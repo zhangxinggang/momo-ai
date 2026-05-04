@@ -1,0 +1,44 @@
+.workflow-terminal {
+  min-width: 120px;
+  border-radius: 12px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.workflow-terminal--start {
+  border-color: hsl(142 76% 36% / 0.55);
+}
+
+.workflow-terminal--end {
+  border-color: hsl(0 72% 51% / 0.45);
+}
+
+.workflow-terminal-body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  text-align: center;
+}
+
+.workflow-terminal-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: hsl(var(--muted-foreground));
+}
+
+.workflow-terminal-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.workflow-terminal-handle {
+  width: 8px;
+  height: 8px;
+  background: hsl(var(--primary)) !important;
+  border: 2px solid hsl(var(--background)) !important;
+}

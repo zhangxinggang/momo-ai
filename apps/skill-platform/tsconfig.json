@@ -1,0 +1,34 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "emitDecoratorMetadata": true,
+    "useDefineForClassFields": true,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@renderer/*": ["./src/renderer/*"],
+      "@preload": ["./src/preload/index.ts"],
+      "@preload/*": ["./src/preload/*"],
+      "@momo/aichat": ["../../packages/momo-aichat/src/index.ts"],
+      "@momo/aichat/*": ["../../packages/momo-aichat/src/*"],
+      "@momo/markdown": ["../../packages/momo-markdown/src/index.ts"],
+      "@momo/markdown/*": ["../../packages/momo-markdown/src/*"],
+      "@momo/markdown-styles": [
+        "../../packages/momo-markdown/src/components/MdEditor/styles/style.less"
+      ],
+      "@momo/knowledge": ["../../packages/momo-knowledge/src/index.ts"],
+      "@momo/knowledge/*": ["../../packages/momo-knowledge/src/*"],
+      "@momo/file-editor": ["../../packages/momo-file-editor/src/index.ts"],
+      "@momo/file-editor/*": ["../../packages/momo-file-editor/src/*"],
+      "~/*": ["../../packages/momo-markdown/src/components/MdEditor/*"],
+      "~~/*": ["../../packages/momo-markdown/src/*"],
+      "@momo/workflow": ["../../packages/momo-workflow/src/index.ts"],
+      "@momo/workflow/*": ["../../packages/momo-workflow/src/*"],
+      "@momo/electron": ["../electron/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "out"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

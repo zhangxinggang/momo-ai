@@ -1,0 +1,45 @@
+{
+  "name": "@momo/electron",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "author": "zhangxinggang",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/src/index.js",
+      "require": "./dist/src/index.cjs"
+    }
+  },
+  "main": "./dist/src/index.cjs",
+  "scripts": {
+    "build": "pnpm run prod",
+    "electron:build:linux": "pnpm run prod && electron-builder --config ./scripts/build/electron-builder-linux-mac.json --publish always",
+    "electron:build:linux:license": "cross-env REQUIRE_LICENSE=true pnpm run electron:build:linux",
+    "electron:build:snap": "pnpm run prod && electron-builder --config ./scripts/build/electron-builder-snap.json --publish never",
+    "electron:build:win": "pnpm run prod && electron-builder --config ./scripts/build/electron-builder-win.json --publish never",
+    "electron:build:win:license": "cross-env REQUIRE_LICENSE=true pnpm run electron:build:win",
+    "electron:build:win-arm64": "pnpm run prod && electron-builder --config ./scripts/build/electron-builder-win-arm64.json --publish never",
+    "electron:build:win-arm64:license": "cross-env REQUIRE_LICENSE=true pnpm run electron:build:win-arm64",
+    "electron:dev": "node ./scripts/dev.cjs",
+    "electron:dev:license": "cross-env REQUIRE_LICENSE=true pnpm run electron:dev",
+    "electron:dev:set-auth": "cross-env NODE_ENV=development ELECTRON_DEV_SET_AUTH=true pnpm run electron:dev",
+    "prod": "node ./scripts/prod.cjs"
+  },
+  "dependencies": {
+    "@momo/server": "workspace:*",
+    "better-sqlite3": "12.9.0",
+    "chalk": "^2.4.2",
+    "chokidar": "^3.5.3",
+    "merge": "^2.1.1",
+    "node-machine-id": "^1.1.12",
+    "node-rsa": "^1.1.1",
+    "typeorm": "^1.0.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "39.8.2",
+    "electron-builder": "26.9.0",
+    "vite": "^7.1.5"
+  }
+}

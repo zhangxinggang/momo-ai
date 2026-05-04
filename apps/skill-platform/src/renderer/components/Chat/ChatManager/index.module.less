@@ -1,0 +1,25 @@
+.chat-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: hsl(var(--background));
+
+  &-hint {
+    padding: 24px;
+    color: hsl(var(--muted-foreground));
+    font-size: 14px;
+  }
+
+  &-body {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: hsl(var(--background));
+  }
+}

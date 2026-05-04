@@ -1,0 +1,32 @@
+.kb-chunk {
+  &-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid hsl(var(--border) / 0.7);
+    background: hsl(var(--muted) / 0.35);
+  }
+
+  &-search-input {
+    width: 240px;
+    max-width: 100%;
+  }
+
+  &-table {
+    :global {
+      .ant-table-thead > tr > th {
+        background: hsl(var(--muted) / 0.45);
+        font-weight: 600;
+        font-size: 12px;
+      }
+
+      .ant-table-tbody > tr:hover > td {
+        background: hsl(var(--accent) / 0.45);
+      }
+    }
+  }
+}

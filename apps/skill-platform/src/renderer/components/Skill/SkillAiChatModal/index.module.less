@@ -1,0 +1,64 @@
+/* Modal 根节点：全屏铺满应用可视区 */
+.skill-ai-modal-root {
+  :global(.ant-modal) {
+    top: 0;
+    max-width: 100vw;
+    margin: 0;
+    padding: 0;
+  }
+
+  :global(.ant-modal-wrap) {
+    overflow: hidden;
+  }
+
+  :global(.ant-modal-close) {
+    position: absolute;
+    z-index: 30;
+    pointer-events: auto;
+  }
+
+  :global(.ant-modal-header) {
+    position: relative;
+    z-index: 20;
+    flex-shrink: 0;
+  }
+
+  :global(.ant-modal-content) {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    overflow: hidden;
+  }
+}
+
+.skill-ai-modal-wrap {
+  :global(.ant-modal) {
+    width: 100% !important;
+    max-width: 100vw;
+    padding-bottom: 0;
+  }
+}
+
+.skill-ai-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+
+  :global(.bg-panel) {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  :global(.md-editor) {
+    height: auto !important;
+    max-height: none;
+    overflow: visible;
+  }
+}

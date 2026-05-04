@@ -1,0 +1,136 @@
+.workflow-studio {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  background: var(--app-ui-panel-strong-bg);
+  -webkit-app-region: no-drag;
+}
+
+.workflow-studio-header {
+  position: relative;
+  z-index: 100;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+  background: var(--app-ui-panel-strong-bg);
+  -webkit-app-region: no-drag;
+  pointer-events: auto;
+}
+
+.workflow-studio-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+}
+
+.workflow-studio-name-wrap {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  max-width: 320px;
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+}
+
+.workflow-studio-name {
+  width: 100%;
+  border-radius: 8px;
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+}
+
+.workflow-studio-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.workflow-studio-palette {
+  width: 280px;
+  flex-shrink: 0;
+  border-right: 1px solid hsl(var(--border) / 0.6);
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  background: hsl(var(--sidebar-background) / 0.35);
+}
+
+.workflow-studio-palette-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+.workflow-studio-palette-search {
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+.workflow-studio-palette-hint {
+  margin-bottom: 0 !important;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.workflow-studio-palette-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.workflow-studio-palette-item {
+  width: 100%;
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: hsl(var(--card) / 0.45);
+  font-size: 12px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s;
+}
+
+.workflow-studio-palette-item--draggable {
+  cursor: grab;
+  user-select: none;
+}
+
+.workflow-studio-palette-item--draggable:active {
+  cursor: grabbing;
+}
+
+.workflow-studio-palette-item--draggable:hover {
+  border-color: hsl(var(--primary) / 0.35);
+  background: hsl(var(--accent) / 0.45);
+}
+
+.workflow-studio-canvas-wrap {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  background: hsl(var(--muted) / 0.12);
+}

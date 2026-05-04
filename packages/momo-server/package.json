@@ -1,0 +1,72 @@
+{
+  "name": "@momo/server",
+  "version": "1.0.0",
+  "description": "node serve",
+  "keywords": [
+    "node",
+    "node.js",
+    "koa"
+  ],
+  "author": "zhangxinggang",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build && node ./scripts/copy-non-code-assets.cjs && tsc -p tsconfig.build.json && node ./scripts/compile-example.cjs",
+    "dev": "vite-node --watch ./example/start.ts",
+    "serve": "node ./dist/index.cjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "nodemonConfig": {
+    "delay": "2500",
+    "ignore": [
+      "dist/*",
+      "doc/*",
+      "node_modules/*",
+      "logs/*"
+    ]
+  },
+  "dependencies": {
+    "@log4js-node/smtp": "^1.1.0",
+    "dotenv": "^8.2.0",
+    "glob": "^7.1.6",
+    "http-proxy-middleware": "^1.0.6",
+    "http2": "^3.3.6",
+    "jsonwebtoken": "^8.5.1",
+    "koa": "^2.13.0",
+    "koa-body": "^7.0.0",
+    "koa-compress": "^3.0.0",
+    "koa-connect": "^2.1.0",
+    "koa-favicon": "^2.1.0",
+    "koa-helmet": "^4.0.0",
+    "koa-router": "^7.4.0",
+    "koa-send": "^5.0.1",
+    "koa2-cors": "^2.0.6",
+    "lodash": "^4.17.21",
+    "log4js": "^6.3.0",
+    "merge": "^2.1.1",
+    "methods": "^1.1.2",
+    "node-rsa": "^1.1.1",
+    "picomatch": "^4.0.4",
+    "upath": "^2.0.1"
+  },
+  "devDependencies": {
+    "@types/glob": "^9.0.0",
+    "@types/node": "^24.9.0",
+    "esbuild": "^0.25.9",
+    "typescript": "^6.0.3",
+    "vite": "^7.1.5",
+    "vite-node": "^3.2.4"
+  }
+}

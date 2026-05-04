@@ -1,0 +1,36 @@
+{
+  "name": "@momo/aichat",
+  "version": "0.2.0",
+  "description": "可复用的 AI 多轮对话组件（流式 Markdown、附件、会话管理、 RAG）",
+  "sideEffects": [
+    "**/*.less",
+    "**/*.css"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles/chat.css",
+    "./markdown-styles": "../momo-markdown/src/components/MdEditor/styles/style.less"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "@ant-design/icons": "^6.2.2",
+    "@momo/markdown": "workspace:*",
+    "axios": "^1.12.2",
+    "classnames": "^2.5.1",
+    "lucide-react": "^0.460.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "antd": "^6.3.7",
+    "less": "^4.4.1",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "typescript": "^6.0.3"
+  }
+}

@@ -1,0 +1,116 @@
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  padding: 0;
+
+  &-header {
+    flex-shrink: 0;
+    padding: 0 4px 8px;
+  }
+
+  &-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  &-section-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: hsl(var(--sidebar-foreground) / 0.65);
+    letter-spacing: 0.02em;
+  }
+
+  &-search {
+    flex-shrink: 0;
+    padding: 0 4px 8px;
+  }
+
+  &-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 8px 10px 12px;
+    border-radius: 12px;
+    border: 1px solid hsl(var(--sidebar-border) / 0.6);
+    background: hsl(var(--sidebar-accent) / 0.25);
+    cursor: pointer;
+    transition:
+      border-color 0.2s,
+      background 0.2s;
+
+    &--active {
+      border-color: hsl(var(--primary) / 0.6);
+      background: hsl(var(--primary) / 0.08);
+    }
+
+    &:hover {
+      background: hsl(var(--sidebar-accent) / 0.45);
+    }
+  }
+
+  &-row-main {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &-row-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
+  &-row-time {
+    font-size: 11px;
+    color: hsl(var(--sidebar-foreground) / 0.5);
+  }
+
+  &-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  &-row-edit {
+    color: hsl(var(--sidebar-foreground) / 0.45);
+  }
+
+  &-row-delete {
+    flex-shrink: 0;
+    color: hsl(var(--sidebar-foreground) / 0.45);
+
+    &:hover {
+      color: hsl(var(--destructive));
+    }
+  }
+
+  &-empty {
+    padding: 24px 8px;
+  }
+
+  &-unavailable {
+    padding: 12px;
+    font-size: 13px;
+    color: hsl(var(--sidebar-foreground) / 0.6);
+  }
+}

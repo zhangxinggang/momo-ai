@@ -1,0 +1,71 @@
+/* 对话区通用样式；Markdown 预览样式见 @momo/aichat/markdown-styles */
+
+.chat-input-textarea:focus,
+.chat-input-textarea:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.chat-input-panel:focus-within {
+  outline: none !important;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+}
+
+.chat-input-toolbar {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.chat-input-toolbar-left {
+  max-width: 100%;
+}
+
+.chat-input-toolbar-left .ant-select {
+  max-width: 100%;
+}
+
+.chat-model-select.ant-select-borderless {
+  width: auto !important;
+  min-width: 0;
+}
+
+.chat-model-select.ant-select-borderless .ant-select-selector {
+  padding-left: 4px !important;
+  padding-right: 18px !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.chat-model-select.ant-select-borderless .ant-select-selection-item {
+  padding-inline-end: 0 !important;
+  font-size: 12px;
+}
+
+.chat-input-action-btn.ant-btn {
+  min-width: 32px;
+}
+
+.chat-input-send-btn:not(:disabled) {
+  background: #3b82f6 !important;
+}
+
+.chat-input-send-btn:not(:disabled):hover {
+  background: #2563eb !important;
+}
+
+.chat-feature-dropdown-trigger {
+  border: none;
+  box-shadow: none;
+}
+
+.chat-feature-dropdown-panel {
+  color: inherit;
+}
+
+.model-select-borderless.ant-select-borderless .ant-select-selector {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}

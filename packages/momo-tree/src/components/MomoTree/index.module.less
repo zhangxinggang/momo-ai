@@ -1,0 +1,84 @@
+.momo-tree {
+  width: 100%;
+
+  :global(.ant-tree) {
+    background: transparent;
+  }
+
+  :global(.ant-tree-treenode) {
+    width: 100%;
+    padding: 2px 0;
+  }
+
+  :global(.ant-tree-node-content-wrapper) {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.momo-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding-right: 4px;
+}
+
+.momo-tree-row-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.momo-tree-row-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.momo-tree-highlight {
+  padding: 0;
+  color: #ef4444;
+  font-weight: 600;
+  background: rgba(239, 68, 68, 0.12);
+  border-radius: 2px;
+}
+
+.momo-tree-empty {
+  padding: 24px 8px;
+}
+
+.momo-tree-empty-action {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.momo-tree-row-actions {
+  display: flex;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.momo-tree-row:hover .momo-tree-row-actions,
+.momo-tree-row-actions-open {
+  opacity: 1;
+}
+
+.momo-tree-action-btn {
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  padding: 0 !important;
+  color: inherit !important;
+
+  &:hover {
+    background: rgba(128, 128, 128, 0.15) !important;
+  }
+}

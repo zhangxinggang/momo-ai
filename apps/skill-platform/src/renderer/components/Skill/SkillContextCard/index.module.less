@@ -1,0 +1,58 @@
+.skill-context-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+  background: var(--surface, rgba(0, 0, 0, 0.02));
+}
+
+.skill-context-card-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.skill-context-card-label {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted-foreground, rgba(0, 0, 0, 0.45));
+}
+
+.skill-context-card-name {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--foreground, inherit);
+}
+
+.skill-context-card-desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted-foreground, rgba(0, 0, 0, 0.55));
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.skill-context-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.skill-context-card-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 500;
+  background: color-mix(in srgb, var(--primary, #1677ff) 12%, transparent);
+  color: var(--primary, #1677ff);
+}

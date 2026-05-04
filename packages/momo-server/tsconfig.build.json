@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": false,
+    "emitDeclarationOnly": true,
+    "module": "CommonJS",
+    "moduleResolution": "bundler",
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": [
+    "src/index.ts",
+    "src/config.ts",
+    "src/services/index.ts",
+    "src/services/http-server/**/*.ts",
+    "src/utils/**/*.ts",
+    "src/types/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", "scripts", "example"]
+}

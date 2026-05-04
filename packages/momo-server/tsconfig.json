@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "rootDir": "src",
+    "outDir": "./dist"
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.js",
+    "example/utils/rsa/rsa.ts",
+    "example/utils/rsa/certificate.ts"
+  ],
+  "exclude": ["node_modules", "dist", "scripts", "example"]
+}

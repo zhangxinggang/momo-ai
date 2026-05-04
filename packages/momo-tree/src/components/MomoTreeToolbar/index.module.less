@@ -1,0 +1,82 @@
+.momo-tree-toolbar {
+  flex-shrink: 0;
+}
+
+.momo-tree-toolbar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 0 24px;
+}
+
+.momo-tree-toolbar-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: hsl(var(--sidebar-foreground) / 0.5);
+}
+
+.momo-tree-toolbar-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.momo-tree-toolbar-action {
+  padding: 6px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: hsl(var(--sidebar-foreground) / 0.6);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+
+  &:hover {
+    background: hsl(var(--sidebar-accent));
+    color: hsl(var(--primary));
+  }
+}
+
+.momo-tree-toolbar-search {
+  flex-shrink: 0;
+  margin: 0 12px 8px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid hsl(var(--border) / 0.6);
+  background: hsl(var(--sidebar-accent) / 0.35);
+}
+
+.momo-tree-toolbar-search-input {
+  height: 32px;
+  font-size: 12px;
+}
+
+.momo-tree-toolbar-search-icon {
+  width: 14px;
+  height: 14px;
+  color: hsl(var(--muted-foreground));
+}
+
+.momo-tree-toolbar-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+
+  &:hover {
+    color: hsl(var(--foreground));
+  }
+}

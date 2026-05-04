@@ -1,0 +1,30 @@
+{
+  "name": "@momo/workflow",
+  "version": "0.1.0",
+  "description": "可复用的工作流画布编辑器（基于 @xyflow/react）",
+  "sideEffects": [
+    "**/*.less",
+    "**/*.css",
+    "@xyflow/react/dist/style.css"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "@xyflow/react": "^12.10.2",
+    "lucide-react": "^0.460.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "less": "^4.4.1",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  }
+}

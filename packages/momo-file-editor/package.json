@@ -1,0 +1,31 @@
+{
+  "name": "@momo/file-editor",
+  "version": "0.1.0",
+  "description": "可复用的树形文件编辑器（Markdown 分屏编辑 + 文本文件）",
+  "sideEffects": [
+    "**/*.less"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "@momo/markdown": "workspace:*",
+    "antd": "^6.3.7",
+    "lucide-react": "^0.460.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "antd": "^6.3.7",
+    "less": "^4.4.1",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "typescript": "^6.0.3"
+  }
+}

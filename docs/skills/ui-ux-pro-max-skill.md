@@ -1,0 +1,3 @@
+- npm install -g uipro-cli
+- cd /path/to/your/project
+- uipro init --ai cursor /ui-ux-pro-max

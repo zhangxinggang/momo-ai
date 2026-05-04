@@ -1,0 +1,21 @@
+.workflow-modals-host {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+}
+
+.workflow-modals-host--open {
+  pointer-events: auto;
+}
+
+.workflow-modals-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--app-ui-panel-strong-bg);
+  -webkit-app-region: no-drag;
+}

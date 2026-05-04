@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@momo/markdown": ["../momo-markdown/src/index.ts"],
+      "@momo/markdown/*": ["../momo-markdown/src/*"],
+      "@momo/markdown-styles": ["../momo-markdown/src/components/MdEditor/styles/style.less"],
+      "~/*": ["../momo-markdown/src/components/MdEditor/*"],
+      "~~/*": ["../momo-markdown/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"]
+}

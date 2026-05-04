@@ -1,0 +1,88 @@
+.workflow-node-panel-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: transparent;
+}
+
+.workflow-node-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  width: 320px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  border: 1px solid hsl(var(--border) / 0.8);
+  background: hsl(var(--background));
+  box-shadow: 0 8px 32px hsl(var(--foreground) / 0.08);
+}
+
+.workflow-node-panel-header {
+  flex-shrink: 0;
+  padding: 12px 14px;
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+}
+
+.workflow-node-panel-body {
+  flex: 1;
+  overflow: auto;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.workflow-node-panel-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+  }
+}
+
+.workflow-node-panel-error {
+  font-size: 11px;
+  color: hsl(var(--destructive));
+}
+
+.workflow-node-panel-skill {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.workflow-node-panel-hint {
+  margin-bottom: 0 !important;
+  font-size: 11px;
+}
+
+.workflow-node-panel-footer {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid hsl(var(--border) / 0.6);
+}
+
+.workflow-node-panel-btn {
+  flex: 1;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid hsl(var(--border));
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+
+  &--primary {
+    border-color: hsl(var(--primary));
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+}

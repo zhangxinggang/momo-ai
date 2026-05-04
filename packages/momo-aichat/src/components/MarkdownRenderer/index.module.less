@@ -1,0 +1,24 @@
+.wrap {
+  max-width: 100%;
+}
+
+/* 嵌入 MdPreview：去掉编辑器固定高度与边框 */
+.wrap :global(.md-editor) {
+  height: auto !important;
+  min-height: 48px;
+  max-height: none;
+  overflow: visible;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.preview {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.plain {
+  white-space: pre-wrap;
+  word-break: break-word;
+}

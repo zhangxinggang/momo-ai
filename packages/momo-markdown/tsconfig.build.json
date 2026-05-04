@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationDir": "./lib/types",
+    "outDir": "./lib",
+    "paths": {
+      "~~/*": ["./src/*"],
+      "~/*": ["./src/components/MdEditor/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}

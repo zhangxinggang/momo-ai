@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>生成授权码</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #f5f7fa;
+        color: #202124;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .panel {
+        width: 100%;
+        max-width: 560px;
+        background: #fff;
+        border-radius: 12px;
+        padding: 28px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      }
+      h1 {
+        margin: 0 0 20px;
+        font-size: 22px;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 6px;
+        color: #5f6368;
+      }
+      input,
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #dadce0;
+        border-radius: 8px;
+        font-size: 14px;
+        margin-bottom: 16px;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+      }
+      .row input {
+        flex: 1;
+      }
+      button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: #1a73e8;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #1765cc;
+      }
+      textarea {
+        min-height: 100px;
+        font-family: monospace;
+        font-size: 12px;
+      }
+      .msg {
+        font-size: 13px;
+        color: #d93025;
+        min-height: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="panel">
+      <h1>生成授权码</h1>
+      <label>用户设备标识</label>
+      <input id="machineId" type="text" placeholder="粘贴用户的 Machine ID" />
+      <label>授权时间段</label>
+      <div class="row">
+        <div style="flex: 1">
+          <label>开始时间</label>
+          <input id="startTime" type="datetime-local" />
+        </div>
+        <div style="flex: 1">
+          <label>结束时间</label>
+          <input id="endTime" type="datetime-local" />
+        </div>
+      </div>
+      <p class="msg" id="message"></p>
+      <button type="button" id="confirmBtn">确认</button>
+      <label style="margin-top: 16px">授权码（发给用户）</label>
+      <textarea id="authOutput" readonly placeholder="点击确认后生成"></textarea>
+    </div>
+    <script>
+      const messageEl = document.getElementById('message');
+      const startInput = document.getElementById('startTime');
+      const endInput = document.getElementById('endTime');
+      const output = document.getElementById('authOutput');
+      function getHttpPort() {
+        const port = new URLSearchParams(window.location.search).get('httpPort');
+        const parsed = port ? parseInt(port, 10) : NaN;
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 8081;
+      }
+
+      function pad(n) {
+        return String(n).padStart(2, '0');
+      }
+      function toLocalInputValue(date) {
+        return (
+          date.getFullYear() +
+          '-' +
+          pad(date.getMonth() + 1) +
+          '-' +
+          pad(date.getDate()) +
+          'T' +
+          pad(date.getHours()) +
+          ':' +
+          pad(date.getMinutes())
+        );
+      }
+
+      function getApiBase() {
+        return 'http://127.0.0.1:' + getHttpPort();
+      }
+
+      function unwrapBody(json) {
+        return json && json.data !== undefined ? json.data : json;
+      }
+
+      const now = new Date();
+      const halfYear = new Date(now.getTime());
+      halfYear.setMonth(halfYear.getMonth() + 6);
+      startInput.value = toLocalInputValue(now);
+      endInput.value = toLocalInputValue(halfYear);
+
+      document.getElementById('confirmBtn').addEventListener('click', async () => {
+        messageEl.textContent = '';
+        output.value = '';
+        const machineId = document.getElementById('machineId').value.trim();
+        if (!machineId) {
+          messageEl.textContent = '请填写用户设备标识';
+          return;
+        }
+        const startMs = new Date(startInput.value).getTime();
+        const endMs = new Date(endInput.value).getTime();
+        if (!startMs || !endMs || endMs <= startMs) {
+          messageEl.textContent = '请设置有效的授权时间段';
+          return;
+        }
+        try {
+          const res = await fetch(getApiBase() + '/system_api/generateAuth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              machineId: machineId,
+              startTime: startMs,
+              endTime: endMs,
+            }),
+          });
+          const json = await res.json();
+          const body = unwrapBody(json);
+          if (body.code === 200 && body.data) {
+            output.value = body.data;
+            messageEl.textContent = '';
+          } else {
+            messageEl.textContent = body.message || '生成失败';
+          }
+        } catch (e) {
+          messageEl.textContent =
+            '请求失败，请确认应用已启动且 HTTP 服务端口与 appConf.server.httpPort 一致';
+        }
+      });
+    </script>
+  </body>
+</html>

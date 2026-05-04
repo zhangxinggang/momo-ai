@@ -1,0 +1,373 @@
+import { randomId } from '@vavt/util';
+import mdit from 'markdown-it';
+import ImageFiguresPlugin from 'markdown-it-image-figures';
+import SubPlugin from 'markdown-it-sub';
+import SupPlugin from 'markdown-it-sup';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { globalConfig, prefix } from '~/config';
+import { EditorContext } from '~/context';
+import { BUILD_FINISHED, CATALOG_CHANGED, PUSH_CATALOG, RERENDER } from '~/static/event-name';
+import { IHeadList, IMarkdownItConfigPlugin, TThemes } from '~/type';
+import { generateCodeRowNumber } from '~/utils';
+import { copyMermaid, zoomMermaid } from '~/utils/dom';
+import bus from '~/utils/event-bus';
+
+import useEcharts from './useEcharts';
+import useHighlight from './useHighlight';
+import useKatex from './useKatex';
+import useMermaid from './useMermaid';
+
+import AdmonitionPlugin from '../markdownIt/admonition';
+import CodePlugin from '../markdownIt/code';
+import EchartsPlugin from '../markdownIt/echarts';
+import HeadingPlugin from '../markdownIt/heading';
+import KatexPlugin from '../markdownIt/katex';
+import MermaidPlugin from '../markdownIt/mermaid';
+import TaskListPlugin from '../markdownIt/task';
+import { IContentPreviewProps } from '../props';
+
+const initLineNumber = (md: mdit) => {
+  md.core.ruler.push('init-line-number', (state) => {
+    state.tokens.forEach((token) => {
+      if (token.map) {
+        if (!token.attrs) {
+          token.attrs = [];
+        }
+        token.attrs.push(['data-line', token.map[0].toString()]);
+      }
+    });
+    return true;
+  });
+};
+
+const useMarkdownIt = (props: IContentPreviewProps, previewOnly: boolean) => {
+  const {
+    modelValue,
+    sanitize,
+    mdHeadingId,
+    codeFoldable,
+    autoFoldThreshold,
+    noKatex,
+    noMermaid,
+    noHighlight,
+    onHtmlChanged,
+    onGetCatalog,
+  } = props;
+  const { editorConfig, markdownItConfig, markdownItPlugins, editorExtensions } = globalConfig;
+  //
+  const {
+    editorId,
+    language,
+    showCodeRowNumber,
+    theme,
+    usedLanguageText,
+    customIcon,
+    rootRef,
+    setting,
+  } = useContext(EditorContext);
+
+  const headsRef = useRef<IHeadList[]>([]);
+
+  const themeRef = useRef<TThemes>(theme);
+  useEffect(() => {
+    themeRef.current = theme;
+  }, [theme]);
+
+  const usedLanguageTextRef = useRef(usedLanguageText);
+  useEffect(() => {
+    usedLanguageTextRef.current = usedLanguageText;
+  }, [usedLanguageText]);
+
+  const customIconRef = useRef(customIcon);
+  useEffect(() => {
+    customIconRef.current = customIcon;
+  }, [customIcon]);
+
+  const { hljsRef, hljsInited } = useHighlight(props);
+  const { katexRef, katexInited } = useKatex(props);
+  const { reRender, replaceMermaid } = useMermaid(props);
+  const { reRenderEcharts, replaceEcharts } = useEcharts(props);
+
+  const [md] = useState(() => {
+    const md_ = mdit({
+      html: true,
+      breaks: true,
+      linkify: true,
+    });
+
+    markdownItConfig(md_, {
+      editorId,
+    });
+
+    const plugins: IMarkdownItConfigPlugin[] = [
+      {
+        type: 'image',
+        plugin: ImageFiguresPlugin,
+        options: { figcaption: true, classes: 'md-zoom' },
+      },
+      {
+        type: 'admonition',
+        plugin: AdmonitionPlugin,
+        options: {},
+      },
+      {
+        type: 'taskList',
+        plugin: TaskListPlugin,
+        options: {},
+      },
+      {
+        type: 'heading',
+        plugin: HeadingPlugin,
+        options: { mdHeadingId, headsRef },
+      },
+      {
+        type: 'code',
+        plugin: CodePlugin,
+        options: {
+          editorId,
+          usedLanguageTextRef,
+          // showCodeRowNumber,
+          codeFoldable,
+          autoFoldThreshold,
+          customIconRef,
+        },
+      },
+      {
+        type: 'sub',
+        plugin: SubPlugin,
+        options: {},
+      },
+      {
+        type: 'sup',
+        plugin: SupPlugin,
+        options: {},
+      },
+    ];
+
+    if (!noKatex) {
+      plugins.push({
+        type: 'katex',
+        plugin: KatexPlugin,
+        options: { katexRef },
+      });
+    }
+
+    if (!noMermaid) {
+      plugins.push({
+        type: 'mermaid',
+        plugin: MermaidPlugin,
+        options: { themeRef },
+      });
+    }
+
+    if (!props.noEcharts) {
+      plugins.push({
+        type: 'echarts',
+        plugin: EchartsPlugin,
+        options: { themeRef },
+      });
+    }
+
+    markdownItPlugins(plugins, {
+      editorId,
+    }).forEach((item) => {
+      md_.use(item.plugin, item.options);
+    });
+
+    const userDefHighlight = md_.options.highlight;
+
+    md_.set({
+      highlight: (str, language, attrs) => {
+        if (userDefHighlight) {
+          const result = userDefHighlight(str, language, attrs);
+          if (result) {
+            return result;
+          }
+        }
+
+        let codeHtml: string;
+
+        // 不高亮或者没有实例，返回默认
+        if (!noHighlight && hljsRef.current) {
+          const hljsLang = hljsRef.current.getLanguage(language);
+          if (hljsLang) {
+            codeHtml = hljsRef.current.highlight(str, {
+              language,
+              ignoreIllegals: true,
+            }).value;
+          } else {
+            codeHtml = hljsRef.current.highlightAuto(str).value;
+          }
+        } else {
+          codeHtml = md.utils.escapeHtml(str);
+        }
+
+        const codeSpan = showCodeRowNumber
+          ? generateCodeRowNumber(codeHtml.replace(/^\n+|\n+$/g, ''), str.replace(/^\n+|\n+$/g, ''))
+          : `<span class="${prefix}-code-block">${codeHtml.replace(/^\n+|\n+$/g, '')}</span>`;
+
+        return `<pre><code class="language-${language}" language=${language}>${codeSpan}</code></pre>`;
+      },
+    });
+
+    // if (!previewOnly) {
+    initLineNumber(md_);
+    // }
+
+    return md_;
+  });
+
+  // 文章节点的key
+  const [key, setKey] = useState(`_article-key_${randomId()}`);
+
+  const [html, setHtml] = useState(() => {
+    // 严格模式下 useState 也会执行两次
+    headsRef.current = [];
+    return sanitize(
+      md.render(modelValue, {
+        srcLines: modelValue.split('\n'),
+      }),
+    );
+  });
+
+  const needReRender = useMemo(() => {
+    return (noHighlight || hljsInited) && (noKatex || katexInited);
+
+    // return (noKatex || katexRef.value) && (noHighlight || hljsRef.value);
+  }, [hljsInited, katexInited, noHighlight, noKatex]);
+
+  // 开始已经render一次了，如果提供了实例，那么也正确生成了内容
+  // 如果没有提过实例，那么相对来讲第一次useEffect执行一定会快于script的onload
+  // 所以忽略多余的一次render
+  const ignoreFirstRender = useRef(true);
+
+  const markHtml = useCallback(() => {
+    // 清理历史标题
+    headsRef.current = [];
+    const html_ = sanitize(
+      md.render(modelValue, {
+        srcLines: modelValue.split('\n'),
+      }),
+    );
+    setHtml(html_);
+  }, [md, modelValue, sanitize]);
+
+  // mermaid相关操作统一处理
+  const handleMermaidActions = useCallback(() => {
+    let clearZoomMermaidEvents = () => {};
+    let clearCopyMermaidEvents = () => {};
+
+    const mermaidEles = rootRef!.current?.querySelectorAll<HTMLElement>(
+      `#${editorId} p.${prefix}-mermaid:not([data-closed=false])`,
+    );
+    clearCopyMermaidEvents = copyMermaid(mermaidEles, {
+      customIcon: customIconRef.current,
+    });
+    if (editorExtensions.mermaid?.enableZoom) {
+      clearZoomMermaidEvents = zoomMermaid(mermaidEles, {
+        customIcon: customIconRef.current,
+      });
+    }
+
+    return [clearZoomMermaidEvents, clearCopyMermaidEvents];
+  }, [editorExtensions.mermaid?.enableZoom, editorId, rootRef]);
+
+  useEffect(() => {
+    // 触发异步的保存事件（html总是会比text后更新）
+    bus.emit(editorId, BUILD_FINISHED, html);
+    onHtmlChanged?.(html);
+    // 传递标题
+    onGetCatalog?.(headsRef.current);
+    // 生成目录
+    bus.emit(editorId, CATALOG_CHANGED, headsRef.current);
+
+    // 手动触发更新时，会更新key，key变化也同步执行上面的任务
+  }, [editorId, html, key, onGetCatalog, onHtmlChanged]);
+
+  useEffect(() => {
+    let clearZoomMermaidEvents = () => {};
+    let clearCopyMermaidEvents = () => {};
+    if (setting.preview) {
+      void replaceMermaid().then(() => {
+        [clearZoomMermaidEvents, clearCopyMermaidEvents] = handleMermaidActions();
+      });
+
+      void replaceEcharts();
+
+      // 生成目录
+      bus.emit(editorId, CATALOG_CHANGED, headsRef.current);
+    }
+
+    return () => {
+      clearZoomMermaidEvents();
+      clearCopyMermaidEvents();
+    };
+  }, [editorId, handleMermaidActions, replaceEcharts, replaceMermaid, setting.preview]);
+
+  useEffect(() => {
+    if (ignoreFirstRender.current) {
+      ignoreFirstRender.current = false;
+      return;
+    }
+
+    const timer = setTimeout(
+      () => {
+        markHtml();
+      },
+      previewOnly ? 0 : editorConfig.renderDelay,
+    );
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [needReRender, theme, markHtml, language, previewOnly, editorConfig.renderDelay]);
+
+  useEffect(() => {
+    let clearZoomMermaidEvents = () => {};
+    let clearCopyMermaidEvents = () => {};
+    void replaceMermaid().then(() => {
+      [clearZoomMermaidEvents, clearCopyMermaidEvents] = handleMermaidActions();
+    });
+
+    void replaceEcharts();
+
+    return () => {
+      clearZoomMermaidEvents();
+      clearCopyMermaidEvents();
+    };
+  }, [handleMermaidActions, html, key, reRender, replaceMermaid, reRenderEcharts, replaceEcharts]);
+
+  useEffect(() => {
+    const callback = () => {
+      bus.emit(editorId, CATALOG_CHANGED, headsRef.current);
+    };
+    // 添加目录主动触发接收监听
+    bus.on(editorId, {
+      name: PUSH_CATALOG,
+      callback,
+    });
+
+    return () => {
+      bus.remove(editorId, PUSH_CATALOG, callback);
+    };
+  }, [editorId]);
+
+  useEffect(() => {
+    const callback = () => {
+      // 强制更新节点
+      setKey(`_article-key_${randomId()}`);
+      markHtml();
+    };
+    bus.on(editorId, {
+      name: RERENDER,
+      callback,
+    });
+    return () => {
+      bus.remove(editorId, RERENDER, callback);
+    };
+  }, [editorId, markHtml]);
+
+  return { html, key };
+};
+
+export default useMarkdownIt;

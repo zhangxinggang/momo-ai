@@ -50,12 +50,21 @@ export type {
 export { default as ChatInputPanel } from './components/ChatInputPanel';
 export type { IChatInputPanelRef } from './components/ChatInputPanel';
 export { ChatWorkspaceControl } from './components/ChatWorkspaceControl';
+export { ChatWorkspaceToolbar } from './components/ChatWorkspaceToolbar';
 export { default as CitationCard } from './components/CitationCard';
 export { default as CollapsibleThinking } from './components/CollapsibleThinking';
 export { default as DropOverlay } from './components/DropOverlay';
 export { default as MarkdownRenderer } from './components/MarkdownRenderer';
+export { SlashCommandPopover } from './components/SlashCommandPopover';
 export { default as StopGenerationButton } from './components/StopGenerationButton';
 export { buildChatWorkspaceConfig, useChatWorkspaceConfig } from './hooks/useChatWorkspaceConfig';
 export type { IUseChatWorkspaceConfigOptions } from './hooks/useChatWorkspaceConfig';
-export type { IChatWorkspaceConfig } from './types/workspace';
+export { useSlashCommandTrigger } from './hooks/useSlashCommandTrigger';
+export type {
+  ISlashCommandItem,
+  ISlashCommandsConfig,
+  ISlashCommandsListContext,
+  ISlashCommandsListResult,
+} from './types/slash-command';
+export type { IChatWorkspaceConfig, IChatWorkspacePreset } from './types/workspace';
 export { formatWorkspaceDisplayPath } from './utils/workspace-display';

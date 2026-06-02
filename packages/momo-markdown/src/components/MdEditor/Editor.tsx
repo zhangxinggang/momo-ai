@@ -41,9 +41,11 @@ const Editor = forwardRef((props: IEditorProps, ref: ForwardedRef<unknown>) => {
     tabWidth = defaultProps.tabWidth,
     showCodeRowNumber = defaultProps.showCodeRowNumber,
     previewTheme = defaultProps.previewTheme,
+    onPreviewThemeChange = defaultProps.onPreviewThemeChange,
     noPrettier = defaultProps.noPrettier,
     tableShape = defaultProps.tableShape as TTableShapeType,
     noMermaid = defaultProps.noMermaid,
+    noPlantuml = defaultProps.noPlantuml,
     noKatex = defaultProps.noKatex,
     placeholder = defaultProps.placeholder,
     onChange = defaultProps.onChange,
@@ -86,9 +88,11 @@ const Editor = forwardRef((props: IEditorProps, ref: ForwardedRef<unknown>) => {
 
   const [state, setState] = useState<{
     scrollAuto: boolean;
+    previewTheme: typeof previewTheme;
   }>(() => {
     return {
       scrollAuto: props.scrollAuto === undefined ? true : props.scrollAuto,
+      previewTheme,
     };
   });
   const rootRef = useRef<HTMLDivElement>(null);
@@ -106,6 +110,30 @@ const Editor = forwardRef((props: IEditorProps, ref: ForwardedRef<unknown>) => {
     [setState],
   );
 
+  useEffect(() => {
+    setState((prev) => {
+      if (prev.previewTheme === previewTheme) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        previewTheme,
+      };
+    });
+  }, [previewTheme]);
+
+  const updatePreviewTheme = useCallback(
+    (nextTheme: typeof previewTheme) => {
+      setState((prev) => ({
+        ...prev,
+        previewTheme: nextTheme,
+      }));
+      onPreviewThemeChange?.(nextTheme);
+    },
+    [onPreviewThemeChange],
+  );
+
   // 快捷键监听
   useOnSave(props, staticProps);
   // 扩展库引用
@@ -117,7 +145,10 @@ const Editor = forwardRef((props: IEditorProps, ref: ForwardedRef<unknown>) => {
   // 目录状态
   const catalogVisible = useCatalog(props, staticProps);
   // 部分配置重构
-  const [highlight, usedLanguageText, setting, updateSetting] = useConfig(props);
+  const [highlight, usedLanguageText, setting, updateSetting] = useConfig({
+    ...props,
+    previewTheme: state.previewTheme,
+  });
 
   useExpose(ref, staticProps, catalogVisible, setting, updateSetting, codeRef);
 
@@ -130,7 +161,8 @@ const Editor = forwardRef((props: IEditorProps, ref: ForwardedRef<unknown>) => {
       highlight,
       showCodeRowNumber,
       usedLanguageText,
-      previewTheme,
+      previewTheme: state.previewTheme,
+      updatePreviewTheme,
       customIcon,
       rootRef,
       disabled,
@@ -157,6 +189,7 @@ const Editor = forwardRef((props: IEditorProps, ref: ForwardedRef<unknown>) => {
     noPrettier,
     noUploadImg,
     previewTheme,
+    state.previewTheme,
     setting,
     showCodeRowNumber,
     showToolbarName,
@@ -164,6 +197,7 @@ const Editor = forwardRef((props: IEditorProps, ref: ForwardedRef<unknown>) => {
     tabWidth,
     tableShape,
     theme,
+    updatePreviewTheme,
     updateSetting,
     usedLanguageText,
   ]);
@@ -184,7 +218,6 @@ const Editor = forwardRef((props: IEditorProps, ref: ForwardedRef<unknown>) => {
           !!className && className,
           theme === 'dark' && `${prefix}-dark`,
           setting.fullscreen && `${prefix}-fullscreen`,
-          setting.pageFullscreen && !setting.fullscreen && `${prefix}-page-fullscreen`,
         ])}
         style={props.style}
         ref={rootRef}>
@@ -199,6 +232,7 @@ const Editor = forwardRef((props: IEditorProps, ref: ForwardedRef<unknown>) => {
           onGetCatalog={onGetCatalog}
           sanitize={sanitize}
           noMermaid={staticProps.noMermaid}
+          noPlantuml={noPlantuml}
           noHighlight={staticProps.noHighlight}
           placeholder={placeholder}
           noKatex={staticProps.noKatex}

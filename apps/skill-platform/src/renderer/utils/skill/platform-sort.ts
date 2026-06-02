@@ -1,4 +1,4 @@
-﻿import { DEFAULT_SKILL_PLATFORM_ORDER, type ISkillPlatform } from '@/types/constants/platforms';
+import { DEFAULT_SKILL_PLATFORM_ORDER, type ISkillPlatform } from '@/types/constants/platforms';
 
 /**
  * 按用户偏好顺序对技能平台列表排序

@@ -1,4 +1,4 @@
-﻿import type { INoteTreeNode } from '@/types/modules/note';
+import type { INoteTreeNode } from '@/types/modules/note';
 import type { IChatMessage } from '@momo/aichat';
 import { App, Button, Input, Modal, TreeSelect } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';

@@ -3,8 +3,8 @@ import { ipcMain } from 'electron';
 
 import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
 
-import { extractText } from '../services/kb/file-parser';
 import { callCliAgent, detectCliAgents } from '../services/aichat/cli-agent';
+import { extractText } from '../services/kb/file-parser';
 
 function isCliAgentCallInput(value: unknown): value is ICliAgentCallInput {
   if (!value || typeof value !== 'object') {

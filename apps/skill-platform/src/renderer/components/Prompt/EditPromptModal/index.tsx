@@ -1,4 +1,4 @@
-﻿import { FullscreenModal } from '@renderer/components/ui/FullscreenModal';
+import { FullscreenModal } from '@renderer/components/ui/FullscreenModal';
 import { handleMarkdownListKeyDown, Textarea } from '@renderer/components/ui/Textarea';
 import { useUnsavedLeaveGuard } from '@renderer/hooks/useUnsavedLeaveGuard';
 import { Button, Modal } from 'antd';

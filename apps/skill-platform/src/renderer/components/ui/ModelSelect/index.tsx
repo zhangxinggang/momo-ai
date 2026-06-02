@@ -19,7 +19,7 @@ import {
 
 interface IProps {
   value?: string;
-  onChange?: (value: string) => void;
+  onChange?: (value: string | undefined) => void;
   /** 从模型配置构建选项 */
   models?: IAIModelConfig[];
   /** chat / image / both */
@@ -36,6 +36,8 @@ interface IProps {
   /** 无边框紧凑样式（AI 对话输入栏） */
   variant?: 'default' | 'borderless';
   dropdownMinWidth?: number;
+  /** 允许不选模型（显示 placeholder，工作流节点等场景） */
+  allowEmpty?: boolean;
 }
 
 /** 公共模型选择下拉：厂商 -> 场景 -> 模型 树形结构 */
@@ -53,6 +55,7 @@ export function ModelSelect({
   style,
   variant = 'default',
   dropdownMinWidth = 280,
+  allowEmpty = false,
 }: IProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -80,7 +83,8 @@ export function ModelSelect({
     return [...simpleIds.filter((id) => !treeIds.includes(id)), ...treeIds];
   }, [allItems, simpleGroups]);
 
-  const selectedValue = value && flatIds.includes(value) ? value : flatIds[0];
+  const selectedValue =
+    value && flatIds.includes(value) ? value : allowEmpty ? undefined : flatIds[0];
 
   const selectOptions = useMemo(
     () =>
@@ -91,7 +95,7 @@ export function ModelSelect({
     [allItems, flatIds, simpleGroups],
   );
 
-  const handleChange = (nextValue: string) => {
+  const handleChange = (nextValue: string | undefined) => {
     onChange?.(nextValue);
     setOpen(false);
     setSearchQuery('');
@@ -113,11 +117,12 @@ export function ModelSelect({
       style={style}
       placeholder={placeholder}
       disabled={disabled || flatIds.length === 0}
+      allowClear={allowEmpty}
       value={flatIds.length > 0 ? selectedValue : undefined}
       options={selectOptions}
       popupMatchSelectWidth={false}
-      dropdownStyle={{ minWidth: dropdownMinWidth, padding: 0 }}
-      dropdownRender={() => (
+      styles={{ popup: { root: { minWidth: dropdownMinWidth, padding: 0 } } }}
+      popupRender={() => (
         <div
           className='bg-popover border-border/60 rounded-lg border p-1.5 shadow-md'
           onMouseDown={(event) => event.preventDefault()}>

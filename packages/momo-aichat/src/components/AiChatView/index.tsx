@@ -9,6 +9,8 @@ import {
   type IChatAttachmentMeta,
   type IChatMessage,
 } from '../../types/chat';
+import { ChatAttachmentIcon } from '../../utils/attachment-icon';
+import { ChatContextBanner } from '../ChatContextBanner';
 import type { IChatInputPanelRef } from '../ChatInputPanel';
 import ChatInputPanel from '../ChatInputPanel';
 import CitationCard from '../CitationCard';
@@ -16,7 +18,6 @@ import CollapsibleThinking from '../CollapsibleThinking';
 import DropOverlay from '../DropOverlay';
 import MarkdownRenderer from '../MarkdownRenderer';
 import { MessageCopyAction } from '../MessageCopyAction';
-import { ChatAttachmentIcon } from '../../utils/attachment-icon';
 
 export interface IProps {
   /** 外部同步的输入值（如 Prompt 测试预填用户提示词） */
@@ -27,6 +28,10 @@ export interface IProps {
   /** 用户发送消息成功后回调 */
   onAfterSend?: () => void;
   placeholder?: string;
+  /** MdPreview 明暗主题 */
+  theme?: 'light' | 'dark';
+  previewTheme?: string;
+  codeTheme?: string;
   /** 助手消息「复制」按钮右侧扩展插槽 */
   renderAssistantMessageActions?: (message: IChatMessage) => React.ReactNode;
 }
@@ -37,6 +42,9 @@ export const AiChatView: React.FC<IProps> = ({
   hideWelcome = false,
   onAfterSend,
   placeholder = '输入您的消息...',
+  theme = 'light',
+  previewTheme = 'cyanosis',
+  codeTheme = 'atom',
   renderAssistantMessageActions,
 }) => {
   const { message } = App.useApp();
@@ -484,7 +492,7 @@ export const AiChatView: React.FC<IProps> = ({
 
   // 获取当前会话的消息列表，如果没有消息则显示欢迎语
   const displayMessages = currentSession?.messages || [];
-  const showWelcome = !hideWelcome && displayMessages.length === 0;
+  const showWelcome = !hideWelcome;
 
   // 判断当前会话是否正在生成
   const isCurrentSessionGenerating = currentSessionId
@@ -493,6 +501,7 @@ export const AiChatView: React.FC<IProps> = ({
 
   return (
     <div className='bg-panel flex h-full flex-col transition-colors'>
+      <ChatContextBanner />
       {/* 消息滚动容器：全宽，允许在左右 10% 空白区域滚动 */}
       <div
         ref={messagesContainerRef}
@@ -532,7 +541,7 @@ export const AiChatView: React.FC<IProps> = ({
         <DropOverlay visible={isDragging} />
         {/* 视觉内容区：80% 宽度、居中 */}
         <div className='mx-auto w-[80%] space-y-4'>
-          {/* 欢迎消息 - 仅在没有消息时显示 */}
+          {/* 欢迎消息 - 用户发送消息后仍保持显示 */}
           {showWelcome && (
             <div className='w-full'>
               <div className='text-foreground whitespace-pre-wrap break-words text-left'>
@@ -571,6 +580,9 @@ export const AiChatView: React.FC<IProps> = ({
                           instanceKey={message.id}
                           content={message.content}
                           isStreaming={true}
+                          theme={theme}
+                          previewTheme={previewTheme}
+                          codeTheme={codeTheme}
                         />
                         <span className='ml-1 inline-block h-5 w-2 animate-pulse bg-blue-500' />
                         {renderMessageStats(message)}
@@ -587,6 +599,9 @@ export const AiChatView: React.FC<IProps> = ({
                         instanceKey={message.id}
                         content={message.content}
                         isStreaming={false}
+                        theme={theme}
+                        previewTheme={previewTheme}
+                        codeTheme={codeTheme}
                       />
                       {renderMessageStats(message)}
                       <MessageCopyAction
@@ -611,7 +626,11 @@ export const AiChatView: React.FC<IProps> = ({
                             <div
                               key={att.id}
                               className='border-surface bg-panel text-foreground flex items-center gap-2 rounded border p-2'>
-                              <ChatAttachmentIcon ext={extLower} className='shrink-0 text-blue-500' size={16} />
+                              <ChatAttachmentIcon
+                                ext={extLower}
+                                className='shrink-0 text-blue-500'
+                                size={16}
+                              />
                               <div className='text-xs text-gray-500'>
                                 {att.name} · {att.ext.toUpperCase()} · {formatSize(att.size)}
                               </div>

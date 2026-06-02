@@ -17,7 +17,7 @@ export interface ISettings {
   skillProjects?: ISkillProject[];
 }
 
-/** 商店/远端同步等设备侧策略（Web 端由 localStorage 承载，不写入 SQLite Settings） */
+/** 商店/远端同步等设备侧策略 */
 export interface IDeviceManagementSettings {
   syncCadence?: 'manual' | '15m' | '1h' | '1d';
   storeAutoSync?: boolean;

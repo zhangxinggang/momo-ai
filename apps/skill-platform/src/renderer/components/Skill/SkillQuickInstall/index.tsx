@@ -1,4 +1,4 @@
-﻿import type { ISkill } from '@/types/modules';
+import type { ISkill } from '@/types/modules';
 import { PlatformIcon } from '@renderer/components/ui/PlatformIcon';
 import { useToast } from '@renderer/components/ui/Toast';
 import { useSkillPlatform } from '@renderer/hooks/useSkillPlatform';

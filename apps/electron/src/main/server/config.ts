@@ -1,9 +1,9 @@
 import path from 'path';
-import { getPackagePath, getServerConfig, getServerPath, getUserPath } from '../../utils';
-import { UPLOAD_FOLDER } from '../../utils/constant';
+import { getPackagePath, getServerConfig, getServerPath, getUploadDir } from '../../utils';
+import { SYSTEM_API_PREFIX, UPLOAD_FOLDER } from '../../utils/constant';
 
 const { httpPort, httpsPort, upload, autoRunDirs, proxyRoutes } = getServerConfig();
-const uploadDir = path.join(getUserPath(), UPLOAD_FOLDER);
+const uploadDir = getUploadDir();
 const config = {
   services: {
     httpServer: {
@@ -36,7 +36,7 @@ const config = {
         dynamicRouteDirs: [
           {
             rootDir: path.join(getPackagePath(), './src/main/server/system'),
-            rootPath: 'system_api',
+            rootPath: SYSTEM_API_PREFIX,
             auth: false,
           },
           {

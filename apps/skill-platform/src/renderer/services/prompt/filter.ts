@@ -1,4 +1,4 @@
-﻿import type { IFolder, IPrompt } from '@/types/modules';
+import type { IFolder, IPrompt } from '@/types/modules';
 import type { EPromptSortBy, ESortOrder } from '@renderer/types/prompt';
 
 interface IFilterVisiblePromptsOptions {

@@ -1,4 +1,4 @@
-﻿import type { EAIProtocol } from '@/types/modules';
+import type { EAIProtocol } from '@/types/modules';
 import type { LucideIcon } from 'lucide-react';
 
 import type { EAIUsageScenario, IAIModelConfig } from '@renderer/types/settings';

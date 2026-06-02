@@ -1,4 +1,3 @@
-import { getWebContext, isWebRuntime, logoutWebSession } from '@renderer/runtime';
 import { filterVisibleScannedSkills, filterVisibleSkills } from '@renderer/services/skill/filter';
 import {
   useFolderStore,
@@ -13,8 +12,6 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   FolderPlusIcon,
-  GlobeIcon,
-  LogOutIcon,
   MoonIcon,
   PanelLeftIcon,
   PlusIcon,
@@ -73,13 +70,10 @@ export function TopBar({ onOpenSettings }: IProps) {
   const setDarkMode = useSettingsStore((state) => state.setDarkMode);
   const aiModels = useSettingsStore((state) => state.aiModels);
   const aiApiKey = useSettingsStore((state) => state.aiApiKey);
-  const creationMode = useSettingsStore((state) => state.creationMode);
   const selectedFolderId = useFolderStore((state) => state.selectedFolderId);
   const folders = useFolderStore((state) => state.folders);
   const appModule = useUIStore((state) => state.appModule);
   const workflowScreen = useUIStore((state) => state.workflowScreen);
-  const workflowListQuery = useUIStore((state) => state.workflowListQuery);
-  const setWorkflowListQuery = useUIStore((state) => state.setWorkflowListQuery);
   const isSidebarCollapsed = useUIStore((state) => state.isSidebarCollapsed);
   const setSidebarCollapsed = useUIStore((state) => state.setSidebarCollapsed);
   const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
@@ -93,39 +87,31 @@ export function TopBar({ onOpenSettings }: IProps) {
     top: 0,
     right: 0,
   });
-  const [webContext, setWebContext] = useState<PromptHubWebContext | undefined>(() =>
-    getWebContext(),
-  );
-  const webRuntime = isWebRuntime();
   const isProjectSkillView = appModule === 'skill' && skillStoreView === 'projects';
   const isSkillView = appModule === 'skill';
   const isPromptView = appModule === 'prompt';
   const isNoteView = appModule === 'note';
   const isKbView = appModule === 'kb';
   const isChatView = appModule === 'chat';
-  const isNewsView = appModule === 'news';
+  const isToolboxView = appModule === 'toolbox';
   const isWorkflowView = appModule === 'workflow';
   const isWorkflowFullscreen =
-    isWorkflowView && (workflowScreen === 'studio' || workflowScreen === 'work');
+    isWorkflowView && (workflowScreen === 'studio' || workflowScreen === 'business-work');
   const setTreeSearchQuery = usePromptStore((state) => state.setTreeSearchQuery);
   const treeSearchQuery = usePromptStore((state) => state.treeSearchQuery);
   const openCreateEditor = usePromptStore((state) => state.openCreateEditor);
 
   const searchQuery = isSkillView
     ? skillSearchQuery
-    : isWorkflowView
-      ? workflowListQuery
-      : isPromptView
-        ? treeSearchQuery
-        : promptSearchQuery;
+    : isPromptView
+      ? treeSearchQuery
+      : promptSearchQuery;
   const deferredSkillSearchQuery = useDeferredValue(skillSearchQuery);
   const setSearchQuery = isSkillView
     ? setSkillSearchQuery
-    : isWorkflowView
-      ? setWorkflowListQuery
-      : isPromptView
-        ? setTreeSearchQuery
-        : setPromptSearchQuery;
+    : isPromptView
+      ? setTreeSearchQuery
+      : setPromptSearchQuery;
 
   // Check if AI is configured
   const hasAiConfig = aiModels.length > 0 || (aiApiKey && aiApiKey.trim() !== '');
@@ -394,21 +380,6 @@ export function TopBar({ onOpenSettings }: IProps) {
     };
   }, [isCreateMenuOpen, updateCreateMenuPosition]);
 
-  useEffect(() => {
-    if (!webRuntime) {
-      return;
-    }
-
-    const syncContext = () => {
-      setWebContext(getWebContext());
-    };
-
-    window.addEventListener('prompthub:web-context-changed', syncContext);
-    return () => {
-      window.removeEventListener('prompthub:web-context-changed', syncContext);
-    };
-  }, [webRuntime]);
-
   const handleCreatePrompt = async (data: {
     title: string;
     systemPrompt?: string;
@@ -445,18 +416,9 @@ export function TopBar({ onOpenSettings }: IProps) {
           className='app-wallpaper-toolbar border-border flex h-12 shrink-0 items-center border-b px-4'
           style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
           <div
-            className={`shrink-0 ${webRuntime ? 'w-52' : 'w-8'}`}
+            className='w-8 shrink-0'
             style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-            {webRuntime ? (
-              <div className='text-foreground flex items-center gap-2 text-sm font-medium'>
-                <span className='bg-primary/10 text-primary inline-flex h-7 w-7 items-center justify-center rounded-lg'>
-                  <GlobeIcon className='h-4 w-4' />
-                </span>
-                <div className='min-w-0'>
-                  <div className='truncate'>{'PromptHub 网页版'}</div>
-                </div>
-              </div>
-            ) : isWorkflowView ? (
+            {isWorkflowView ? (
               <div className='w-8 shrink-0' />
             ) : (
               <Button
@@ -477,7 +439,7 @@ export function TopBar({ onOpenSettings }: IProps) {
             isPromptView ||
             isKbView ||
             isChatView ||
-            isNewsView ||
+            isToolboxView ||
             isWorkflowView ? null : (
               <div className='relative flex w-full max-w-lg flex-1 items-center'>
                 <div className='app-wallpaper-search pointer-events-none absolute inset-0 rounded-lg border' />
@@ -562,7 +524,7 @@ export function TopBar({ onOpenSettings }: IProps) {
               !isPromptView &&
               !isKbView &&
               !isChatView &&
-              !isNewsView &&
+              !isToolboxView &&
               !isWorkflowView && (
                 <div
                   ref={createMenuRef}
@@ -600,18 +562,6 @@ export function TopBar({ onOpenSettings }: IProps) {
               style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               icon={isDarkMode ? <SunIcon className='h-4 w-4' /> : <MoonIcon className='h-4 w-4' />}
             />
-
-            {webRuntime && (
-              <Button
-                type='text'
-                onClick={() => void logoutWebSession()}
-                className='text-muted-foreground hover:bg-accent/60 hover:text-foreground inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm transition-colors'
-                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
-                title={'退出登录'}
-                icon={<LogOutIcon className='h-4 w-4' />}>
-                <span className='hidden sm:inline'>{'退出登录'}</span>
-              </Button>
-            )}
           </div>
         </header>
       ) : null}

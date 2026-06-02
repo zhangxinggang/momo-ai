@@ -1,8 +1,7 @@
-﻿import type { ISkillPlatform } from '@/types/constants/platforms';
+import type { ISkillPlatform } from '@/types/constants/platforms';
 import type { ISkill } from '@/types/modules';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { getRuntimeCapabilities } from '@renderer/runtime';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
 import { sortSkillPlatformsByPreference } from '@renderer/utils/skill/platform-sort';
 
@@ -16,7 +15,6 @@ export interface IBatchInstallResult {
 export function useSkillPlatform(skill: ISkill | null | undefined, installMode: ESkillInstallMode) {
   const loadDeployedStatus = useSkillStore((state) => state.loadDeployedStatus);
   const skillPlatformOrder = useSettingsStore((state) => state.skillPlatformOrder) ?? [];
-  const runtimeCapabilities = getRuntimeCapabilities();
   const [supportedPlatforms, setSupportedPlatforms] = useState<ISkillPlatform[]>([]);
   const [detectedPlatforms, setDetectedPlatforms] = useState<string[]>([]);
   const [installStatus, setInstallStatus] = useState<Record<string, boolean>>({});
@@ -28,22 +26,16 @@ export function useSkillPlatform(skill: ISkill | null | undefined, installMode: 
   } | null>(null);
 
   const loadPlatforms = useCallback(async () => {
-    if (!runtimeCapabilities.skillPlatformIntegration) {
-      setSupportedPlatforms([]);
-      setDetectedPlatforms([]);
-      return;
-    }
-
     const [platforms, detected] = await Promise.all([
       window.api.skill.getSupportedPlatforms(),
       window.api.skill.detectPlatforms(),
     ]);
     setSupportedPlatforms(platforms);
     setDetectedPlatforms(detected);
-  }, [runtimeCapabilities.skillPlatformIntegration]);
+  }, []);
 
   const refreshInstallStatus = useCallback(async () => {
-    if (!skill || !runtimeCapabilities.skillPlatformIntegration) {
+    if (!skill) {
       setInstallStatus({});
       setSelectedPlatforms(new Set());
       return;
@@ -52,7 +44,7 @@ export function useSkillPlatform(skill: ISkill | null | undefined, installMode: 
     setInstallStatus(status);
     setSelectedPlatforms(new Set());
     await loadDeployedStatus();
-  }, [loadDeployedStatus, runtimeCapabilities.skillPlatformIntegration, skill]);
+  }, [loadDeployedStatus, skill]);
 
   useEffect(() => {
     void loadPlatforms();
@@ -98,7 +90,7 @@ export function useSkillPlatform(skill: ISkill | null | undefined, installMode: 
   }, []);
 
   const batchInstall = useCallback(async (): Promise<IBatchInstallResult> => {
-    if (!runtimeCapabilities.skillPlatformIntegration || !skill || selectedPlatforms.size === 0) {
+    if (!skill || selectedPlatforms.size === 0) {
       return { successCount: 0, totalCount: 0 };
     }
 
@@ -132,21 +124,15 @@ export function useSkillPlatform(skill: ISkill | null | undefined, installMode: 
       setIsBatchInstalling(false);
       setInstallProgress(null);
     }
-  }, [
-    installMode,
-    refreshInstallStatus,
-    runtimeCapabilities.skillPlatformIntegration,
-    selectedPlatforms,
-    skill,
-  ]);
+  }, [installMode, refreshInstallStatus, selectedPlatforms, skill]);
 
   const uninstallFromPlatform = useCallback(
     async (platformId: string) => {
-      if (!runtimeCapabilities.skillPlatformIntegration || !skill) return;
+      if (!skill) return;
       await window.api.skill.uninstallMd(skill.name, platformId);
       await refreshInstallStatus();
     },
-    [refreshInstallStatus, runtimeCapabilities.skillPlatformIntegration, skill],
+    [refreshInstallStatus, skill],
   );
 
   return {

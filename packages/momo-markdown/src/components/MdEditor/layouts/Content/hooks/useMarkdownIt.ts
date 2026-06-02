@@ -16,6 +16,7 @@ import useEcharts from './useEcharts';
 import useHighlight from './useHighlight';
 import useKatex from './useKatex';
 import useMermaid from './useMermaid';
+import usePlantuml from './usePlantuml';
 
 import AdmonitionPlugin from '../markdownIt/admonition';
 import CodePlugin from '../markdownIt/code';
@@ -23,6 +24,7 @@ import EchartsPlugin from '../markdownIt/echarts';
 import HeadingPlugin from '../markdownIt/heading';
 import KatexPlugin from '../markdownIt/katex';
 import MermaidPlugin from '../markdownIt/mermaid';
+import PlantumlPlugin from '../markdownIt/plantuml';
 import TaskListPlugin from '../markdownIt/task';
 import { IContentPreviewProps } from '../props';
 
@@ -49,6 +51,7 @@ const useMarkdownIt = (props: IContentPreviewProps, previewOnly: boolean) => {
     autoFoldThreshold,
     noKatex,
     noMermaid,
+    noPlantuml,
     noHighlight,
     onHtmlChanged,
     onGetCatalog,
@@ -86,6 +89,7 @@ const useMarkdownIt = (props: IContentPreviewProps, previewOnly: boolean) => {
   const { hljsRef, hljsInited } = useHighlight(props);
   const { katexRef, katexInited } = useKatex(props);
   const { reRender, replaceMermaid } = useMermaid(props);
+  const { replacePlantuml } = usePlantuml(props);
   const { reRenderEcharts, replaceEcharts } = useEcharts(props);
 
   const [md] = useState(() => {
@@ -157,6 +161,14 @@ const useMarkdownIt = (props: IContentPreviewProps, previewOnly: boolean) => {
         type: 'mermaid',
         plugin: MermaidPlugin,
         options: { themeRef },
+      });
+    }
+
+    if (!noPlantuml) {
+      plugins.push({
+        type: 'plantuml',
+        plugin: PlantumlPlugin,
+        options: {},
       });
     }
 
@@ -252,10 +264,13 @@ const useMarkdownIt = (props: IContentPreviewProps, previewOnly: boolean) => {
     setHtml(html_);
   }, [md, modelValue, sanitize]);
 
-  // mermaid相关操作统一处理
+  // mermaid / plantuml / echarts 操作栏挂载
   const handleMermaidActions = useCallback(() => {
     let clearZoomMermaidEvents = () => {};
     let clearCopyMermaidEvents = () => {};
+    let clearZoomPlantumlEvents = () => {};
+    let clearCopyPlantumlEvents = () => {};
+    let clearCopyEchartsEvents = () => {};
 
     const mermaidEles = rootRef!.current?.querySelectorAll<HTMLElement>(
       `#${editorId} p.${prefix}-mermaid:not([data-closed=false])`,
@@ -269,7 +284,32 @@ const useMarkdownIt = (props: IContentPreviewProps, previewOnly: boolean) => {
       });
     }
 
-    return [clearZoomMermaidEvents, clearCopyMermaidEvents];
+    const plantumlEles = rootRef!.current?.querySelectorAll<HTMLElement>(
+      `#${editorId} .${prefix}-plantuml-rendered:not([data-closed=false])`,
+    );
+    clearCopyPlantumlEvents = copyMermaid(plantumlEles, {
+      customIcon: customIconRef.current,
+    });
+    if (editorExtensions.mermaid?.enableZoom) {
+      clearZoomPlantumlEvents = zoomMermaid(plantumlEles, {
+        customIcon: customIconRef.current,
+      });
+    }
+
+    const echartsEles = rootRef!.current?.querySelectorAll<HTMLElement>(
+      `#${editorId} div.${prefix}-echarts[data-processed]`,
+    );
+    clearCopyEchartsEvents = copyMermaid(echartsEles, {
+      customIcon: customIconRef.current,
+    });
+
+    return () => {
+      clearZoomMermaidEvents();
+      clearCopyMermaidEvents();
+      clearZoomPlantumlEvents();
+      clearCopyPlantumlEvents();
+      clearCopyEchartsEvents();
+    };
   }, [editorExtensions.mermaid?.enableZoom, editorId, rootRef]);
 
   useEffect(() => {
@@ -285,24 +325,30 @@ const useMarkdownIt = (props: IContentPreviewProps, previewOnly: boolean) => {
   }, [editorId, html, key, onGetCatalog, onHtmlChanged]);
 
   useEffect(() => {
-    let clearZoomMermaidEvents = () => {};
-    let clearCopyMermaidEvents = () => {};
+    let clearDiagramEvents = () => {};
     if (setting.preview) {
       void replaceMermaid().then(() => {
-        [clearZoomMermaidEvents, clearCopyMermaidEvents] = handleMermaidActions();
+        void replacePlantuml().then(() => {
+          replaceEcharts();
+          clearDiagramEvents = handleMermaidActions();
+        });
       });
-
-      void replaceEcharts();
 
       // 生成目录
       bus.emit(editorId, CATALOG_CHANGED, headsRef.current);
     }
 
     return () => {
-      clearZoomMermaidEvents();
-      clearCopyMermaidEvents();
+      clearDiagramEvents();
     };
-  }, [editorId, handleMermaidActions, replaceEcharts, replaceMermaid, setting.preview]);
+  }, [
+    editorId,
+    handleMermaidActions,
+    replaceEcharts,
+    replaceMermaid,
+    replacePlantuml,
+    setting.preview,
+  ]);
 
   useEffect(() => {
     if (ignoreFirstRender.current) {
@@ -323,19 +369,27 @@ const useMarkdownIt = (props: IContentPreviewProps, previewOnly: boolean) => {
   }, [needReRender, theme, markHtml, language, previewOnly, editorConfig.renderDelay]);
 
   useEffect(() => {
-    let clearZoomMermaidEvents = () => {};
-    let clearCopyMermaidEvents = () => {};
+    let clearDiagramEvents = () => {};
     void replaceMermaid().then(() => {
-      [clearZoomMermaidEvents, clearCopyMermaidEvents] = handleMermaidActions();
+      void replacePlantuml().then(() => {
+        replaceEcharts();
+        clearDiagramEvents = handleMermaidActions();
+      });
     });
 
-    void replaceEcharts();
-
     return () => {
-      clearZoomMermaidEvents();
-      clearCopyMermaidEvents();
+      clearDiagramEvents();
     };
-  }, [handleMermaidActions, html, key, reRender, replaceMermaid, reRenderEcharts, replaceEcharts]);
+  }, [
+    handleMermaidActions,
+    html,
+    key,
+    reRender,
+    replaceMermaid,
+    replacePlantuml,
+    reRenderEcharts,
+    replaceEcharts,
+  ]);
 
   useEffect(() => {
     const callback = () => {

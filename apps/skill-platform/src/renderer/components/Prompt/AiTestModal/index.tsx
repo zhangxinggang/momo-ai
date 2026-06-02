@@ -1,4 +1,4 @@
-﻿import type { IPrompt } from '@/types/modules';
+import type { IPrompt } from '@/types/modules';
 import { FullscreenModal } from '@renderer/components/ui/FullscreenModal';
 import { MarkdownPreview } from '@renderer/components/ui/MarkdownPreview';
 import { useToast } from '@renderer/components/ui/Toast';
@@ -714,7 +714,7 @@ export function AiTestModal({
       footer={null}
       showDefaultFooter={false}
       zIndex={9999}
-      destroyOnClose={false}>
+      destroyOnHidden={false}>
       <aside className='flex h-full min-h-0 flex-col'>
         <div
           className={`flex min-h-0 flex-1 flex-col px-5 py-4 ${

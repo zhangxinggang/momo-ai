@@ -2,22 +2,19 @@ import { KNOWN_RULE_FILE_TEMPLATES, RULE_FILE_GROUPS } from '../constants/rules'
 import type { EAIProtocol } from './ai';
 
 export type IKnownRuleFileId = keyof typeof KNOWN_RULE_FILE_TEMPLATES;
+export type ICustomRuleFileId = `custom:${string}`;
 export type ERulePlatformId =
   | (typeof KNOWN_RULE_FILE_TEMPLATES)[keyof typeof KNOWN_RULE_FILE_TEMPLATES]['platformId']
+  | `custom:${string}`
   | 'workspace';
 
-export type IRuleFileId = IKnownRuleFileId | `project:${string}`;
+export type IRuleFileId = IKnownRuleFileId | ICustomRuleFileId | `project:${string}`;
 
 export type ERuleFileGroup = (typeof RULE_FILE_GROUPS)[number];
 
 export type ERuleSyncStatus = 'synced' | 'target-missing' | 'out-of-sync' | 'sync-error';
 
-export interface IRuleVersionSnapshot {
-  id: string;
-  savedAt: string;
-  content: string;
-  source: 'manual-save' | 'ai-rewrite' | 'create';
-}
+export type ERuleConflictResolutionStrategy = 'use-managed' | 'use-target';
 
 export interface IRuleFileDescriptor {
   id: IRuleFileId;
@@ -38,7 +35,7 @@ export interface IRuleFileDescriptor {
 
 export interface IRuleFileContent extends IRuleFileDescriptor {
   content: string;
-  versions: IRuleVersionSnapshot[];
+  targetContent?: string;
 }
 
 export interface DCreateRuleProject {
@@ -61,7 +58,6 @@ export interface IRuleBackupRecord {
   projectRootPath?: string | null;
   syncStatus?: ERuleSyncStatus;
   content: string;
-  versions: IRuleVersionSnapshot[];
 }
 
 export interface IRuleRecord {
@@ -83,15 +79,6 @@ export interface IRuleRecord {
   updatedAt: string;
 }
 
-export interface IRuleVersionRecord {
-  id: string;
-  ruleId: IRuleFileId;
-  version: number;
-  filePath: string;
-  source: IRuleVersionSnapshot['source'];
-  createdAt: string;
-}
-
 export interface DRuleRewriteRequest {
   aiConfig?: {
     apiKey: string;
@@ -109,4 +96,22 @@ export interface DRuleRewriteRequest {
 export interface IRuleRewriteResult {
   content: string;
   summary: string;
+}
+
+export function isRuleFileId(value: string): value is IRuleFileId {
+  return (
+    value.startsWith('project:') ||
+    value.startsWith('custom:') ||
+    value in KNOWN_RULE_FILE_TEMPLATES
+  );
+}
+
+export function isRulePlatformId(value: string): value is ERulePlatformId {
+  if (value === 'workspace') {
+    return true;
+  }
+  if (value.startsWith('custom:')) {
+    return true;
+  }
+  return Object.values(KNOWN_RULE_FILE_TEMPLATES).some((template) => template.platformId === value);
 }

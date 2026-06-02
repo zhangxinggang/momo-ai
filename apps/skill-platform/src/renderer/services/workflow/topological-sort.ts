@@ -1,2 +1,6 @@
-export { buildWorkflowResourceSteps } from '@momo/workflow';
-export type { IWorkflowResourceStep } from '@momo/workflow';
+export {
+  buildWorkflowResourceSteps,
+  buildWorkflowSteps,
+  isParallelGroupOutputReady,
+} from '@momo/workflow';
+export type { IWorkflowResourceStep, IWorkflowStep } from '@momo/workflow';

@@ -5,28 +5,35 @@ import { useState } from 'react';
 
 interface IProps {
   label: string;
-  enabled: boolean;
-  onEnabledChange: (enabled: boolean) => void;
-  enableTitle: string;
-  enableHint: string;
+  enabled?: boolean;
+  onEnabledChange?: (enabled: boolean) => void;
+  enableTitle?: string;
+  enableHint?: string;
   children?: ReactNode;
   /** 开启后才显示下方扩展内容 */
   showExtraWhenEnabled?: boolean;
+  /** 完全自定义面板（不含默认开关行，用于工作区等复杂面板） */
+  customPanel?: ReactNode;
 }
 
 /** RAG / 工作区等：标签 + 下拉箭头，面板首行为开关 */
 export function ChatFeatureDropdown({
   label,
-  enabled,
+  enabled = false,
   onEnabledChange,
   enableTitle,
   enableHint,
   children,
   showExtraWhenEnabled = true,
+  customPanel,
 }: IProps) {
   const [open, setOpen] = useState(false);
 
-  const panel = (
+  const panel = customPanel ? (
+    <div className='chat-feature-dropdown-panel chat-feature-dropdown-panel--custom min-w-[280px] px-3 py-2'>
+      {customPanel}
+    </div>
+  ) : (
     <div className='chat-feature-dropdown-panel min-w-[240px] py-1'>
       <div className='flex items-center justify-between gap-3 px-3 py-2'>
         <div className='min-w-0 flex-1'>

@@ -10,11 +10,13 @@ import React, {
 } from 'react';
 import { useAiChatConfig } from '../../contexts/AiChatConfigContext';
 import { useChatContext } from '../../contexts/ChatContext';
+import { useSlashCommandTrigger } from '../../hooks/useSlashCommandTrigger';
 import '../../styles/chat.css';
-import { formatWorkspaceDisplayPath } from '../../utils/workspace-display';
 import { ChatAttachmentIcon } from '../../utils/attachment-icon';
 import { ChatAgentModeControl } from '../ChatAgentModeControl';
 import { ChatFeatureDropdown } from '../ChatFeatureDropdown';
+import { ChatWorkspaceToolbar } from '../ChatWorkspaceToolbar';
+import { SlashCommandPopover } from '../SlashCommandPopover';
 
 export interface IChatInputPanelRef {
   focus: () => void;
@@ -70,6 +72,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       chatModelOptionGroups = [],
       renderModelSelect,
       workspace,
+      slashCommands,
     } = useAiChatConfig();
     const [collections, setCollections] = useState<{ id: number; name: string }[]>([]);
     const [loadingKb, setLoadingKb] = useState(false);
@@ -196,9 +199,21 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       adjustTextareaHeight();
     }, [value]);
 
+    const slash = useSlashCommandTrigger({
+      value,
+      onChange,
+      slashCommands,
+      currentModel,
+      workspacePaths: workspace?.paths ?? [],
+      workspaceEnabled: workspace?.enabled ?? false,
+    });
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (loading && e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
+        return;
+      }
+      if (slash.handleKeyDown(e)) {
         return;
       }
       onKeyDown?.(e);
@@ -246,42 +261,6 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
         )}
       </div>
     );
-
-    const workspaceExtra = workspace ? (
-      <div className='flex flex-col gap-2'>
-        <div className='flex items-center justify-end'>
-          <Button
-            type='link'
-            size='small'
-            className='shrink-0 px-0 text-xs'
-            onClick={workspace.onAddFolder}>
-            {'添加'}
-          </Button>
-        </div>
-        {workspace.paths.length > 0 ? (
-          <ul className='flex max-h-32 flex-col gap-1 overflow-y-auto'>
-            {workspace.paths.map((folderPath) => (
-              <li
-                key={folderPath}
-                className='border-surface flex items-center gap-2 rounded-md border px-2 py-1'>
-                <span
-                  className='min-w-0 flex-1 truncate text-xs text-gray-500 dark:text-gray-400'
-                  title={folderPath}>
-                  {formatWorkspaceDisplayPath(folderPath)}
-                </span>
-                <button
-                  type='button'
-                  aria-label='移除目录'
-                  className='flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-400 hover:text-red-500'
-                  onClick={() => workspace.onRemoveFolder(folderPath)}>
-                  <CloseOutlined style={{ fontSize: 11 }} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
-    ) : null;
 
     return (
       <div className='chat-input-panel bg-panel border-surface relative rounded-xl border shadow-sm'>
@@ -348,7 +327,16 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
           </div>
         )}
 
-        <div className='px-4 pb-2 pt-4'>
+        <div className='relative px-4 pb-2 pt-4'>
+          <SlashCommandPopover
+            open={slash.open}
+            items={slash.items}
+            selectedIndex={slash.selectedIndex}
+            loading={slash.loading}
+            warning={slash.warning}
+            onSelect={slash.handleSelect}
+            onHover={slash.setSelectedIndex}
+          />
           <textarea
             ref={textareaRef}
             value={value}
@@ -367,7 +355,6 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
             ref={fileInputRef}
             type='file'
             multiple
-            accept='.txt,.md,.docx,.css,.html,.js,.py,text/plain,text/markdown,text/css,text/html,application/javascript,text/javascript,text/x-python,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
             className='hidden'
             onChange={handleFileInputChange}
           />
@@ -413,15 +400,10 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
             ) : null}
             {workspace ? (
               <ChatFeatureDropdown
-                label='工作区'
+                customPanel={<ChatWorkspaceToolbar workspace={workspace} />}
                 enabled={workspace.enabled}
-                onEnabledChange={(enabled) => {
-                  workspace.onEnabledChange(enabled);
-                }}
-                enableTitle='是否启用'
-                enableHint='启用后选择的目录作为上下文'>
-                {workspaceExtra}
-              </ChatFeatureDropdown>
+                label='工作区'
+              />
             ) : null}
           </div>
 
@@ -431,7 +413,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
               size='small'
               icon={<PaperClipOutlined />}
               onClick={handleFileButtonClick}
-              className='flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-all duration-200 hover:bg-[var(--surface-hover)] hover:text-blue-500 dark:text-gray-300'
+              className='chat-input-attach-btn flex items-center justify-center text-gray-500 transition-all duration-200 hover:bg-[var(--surface-hover)] hover:text-blue-500 dark:text-gray-300'
               title='上传文件'
             />
             {isGenerating ? (

@@ -9,6 +9,7 @@ export interface IContentPreviewProps {
   onGetCatalog?: (list: IHeadList[]) => void;
   mdHeadingId: TMdHeadingId;
   noMermaid?: boolean;
+  noPlantuml?: boolean;
   sanitize: (html: string) => string;
   noKatex?: boolean;
   formatCopiedText?: (text: string) => string;

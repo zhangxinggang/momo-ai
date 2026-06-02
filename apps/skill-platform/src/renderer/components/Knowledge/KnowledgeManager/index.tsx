@@ -1,4 +1,4 @@
-﻿import type { IKbDocument, IKbSearchItem } from '@/types/modules/kb';
+import type { IKbDocument, IKbSearchItem } from '@/types/modules/kb';
 import {
   KnowledgeDocumentTable,
   KnowledgeDocumentWizard,
@@ -8,7 +8,6 @@ import {
 import { KnowledgeChunkPanel } from '@renderer/components/Knowledge/KnowledgeChunkPanel';
 import { KnowledgeSegmentSettingsModal } from '@renderer/components/Knowledge/KnowledgeSegmentSettingsModal';
 import { ModuleEmptyState } from '@renderer/components/ui/ModuleEmptyState';
-import { isWebRuntime } from '@renderer/runtime';
 import {
   kbDeleteDocument,
   kbGetDocumentProgress,
@@ -28,7 +27,6 @@ import {
   DatabaseIcon,
   FilePlusIcon,
   FileTextIcon,
-  MonitorIcon,
   SearchIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -51,7 +49,6 @@ const KB_UPDATED_EVENT = 'kb:collections-updated';
  */
 export function KnowledgeManager() {
   const { message } = App.useApp();
-  const webRuntime = isWebRuntime();
   const activeCollectionId = useKbStore((s) => s.activeCollectionId);
   const setActiveCollectionId = useKbStore((s) => s.setActiveCollectionId);
   const aiModels = useSettingsStore((s) => s.aiModels);
@@ -357,22 +354,6 @@ export function KnowledgeManager() {
     }
   };
 
-  if (webRuntime) {
-    return (
-      <div className={styles['kb-main']}>
-        <div className={styles['kb-main-unavailable']}>
-          <span className={styles['kb-main-unavailable-icon']}>
-            <MonitorIcon size={28} aria-hidden />
-          </span>
-          <p className={styles['kb-main-empty-title']}>{'桌面客户端专属功能'}</p>
-          <p className={styles['kb-main-empty-desc']}>
-            {'知识库文档管理与向量检索请在 PromptHub 桌面版中使用'}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   if (!activeCollectionId) {
     return (
       <div className={styles['kb-main']}>
@@ -450,13 +431,6 @@ export function KnowledgeManager() {
                 title='暂无文档'
                 description='上传 PDF、Word、Markdown 等文件，或粘贴文本开始构建知识库'
               />
-              <Button
-                className={`${styles['kb-main-toolbar-btn']} ${styles['kb-main-toolbar-btn--primary']}`}
-                disabled={uploading}
-                onClick={() => setWizardOpen(true)}>
-                <FilePlusIcon size={16} aria-hidden />
-                {'添加第一个文档'}
-              </Button>
             </div>
           ) : (
             <div className={styles['kb-main-doc-table']}>

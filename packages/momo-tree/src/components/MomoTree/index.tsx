@@ -51,6 +51,8 @@ export interface IProps {
   emptyDescription?: string;
   /** 树为空时的操作区（如新建按钮） */
   emptyAction?: ReactNode;
+  /** 文件节点菜单隐藏「重命名」 */
+  hideFileRename?: boolean;
 }
 
 function mapToAntdNodes(nodes: IMomoTreeNode[]): TreeDataNode[] {
@@ -76,6 +78,7 @@ export function MomoTree({
   moveTreeData,
   emptyDescription,
   emptyAction,
+  hideFileRename = false,
 }: IProps) {
   const { modal, message } = App.useApp();
   const labels = { ...DEFAULT_LABELS, ...labelOverrides };
@@ -202,16 +205,24 @@ export function MomoTree({
 
   const buildFileMenuItems = useCallback(
     (node: IMomoTreeNode): MenuProps['items'] => {
-      const items: MenuProps['items'] = [
-        {
+      const items: MenuProps['items'] = [];
+      if (!hideFileRename) {
+        items.push({
           key: 'rename',
           label: labels.rename,
           onClick: () => {
             setRenameNodeId(node.id);
             setRenameValue(node.name.replace(/\.md$/i, ''));
           },
-        },
-      ];
+        });
+      }
+      if (adapter.onEdit && labels.edit) {
+        items.push({
+          key: 'edit',
+          label: labels.edit,
+          onClick: () => void adapter.onEdit?.(node.id),
+        });
+      }
       if (adapter.onCopy && labels.copy) {
         items.push({
           key: 'copy',
@@ -238,7 +249,7 @@ export function MomoTree({
       );
       return items;
     },
-    [adapter, confirmDeleteNode, labels, rootId],
+    [adapter, confirmDeleteNode, hideFileRename, labels, rootId],
   );
 
   const moveTargetTreeData = useMemo(() => {

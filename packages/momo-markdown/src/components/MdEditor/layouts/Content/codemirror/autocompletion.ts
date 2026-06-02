@@ -80,6 +80,8 @@ export const createAutocompletion = (completions: Array<CompletionSource> | unde
           ['`', ''],
           ['```', 'language'],
           ['```mermaid\n', ''],
+          ['```flowchart LR\n', ''],
+          ['```plantuml\n', ''],
           ['```echarts\n', ''],
         ].map((c) => {
           return {

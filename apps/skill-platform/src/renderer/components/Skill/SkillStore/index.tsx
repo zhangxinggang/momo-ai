@@ -1,7 +1,16 @@
-﻿import type { IRegistrySkill, ISkillStoreSource } from '@/types/modules';
+import type { IRegistrySkill, ISkillStoreSource } from '@/types/modules';
 import { useToast } from '@renderer/components/ui/Toast';
+import { useOnlineStoreSources } from '@renderer/hooks/useOnlineStoreSources';
 import { useSkillStoreRemoteSync } from '@renderer/hooks/useSkillStoreRemoteSync';
 import { getSafetyScanAIConfig } from '@renderer/services/skill/detail-utils';
+import {
+  isPagedRemoteStoreType,
+  isSearchRemoteStoreType,
+} from '@renderer/services/skill/online-store-sources';
+import {
+  SKILLS_SH_FILTERS,
+  normalizeSkillsShFilterKey,
+} from '@renderer/services/skill/skills-sh-store';
 import { findInstalledRegistrySkill } from '@renderer/services/skill/store-update';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
 import { Button, Input } from 'antd';
@@ -50,26 +59,46 @@ function sortByName(skills: IRegistrySkill[]) {
 export function SkillStore() {
   const storeSearchQuery = useSkillStore((state) => state.storeSearchQuery) ?? '';
   const setStoreSearchQuery = useSkillStore((state) => state.setStoreSearchQuery);
+  const storeCategory = useSkillStore((state) => state.storeCategory) ?? 'all';
+  const setStoreCategory = useSkillStore((state) => state.setStoreCategory);
   const installRegistrySkill = useSkillStore((state) => state.installRegistrySkill);
   const skills = useSkillStore((state) => state.skills);
   const selectRegistrySkill = useSkillStore((state) => state.selectRegistrySkill);
   const selectedRegistrySlug = useSkillStore((state) => state.selectedRegistrySlug);
-  const selectedStoreSourceId =
-    useSkillStore((state) => state.selectedStoreSourceId) ?? 'claude-code';
+  const selectedStoreSourceId = useSkillStore((state) => state.selectedStoreSourceId) ?? '';
   const selectStoreSource = useSkillStore((state) => state.selectStoreSource);
   const customStoreSources = useSkillStore((state) => state.customStoreSources) ?? [];
   const addCustomStoreSource = useSkillStore((state) => state.addCustomStoreSource);
   const removeCustomStoreSource = useSkillStore((state) => state.removeCustomStoreSource);
   const toggleCustomStoreSource = useSkillStore((state) => state.toggleCustomStoreSource);
+  const onlineStoreSources = useOnlineStoreSources();
+  const selectedOnlineSource = useMemo(
+    () => onlineStoreSources.find((source) => source.id === selectedStoreSourceId) ?? null,
+    [onlineStoreSources, selectedStoreSourceId],
+  );
   const skillhubKeyword =
-    selectedStoreSourceId === 'skillhub' ? storeSearchQuery.trim() : undefined;
+    selectedOnlineSource?.type === 'skillhub' ? storeSearchQuery.trim() : undefined;
+  const skillsShFilterKey =
+    selectedOnlineSource?.type === 'skills-sh'
+      ? normalizeSkillsShFilterKey(storeCategory)
+      : undefined;
+  const skillsShSearchQuery =
+    selectedOnlineSource?.type === 'skills-sh' ? storeSearchQuery.trim() : undefined;
 
-  const { loadingSourceId, loadStoreSource, loadMoreSkillHub, loadMoreClawHub, remoteStoreEntries } =
-    useSkillStoreRemoteSync({
-      eagerRemoteSources: 'selected',
-      selectedStoreSourceId,
-      skillhubKeyword,
-    });
+  const {
+    loadingSourceId,
+    loadStoreSource,
+    loadMoreSkillHub,
+    loadMoreClawHub,
+    loadMoreSkillsSh,
+    remoteStoreEntries,
+  } = useSkillStoreRemoteSync({
+    eagerRemoteSources: 'selected',
+    selectedStoreSourceId,
+    skillhubKeyword,
+    skillsShFilterKey,
+    skillsShSearchQuery,
+  });
 
   const [installingSlug, setInstallingSlug] = useState<string | null>(null);
   const [sourceType, setSourceType] =
@@ -97,24 +126,24 @@ export function SkillStore() {
   );
 
   const selectedRemoteEntry = remoteStoreEntries[selectedStoreSourceId];
-  const isSelectedSourceRemote =
-    selectedStoreSourceId === 'skillhub' ||
-    selectedStoreSourceId === 'clawhub' ||
-    selectedStoreSourceId === 'claude-code' ||
-    selectedStoreSourceId === 'openai-codex' ||
-    selectedStoreSourceId === 'community' ||
-    Boolean(selectedCustomSource);
+  const isSelectedSourceRemote = Boolean(selectedOnlineSource) || Boolean(selectedCustomSource);
 
   useEffect(() => {
     if (!isSelectedSourceRemote) return;
     void loadStoreSource(selectedStoreSourceId, false);
-  }, [isSelectedSourceRemote, loadStoreSource, selectedStoreSourceId, skillhubKeyword]);
+  }, [
+    isSelectedSourceRemote,
+    loadStoreSource,
+    selectedStoreSourceId,
+    skillhubKeyword,
+    skillsShFilterKey,
+    skillsShSearchQuery,
+  ]);
 
   useEffect(() => {
+    const pagedSourceType = selectedOnlineSource?.type;
     const pagedSourceId =
-      selectedStoreSourceId === 'skillhub' || selectedStoreSourceId === 'clawhub'
-        ? selectedStoreSourceId
-        : null;
+      pagedSourceType && isPagedRemoteStoreType(pagedSourceType) ? selectedStoreSourceId : null;
     if (!pagedSourceId) {
       return;
     }
@@ -135,8 +164,12 @@ export function SkillStore() {
         if (!selectedRemoteEntry?.pagination?.hasMore) {
           return;
         }
-        if (pagedSourceId === 'skillhub') {
+        if (pagedSourceId === 'skillhub' || selectedOnlineSource?.type === 'skillhub') {
           void loadMoreSkillHub();
+          return;
+        }
+        if (pagedSourceId === 'skills-sh' || selectedOnlineSource?.type === 'skills-sh') {
+          void loadMoreSkillsSh();
           return;
         }
         void loadMoreClawHub();
@@ -148,6 +181,7 @@ export function SkillStore() {
     return () => observer.disconnect();
   }, [
     loadMoreClawHub,
+    loadMoreSkillsSh,
     loadMoreSkillHub,
     loadingSourceId,
     selectedRemoteEntry?.pagination?.hasMore,
@@ -157,7 +191,10 @@ export function SkillStore() {
   const sourceRegistrySkills = useMemo(() => {
     let baseSkills = selectedRemoteEntry?.skills || [];
 
-    if (storeSearchQuery.trim() && selectedStoreSourceId !== 'skillhub') {
+    if (
+      storeSearchQuery.trim() &&
+      (!selectedOnlineSource || !isSearchRemoteStoreType(selectedOnlineSource.type))
+    ) {
       const query = storeSearchQuery.toLowerCase();
       baseSkills = baseSkills.filter(
         (skill) =>
@@ -271,56 +308,6 @@ export function SkillStore() {
   };
 
   const sourceMeta = useMemo(() => {
-    if (selectedStoreSourceId === 'claude-code') {
-      return {
-        title: 'Claude Code 商店',
-        hint: '来自 anthropics/skills 仓库的技能集合。',
-        count: sourceRegistrySkills.length,
-        showCatalog: true,
-        canRefresh: true,
-      };
-    }
-
-    if (selectedStoreSourceId === 'openai-codex') {
-      return {
-        title: 'OpenAI Codex 商店',
-        hint: '来自 openai/skills 仓库的技能集合。',
-        count: sourceRegistrySkills.length,
-        showCatalog: true,
-        canRefresh: true,
-      };
-    }
-
-    if (selectedStoreSourceId === 'community') {
-      return {
-        title: '社区商店',
-        hint: '来自 awesome-claude-skills 仓库的技能集合。',
-        count: sourceRegistrySkills.length,
-        showCatalog: true,
-        canRefresh: true,
-      };
-    }
-
-    if (selectedStoreSourceId === 'skillhub') {
-      return {
-        title: 'SkillHub 商店',
-        hint: '来自 SkillHub 的精选技能集合。',
-        count: sourceRegistrySkills.length,
-        showCatalog: true,
-        canRefresh: true,
-      };
-    }
-
-    if (selectedStoreSourceId === 'clawhub') {
-      return {
-        title: 'ClawHub 商店',
-        hint: '来自 ClawHub 的公开技能集合。',
-        count: sourceRegistrySkills.length,
-        showCatalog: true,
-        canRefresh: true,
-      };
-    }
-
     if (selectedStoreSourceId === 'new-custom') {
       return {
         title: '添加商店',
@@ -328,6 +315,19 @@ export function SkillStore() {
         count: customStoreSources.length,
         showCatalog: false,
         canRefresh: false,
+      };
+    }
+
+    if (selectedOnlineSource) {
+      return {
+        title: selectedOnlineSource.name,
+        hint: selectedOnlineSource.description || selectedOnlineSource.url,
+        count:
+          selectedOnlineSource.type === 'skills-sh'
+            ? (selectedRemoteEntry?.pagination?.total ?? sourceRegistrySkills.length)
+            : sourceRegistrySkills.length,
+        showCatalog: true,
+        canRefresh: true,
       };
     }
 
@@ -351,8 +351,10 @@ export function SkillStore() {
   }, [
     customStoreSources.length,
     selectedCustomSource,
+    selectedOnlineSource,
     selectedStoreSourceId,
     sourceRegistrySkills.length,
+    selectedRemoteEntry?.pagination?.total,
   ]);
 
   const currentRemoteError = selectedRemoteEntry?.error || null;
@@ -366,20 +368,11 @@ export function SkillStore() {
     Boolean(selectedRemoteEntry?.skills.length);
 
   const loadingMessage = useMemo(() => {
-    if (selectedStoreSourceId === 'claude-code') {
-      return '正在下载并扫描 Claude Code 技能...';
-    }
-    if (selectedStoreSourceId === 'openai-codex') {
-      return '正在下载并扫描 OpenAI Codex 技能...';
-    }
-    if (selectedStoreSourceId === 'community') {
-      return '正在下载并扫描社区技能...';
-    }
-    if (selectedStoreSourceId === 'skillhub') {
-      return '正在从 SkillHub 加载技能列表...';
+    if (selectedOnlineSource) {
+      return `正在加载 ${selectedOnlineSource.name}...`;
     }
     return '正在加载自定义商店内容...';
-  }, [selectedStoreSourceId]);
+  }, [selectedOnlineSource]);
 
   return (
     <div className='app-wallpaper-section flex h-full flex-1 flex-col overflow-hidden'>
@@ -416,18 +409,39 @@ export function SkillStore() {
             />
           )}
           {sourceMeta.showCatalog && (
-            <div className='relative w-64'>
-              <SearchIcon className='text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2' />
-              <Input
-                value={storeSearchQuery}
-                onChange={(e) => setStoreSearchQuery(e.target.value)}
-                placeholder={'搜索技能...'}
-                className='bg-accent/50 border-border w-full rounded-lg py-2 pl-9 text-sm'
-              />
-            </div>
+            <Input
+              value={storeSearchQuery}
+              onChange={(e) => setStoreSearchQuery(e.target.value)}
+              placeholder={'搜索技能...'}
+              prefix={<SearchIcon className='text-muted-foreground h-4 w-4 shrink-0' />}
+              className='bg-accent/50 border-border w-64 rounded-lg text-sm'
+            />
           )}
         </div>
       </div>
+
+      {selectedOnlineSource?.type === 'skills-sh' && (
+        <div className='border-border app-wallpaper-section border-b px-6 py-3'>
+          <div className='scrollbar-hide flex gap-2 overflow-x-auto pb-1'>
+            {SKILLS_SH_FILTERS.map((filter) => {
+              const isActive = normalizeSkillsShFilterKey(storeCategory) === filter.key;
+              return (
+                <button
+                  key={filter.key}
+                  type='button'
+                  onClick={() => setStoreCategory(filter.key)}
+                  className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-accent/50 text-muted-foreground hover:bg-accent'
+                  }`}>
+                  {filter.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {selectedStoreSourceId === 'new-custom' && (
         <div className='border-border app-wallpaper-section border-b px-6 py-3'>
@@ -504,21 +518,22 @@ export function SkillStore() {
               </div>
             )}
 
-            {(selectedStoreSourceId === 'skillhub' || selectedStoreSourceId === 'clawhub') &&
+            {selectedOnlineSource &&
+              isPagedRemoteStoreType(selectedOnlineSource.type) &&
               selectedRemoteEntry?.pagination?.hasMore && (
-              <div
-                ref={loadMoreRef}
-                className='text-muted-foreground flex items-center justify-center py-6 text-sm'>
-                {loadingSourceId === selectedStoreSourceId ? (
-                  <span className='inline-flex items-center gap-2'>
-                    <Loader2Icon className='h-4 w-4 animate-spin' />
-                    {'加载更多技能...'}
-                  </span>
-                ) : (
-                  '向下滚动加载更多'
-                )}
-              </div>
-            )}
+                <div
+                  ref={loadMoreRef}
+                  className='text-muted-foreground flex items-center justify-center py-6 text-sm'>
+                  {loadingSourceId === selectedStoreSourceId ? (
+                    <span className='inline-flex items-center gap-2'>
+                      <Loader2Icon className='h-4 w-4 animate-spin' />
+                      {'加载更多技能...'}
+                    </span>
+                  ) : (
+                    '向下滚动加载更多'
+                  )}
+                </div>
+              )}
           </>
         )}
 

@@ -14,6 +14,7 @@ const MAIN_PROCESS_EXTERNALS = [
   '@log4js-node/smtp',
   '@napi-rs/canvas',
   'pdf-parse',
+  'html-to-docx',
 ];
 
 function isMainProcessExternal(id: string): boolean {
@@ -153,7 +154,9 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['fflate'],
+    include: ['fflate', 'html2canvas', 'jspdf', 'docx'],
+    // renderer 不应打包 typeorm；若误引入主进程依赖，跳过预构建避免 expo-sqlite 解析失败
+    exclude: ['typeorm', 'expo-sqlite'],
   },
   build: {
     outDir: 'out/renderer',

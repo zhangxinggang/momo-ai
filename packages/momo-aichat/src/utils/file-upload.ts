@@ -48,7 +48,6 @@ export function createUploadFiles(apiBaseUrl: string): TUploadFilesFn {
 export const validateLocalFiles: TValidateLocalFilesFn = (files) => {
   const MAX_COUNT = 10;
   const MAX_SINGLE = 10 * 1024 * 1024;
-  const allowed = ['txt', 'md', 'docx', 'css', 'html', 'js', 'py'];
 
   if (files.length > MAX_COUNT) {
     return { ok: false, message: `单次最多上传 ${MAX_COUNT} 个文件` };
@@ -56,12 +55,8 @@ export const validateLocalFiles: TValidateLocalFilesFn = (files) => {
 
   for (const f of files) {
     const name = f.name || '';
-    const ext = (name.split('.').pop() || '').toLowerCase();
-    if (!allowed.includes(ext)) {
-      return { ok: false, message: `不支持的文件类型: ${name}` };
-    }
     if (f.size > MAX_SINGLE) {
-      return { ok: false, message: `${name} 超过 10MB 限制` };
+      return { ok: false, message: `${name || '文件'} 超过 10MB 限制` };
     }
   }
   return { ok: true };

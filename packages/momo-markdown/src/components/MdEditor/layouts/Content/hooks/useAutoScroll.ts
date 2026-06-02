@@ -43,15 +43,7 @@ const useAutoScroll = (
         clear,
       });
     }
-  }, [
-    html,
-    setting.fullscreen,
-    setting.pageFullscreen,
-    setting.preview,
-    setting.htmlPreview,
-    editorId,
-    codeMirrorUt,
-  ]);
+  }, [html, setting.fullscreen, setting.preview, setting.htmlPreview, editorId, codeMirrorUt]);
 
   useEffect(() => {
     if (props.scrollAuto && !setting.previewOnly && (setting.preview || setting.htmlPreview)) {

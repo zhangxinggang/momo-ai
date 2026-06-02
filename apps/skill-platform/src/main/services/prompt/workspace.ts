@@ -4,7 +4,7 @@ import path from 'path';
 import type { IFolder, IPrompt, IPromptVersion } from '@/types/modules';
 
 import type { FolderDB, PromptDB } from '../../database';
-import { getPromptsWorkspaceDir, getUserDataPath, getWorkspaceDir } from '../../runtime-paths';
+import { getPromptsWorkspaceDir, getWorkspaceDir } from '../../runtime-paths';
 
 const FOLDERS_FILE_NAME = 'folders.json';
 const FOLDER_METADATA_FILE_NAME = '_folder.json';
@@ -12,58 +12,8 @@ const PROMPT_FILE_NAME = 'prompt.md';
 const VERSIONS_DIR_NAME = 'versions';
 const VERSION_ROOT_DIR_NAME = '.versions';
 const TRASH_DIR_NAME = '.trash';
-const TRASH_CONFLICTS_SUBDIR = 'conflicts';
-const TRASH_RETENTION = 5;
 const SYSTEM_MARKER = '<!-- PROMPTHUB:SYSTEM -->';
 const USER_MARKER = '<!-- PROMPTHUB:USER -->';
-const RESTORE_MARKER_NAME = '.prompthub-restore-marker';
-
-/**
- * Restore marker (v0.5.3, review-follow-up).
- *
- * Written by the IPC recovery handler after a successful database restore.
- * During the next `bootstrapPromptWorkspace` boot, the marker suppresses the
- * Phase-1 "workspace → DB" import so that stale prompts kept in the
- * on-disk workspace cannot "resurrect" records the user just rolled back
- * via recovery. Cleared after the DB → workspace re-sync completes.
- *
- * 恢复标记（v0.5.3，review 反馈修复）：
- * 数据恢复 IPC 成功后写入该标记。下一次 bootstrapPromptWorkspace 启动时，
- * 若检测到标记存在，则跳过 Phase 1（workspace → DB 导入），避免磁盘上
- * 残留的旧 prompt "复活"用户刚刚回滚掉的记录。DB → workspace 同步完成后清除。
- */
-function getRestoreMarkerPath(userDataPath?: string): string {
-  return path.join(userDataPath ?? getUserDataPath(), RESTORE_MARKER_NAME);
-}
-
-export function writeRestoreMarker(userDataPath?: string): void {
-  try {
-    const markerPath = getRestoreMarkerPath(userDataPath);
-    ensureDir(path.dirname(markerPath));
-    fs.writeFileSync(markerPath, new Date().toISOString(), 'utf8');
-  } catch (error) {
-    console.warn('[prompt-workspace] failed to write restore marker:', error);
-  }
-}
-
-function hasRestoreMarker(userDataPath?: string): boolean {
-  try {
-    return fs.existsSync(getRestoreMarkerPath(userDataPath));
-  } catch {
-    return false;
-  }
-}
-
-function clearRestoreMarker(userDataPath?: string): void {
-  try {
-    const markerPath = getRestoreMarkerPath(userDataPath);
-    if (fs.existsSync(markerPath)) {
-      fs.unlinkSync(markerPath);
-    }
-  } catch (error) {
-    console.warn('[prompt-workspace] failed to clear restore marker:', error);
-  }
-}
 
 /**
  * On Windows and macOS (default HFS+/APFS), filesystems are case-insensitive.
@@ -124,13 +74,6 @@ export interface IBootstrapResult {
   promptCount: number;
   folderCount: number;
   versionCount: number;
-  /**
-   * Whether a restore marker was detected and honored during this bootstrap.
-   * When true, Phase 1 (WS → DB) of Quadrant 4 was skipped to prevent the
-   * "data revival" bug where deleted records come back after a DB restore.
-   * 是否检测到并处理了恢复标记。为 true 时 Q4 跳过 Phase 1，防止恢复后删除数据复活。
-   */
-  restoreMarkerUsed?: boolean;
 }
 
 function ensureDir(targetPath: string): void {
@@ -662,119 +605,12 @@ function workspaceHasPromptData(promptsDir: string, workspaceDir: string): boole
   return fs.existsSync(path.join(workspaceDir, FOLDERS_FILE_NAME));
 }
 
-/**
- * Move a file or directory into the workspace trash, preserving relative path.
- * Trashed items live under `<workspace>/.trash/<ISO-timestamp>/<relative-path>`
- * (or `<workspace>/.trash/conflicts/<ISO-timestamp>/...` when `reason` is
- * `"conflict"`).
- *
- * v0.5.3: replaces `fs.rmSync` — never permanently deletes user data.
- * v0.5.3 review-follow-up: the `renameSync` fallback to `cp + rm` now fires
- * **only** on `EXDEV` (cross-device) errors. Other errors (EPERM/EBUSY
- * from Windows antivirus or a locked file) now propagate — blindly
- * copying + removing could double-destroy data or hang indefinitely.
- *
- * v0.5.3: 取代 fs.rmSync，永不永久删除用户数据。
- * review 反馈修复：renameSync 降级为 cp+rm 仅在 EXDEV（跨卷）时触发。
- *   其他错误（如 Windows 杀软占用导致的 EPERM/EBUSY）不再盲目降级，
- *   以免复制+删除造成二次破坏。
- */
-function moveToTrash(absolutePath: string, reason: 'orphan' | 'conflict' = 'orphan'): void {
+/** 永久删除工作区中的文件或目录（不再保留 trash 快照）。 */
+function moveToTrash(absolutePath: string): void {
   if (!fs.existsSync(absolutePath)) {
     return;
   }
-
-  const workspaceDir = getWorkspaceDir();
-  const trashRoot = path.join(workspaceDir, TRASH_DIR_NAME);
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const trashSnapshotDir =
-    reason === 'conflict'
-      ? path.join(trashRoot, TRASH_CONFLICTS_SUBDIR, timestamp)
-      : path.join(trashRoot, timestamp);
-
-  // Compute path relative to workspace so trash preserves layout.
-  // 相对工作区计算路径，让回收站保持原有结构。
-  const relativeToWorkspace = path.relative(workspaceDir, absolutePath);
-  const destination = path.join(trashSnapshotDir, relativeToWorkspace);
-
-  ensureDir(path.dirname(destination));
-  try {
-    fs.renameSync(absolutePath, destination);
-  } catch (error) {
-    const code =
-      error instanceof Error && 'code' in error ? (error as NodeJS.ErrnoException).code : undefined;
-    if (code === 'EXDEV') {
-      // Cross-device rename: must copy + remove.
-      // 跨卷重命名：只能复制后删除。
-      console.warn('[prompt-workspace] moveToTrash: EXDEV, falling back to copy+rm:', absolutePath);
-      fs.cpSync(absolutePath, destination, { recursive: true });
-      fs.rmSync(absolutePath, { recursive: true, force: true });
-    } else {
-      // EPERM/EBUSY/ENOENT/etc.: do NOT silently fall back — leaving the file
-      // in place is safer than a potentially-destructive copy+rm.
-      // 其他错误：不得静默降级；让文件留在原位比潜在破坏性的 cp+rm 更安全。
-      console.error(
-        `[prompt-workspace] moveToTrash failed (${code ?? 'unknown'}) for ${absolutePath}; leaving in place.`,
-        error,
-      );
-      return;
-    }
-  }
-
-  pruneTrash(trashRoot);
-}
-
-/**
- * Keep only the most recent TRASH_RETENTION snapshots, delete older ones.
- * 仅保留最近 TRASH_RETENTION 个快照，删除更旧的。
- */
-function pruneTrash(trashRoot: string): void {
-  if (!fs.existsSync(trashRoot)) {
-    return;
-  }
-
-  try {
-    const snapshots = fs
-      .readdirSync(trashRoot, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      // Skip the `conflicts` subdir: it contains its own timestamped snapshots
-      // pruned separately below, and must not be treated as a retention unit.
-      // 跳过 conflicts 子目录：它自带时间戳快照，由下方单独清理。
-      .filter((entry) => entry.name !== TRASH_CONFLICTS_SUBDIR)
-      .map((entry) => entry.name)
-      .sort();
-
-    if (snapshots.length > TRASH_RETENTION) {
-      const toDelete = snapshots.slice(0, snapshots.length - TRASH_RETENTION);
-      for (const name of toDelete) {
-        fs.rmSync(path.join(trashRoot, name), { recursive: true, force: true });
-      }
-    }
-
-    // Prune the conflicts/ subdir on the same retention policy.
-    // 同样的保留策略应用于 conflicts/ 子目录。
-    const conflictsRoot = path.join(trashRoot, TRASH_CONFLICTS_SUBDIR);
-    if (fs.existsSync(conflictsRoot)) {
-      const conflictSnapshots = fs
-        .readdirSync(conflictsRoot, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory())
-        .map((entry) => entry.name)
-        .sort();
-      if (conflictSnapshots.length > TRASH_RETENTION) {
-        const toDelete = conflictSnapshots.slice(0, conflictSnapshots.length - TRASH_RETENTION);
-        for (const name of toDelete) {
-          fs.rmSync(path.join(conflictsRoot, name), {
-            recursive: true,
-            force: true,
-          });
-        }
-      }
-    }
-  } catch (error) {
-    // Pruning is best-effort; failure must not break sync.
-    // 清理属于尽力而为，失败不得影响同步主流程。
-    console.warn('[prompt-workspace] pruneTrash failed:', error);
-  }
+  fs.rmSync(absolutePath, { recursive: true, force: true });
 }
 
 function writePromptToDisk(
@@ -1065,7 +901,7 @@ export async function importPromptWorkspaceIntoDatabase(
     );
     skippedPromptPaths.add(path.resolve(loser.filePath));
     try {
-      moveToTrash(getPromptCleanupPath(loser.filePath), 'conflict');
+      moveToTrash(getPromptCleanupPath(loser.filePath));
     } catch (error) {
       // If we can't move the loser, at least ensure Phase 2 doesn't trash it
       // again; user can clean up manually via the conflicts/ folder.
@@ -1163,17 +999,8 @@ export async function bootstrapPromptWorkspace(
   const foldersInDb = await folderDb.getAll();
   const hasDatabaseData = promptsInDb.length > 0 || foldersInDb.length > 0;
   const hasWorkspaceData = workspaceHasPromptData(promptsDir, workspaceDir);
-  const restoreMarkerPresent = hasRestoreMarker();
 
   if (!hasDatabaseData && !hasWorkspaceData) {
-    // Quadrant 1: fresh install or cleared state. Do nothing; avoid creating
-    // empty directories/files that would mask future recovery attempts.
-    // 象限 1：全新安装或全部清空状态。不做任何动作，避免创建空目录/文件干扰后续恢复。
-    if (restoreMarkerPresent) {
-      // Stale marker from a previous restore that produced no data. Clean up.
-      // 清理上次恢复遗留但未产生数据的 marker。
-      clearRestoreMarker();
-    }
     return {
       quadrant: 'empty',
       imported: false,
@@ -1185,33 +1012,17 @@ export async function bootstrapPromptWorkspace(
   }
 
   if (hasDatabaseData && !hasWorkspaceData) {
-    // Quadrant 2: DB has data, workspace empty (0.5.1 → 0.5.3 upgrade path).
-    // 象限 2：DB 有数据但工作区为空（0.5.1 → 0.5.3 升级路径）。
     const result = await syncPromptWorkspaceFromDatabase(promptDb, folderDb);
-    if (restoreMarkerPresent) {
-      clearRestoreMarker();
-    }
     return {
       quadrant: 'db-only',
       imported: false,
       exported: true,
       ...result,
-      ...(restoreMarkerPresent ? { restoreMarkerUsed: true } : {}),
     };
   }
 
   if (!hasDatabaseData && hasWorkspaceData) {
-    // Quadrant 3: workspace has data, DB empty. Import WS → DB. Do NOT
-    // re-export afterwards — workspace already is the authoritative state.
-    // 象限 3：工作区有数据但 DB 为空。仅导入 WS → DB，不反向同步，
-    // 工作区已是权威状态。
     const result = await importPromptWorkspaceIntoDatabase(promptDb, folderDb);
-    if (restoreMarkerPresent) {
-      // DB was empty despite marker — restore likely failed or produced no rows.
-      // Clear the marker so next boot does not skip Phase 1 needlessly.
-      // DB 为空说明恢复无效，清除 marker 以免下次启动继续跳 Phase 1。
-      clearRestoreMarker();
-    }
     return {
       quadrant: 'workspace-only',
       imported: true,
@@ -1222,34 +1033,6 @@ export async function bootstrapPromptWorkspace(
     };
   }
 
-  // Quadrant 4: both sides have data → merge.
-  // v0.5.3 review-follow-up: if a restore marker is present, the DB was just
-  // restored from a backup/WebDAV snapshot. Skip Phase 1 (WS → DB) to prevent
-  // records deleted before the restore from being re-imported from workspace
-  // files that still hold their pre-deletion state. Only run Phase 2 so the
-  // workspace realigns with the restored DB, then clear the marker.
-  // v0.5.3 review 反馈修复：若存在恢复标记，说明 DB 刚从备份/WebDAV 快照恢复。
-  // 跳过 Phase 1（WS → DB）避免删除记录被工作区旧文件"复活"；仅执行 Phase 2
-  // 让工作区对齐恢复后的 DB，完成后清除 marker。
-  if (restoreMarkerPresent) {
-    const exported = await syncPromptWorkspaceFromDatabase(promptDb, folderDb);
-    clearRestoreMarker();
-    return {
-      quadrant: 'both',
-      imported: false,
-      exported: true,
-      promptCount: exported.promptCount,
-      folderCount: exported.folderCount,
-      versionCount: exported.versionCount,
-      restoreMarkerUsed: true,
-    };
-  }
-
-  // Phase 1: import workspace entries newer than their DB counterparts.
-  // Phase 2: re-sync DB → workspace (incremental, trashes orphans).
-  // 阶段 1：将比 DB 更新的工作区条目导入；阶段 2：DB → 工作区增量同步，回收孤立项。
-  // v0.5.3 review 反馈修复：把 Phase 1 的 skippedPromptPaths 传给 Phase 2，
-  // 避免解析失败或冲突 loser 的目录被当作 orphan 再次送入 trash。
   const imported = await importPromptWorkspaceIntoDatabase(promptDb, folderDb, {
     onlyIfNewer: true,
   });

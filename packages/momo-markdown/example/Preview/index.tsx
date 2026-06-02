@@ -1,11 +1,10 @@
 import { CompletionSource } from '@codemirror/autocomplete';
-import axios from 'axios';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
 
 import {
   DropdownToolbar,
-  ExposeParam,
+  IExposeParam,
   MdCatalog,
   MdEditor,
   ModalToolbar,
@@ -43,6 +42,22 @@ const mdHeadingId: TMdHeadingId = ({ index }) => {
   return `heading-${index}`;
 };
 
+async function uploadImage(file: File): Promise<{ url: string }> {
+  const form = new FormData();
+  form.append('file', file);
+
+  const response = await fetch('/api/img/upload', {
+    method: 'POST',
+    body: form,
+  });
+
+  if (!response.ok) {
+    throw new Error(`图片上传失败 (${response.status})`);
+  }
+
+  return response.json() as Promise<{ url: string }>;
+}
+
 const DEFAULT_TOOLBARS = [
   'bold',
   'underline',
@@ -73,8 +88,8 @@ const DEFAULT_TOOLBARS = [
   2,
   '=',
   'prettier',
-  'pageFullscreen',
   'fullscreen',
+  'previewStyle',
   'preview',
   'previewOnly',
   'htmlPreview',
@@ -83,7 +98,7 @@ const DEFAULT_TOOLBARS = [
 ] as unknown as TToolbarNames[];
 
 export default ({ theme, previewTheme, codeTheme, lang }: IProps) => {
-  const editorRef = useRef<ExposeParam>(null);
+  const editorRef = useRef<IExposeParam>(null);
 
   const [md, setMd] = useState<IPreviewEditorState>(() => ({
     text: mdText,
@@ -148,21 +163,14 @@ export default ({ theme, previewTheme, codeTheme, lang }: IProps) => {
     e.stopPropagation();
 
     void (async () => {
-      const form = new FormData();
       const file = e.dataTransfer?.files[0];
       if (file) {
-        form.append('file', file);
-
         try {
-          const res = await axios.post('/api/img/upload', form, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          });
+          const data = await uploadImage(file);
 
           editorRef.current?.insert(() => {
             return {
-              targetValue: `![](${res.data.url})`,
+              targetValue: `![](${data.url})`,
             };
           });
         } catch (error) {
@@ -197,31 +205,19 @@ export default ({ theme, previewTheme, codeTheme, lang }: IProps) => {
 
   const handleUploadImg = useCallback((files: File[], callback: (arr: any[]) => void) => {
     void (async () => {
-      const res = await Promise.all(
-        files.map((file) => {
-          return new Promise((rev, rej) => {
-            const form = new FormData();
-            form.append('file', file);
+      try {
+        const uploadedList = await Promise.all(files.map((file) => uploadImage(file)));
 
-            axios
-              .post('/api/img/upload', form, {
-                headers: {
-                  'Content-Type': 'multipart/form-data',
-                },
-              })
-              .then((res) => rev(res))
-              .catch((error) => rej(error instanceof Error ? error : new Error(String(error))));
-          });
-        }),
-      );
-
-      callback(
-        res.map((item: any) => ({
-          url: item.data.url,
-          alt: 'alt',
-          title: 'title',
-        })),
-      );
+        callback(
+          uploadedList.map((item) => ({
+            url: item.url,
+            alt: 'alt',
+            title: 'title',
+          })),
+        );
+      } catch (error) {
+        console.error('Image upload failed:', error);
+      }
     })();
   }, []);
 
@@ -240,10 +236,6 @@ export default ({ theme, previewTheme, codeTheme, lang }: IProps) => {
 
     editorRef.current?.on('htmlPreview', (status) => {
       console.log('htmlPreview', status);
-    });
-
-    editorRef.current?.on('pageFullscreen', (status) => {
-      console.log('pageFullscreen', status);
     });
 
     editorRef.current?.on('fullscreen', (status) => {
@@ -333,8 +325,6 @@ export default ({ theme, previewTheme, codeTheme, lang }: IProps) => {
           zIndex: 1000000,
         }}
         onClick={() => {
-          // editorRef.current?.toggleFullscreen();
-          // editorRef.current?.togglePageFullscreen();
           // editorRef.current?.toggleCatalog();
           // editorRef.current?.togglePreviewOnly();
           // editorRef.current?.toggleHtmlPreview();
@@ -385,7 +375,6 @@ export default ({ theme, previewTheme, codeTheme, lang }: IProps) => {
           previewTheme={previewTheme}
           codeTheme={codeTheme}
           value={md.text}
-          // pageFullscreen
           // preview={false}
           // htmlPreview
           // toolbarsExclude={['github']}

@@ -1,4 +1,4 @@
-﻿import type { ISkill } from '@/types/modules';
+import type { ISkill } from '@/types/modules';
 
 export type ESkillBatchTagMode = 'add' | 'remove';
 

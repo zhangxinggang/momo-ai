@@ -8,7 +8,6 @@ import { useToast } from '@renderer/components/ui/Toast';
 import { useChatWorkspaceBinding } from '@renderer/hooks/useChatWorkspaceBinding';
 import { useRankedChatModelGroups } from '@renderer/hooks/useRankedChatModelGroups';
 import { useStableModelResolver } from '@renderer/hooks/useStableModelResolver';
-import { isWebRuntime } from '@renderer/runtime';
 import { buildSharedAiChatServices, createGeneralChatStream } from '@renderer/services/aichat';
 import { useSettingsStore } from '@renderer/store';
 import { ChatErrorBoundary } from '../ChatErrorBoundary';
@@ -39,10 +38,6 @@ export function ChatModuleProvider({ children }: IProps) {
       }),
     [aiModels, chatModelOptionGroups, modelResolverRef, showToast, workspace],
   );
-
-  if (isWebRuntime()) {
-    return <>{children}</>;
-  }
 
   return (
     <ChatErrorBoundary>

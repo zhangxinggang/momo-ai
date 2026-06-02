@@ -1,10 +1,11 @@
-﻿import type { ISkill } from '@/types/modules';
+import type { ISkill } from '@/types/modules';
 import { AiChatView, type IAiChatServices } from '@momo/aichat';
 import '@momo/markdown-styles';
 import { useCallback, useMemo } from 'react';
 
 import { AiChatShell } from '@renderer/components/Chat/AiChatShell';
 import { useToast } from '@renderer/components/ui/Toast';
+import { useAiChatViewTheme } from '@renderer/hooks/useAiChatViewTheme';
 import { useChatWorkspaceBinding } from '@renderer/hooks/useChatWorkspaceBinding';
 import { useRankedChatModelGroups } from '@renderer/hooks/useRankedChatModelGroups';
 import { useStableModelResolver } from '@renderer/hooks/useStableModelResolver';
@@ -38,6 +39,7 @@ export function SkillAiChat({
   const modelResolverRef = useStableModelResolver(aiModels);
   const chatModelOptionGroups = useRankedChatModelGroups(aiModels);
   const workspace = useChatWorkspaceBinding();
+  const chatTheme = useAiChatViewTheme();
 
   const activeSkill = useMemo(
     () => (activeSkillId ? skills.find((s) => s.id === activeSkillId) : undefined),
@@ -90,6 +92,7 @@ export function SkillAiChat({
       </div>
       <div className={styles['skill-ai-chat-main']}>
         <AiChatView
+          {...chatTheme}
           hideWelcome
           placeholder={
             activeSkill

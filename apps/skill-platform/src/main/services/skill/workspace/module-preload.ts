@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-import { getSkillRuntimeDir } from '../runtime/node-runtime';
+import { getSkillRuntimeDir } from '../../../runtime-paths';
 
 const PRELOAD_FILE_NAME = 'skill-module-paths.cjs';
 

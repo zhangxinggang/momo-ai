@@ -1,4 +1,4 @@
-﻿import type { IKbEmbeddingConfig } from '@/types/modules/kb';
+import type { IKbEmbeddingConfig } from '@/types/modules/kb';
 
 import type { IAIModelConfig } from '@renderer/types/settings';
 

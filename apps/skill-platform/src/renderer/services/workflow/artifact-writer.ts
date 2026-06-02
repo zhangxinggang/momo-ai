@@ -7,6 +7,7 @@ import { writeWorkflowNodeArtifacts } from './agent-files';
 /** 从模型回复解析 artifact 并写入工作流节点目录 */
 export async function persistWorkflowArtifactsFromReply(
   workflowName: string,
+  businessId: string,
   nodeName: string,
   reply: string,
 ): Promise<string[]> {
@@ -14,7 +15,7 @@ export async function persistWorkflowArtifactsFromReply(
   if (artifacts.length === 0) {
     return [];
   }
-  return writeWorkflowNodeArtifacts(workflowName, nodeName, artifacts);
+  return writeWorkflowNodeArtifacts(workflowName, businessId, nodeName, artifacts);
 }
 
 export type { ISkillArtifactFile };

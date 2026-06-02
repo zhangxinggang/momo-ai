@@ -1,4 +1,4 @@
-﻿import type { IFolder, IPrompt } from '@/types/modules';
+import type { IFolder, IPrompt } from '@/types/modules';
 import type { IMomoTreeNode } from '@momo/tree';
 
 function sortTreeNodes(nodes: IMomoTreeNode[]): IMomoTreeNode[] {

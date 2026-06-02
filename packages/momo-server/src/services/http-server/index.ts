@@ -34,6 +34,14 @@ class HttpServer {
     }
     const routes = new Routers({ ...(this.config.routes || {}) });
     const bodyParserOptions = this.config.bodyparser || {};
+    const uploadDir = bodyParserOptions.formidable?.uploadDir;
+    if (uploadDir) {
+      try {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      } catch (err) {
+        console.error('上传目录创建失败');
+      }
+    }
     app
       .use(
         compress({

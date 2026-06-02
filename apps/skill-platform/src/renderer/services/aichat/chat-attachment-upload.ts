@@ -2,10 +2,13 @@ import type { IChatAttachment } from '@momo/aichat';
 
 const MAX_COUNT = 10;
 const MAX_SINGLE = 10 * 1024 * 1024;
-const ALLOWED_EXTENSIONS = ['txt', 'md', 'docx', 'css', 'html', 'js', 'py'];
 
 function getFileExtension(fileName: string): string {
   return (fileName.split('.').pop() || '').toLowerCase();
+}
+
+function buildUnsupportedAttachmentText(file: File): string {
+  return `[附件 ${file.name}，大小 ${file.size} 字节，当前环境无法提取文本内容]`;
 }
 
 function createAttachmentId(): string {
@@ -34,38 +37,50 @@ async function fileToBase64(file: File): Promise<string> {
 
 async function readFileText(file: File): Promise<{ text: string; snippet: string }> {
   const ext = getFileExtension(file.name);
-  if (ext === 'docx') {
-    const base64 = await fileToBase64(file);
-    const parsed = await window.api.aichat.parseAttachment({ base64, ext, mime: file.type });
-    if (!parsed?.text) {
-      throw new Error(`${file.name} 解析失败`);
+
+  if (typeof window !== 'undefined' && window.api?.aichat?.parseAttachment) {
+    try {
+      const base64 = await fileToBase64(file);
+      const parsed = await window.api.aichat.parseAttachment({ base64, ext, mime: file.type });
+      if (parsed?.text) {
+        return { text: parsed.text, snippet: parsed.snippet || parsed.text.slice(0, 800) };
+      }
+    } catch {
+      // 解析失败时继续走文本读取或占位提示
     }
-    return { text: parsed.text, snippet: parsed.snippet || parsed.text.slice(0, 800) };
   }
 
-  const text = await readTextFile(file);
-  const snippet = text.length > 800 ? text.slice(0, 800) : text;
-  return { text, snippet };
+  if (
+    file.type.startsWith('text/') ||
+    ['txt', 'md', 'markdown', 'css', 'html', 'js', 'py', 'json', 'xml', 'csv'].includes(ext)
+  ) {
+    try {
+      const text = await readTextFile(file);
+      const snippet = text.length > 800 ? text.slice(0, 800) : text;
+      return { text, snippet };
+    } catch {
+      // 继续走占位提示
+    }
+  }
+
+  const placeholder = buildUnsupportedAttachmentText(file);
+  return { text: placeholder, snippet: placeholder };
 }
 
-/** 校验本地附件类型与大小 */
+/** 校验本地附件大小与数量 */
 export function validateChatAttachmentFiles(files: File[]) {
   if (files.length > MAX_COUNT) {
     return { ok: false, message: `单次最多上传 ${MAX_COUNT} 个文件` };
   }
 
   for (const file of files) {
-    const ext = getFileExtension(file.name);
-    if (!ALLOWED_EXTENSIONS.includes(ext)) {
-      return { ok: false, message: `不支持的文件类型: ${file.name}` };
-    }
     if (file.size > MAX_SINGLE) {
       return { ok: false, message: `${file.name} 超过 10MB 限制` };
     }
   }
 
   return { ok: true };
-};
+}
 
 /** 本地读取附件内容，无需 HTTP 上传服务 */
 export async function uploadChatAttachmentFiles(
@@ -93,4 +108,4 @@ export async function uploadChatAttachmentFiles(
   }
 
   return results;
-};
+}

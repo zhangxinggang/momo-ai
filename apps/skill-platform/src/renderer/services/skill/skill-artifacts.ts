@@ -48,9 +48,7 @@ export async function writeSkillArtifacts(
 
   const written: string[] = [];
   for (const artifact of artifacts) {
-    await window.api.skill.writeLocalFile(skillId, artifact.path, artifact.content, {
-      skipVersionSnapshot: true,
-    });
+    await window.api.skill.writeLocalFile(skillId, artifact.path, artifact.content);
     written.push(artifact.path);
   }
   return written;

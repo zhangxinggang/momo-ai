@@ -59,9 +59,22 @@ interface IProps {
   footer?: ReactNode | null;
   zIndex?: number;
   getContainer?: ModalProps['getContainer'];
-  destroyOnClose?: boolean;
-  maskClosable?: boolean;
+  destroyOnHidden?: boolean;
+  mask?: ModalProps['mask'];
   showDefaultFooter?: boolean;
+}
+
+function resolveModalMask(mask: ModalProps['mask']): ModalProps['mask'] {
+  if (mask === false) {
+    return false;
+  }
+
+  const baseMask = { closable: false };
+  if (typeof mask === 'object' && mask !== null) {
+    return { ...baseMask, ...mask };
+  }
+
+  return baseMask;
 }
 
 /** 全屏 Modal 壳（头部样式对齐提示词 AI 测试弹框） */
@@ -73,8 +86,8 @@ export function FullscreenModal({
   footer,
   zIndex,
   getContainer,
-  destroyOnClose = true,
-  maskClosable = false,
+  destroyOnHidden = true,
+  mask,
   showDefaultFooter = true,
 }: IProps) {
   const resolvedFooter =
@@ -95,11 +108,11 @@ export function FullscreenModal({
       onCancel={onClose}
       zIndex={zIndex}
       getContainer={getContainer}
-      maskClosable={maskClosable}
+      mask={resolveModalMask(mask)}
       width={FULLSCREEN_MODAL_WIDTH}
       style={fullscreenModalStyle}
       styles={fullscreenModalStyles}
-      destroyOnClose={destroyOnClose}
+      destroyOnHidden={destroyOnHidden}
       classNames={{ header: styles['fullscreen-modal-header'] }}>
       <div className={styles['fullscreen-modal-body']}>{children}</div>
     </Modal>

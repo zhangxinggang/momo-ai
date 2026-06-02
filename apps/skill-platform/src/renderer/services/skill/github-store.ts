@@ -1,10 +1,11 @@
-﻿import type {
+import type {
   DGitHubRepoMetadata,
   DGitHubTreeEntry,
   DGitHubTreeResponse,
-  ESkillCategory,
   IRegistrySkill,
 } from '@/types/modules';
+
+import { inferCategory, slugify } from './store-mapper-utils';
 
 function stripQuotes(value: string): string {
   return value.trim().replace(/^['"]|['"]$/g, '');
@@ -35,43 +36,6 @@ export function parseFrontmatter(content: string): {
 
 export function toTitleCase(value: string): string {
   return value.replace(/[-_]+/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-function inferCategory(slug: string, description: string): ESkillCategory {
-  const text = `${slug} ${description}`.toLowerCase();
-  if (/(pdf|doc|ppt|sheet|spreadsheet|word|xlsx|docx)/.test(text)) {
-    return 'office';
-  }
-  if (/(github|git|web|playwright|mcp|code|cli|dev|pr)/.test(text)) {
-    return 'dev';
-  }
-  if (/(design|figma|css|ui|frontend|canvas|brand)/.test(text)) {
-    return 'design';
-  }
-  if (/(deploy|vercel|docker|cloudflare|netlify)/.test(text)) {
-    return 'deploy';
-  }
-  if (/(secure|security|audit|auth|secret)/.test(text)) {
-    return 'security';
-  }
-  if (/(analy|data|sql|chart|research)/.test(text)) {
-    return 'data';
-  }
-  if (/(manage|project|notion|linear)/.test(text)) {
-    return 'management';
-  }
-  if (/(ai|generate|translation|speech|image|video|art)/.test(text)) {
-    return 'ai';
-  }
-  return 'general';
 }
 
 function parseJson<T>(raw: string, fallback: T): T {

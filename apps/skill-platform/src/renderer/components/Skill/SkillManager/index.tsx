@@ -1,8 +1,8 @@
-﻿import type { IScannedSkill, ISkill } from '@/types/modules';
+import type { IScannedSkill, ISkill } from '@/types/modules';
 import { CenteredLoading } from '@renderer/components/ui/CenteredLoading';
 import { useToast } from '@renderer/components/ui/Toast';
+import { useSyncDefaultOnlineStoreSource } from '@renderer/hooks/useOnlineStoreSources';
 import { useSkillStoreRemoteSync } from '@renderer/hooks/useSkillStoreRemoteSync';
-import { getRuntimeCapabilities } from '@renderer/runtime';
 import { updateSkillTags, type ESkillBatchTagMode } from '@renderer/services/skill/batch-utils';
 import { filterVisibleSkills } from '@renderer/services/skill/filter';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
@@ -69,6 +69,7 @@ const SkillBatchTagDialog = lazy(() =>
 
 export function SkillManager() {
   const { showToast } = useToast();
+  useSyncDefaultOnlineStoreSource();
   const skills = useSkillStore((state) => state.skills);
   const loadSkills = useSkillStore((state) => state.loadSkills);
   const deleteSkill = useSkillStore((state) => state.deleteSkill);
@@ -89,15 +90,8 @@ export function SkillManager() {
   const toggleSkillFilterTag = useSkillStore((state) => state.toggleFilterTag);
   const clearSkillFilterTags = useSkillStore((state) => state.clearFilterTags);
   const customSkillScanPaths = useSettingsStore((state) => state.customSkillScanPaths);
-  const runtimeCapabilities = getRuntimeCapabilities();
-  const webSkillLibraryMode =
-    !runtimeCapabilities.skillDistribution && !runtimeCapabilities.skillStore;
-  const effectiveStoreView = webSkillLibraryMode ? 'my-skills' : storeView;
-  const effectiveFilterType =
-    webSkillLibraryMode &&
-    (filterType === 'installed' || filterType === 'deployed' || filterType === 'pending')
-      ? 'all'
-      : filterType;
+  const effectiveStoreView = storeView;
+  const effectiveFilterType = filterType;
   const isDistributionView = effectiveStoreView === 'distribution';
 
   const tagFilterBaseSkills = useMemo(() => {
@@ -124,9 +118,7 @@ export function SkillManager() {
   }, [tagFilterBaseSkills]);
 
   const showTagFilter =
-    availableTags.length >= 1 &&
-    !webSkillLibraryMode &&
-    (effectiveStoreView === 'my-skills' || isDistributionView);
+    availableTags.length >= 1 && (effectiveStoreView === 'my-skills' || isDistributionView);
 
   // Get filtered skills - filter directly in useMemo instead of using store function
   // 直接在 useMemo 中过滤，而不是使用 store 函数（避免函数引用作为依赖）
@@ -212,10 +204,6 @@ export function SkillManager() {
   }>({ isOpen: false, skillIds: [], skillNames: [] });
 
   const handleScanLocal = async (customPaths?: string[]) => {
-    if (!runtimeCapabilities.skillLocalScan) {
-      return;
-    }
-
     setIsScanning(true);
     try {
       const result = await scanLocalPreview(customPaths);
@@ -231,10 +219,6 @@ export function SkillManager() {
   // Re-scan handler passed down to the preview modal
   // 传给预览弹窗的重新扫描回调
   const handleRescan = async (customPaths: string[]) => {
-    if (!runtimeCapabilities.skillLocalScan) {
-      return;
-    }
-
     const result = await scanLocalPreview(customPaths);
     setScannedSkills(result);
   };
@@ -244,10 +228,7 @@ export function SkillManager() {
     userTagsByPath?: Record<string, string[]>,
   ) => {
     const result = await importScannedSkills(skillsToImport, userTagsByPath);
-    // Refresh deployed status after import
-    if (runtimeCapabilities.skillDistribution) {
-      await loadDeployedStatus();
-    }
+    await loadDeployedStatus();
     return result.importedCount;
   };
 
@@ -275,20 +256,6 @@ export function SkillManager() {
 
   // Load skills on mount, then defer deployed status to idle time
   useEffect(() => {
-    if (!webSkillLibraryMode) {
-      return;
-    }
-
-    if (storeView !== 'my-skills') {
-      setStoreView('my-skills');
-    }
-
-    if (filterType === 'installed' || filterType === 'deployed' || filterType === 'pending') {
-      setFilterType('all');
-    }
-  }, [filterType, setFilterType, setStoreView, storeView, webSkillLibraryMode]);
-
-  useEffect(() => {
     let disposed = false;
     let idleId: number | undefined;
     let timeoutId: number | undefined;
@@ -299,10 +266,6 @@ export function SkillManager() {
 
     void loadSkills().then(() => {
       if (disposed) return;
-
-      if (!runtimeCapabilities.skillDistribution) {
-        return;
-      }
 
       const run = () => {
         if (!disposed) {
@@ -326,7 +289,7 @@ export function SkillManager() {
         window.clearTimeout(timeoutId);
       }
     };
-  }, [loadSkills, loadDeployedStatus, runtimeCapabilities.skillDistribution]);
+  }, [loadSkills, loadDeployedStatus]);
 
   useEffect(() => {
     const targetCount =
@@ -383,7 +346,7 @@ export function SkillManager() {
 
   // Store view: show the skill store page
   // 商店视图：显示技能商店页面
-  if (runtimeCapabilities.skillStore && effectiveStoreView === 'store') {
+  if (effectiveStoreView === 'store') {
     return (
       <div className='relative h-full min-h-0 flex-1'>
         <Suspense fallback={<CenteredLoading label='加载中…' />}>
@@ -393,7 +356,7 @@ export function SkillManager() {
     );
   }
 
-  if (runtimeCapabilities.skillLocalScan && effectiveStoreView === 'projects') {
+  if (effectiveStoreView === 'projects') {
     return (
       <div className='relative h-full min-h-0 flex-1'>
         <Suspense fallback={<CenteredLoading label='加载中…' />}>
@@ -530,23 +493,19 @@ export function SkillManager() {
           ? '还没有待分发的技能'
           : '暂无技能';
 
-  const emptyStateHint = webSkillLibraryMode
-    ? '在此创建或导入你自己的技能。平台分发与技能商店仅在桌面客户端可用。'
-    : isDistributionView
-      ? '先导入 skill，再在这里安装、同步或卸载到 Claude、Cursor 等平台。'
-      : effectiveFilterType === 'installed'
-        ? '从 Skill 商店、本地扫描、GitHub 或手动创建导入后，它们会出现在这里。'
-        : effectiveFilterType === 'deployed'
-          ? '将技能分发到 Claude、Cursor 等平台后，这里会显示已分发项目。'
-          : effectiveFilterType === 'pending'
-            ? '尚未分发到任何平台的 skill 会显示在这里。'
-            : '创建、导入或从商店安装你的第一个技能';
+  const emptyStateHint = isDistributionView
+    ? '先导入 skill，再在这里安装、同步或卸载到 Claude、Cursor 等平台。'
+    : effectiveFilterType === 'installed'
+      ? '从 Skill 商店、本地扫描、GitHub 或手动创建导入后，它们会出现在这里。'
+      : effectiveFilterType === 'deployed'
+        ? '将技能分发到 Claude、Cursor 等平台后，这里会显示已分发项目。'
+        : effectiveFilterType === 'pending'
+          ? '尚未分发到任何平台的 skill 会显示在这里。'
+          : '创建、导入或从商店安装你的第一个技能';
 
-  const headerSubtitle = webSkillLibraryMode
-    ? '在自部署网页工作区里管理你的个人 ISkill 库。'
-    : isDistributionView
-      ? '集中管理 skill 在各个平台上的安装、同步与卸载。'
-      : '统一管理所有已导入的 skills，不区分来源渠道。';
+  const headerSubtitle = isDistributionView
+    ? '集中管理 skill 在各个平台上的安装、同步与卸载。'
+    : '统一管理所有已导入的 skills，不区分来源渠道。';
   const distributionStatsLabel = isDistributionView
     ? `已分发 ${deployedSkillNames.size} / 全部 ${skills.length}`
     : null;
@@ -613,23 +572,19 @@ export function SkillManager() {
                     icon={<ListIcon className='h-4 w-4' />}
                   />
                 </div>
-                {runtimeCapabilities.skillLocalScan && (
-                  <>
-                    <div className='bg-border h-4 w-px' />
-                    <Button
-                      type='text'
-                      onClick={() => handleScanLocal(customSkillScanPaths)}
-                      disabled={isScanning}
-                      className='text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg p-2'
-                      title={'扫描本地'}
-                      icon={
-                        <FolderInputIcon
-                          className={`h-4 w-4 ${isScanning ? 'animate-spin' : ''}`}
-                        />
-                      }
-                    />
-                  </>
-                )}
+                <>
+                  <div className='bg-border h-4 w-px' />
+                  <Button
+                    type='text'
+                    onClick={() => handleScanLocal(customSkillScanPaths)}
+                    disabled={isScanning}
+                    className='text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg p-2'
+                    title={'扫描本地'}
+                    icon={
+                      <FolderInputIcon className={`h-4 w-4 ${isScanning ? 'animate-spin' : ''}`} />
+                    }
+                  />
+                </>
               </div>
             </div>
 
@@ -664,17 +619,15 @@ export function SkillManager() {
                   title={'批量管理标签'}>
                   {'批量管理标签'}
                 </Button>
-                {runtimeCapabilities.skillDistribution && (
-                  <Button
-                    type='primary'
-                    onClick={handleBatchDeploy}
-                    disabled={selectedSkillIds.size === 0}
-                    icon={<SendIcon className='h-4 w-4' />}
-                    className='inline-flex h-auto items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium'
-                    title={'批量同步到平台'}>
-                    {'批量同步到平台'}
-                  </Button>
-                )}
+                <Button
+                  type='primary'
+                  onClick={handleBatchDeploy}
+                  disabled={selectedSkillIds.size === 0}
+                  icon={<SendIcon className='h-4 w-4' />}
+                  className='inline-flex h-auto items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium'
+                  title={'批量同步到平台'}>
+                  {'批量同步到平台'}
+                </Button>
                 <Button
                   danger
                   onClick={handleBatchDelete}
@@ -781,7 +734,7 @@ export function SkillManager() {
 
       {/* Quick Install Modal */}
       {/* 快速安装弹窗 */}
-      {runtimeCapabilities.skillPlatformIntegration && quickInstallSkill && (
+      {quickInstallSkill && (
         <SkillQuickInstall skill={quickInstallSkill} onClose={() => setQuickInstallSkill(null)} />
       )}
 
@@ -794,7 +747,7 @@ export function SkillManager() {
 
       {/* Scan Preview Modal */}
       {/* 扫描预览弹窗 */}
-      {runtimeCapabilities.skillLocalScan && showScanPreview && (
+      {showScanPreview && (
         <Suspense fallback={null}>
           <SkillScanPreview
             scannedSkills={scannedSkills}
@@ -814,15 +767,13 @@ export function SkillManager() {
         </Suspense>
       )}
 
-      {runtimeCapabilities.skillDistribution && showBatchDeployDialog && (
+      {showBatchDeployDialog && (
         <Suspense fallback={null}>
           <SkillBatchDeployDialog
             skills={selectedSkills}
             onClose={() => setShowBatchDeployDialog(false)}
             onComplete={async () => {
-              if (runtimeCapabilities.skillDistribution) {
-                await loadDeployedStatus();
-              }
+              await loadDeployedStatus();
             }}
           />
         </Suspense>

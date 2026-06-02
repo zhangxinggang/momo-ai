@@ -62,31 +62,6 @@ function clearStaleLock(dbPath: string): void {
   }
 }
 
-/**
- * Create a timestamped backup of the database file before running migrations.
- * Returns the backup path on success, or null if no backup was needed/possible.
- */
-function backupDatabaseBeforeMigration(dbPath: string): string | null {
-  try {
-    if (!fs.existsSync(dbPath)) {
-      return null;
-    }
-    const stat = fs.statSync(dbPath);
-    // Only back up non-empty databases (empty = freshly created)
-    if (stat.size === 0) {
-      return null;
-    }
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupPath = `${dbPath}.backup-${timestamp}`;
-    fs.copyFileSync(dbPath, backupPath);
-    console.log(`[DB] Pre-migration backup created: ${backupPath}`);
-    return backupPath;
-  } catch (err) {
-    console.warn('[DB] Failed to create pre-migration backup:', err);
-    return null;
-  }
-}
-
 export function getAppDataSource(): DataSource {
   if (!appDataSource?.isInitialized) {
     throw new Error('DataSource 未初始化');
@@ -153,7 +128,6 @@ export async function initDatabase(dbPath: string, hooks?: IInitDatabaseHooks): 
   fs.mkdirSync(path.dirname(dbPath), { recursive: true });
   clearStaleLock(dbPath);
   recoverCorruptedDatabaseIfNeeded(dbPath);
-  backupDatabaseBeforeMigration(dbPath);
   const ds = new DataSource({
     type: 'better-sqlite3',
     database: dbPath,
@@ -192,11 +166,35 @@ export async function initDatabase(dbPath: string, hooks?: IInitDatabaseHooks): 
         .run(name, Date.now());
     };
 
-    // Rules 已移除：若旧库仍存在则直接 DROP（幂等，不写 schema_migrations）
-    db!.exec(`
-      DROP TABLE IF EXISTS rule_versions;
-      DROP TABLE IF EXISTS rules;
-    `);
+    // Rules 表（全局 / 项目规则元数据）
+    if (!hasMigration('rules_v1')) {
+      db!.exec(`
+        CREATE TABLE IF NOT EXISTS rules (
+          id TEXT PRIMARY KEY,
+          scope TEXT NOT NULL CHECK(scope IN ('global', 'project')),
+          platform_id TEXT NOT NULL,
+          platform_name TEXT NOT NULL,
+          platform_icon TEXT NOT NULL,
+          platform_description TEXT NOT NULL,
+          canonical_file_name TEXT NOT NULL,
+          description TEXT NOT NULL,
+          managed_path TEXT NOT NULL,
+          target_path TEXT NOT NULL,
+          project_root_path TEXT,
+          sync_status TEXT NOT NULL CHECK(sync_status IN ('synced', 'target-missing', 'out-of-sync', 'sync-error')),
+          current_version INTEGER NOT NULL DEFAULT 0,
+          content_hash TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
+      `);
+      markMigration('rules_v1');
+    }
+
+    if (!hasMigration('rules_v2_drop_rule_versions')) {
+      db!.exec('DROP TABLE IF EXISTS rule_versions');
+      markMigration('rules_v2_drop_rule_versions');
+    }
 
     // Migrations: prompts table (query column list once)
     const promptCols = (db!.pragma('table_info(prompts)') as IPragmaColumnInfo[]).map(
@@ -623,6 +621,47 @@ export async function initDatabase(dbPath: string, hooks?: IInitDatabaseHooks): 
         db!.exec(`ALTER TABLE kb_documents ADD COLUMN segment_settings TEXT`);
       }
       markMigration('kb_documents_segment_v2');
+    }
+
+    if (!hasMigration('workflow_businesses_v1')) {
+      db!.exec(`
+        CREATE TABLE IF NOT EXISTS workflow_businesses (
+          id TEXT PRIMARY KEY,
+          workflow_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          remark TEXT NOT NULL DEFAULT '',
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL,
+          FOREIGN KEY (workflow_id) REFERENCES workflows(id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_workflow_businesses_workflow ON workflow_businesses(workflow_id);
+        CREATE INDEX IF NOT EXISTS idx_workflow_businesses_updated ON workflow_businesses(updated_at DESC);
+      `);
+      markMigration('workflow_businesses_v1');
+    }
+
+    if (!hasMigration('workflow_folders_v1')) {
+      console.log('Migrating: Creating workflow_folders table and workflows.folder_id');
+      db!.exec(`
+        CREATE TABLE IF NOT EXISTS workflow_folders (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          parent_id TEXT,
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL,
+          FOREIGN KEY (parent_id) REFERENCES workflow_folders(id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_workflow_folders_parent ON workflow_folders(parent_id);
+        CREATE INDEX IF NOT EXISTS idx_workflow_folders_sort ON workflow_folders(sort_order);
+      `);
+      const workflowCols = (db!.pragma('table_info(workflows)') as IPragmaColumnInfo[]).map(
+        (col) => col.name,
+      );
+      if (!workflowCols.includes('folder_id')) {
+        db!.prepare('ALTER TABLE workflows ADD COLUMN folder_id TEXT').run();
+      }
+      markMigration('workflow_folders_v1');
     }
   });
 

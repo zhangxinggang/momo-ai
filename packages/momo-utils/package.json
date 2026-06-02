@@ -4,6 +4,30 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "require": "./dist/index.js",
+      "default": "./src/index.ts"
+    },
+    "./tools/url": {
+      "types": "./src/tools/url.ts",
+      "import": "./src/tools/url.ts",
+      "require": "./dist/tools/url.js",
+      "default": "./src/tools/url.ts"
+    },
+    "./tools/fullscreen": {
+      "types": "./src/tools/fullscreen.ts",
+      "import": "./src/tools/fullscreen.ts",
+      "require": "./dist/tools/fullscreen.js",
+      "default": "./src/tools/fullscreen.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node ./scripts/post-build.cjs"
+  },
+  "dependencies": {
+    "lodash-es": "^4.17.21",
+    "screenfull": "^6.0.2"
   }
 }

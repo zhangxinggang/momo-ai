@@ -1,6 +1,7 @@
+import { importScreenfull } from '@momo/utils';
 import { cloneElement, ReactElement, useCallback, useContext, useEffect, useRef } from 'react';
 import Divider from '~/components/Divider';
-import { allToolbar, globalConfig } from '~/config';
+import { allToolbar, editorExtensionsAttrs, globalConfig } from '~/config';
 import { EditorContext } from '~/context';
 import { CDN_IDS } from '~/static';
 import { CHANGE_FULL_SCREEN, ERROR_CATCHER, REPLACE } from '~/static/event-name';
@@ -23,10 +24,10 @@ import ToolbarLink from './tools/Link';
 import ToolbarMermaid from './tools/Mermaid';
 import ToolbarNext from './tools/Next';
 import ToolbarOrderedList from './tools/OrderedList';
-import ToolbarPageFullscreen from './tools/PageFullscreen';
 import ToolbarPrettier from './tools/Prettier';
 import ToolbarPreview from './tools/Preview';
 import ToolbarPreviewOnly from './tools/PreviewOnly';
+import ToolbarPreviewStyle from './tools/PreviewStyle';
 import ToolbarQuote from './tools/Quote';
 import ToolbarRevoke from './tools/Revoke';
 import ToolbarSave from './tools/Save';
@@ -42,11 +43,8 @@ import ToolbarUnorderedList from './tools/UnorderedList';
 export const useSreenfull = () => {
   const { editorId, updateSetting } = useContext(EditorContext);
   const screenfull = useRef(globalConfig.editorExtensions.screenfull!.instance);
-  // 是否组件内部全屏标识
   const screenfullMe = useRef(false);
 
-  // 该处使用useCallback并不是为了减少子组件渲染次数
-  // 而是screenfull获取到实例后要正确的初始化该方法
   const fullscreenHandler = useCallback(
     (status?: boolean) => {
       if (!screenfull.current) {
@@ -58,8 +56,6 @@ export const useSreenfull = () => {
       }
 
       if (screenfull.current.isEnabled) {
-        screenfullMe.current = !screenfullMe.current;
-
         const targetStatus = status === undefined ? !screenfull.current.isFullscreen : status;
 
         if (targetStatus) {
@@ -76,44 +72,50 @@ export const useSreenfull = () => {
 
   useEffect(() => {
     const changedEvent = () => {
-      updateSetting('fullscreen', screenfullMe.current);
+      const isFullscreen = !!screenfull.current?.isFullscreen;
+      screenfullMe.current = isFullscreen;
+      updateSetting('fullscreen', isFullscreen);
     };
 
-    // 延后插入标签
     let timer = -1;
 
-    // 非预览模式且未提供screenfull时请求cdn
     if (!screenfull.current) {
-      const { editorExtensions, editorExtensionsAttrs } = globalConfig;
+      void importScreenfull().then((instance) => {
+        if (instance) {
+          screenfull.current = instance;
+          if (instance.isEnabled) {
+            instance.on('change', changedEvent);
+          }
+          return;
+        }
 
-      timer = requestAnimationFrame(() => {
-        appendHandler(
-          'script',
-          {
-            ...editorExtensionsAttrs.screenfull?.js,
-            src: editorExtensions.screenfull!.js,
-            id: CDN_IDS.screenfull,
-            onload() {
-              // 复制实例
-              screenfull.current = window.screenfull;
-              // 注册事件
-              if (screenfull.current && screenfull.current.isEnabled) {
-                screenfull.current.on('change', changedEvent);
-              }
+        const { editorExtensions } = globalConfig;
+
+        timer = requestAnimationFrame(() => {
+          appendHandler(
+            'script',
+            {
+              ...editorExtensionsAttrs.screenfull?.js,
+              src: editorExtensions.screenfull!.js,
+              id: CDN_IDS.screenfull,
+              onload() {
+                screenfull.current = window.screenfull;
+                if (screenfull.current && screenfull.current.isEnabled) {
+                  screenfull.current.on('change', changedEvent);
+                }
+              },
             },
-          },
-          'screenfull',
-        );
+            'screenfull',
+          );
+        });
       });
     }
 
-    // 提供了对象直接监听事件，未提供通过screenfullLoad触发
     if (screenfull.current && screenfull.current.isEnabled) {
       screenfull.current.on('change', changedEvent);
     }
 
     return () => {
-      // 严格模式下，需要取消一次嵌入标签
       if (!screenfull.current) {
         cancelAnimationFrame(timer);
       }
@@ -125,7 +127,6 @@ export const useSreenfull = () => {
   }, [updateSetting]);
 
   useEffect(() => {
-    // 注册切换全屏监听
     bus.on(editorId, {
       name: CHANGE_FULL_SCREEN,
       callback: fullscreenHandler,
@@ -227,9 +228,6 @@ export const useBarRender = () => {
           case 'prettier': {
             return !noPrettier && <ToolbarPrettier key='bar-prettier' />;
           }
-          case 'pageFullscreen': {
-            return !setting.fullscreen && <ToolbarPageFullscreen key='bar-pageFullscreen' />;
-          }
           case 'fullscreen': {
             return <ToolbarFullscreen key='bar-fullscreen' />;
           }
@@ -238,6 +236,9 @@ export const useBarRender = () => {
           }
           case 'preview': {
             return <ToolbarPreview key='bar-preview' />;
+          }
+          case 'previewStyle': {
+            return <ToolbarPreviewStyle key='bar-previewStyle' />;
           }
           case 'previewOnly': {
             return <ToolbarPreviewOnly key='bar-previewOnly' />;

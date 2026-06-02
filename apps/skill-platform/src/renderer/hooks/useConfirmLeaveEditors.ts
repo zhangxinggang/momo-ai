@@ -28,15 +28,15 @@ export function useConfirmLeaveEditors() {
 
   const confirmLeaveWorkflowEditor = useCallback(async (): Promise<boolean> => {
     const state = useUIStore.getState();
-    if (state.workflowScreen === 'work') {
-      state.openWorkflowList();
+    if (state.workflowScreen === 'business-work') {
+      state.closeWorkflowBusinessWork();
     }
     if (state.workflowScreen !== 'studio') {
       return true;
     }
     const ok = await state.confirmWorkflowLeave();
     if (ok) {
-      state.openWorkflowList();
+      state.closeWorkflowStudio();
     }
     return ok;
   }, []);

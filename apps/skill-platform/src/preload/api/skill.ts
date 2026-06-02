@@ -3,13 +3,11 @@ import type {
   DCreateSkill,
   DUpdateSkill,
   IMcpServerConfig,
-  ISkillFileSnapshot,
   ISkillLocalFileEntry,
   ISkillLocalFileTreeEntry,
   ISkillMcpConfig,
   ISkillSafetyReport,
   ISkillSafetyScanInput,
-  ISkillVersion,
 } from '@/types/modules';
 import { ipcRenderer } from 'electron';
 
@@ -80,6 +78,15 @@ export const skillApi = {
   },
   saveToRepo: (skillName: string, sourceDir: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_SAVE_TO_REPO, skillName, sourceDir),
+  saveRemoteGitToRepo: (
+    skillId: string,
+    options: {
+      repoUrl: string;
+      branch?: string;
+      directory?: string;
+      installName?: string;
+    },
+  ) => ipcRenderer.invoke(IPC_CHANNELS.SKILL_SAVE_REMOTE_GIT_TO_REPO, skillId, options),
   listLocalFiles: (skillId: string): Promise<ISkillLocalFileTreeEntry[]> =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_LIST_LOCAL_FILES, skillId),
   readLocalFile: (skillId: string, relativePath: string): Promise<ISkillLocalFileEntry | null> =>
@@ -93,19 +100,8 @@ export const skillApi = {
       oldRelativePath,
       newRelativePath,
     ),
-  writeLocalFile: (
-    skillId: string,
-    relativePath: string,
-    content: string,
-    options?: { skipVersionSnapshot?: boolean },
-  ) =>
-    ipcRenderer.invoke(
-      IPC_CHANNELS.SKILL_WRITE_LOCAL_FILE,
-      skillId,
-      relativePath,
-      content,
-      options,
-    ),
+  writeLocalFile: (skillId: string, relativePath: string, content: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILL_WRITE_LOCAL_FILE, skillId, relativePath, content),
   deleteLocalFile: (skillId: string, relativePath: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_DELETE_LOCAL_FILE, skillId, relativePath),
   createLocalDir: (skillId: string, relativePath: string) =>
@@ -156,15 +152,4 @@ export const skillApi = {
     userInput: string,
     options?: { commands?: string[]; outputDir?: string },
   ) => ipcRenderer.invoke(IPC_CHANNELS.SKILL_EXECUTE_WORKSPACE, skillId, userInput, options),
-  versionGetAll: (skillId: string) =>
-    ipcRenderer.invoke(IPC_CHANNELS.SKILL_VERSION_GET_ALL, skillId),
-  versionCreate: (skillId: string, note?: string, filesSnapshot?: ISkillFileSnapshot[]) =>
-    ipcRenderer.invoke(IPC_CHANNELS.SKILL_VERSION_CREATE, skillId, note, filesSnapshot),
-  versionRollback: (skillId: string, version: number) =>
-    ipcRenderer.invoke(IPC_CHANNELS.SKILL_VERSION_ROLLBACK, skillId, version),
-  versionDelete: (skillId: string, versionId: string) =>
-    ipcRenderer.invoke(IPC_CHANNELS.SKILL_VERSION_DELETE, skillId, versionId),
-  deleteAll: () => ipcRenderer.invoke(IPC_CHANNELS.SKILL_DELETE_ALL, true),
-  insertVersionDirect: (version: ISkillVersion) =>
-    ipcRenderer.invoke(IPC_CHANNELS.SKILL_INSERT_VERSION_DIRECT, version),
 };

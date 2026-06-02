@@ -1,26 +1,27 @@
+import { compareVersions } from '@/utils/version';
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { isWebRuntime } from '@renderer/runtime';
+import { useOnlineConfStore } from '@renderer/store/online-conf';
 import { Button, Layout, Menu, Typography } from 'antd';
 import {
   BellIcon,
   BrainIcon,
   DatabaseIcon,
+  InfoIcon,
   PaletteIcon,
-  ServerCogIcon,
   SettingsIcon,
   SparklesIcon,
 } from 'lucide-react';
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { useMemo, useState } from 'react';
-import { AISettingsPrototype } from '../AISettingsPrototype';
-import { AppearanceSettings } from '../AppearanceSettings';
-import { DataSettings } from '../DataSettings';
-import { GeneralSettings } from '../GeneralSettings';
-import { NotificationsSettings } from '../NotificationsSettings';
-import { SkillSettings } from '../SkillSettings';
-import { WebDeviceSettings } from '../WebDeviceSettings';
-import { WebWorkspaceSettings } from '../WebWorkspaceSettings';
 
+import badgeStyles from '../SettingBadge/index.module.less';
+import { AboutSettings } from '../sections/AboutSettings';
+import { AiSettings } from '../sections/AiSettings';
+import { AppearanceSettings } from '../sections/AppearanceSettings';
+import { DataSettings } from '../sections/DataSettings';
+import { GeneralSettings } from '../sections/GeneralSettings';
+import { NotificationsSettings } from '../sections/NotificationsSettings';
+import { SkillSettings } from '../sections/SkillSettings';
 const { Sider, Content } = Layout;
 
 interface IProps {
@@ -40,40 +41,44 @@ const DESKTOP_SETTINGS_MENU: SettingsMenuItem[] = [
   { id: 'skill', label: 'Agent管理', icon: SparklesIcon },
   { id: 'ai', label: 'AI 模型', icon: BrainIcon },
   { id: 'notifications', label: '通知', icon: BellIcon },
-];
-
-const WEB_SETTINGS_MENU: SettingsMenuItem[] = [
-  { id: 'web', label: '网页工作区', icon: ServerCogIcon },
-  { id: 'devices', label: '设备管理', icon: SettingsIcon },
-  { id: 'appearance', label: '显示设置', icon: PaletteIcon },
-  { id: 'data', label: '数据设置', icon: DatabaseIcon },
-  { id: 'ai', label: 'AI 模型', icon: BrainIcon },
+  { id: 'about', label: '关于', icon: InfoIcon },
 ];
 
 export function SettingsPage({ onBack }: IProps) {
-  const webRuntime = isWebRuntime();
-  const settingsMenu = webRuntime ? WEB_SETTINGS_MENU : DESKTOP_SETTINGS_MENU;
-  const [activeSection, setActiveSection] = useState(webRuntime ? 'web' : 'general');
+  const settingsMenu = DESKTOP_SETTINGS_MENU;
+  const [activeSection, setActiveSection] = useState('general');
+  const hasNewVersion = useOnlineConfStore((state) => {
+    const remoteVersion = state.config?.update?.version?.trim();
+    if (!remoteVersion) {
+      return false;
+    }
+    return compareVersions(remoteVersion, state.localVersion) > 0;
+  });
 
   const menuItems = useMemo(
     () =>
       settingsMenu.map((item) => {
         const Icon = item.icon;
+        const labelNode: ReactNode =
+          item.id === 'about' && hasNewVersion ? (
+            <span className={badgeStyles['settings-menu-badge']}>
+              {item.label}
+              <span className={badgeStyles['settings-menu-badge-dot']} />
+            </span>
+          ) : (
+            item.label
+          );
         return {
           key: item.id,
           icon: <Icon className='h-4 w-4' />,
-          label: item.label,
+          label: labelNode,
         };
       }),
-    [settingsMenu],
+    [settingsMenu, hasNewVersion],
   );
 
   const renderContent = () => {
     switch (activeSection) {
-      case 'web':
-        return <WebWorkspaceSettings onNavigate={setActiveSection} />;
-      case 'devices':
-        return <WebDeviceSettings />;
       case 'general':
         return <GeneralSettings />;
       case 'appearance':
@@ -83,9 +88,11 @@ export function SettingsPage({ onBack }: IProps) {
       case 'skill':
         return <SkillSettings />;
       case 'ai':
-        return <AISettingsPrototype />;
+        return <AiSettings />;
       case 'notifications':
         return <NotificationsSettings />;
+      case 'about':
+        return <AboutSettings />;
       default:
         return null;
     }

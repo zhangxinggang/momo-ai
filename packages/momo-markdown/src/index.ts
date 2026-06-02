@@ -1,3 +1,5 @@
+import './editor-extensions';
+
 export { default as MdEditor } from './components/MdEditor';
 
 export { default as DropdownToolbar } from './components/DropdownToolbar';
@@ -7,5 +9,6 @@ export { allToolbar } from './components/MdEditor/config';
 export { default as ModalToolbar } from './components/ModalToolbar';
 export { default as NormalFooterToolbar } from './components/NormalFooterToolbar';
 export { default as NormalToolbar } from './components/NormalToolbar';
+export * from './editor-extensions';
 
 export * from './preview';

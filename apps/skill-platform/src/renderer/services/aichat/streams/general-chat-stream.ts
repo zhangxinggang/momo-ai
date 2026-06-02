@@ -2,6 +2,7 @@ import type { IChatStreamMessage, TCallAiChatStream } from '@momo/aichat';
 
 import type { IAIConfig, IChatMessage } from '@renderer/services/ai';
 import { getEnabledWorkspaceContext } from '@renderer/services/workspace/context';
+import { MERMAID_SYSTEM_PROMPT } from '../core/mermaid-system-prompt';
 import { buildRagContext } from '../core/rag-context';
 import { resolveStreamModelConfig, runChatCompletionStream } from './chat-completion-stream';
 
@@ -37,6 +38,8 @@ export function createGeneralChatStream(options: IGeneralChatStreamOptions): TCa
       apiMessages = [{ role: 'system', content: workspaceContext }, ...apiMessages];
     }
 
+    apiMessages = [{ role: 'system', content: MERMAID_SYSTEM_PROMPT }, ...apiMessages];
+
     if (streamOptions?.user_system_prompt?.trim()) {
       apiMessages = [
         { role: 'system', content: streamOptions.user_system_prompt.trim() },
@@ -45,7 +48,7 @@ export function createGeneralChatStream(options: IGeneralChatStreamOptions): TCa
     }
 
     try {
-      const elapsedSec = await runChatCompletionStream({
+      const { elapsedSec, usage } = await runChatCompletionStream({
         config,
         apiMessages,
         onChunk,
@@ -55,9 +58,9 @@ export function createGeneralChatStream(options: IGeneralChatStreamOptions): TCa
       onStats?.({
         model: config.model,
         responseTime: `${elapsedSec}s`,
-        totalTokens: 0,
-        promptTokens: 0,
-        completionTokens: 0,
+        totalTokens: usage?.totalTokens ?? 0,
+        promptTokens: usage?.promptTokens ?? 0,
+        completionTokens: usage?.completionTokens ?? 0,
         citations,
       });
     } catch (err) {

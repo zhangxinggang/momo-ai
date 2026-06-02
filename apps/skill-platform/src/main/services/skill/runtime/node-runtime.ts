@@ -1,7 +1,11 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-import { getUserDataPath } from '../../../runtime-paths';
+import {
+  getSkillRuntimeDir,
+  getSkillRuntimeNodeModulesDir,
+  getSkillRuntimePackageName,
+} from '../../../runtime-paths';
 import { runRuntimePostInstallHooks } from './post-install';
 import { runNpmInstallWithRetry, runSkillShellCommand } from './shell';
 import { resolveSkillShellEnv } from './toolchain';
@@ -13,16 +17,7 @@ export interface IEnsureSkillRuntimePackagesResult {
   error?: string;
 }
 
-const RUNTIME_PACKAGE_NAME = '@prompthub/skill-runtime';
-
-/** 全局 ISkill Node 运行时目录（类似 Cursor/Claude Code 的沙箱 node_modules） */
-export function getSkillRuntimeDir(): string {
-  return path.join(getUserDataPath(), 'skill-runtime');
-}
-
-export function getSkillRuntimeNodeModulesDir(): string {
-  return path.join(getSkillRuntimeDir(), 'node_modules');
-}
+export { getSkillRuntimeDir, getSkillRuntimeNodeModulesDir } from '../../../runtime-paths';
 
 async function pathExists(targetPath: string): Promise<boolean> {
   try {
@@ -60,7 +55,7 @@ async function readRuntimePackageJson(runtimeDir: string): Promise<{
         dependencies?: Record<string, string>;
       };
       return {
-        name: RUNTIME_PACKAGE_NAME,
+        name: getSkillRuntimePackageName(),
         private: true,
         version: '1.0.0',
         dependencies: parsed.dependencies ?? {},
@@ -71,7 +66,7 @@ async function readRuntimePackageJson(runtimeDir: string): Promise<{
   }
 
   return {
-    name: RUNTIME_PACKAGE_NAME,
+    name: getSkillRuntimePackageName(),
     private: true,
     version: '1.0.0',
     dependencies: {},

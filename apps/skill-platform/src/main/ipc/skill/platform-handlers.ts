@@ -205,35 +205,32 @@ export function registerSkillPlatformHandlers(context: ISkillIPCContext): void {
     return extractClawHubSkillToCache(slug);
   });
 
-  ipcMain.handle(
-    IPC_CHANNELS.SKILL_FETCH_REMOTE_POST,
-    async (_, url: string, body: unknown) => {
-      if (typeof url !== 'string' || url.trim().length === 0) {
-        throw new Error('skill:fetchRemotePost requires a non-empty url');
-      }
-      let parsed: URL;
-      try {
-        parsed = new URL(url);
-      } catch {
-        throw new Error('skill:fetchRemotePost received an invalid URL');
-      }
-      if (!['http:', 'https:'].includes(parsed.protocol)) {
-        throw new Error('skill:fetchRemotePost only allows http/https URLs');
-      }
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json, text/plain, */*',
-        },
-        body: JSON.stringify(body ?? {}),
-      });
-      if (!response.ok) {
-        throw new Error(`Remote POST failed (${response.status})`);
-      }
-      return await response.text();
-    },
-  );
+  ipcMain.handle(IPC_CHANNELS.SKILL_FETCH_REMOTE_POST, async (_, url: string, body: unknown) => {
+    if (typeof url !== 'string' || url.trim().length === 0) {
+      throw new Error('skill:fetchRemotePost requires a non-empty url');
+    }
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      throw new Error('skill:fetchRemotePost received an invalid URL');
+    }
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      throw new Error('skill:fetchRemotePost only allows http/https URLs');
+    }
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/plain, */*',
+      },
+      body: JSON.stringify(body ?? {}),
+    });
+    if (!response.ok) {
+      throw new Error(`Remote POST failed (${response.status})`);
+    }
+    return await response.text();
+  });
 
   ipcMain.handle(IPC_CHANNELS.SKILL_FETCH_REMOTE_BINARY, async (_, url: string) => {
     if (typeof url !== 'string' || url.trim().length === 0) {

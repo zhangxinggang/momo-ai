@@ -1,4 +1,4 @@
-﻿import type { ISkill } from '@/types/modules';
+import type { ISkill } from '@/types/modules';
 
 /** 技能描述摘要最大长度 */
 const SKILL_DESC_PREVIEW = 160;

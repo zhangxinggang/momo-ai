@@ -35,9 +35,7 @@ export function ChatWorkspaceControl({ workspace, tooltip, className }: IProps) 
         <span
           className='max-w-[120px] truncate text-xs text-gray-500 dark:text-gray-400'
           title={workspace.paths.join('\n')}>
-          {pathCount === 1
-            ? formatWorkspaceDisplayPath(workspace.paths[0])
-            : `${pathCount} 个目录`}
+          {pathCount === 1 ? formatWorkspaceDisplayPath(workspace.paths[0]) : `${pathCount} 个目录`}
         </span>
       ) : null}
     </div>

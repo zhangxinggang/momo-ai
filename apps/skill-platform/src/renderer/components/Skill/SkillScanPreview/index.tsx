@@ -1,4 +1,4 @@
-﻿import type { IScannedSkill } from '@/types/modules';
+import type { IScannedSkill } from '@/types/modules';
 import { Button, Checkbox, Input, Modal } from 'antd';
 import {
   CheckCircle2Icon,

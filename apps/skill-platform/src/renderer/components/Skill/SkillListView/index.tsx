@@ -1,7 +1,6 @@
-﻿import type { ISkillPlatform } from '@/types/constants/platforms';
+import type { ISkillPlatform } from '@/types/constants/platforms';
 import type { ESkillSafetyLevel, ISkill } from '@/types/modules';
 import { PlatformIcon } from '@renderer/components/ui/PlatformIcon';
-import { getRuntimeCapabilities } from '@renderer/runtime';
 import { useSkillStore } from '@renderer/store';
 import { Button } from 'antd';
 import {
@@ -97,7 +96,6 @@ export function SkillListView({
   const selectedSkillId = useSkillStore((state) => state.selectedSkillId);
   const selectSkill = useSkillStore((state) => state.selectSkill);
   const storeView = useSkillStore((state) => state.storeView);
-  const runtimeCapabilities = getRuntimeCapabilities();
 
   // Platform status cache
   const [platformStatuses, setPlatformStatuses] = useState<Record<string, Record<string, boolean>>>(
@@ -108,12 +106,6 @@ export function SkillListView({
 
   // Load platforms on mount
   useEffect(() => {
-    if (!runtimeCapabilities.skillPlatformIntegration) {
-      setSupportedPlatforms([]);
-      setDetectedPlatforms([]);
-      return;
-    }
-
     const loadPlatforms = async () => {
       try {
         const platforms = await window.api.skill.getSupportedPlatforms();
@@ -125,15 +117,10 @@ export function SkillListView({
       }
     };
     loadPlatforms();
-  }, [runtimeCapabilities.skillPlatformIntegration]);
+  }, []);
 
   // Load install status for all skills
   useEffect(() => {
-    if (!runtimeCapabilities.skillPlatformIntegration) {
-      setPlatformStatuses({});
-      return;
-    }
-
     const loadStatuses = async () => {
       const nextStatuses = Object.fromEntries(
         skills.map((skill) => [skill.id, skillPlatformStatusCache.get(skill.name) ?? {}]),
@@ -173,7 +160,7 @@ export function SkillListView({
     } else {
       setPlatformStatuses({});
     }
-  }, [runtimeCapabilities.skillPlatformIntegration, skills]);
+  }, [skills]);
 
   const availablePlatforms = useMemo(() => {
     return supportedPlatforms.filter((p) => detectedPlatforms.includes(p.id));
@@ -188,8 +175,6 @@ export function SkillListView({
 
   if (skills.length === 0) {
     const isDistributionView = storeView === 'distribution';
-    const webSkillLibraryMode =
-      !runtimeCapabilities.skillDistribution && !runtimeCapabilities.skillStore;
     return (
       <div className='text-muted-foreground animate-in fade-in zoom-in-95 flex h-full flex-col items-center justify-center py-20 duration-500'>
         <div className='bg-accent/30 relative mb-6 rounded-full p-8'>
@@ -200,11 +185,9 @@ export function SkillListView({
           {isDistributionView ? '暂无技能' : '暂无技能'}
         </h3>
         <p className='mb-8 max-w-sm text-center text-sm opacity-70'>
-          {webSkillLibraryMode
-            ? '在此创建或导入你自己的技能。平台分发与技能商店仅在桌面客户端可用。'
-            : isDistributionView
-              ? '先导入 skill，再在这里安装、同步或卸载到 Claude、Cursor 等平台。'
-              : '创建、导入或从商店安装你的第一个技能'}
+          {isDistributionView
+            ? '先导入 skill，再在这里安装、同步或卸载到 Claude、Cursor 等平台。'
+            : '创建、导入或从商店安装你的第一个技能'}
         </p>
       </div>
     );
@@ -317,7 +300,7 @@ export function SkillListView({
                 </div>
 
                 {/* Platform indicators */}
-                {runtimeCapabilities.skillPlatformIntegration && totalPlatforms > 0 && (
+                {totalPlatforms > 0 && (
                   <div className='flex shrink-0 items-center gap-1'>
                     {availablePlatforms.slice(0, 3).map((platform) => {
                       const isInstalled = platformStatuses[skill.id]?.[platform.id];
@@ -353,18 +336,16 @@ export function SkillListView({
                       title={'AI 对话'}
                       icon={<MessagesSquare className='h-4 w-4' />}
                     />
-                    {runtimeCapabilities.skillPlatformIntegration && (
-                      <Button
-                        type='text'
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onQuickInstall(skill);
-                        }}
-                        className='text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg p-2 active:scale-90'
-                        title={'快速安装'}
-                        icon={<DownloadIcon className='h-4 w-4' />}
-                      />
-                    )}
+                    <Button
+                      type='text'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onQuickInstall(skill);
+                      }}
+                      className='text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg p-2 active:scale-90'
+                      title={'快速安装'}
+                      icon={<DownloadIcon className='h-4 w-4' />}
+                    />
                     <Button
                       type='text'
                       danger

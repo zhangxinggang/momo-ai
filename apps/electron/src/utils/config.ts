@@ -1,8 +1,8 @@
 import fs from 'fs';
-import merge from 'merge';
 import path from 'path';
 import packageJson from '../../package.json';
 
+import { mergeDeep } from '@momo/utils';
 import { CONFIG_FILE } from './constant';
 import { getAPPRootPath, getPackagePath } from './path';
 
@@ -12,7 +12,7 @@ export const getAppConfig = () => {
   const selfBuildPath = path.join(getPackagePath(), CONFIG_FILE);
   let config = require(selfBuildPath);
   if (fs.existsSync(promisePath)) {
-    merge.recursive(config, require(promisePath));
+    mergeDeep(config, require(promisePath));
   }
   return config;
 };

@@ -7,7 +7,9 @@ import styles from './index.module.less';
 export interface IProps {
   value: string;
   className?: string;
+  theme?: 'light' | 'dark';
   previewTheme?: string;
+  codeTheme?: string;
   id?: string;
 }
 
@@ -17,14 +19,21 @@ const MdPreviewView = MdPreview as any;
 /**
  * 基于 @momo/markdown 的只读 Markdown 预览
  */
-export function MarkdownPreview({ value, className, previewTheme, id }: IProps) {
+export function MarkdownPreview({
+  value,
+  className,
+  theme: themeProp,
+  previewTheme,
+  codeTheme = 'atom',
+  id,
+}: IProps) {
   const isDarkMode = useSettingsStore((state) => state.isDarkMode);
   const generatedId = useId().replace(/:/g, '');
   const editorId = id ?? `markdown-preview-${generatedId}`;
 
-  const theme = isDarkMode ? 'dark' : 'light';
+  const theme = themeProp ?? (isDarkMode ? 'dark' : 'light');
   const resolvedPreviewTheme = useMemo(
-    () => previewTheme ?? (isDarkMode ? 'cyanosis' : 'default'),
+    () => previewTheme ?? 'cyanosis',
     [isDarkMode, previewTheme],
   );
 
@@ -39,6 +48,7 @@ export function MarkdownPreview({ value, className, previewTheme, id }: IProps) 
         value={value}
         theme={theme}
         previewTheme={resolvedPreviewTheme}
+        codeTheme={codeTheme}
         style={{ background: 'transparent' }}
       />
     </div>

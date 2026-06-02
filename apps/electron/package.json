@@ -28,10 +28,10 @@
   },
   "dependencies": {
     "@momo/server": "workspace:*",
+    "@momo/utils": "workspace:*",
     "better-sqlite3": "12.9.0",
     "chalk": "^2.4.2",
     "chokidar": "^3.5.3",
-    "merge": "^2.1.1",
     "node-machine-id": "^1.1.12",
     "node-rsa": "^1.1.1",
     "typeorm": "^1.0.0"

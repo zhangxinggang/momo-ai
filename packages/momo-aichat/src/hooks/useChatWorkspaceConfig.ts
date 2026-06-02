@@ -98,9 +98,6 @@ export function useChatWorkspaceConfig(
         void handleAddFolder();
       },
       onRemoveFolder: handleRemoveFolder,
-      onSelectFolder: () => {
-        void handleAddFolder();
-      },
     }),
     [handleAddFolder, handleRemoveFolder, setWorkspaceEnabled, workspaceEnabled, workspacePaths],
   );
@@ -114,11 +111,16 @@ export function buildChatWorkspaceConfig(input: {
   onEnabledChange: (enabled: boolean) => void;
   onAddFolder: () => void;
   onRemoveFolder: (folderPath: string) => void;
-  onSelectFolder?: () => void;
+  presets?: IChatWorkspaceConfig['presets'];
+  activePresetId?: string | null;
+  onPresetSelect?: IChatWorkspaceConfig['onPresetSelect'];
+  onPresetSave?: IChatWorkspaceConfig['onPresetSave'];
+  onPresetRename?: IChatWorkspaceConfig['onPresetRename'];
+  onPresetDelete?: IChatWorkspaceConfig['onPresetDelete'];
+  onOpenFolderPath?: IChatWorkspaceConfig['onOpenFolderPath'];
+  checkPathExists?: IChatWorkspaceConfig['checkPathExists'];
 }): IChatWorkspaceConfig {
-  const paths =
-    input.paths ??
-    (input.path?.trim() ? [input.path.trim()] : []);
+  const paths = input.paths ?? (input.path?.trim() ? [input.path.trim()] : []);
   return {
     enabled: input.enabled,
     paths,
@@ -126,6 +128,13 @@ export function buildChatWorkspaceConfig(input: {
     onEnabledChange: input.onEnabledChange,
     onAddFolder: input.onAddFolder,
     onRemoveFolder: input.onRemoveFolder,
-    onSelectFolder: input.onSelectFolder ?? input.onAddFolder,
+    presets: input.presets,
+    activePresetId: input.activePresetId,
+    onPresetSelect: input.onPresetSelect,
+    onPresetSave: input.onPresetSave,
+    onPresetRename: input.onPresetRename,
+    onPresetDelete: input.onPresetDelete,
+    onOpenFolderPath: input.onOpenFolderPath,
+    checkPathExists: input.checkPathExists,
   };
 }

@@ -3,6 +3,7 @@ import '@momo/markdown-styles';
 import { useEffect } from 'react';
 
 import { AiChatShell } from '@renderer/components/Chat/AiChatShell';
+import { useAiChatViewTheme } from '@renderer/hooks/useAiChatViewTheme';
 
 export interface IProps {
   /** 用于在 Drawer 打开时重置 ChatProvider */
@@ -35,6 +36,7 @@ function PromptTestAiChatBridge({
 >) {
   const { isAILoading, currentSession, currentSessionId, addMessage, updateMessage } =
     useChatContext();
+  const chatTheme = useAiChatViewTheme();
 
   useEffect(() => {
     onLoadingChange?.(isAILoading);
@@ -64,6 +66,7 @@ function PromptTestAiChatBridge({
 
   return (
     <AiChatView
+      {...chatTheme}
       inputValue={userPrompt}
       hideWelcome
       onAfterSend={onAfterSend}

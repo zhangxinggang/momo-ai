@@ -11,10 +11,13 @@ import styles from './index.module.less';
 export function WorkflowModalsHost() {
   const workflowScreen = useUIStore((s) => s.workflowScreen);
   const activeWorkflowId = useUIStore((s) => s.activeWorkflowId);
-  const openWorkflowList = useUIStore((s) => s.openWorkflowList);
+  const activeBusinessId = useUIStore((s) => s.activeBusinessId);
+  const closeWorkflowStudio = useUIStore((s) => s.closeWorkflowStudio);
+  const closeWorkflowBusinessWork = useUIStore((s) => s.closeWorkflowBusinessWork);
 
   const isStudioOpen = workflowScreen === 'studio';
-  const isWorkOpen = workflowScreen === 'work' && Boolean(activeWorkflowId);
+  const isBusinessWorkOpen =
+    workflowScreen === 'business-work' && Boolean(activeWorkflowId) && Boolean(activeBusinessId);
   const studioKey = activeWorkflowId ?? 'new';
 
   return (
@@ -28,16 +31,17 @@ export function WorkflowModalsHost() {
           <div className={styles['workflow-modals-overlay']}>
             <WorkflowStudio
               key={`studio-${studioKey}`}
-              onClose={openWorkflowList}
+              onClose={closeWorkflowStudio}
               workflowId={activeWorkflowId}
             />
           </div>
         ) : null}
       </div>
-      {isWorkOpen && activeWorkflowId ? (
+      {isBusinessWorkOpen && activeWorkflowId && activeBusinessId ? (
         <WorkflowWorkPage
-          key={`work-${activeWorkflowId}`}
-          onClose={openWorkflowList}
+          key={`work-${activeWorkflowId}-${activeBusinessId}`}
+          businessId={activeBusinessId}
+          onClose={closeWorkflowBusinessWork}
           workflowId={activeWorkflowId}
         />
       ) : null}

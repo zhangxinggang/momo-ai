@@ -17,5 +17,6 @@ export type {
   IModelInfo,
   IMultiModelCompareResult,
   IStreamCallbacks,
+  ITokenUsage,
   TChatMessageContent,
 } from '@renderer/types/ai';

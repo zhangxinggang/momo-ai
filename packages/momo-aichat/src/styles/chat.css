@@ -38,6 +38,14 @@
   background: transparent !important;
 }
 
+.chat-model-select.ant-select-borderless:hover .ant-select-selector,
+.chat-model-select.ant-select-borderless.ant-select-focused .ant-select-selector,
+.chat-model-select.ant-select-borderless.ant-select-open .ant-select-selector {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
 .chat-model-select.ant-select-borderless .ant-select-selection-item {
   padding-inline-end: 0 !important;
   font-size: 12px;
@@ -56,8 +64,17 @@
 }
 
 .chat-feature-dropdown-trigger {
-  border: none;
-  box-shadow: none;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.chat-feature-dropdown-trigger:hover,
+.chat-feature-dropdown-trigger:focus,
+.chat-feature-dropdown-trigger:focus-visible,
+.chat-feature-dropdown-trigger:active {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 .chat-feature-dropdown-panel {
@@ -68,4 +85,20 @@
   border: none !important;
   box-shadow: none !important;
   background: transparent !important;
+}
+
+.model-select-borderless.ant-select-borderless:hover .ant-select-selector,
+.model-select-borderless.ant-select-borderless.ant-select-focused .ant-select-selector,
+.model-select-borderless.ant-select-borderless.ant-select-open .ant-select-selector {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.chat-input-attach-btn.ant-btn {
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  border-radius: 9999px !important;
 }

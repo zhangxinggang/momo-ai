@@ -1,13 +1,13 @@
-﻿import { SKILL_CREATOR_CONTENT_URL } from '@/types/constants/skill-registry';
+import { SKILL_CREATOR_CONTENT_URL } from '@/types/constants/skill-registry';
 import type { IRegistrySkill, IScannedSkill } from '@/types/modules/skill';
-import { allToolbar, MdEditor } from '@momo/markdown';
+import { allToolbar, MdEditor, type IExposeParam } from '@momo/markdown';
 import '@momo/markdown-styles';
 import { useUnsavedLeaveGuard } from '@renderer/hooks/useUnsavedLeaveGuard';
-import { getRuntimeCapabilities } from '@renderer/runtime';
 import { generateSkillContent, IAIConfig, polishSkillContent } from '@renderer/services/ai';
 import { loadGitHubSkillRepo } from '@renderer/services/skill/github-store';
 import { getExistingSkillTags } from '@renderer/services/skill/modal-utils';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
+import { useMdEditorImageUpload } from '@renderer/utils/markdown/editor-config';
 import type { UploadProps } from 'antd';
 import { Button, Input, Modal, Upload, type ModalProps } from 'antd';
 import {
@@ -42,7 +42,6 @@ function sanitizeSkillName(value: string): string {
 }
 
 export function CreateSkillModal({ isOpen, onClose }: IProps) {
-  const runtimeCapabilities = getRuntimeCapabilities();
   const createSkill = useSkillStore((state) => state.createSkill);
   const installRegistrySkill = useSkillStore((state) => state.installRegistrySkill);
   const importScannedSkills = useSkillStore((state) => state.importScannedSkills);
@@ -77,6 +76,8 @@ export function CreateSkillModal({ isOpen, onClose }: IProps) {
   const [tagInput, setTagInput] = useState('');
 
   const SkillMdEditor = MdEditor as typeof MdEditor;
+  const skillMdEditorRef = useRef<IExposeParam>(null);
+  const { handleDrop, handleUploadImg } = useMdEditorImageUpload(skillMdEditorRef);
   const skillMdToolbars = useMemo(
     () => allToolbar.filter((item) => !['prettier', 'github', 'save'].includes(String(item))),
     [],
@@ -879,21 +880,19 @@ export function CreateSkillModal({ isOpen, onClose }: IProps) {
                 </div>
               </Button>
 
-              {runtimeCapabilities.skillLocalScan && (
-                <Button
-                  type='default'
-                  block
-                  className='bg-accent/50 hover:bg-accent border-border !h-auto justify-start gap-4 rounded-xl border p-4 text-left'
-                  onClick={() => setMode('scan')}>
-                  <div className='bg-background group-hover:bg-primary/10 rounded-lg p-3 transition-colors'>
-                    <FolderOpenIcon className='text-foreground h-6 w-6' />
-                  </div>
-                  <div className='text-left'>
-                    <h3 className='text-foreground font-medium'>{'扫描本地'}</h3>
-                    <p className='text-muted-foreground text-sm'>{'扫描本地已有的技能'}</p>
-                  </div>
-                </Button>
-              )}
+              <Button
+                type='default'
+                block
+                className='bg-accent/50 hover:bg-accent border-border !h-auto justify-start gap-4 rounded-xl border p-4 text-left'
+                onClick={() => setMode('scan')}>
+                <div className='bg-background group-hover:bg-primary/10 rounded-lg p-3 transition-colors'>
+                  <FolderOpenIcon className='text-foreground h-6 w-6' />
+                </div>
+                <div className='text-left'>
+                  <h3 className='text-foreground font-medium'>{'扫描本地'}</h3>
+                  <p className='text-muted-foreground text-sm'>{'扫描本地已有的技能'}</p>
+                </div>
+              </Button>
             </div>
           )}
 
@@ -1209,12 +1208,15 @@ export function CreateSkillModal({ isOpen, onClose }: IProps) {
                   className='border-border overflow-hidden rounded-lg border'
                   style={{ height: 420 }}>
                   <SkillMdEditor
+                    ref={skillMdEditorRef}
                     value={instructions}
                     onChange={(value) => setInstructions(value)}
                     preview
                     previewTheme='default'
                     noPrettier
                     toolbars={skillMdToolbars}
+                    onDrop={handleDrop}
+                    onUploadImg={handleUploadImg}
                     style={{ height: '100%' }}
                   />
                 </div>

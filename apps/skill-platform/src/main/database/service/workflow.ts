@@ -10,6 +10,7 @@ function rowToWorkflow(row: Record<string, unknown>): IWorkflow {
     id: String(row.id),
     name: String(row.name),
     graphJson: String(row.graph_json ?? row.graphJson ?? EMPTY_GRAPH),
+    folderId: row.folder_id != null ? String(row.folder_id) : null,
     createdAt: Number(row.created_at ?? row.createdAt),
     updatedAt: Number(row.updated_at ?? row.updatedAt),
   };
@@ -27,6 +28,7 @@ export class WorkflowService {
       id,
       name: data.name.trim() || 'Untitled',
       graph_json: graphJson,
+      folder_id: data.folderId ?? null,
       created_at: now,
       updated_at: now,
     });
@@ -58,6 +60,10 @@ export class WorkflowService {
     if (data.graphJson !== undefined) {
       sets.push('graph_json = ?');
       values.push(data.graphJson);
+    }
+    if (data.folderId !== undefined) {
+      sets.push('folder_id = ?');
+      values.push(data.folderId);
     }
 
     await this.repo.updateDynamic(sets.join(', '), values, id);

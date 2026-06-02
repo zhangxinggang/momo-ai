@@ -1,37 +1,12 @@
-import { getAppConfig, resolveInitialUserDataPath } from '@momo/electron';
 import { app } from 'electron';
 import fs from 'fs';
 import path from 'path';
 
-const { appName } = getAppConfig();
-const appDataPath = app.getPath('appData');
-const userDataPath = app.getPath('userData');
+/** ISkill 全局 Node 运行时 npm 包名 */
+const SKILL_RUNTIME_PACKAGE_NAME = '@prompthub/skill-runtime';
 
-const productConfig = {
-  productName: 'PromptHub',
-  configDirName: 'PromptHub',
-  dataMarkers: [
-    'prompthub.db',
-    'data',
-    'config',
-    'backups',
-    'logs',
-    'workspace',
-    'IndexedDB',
-    'Local Storage',
-    'Session Storage',
-    'images',
-    'videos',
-    'skills',
-    'shortcuts.json',
-    'shortcut-mode.json',
-  ],
-};
 export function getUserDataPath(): string {
-  if (userDataPath) {
-    return path.resolve(userDataPath);
-  }
-  return resolveInitialUserDataPath(productConfig);
+  return path.resolve(app.getPath('userData'));
 }
 
 function resolvePreferredPath(primaryPath: string, legacyPath?: string): string {
@@ -66,6 +41,25 @@ export function getLegacySkillsDir(): string {
 
 export function getSkillsDir(): string {
   return resolvePreferredPath(path.join(getDataDir(), 'skills'), getLegacySkillsDir());
+}
+
+export function getRulesDir(): string {
+  return path.join(getDataDir(), 'rules');
+}
+
+/** ISkill 全局 Node 运行时 npm 包名 */
+export function getSkillRuntimePackageName(): string {
+  return SKILL_RUNTIME_PACKAGE_NAME;
+}
+
+/** ISkill 全局 Node 运行时根目录：<userData>/data/skills/runtime */
+export function getSkillRuntimeDir(): string {
+  return path.join(getDataDir(), 'skills', 'runtime');
+}
+
+/** ISkill 全局 Node 运行时 node_modules：<userData>/data/skills/runtime/node_modules */
+export function getSkillRuntimeNodeModulesDir(): string {
+  return path.join(getSkillRuntimeDir(), 'node_modules');
 }
 
 export function getLegacyWorkspaceDir(): string {
@@ -121,6 +115,11 @@ export function getNotesDir(): string {
   return path.join(getDataDir(), 'notes');
 }
 
+/** 技能商店下载缓存：<userData>/data/skills/source */
+export function getSkillsSourceDir(): string {
+  return path.join(getDataDir(), 'skills', 'source');
+}
+
 /** 启动项目根目录（开发/打包均以 process.cwd() 为准） */
 export function getProjectRoot(): string {
   return process.cwd();
@@ -143,8 +142,24 @@ export function getWorkflowAgentDir(workflowName: string): string {
   return path.join(getAgentDir(), safeName);
 }
 
-/** 工作流节点产出目录：<userData>/agent/<workflowName>/<nodeName> */
+/** 工作流业务实例目录：<userData>/agent/<workflowName>/<businessId> */
+export function getWorkflowBusinessAgentDir(workflowName: string, businessId: string): string {
+  const safeBiz = businessId.replace(/[^a-zA-Z0-9_-]/g, '_') || 'business';
+  return path.join(getWorkflowAgentDir(workflowName), safeBiz);
+}
+
+/** 工作流节点产出目录（旧，无 businessId）：<userData>/agent/<workflowName>/<nodeName> */
 export function getWorkflowNodeAgentDir(workflowName: string, nodeName: string): string {
   const safeNode = nodeName.replace(/[^a-zA-Z0-9_-]/g, '_') || 'node';
   return path.join(getWorkflowAgentDir(workflowName), safeNode);
+}
+
+/** 工作流业务节点产出目录：<userData>/agent/<workflowName>/<businessId>/<nodeName> */
+export function getWorkflowBusinessNodeAgentDir(
+  workflowName: string,
+  businessId: string,
+  nodeName: string,
+): string {
+  const safeNode = nodeName.replace(/[^a-zA-Z0-9_-]/g, '_') || 'node';
+  return path.join(getWorkflowBusinessAgentDir(workflowName, businessId), safeNode);
 }

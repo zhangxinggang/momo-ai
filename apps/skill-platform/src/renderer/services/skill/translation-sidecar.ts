@@ -101,12 +101,8 @@ export async function writeSkillTranslationSidecar(input: {
   };
 
   await window.api.skill.createLocalDir(input.skillId, baseDir);
-  await window.api.skill.writeLocalFile(input.skillId, skillMdPath, input.translatedContent, {
-    skipVersionSnapshot: true,
-  });
-  await window.api.skill.writeLocalFile(input.skillId, metaPath, JSON.stringify(meta, null, 2), {
-    skipVersionSnapshot: true,
-  });
+  await window.api.skill.writeLocalFile(input.skillId, skillMdPath, input.translatedContent);
+  await window.api.skill.writeLocalFile(input.skillId, metaPath, JSON.stringify(meta, null, 2));
 
   return {
     content: input.translatedContent,

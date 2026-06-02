@@ -1,4 +1,4 @@
-﻿import type { ISkillStoreSource } from '@/types/modules';
+import type { ISkillStoreSource } from '@/types/modules';
 import { Button } from 'antd';
 import { LinkIcon, Loader2Icon, PowerIcon, TrashIcon } from 'lucide-react';
 

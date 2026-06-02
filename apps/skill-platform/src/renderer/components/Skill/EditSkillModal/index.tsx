@@ -1,4 +1,4 @@
-﻿import type { ISkill } from '@/types/modules';
+import type { ISkill } from '@/types/modules';
 import { useUnsavedLeaveGuard } from '@renderer/hooks/useUnsavedLeaveGuard';
 import { SKILL_NAME_REGEX } from '@renderer/services/skill/detail-utils';
 import {

@@ -1,39 +1,8 @@
 ﻿import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
 import type { ENoteType } from '@/types/modules';
-import { getMainWindow } from '@momo/electron';
-import { BrowserWindow, dialog, ipcMain } from 'electron';
-import fs from 'node:fs';
+import { ipcMain } from 'electron';
 
 import { noteWorkspaceService } from '../services/note';
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function buildNotePdfHtml(title: string, content: string): string {
-  return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>${escapeHtml(title)}</title>
-  <style>
-    body {
-      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
-      padding: 24px;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      color: #111827;
-    }
-  </style>
-</head>
-<body>${escapeHtml(content)}</body>
-</html>`;
-}
 
 /**
  * 注册笔记 IPC
@@ -89,35 +58,7 @@ export function registerNoteIPC(): void {
     return noteWorkspaceService.copyFile(filePath);
   });
 
-  ipcMain.handle(
-    IPC_CHANNELS.NOTE_EXPORT_PDF,
-    async (_event, payload: { title: string; content: string; defaultName: string }) => {
-      const win = new BrowserWindow({
-        show: false,
-        webPreferences: {
-          sandbox: true,
-        },
-      });
-
-      try {
-        const html = buildNotePdfHtml(payload.title, payload.content);
-        await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
-        const pdfBuffer = await win.webContents.printToPDF({ printBackground: true });
-
-        const result = await dialog.showSaveDialog(getMainWindow()!, {
-          defaultPath: `${payload.defaultName}.pdf`,
-          filters: [{ name: 'PDF', extensions: ['pdf'] }],
-        });
-
-        if (result.canceled || !result.filePath) {
-          return { success: false, canceled: true };
-        }
-
-        fs.writeFileSync(result.filePath, pdfBuffer);
-        return { success: true, filePath: result.filePath };
-      } finally {
-        win.destroy();
-      }
-    },
-  );
+  ipcMain.handle(IPC_CHANNELS.NOTE_BOOTSTRAP_CURSOR_RULES, async () => {
+    return noteWorkspaceService.bootstrapCursorRulesFromProject();
+  });
 }

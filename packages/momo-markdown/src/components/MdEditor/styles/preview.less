@@ -1,4 +1,5 @@
 // 部分样式来源于其他开源UI库
+@import '@vavt/cm-extension/dist/previewTheme/arknights.css';
 @import '@vavt/markdown-theme/css/all.css';
 @import '~/styles/vars.less';
 @import '~~/components/MdCatalog/index.less';
@@ -35,14 +36,6 @@
     z-index: 10000;
   }
 
-  .@{prefix}-page-fullscreen {
-    position: absolute !important;
-    inset: 0;
-    width: 100% !important;
-    height: 100% !important;
-    z-index: 20;
-  }
-
   svg&-icon {
     width: 16px;
     height: 16px;
@@ -71,6 +64,70 @@
     display: flow-root;
     padding-block: 10px;
     padding-inline: 20px;
+
+    p.@{prefix}-mermaid,
+    .@{prefix}-plantuml-rendered,
+    div.@{prefix}-echarts {
+      position: relative;
+      overflow: hidden;
+    }
+
+    p.@{prefix}-mermaid > svg,
+    .@{prefix}-plantuml-rendered > .@{prefix}-plantuml-image,
+    div.@{prefix}-echarts > canvas {
+      pointer-events: none;
+    }
+
+    p.@{prefix}-mermaid[data-grab] > svg,
+    .@{prefix}-plantuml-rendered[data-grab] > .@{prefix}-plantuml-image,
+    div.@{prefix}-echarts[data-grab] > canvas {
+      pointer-events: auto;
+    }
+
+    p.@{prefix}-mermaid[data-grab],
+    .@{prefix}-plantuml-rendered[data-grab],
+    div.@{prefix}-echarts[data-grab] {
+      touch-action: none;
+    }
+
+    .@{prefix}-mermaid-action {
+      position: absolute;
+      inset-block-start: 8px;
+      inset-inline-end: 8px;
+      display: flex;
+      gap: 4px;
+      padding-block: 2px;
+      padding-inline: 4px;
+      border-radius: 4px;
+      background-color: rgb(255 255 255 / 88%);
+      box-shadow: 0 1px 4px rgb(0 0 0 / 12%);
+      z-index: 10;
+      pointer-events: auto;
+
+      span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-radius: 3px;
+        min-width: 24px;
+        min-height: 24px;
+
+        svg,
+        .@{prefix}-icon {
+          pointer-events: none;
+        }
+
+        &:hover {
+          background-color: var(--md-bk-hover-color);
+        }
+      }
+    }
+
+    .@{prefix}-plantuml-image {
+      display: block;
+      max-width: 100%;
+    }
   }
 }
 
@@ -111,7 +168,102 @@
 }
 
 // 图片预览优先级高于编辑器，低于编辑器弹窗
-.medium-zoom-overlay,
-.medium-zoom-image--opened {
-  z-index: 100001;
+.@{prefix}-image-preview-root,
+.ant-image-preview-root,
+.ant-image-preview-wrap {
+  z-index: 100001 !important;
+}
+
+.@{prefix}-image-preview-root {
+  .ant-image-preview-close {
+    position: fixed;
+    inset-block-start: 28px;
+    inset-inline-end: 28px;
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+
+    .anticon,
+    svg,
+    path {
+      pointer-events: none;
+    }
+  }
+
+  .ant-image-preview-operations {
+    pointer-events: auto;
+  }
+}
+
+.@{prefix}-chart-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100002;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.@{prefix}-chart-fullscreen-action {
+  position: absolute;
+  inset-block-start: 12px;
+  inset-inline-end: 12px;
+  z-index: 3;
+  display: flex;
+  gap: 4px;
+  padding-block: 2px;
+  padding-inline: 4px;
+  border-radius: 4px;
+  background-color: rgb(255 255 255 / 88%);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 12%);
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 3px;
+    min-width: 24px;
+    min-height: 24px;
+
+    svg,
+    .@{prefix}-icon {
+      pointer-events: none;
+    }
+
+    &:hover {
+      background-color: var(--md-bk-hover-color, rgb(0 0 0 / 6%));
+    }
+  }
+}
+
+.@{prefix}-chart-fullscreen-viewport {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 0;
+  background-color: #fff;
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
+.@{prefix}-chart-fullscreen-transform {
+  display: inline-block;
+  transform-origin: 0 0;
+
+  svg,
+  img {
+    display: block;
+    max-width: none;
+    height: auto;
+    margin: 0;
+    pointer-events: none;
+  }
 }

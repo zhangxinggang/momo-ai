@@ -91,7 +91,7 @@ export function createPromptTestStream(options: IPromptTestStreamOptions): TCall
     }
 
     try {
-      const elapsedSec = await runChatCompletionStream({
+      const { elapsedSec, usage } = await runChatCompletionStream({
         config,
         apiMessages,
         onChunk,
@@ -103,9 +103,9 @@ export function createPromptTestStream(options: IPromptTestStreamOptions): TCall
       onStats?.({
         model: config.model,
         responseTime: `${elapsedSec}s`,
-        totalTokens: 0,
-        promptTokens: 0,
-        completionTokens: 0,
+        totalTokens: usage?.totalTokens ?? 0,
+        promptTokens: usage?.promptTokens ?? 0,
+        completionTokens: usage?.completionTokens ?? 0,
         citations,
       });
     } catch (err) {

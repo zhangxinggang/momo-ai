@@ -1,8 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-import { getSkillTempOutputDir } from '../../../runtime-paths';
-import { getSkillRuntimeDir } from '../runtime/node-runtime';
+import { getSkillRuntimeDir, getSkillTempOutputDir } from '../../../runtime-paths';
 import { runSkillCommandLines } from './command-runner';
 import { ensureSkillWorkspaceDependencies } from './deps';
 import { sanitizeSkillCommandLines } from './sanitize-commands';

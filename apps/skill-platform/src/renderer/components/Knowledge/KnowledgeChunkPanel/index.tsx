@@ -1,4 +1,4 @@
-﻿import type { IKbDocument } from '@/types/modules/kb';
+import type { IKbDocument } from '@/types/modules/kb';
 import {
   kbDeleteChunks,
   kbListChunks,

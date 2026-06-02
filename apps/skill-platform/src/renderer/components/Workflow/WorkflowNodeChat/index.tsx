@@ -1,11 +1,17 @@
 import type { ISkill } from '@/types/modules';
-import { AiChatView, useChatContext, type IAiChatServices, type IChatMessage } from '@momo/aichat';
+import {
+  AiChatView,
+  buildChatWorkspaceConfig,
+  useChatContext,
+  type IAiChatServices,
+  type IChatMessage,
+} from '@momo/aichat';
 import '@momo/markdown-styles';
 import { useCallback, useEffect, useMemo } from 'react';
 
-import { SkillContextCard } from '@renderer/components/Skill/SkillContextCard';
 import { WorkflowAiChatShell } from '@renderer/components/Workflow/WorkflowAiChatShell';
 import { useToast } from '@renderer/components/ui/Toast';
+import { useAiChatViewTheme } from '@renderer/hooks/useAiChatViewTheme';
 import { useChatWorkspaceBinding } from '@renderer/hooks/useChatWorkspaceBinding';
 import { useRankedChatModelGroups } from '@renderer/hooks/useRankedChatModelGroups';
 import { useStableModelResolver } from '@renderer/hooks/useStableModelResolver';
@@ -17,8 +23,11 @@ import {
 } from '@renderer/services/aichat';
 import { buildActiveSkillLine, buildSkillsSummary } from '@renderer/services/skill/chat-context';
 import { persistWorkflowArtifactsFromReply } from '@renderer/services/workflow/artifact-writer';
+import type { IParallelPreviousResultItem } from '@renderer/services/workflow/parallel-context';
+import { buildMergedParallelContext } from '@renderer/services/workflow/parallel-context';
 import { buildWorkflowWorkspaceContext } from '@renderer/services/workflow/workspace-context';
 import type { IAIModelConfig } from '@renderer/types/settings';
+import { Tabs } from 'antd';
 import styles from './index.module.less';
 
 export interface IProps {
@@ -26,6 +35,7 @@ export interface IProps {
   bootstrapSessionId: string;
   storagePrefix: string;
   workflowName: string;
+  businessId: string;
   nodeName: string;
   nodeOutputDir: string | null;
   resourceKind: 'prompt' | 'skill';
@@ -35,7 +45,11 @@ export interface IProps {
   activeSkillId: string | null;
   aiModels: IAIModelConfig[];
   workspaceNodeName: string | null;
+  executionModel?: string;
+  kbCollectionId?: number;
+  nodeWorkspacePaths?: string[];
   previousNodeRunResult: { nodeName: string; content: string } | null;
+  previousParallelResults?: IParallelPreviousResultItem[] | null;
   prefillUserPrompt: boolean;
   onAdopt: (content: string) => void;
   onArtifactsPersisted?: () => void;
@@ -45,9 +59,8 @@ function WorkflowChatBridge({
   systemPrompt,
   userPrompt,
   resourceKind,
-  skills,
-  activeSkillId,
   previousNodeRunResult,
+  previousParallelResults,
   prefillUserPrompt,
   onAdopt,
 }: Pick<
@@ -55,12 +68,12 @@ function WorkflowChatBridge({
   | 'systemPrompt'
   | 'userPrompt'
   | 'resourceKind'
-  | 'skills'
-  | 'activeSkillId'
   | 'previousNodeRunResult'
+  | 'previousParallelResults'
   | 'prefillUserPrompt'
   | 'onAdopt'
 >) {
+  const chatTheme = useAiChatViewTheme();
   const { currentSession, currentSessionId, addMessage, updateMessage } = useChatContext();
 
   useEffect(() => {
@@ -93,11 +106,6 @@ function WorkflowChatBridge({
     [onAdopt],
   );
 
-  const activeSkill = useMemo(
-    () => (activeSkillId ? skills.find((s) => s.id === activeSkillId) : undefined),
-    [activeSkillId, skills],
-  );
-
   const hasChatHistory = useMemo(
     () =>
       (currentSession?.messages ?? []).some(
@@ -107,10 +115,28 @@ function WorkflowChatBridge({
   );
 
   const shouldPrefillUserPrompt = prefillUserPrompt && !hasChatHistory;
+  const showParallelTabs = previousParallelResults && previousParallelResults.length > 1;
 
   return (
     <div className={styles['workflow-node-chat']}>
-      {previousNodeRunResult ? (
+      {showParallelTabs ? (
+        <div className={styles['workflow-node-chat-prev-result']}>
+          <div className={styles['workflow-node-chat-prev-result-header']}>
+            {'上一节点运行结果'}
+          </div>
+          <Tabs
+            items={previousParallelResults.map((item) => ({
+              key: item.nodeId,
+              label: item.nodeName,
+              children: (
+                <div className={styles['workflow-node-chat-prev-result-body']}>
+                  {item.content.trim() || '暂无运行结果'}
+                </div>
+              ),
+            }))}
+          />
+        </div>
+      ) : previousNodeRunResult ? (
         <div className={styles['workflow-node-chat-prev-result']}>
           <div className={styles['workflow-node-chat-prev-result-header']}>
             {'上一节点运行结果'}
@@ -123,13 +149,9 @@ function WorkflowChatBridge({
           </div>
         </div>
       ) : null}
-      {resourceKind === 'skill' && activeSkill ? (
-        <div className={styles['workflow-node-chat-context']}>
-          <SkillContextCard skill={activeSkill} />
-        </div>
-      ) : null}
       <div className={styles['workflow-node-chat-main']}>
         <AiChatView
+          {...chatTheme}
           hideWelcome
           inputValue={
             resourceKind === 'prompt' ? (shouldPrefillUserPrompt ? userPrompt : '') : undefined
@@ -144,11 +166,26 @@ function WorkflowChatBridge({
   );
 }
 
+function WorkflowChatKbBootstrap({ kbCollectionId }: { kbCollectionId?: number }) {
+  const { setKbEnabled, setKbCollectionId } = useChatContext();
+
+  useEffect(() => {
+    if (kbCollectionId === undefined) {
+      return;
+    }
+    setKbEnabled(true);
+    setKbCollectionId(kbCollectionId);
+  }, [kbCollectionId, setKbCollectionId, setKbEnabled]);
+
+  return null;
+}
+
 export function WorkflowNodeChat({
   sessionKey,
   bootstrapSessionId,
   storagePrefix,
   workflowName,
+  businessId,
   nodeName,
   nodeOutputDir,
   resourceKind,
@@ -158,7 +195,11 @@ export function WorkflowNodeChat({
   activeSkillId,
   aiModels,
   workspaceNodeName,
+  executionModel,
+  kbCollectionId,
+  nodeWorkspacePaths,
   previousNodeRunResult,
+  previousParallelResults,
   prefillUserPrompt,
   onAdopt,
   onArtifactsPersisted,
@@ -166,10 +207,28 @@ export function WorkflowNodeChat({
   const { showToast } = useToast();
   const modelResolverRef = useStableModelResolver(aiModels);
   const chatModelOptionGroups = useRankedChatModelGroups(aiModels);
-  const workspace = useChatWorkspaceBinding();
+  const globalWorkspace = useChatWorkspaceBinding();
+  const workspace = useMemo(() => {
+    if (nodeWorkspacePaths && nodeWorkspacePaths.length > 0) {
+      return buildChatWorkspaceConfig({
+        enabled: true,
+        paths: nodeWorkspacePaths,
+        onEnabledChange: () => undefined,
+        onAddFolder: () => undefined,
+        onRemoveFolder: () => undefined,
+        onOpenFolderPath: (folderPath) => {
+          void window.electron?.openPath?.(folderPath);
+        },
+        checkPathExists: (folderPath) =>
+          window.electron?.pathExists?.(folderPath) ?? Promise.resolve(true),
+      });
+    }
+    return globalWorkspace;
+  }, [globalWorkspace, nodeWorkspacePaths]);
   const workspaceNodeNameRef = useStableRef(workspaceNodeName);
   const nodeOutputDirRef = useStableRef(nodeOutputDir);
   const workflowNameRef = useStableRef(workflowName);
+  const businessIdRef = useStableRef(businessId);
   const nodeNameRef = useStableRef(nodeName);
   const skillsSummaryRef = useStableRef(buildSkillsSummary(skills));
   const activeSkill = useMemo(
@@ -180,6 +239,7 @@ export function WorkflowNodeChat({
   const activeSkillLineRef = useStableRef(buildActiveSkillLine(activeSkill));
   const systemPromptRef = useStableRef(systemPrompt);
   const userPromptRef = useStableRef(userPrompt);
+  const previousParallelResultsRef = useStableRef(previousParallelResults);
   const onArtifactsPersistedRef = useStableRef(onArtifactsPersisted);
 
   const handleNeedModel = useCallback(() => {
@@ -189,13 +249,14 @@ export function WorkflowNodeChat({
   const handleReplyComplete = useCallback(
     async (reply: string) => {
       const wf = workflowNameRef.current;
+      const bizId = businessIdRef.current;
       const node = nodeNameRef.current;
-      const written = await persistWorkflowArtifactsFromReply(wf, node, reply);
+      const written = await persistWorkflowArtifactsFromReply(wf, bizId, node, reply);
       if (written.length > 0) {
         onArtifactsPersistedRef.current?.();
       }
     },
-    [nodeNameRef, onArtifactsPersistedRef, workflowNameRef],
+    [businessIdRef, nodeNameRef, onArtifactsPersistedRef, workflowNameRef],
   );
 
   const chatServices = useMemo((): IAiChatServices => {
@@ -205,6 +266,12 @@ export function WorkflowNodeChat({
         getDefaultConfig: () => modelResolverRef.current.getModelConfig(),
         getBaseMessages: () => {
           const msgs: { role: 'system' | 'user'; content: string }[] = [];
+          const parallelBlock = previousParallelResultsRef.current
+            ? buildMergedParallelContext(previousParallelResultsRef.current)
+            : '';
+          if (parallelBlock.trim()) {
+            msgs.push({ role: 'system', content: parallelBlock });
+          }
           if (wsContext.trim()) {
             msgs.push({ role: 'system', content: wsContext });
           }
@@ -237,6 +304,7 @@ export function WorkflowNodeChat({
         }
         return {
           workflowName: workflowNameRef.current,
+          businessId: businessIdRef.current,
           nodeName: nodeNameRef.current,
           outputDir,
         };
@@ -253,8 +321,12 @@ export function WorkflowNodeChat({
     ) => {
       const wsContext = await buildWorkflowWorkspaceContext(
         workflowNameRef.current,
+        businessIdRef.current,
         workspaceNodeNameRef.current,
       );
+      const parallelBlock = previousParallelResultsRef.current
+        ? buildMergedParallelContext(previousParallelResultsRef.current)
+        : '';
 
       if (resourceKind === 'prompt') {
         return buildPromptStream(wsContext)(
@@ -269,9 +341,11 @@ export function WorkflowNodeChat({
 
       return skillStream(messages, onChunk, onError, onStats, modelKey, {
         ...streamOptions,
-        user_system_prompt: wsContext.trim()
-          ? `${wsContext}\n\n${streamOptions?.user_system_prompt || ''}`.trim()
-          : streamOptions?.user_system_prompt,
+        user_system_prompt:
+          [parallelBlock, wsContext.trim(), streamOptions?.user_system_prompt || '']
+            .filter(Boolean)
+            .join('\n\n')
+            .trim() || streamOptions?.user_system_prompt,
       });
     };
 
@@ -280,6 +354,7 @@ export function WorkflowNodeChat({
       chatModelOptionGroups,
       workspace,
       storageKeyPrefix: storagePrefix,
+      defaultModel: executionModel?.trim() || undefined,
       enableSuperpower: resourceKind !== 'prompt',
       noAttachmentsMessage: '工作流对话暂不支持附件',
       onNoAttachments: (msg) => showToast(msg, 'warning'),
@@ -290,11 +365,14 @@ export function WorkflowNodeChat({
     activeSkillRef,
     aiModels,
     chatModelOptionGroups,
+    executionModel,
     handleNeedModel,
     handleReplyComplete,
     modelResolverRef,
+    businessIdRef,
     nodeNameRef,
     nodeOutputDirRef,
+    previousParallelResultsRef,
     resourceKind,
     showToast,
     skillsSummaryRef,
@@ -312,13 +390,13 @@ export function WorkflowNodeChat({
       className={styles['workflow-node-chat-shell']}
       services={chatServices}
       sessionKey={sessionKey}>
+      <WorkflowChatKbBootstrap kbCollectionId={kbCollectionId} />
       <WorkflowChatBridge
-        activeSkillId={activeSkillId}
         onAdopt={onAdopt}
         previousNodeRunResult={previousNodeRunResult}
+        previousParallelResults={previousParallelResults}
         prefillUserPrompt={prefillUserPrompt}
         resourceKind={resourceKind}
-        skills={skills}
         systemPrompt={systemPrompt}
         userPrompt={userPrompt}
       />

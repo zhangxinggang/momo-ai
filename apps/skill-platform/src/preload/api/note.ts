@@ -17,10 +17,5 @@ export const noteApi = {
   move: (sourcePath: string, targetParentPath: string | null) =>
     ipcRenderer.invoke(IPC_CHANNELS.NOTE_MOVE, sourcePath, targetParentPath),
   copyFile: (filePath: string) => ipcRenderer.invoke(IPC_CHANNELS.NOTE_COPY_FILE, filePath),
-  exportPdf: (payload: { title: string; content: string; defaultName: string }) =>
-    ipcRenderer.invoke(IPC_CHANNELS.NOTE_EXPORT_PDF, payload) as Promise<{
-      success: boolean;
-      canceled?: boolean;
-      filePath?: string;
-    }>,
+  bootstrapCursorRules: () => ipcRenderer.invoke(IPC_CHANNELS.NOTE_BOOTSTRAP_CURSOR_RULES),
 };

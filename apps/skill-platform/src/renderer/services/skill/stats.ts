@@ -1,4 +1,4 @@
-﻿import type { ISkill } from '@/types/modules';
+import type { ISkill } from '@/types/modules';
 
 function isRemoteSourceUrl(sourceUrl?: string): boolean {
   return /^https?:\/\//i.test(sourceUrl || '');

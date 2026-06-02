@@ -1,0 +1,169 @@
+.md-editor-emoji-panel {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  padding: 8px;
+  min-width: 180px;
+}
+
+.md-editor-emoji-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: var(--md-bk-hover-color, rgb(0 0 0 / 6%));
+  }
+}
+
+.md-editor-export-menu {
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  min-width: 120px;
+
+  li button {
+    display: block;
+    width: 100%;
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--md-color, #0f172a);
+    transition: background-color 0.2s;
+
+    &:hover:not(:disabled) {
+      background-color: var(--md-bk-hover-color, rgb(0 0 0 / 6%));
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+  }
+}
+
+.md-editor-export-progress {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(255 255 255 / 72%);
+  backdrop-filter: blur(4px);
+  pointer-events: auto;
+}
+
+.md-editor-export-progress-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.md-editor-export-progress-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgb(15 23 42 / 12%);
+  border-block-start-color: #2563eb;
+  border-radius: 50%;
+  animation: md-editor-export-spin 0.8s linear infinite;
+}
+
+.md-editor-export-progress-text {
+  font-size: 14px;
+  line-height: 1.4;
+  color: rgb(15 23 42 / 78%);
+}
+
+@keyframes md-editor-export-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.md-editor-dark .md-editor-export-progress {
+  background: rgb(15 23 42 / 72%);
+}
+
+.md-editor-dark .md-editor-export-progress-spinner {
+  border-color: rgb(248 250 252 / 16%);
+  border-block-start-color: #38bdf8;
+}
+
+.md-editor-dark .md-editor-export-progress-text {
+  color: rgb(248 250 252 / 82%);
+}
+
+/** 离屏导出容器：屏幕不可见，供 DOCX/PDF 渲染 */
+.md-editor-export-shell {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 210mm;
+  max-width: 100vw;
+  height: auto;
+  overflow: visible;
+
+  &--offscreen {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+  }
+}
+
+/**
+ * 打印 PDF：ExportPDF.css 已处理布局，此处补充离屏容器的可见性。
+ * visibility:hidden 的祖先会导致打印空白，必须在 print 时强制显示。
+ */
+@media print {
+  body.md-editor-export-printing {
+    margin: 0;
+  }
+
+  body.md-editor-export-printing > *:not(#md-editor-export-shell) {
+    display: none !important;
+  }
+
+  body.md-editor-export-printing #md-editor-export-shell,
+  body.md-editor-export-printing #md-editor-export-shell.md-editor-export-shell--offscreen {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: static !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    z-index: auto !important;
+    pointer-events: auto !important;
+    overflow: visible !important;
+  }
+
+  body.md-editor-export-printing #md-editor-export-shell .export-pdf-content,
+  body.md-editor-export-printing #export-pdf-preview,
+  body.md-editor-export-printing #export-pdf-preview .md-editor-preview {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: block !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  body.md-editor-export-printing #export-pdf-preview .md-editor-preview {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

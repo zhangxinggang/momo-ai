@@ -1,4 +1,4 @@
-﻿import type { DAITransportResponse } from '@/types/modules';
+import type { DAITransportResponse } from '@/types/modules';
 
 import type { IResponseLike } from './types';
 

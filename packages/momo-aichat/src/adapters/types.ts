@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { IChatStorageAdapter } from '../storage/chat-storage';
 import type { IChatAttachment, IChatAttachmentMeta, IChatSession } from '../types/chat';
+import type { ISlashCommandsConfig } from '../types/slash-command';
 import type { IChatWorkspaceConfig } from '../types/workspace';
 
 export interface IChatStreamMessage {
@@ -133,6 +134,8 @@ export interface IAiChatServices {
   superpowerPrompts?: {
     workflow: string;
   };
+  /** 输入框斜杠命令补全（由宿主注入，如 Claude Code） */
+  slashCommands?: ISlashCommandsConfig;
 }
 
 export type { IChatAttachment, IChatAttachmentMeta, IChatSession };

@@ -3,10 +3,9 @@ import path from 'path';
 
 import { unzipSync } from 'fflate';
 
-import { getProjectRoot } from '../../../runtime-paths';
+import { getSkillsSourceDir } from '../../../runtime-paths';
 import { SkillInstaller } from '../installer';
 
-const CLAWHUB_CACHE_ROOT = 'temp/skills/clawhub';
 const CLAWHUB_DOWNLOAD_BASE_URL = 'https://wry-manatee-359.convex.site/api/v1/download';
 
 function buildClawHubDownloadUrl(slug: string): string {
@@ -78,11 +77,13 @@ async function findSkillMdFile(rootDir: string): Promise<string | null> {
 }
 
 function getClawHubCacheDir(slug: string): string {
-  return path.join(getProjectRoot(), CLAWHUB_CACHE_ROOT, slug);
+  return path.join(getSkillsSourceDir(), 'clawhub', slug);
 }
 
-/** 下载 ClawHub 压缩包并解压到 temp/skills/clawhub/{slug} */
-export async function extractClawHubSkillToCache(slug: string): Promise<IExtractClawHubSkillResult> {
+/** 下载 ClawHub 压缩包并解压到 data/skills/source/clawhub/{slug} */
+export async function extractClawHubSkillToCache(
+  slug: string,
+): Promise<IExtractClawHubSkillResult> {
   const trimmedSlug = slug.trim();
   if (!trimmedSlug) {
     throw new Error('ClawHub slug 不能为空');

@@ -2,6 +2,7 @@ import { AiChatView, ChatProvider, type IChatMessage } from '@momo/aichat';
 import '@momo/markdown-styles';
 import { FullscreenModal } from '@renderer/components/ui/FullscreenModal';
 import { useToast } from '@renderer/components/ui/Toast';
+import { useAiChatViewTheme } from '@renderer/hooks/useAiChatViewTheme';
 import { useChatWorkspaceBinding } from '@renderer/hooks/useChatWorkspaceBinding';
 import { useRankedChatModelGroups } from '@renderer/hooks/useRankedChatModelGroups';
 import { useStableModelResolver } from '@renderer/hooks/useStableModelResolver';
@@ -25,6 +26,7 @@ export function NoteAiWritingModal({ open, filePath, onClose }: IProps) {
   const modelResolverRef = useStableModelResolver(aiModels);
   const chatModelOptionGroups = useRankedChatModelGroups(aiModels);
   const workspace = useChatWorkspaceBinding();
+  const chatTheme = useAiChatViewTheme();
 
   const chatServices = useMemo(
     () =>
@@ -56,9 +58,15 @@ export function NoteAiWritingModal({ open, filePath, onClose }: IProps) {
   };
 
   return (
-    <FullscreenModal open={open} title={`AI 写作 - ${filePath}`} onClose={onClose}>
+    <FullscreenModal
+      open={open}
+      title={`AI 写作 - ${filePath}`}
+      onClose={onClose}
+      footer={null}
+      showDefaultFooter={false}>
       <ChatProvider services={chatServices}>
         <AiChatView
+          {...chatTheme}
           hideWelcome
           renderAssistantMessageActions={(msg) => (
             <Button type='link' size='small' onClick={() => handleSaveToNote(msg)}>

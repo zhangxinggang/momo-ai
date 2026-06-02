@@ -5,12 +5,9 @@ import path from 'path';
 import type { IScannedSkill } from '@/types/modules';
 import { downloadTemplate } from 'giget';
 
-import { getProjectRoot } from '../../../runtime-paths';
+import { getSkillsSourceDir } from '../../../runtime-paths';
 import { sanitizeImportedSkillDraft } from '../safety/import-sanitize';
 import { parseSkillMd } from '../safety/validator';
-
-/** 商店 Git 缓存根目录 */
-const STORE_SKILLS_ROOT = 'temp/skills';
 
 /** 扫描时跳过的目录 */
 const SKIP_SCAN_DIR_NAMES = new Set([
@@ -69,7 +66,7 @@ export function normalizeGitStoreSource(repoUrl: string, gitRef = DEFAULT_GIT_RE
 }
 
 function getStoreCacheDir(repoUrl: string): string {
-  return path.join(getProjectRoot(), STORE_SKILLS_ROOT, sanitizeRepoUrlForCacheDir(repoUrl));
+  return path.join(getSkillsSourceDir(), sanitizeRepoUrlForCacheDir(repoUrl));
 }
 
 function getGigetTarCachePath(repoUrl: string, gitRef: string): string | null {
@@ -255,7 +252,7 @@ async function scanSkillFolder(skillFolderPath: string): Promise<IScannedSkill |
   }
 }
 
-/** 下载 Git 仓库到 temp/skills 并扫描 skills */
+/** 下载 Git 仓库到 data/skills/source 并扫描 skills */
 export async function syncGitStoreSource(
   options: ISyncGitStoreOptions,
 ): Promise<ISyncGitStoreResult> {

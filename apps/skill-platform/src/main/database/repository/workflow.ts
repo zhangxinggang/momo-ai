@@ -9,15 +9,23 @@ export class WorkflowRepository {
       id: string;
       name: string;
       graph_json: string;
+      folder_id: string | null;
       created_at: number;
       updated_at: number;
     },
     manager?: EntityManager,
   ): Promise<void> {
     await runQuery(
-      `INSERT INTO workflows (id, name, graph_json, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?)`,
-      [params.id, params.name, params.graph_json, params.created_at, params.updated_at],
+      `INSERT INTO workflows (id, name, graph_json, folder_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        params.id,
+        params.name,
+        params.graph_json,
+        params.folder_id,
+        params.created_at,
+        params.updated_at,
+      ],
       manager,
     );
   }

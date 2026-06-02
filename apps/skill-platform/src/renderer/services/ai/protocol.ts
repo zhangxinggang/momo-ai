@@ -1,4 +1,4 @@
-﻿import type { EAIProtocol } from '@/types/modules';
+import type { EAIProtocol } from '@/types/modules';
 
 import type { TResolvedProtocol } from './internal/types';
 import type { IAIConfig } from './types';

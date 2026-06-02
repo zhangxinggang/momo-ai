@@ -22,7 +22,6 @@ import {
   FULL_SCREEN_CHANGED,
   HTML_PREVIEW_CHANGED,
   ON_SAVE,
-  PAGE_FULL_SCREEN_CHANGED,
   PREVIEW_CHANGED,
   PREVIEW_ONLY_CHANGED,
   REPLACE,
@@ -357,16 +356,11 @@ export const useMdPreviewConfig = (props: IMdPreviewProps) => {
  * @returns
  */
 export const useConfig = (props: IEditorProps): [any, any, ISettingType, TUpdateSetting] => {
-  const {
-    preview = defaultProps.preview,
-    htmlPreview = defaultProps.htmlPreview,
-    pageFullscreen = defaultProps.pageFullscreen,
-  } = props;
+  const { preview = defaultProps.preview, htmlPreview = defaultProps.htmlPreview } = props;
 
   const [highlight, usedLanguageText] = useMdPreviewConfig(props);
 
   const [setting, setSetting] = useState<ISettingType>({
-    pageFullscreen,
     fullscreen: false,
     preview: preview,
     htmlPreview: preview ? false : htmlPreview,
@@ -426,17 +420,16 @@ export const useConfig = (props: IEditorProps): [any, any, ISettingType, TUpdate
   }, []);
 
   useEffect(() => {
-    // 保存body部分样式
     bodyOverflowHistory = document.body.style.overflow;
   }, []);
 
   useEffect(() => {
-    if (setting.pageFullscreen || setting.fullscreen) {
+    if (setting.fullscreen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = bodyOverflowHistory;
     }
-  }, [setting.pageFullscreen, setting.fullscreen]);
+  }, [setting.fullscreen]);
 
   return [highlight, usedLanguageText, setting, updateSetting];
 };
@@ -459,10 +452,6 @@ export const useExpose = (
   codeRef: MutableRefObject<IContentExposeParam | undefined>,
 ) => {
   const { editorId } = staticProps;
-
-  useEffect(() => {
-    bus.emit(editorId, PAGE_FULL_SCREEN_CHANGED, setting.pageFullscreen);
-  }, [editorId, setting.pageFullscreen]);
 
   useEffect(() => {
     bus.emit(editorId, FULL_SCREEN_CHANGED, setting.fullscreen);
@@ -488,16 +477,6 @@ export const useExpose = (
     const exposeParam: IExposeParam = {
       on(eventName, callBack) {
         switch (eventName) {
-          case 'pageFullscreen': {
-            bus.on(editorId, {
-              name: PAGE_FULL_SCREEN_CHANGED,
-              callback(status: boolean) {
-                (callBack as IExposeEvent['pageFullscreen'])(status);
-              },
-            });
-
-            break;
-          }
           case 'fullscreen': {
             bus.on(editorId, {
               name: FULL_SCREEN_CHANGED,
@@ -557,9 +536,6 @@ export const useExpose = (
             //
           }
         }
-      },
-      togglePageFullscreen(status) {
-        updateSetting('pageFullscreen', status);
       },
       toggleFullscreen(status) {
         bus.emit(editorId, CHANGE_FULL_SCREEN, status);

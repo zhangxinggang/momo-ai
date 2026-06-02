@@ -1,4 +1,4 @@
-﻿import type { ISkill } from '@/types/modules';
+import type { ISkill } from '@/types/modules';
 import { FullscreenModal } from '@renderer/components/ui/FullscreenModal';
 import { createMainChatSession } from '@renderer/services/aichat/chat-history-bridge';
 import { useSettingsStore } from '@renderer/store';
@@ -44,7 +44,7 @@ export function SkillAiChatModal({ isOpen, skills, initialSkillId, onClose }: IP
       onClose={onClose}
       footer={null}
       zIndex={1050}
-      destroyOnClose>
+      destroyOnHidden>
       <div className={styles['skill-ai-body']}>
         {isOpen && chatBootstrap ? (
           <SkillAiChat

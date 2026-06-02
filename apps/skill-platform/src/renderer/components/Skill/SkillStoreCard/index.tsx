@@ -1,4 +1,4 @@
-﻿import type { IRegistrySkill } from '@/types/modules';
+import type { IRegistrySkill } from '@/types/modules';
 import { Button } from 'antd';
 import { CheckIcon, DownloadIcon, Loader2Icon, PlusIcon } from 'lucide-react';
 import { SkillIcon } from '../SkillIcon';

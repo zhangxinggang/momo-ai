@@ -1,9 +1,18 @@
-import { allToolbar, MdEditor } from '@momo/markdown';
+import {
+  allToolbar,
+  buildExtendedMarkdownToolbars,
+  type IExposeParam,
+  MdEditor,
+} from '@momo/markdown';
 import '@momo/markdown-styles';
 import { NoteAiWritingModal } from '@renderer/components/Note/NoteAiWritingModal';
-import { NoteExportMenu } from '@renderer/components/Note/NoteExportMenu';
 import { ModuleEmptyState } from '@renderer/components/ui/ModuleEmptyState';
 import { useNoteStore, useSettingsStore } from '@renderer/store';
+import {
+  useMdEditorImageUpload,
+  useMdPreviewTheme,
+  useSkillMdEditorToolbars,
+} from '@renderer/utils/markdown/editor-config';
 import { Button } from 'antd';
 import { FileTextIcon, SparklesIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -18,8 +27,7 @@ function sanitizeNoteEditorDomId(path: string): string {
 }
 
 function buildNoteMarkdownToolbars() {
-  const skip = new Set(['prettier', 'github', 'save']);
-  return allToolbar.filter((item) => !skip.has(String(item)));
+  return buildExtendedMarkdownToolbars();
 }
 
 const NOTE_MD_TOOLBARS = buildNoteMarkdownToolbars() as typeof allToolbar;
@@ -38,8 +46,17 @@ export function NoteManager() {
   const saveRef = useRef(saveCurrentFile);
   saveRef.current = saveCurrentFile;
 
+  const noteMdEditorRef = useRef<IExposeParam>(null);
+  const { handleDrop, handleUploadImg } = useMdEditorImageUpload(noteMdEditorRef);
+
   const mdTheme = isDarkMode ? 'dark' : 'light';
-  const mdPreviewTheme = isDarkMode ? 'cyanosis' : 'default';
+  const [mdPreviewTheme, setMdPreviewTheme] = useMdPreviewTheme('cyanosis');
+  const defToolbars = useSkillMdEditorToolbars({
+    content: editorContent,
+    exportTitle: selectedId ?? 'note',
+    previewTheme: mdPreviewTheme,
+    onPreviewThemeChange: setMdPreviewTheme,
+  });
 
   const markdownEditorDomId = useMemo(
     () => `note-md-${sanitizeNoteEditorDomId(selectedId ?? 'none')}`,
@@ -84,7 +101,6 @@ export function NoteManager() {
                 ) : editorContent !== savedContent ? (
                   <span className={styles['note-editor-save-hint']}>{'未保存'}</span>
                 ) : null}
-                <NoteExportMenu filePath={selectedId} content={editorContent} />
                 <Button
                   type='primary'
                   size='small'
@@ -101,19 +117,22 @@ export function NoteManager() {
                 <div className={styles['note-editor-md']}>
                   <NoteMdEditor
                     key={selectedId}
+                    ref={noteMdEditorRef}
                     id={markdownEditorDomId}
                     value={editorContent}
                     onChange={(value) => setEditorContent(value)}
                     theme={mdTheme}
                     preview
                     previewTheme={mdPreviewTheme}
+                    onPreviewThemeChange={setMdPreviewTheme}
                     noPrettier
                     inputBoxWidth='50%'
                     footers={[]}
-                    noUploadImg
                     toolbars={NOTE_MD_TOOLBARS}
                     toolbarsExclude={[]}
-                    defToolbars={[]}
+                    defToolbars={defToolbars}
+                    onDrop={handleDrop}
+                    onUploadImg={handleUploadImg}
                     style={{ height: '100%' }}
                   />
                 </div>

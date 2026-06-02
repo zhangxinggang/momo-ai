@@ -1,17 +1,14 @@
 import type { IAiChatServices, TCallAiChatStream } from '@momo/aichat';
 import { CLI_AGENT_OPTIONS, createDefaultAiChatServices } from '@momo/aichat';
 
-import { isWebRuntime } from '@renderer/runtime';
+import { createClaudeSlashCommandsConfig } from '@/claude-code/renderer/claude-slash-provider';
 import {
   getImageScenarioModels,
   getModelsByType,
   toAIConfig,
 } from '@renderer/services/ai/defaults';
 import type { IAIModelConfig } from '@renderer/types/settings';
-import {
-  uploadChatAttachmentFiles,
-  validateChatAttachmentFiles,
-} from '../chat-attachment-upload';
+import { uploadChatAttachmentFiles, validateChatAttachmentFiles } from '../chat-attachment-upload';
 import { MAIN_AI_CHAT_STORAGE_PREFIX } from '../chat-history-bridge';
 import { renderChatModelSelect } from '../chat-model-select';
 import { createCliAgentCaller } from '../cli-agent-caller';
@@ -63,8 +60,12 @@ export function buildCliSuperpowerDefaults(options: {
   if (options.enableSuperpower !== false) {
     defaults.superpowerPrompts = SUPERPOWER_PROMPTS;
   }
-  if (options.enableCliAgent !== false && !isWebRuntime()) {
+  if (options.enableCliAgent !== false) {
     defaults.callCliAgent = createCliAgentCaller();
+    const slashCommands = createClaudeSlashCommandsConfig();
+    if (slashCommands) {
+      defaults.slashCommands = slashCommands;
+    }
   }
   return { ...defaults, ...options.overrides };
 }
@@ -85,10 +86,12 @@ export interface IBuildSharedAiChatServicesOptions {
   workspace?: IAiChatServices['workspace'];
   /** 是否启用 Superpowers 两阶段（默认 true；提示词测试等固定模板场景设为 false） */
   enableSuperpower?: boolean;
-  /** 是否注入 CLI Agent（默认 true；Web 端自动无 callCliAgent） */
+  /** 是否注入 CLI Agent（默认 true） */
   enableCliAgent?: boolean;
   /** 额外覆盖项（如 getIsAuthenticated、chatSync） */
   overrides?: Partial<IAiChatServices>;
+  /** 覆盖默认模型（如工作流节点执行模型） */
+  defaultModel?: string;
 }
 
 /** 构建统一的 AI 对话 services：模型列表与知识库由外侧 settings 注入 */
@@ -129,9 +132,6 @@ export function buildSharedAiChatServices(
           message: noAttachmentsMessage,
         }),
     listKbCollections: async () => {
-      if (isWebRuntime()) {
-        return [];
-      }
       const { kbListCollections } = await import('@renderer/services/kb/api');
       return kbListCollections();
     },
@@ -144,7 +144,7 @@ export function buildSharedAiChatServices(
     },
     chatSync: null,
     getIsAuthenticated: () => false,
-    defaultModel: defaultModelId || undefined,
+    defaultModel: options.defaultModel ?? (defaultModelId || undefined),
     storageKeyPrefix: options.storageKeyPrefix ?? MAIN_AI_CHAT_STORAGE_PREFIX,
     chatStorage: createLocalChatStorage(),
     chatModels,

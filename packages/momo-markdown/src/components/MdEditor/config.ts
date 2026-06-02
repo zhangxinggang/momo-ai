@@ -32,7 +32,7 @@ export const cropperUrl = {
 };
 
 export const screenfullUrl = `${cdnBase}/screenfull@5.2.0/dist/screenfull.js`;
-export const mermaidUrl = `${cdnBase}/mermaid@11.12.3/dist/mermaid.min.js`;
+export const mermaidUrl = `${cdnBase}/mermaid@11.15.0/dist/mermaid.min.js`;
 // export const mermaidUrl = `${cdnBase}/mermaid/9.4.0/mermaid.min.js`;
 export const katexUrl = {
   js: `${cdnBase}/katex@0.16.33/dist/katex.min.js`,
@@ -243,8 +243,8 @@ export const allToolbar: Array<TToolbarNames> = [
   'save',
   '=',
   'prettier',
-  'pageFullscreen',
   'fullscreen',
+  'previewStyle',
   'preview',
   'previewOnly',
   'htmlPreview',
@@ -273,14 +273,14 @@ export const staticTextDefault: IStaticTextDefault = {
       link: '链接',
       image: '图片',
       table: '表格',
-      mermaid: 'mermaid图',
+      mermaid: '图表',
       katex: 'katex公式',
       revoke: '后退',
       next: '前进',
       save: '保存',
       prettier: '美化',
-      pageFullscreen: '页面全屏',
       fullscreen: '全屏',
+      previewStyle: '预览样式',
       preview: '预览',
       previewOnly: '仅预览',
       htmlPreview: 'html代码预览',
@@ -320,6 +320,7 @@ export const staticTextDefault: IStaticTextDefault = {
     },
     mermaid: {
       flow: '流程图',
+      flowLR: '横向流程图',
       sequence: '时序图',
       gantt: '甘特图',
       class: '类图',
@@ -327,6 +328,11 @@ export const staticTextDefault: IStaticTextDefault = {
       pie: '饼图',
       relationship: '关系图',
       journey: '旅程图',
+    },
+    plantuml: {
+      sequence: 'PlantUML时序图',
+      class: 'PlantUML类图',
+      activity: 'PlantUML活动图',
     },
     katex: {
       inline: '行内公式',
@@ -355,14 +361,14 @@ export const staticTextDefault: IStaticTextDefault = {
       link: 'link',
       image: 'image',
       table: 'table',
-      mermaid: 'mermaid',
+      mermaid: 'Chart',
       katex: 'formula',
       revoke: 'revoke',
       next: 'undo revoke',
       save: 'save',
       prettier: 'prettier',
-      pageFullscreen: 'fullscreen in page',
       fullscreen: 'fullscreen',
+      previewStyle: 'preview style',
       preview: 'preview',
       previewOnly: 'preview only',
       htmlPreview: 'html preview',
@@ -402,6 +408,7 @@ export const staticTextDefault: IStaticTextDefault = {
     },
     mermaid: {
       flow: 'flow',
+      flowLR: 'flow LR',
       sequence: 'sequence',
       gantt: 'gantt',
       class: 'class',
@@ -409,6 +416,11 @@ export const staticTextDefault: IStaticTextDefault = {
       pie: 'pie',
       relationship: 'relationship',
       journey: 'journey',
+    },
+    plantuml: {
+      sequence: 'PlantUML sequence',
+      class: 'PlantUML class',
+      activity: 'PlantUML activity',
     },
     katex: {
       inline: 'inline',
@@ -427,7 +439,7 @@ export const defaultProps = {
   className: '',
   onChange: () => {},
   onSave: () => {},
-  pageFullscreen: false,
+  onPreviewThemeChange: () => {},
   preview: true,
   htmlPreview: false,
   language: 'zh-CN',
@@ -438,11 +450,12 @@ export const defaultProps = {
   onGetCatalog: () => {},
   tabWidth: 2,
   showCodeRowNumber: true,
-  previewTheme: 'default',
+  previewTheme: 'cyanosis',
   mdHeadingId: (({ text }) => text) as TMdHeadingId,
   style: {},
   tableShape: [6, 4],
   noMermaid: false,
+  noPlantuml: false,
   sanitize: (text: string) => text,
   placeholder: '',
   noKatex: false,
@@ -508,6 +521,7 @@ export const globalConfig: IGlobalConfig = {
   editorConfig: {
     languageUserDefined: {},
     mermaidTemplate: {},
+    noPlantuml: false,
     renderDelay: 500,
     zIndex: 20000,
   },

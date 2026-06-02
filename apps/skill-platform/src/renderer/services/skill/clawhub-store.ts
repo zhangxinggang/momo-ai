@@ -1,4 +1,6 @@
-import type { ESkillCategory, IRegistrySkill } from '@/types/modules';
+import type { IRegistrySkill } from '@/types/modules';
+
+import { inferCategory } from './store-mapper-utils';
 
 export const CLAWHUB_QUERY_URL = 'https://wry-manatee-359.convex.cloud/api/query';
 export const CLAWHUB_DOWNLOAD_BASE_URL = 'https://wry-manatee-359.convex.site/api/v1/download';
@@ -41,21 +43,6 @@ export interface IClawHubStorePageResult {
   skills: IRegistrySkill[];
   hasMore: boolean;
   nextCursor?: string;
-}
-
-function inferCategory(slug: string, description: string): ESkillCategory {
-  const text = `${slug} ${description}`.toLowerCase();
-  if (/(pdf|doc|ppt|sheet|spreadsheet|word|xlsx|docx|office)/.test(text)) return 'office';
-  if (/(github|git|web|playwright|mcp|code|cli|dev|pr)/.test(text)) return 'dev';
-  if (/(design|figma|css|ui|frontend|canvas|brand)/.test(text)) return 'design';
-  if (/(deploy|vercel|docker|cloudflare|netlify)/.test(text)) return 'deploy';
-  if (/(secure|security|audit|auth|secret)/.test(text)) return 'security';
-  if (/(analy|data|sql|chart|research)/.test(text)) return 'data';
-  if (/(manage|project|notion|linear)/.test(text)) return 'management';
-  if (/(ai|generate|translation|speech|image|video|art|intelligence)/.test(text)) {
-    return 'ai';
-  }
-  return 'general';
 }
 
 export function buildClawHubDownloadUrl(slug: string): string {

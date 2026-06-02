@@ -1,18 +1,25 @@
 ﻿import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
 import type { Database } from 'better-sqlite3';
 import { ipcMain } from 'electron';
+import { registerClaudeCodeIPC } from '../../claude-code/main/register';
 import { FolderDB, PromptDB, SkillDB, WorkflowDB } from '../database';
+import { WorkflowBusinessController } from '../database/controller/workflow-business';
+import { WorkflowFolderController } from '../database/controller/workflow-folder';
 import { registerAIIPC } from './ai';
 import { registerAichatIPC } from './aichat-handlers';
 import { registerFolderIPC } from './folder';
 import { registerImageIPC } from './image';
 import { registerKbIPC } from './kb';
+import { registerOnlineConfIPC } from './online-conf';
 import { registerPromptIPC } from './prompt';
 import { registerScraperIPC } from './scraper';
 import { registerSettingsIPC } from './settings';
 import { registerSkillIPC } from './skill';
+import { registerSystemIPC } from './system';
 import { registerWorkflowIPC } from './workflow';
 import { registerWorkflowAgentIPC } from './workflow-agent';
+import { registerWorkflowBusinessIPC } from './workflow-business';
+import { registerWorkflowFolderIPC } from './workflow-folder';
 import { registerWorkspaceIPC } from './workspace';
 
 const REBINDABLE_DB_CHANNELS = [
@@ -25,7 +32,6 @@ const REBINDABLE_DB_CHANNELS = [
   IPC_CHANNELS.PROMPT_COPY,
   IPC_CHANNELS.PROMPT_INSERT_DIRECT,
   IPC_CHANNELS.PROMPT_SYNC_WORKSPACE,
-  IPC_CHANNELS.PROMPT_MIGRATE_IDB_BATCH,
   IPC_CHANNELS.VERSION_GET_ALL,
   IPC_CHANNELS.VERSION_CREATE,
   IPC_CHANNELS.VERSION_ROLLBACK,
@@ -73,17 +79,17 @@ const REBINDABLE_DB_CHANNELS = [
   IPC_CHANNELS.SKILL_GET_REPO_PATH,
   IPC_CHANNELS.SKILL_SYNC_FROM_REPO,
   IPC_CHANNELS.SKILL_EXECUTE_WORKSPACE,
-  IPC_CHANNELS.SKILL_VERSION_GET_ALL,
-  IPC_CHANNELS.SKILL_VERSION_CREATE,
-  IPC_CHANNELS.SKILL_VERSION_ROLLBACK,
-  IPC_CHANNELS.SKILL_VERSION_DELETE,
-  IPC_CHANNELS.SKILL_DELETE_ALL,
-  IPC_CHANNELS.SKILL_INSERT_VERSION_DIRECT,
   IPC_CHANNELS.WORKFLOW_CREATE,
   IPC_CHANNELS.WORKFLOW_GET,
   IPC_CHANNELS.WORKFLOW_GET_ALL,
   IPC_CHANNELS.WORKFLOW_UPDATE,
   IPC_CHANNELS.WORKFLOW_DELETE,
+  IPC_CHANNELS.WORKFLOW_BUSINESS_CREATE,
+  IPC_CHANNELS.WORKFLOW_BUSINESS_GET_ALL,
+  IPC_CHANNELS.WORKFLOW_BUSINESS_UPDATE,
+  IPC_CHANNELS.WORKFLOW_BUSINESS_DELETE,
+  IPC_CHANNELS.WORKFLOW_BUSINESS_DELETE_BY_WORKFLOW,
+  IPC_CHANNELS.WORKFLOW_BUSINESS_HAS_ANY,
   IPC_CHANNELS.KB_LIST_COLLECTIONS,
   IPC_CHANNELS.KB_CREATE_COLLECTION,
   IPC_CHANNELS.KB_UPDATE_COLLECTION,
@@ -115,16 +121,23 @@ export function registerAllIPC(db: Database): void {
   const folderDB = new FolderDB();
   const skillDB = new SkillDB();
   const workflowDB = new WorkflowDB();
+  const workflowBusinessDB = new WorkflowBusinessController();
+  const workflowFolderDB = new WorkflowFolderController();
   registerPromptIPC(promptDB, folderDB);
   registerFolderIPC(folderDB, promptDB);
   registerSkillIPC(skillDB);
   registerWorkflowIPC(workflowDB);
+  registerWorkflowBusinessIPC(workflowBusinessDB);
+  registerWorkflowFolderIPC(workflowFolderDB);
   registerWorkflowAgentIPC();
   registerSettingsIPC(db);
   registerImageIPC();
   registerAIIPC();
   registerAichatIPC();
+  registerClaudeCodeIPC();
   registerKbIPC(db);
   registerWorkspaceIPC();
   registerScraperIPC();
+  registerOnlineConfIPC();
+  registerSystemIPC();
 }

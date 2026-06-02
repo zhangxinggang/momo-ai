@@ -1,4 +1,4 @@
-﻿import type { EAIProtocol } from '@/types/modules';
+import type { EAIProtocol } from '@/types/modules';
 
 /** 主题模式 */
 export type EThemeMode = 'light' | 'dark' | 'system';

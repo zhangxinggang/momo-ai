@@ -1,5 +1,3 @@
-import { isWebRuntime } from '@renderer/runtime';
-
 function isExternalMediaSrc(src: string): boolean {
   return /^(https?:|data:|blob:)/i.test(src);
 }
@@ -15,9 +13,6 @@ export function resolveLocalImageSrc(src: string): string {
   }
 
   const fileName = stripProtocol(src, 'local-image');
-  if (isWebRuntime()) {
-    return `/api/media/images/${encodeURIComponent(fileName)}`;
-  }
   return `local-image://${encodeURIComponent(fileName)}`;
 }
 
@@ -27,8 +22,5 @@ export function resolveLocalVideoSrc(src: string): string {
   }
 
   const fileName = stripProtocol(src, 'local-video');
-  if (isWebRuntime()) {
-    return `/api/media/videos/${encodeURIComponent(fileName)}`;
-  }
   return `local-video://${fileName}`;
 }

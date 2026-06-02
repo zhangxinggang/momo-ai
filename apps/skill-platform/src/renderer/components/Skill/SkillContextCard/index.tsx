@@ -1,4 +1,4 @@
-﻿import type { ISkill } from '@/types/modules';
+import type { ISkill } from '@/types/modules';
 
 import { SkillIcon } from '../SkillIcon';
 import styles from './index.module.less';

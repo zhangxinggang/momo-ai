@@ -1,4 +1,4 @@
-﻿import type { ISkill } from '@/types/modules';
+import type { ISkill } from '@/types/modules';
 import type { IChatStreamMessage, TCallAiChatStream } from '@momo/aichat';
 import type { IAIConfig } from '@renderer/services/ai';
 import { buildActiveSkillLine } from '@renderer/services/skill/chat-context';
@@ -32,6 +32,7 @@ export interface ISkillLangGraphStreamOptions {
   /** 工作流上下文：产出写入节点目录 */
   getWorkflowOutput?: () => {
     workflowName: string;
+    businessId: string;
     nodeName: string;
     outputDir: string;
   } | null;

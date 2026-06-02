@@ -46,13 +46,13 @@ export interface IToolbarTips {
   next?: string;
   save?: string;
   prettier?: string;
-  pageFullscreen?: string;
   fullscreen?: string;
   catalog?: string;
   preview?: string;
   previewOnly?: string;
   htmlPreview?: string;
   github?: string;
+  previewStyle?: string;
   '-'?: string;
   '='?: string;
 }
@@ -107,6 +107,13 @@ export interface IStaticTextDefaultValue {
     relationship?: string;
     // 旅程图
     journey?: string;
+    // 横向流程图
+    flowLR?: string;
+  };
+  plantuml?: {
+    sequence?: string;
+    class?: string;
+    activity?: string;
   };
   katex?: {
     inline: string;
@@ -130,7 +137,6 @@ export type TToolbarNames = keyof IToolbarTips | number;
 export type TFooters = '=' | 'markdownTotal' | 'scrollSwitch' | number;
 
 export interface ISettingType {
-  pageFullscreen: boolean;
   fullscreen: boolean;
   preview: boolean;
   htmlPreview: boolean;
@@ -225,6 +231,10 @@ export interface IMdPreviewProps {
    */
   previewTheme?: TPreviewThemes;
   /**
+   * 预览样式变更回调
+   */
+  onPreviewThemeChange?: (theme: TPreviewThemes) => void;
+  /**
    * 标题的id生成方式
    *
    * @default (text: string) => text
@@ -240,6 +250,10 @@ export interface IMdPreviewProps {
    * @default false
    */
   noMermaid?: boolean;
+  /**
+   * 不使用 PlantUML 渲染
+   */
+  noPlantuml?: boolean;
   /**
    *
    * 不能保证文本正确的情况，在marked编译md文本后通过该方法处理
@@ -345,12 +359,6 @@ export interface IEditorProps extends IMdPreviewProps {
    * 上传图片事件
    */
   onUploadImg?: TUploadImgEvent;
-  /**
-   * 是否页面内全屏
-   *
-   * @default false
-   */
-  pageFullscreen?: boolean;
   /**
    * 是否展开预览
    *
@@ -549,6 +557,7 @@ export interface IContextType {
   theme: TThemes;
   language: string;
   previewTheme: TPreviewThemes;
+  updatePreviewTheme: (theme: TPreviewThemes) => void;
   customIcon: ICustomIcon;
   rootRef: RefObject<HTMLDivElement | null> | null;
   disabled: boolean | undefined;
@@ -597,6 +606,10 @@ export interface IMermaidTemplate {
    * 旅程图
    */
   journey?: string;
+  /**
+   * 横向流程图
+   */
+  flowLR?: string;
 }
 
 export interface IMarkdownItConfigPlugin {
@@ -732,6 +745,10 @@ export interface IGlobalConfig {
      */
     renderDelay?: number;
     /**
+     * 禁用 PlantUML 渲染
+     */
+    noPlantuml?: boolean;
+    /**
      * 内部的弹窗、下拉框等内联zIndex
      * @default 20000
      */
@@ -853,7 +870,6 @@ export type TGetCatalogEvent = (list: IHeadList[]) => void;
 export type TErrorEvent = (err: IInnerError) => void;
 
 export interface IExposeEvent {
-  pageFullscreen(status: boolean): void;
   fullscreen(status: boolean): void;
   preview(status: boolean): void;
   previewOnly(status: boolean): void;
@@ -909,13 +925,6 @@ export interface IExposeParam {
    * @param callBack 事件回调函数
    */
   on<E extends keyof IExposeEvent, C extends IExposeEvent[E]>(eventName: E, callBack: C): void;
-
-  /**
-   * 切换页面内全屏
-   *
-   * @param status 是否页面全屏
-   */
-  togglePageFullscreen(status?: boolean): void;
 
   /**
    * 切换屏幕全屏
@@ -1012,6 +1021,9 @@ export type ICustomStrIcon = {
   pin?: string;
   'pin-off'?: string;
   check?: string;
+  fullscreen?: string;
+  'fullscreen-exit'?: string;
+  download?: string;
 };
 
 /**

@@ -1,7 +1,7 @@
 import { AiChatView, type IChatMessage } from '@momo/aichat';
 
+import { useAiChatViewTheme } from '@renderer/hooks/useAiChatViewTheme';
 import { useAutoSessionTitle } from '@renderer/hooks/useAutoSessionTitle';
-import { isWebRuntime } from '@renderer/runtime';
 
 import { useUIStore } from '@renderer/store';
 
@@ -10,36 +10,11 @@ import { SaveToNoteAction } from '../SaveToNoteAction';
 
 import styles from './index.module.less';
 
-function ChatManagerDesktop() {
-  useAutoSessionTitle();
-
-  return (
-    <div className={styles['chat-main']}>
-      <div className={styles['chat-main-body']}>
-        <AiChatView
-          renderAssistantMessageActions={(msg: IChatMessage) => <SaveToNoteAction message={msg} />}
-        />
-      </div>
-    </div>
-  );
-}
-
-function ChatManagerContent() {
-  if (isWebRuntime()) {
-    return (
-      <div className={styles['chat-main']}>
-        <p className={styles['chat-main-hint']}>{'AI 对话仅在桌面客户端可用'}</p>
-      </div>
-    );
-  }
-
-  return <ChatManagerDesktop />;
-}
-
 /** AI 对话主内容区 */
-
 export function ChatManager() {
   const viewMode = useUIStore((s) => s.viewMode);
+  useAutoSessionTitle();
+  const chatTheme = useAiChatViewTheme();
 
   if (viewMode !== 'chat') {
     return null;
@@ -47,7 +22,16 @@ export function ChatManager() {
 
   return (
     <ChatErrorBoundary>
-      <ChatManagerContent />
+      <div className={styles['chat-main']}>
+        <div className={styles['chat-main-body']}>
+          <AiChatView
+            {...chatTheme}
+            renderAssistantMessageActions={(msg: IChatMessage) => (
+              <SaveToNoteAction message={msg} />
+            )}
+          />
+        </div>
+      </div>
     </ChatErrorBoundary>
   );
 }

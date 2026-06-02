@@ -3,7 +3,8 @@ import fs from 'fs';
 import path from 'path';
 
 import type { IConfigureElectronBasePathsOptions, TElectronPathName } from '../types/electron-path';
-import { SERVER_FOLDER, STATIC_FOLDER_NAME } from './constant';
+import { SERVER_FOLDER, STATIC_FOLDER_NAME, UPLOAD_FOLDER } from './constant';
+import { isMac, isWin } from './env';
 
 export type { IConfigureElectronBasePathsOptions, TElectronPathName };
 
@@ -47,18 +48,12 @@ export const getServerPath = () => {
   return getPromisePath(SERVER_FOLDER);
 };
 
-type IElectronPath = TElectronPathName;
-
-export const getUserPath = (folder?: IElectronPath) => {
-  const userFolder = folder || 'userData';
-  return path.join(app.getPath(userFolder), 'userData');
-};
+export function getUserDataPath(): string {
+  return path.resolve(app.getPath('userData'));
+}
 
 export const getPlatformPath = (basePath: string, childPath: string): string => {
-  const platform = process.platform;
-  return platform === 'win32'
-    ? path.win32.join(basePath, childPath)
-    : path.join(basePath, childPath);
+  return isWin ? path.win32.join(basePath, childPath) : path.join(basePath, childPath);
 };
 
 export const isPathWritable = (targetPath: string): boolean => {
@@ -71,4 +66,44 @@ export const isPathWritable = (targetPath: string): boolean => {
   } catch {
     return false;
   }
+};
+
+export const resolvePlatformPath = (targetPath: string): string => {
+  if (isWin) {
+    return targetPath.replace(/\//g, '\\');
+  }
+  return path.resolve(targetPath);
+};
+
+export const dirnamePlatformPath = (targetPath: string): string => {
+  return isWin ? path.win32.dirname(targetPath) : path.dirname(targetPath);
+};
+
+export const isProtectedInstallDir = (targetPath: string): boolean => {
+  const normalized = resolvePlatformPath(targetPath).toLowerCase();
+  if (isWin) {
+    return ['\\windows\\', '\\program files\\', '\\program files (x86)\\'].some((segment) =>
+      normalized.includes(segment),
+    );
+  }
+  if (isMac) {
+    return (
+      normalized.startsWith('/applications') ||
+      normalized.startsWith('/system') ||
+      normalized.startsWith('/library')
+    );
+  }
+  return normalized.startsWith('/usr') || normalized.startsWith('/opt');
+};
+
+export const isDefaultPerUserInstallDir = (targetPath: string): boolean => {
+  if (!isWin) {
+    return false;
+  }
+  const normalized = resolvePlatformPath(targetPath).toLowerCase();
+  return normalized.includes('\\appdata\\local\\programs\\');
+};
+
+export const getUploadDir = () => {
+  return path.join(getUserDataPath(), 'data', UPLOAD_FOLDER);
 };

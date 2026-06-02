@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import { getServerConfig } from './config';
+import { SYSTEM_API_PREFIX } from './constant';
 import { getStaticPath } from './path';
 
 function getFolderAllFiles(dirPath: string, arrayOfFiles: string[]) {
@@ -41,4 +43,7 @@ function getSystemLogo(): { ico: string | undefined; png: string | undefined } {
   return { ico: icoData, png: pngData };
 }
 
-export { getFolderAllFiles, getSystemLogo };
+const getUploadUrl = () =>
+  `http://localhost:${getServerConfig().httpPort}/${SYSTEM_API_PREFIX}/upload`;
+
+export { getFolderAllFiles, getSystemLogo, getUploadUrl };

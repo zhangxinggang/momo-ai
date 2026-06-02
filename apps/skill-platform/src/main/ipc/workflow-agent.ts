@@ -3,7 +3,12 @@ import { ipcMain } from 'electron';
 import fs from 'fs';
 import path from 'path';
 
-import { getAgentDir, getWorkflowAgentDir, getWorkflowNodeAgentDir } from '../runtime-paths';
+import {
+  getAgentDir,
+  getWorkflowAgentDir,
+  getWorkflowBusinessAgentDir,
+  getWorkflowBusinessNodeAgentDir,
+} from '../runtime-paths';
 
 const TEXT_EXTENSIONS = new Set([
   '.md',
@@ -38,11 +43,21 @@ function resolveWorkflowDir(workflowName: string): string {
   return resolved;
 }
 
-function resolveNodeDir(workflowName: string, nodeName: string): string {
-  const dir = getWorkflowNodeAgentDir(workflowName, nodeName);
+function resolveBusinessDir(workflowName: string, businessId: string): string {
+  const dir = getWorkflowBusinessAgentDir(workflowName, businessId);
   const resolved = path.resolve(dir);
   const workflowDir = resolveWorkflowDir(workflowName);
   if (!resolved.startsWith(workflowDir)) {
+    throw new Error('非法业务目录路径');
+  }
+  return resolved;
+}
+
+function resolveNodeDir(workflowName: string, businessId: string, nodeName: string): string {
+  const dir = getWorkflowBusinessNodeAgentDir(workflowName, businessId, nodeName);
+  const resolved = path.resolve(dir);
+  const businessDir = resolveBusinessDir(workflowName, businessId);
+  if (!resolved.startsWith(businessDir)) {
     throw new Error('非法节点目录路径');
   }
   return resolved;
@@ -66,6 +81,17 @@ function removeDirRecursive(dir: string): void {
     return;
   }
   fs.rmSync(dir, { recursive: true, force: true });
+}
+
+function listBusinessSubdirs(workflowName: string): string[] {
+  const workflowDir = resolveWorkflowDir(workflowName);
+  if (!fs.existsSync(workflowDir)) {
+    return [];
+  }
+  return fs
+    .readdirSync(workflowDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
+    .map((entry) => entry.name);
 }
 
 export interface IWorkflowAgentDirEntry {
@@ -115,6 +141,19 @@ export function registerWorkflowAgentIPC(): void {
     }
   });
 
+  ipcMain.handle(
+    IPC_CHANNELS.WORKFLOW_AGENT_ENSURE_BUSINESS_DIR,
+    async (_event, workflowName: string, businessId: string) => {
+      try {
+        const dir = resolveBusinessDir(workflowName, businessId);
+        fs.mkdirSync(dir, { recursive: true });
+        return { success: true, dirPath: dir };
+      } catch (e) {
+        return { success: false, error: (e as Error).message };
+      }
+    },
+  );
+
   ipcMain.handle(IPC_CHANNELS.WORKFLOW_AGENT_DELETE_DIR, async (_event, workflowName: string) => {
     try {
       const dir = resolveWorkflowDir(workflowName);
@@ -124,6 +163,19 @@ export function registerWorkflowAgentIPC(): void {
       return { success: false, error: (e as Error).message };
     }
   });
+
+  ipcMain.handle(
+    IPC_CHANNELS.WORKFLOW_AGENT_DELETE_BUSINESS_DIR,
+    async (_event, workflowName: string, businessId: string) => {
+      try {
+        const dir = resolveBusinessDir(workflowName, businessId);
+        removeDirRecursive(dir);
+        return { success: true };
+      } catch (e) {
+        return { success: false, error: (e as Error).message };
+      }
+    },
+  );
 
   ipcMain.handle(
     IPC_CHANNELS.WORKFLOW_AGENT_RENAME_DIR,
@@ -148,11 +200,11 @@ export function registerWorkflowAgentIPC(): void {
 
   ipcMain.handle(
     IPC_CHANNELS.WORKFLOW_AGENT_LIST_DIR,
-    async (_event, workflowName: string, nodeName?: string) => {
+    async (_event, workflowName: string, businessId: string, nodeName?: string) => {
       try {
         const dir = nodeName
-          ? resolveNodeDir(workflowName, nodeName)
-          : resolveWorkflowDir(workflowName);
+          ? resolveNodeDir(workflowName, businessId, nodeName)
+          : resolveBusinessDir(workflowName, businessId);
         if (!fs.existsSync(dir)) {
           return { success: true, entries: [] as IWorkflowAgentDirEntry[], dirPath: dir };
         }
@@ -178,9 +230,15 @@ export function registerWorkflowAgentIPC(): void {
 
   ipcMain.handle(
     IPC_CHANNELS.WORKFLOW_AGENT_READ_FILE,
-    async (_event, workflowName: string, nodeName: string, relativePath: string) => {
+    async (
+      _event,
+      workflowName: string,
+      businessId: string,
+      nodeName: string,
+      relativePath: string,
+    ) => {
       try {
-        const dir = resolveNodeDir(workflowName, nodeName);
+        const dir = resolveNodeDir(workflowName, businessId, nodeName);
         const filePath = resolveRelativePathInDir(dir, relativePath);
         if (!fs.existsSync(filePath)) {
           return { success: false, error: '文件不存在' };
@@ -202,12 +260,13 @@ export function registerWorkflowAgentIPC(): void {
     async (
       _event,
       workflowName: string,
+      businessId: string,
       nodeName: string,
       relativePath: string,
       content: string,
     ) => {
       try {
-        const dir = resolveNodeDir(workflowName, nodeName);
+        const dir = resolveNodeDir(workflowName, businessId, nodeName);
         const filePath = resolveRelativePathInDir(dir, relativePath);
         fs.mkdirSync(path.dirname(filePath), { recursive: true });
         fs.writeFileSync(filePath, content, 'utf-8');
@@ -220,9 +279,9 @@ export function registerWorkflowAgentIPC(): void {
 
   ipcMain.handle(
     IPC_CHANNELS.WORKFLOW_AGENT_DELETE_NODE_DIR,
-    async (_event, workflowName: string, nodeName: string) => {
+    async (_event, workflowName: string, businessId: string, nodeName: string) => {
       try {
-        const dir = resolveNodeDir(workflowName, sanitizeDirName(nodeName));
+        const dir = resolveNodeDir(workflowName, businessId, sanitizeDirName(nodeName));
         removeDirRecursive(dir);
         return { success: true };
       } catch (e) {
@@ -233,10 +292,16 @@ export function registerWorkflowAgentIPC(): void {
 
   ipcMain.handle(
     IPC_CHANNELS.WORKFLOW_AGENT_RENAME_NODE_DIR,
-    async (_event, workflowName: string, oldNodeName: string, newNodeName: string) => {
+    async (
+      _event,
+      workflowName: string,
+      businessId: string,
+      oldNodeName: string,
+      newNodeName: string,
+    ) => {
       try {
-        const oldDir = resolveNodeDir(workflowName, oldNodeName);
-        const newDir = resolveNodeDir(workflowName, newNodeName);
+        const oldDir = resolveNodeDir(workflowName, businessId, oldNodeName);
+        const newDir = resolveNodeDir(workflowName, businessId, newNodeName);
         if (fs.existsSync(newDir)) {
           return { success: false, error: '目标节点目录已存在' };
         }
@@ -253,10 +318,51 @@ export function registerWorkflowAgentIPC(): void {
   );
 
   ipcMain.handle(
-    IPC_CHANNELS.WORKFLOW_AGENT_LIST_FILE_TREE,
+    IPC_CHANNELS.WORKFLOW_AGENT_DELETE_NODE_FOR_ALL_BUSINESSES,
     async (_event, workflowName: string, nodeName: string) => {
       try {
-        const dir = resolveNodeDir(workflowName, nodeName);
+        const safeNode = sanitizeDirName(nodeName);
+        for (const businessDirName of listBusinessSubdirs(workflowName)) {
+          const nodeDir = path.join(resolveWorkflowDir(workflowName), businessDirName, safeNode);
+          removeDirRecursive(nodeDir);
+        }
+        return { success: true };
+      } catch (e) {
+        return { success: false, error: (e as Error).message };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.WORKFLOW_AGENT_RENAME_NODE_FOR_ALL_BUSINESSES,
+    async (_event, workflowName: string, oldNodeName: string, newNodeName: string) => {
+      try {
+        const safeOld = sanitizeDirName(oldNodeName);
+        const safeNew = sanitizeDirName(newNodeName);
+        for (const businessDirName of listBusinessSubdirs(workflowName)) {
+          const workflowDir = resolveWorkflowDir(workflowName);
+          const oldDir = path.join(workflowDir, businessDirName, safeOld);
+          const newDir = path.join(workflowDir, businessDirName, safeNew);
+          if (!fs.existsSync(oldDir)) {
+            continue;
+          }
+          if (fs.existsSync(newDir)) {
+            return { success: false, error: '目标节点目录已存在' };
+          }
+          fs.renameSync(oldDir, newDir);
+        }
+        return { success: true };
+      } catch (e) {
+        return { success: false, error: (e as Error).message };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.WORKFLOW_AGENT_LIST_FILE_TREE,
+    async (_event, workflowName: string, businessId: string, nodeName: string) => {
+      try {
+        const dir = resolveNodeDir(workflowName, businessId, nodeName);
         fs.mkdirSync(dir, { recursive: true });
         const entries: IWorkflowAgentFileTreeEntry[] = [];
         walkFileTree(dir, dir, entries);
@@ -269,9 +375,15 @@ export function registerWorkflowAgentIPC(): void {
 
   ipcMain.handle(
     IPC_CHANNELS.WORKFLOW_AGENT_DELETE_FILE,
-    async (_event, workflowName: string, nodeName: string, relativePath: string) => {
+    async (
+      _event,
+      workflowName: string,
+      businessId: string,
+      nodeName: string,
+      relativePath: string,
+    ) => {
       try {
-        const dir = resolveNodeDir(workflowName, nodeName);
+        const dir = resolveNodeDir(workflowName, businessId, nodeName);
         const filePath = resolveRelativePathInDir(dir, relativePath);
         if (!fs.existsSync(filePath)) {
           return { success: false, error: '文件不存在' };
@@ -291,9 +403,15 @@ export function registerWorkflowAgentIPC(): void {
 
   ipcMain.handle(
     IPC_CHANNELS.WORKFLOW_AGENT_CREATE_DIR,
-    async (_event, workflowName: string, nodeName: string, relativePath: string) => {
+    async (
+      _event,
+      workflowName: string,
+      businessId: string,
+      nodeName: string,
+      relativePath: string,
+    ) => {
       try {
-        const dir = resolveNodeDir(workflowName, nodeName);
+        const dir = resolveNodeDir(workflowName, businessId, nodeName);
         const target = resolveRelativePathInDir(dir, relativePath);
         fs.mkdirSync(target, { recursive: true });
         return { success: true, dirPath: target };
@@ -308,12 +426,13 @@ export function registerWorkflowAgentIPC(): void {
     async (
       _event,
       workflowName: string,
+      businessId: string,
       nodeName: string,
       fromRelativePath: string,
       toRelativePath: string,
     ) => {
       try {
-        const dir = resolveNodeDir(workflowName, nodeName);
+        const dir = resolveNodeDir(workflowName, businessId, nodeName);
         const fromPath = resolveRelativePathInDir(dir, fromRelativePath);
         const toPath = resolveRelativePathInDir(dir, toRelativePath);
         if (!fs.existsSync(fromPath)) {

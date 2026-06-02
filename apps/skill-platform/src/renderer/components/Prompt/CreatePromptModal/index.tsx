@@ -1,4 +1,4 @@
-﻿import type { DCreatePrompt } from '@/types/modules';
+import type { DCreatePrompt } from '@/types/modules';
 import { PromptFullscreenEditor } from '@renderer/components/Prompt/PromptFullscreenEditor';
 import { FullscreenModal } from '@renderer/components/ui/FullscreenModal';
 import { Textarea } from '@renderer/components/ui/Textarea';

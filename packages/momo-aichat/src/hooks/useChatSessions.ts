@@ -1055,11 +1055,14 @@ export const useChatSessions = () => {
     }
   }, [isAuthenticated, hasSyncedAfterLogin, loadFromStorage]);
 
-  // 组件挂载时加载游客数据（仅在游客模式下）
+  // 组件挂载时加载游客数据（仅在游客模式下，仅执行一次）
+  const hasLoadedFromStorageRef = useRef(false);
   useEffect(() => {
-    if (!isAuthenticated) {
-      loadFromStorage();
+    if (isAuthenticated || hasLoadedFromStorageRef.current) {
+      return;
     }
+    hasLoadedFromStorageRef.current = true;
+    loadFromStorage();
   }, [isAuthenticated, loadFromStorage]);
 
   // 清理定时器

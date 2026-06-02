@@ -1,9 +1,8 @@
-﻿import type { ISkill, ISkillSafetyReport } from '@/types/modules';
+import type { ISkill, ISkillSafetyReport } from '@/types/modules';
 import { useToast } from '@renderer/components/ui/Toast';
 import { APP_LOCALE } from '@renderer/constants/common';
 import { useSkillPlatform } from '@renderer/hooks/useSkillPlatform';
 import { useUnsavedLeaveGuard } from '@renderer/hooks/useUnsavedLeaveGuard';
-import { getRuntimeCapabilities } from '@renderer/runtime';
 import {
   downloadSkillExport,
   downloadSkillZipExport,
@@ -23,7 +22,7 @@ import {
   type ISkillTranslationSidecar,
 } from '@renderer/services/skill/translation-sidecar';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
-import { Button, Input, Modal } from 'antd';
+import { Button, Modal } from 'antd';
 import 'highlight.js/styles/github-dark.css';
 import {
   AlertTriangleIcon,
@@ -34,11 +33,9 @@ import {
   CodeIcon,
   FolderOpenIcon,
   GlobeIcon,
-  HistoryIcon,
   InfoIcon,
   PencilIcon,
   RefreshCwIcon,
-  SaveIcon,
   ShieldAlertIcon,
   ShieldCheckIcon,
   ShieldIcon,
@@ -52,7 +49,6 @@ import { SkillIcon } from '../SkillIcon';
 import '../SkillMarkdown/index.module.less';
 import { SkillPlatformPanel } from '../SkillPlatformPanel';
 import { SkillPreviewPane } from '../SkillPreviewPane';
-import { SkillVersionHistoryModal } from '../SkillVersionHistoryModal';
 
 /**
  * Full-width ISkill Detail Page
@@ -66,7 +62,6 @@ interface IProps {
 
 export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: IProps = {}) {
   const { showToast } = useToast();
-  const runtimeCapabilities = getRuntimeCapabilities();
   const selectedSkillId = useSkillStore((state) => state.selectedSkillId);
   const skills = useSkillStore((state) => state.skills);
   const selectSkill = useSkillStore((state) => state.selectSkill);
@@ -96,15 +91,11 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
   const [isTranslating, setIsTranslating] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isScanningSafety, setIsScanningSafety] = useState(false);
   const [isSafetyModalOpen, setIsSafetyModalOpen] = useState(false);
   const [safetyReport, setSafetyReport] = useState<ISkillSafetyReport | null>(
     () => selectedSkill?.safetyReport ?? null,
   );
-  const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
-  const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false);
-  const [snapshotNote, setSnapshotNote] = useState('');
   const [resolvedSkillMdContent, setResolvedSkillMdContent] = useState('');
   const [fileEditorHasUnsavedChanges, setFileEditorHasUnsavedChanges] = useState(false);
   const fileEditorRef = useRef<ISkillFileEditorHandle>(null);
@@ -114,7 +105,6 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
   const contentScrollRef = useRef<HTMLDivElement>(null);
   const stalePromptFingerprintRef = useRef<string | null>(null);
   const [isRetranslatePromptOpen, setIsRetranslatePromptOpen] = useState(false);
-  const buildDefaultSnapshotNote = () => `手动快照 ${new Date().toLocaleString(APP_LOCALE)}`;
 
   const { confirmLeave, UnsavedLeaveDialog } = useUnsavedLeaveGuard({
     isDirty: () => activeTab === 'files' && fileEditorHasUnsavedChanges,
@@ -184,12 +174,6 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
     [effectiveSkillMdContent, selectedSkill?.description],
   );
   // Refresh when skill changes
-  useEffect(() => {
-    if (!runtimeCapabilities.skillFileEditing && activeTab === 'files') {
-      setActiveTab('preview');
-    }
-  }, [activeTab, runtimeCapabilities.skillFileEditing]);
-
   useEffect(() => {
     if (selectedSkill) {
       stalePromptFingerprintRef.current = null;
@@ -551,31 +535,6 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
     contentScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const openSnapshotModal = () => {
-    setSnapshotNote(buildDefaultSnapshotNote());
-    setIsSnapshotModalOpen(true);
-  };
-
-  const handleCreateSnapshot = async () => {
-    if (!selectedSkill) return;
-
-    setIsCreatingSnapshot(true);
-    try {
-      await window.api.skill.versionCreate(
-        selectedSkill.id,
-        snapshotNote.trim() || buildDefaultSnapshotNote(),
-      );
-      await loadSkills();
-      setIsSnapshotModalOpen(false);
-      showToast('已创建版本快照', 'success');
-    } catch (error) {
-      console.error('Failed to create skill snapshot:', error);
-      showToast(`更新失败: ${getErrorMessage(error)}`, 'error');
-    } finally {
-      setIsCreatingSnapshot(false);
-    }
-  };
-
   return (
     <div className='app-wallpaper-section animate-in fade-in slide-in-from-right-4 flex h-full flex-1 flex-col overflow-hidden duration-300'>
       {/* Header with back button */}
@@ -612,32 +571,12 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
                 <GlobeIcon className='h-3.5 w-3.5' />
                 {selectedSkill.author || '本地存储'}
               </div>
-              {!isProjectDetail ? (
-                <span className='bg-primary/10 text-primary rounded-full px-2 py-0.5 text-[11px] font-medium'>
-                  {'当前版本'} v{selectedSkill.currentVersion || 0}
-                </span>
-              ) : null}
             </div>
           </div>
         </div>
         <div className='flex items-center gap-2'>
           {!isProjectDetail ? (
             <>
-              <Button
-                onClick={openSnapshotModal}
-                disabled={isCreatingSnapshot}
-                icon={<SaveIcon className='h-4 w-4' />}
-                className='border-border text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-primary inline-flex h-auto items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium'
-                title={'创建快照'}>
-                {'快照'}
-              </Button>
-              <Button
-                type='text'
-                onClick={() => setIsVersionHistoryOpen(true)}
-                className='text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full p-2.5 active:scale-95'
-                title={'版本历史'}
-                icon={<HistoryIcon className='h-5 w-5' />}
-              />
               <Button
                 type='text'
                 onClick={() => setIsEditModalOpen(true)}
@@ -692,20 +631,18 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
             <div className='bg-primary absolute bottom-0 left-0 right-0 h-0.5 rounded-full' />
           )}
         </Button>
-        {runtimeCapabilities.skillFileEditing && (
-          <Button
-            type='text'
-            onClick={() => setActiveTab('files')}
-            className={`relative h-auto rounded-none py-3 text-sm font-semibold ${activeTab === 'files' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
-            <div className='flex items-center gap-2'>
-              <FolderOpenIcon className='h-4 w-4' />
-              {'文件'}
-            </div>
-            {activeTab === 'files' && (
-              <div className='bg-primary absolute bottom-0 left-0 right-0 h-0.5 rounded-full' />
-            )}
-          </Button>
-        )}
+        <Button
+          type='text'
+          onClick={() => setActiveTab('files')}
+          className={`relative h-auto rounded-none py-3 text-sm font-semibold ${activeTab === 'files' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+          <div className='flex items-center gap-2'>
+            <FolderOpenIcon className='h-4 w-4' />
+            {'文件'}
+          </div>
+          {activeTab === 'files' && (
+            <div className='bg-primary absolute bottom-0 left-0 right-0 h-0.5 rounded-full' />
+          )}
+        </Button>
 
         {/* Safety pill — compact, right-aligned in tab bar */}
         <Button
@@ -750,8 +687,8 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
       <div
         ref={contentScrollRef}
         onScroll={handleContentScroll}
-        className={`flex flex-1 flex-col ${runtimeCapabilities.skillFileEditing && activeTab === 'files' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
-        {runtimeCapabilities.skillFileEditing && activeTab === 'files' ? (
+        className={`flex flex-1 flex-col ${activeTab === 'files' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+        {activeTab === 'files' ? (
           /* Files Tab: inline file editor fills the entire content area */
           <div className='app-wallpaper-panel flex min-h-0 flex-1 flex-col overflow-hidden'>
             <SkillFileEditor
@@ -869,52 +806,6 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
         <p>{'这个技能的 SKILL.md 在上次翻译后已经发生变化，现在要重新翻译吗？'}</p>
       </Modal>
       <UnsavedLeaveDialog />
-
-      <SkillVersionHistoryModal
-        isOpen={isVersionHistoryOpen}
-        onClose={() => setIsVersionHistoryOpen(false)}
-        skill={selectedSkill}
-        currentContent={resolvedSkillMdContent}
-        onReload={loadSkills}
-      />
-
-      <Modal
-        open={isSnapshotModalOpen}
-        title={'创建快照'}
-        onCancel={() => {
-          if (!isCreatingSnapshot) {
-            setIsSnapshotModalOpen(false);
-          }
-        }}
-        width={600}
-        footer={
-          <div className='flex items-center justify-end gap-3'>
-            <Button onClick={() => setIsSnapshotModalOpen(false)} disabled={isCreatingSnapshot}>
-              {'取消'}
-            </Button>
-            <Button
-              type='primary'
-              onClick={handleCreateSnapshot}
-              disabled={isCreatingSnapshot}
-              loading={isCreatingSnapshot}
-              icon={<SaveIcon className='h-4 w-4' />}>
-              {'创建快照'}
-            </Button>
-          </div>
-        }
-        destroyOnClose>
-        <div className='space-y-4'>
-          <div className='text-muted-foreground text-sm'>{'输入本次快照说明'}</div>
-          <Input.TextArea
-            value={snapshotNote}
-            onChange={(event) => setSnapshotNote(event.target.value)}
-            placeholder={'描述本次变更...'}
-            rows={4}
-            autoFocus
-            disabled={isCreatingSnapshot}
-          />
-        </div>
-      </Modal>
 
       {/* 安全扫描报告 */}
       <Modal

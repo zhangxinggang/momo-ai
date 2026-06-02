@@ -1,9 +1,11 @@
-﻿import type { IWorkflow } from '@/types/modules';
+import type { IWorkflow } from '@/types/modules';
 import {
+  attachResourceNodeToParallel,
+  createParallelNode,
   createResourceNode,
   parseWorkflowGraphJson,
   stringifyWorkflowGraph,
-  validateWorkflowResourceChain,
+  validateWorkflowGraph,
   WORKFLOW_DRAG_MIME,
   WorkflowEditor,
   type IWorkflowEditorNodeEvent,
@@ -19,14 +21,22 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { WorkflowNodeEditPanel } from '@renderer/components/Workflow/WorkflowNodeEditPanel';
 import { useUnsavedLeaveGuard } from '@renderer/hooks/useUnsavedLeaveGuard';
 import {
-  deleteWorkflowNodeAgentDir,
+  deleteWorkflowNodeForAllBusinesses,
   ensureWorkflowAgentDir,
   renameWorkflowAgentDir,
-  renameWorkflowNodeAgentDir,
+  renameWorkflowNodeForAllBusinesses,
 } from '@renderer/services/workflow/agent-files';
-import { deleteWorkflowNodeChat } from '@renderer/services/workflow/chat-storage';
+import { fetchBusinessList, workflowHasBusinesses } from '@renderer/services/workflow/business';
+import { deleteWorkflowNodeChatForAllBusinesses } from '@renderer/services/workflow/chat-storage';
 import { isResourceNode } from '@renderer/services/workflow/graph-utils';
-import { usePromptStore, useSkillStore, useUIStore } from '@renderer/store';
+import { readWorkflowNodeDefaultValues } from '@renderer/services/workflow/node-defaults';
+import {
+  usePromptStore,
+  useSettingsStore,
+  useSkillStore,
+  useUIStore,
+  useWorkflowStore,
+} from '@renderer/store';
 import { getSystemFileNameError } from '@renderer/utils/validation/system-name';
 import styles from './index.module.less';
 
@@ -44,11 +54,12 @@ function setPaletteDragData(event: React.DragEvent, payload: IWorkflowPaletteDra
  * 工作流全屏编辑器：侧栏拖放 + 编排画布 + 节点属性浮层
  */
 export function WorkflowStudio({ workflowId, onClose }: IProps) {
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const wfApi = window.api?.workflow;
 
   const prompts = usePromptStore((s) => s.prompts);
   const skills = useSkillStore((s) => s.skills);
+  const aiModels = useSettingsStore((s) => s.aiModels);
   const fetchPrompts = usePromptStore((s) => s.fetchPrompts);
   const loadSkills = useSkillStore((s) => s.loadSkills);
 
@@ -158,36 +169,57 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
     ({
       flowPosition,
       dragData,
+      targetParallelId,
     }: {
       flowPosition: { x: number; y: number };
       dragData: IWorkflowPaletteDragPayload;
+      targetParallelId?: string;
     }) => {
       if (dragData.kind === 'prompt' && dragData.resourceId) {
         const prompt = prompts.find((p) => p.id === dragData.resourceId);
-        setNodes((nds) => [
-          ...nds,
-          createResourceNode({
-            resourceKind: 'prompt',
-            resourceId: dragData.resourceId!,
-            label: dragData.label,
-            nodeName: dragData.label,
-            systemPrompt: prompt?.systemPrompt,
-            userPrompt: prompt?.userPrompt,
-            position: flowPosition,
-          }),
-        ]);
+        const defaults = readWorkflowNodeDefaultValues();
+        const newNode = createResourceNode({
+          resourceKind: 'prompt',
+          resourceId: dragData.resourceId,
+          label: dragData.label,
+          nodeName: dragData.label,
+          systemPrompt: prompt?.systemPrompt,
+          userPrompt: prompt?.userPrompt,
+          executionModel: defaults.executionModel || undefined,
+          kbCollectionId: defaults.kbCollectionId,
+          workspacePaths: defaults.workspacePaths.length > 0 ? defaults.workspacePaths : undefined,
+          position: flowPosition,
+        });
+        setNodes((nds) =>
+          targetParallelId
+            ? attachResourceNodeToParallel([...nds, newNode], targetParallelId, newNode.id)
+            : [...nds, newNode],
+        );
         return;
       }
       if (dragData.kind === 'skill' && dragData.resourceId) {
+        const defaults = readWorkflowNodeDefaultValues();
+        const newNode = createResourceNode({
+          resourceKind: 'skill',
+          resourceId: dragData.resourceId,
+          label: dragData.label,
+          nodeName: dragData.label,
+          executionModel: defaults.executionModel || undefined,
+          kbCollectionId: defaults.kbCollectionId,
+          workspacePaths: defaults.workspacePaths.length > 0 ? defaults.workspacePaths : undefined,
+          position: flowPosition,
+        });
+        setNodes((nds) =>
+          targetParallelId
+            ? attachResourceNodeToParallel([...nds, newNode], targetParallelId, newNode.id)
+            : [...nds, newNode],
+        );
+        return;
+      }
+      if (dragData.kind === 'parallel') {
         setNodes((nds) => [
           ...nds,
-          createResourceNode({
-            resourceKind: 'skill',
-            resourceId: dragData.resourceId!,
-            label: dragData.label,
-            nodeName: dragData.label,
-            position: flowPosition,
-          }),
+          createParallelNode({ position: flowPosition, label: dragData.label ?? '并行节点' }),
         ]);
       }
     },
@@ -212,21 +244,37 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
         return;
       }
       const data = node.data;
-      const wfName = savedName.trim() || workflowName.trim();
-      const nodeName = data.nodeName?.trim() || data.label?.trim() || '';
       const wfId = currentWorkflowIdRef.current;
-      if (wfId) {
-        deleteWorkflowNodeChat(wfId, node.id);
+
+      const finishRemove = () => {
+        if (selectedNodeId === node.id) {
+          setSelectedNodeId(null);
+        }
+        message.info(`已移除节点：${data.label || data.resourceId}`);
+        return true;
+      };
+
+      if (!wfId) {
+        return finishRemove();
       }
-      if (wfName && nodeName) {
-        await deleteWorkflowNodeAgentDir(wfName, nodeName);
+
+      const hasBusiness = await workflowHasBusinesses(wfId);
+      if (!hasBusiness) {
+        return finishRemove();
       }
-      if (selectedNodeId === node.id) {
-        setSelectedNodeId(null);
-      }
-      message.info(`已移除节点：${data.label || data.resourceId}`);
+
+      return new Promise<boolean>((resolve) => {
+        modal.confirm({
+          title: '删除节点',
+          content: '删除当前节点后，保存时会删除当前节点所有的历史业务记录，是否继续？',
+          okText: '继续',
+          cancelText: '取消',
+          onOk: () => resolve(finishRemove()),
+          onCancel: () => resolve(false),
+        });
+      });
     },
-    [message, savedName, selectedNodeId, workflowName],
+    [message, modal, selectedNodeId],
   );
 
   const handleNodeUpdate = useCallback(
@@ -256,7 +304,7 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
       return false;
     }
 
-    const chainValidation = validateWorkflowResourceChain(nodes, edges);
+    const chainValidation = validateWorkflowGraph(nodes, edges);
     if (!chainValidation.ok) {
       message.warning(chainValidation.message ?? '请将节点进行串联');
       return false;
@@ -286,6 +334,8 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
         currentWorkflowIdRef.current = id;
         setWorkflow(created);
         useUIStore.setState({ activeWorkflowId: id });
+        useWorkflowStore.getState().selectWorkflow(id);
+        void useWorkflowStore.getState().fetchWorkflows();
       } else {
         await wfApi.update(id, { name: trimmedName, graphJson });
       }
@@ -305,6 +355,30 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
         oldNodeNames.set(n.id, name);
       }
 
+      const newResourceNodeIds = new Set(
+        nodes.filter(isResourceNode).map((resourceNode) => resourceNode.id),
+      );
+      const businesses = id ? await fetchBusinessList(id) : [];
+      const businessIds = businesses.map((item) => item.id);
+
+      for (const oldNode of oldGraph.nodes) {
+        if (!isResourceNode(oldNode)) {
+          continue;
+        }
+        if (newResourceNodeIds.has(oldNode.id)) {
+          continue;
+        }
+        const removedNodeName =
+          oldNode.data.nodeName?.trim() ||
+          oldNode.data.label?.trim() ||
+          oldNode.data.resourceId ||
+          '';
+        if (removedNodeName) {
+          await deleteWorkflowNodeForAllBusinesses(trimmedName, removedNodeName);
+          deleteWorkflowNodeChatForAllBusinesses(id!, businessIds, oldNode.id);
+        }
+      }
+
       for (const n of nodes) {
         if (!isResourceNode(n)) {
           continue;
@@ -312,9 +386,8 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
         const nodeName = n.data.nodeName?.trim() || n.data.label?.trim() || n.data.resourceId || '';
         const prevNodeName = oldNodeNames.get(n.id);
         if (prevNodeName && nodeName && prevNodeName !== nodeName) {
-          await renameWorkflowNodeAgentDir(trimmedName, prevNodeName, nodeName);
+          await renameWorkflowNodeForAllBusinesses(trimmedName, prevNodeName, nodeName);
         }
-        await window.api?.workflowAgent?.listDir(trimmedName, nodeName);
       }
 
       setSavedName(trimmedName);
@@ -418,8 +491,23 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
             <Typography.Paragraph
               className={styles['workflow-studio-palette-hint']}
               type='secondary'>
-              {'拖拽提示词或技能到右侧画布编排'}
+              {'拖拽组件、提示词或技能到右侧画布编排'}
             </Typography.Paragraph>
+            <Typography.Text className={styles['workflow-studio-palette-title']}>
+              {'组件'}
+            </Typography.Text>
+            <ul className={styles['workflow-studio-palette-list']}>
+              <li>
+                <div
+                  className={`${styles['workflow-studio-palette-item']} ${styles['workflow-studio-palette-item--draggable']}`}
+                  draggable
+                  onDragStart={(e) =>
+                    setPaletteDragData(e, { kind: 'parallel', label: '并行节点' })
+                  }>
+                  {'并行节点'}
+                </div>
+              </li>
+            </ul>
             <Typography.Text className={styles['workflow-studio-palette-title']}>
               {'提示词'}
             </Typography.Text>
@@ -490,10 +578,12 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
               onNodeDelete={handleNodeDelete}
               onNodeEdit={handleNodeEdit}
               onNodesChange={setNodes}
-              panelHint={'点击节点编辑属性；每个节点仅可连接一次'}
+              panelHint={'点击节点编辑属性；并行节点可拖入未连线节点'}
             />
             {selectedNode && isResourceNode(selectedNode) ? (
               <WorkflowNodeEditPanel
+                key={selectedNode.id}
+                aiModels={aiModels}
                 node={selectedNode}
                 prompts={prompts}
                 skills={skills}

@@ -1,0 +1,55 @@
+.inline-editable {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  padding-right: 28px;
+
+  &-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: hsl(var(--foreground));
+  }
+
+  &-placeholder {
+    color: hsl(var(--muted-foreground));
+  }
+
+  &-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &-edit-btn {
+    position: absolute;
+    right: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: hsl(var(--muted-foreground));
+    cursor: pointer;
+    opacity: 0;
+    transition:
+      opacity 0.15s,
+      color 0.15s,
+      background-color 0.15s;
+  }
+
+  &:hover &-edit-btn {
+    opacity: 1;
+  }
+
+  &-edit-btn:hover {
+    color: hsl(var(--foreground));
+    background: hsl(var(--accent) / 0.45);
+  }
+}

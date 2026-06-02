@@ -1,9 +1,4 @@
-import {
-  MdEditor,
-  MdPreviewThemeSelect,
-  useMarkdownEditorTheme,
-  useMdPreviewTheme,
-} from '@momo/markdown';
+import { MdEditor, useMarkdownEditorTheme, useMdPreviewTheme } from '@momo/markdown';
 import '@momo/markdown-styles';
 import type { MenuProps, TreeDataNode } from 'antd';
 import { Button, Dropdown, Input, Modal, Select, Tree } from 'antd';
@@ -190,17 +185,6 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
   useEffect(() => {
     onUnsavedChange?.(hasUnsaved);
   }, [hasUnsaved, onUnsavedChange]);
-
-  const mdDefToolbars = useMemo(
-    () => [
-      <MdPreviewThemeSelect
-        key='md-preview-theme'
-        value={mdPreviewTheme}
-        onChange={setMdPreviewTheme}
-      />,
-    ],
-    [mdPreviewTheme, setMdPreviewTheme],
-  );
 
   const loadFile = useCallback(
     async (relativePath: string) => {
@@ -722,12 +706,12 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
                       theme={mdTheme}
                       preview
                       previewTheme={mdPreviewTheme}
+                      onPreviewThemeChange={setMdPreviewTheme}
                       noPrettier
                       inputBoxWidth='50%'
                       footers={[]}
                       noUploadImg
                       toolbars={MARKDOWN_TOOLBARS}
-                      defToolbars={mdDefToolbars}
                       style={{ height: '100%' }}
                     />
                   </div>

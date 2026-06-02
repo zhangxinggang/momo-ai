@@ -1,4 +1,4 @@
-﻿import type { ISkill } from '@/types/modules';
+import type { ISkill } from '@/types/modules';
 
 const MARKDOWN_LINK_MD_RE = /\[[^\]]*\]\(([^)]+\.md)\)/gi;
 const BACKTICK_MD_RE = /`([^`]+\.md)`/g;

@@ -1,4 +1,4 @@
-﻿import type { IScannedSkill, ISkill } from '@/types/modules';
+import type { IScannedSkill, ISkill } from '@/types/modules';
 import type { ESkillFilterType, ESkillStoreView } from '@renderer/types/skill';
 
 interface IFilterVisibleSkillsOptions {

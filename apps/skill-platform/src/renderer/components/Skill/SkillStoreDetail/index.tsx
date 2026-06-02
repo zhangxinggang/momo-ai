@@ -1,4 +1,4 @@
-﻿import type { IRegistrySkill, ISkill, ISkillSafetyReport } from '@/types/modules';
+import type { IRegistrySkill, ISkill, ISkillSafetyReport } from '@/types/modules';
 import { useToast } from '@renderer/components/ui/Toast';
 import {
   formatSkillTranslationError,

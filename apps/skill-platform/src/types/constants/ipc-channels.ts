@@ -13,16 +13,6 @@ export const IPC_CHANNELS = {
   PROMPT_COPY: 'prompt:copy',
   PROMPT_INSERT_DIRECT: 'prompt:insertDirect',
   PROMPT_SYNC_WORKSPACE: 'prompt:syncWorkspace',
-  /**
-   * Atomic batch migration from legacy IndexedDB data.
-   * All inserts are wrapped in a single SQLite transaction.
-   * Returns { imported: true } when data was actually written, or { imported: false } if
-   * the target already had prompts (no-op guard).
-   *
-   * 原子批量迁移：将旧版 IndexedDB 数据一次性写入 SQLite（单事务）。
-   * 若 SQLite 已有数据则直接返回 { imported: false }（防止覆盖）。
-   */
-  PROMPT_MIGRATE_IDB_BATCH: 'prompt:migrateIdbBatch',
 
   // Version
   VERSION_GET_ALL: 'version:getAll',
@@ -47,6 +37,12 @@ export const IPC_CHANNELS = {
   // App lifecycle
   APP_RELAUNCH: 'app:relaunch',
 
+  // 在线配置（版本更新、AI 资讯等）
+  ONLINE_CONF_FETCH: 'onlineConf:fetch',
+
+  // 内置 HTTP 服务（system_api）
+  SYSTEM_GET_UPLOAD_URL: 'system:getUploadUrl',
+
   // AI transport
   AI_HTTP_REQUEST: 'ai:httpRequest',
   AI_HTTP_STREAM: 'ai:httpStream',
@@ -67,7 +63,7 @@ export const IPC_CHANNELS = {
   NOTE_DELETE: 'note:delete',
   NOTE_MOVE: 'note:move',
   NOTE_COPY_FILE: 'note:copyFile',
-  NOTE_EXPORT_PDF: 'note:exportPdf',
+  NOTE_BOOTSTRAP_CURSOR_RULES: 'note:bootstrapCursorRules',
 
   // Knowledge base（知识库）
   KB_LIST_COLLECTIONS: 'kb:listCollections',
@@ -94,6 +90,21 @@ export const IPC_CHANNELS = {
   WORKFLOW_UPDATE: 'workflow:update',
   WORKFLOW_DELETE: 'workflow:delete',
 
+  // 工作流侧栏目录
+  WORKFLOW_FOLDER_CREATE: 'workflowFolder:create',
+  WORKFLOW_FOLDER_GET_ALL: 'workflowFolder:getAll',
+  WORKFLOW_FOLDER_UPDATE: 'workflowFolder:update',
+  WORKFLOW_FOLDER_DELETE: 'workflowFolder:delete',
+  WORKFLOW_FOLDER_UPDATE_ORDERS: 'workflowFolder:updateOrders',
+
+  // 工作流业务实例
+  WORKFLOW_BUSINESS_CREATE: 'workflowBusiness:create',
+  WORKFLOW_BUSINESS_GET_ALL: 'workflowBusiness:getAll',
+  WORKFLOW_BUSINESS_UPDATE: 'workflowBusiness:update',
+  WORKFLOW_BUSINESS_DELETE: 'workflowBusiness:delete',
+  WORKFLOW_BUSINESS_DELETE_BY_WORKFLOW: 'workflowBusiness:deleteByWorkflow',
+  WORKFLOW_BUSINESS_HAS_ANY: 'workflowBusiness:hasAny',
+
   // 工作流 Agent 目录（节点产出与文件）
   WORKFLOW_AGENT_ENSURE_DIR: 'workflowAgent:ensureDir',
   WORKFLOW_AGENT_DELETE_DIR: 'workflowAgent:deleteDir',
@@ -107,6 +118,10 @@ export const IPC_CHANNELS = {
   WORKFLOW_AGENT_DELETE_FILE: 'workflowAgent:deleteFile',
   WORKFLOW_AGENT_CREATE_DIR: 'workflowAgent:createDir',
   WORKFLOW_AGENT_MOVE_PATH: 'workflowAgent:movePath',
+  WORKFLOW_AGENT_ENSURE_BUSINESS_DIR: 'workflowAgent:ensureBusinessDir',
+  WORKFLOW_AGENT_DELETE_BUSINESS_DIR: 'workflowAgent:deleteBusinessDir',
+  WORKFLOW_AGENT_DELETE_NODE_FOR_ALL_BUSINESSES: 'workflowAgent:deleteNodeForAllBusinesses',
+  WORKFLOW_AGENT_RENAME_NODE_FOR_ALL_BUSINESSES: 'workflowAgent:renameNodeForAllBusinesses',
 
   // Skills
   SKILL_CREATE: 'skill:create',
@@ -156,18 +171,10 @@ export const IPC_CHANNELS = {
   SKILL_IMPORT_LOCAL_FILES: 'skill:importLocalFiles',
   SKILL_IMPORT_LOCAL_FILES_BY_PATH: 'skill:importLocalFilesByPath',
   SKILL_SAVE_TO_REPO: 'skill:saveToRepo',
+  SKILL_SAVE_REMOTE_GIT_TO_REPO: 'skill:saveRemoteGitToRepo',
   SKILL_GET_REPO_PATH: 'skill:getRepoPath',
   SKILL_SYNC_FROM_REPO: 'skill:syncFromRepo',
   SKILL_EXECUTE_WORKSPACE: 'skill:executeWorkspace',
-
-  // Skill Version
-  SKILL_VERSION_GET_ALL: 'skill:version:getAll',
-  SKILL_VERSION_CREATE: 'skill:version:create',
-  SKILL_VERSION_ROLLBACK: 'skill:version:rollback',
-  SKILL_VERSION_DELETE: 'skill:version:delete',
-  // Skill Backup Restore
-  SKILL_DELETE_ALL: 'skill:deleteAll',
-  SKILL_INSERT_VERSION_DIRECT: 'skill:version:insertDirect',
 
   // Image
   DIALOG_SELECT_IMAGE: 'dialog:selectImage',
@@ -206,9 +213,23 @@ export const IPC_CHANNELS = {
   AICHAT_CLI_AGENT_DETECT: 'aichat:cliAgentDetect',
   AICHAT_PARSE_ATTACHMENT: 'aichat:parseAttachment',
 
+  // Claude Code 斜杠命令（见 src/claude-code/）
+  CLAUDE_CODE_LIST_SLASH: 'claudeCode:listSlashCommands',
+
   // Skill 远程 POST 请求
   SKILL_FETCH_REMOTE_POST: 'skill:fetchRemotePost',
   SKILL_EXTRACT_CLAWHUB_ARCHIVE: 'skill:extractClawhubArchive',
+
+  // Rules 规则工作区
+  RULES_LIST: 'rules:list',
+  RULES_SCAN: 'rules:scan',
+  RULES_READ: 'rules:read',
+  RULES_SAVE: 'rules:save',
+  RULES_RESOLVE_CONFLICT: 'rules:resolveConflict',
+  RULES_REWRITE: 'rules:rewrite',
+  RULES_ADD_PROJECT: 'rules:addProject',
+  RULES_REMOVE_PROJECT: 'rules:removeProject',
+  RULES_IMPORT_RECORDS: 'rules:importRecords',
 } as const;
 
 export type IPCChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

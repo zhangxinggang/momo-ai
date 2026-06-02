@@ -1,7 +1,6 @@
-﻿import type { ISkillFileSnapshot, ISkillLocalFileEntry } from '@/types/modules';
-import fs from 'fs/promises';
+﻿import fs from 'fs/promises';
 import type { SkillDB } from '../../database';
-import { SkillInstaller, isInternalSkillRepoEntry } from '../../services/skill';
+import { SkillInstaller } from '../../services/skill';
 
 export interface ISkillIPCContext {
   db: SkillDB;
@@ -57,45 +56,6 @@ export async function ensureLocalRepoPath(db: SkillDB, skillId: string): Promise
     await db.update(skillId, { local_repo_path: savedRepoPath });
   }
   return savedRepoPath;
-}
-
-export async function readCurrentFilesSnapshot(
-  db: SkillDB,
-  skillId: string,
-): Promise<ISkillFileSnapshot[]> {
-  const ensuredRepoPath = await ensureLocalRepoPath(db, skillId);
-  const skill = await db.getById(skillId);
-  if (!skill) return [];
-
-  const files: ISkillLocalFileEntry[] = ensuredRepoPath
-    ? await SkillInstaller.readLocalRepoFilesByPath(ensuredRepoPath)
-    : await SkillInstaller.readLocalRepoFiles(skill.name);
-
-  return files
-    .filter((file) => !file.isDirectory && !isInternalSkillRepoEntry(file.path))
-    .map((file) => ({
-      relativePath: file.path,
-      content: file.content,
-    }));
-}
-
-export async function replaceRepoFiles(
-  db: SkillDB,
-  skillId: string,
-  filesSnapshot?: ISkillFileSnapshot[],
-): Promise<void> {
-  if (!filesSnapshot) return;
-
-  const skill = await db.getById(skillId);
-  if (!skill) {
-    throw new Error(`ISkill not found: ${skillId}`);
-  }
-
-  const repoPath = await ensureLocalRepoPath(db, skillId);
-  if (!repoPath) {
-    throw new Error(`Unable to resolve local repo for skill: ${skillId}`);
-  }
-  await SkillInstaller.replaceLocalRepoFilesByPath(repoPath, filesSnapshot);
 }
 
 export async function resolveRepoPath(db: SkillDB, skillId: string): Promise<string | null> {

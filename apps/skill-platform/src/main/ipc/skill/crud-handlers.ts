@@ -1,6 +1,7 @@
 ﻿import { IPC_CHANNELS } from '@/types/constants';
 import type { DCreateSkill, DUpdateSkill } from '@/types/modules';
 import { ipcMain } from 'electron';
+import { zipSync } from 'fflate';
 import {
   SkillInstaller,
   hasMetadataChanges,
@@ -8,7 +9,7 @@ import {
   syncFrontmatterToRepo,
 } from '../../services/skill';
 import type { ISkillIPCContext } from './shared';
-import { ensureLocalRepoPath, readCurrentFilesSnapshot } from './shared';
+import { ensureLocalRepoPath } from './shared';
 
 export function registerSkillCrudHandlers({ db }: ISkillIPCContext): void {
   ipcMain.handle(
@@ -91,11 +92,6 @@ export function registerSkillCrudHandlers({ db }: ISkillIPCContext): void {
         nextData.local_repo_path = migratedRepoPath ?? undefined;
       }
       nextData.name = nextName;
-    }
-
-    if (data.instructions !== undefined || data.content !== undefined) {
-      const filesSnapshot = await readCurrentFilesSnapshot(db, id);
-      await db.createVersion(id, 'Before updating SKILL.md', filesSnapshot, existingSkill);
     }
 
     const updatedSkill = await db.update(id, nextData);
@@ -204,7 +200,6 @@ export function registerSkillCrudHandlers({ db }: ISkillIPCContext): void {
       throw new Error(`ISkill repo is empty: ${skill.name}`);
     }
 
-    const { zipSync } = await import('fflate');
     const zipFiles: Record<string, Uint8Array> = {};
 
     for (const file of fileEntries) {

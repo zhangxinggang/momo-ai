@@ -1,6 +1,5 @@
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { SidebarEmptyState } from '@renderer/components/ui/SidebarEmptyState';
-import { isWebRuntime } from '@renderer/runtime';
 import {
   kbCreateCollection,
   kbDeleteCollection,
@@ -10,7 +9,7 @@ import {
 import { useKbStore } from '@renderer/store';
 import { App, Button, Input, Modal, Popconfirm, Tooltip } from 'antd';
 import { clsx } from 'clsx';
-import { DatabaseIcon, MonitorIcon, PlusIcon } from 'lucide-react';
+import { DatabaseIcon, PlusIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styles from './index.module.less';
 
@@ -43,7 +42,6 @@ export function KnowledgePanel({
   hideHeader = false,
 }: IProps) {
   const { message } = App.useApp();
-  const webRuntime = isWebRuntime();
   const activeCollectionId = useKbStore((s) => s.activeCollectionId);
   const setActiveCollectionId = useKbStore((s) => s.setActiveCollectionId);
   const listSearchQuery = useKbStore((s) => s.listSearchQuery);
@@ -60,9 +58,6 @@ export function KnowledgePanel({
   const [renameSubmitting, setRenameSubmitting] = useState(false);
 
   const load = useCallback(async () => {
-    if (webRuntime) {
-      return;
-    }
     try {
       const items = await kbListCollections();
       setList(items);
@@ -72,7 +67,7 @@ export function KnowledgePanel({
       message.error(err?.message || '加载知识库失败');
       return [];
     }
-  }, [message, webRuntime]);
+  }, [message]);
 
   useEffect(() => {
     void load();
@@ -85,9 +80,6 @@ export function KnowledgePanel({
   }, [load]);
 
   useEffect(() => {
-    if (webRuntime) {
-      return;
-    }
     if (list.length === 0) {
       if (activeCollectionId) {
         setActiveCollectionId(undefined);
@@ -98,7 +90,7 @@ export function KnowledgePanel({
     if (!activeCollectionId || !exists) {
       setActiveCollectionId(list[0].id);
     }
-  }, [list, activeCollectionId, setActiveCollectionId, webRuntime]);
+  }, [list, activeCollectionId, setActiveCollectionId]);
 
   const normalizedSearchQuery = listSearchQuery.trim().toLowerCase();
   const filteredList = useMemo(() => {
@@ -187,21 +179,6 @@ export function KnowledgePanel({
   const rootClass = clsx(styles.knowledge, {
     [styles['knowledge--embedded']]: layout === 'embedded',
   });
-
-  if (webRuntime) {
-    return (
-      <div className={rootClass}>
-        <div className={styles['knowledge-section-label']}>
-          <DatabaseIcon className={styles['knowledge-section-icon']} aria-hidden />
-          {'知识库'}
-        </div>
-        <div className={styles['knowledge-unavailable']}>
-          <MonitorIcon size={18} aria-hidden />
-          <span>{'知识库仅在桌面客户端可用'}</span>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={rootClass}>

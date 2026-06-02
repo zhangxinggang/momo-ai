@@ -5,6 +5,7 @@ import type {
   Edge,
   Node,
   NodeMouseHandler,
+  OnNodeDrag,
   OnNodesDelete,
   ReactFlowInstance,
 } from '@xyflow/react';
@@ -34,14 +35,27 @@ import {
 
 import { WorkflowEditorContext } from '../../context';
 import {
+  isPaletteDragEvent,
   WORKFLOW_DRAG_MIME,
   WORKFLOW_NODE_TYPE_END,
+  WORKFLOW_NODE_TYPE_PARALLEL,
   WORKFLOW_NODE_TYPE_PROMPT,
   WORKFLOW_NODE_TYPE_SKILL,
   WORKFLOW_NODE_TYPE_START,
   type IProps,
   type IWorkflowPaletteDragPayload,
 } from '../../types';
+import {
+  attachResourceNodeToParallel,
+  findParallelNodeAtPoint,
+  getParallelSize,
+  isFreeResourceNode,
+  isParallelNode,
+  isResourceNode,
+  RESOURCE_NODE_HEIGHT,
+  RESOURCE_NODE_WIDTH,
+} from '../../utils/parallel-graph';
+import { ParallelGroupNode } from '../ParallelGroupNode';
 import { PromptResourceNode, SkillResourceNode } from '../ResourceNode';
 import { EndTerminalNode, StartTerminalNode } from '../TerminalNode';
 import styles from './index.module.less';
@@ -56,6 +70,7 @@ const builtInNodeTypes = {
   [WORKFLOW_NODE_TYPE_SKILL]: memo(SkillResourceNode),
   [WORKFLOW_NODE_TYPE_START]: memo(StartTerminalNode),
   [WORKFLOW_NODE_TYPE_END]: memo(EndTerminalNode),
+  [WORKFLOW_NODE_TYPE_PARALLEL]: memo(ParallelGroupNode),
 };
 
 function parseDragPayload(event: DragEvent): IWorkflowPaletteDragPayload | null {
@@ -66,6 +81,21 @@ function parseDragPayload(event: DragEvent): IWorkflowPaletteDragPayload | null 
   } catch {
     return null;
   }
+}
+
+function getAbsolutePosition(node: Node, nodeById: Map<string, Node>): { x: number; y: number } {
+  if (!node.parentId) {
+    return node.position;
+  }
+  const parent = nodeById.get(node.parentId);
+  if (!parent) {
+    return node.position;
+  }
+  const parentAbs = getAbsolutePosition(parent, nodeById);
+  return {
+    x: parentAbs.x + node.position.x,
+    y: parentAbs.y + node.position.y,
+  };
 }
 
 function WorkflowEditorInner({
@@ -89,6 +119,10 @@ function WorkflowEditorInner({
   const hasFittedViewRef = useRef(false);
   const [internalNodes, setInternalNodes] = useState<Node[]>([]);
   const [internalEdges, setInternalEdges] = useState<Edge[]>([]);
+  const [parallelDropState, setParallelDropState] = useState<{
+    parallelId: string;
+    kind: 'valid' | 'invalid';
+  } | null>(null);
 
   const isControlled = controlledNodes !== undefined && controlledEdges !== undefined;
   const nodes = isControlled ? controlledNodes : internalNodes;
@@ -120,10 +154,88 @@ function WorkflowEditorInner({
 
   const removeNodeById = useCallback(
     (nodeId: string) => {
-      setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+      setNodes((nds) => {
+        const target = nds.find((n) => n.id === nodeId);
+        const childIdsToRemove =
+          target && isParallelNode(target) ? [...(target.data.childNodeIds ?? [])] : [];
+        const removeIds = new Set([nodeId, ...childIdsToRemove]);
+        return nds
+          .filter((n) => !removeIds.has(n.id))
+          .map((n) => {
+            if (!isParallelNode(n)) {
+              return n;
+            }
+            const nextChildIds = (n.data.childNodeIds ?? []).filter((id) => !removeIds.has(id));
+            if (nextChildIds.length === (n.data.childNodeIds ?? []).length) {
+              return n;
+            }
+            const size = getParallelSize(nextChildIds.length);
+            return {
+              ...n,
+              data: { ...n.data, childNodeIds: nextChildIds },
+              style: { ...n.style, width: size.width, height: size.height },
+            };
+          });
+      });
       setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
     },
     [setEdges, setNodes],
+  );
+
+  const attachNodeToParallel = useCallback(
+    (parallelId: string, childId: string) => {
+      setNodes((nds) => attachResourceNodeToParallel(nds, parallelId, childId));
+    },
+    [setNodes],
+  );
+
+  const setParallelDropHighlight = useCallback((parallelId: string, kind: 'valid' | 'invalid') => {
+    setParallelDropState({ parallelId, kind });
+  }, []);
+
+  const clearParallelDropHighlight = useCallback(() => {
+    setParallelDropState(null);
+  }, []);
+
+  const detachNodeFromParallel = useCallback(
+    (childId: string) => {
+      setNodes((nds) => {
+        const child = nds.find((n) => n.id === childId);
+        if (!child?.parentId) {
+          return nds;
+        }
+        const parallelId = child.parentId;
+        const parallel = nds.find((n) => n.id === parallelId);
+        const parentPos = parallel?.position ?? { x: 0, y: 0 };
+        const absPos = {
+          x: parentPos.x + child.position.x + 24,
+          y: parentPos.y + child.position.y + 24,
+        };
+
+        return nds.map((n) => {
+          if (n.id === parallelId && isParallelNode(n)) {
+            const nextChildIds = (n.data.childNodeIds ?? []).filter((id) => id !== childId);
+            const size = getParallelSize(nextChildIds.length);
+            return {
+              ...n,
+              data: { ...n.data, childNodeIds: nextChildIds },
+              style: { ...n.style, width: size.width, height: size.height },
+            };
+          }
+          if (n.id === childId) {
+            const nextNode: Node = {
+              ...n,
+              position: absPos,
+            };
+            delete nextNode.parentId;
+            delete nextNode.extent;
+            return nextNode;
+          }
+          return n;
+        });
+      });
+    },
+    [setNodes],
   );
 
   const contextValue = useMemo(
@@ -132,8 +244,21 @@ function WorkflowEditorInner({
       onNodeDelete,
       removeNodeById,
       readOnly,
+      parallelDropState,
+      setParallelDropHighlight,
+      clearParallelDropHighlight,
+      attachNodeToParallel,
     }),
-    [onNodeDelete, onNodeEdit, readOnly, removeNodeById],
+    [
+      attachNodeToParallel,
+      clearParallelDropHighlight,
+      onNodeDelete,
+      onNodeEdit,
+      parallelDropState,
+      readOnly,
+      removeNodeById,
+      setParallelDropHighlight,
+    ],
   );
 
   const mergedNodeTypes = useMemo(
@@ -165,7 +290,11 @@ function WorkflowEditorInner({
   const handleConnect = useCallback(
     (params: Connection) => {
       if (readOnly) return;
-      // 每个节点最多一条入边、一条出边
+      const sourceNode = nodes.find((n) => n.id === params.source);
+      const targetNode = nodes.find((n) => n.id === params.target);
+      if (sourceNode?.parentId || targetNode?.parentId) {
+        return;
+      }
       const hasIncoming = edges.some((e) => e.target === params.target);
       const hasOutgoing = edges.some((e) => e.source === params.source);
       if (hasIncoming || hasOutgoing) {
@@ -173,7 +302,7 @@ function WorkflowEditorInner({
       }
       setEdges((eds) => addEdge({ ...params, animated: true }, eds));
     },
-    [edges, readOnly, setEdges],
+    [edges, nodes, readOnly, setEdges],
   );
 
   const handleNodeClick: NodeMouseHandler = useCallback(
@@ -183,19 +312,103 @@ function WorkflowEditorInner({
     [onNodeClick],
   );
 
+  const handleNodeDrag: OnNodeDrag = useCallback(
+    (_, draggedNode) => {
+      if (readOnly || !isResourceNode(draggedNode)) {
+        setParallelDropState(null);
+        return;
+      }
+
+      const nodeById = new Map(nodes.map((n) => [n.id, n]));
+      const abs = getAbsolutePosition(draggedNode, nodeById);
+      const center = {
+        x: abs.x + RESOURCE_NODE_WIDTH / 2,
+        y: abs.y + RESOURCE_NODE_HEIGHT / 2,
+      };
+
+      const parallel = findParallelNodeAtPoint(nodes, center);
+      if (parallel) {
+        if (draggedNode.parentId === parallel.id) {
+          setParallelDropState({ parallelId: parallel.id, kind: 'valid' });
+          return;
+        }
+        const canDrop = isFreeResourceNode(nodes, edges, draggedNode.id);
+        setParallelDropState({
+          parallelId: parallel.id,
+          kind: canDrop ? 'valid' : 'invalid',
+        });
+        return;
+      }
+      setParallelDropState(null);
+    },
+    [edges, nodes, readOnly],
+  );
+
+  const handleNodeDragStop: NodeMouseHandler = useCallback(
+    (_, draggedNode) => {
+      setParallelDropState(null);
+      if (readOnly || !isResourceNode(draggedNode)) {
+        return;
+      }
+
+      const nodeById = new Map(nodes.map((n) => [n.id, n]));
+      const abs = getAbsolutePosition(draggedNode, nodeById);
+      const center = {
+        x: abs.x + RESOURCE_NODE_WIDTH / 2,
+        y: abs.y + RESOURCE_NODE_HEIGHT / 2,
+      };
+
+      const parallel = findParallelNodeAtPoint(nodes, center);
+      if (parallel) {
+        if (
+          draggedNode.parentId !== parallel.id &&
+          isFreeResourceNode(nodes, edges, draggedNode.id)
+        ) {
+          attachNodeToParallel(parallel.id, draggedNode.id);
+        }
+        return;
+      }
+
+      if (draggedNode.parentId) {
+        detachNodeFromParallel(draggedNode.id);
+      }
+    },
+    [attachNodeToParallel, detachNodeFromParallel, edges, nodes, readOnly],
+  );
+
   const handleDragOver = useCallback(
     (event: DragEvent) => {
       if (readOnly || !onCanvasDrop) return;
       event.preventDefault();
       event.dataTransfer.dropEffect = 'move';
+
+      if (!isPaletteDragEvent(event)) {
+        return;
+      }
+
+      const instance = reactFlowRef.current;
+      if (!instance) {
+        return;
+      }
+      const flowPosition = instance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+      const parallel = findParallelNodeAtPoint(nodes, flowPosition);
+      if (parallel) {
+        setParallelDropState({ parallelId: parallel.id, kind: 'valid' });
+      } else {
+        setParallelDropState(null);
+      }
     },
-    [onCanvasDrop, readOnly],
+    [nodes, onCanvasDrop, readOnly],
   );
 
   const handleDrop = useCallback(
     (event: DragEvent) => {
       if (readOnly || !onCanvasDrop) return;
       event.preventDefault();
+      setParallelDropState(null);
       const dragData = parseDragPayload(event);
       if (!dragData) return;
       const instance = reactFlowRef.current;
@@ -204,9 +417,14 @@ function WorkflowEditorInner({
         x: event.clientX,
         y: event.clientY,
       });
-      onCanvasDrop({ flowPosition, dragData });
+      const parallel = findParallelNodeAtPoint(nodes, flowPosition);
+      onCanvasDrop({
+        flowPosition,
+        dragData,
+        targetParallelId: parallel?.id,
+      });
     },
-    [onCanvasDrop, readOnly],
+    [nodes, onCanvasDrop, readOnly],
   );
 
   const handleNodesDelete: OnNodesDelete = useCallback(
@@ -276,6 +494,8 @@ function WorkflowEditorInner({
           onDrop={handleDrop}
           onEdgesChange={handleEdgesChange}
           onNodeClick={handleNodeClick}
+          onNodeDrag={handleNodeDrag}
+          onNodeDragStop={handleNodeDragStop}
           onNodesChange={handleNodesChange}
           onNodesDelete={readOnly ? undefined : handleNodesDelete}
           deleteKeyCode={readOnly ? null : ['Backspace', 'Delete']}>

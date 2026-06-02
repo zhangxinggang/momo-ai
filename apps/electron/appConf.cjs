@@ -3,6 +3,7 @@ module.exports = {
   loadUrl: '',
   openDevTools: true,
   closeConfirm: true,
+  onlineConfUrl: '',
   databaseName: 'database.sql',
   browserWindow: {
     width: 1200,

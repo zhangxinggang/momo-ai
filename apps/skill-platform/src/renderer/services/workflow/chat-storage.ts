@@ -6,8 +6,12 @@ import { createLocalChatStorage } from '@renderer/services/aichat/core/web-chat-
 import { isResourceNode } from '@renderer/services/workflow/graph-utils';
 
 /** 工作流节点对话独立存储前缀（不进入 AI 对话模块） */
-export function buildWorkflowNodeChatPrefix(workflowId: string, nodeId: string): string {
-  return `workflow-node-chat-${workflowId}-${nodeId}`;
+export function buildWorkflowNodeChatPrefix(
+  workflowId: string,
+  businessId: string,
+  nodeId: string,
+): string {
+  return `workflow-node-chat-${workflowId}-${businessId}-${nodeId}`;
 }
 
 function generateSessionId(): string {
@@ -41,13 +45,20 @@ function saveSessions(
   }
 }
 
+function removeChatByPrefix(prefix: string, storage = createLocalChatStorage()): void {
+  const keys = buildStorageKeys(prefix);
+  storage.removeItem(keys.CHAT_SESSIONS);
+  storage.removeItem(keys.CURRENT_SESSION_ID);
+}
+
 /** 获取或创建工作流节点对话会话 */
 export function getOrCreateWorkflowNodeSession(
   workflowId: string,
+  businessId: string,
   nodeId: string,
   title: string,
 ): { sessionId: string; sessionKey: string; storagePrefix: string } {
-  const storagePrefix = buildWorkflowNodeChatPrefix(workflowId, nodeId);
+  const storagePrefix = buildWorkflowNodeChatPrefix(workflowId, businessId, nodeId);
   const storage = createLocalChatStorage();
   const keys = buildStorageKeys(storagePrefix);
   const existingId = storage.getItem(keys.CURRENT_SESSION_ID);
@@ -56,7 +67,7 @@ export function getOrCreateWorkflowNodeSession(
   if (existingId && sessions.some((s) => s.id === existingId)) {
     return {
       sessionId: existingId,
-      sessionKey: `wf-node-${workflowId}-${nodeId}-${existingId}`,
+      sessionKey: `wf-node-${workflowId}-${businessId}-${nodeId}-${existingId}`,
       storagePrefix,
     };
   }
@@ -72,29 +83,56 @@ export function getOrCreateWorkflowNodeSession(
   saveSessions(storagePrefix, [newSession], sessionId, storage);
   return {
     sessionId,
-    sessionKey: `wf-node-${workflowId}-${nodeId}-${sessionId}`,
+    sessionKey: `wf-node-${workflowId}-${businessId}-${nodeId}-${sessionId}`,
     storagePrefix,
   };
 }
 
 /** 删除工作流节点对话记录 */
-export function deleteWorkflowNodeChat(workflowId: string, nodeId: string): void {
+export function deleteWorkflowNodeChat(
+  workflowId: string,
+  businessId: string,
+  nodeId: string,
+): void {
   const storage = createLocalChatStorage();
-  const prefix = buildWorkflowNodeChatPrefix(workflowId, nodeId);
-  const keys = buildStorageKeys(prefix);
-  storage.removeItem(keys.CHAT_SESSIONS);
-  storage.removeItem(keys.CURRENT_SESSION_ID);
+  removeChatByPrefix(buildWorkflowNodeChatPrefix(workflowId, businessId, nodeId), storage);
 }
 
-/** 删除整个工作流的所有节点对话 */
-export function deleteAllWorkflowNodeChats(workflowId: string, graphJson?: string): void {
+/** 删除业务实例下所有节点对话 */
+export function deleteWorkflowBusinessChats(
+  workflowId: string,
+  businessId: string,
+  graphJson?: string,
+): void {
   if (!graphJson) {
     return;
   }
   const { nodes } = parseWorkflowGraphJson(graphJson);
   for (const node of nodes) {
     if (isResourceNode(node)) {
-      deleteWorkflowNodeChat(workflowId, node.id);
+      deleteWorkflowNodeChat(workflowId, businessId, node.id);
     }
+  }
+}
+
+/** 删除节点在所有业务下的对话 */
+export function deleteWorkflowNodeChatForAllBusinesses(
+  workflowId: string,
+  businessIds: string[],
+  nodeId: string,
+): void {
+  for (const businessId of businessIds) {
+    deleteWorkflowNodeChat(workflowId, businessId, nodeId);
+  }
+}
+
+/** 删除整个工作流模板下所有业务的节点对话（侧栏删工作流时用） */
+export function deleteAllWorkflowBusinessChats(
+  workflowId: string,
+  businessIds: string[],
+  graphJson?: string,
+): void {
+  for (const businessId of businessIds) {
+    deleteWorkflowBusinessChats(workflowId, businessId, graphJson);
   }
 }

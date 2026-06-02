@@ -1,4 +1,4 @@
-﻿import type { DCreatePrompt, DUpdatePrompt, IPrompt } from '@/types/modules';
+import type { DCreatePrompt, DUpdatePrompt, IPrompt } from '@/types/modules';
 import { collectFirstLevelFolderIds, type IMomoTreeNode } from '@momo/tree';
 import * as db from '@renderer/services/database';
 import {

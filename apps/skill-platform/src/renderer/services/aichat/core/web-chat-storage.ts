@@ -14,9 +14,14 @@ export function toChatStorageAdapter(storage: IKeyValueStorageAdapter): IChatSto
   };
 }
 
-/** 基于 localStorage 的对话持久化（宿主层） */
+let localChatStorageSingleton: IChatStorageAdapter | null = null;
+
+/** 基于 localStorage 的对话持久化（宿主层，单例避免 services 重建触发状态重载） */
 export function createLocalChatStorage(): IChatStorageAdapter {
-  return toChatStorageAdapter(createLocalStorageAdapter());
+  if (!localChatStorageSingleton) {
+    localChatStorageSingleton = toChatStorageAdapter(createLocalStorageAdapter());
+  }
+  return localChatStorageSingleton;
 }
 
 export type { IKeyValueStorageAdapter as IWebStorageLike } from '@renderer/services/storage/key-value-storage';

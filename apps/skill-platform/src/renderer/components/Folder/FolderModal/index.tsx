@@ -1,4 +1,4 @@
-﻿import type { IFolder } from '@/types/modules';
+import type { IFolder } from '@/types/modules';
 import { useToast } from '@renderer/components/ui/Toast';
 import { useFolderStore, usePromptStore } from '@renderer/store';
 import {

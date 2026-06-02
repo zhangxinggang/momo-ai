@@ -1,4 +1,4 @@
-﻿import type { ISkillStoreSource } from '@/types/modules';
+import type { ISkillStoreSource } from '@/types/modules';
 import { Button, Input } from 'antd';
 interface IProps {
   handleAddSource: () => void;

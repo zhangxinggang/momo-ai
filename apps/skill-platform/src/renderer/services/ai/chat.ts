@@ -7,6 +7,7 @@ import {
 } from './internal/stream';
 import { createFetchResponseLike, createResponseLike, getAITransport } from './internal/transport';
 import type { IResponseLike } from './internal/types';
+import { normalizeTokenUsage } from './internal/usage';
 import {
   buildChatEndpointFromBase,
   buildHeadersForProtocol,
@@ -177,6 +178,10 @@ export async function chatCompletion(
     body.max_completion_tokens = mergedParams.maxTokens;
   } else {
     body.max_tokens = mergedParams.maxTokens;
+  }
+
+  if (mergedParams.stream) {
+    body.stream_options = { include_usage: true };
   }
 
   // 添加可选参数 / Add optional parameters
@@ -407,6 +412,7 @@ export async function chatCompletion(
     return {
       content: normalizeAssistantContent(message.content),
       thinkingContent: message.reasoning_content,
+      usage: normalizeTokenUsage(data.usage),
     };
   } catch (error) {
     if (error instanceof Error) {

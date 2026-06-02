@@ -1,4 +1,4 @@
-﻿import type { ISkillStoreSource } from '@/types/modules';
+import type { ISkillStoreSource } from '@/types/modules';
 
 export type ECustomStoreSourceType = Extract<
   ISkillStoreSource['type'],

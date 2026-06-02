@@ -1,7 +1,7 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 
-import { AiNewsManager } from '@renderer/components/AiNews';
 import { ChatManager } from '@renderer/components/Chat';
+import { ToolboxManager } from '@renderer/components/Toolbox';
 import { CenteredLoading } from '@renderer/components/ui/CenteredLoading';
 import { useUIStore } from '@renderer/store';
 
@@ -54,9 +54,9 @@ export function MainContent() {
         <div className='bg-background absolute inset-0 flex min-h-0 flex-col overflow-hidden'>
           <ChatManager />
         </div>
-      ) : uiViewMode === 'news' ? (
+      ) : uiViewMode === 'toolbox' ? (
         <div className='bg-background absolute inset-0 flex min-h-0 flex-col overflow-hidden'>
-          <AiNewsManager />
+          <ToolboxManager />
         </div>
       ) : uiViewMode === 'note' ? (
         <ModuleShell>

@@ -1,3 +1,4 @@
+import { createNativeFullscreenBridge } from '@momo/utils';
 import { useCallback, useState } from 'react';
 
 export type EPromptFullscreenField = 'system' | 'user';
@@ -7,6 +8,8 @@ interface IPromptNativeFullscreenOptions {
   setFieldValue: (field: EPromptFullscreenField, value: string) => void;
   getFieldTitle: (field: EPromptFullscreenField) => string;
 }
+
+const nativeFullscreenBridge = createNativeFullscreenBridge();
 
 export function usePromptNativeFullscreen({
   getFieldValue,
@@ -21,13 +24,13 @@ export function usePromptNativeFullscreen({
   const enterNativeFullscreen = useCallback((field: EPromptFullscreenField) => {
     setActiveFullscreenField(field);
     setIsNativeFullscreen(true);
-    window.electron?.enterFullscreen?.();
+    nativeFullscreenBridge.enter();
   }, []);
 
   const exitNativeFullscreen = useCallback(() => {
     setActiveFullscreenField(null);
     setIsNativeFullscreen(false);
-    window.electron?.exitFullscreen?.();
+    nativeFullscreenBridge.exit();
   }, []);
 
   const fullscreenValue = activeFullscreenField ? getFieldValue(activeFullscreenField) : '';

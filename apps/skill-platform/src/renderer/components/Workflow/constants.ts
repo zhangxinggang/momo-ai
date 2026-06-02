@@ -6,3 +6,6 @@ export const WORKFLOW_RESOURCE_TAG_COLORS = {
   prompt: '#e8f0ff',
   skill: '#d9ffde',
 } as const;
+
+/** 并行步骤条卡片背景色 */
+export const WORKFLOW_PARALLEL_TAG_COLOR = '#68637a';

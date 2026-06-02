@@ -5,6 +5,7 @@ import type {
   TChatMessageContent,
 } from '../types';
 import type { IResponseLike, IStreamState } from './types';
+import { normalizeTokenUsage } from './usage';
 
 export function createStreamState(): IStreamState {
   return {
@@ -55,6 +56,11 @@ export async function processStreamTextChunk(
 
     try {
       const json = JSON.parse(trimmed.slice(6));
+      const usage = normalizeTokenUsage(json.usage);
+      if (usage) {
+        state.usage = usage;
+      }
+
       const delta = json.choices?.[0]?.delta;
 
       if (!delta) {
@@ -106,6 +112,7 @@ export function finalizeStreamState(
   return {
     content: state.fullContent,
     thinkingContent: state.thinkingContent || undefined,
+    usage: state.usage,
   };
 }
 

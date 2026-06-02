@@ -1,4 +1,4 @@
-﻿import type { ISkill } from '@/types/modules';
+import type { ISkill } from '@/types/modules';
 import { getProtocolDisplayLabel, getSkillSourceMeta } from '@renderer/services/skill/detail-utils';
 import { Button } from 'antd';
 import { CheckIcon, ChevronRightIcon, CopyIcon } from 'lucide-react';

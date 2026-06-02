@@ -1,4 +1,4 @@
-﻿import type { ISkill } from '@/types/modules';
+import type { ISkill } from '@/types/modules';
 import { renderImmersiveSegments, stripFrontmatter } from '@renderer/services/skill/detail-utils';
 import { normalizeStringArray } from '@renderer/services/skill/normalize';
 import { Button } from 'antd';

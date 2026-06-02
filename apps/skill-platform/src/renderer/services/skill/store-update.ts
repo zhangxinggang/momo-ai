@@ -1,4 +1,4 @@
-﻿import type { IRegistrySkill, ISkill } from '@/types/modules';
+import type { IRegistrySkill, ISkill } from '@/types/modules';
 
 export type ERegistrySkillUpdateStatus =
   | 'not-installed'

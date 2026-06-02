@@ -1,4 +1,4 @@
-﻿import type { EAIProtocol } from '@/types/modules';
+import type { EAIProtocol } from '@/types/modules';
 
 import { createResponseLike, getAITransport } from './internal/transport';
 import {

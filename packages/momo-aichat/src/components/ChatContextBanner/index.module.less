@@ -1,0 +1,111 @@
+.chat-context-banner {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgb(148 163 184 / 28%);
+  background: rgb(248 250 252 / 95%);
+}
+
+.chat-context-banner-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.chat-context-banner-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #3b82f6;
+}
+
+.chat-context-banner-label {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  color: #475569;
+}
+
+.chat-context-banner-value {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 20px;
+  color: #0f172a;
+}
+
+.chat-context-banner-paths {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+
+.chat-context-banner-path {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgb(226 232 240);
+  background: rgb(241 245 249);
+  font-size: 12px;
+  color: #0f172a;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: rgb(226 232 240);
+  }
+}
+
+.chat-context-banner-path--missing {
+  border-color: rgb(248 113 113);
+  background: rgb(254 226 226);
+  color: #b91c1c;
+
+  &:hover {
+    background: rgb(254 202 202);
+  }
+}
+
+:global(.dark) .chat-context-banner {
+  border-bottom-color: rgb(71 85 105 / 50%);
+  background: rgb(30 41 59 / 95%);
+}
+
+:global(.dark) .chat-context-banner-label {
+  color: #94a3b8;
+}
+
+:global(.dark) .chat-context-banner-value {
+  color: #e2e8f0;
+}
+
+:global(.dark) .chat-context-banner-path {
+  border-color: rgb(71 85 105 / 70%);
+  background: rgb(51 65 85);
+  color: #e2e8f0;
+
+  &:hover {
+    background: rgb(71 85 105);
+  }
+}
+
+:global(.dark) .chat-context-banner-path--missing {
+  border-color: rgb(248 113 113 / 70%);
+  background: rgb(127 29 29 / 40%);
+  color: #fca5a5;
+
+  &:hover {
+    background: rgb(127 29 29 / 55%);
+  }
+}

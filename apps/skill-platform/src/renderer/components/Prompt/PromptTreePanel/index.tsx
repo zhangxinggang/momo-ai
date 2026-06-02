@@ -83,7 +83,8 @@ export function PromptTreePanel() {
           }
 
           const sortedFolderIds = [...folderIdsToDelete].sort(
-            (left, right) => getFolderDepth(currentFolders, right) - getFolderDepth(currentFolders, left),
+            (left, right) =>
+              getFolderDepth(currentFolders, right) - getFolderDepth(currentFolders, left),
           );
           for (const folderId of sortedFolderIds) {
             await deleteFolder(folderId);
@@ -122,8 +123,7 @@ export function PromptTreePanel() {
           await duplicatePrompt(nodeId);
         }
       },
-      countNonFolderDescendants: (folderId) =>
-        countNonFolderDescendants(moveTreeData, folderId),
+      countNonFolderDescendants: (folderId) => countNonFolderDescendants(moveTreeData, folderId),
     }),
     [
       createFolder,

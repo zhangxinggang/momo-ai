@@ -1,4 +1,4 @@
-﻿import {
+import {
   ICON_ARCHITECTURE,
   ICON_BARCHART,
   ICON_BOT,

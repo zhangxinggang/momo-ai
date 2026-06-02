@@ -3,7 +3,7 @@ import path from 'path';
 
 import type { ENoteType, INoteTreeNode } from '@/types/modules';
 
-import { getNotesDir } from '../../runtime-paths';
+import { getNotesDir, getProjectRoot } from '../../runtime-paths';
 
 const NOTE_FILE_EXT = '.md';
 const META_FILE_NAME = '.notes-meta.json';
@@ -153,7 +153,10 @@ function scanDirectory(dirPath: string, relativePrefix: string): INoteTreeNode[]
       continue;
     }
 
-    if (!entry.name.toLowerCase().endsWith(NOTE_FILE_EXT)) {
+    if (
+      !entry.name.toLowerCase().endsWith(NOTE_FILE_EXT) &&
+      !entry.name.toLowerCase().endsWith('.mdc')
+    ) {
       continue;
     }
 
@@ -377,6 +380,51 @@ export class NoteWorkspaceService {
       kind: 'file',
       noteType: getNoteType(newRel, content),
     };
+  }
+
+  /** 将项目 .cursor/rules 目录初始化到笔记「规则」文件夹 */
+  bootstrapCursorRulesFromProject(): { copied: number; skipped: number } {
+    const sourceDir = path.join(getProjectRoot(), '.cursor', 'rules');
+    if (!fs.existsSync(sourceDir)) {
+      return { copied: 0, skipped: 0 };
+    }
+
+    const rulesFolderName = '规则';
+    const root = ensureNotesRoot();
+    let rulesFolderRel = '';
+    const existing = fs
+      .readdirSync(root, { withFileTypes: true })
+      .find((entry) => entry.isDirectory() && entry.name === rulesFolderName);
+    if (existing) {
+      rulesFolderRel = existing.name;
+    } else {
+      const created = this.createFolder(null, rulesFolderName);
+      rulesFolderRel = created.id;
+    }
+
+    const rulesFolderAbs = resolveSafePath(rulesFolderRel);
+    let copied = 0;
+    let skipped = 0;
+    const entries = fs.readdirSync(sourceDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isFile()) {
+        continue;
+      }
+      const lowerName = entry.name.toLowerCase();
+      if (!lowerName.endsWith('.md') && !lowerName.endsWith('.mdc')) {
+        continue;
+      }
+      const targetAbs = path.join(rulesFolderAbs, entry.name);
+      if (fs.existsSync(targetAbs)) {
+        skipped += 1;
+        continue;
+      }
+      const sourceAbs = path.join(sourceDir, entry.name);
+      fs.copyFileSync(sourceAbs, targetAbs);
+      copied += 1;
+    }
+
+    return { copied, skipped };
   }
 }
 

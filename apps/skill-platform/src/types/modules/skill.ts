@@ -173,6 +173,12 @@ export interface IRegistrySkill {
   slug: string;
   name: string;
   install_name?: string;
+  /** 商店来源标识，如 skills.sh */
+  source_label?: string;
+  /** Git 仓库内 skill 包目录 */
+  source_directory?: string;
+  /** skill 包内 SKILL.md 相对路径 */
+  canonical_skill_path?: string;
   description: string;
   category: ESkillCategory;
   icon_url?: string;
@@ -185,7 +191,7 @@ export interface IRegistrySkill {
   version: string;
   content: string; // Embedded SKILL.md content
   content_url?: string; // Remote SKILL.md URL (for updates)
-  /** 商店本地缓存目录（temp/skills 下 skill 文件夹路径） */
+  /** 商店本地缓存目录（data/skills/source 下 skill 文件夹路径） */
   local_path?: string;
   prerequisites?: string[];
   compatibility?: string[];

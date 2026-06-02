@@ -12,7 +12,7 @@ interface IProps extends NodeProps<Node<IWorkflowResourceNodeData>> {
   variant?: 'prompt' | 'skill';
 }
 
-function ResourceNodeInner({ badgeLabel, variant = 'prompt', id, data, type }: IProps) {
+function ResourceNodeInner({ badgeLabel, variant = 'prompt', id, data, type, parentId }: IProps) {
   const { onNodeEdit, onNodeDelete, removeNodeById, readOnly } = useWorkflowEditorContext();
   const node: Node<IWorkflowResourceNodeData> = { id, data, type, position: { x: 0, y: 0 } };
   const title = data.label || data.resourceId;
@@ -28,8 +28,18 @@ function ResourceNodeInner({ badgeLabel, variant = 'prompt', id, data, type }: I
   const handleDelete = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      onNodeDelete?.({ event: e, node });
-      removeNodeById(node.id);
+      void (async () => {
+        let canRemove = true;
+        if (onNodeDelete) {
+          const result = await Promise.resolve(onNodeDelete({ event: e, node }));
+          if (result === false) {
+            canRemove = false;
+          }
+        }
+        if (canRemove) {
+          removeNodeById(node.id);
+        }
+      })();
     },
     [node, onNodeDelete, removeNodeById],
   );
@@ -41,7 +51,9 @@ function ResourceNodeInner({ badgeLabel, variant = 'prompt', id, data, type }: I
 
   return (
     <div className={rootClass}>
-      <Handle className={styles['workflow-node-handle']} position={Position.Top} type='target' />
+      {!parentId ? (
+        <Handle className={styles['workflow-node-handle']} position={Position.Top} type='target' />
+      ) : null}
       <div className={styles['workflow-node-body']}>
         <div className={styles['workflow-node-header']}>
           <span className={styles['workflow-node-badge']}>{badgeLabel}</span>
@@ -66,7 +78,13 @@ function ResourceNodeInner({ badgeLabel, variant = 'prompt', id, data, type }: I
         </div>
         <span className={styles['workflow-node-title']}>{title}</span>
       </div>
-      <Handle className={styles['workflow-node-handle']} position={Position.Bottom} type='source' />
+      {!parentId ? (
+        <Handle
+          className={styles['workflow-node-handle']}
+          position={Position.Bottom}
+          type='source'
+        />
+      ) : null}
     </div>
   );
 }

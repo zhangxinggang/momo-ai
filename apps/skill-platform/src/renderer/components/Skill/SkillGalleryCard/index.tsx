@@ -1,5 +1,4 @@
-﻿import type { ISkill } from '@/types/modules';
-import { getRuntimeCapabilities } from '@renderer/runtime';
+import type { ISkill } from '@/types/modules';
 import { Button } from 'antd';
 import {
   BellDotIcon,
@@ -37,8 +36,6 @@ function SkillGalleryCardComponent({
   onToggleSelection,
   skill,
 }: IProps) {
-  const runtimeCapabilities = getRuntimeCapabilities();
-
   return (
     <div
       onClick={() => {
@@ -112,18 +109,16 @@ function SkillGalleryCardComponent({
               title={'AI 对话'}
               icon={<MessagesSquare className='h-4 w-4' />}
             />
-            {runtimeCapabilities.skillPlatformIntegration && (
-              <Button
-                type='text'
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onQuickInstall(skill);
-                }}
-                className='text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg p-2 opacity-0 active:scale-90 group-hover:opacity-100'
-                title={'安装到平台'}
-                icon={<DownloadIcon className='h-4 w-4' />}
-              />
-            )}
+            <Button
+              type='text'
+              onClick={(event) => {
+                event.stopPropagation();
+                onQuickInstall(skill);
+              }}
+              className='text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg p-2 opacity-0 active:scale-90 group-hover:opacity-100'
+              title={'安装到平台'}
+              icon={<DownloadIcon className='h-4 w-4' />}
+            />
             <Button
               type='text'
               danger

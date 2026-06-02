@@ -1,13 +1,18 @@
+import { createNativeFullscreenBridge } from '@momo/utils';
 import { ChatModuleProvider } from '@renderer/components/Chat';
 import { MainContent, Sidebar, TitleBar, TopBar } from '@renderer/components/Layout';
 import { BackgroundImageBackdrop } from '@renderer/components/ui/BackgroundImageBackdrop';
 import { CloseDialog } from '@renderer/components/ui/CloseDialog';
 import { WorkflowModalsHost } from '@renderer/components/Workflow';
 import { useConfirmLeaveEditors } from '@renderer/hooks/useConfirmLeaveEditors';
-import { isWebRuntime } from '@renderer/runtime';
-import { initDatabase, migrateLegacyIndexedDbToMainProcess } from '@renderer/services/database';
+import { initDatabase } from '@renderer/services/database';
 import { configureKbService } from '@renderer/services/kb';
-import { useFolderStore, usePromptStore, useSettingsStore, useUIStore } from '@renderer/store';
+import {
+  useFolderStore,
+  useOnlineConfStore,
+  usePromptStore,
+  useSettingsStore,
+} from '@renderer/store';
 import {
   getRenderedBackgroundImageBlur,
   getRenderedBackgroundImageOpacity,
@@ -15,10 +20,12 @@ import {
 import { Flex, Spin } from 'antd';
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 
+const nativeFullscreenBridge = createNativeFullscreenBridge();
+
 // Lazy load heavy components for better initial load performance
 // 懒加载大型组件以提升初始加载性能
 const SettingsPage = lazy(() =>
-  import('@renderer/components/Settings/SettingsPage').then((m) => ({
+  import('@renderer/components/Settings').then((m) => ({
     default: m.SettingsPage,
   })),
 );
@@ -42,7 +49,6 @@ function App() {
   const backgroundImageOpacity = useSettingsStore((state) => state.backgroundImageOpacity);
   const backgroundImageBlur = useSettingsStore((state) => state.backgroundImageBlur);
   const debugMode = useSettingsStore((state) => state.debugMode);
-  const viewMode = useUIStore((state) => state.viewMode);
   const [currentPage, setCurrentPage] = useState<PageType>('home');
   const [isLoading, setIsLoading] = useState(true);
   const { confirmLeaveAllEditors } = useConfirmLeaveEditors();
@@ -66,8 +72,7 @@ function App() {
   const [showCloseDialog, setShowCloseDialog] = useState(false);
 
   const normalizedBackgroundImageFileName = backgroundImageFileName?.trim();
-  const hasBackgroundImage =
-    !isWebRuntime() && typeof normalizedBackgroundImageFileName === 'string';
+  const hasBackgroundImage = typeof normalizedBackgroundImageFileName === 'string';
   const renderedBackgroundBlur = getRenderedBackgroundImageBlur(backgroundImageBlur);
   const renderedBackgroundImageOpacity = getRenderedBackgroundImageOpacity(backgroundImageOpacity);
 
@@ -77,7 +82,7 @@ function App() {
     if (!isOsFullscreen) return;
     const handleEscapeFullscreen = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        window.electron?.exitFullscreen?.();
+        nativeFullscreenBridge.exit();
       }
     };
     window.addEventListener('keydown', handleEscapeFullscreen);
@@ -85,10 +90,6 @@ function App() {
   }, [isOsFullscreen]);
 
   useEffect(() => {
-    if (isWebRuntime()) {
-      return;
-    }
-
     // Listen for OS fullscreen state changes from main process
     // 监听主进程发送的 OS 全屏状态变化事件
     const handleFullscreenChanged = (isFullscreen: boolean) => {
@@ -136,6 +137,10 @@ function App() {
     syncSystemTheme();
     mediaQuery.addEventListener('change', syncSystemTheme);
     return () => mediaQuery.removeEventListener('change', syncSystemTheme);
+  }, []);
+
+  useEffect(() => {
+    void useOnlineConfStore.getState().fetchOnlineConf();
   }, []);
 
   useEffect(() => {
@@ -191,14 +196,6 @@ function App() {
 
       try {
         await initDatabase();
-        if (!isWebRuntime()) {
-          const migration = await migrateLegacyIndexedDbToMainProcess();
-          if (migration.migrated) {
-            console.log(
-              `Migrated legacy IndexedDB data to SQLite (${migration.promptCount} prompts, ${migration.folderCount} folders, ${migration.versionCount} versions)`,
-            );
-          }
-        }
         await fetchPrompts();
         await fetchFolders();
         console.log('✅ App initialized');
@@ -266,7 +263,7 @@ function App() {
           }`}>
           {/* Windows title bar */}
           {/* Windows 标题栏 */}
-          {!isWebRuntime() && <TitleBar />}
+          <TitleBar />
 
           <div className='flex flex-1 overflow-y-hidden overflow-x-visible'>
             <ChatModuleProvider>
@@ -277,7 +274,7 @@ function App() {
                 <TopBar onOpenSettings={openSettingsPage} />
 
                 <div className='flex min-h-0 flex-1 overflow-hidden'>
-                  {currentPage === 'home' && viewMode !== 'workflow' ? (
+                  {currentPage === 'home' ? (
                     <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} layout='panel' />
                   ) : null}
 

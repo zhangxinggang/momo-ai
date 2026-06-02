@@ -16,6 +16,10 @@
   "files": [
     "src"
   ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
   "dependencies": {
     "@xyflow/react": "^12.10.2",
     "lucide-react": "^0.460.0"
@@ -25,6 +29,7 @@
     "@types/react-dom": "^19.2.3",
     "less": "^4.4.1",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "vitest": "^3.2.4"
   }
 }

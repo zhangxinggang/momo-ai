@@ -1,4 +1,4 @@
-﻿import type { EAIProtocol } from '@/types/modules';
+import type { EAIProtocol } from '@/types/modules';
 
 export interface IChatImageAttachment {
   name?: string;
@@ -34,6 +34,9 @@ export interface DChatCompletionRequest {
   frequency_penalty?: number;
   presence_penalty?: number;
   stream?: boolean;
+  stream_options?: {
+    include_usage?: boolean;
+  };
   enable_thinking?: boolean;
   response_format?: {
     type: 'text' | 'json_object' | 'json_schema';
@@ -138,9 +141,16 @@ export interface IStreamCallbacks {
   onComplete?: (fullContent: string, thinkingContent?: string) => void;
 }
 
+export interface ITokenUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+}
+
 export interface IChatCompletionResult {
   content: string;
   thinkingContent?: string;
+  usage?: ITokenUsage;
 }
 
 export interface IAITestResult {

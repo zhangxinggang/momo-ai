@@ -1,4 +1,4 @@
-﻿import type { INoteTreeNode } from '@/types/modules';
+import type { INoteTreeNode } from '@/types/modules';
 import { collectFirstLevelFolderIds, type IMomoTreeNode } from '@momo/tree';
 import { collectNoteFolderIds, filterNoteTreeByQuery } from '@renderer/services/note/tree-filter';
 import { create } from 'zustand';
@@ -90,6 +90,7 @@ export const useNoteStore = create<INoteState>((set, get) => ({
     }
     set({ isLoadingTree: true });
     try {
+      await api.bootstrapCursorRules?.();
       const nodes = mapToMomoNodes(await api.listTree());
       const { treeSearchQuery } = get();
       const treeData = buildVisibleTree(nodes, treeSearchQuery);

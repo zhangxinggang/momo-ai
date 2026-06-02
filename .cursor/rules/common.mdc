@@ -1,14 +1,14 @@
 ---
 description: >-
-  命名约定、camelCase、PascalCase、kebab-case、UPPER_SNAKE、Hook 文件 use 前缀、 handle 事件、布尔 is/has/can、魔法数字与常量映射； 同业务域目录聚合、services/utils 子目录拆分、避免平铺长文件名； 代码生成、组件/服务/工具、API 适配与复用；样式与 CSS Module； 项目/目录优化、Monorepo、脚手架、批量建目录与 index 导出；类型生成，类型规范。
-
-
+  代码生成与复用、魔法数字；工程目录与文件结构、同域模块聚合、包根配置；
+  通用标识符命名（PascalCase/camelCase/kebab-case/UPPER_SNAKE）、路径分段。
+  类型前缀与 React 细则见 typescript.mdc、react.mdc。
 alwaysApply: true
 ---
 
 # 通用工程与生成规范
 
-以下场景均适用本规则：**代码生成**、**样式生成**、**项目优化**、**目录优化**、**项目生成**、**目录与文件生成**、**类型命名**。
+适用于 **代码生成**、**项目/目录优化**、**目录与文件生成**。样式与 CSS Module 见 `react.mdc`；TypeScript 类型前缀见 `typescript.mdc`。
 
 ---
 
@@ -38,8 +38,7 @@ if (state === UNPUBLISHED || state === PUBLISHED) {
 
 ## 命名约定（通用）
 
-- 适用于 TS/JS、Node、脚本及前端工程中的标识符与路径命名（React 组件与 JSX 细则见 `react.mdc`）。
-- 适用 ts 类型变量生成与命名规范，规则见 `typescript.mdc`
+适用于 TS/JS、Node、脚本及前端工程中的**标识符与路径**命名。
 
 ### 标识符
 
@@ -47,12 +46,12 @@ if (state === UNPUBLISHED || state === PUBLISHED) {
 - **camelCase**：变量、函数、方法、属性、一般模块内函数。
 - **camelCase + `use` 前缀**：自定义 Hook 文件名与函数名，如 `useAuth`、`useForm`。
 - **UPPER_SNAKE_CASE**：环境变量、跨模块常量、全局配置键（语义完整，如 `API_BASE_URL`）。
-- **小写短横线 kebab-case**：npm 包名、应用/包根目录、**配置文件名**（如 `electron-builder.json`）、**非组件**的多词工具/服务文件名（如 `note-service.ts`），与下文「路径分段」配合使用。
+- **kebab-case**：npm 包名、应用/包根目录、**配置文件名**（如 `electron-builder.json`）、**非组件**的多词工具/服务文件名（如 `note-service.ts`）。
 
 ### 事件、布尔与集合
 
 - 事件处理函数：`handle` 前缀，如 `handleClick`、`handleSubmit`。
-- 布尔变量：动词前缀，如 `isLoading`、`hasError`、`canSubmit`。
+- 布尔变量：`is` / `has` / `can` 前缀，如 `isLoading`、`hasError`、`canSubmit`。
 - 数组：名词 + `List` 或复数，如 `userList`、`items`。
 
 ### 用词与缩写
@@ -61,59 +60,38 @@ if (state === UNPUBLISHED || state === PUBLISHED) {
 - **禁止**拼音与英文混排；**禁止**以中文作为标识符（域名、品牌等专有名词除外）。
 - 杜绝模糊缩写，保证见名知义。
 
-### 路径与目录分段（与 React 规则对齐）
-
-以下口径用于消除「目录一律 kebab-case」与「组件目录 PascalCase」的歧义：
+### 路径与目录分段
 
 - **包或应用根目录**：kebab-case。
 - **固定约定目录**：小写，如 `components`、`hooks`、`services`、`utils`、`types`。
-- **单个 React 组件根目录**：**PascalCase**（如 `NoteTree/`、`RightPanel/`），入口为 `index.tsx`；**不要**用名为 `index` 的文件夹代替组件文件夹。
-- **功能域、路由段、多词业务分包**（表示「区域」而非单个组件根）：**kebab-case**，例如 `components/auth-wizard` 下再放 PascalCase 组件子目录。
-- **Hook 文件**：`useXxx.ts`（camelCase + use）。
+- **单个 React 组件根目录**：**PascalCase**（如 `NoteTree/`），入口为 `index.tsx`；勿用名为 `index` 的文件夹代替组件文件夹。
+- **功能域、路由段、多词业务分包**：**kebab-case**，例如 `components/auth-wizard` 下再放 PascalCase 组件子目录。
+- **Hook 文件**：`useXxx.ts`。
 - **类型文件**：业务内聚用同目录 `types.ts`；全包共享类型放 `types/`。
 
----
-
-## 样式生成
-
-- 需要样式时优先使用 **CSS Module**（如 `index.module.less`），避免全局样式污染。
-- **CSS Module 类名**：局部类选择器使用 **kebab-case**（如 `.chat-panel`、`.message-bubble`），生成或新增样式时保持一致；在 TSX 中通过 `styles['kebab-name']` 引用。
-- **层级与类名对齐**：当容器具有明显 DOM 层级（根区域 → 子区域 → 更细子块）时，类名采用 **「根块 + 短横线 + 语义片段」** 的链式前缀，使类名结构与视图层级一致，便于阅读与检索。根层使用短表意名作为**命名空间**（如 `.skill`），其下一层及更深层均以该根名为前缀（如 `.skill-header`、`.skill-toolbar`、`.skill-body`、`.skill-body-main`）；**避免**在同级模块里出现大量与根块无关的孤立短名（除非该节点确为无域的通用布局块）。
-- 与组件同目录放置样式文件，命名与引用方式与仓库内现有组件保持一致。
+React 组件目录、Props、样式引用等细则见 `react.mdc`。
 
 ---
 
-## 项目优化
+## 项目与目录
 
-- 调整包边界、依赖、脚本或构建配置时，仍须遵守下文「目录规范」与「文件命名」。
-- 保持 `package.json`、`tsconfig.json`、说明类文档等位于包根目录，便于维护与发布。
+### 项目优化
 
----
+- 调整包边界、依赖、脚本或构建配置时，仍须遵守下文目录与文件命名约定。
+- 保持 `package.json`、`tsconfig.json`、说明类文档等位于包根目录。
 
-## 目录优化
+### 目录与文件生成
 
-- 目录、项目、代码结构优化时，执行**以下**目录与命名约定（移动/合并目录后同步更新引用与导出）。
-
----
-
-## 项目生成
-
-- 新建包、子应用或从模板初始化工程时，采用下文示例树形结构作为默认参考，并按实际技术栈裁剪（如无需 `example/` 可省略，但须在包内自洽）。
-
----
-
-## 目录与文件生成
-
-- 批量创建文件夹与入口文件时：每个 React 组件独占 **PascalCase** 目录，入口为 `index.tsx`；子组件放在 `components/` 下子目录中，同样使用 `index.tsx`。
+- 每个 React 组件独占 **PascalCase** 目录，入口为 `index.tsx`；子组件放在 `components/` 下子目录中。
 - 生成 `index.ts` 聚合导出时，与 `src` 约定保持一致，避免循环依赖。
 
 ### 同域模块聚合（目录优于长文件名）
 
-- 在 `services`、`utils`、纯逻辑包等位置，若多个文件属于**同一业务域/子系统**（例如技能 Skill、提示词 Prompt），应使用 **子目录表达域边界**，在域内放置若干职责单一的模块文件；**不要**仅靠「把域前缀写进文件名」在平铺目录里区分（易造成 `skill-xxx.ts`、`skill-yyy.ts` 一长串、难浏览、难扩展）。
-- **域内文件名**在表意清晰前提下宜**简短**：父目录已表明域（如 `services/skill/`），子文件可用 `platform-sync.ts`、`stats.ts`、`filter.ts` 等；对外导出的函数/类型名仍可保持完整语义（如 `buildSkillStats`）。
-- **反例（不推荐）**：在 `services/` 根下并列 `skill-platform-sync.ts`、`skill-stats.ts`，用文件名堆叠域与能力。
-- **正例（推荐）**：`services/skill/platform-sync.ts`、`services/skill/stats.ts`；若域内确有同名冲突，再在文件名加必要后缀（如 `skill-stats.ts`），但**前提**仍是已存在 `skill/` 聚合目录。
-- 新增同域能力时优先落在既有域目录下；单目录文件过多时再分子目录，避免过深无意义嵌套。
+- 在 `services`、`utils`、纯逻辑包等位置，同一业务域/子系统（如 Skill、Prompt）应使用 **子目录表达域边界**；勿仅靠域前缀平铺长文件名（如 `skill-xxx.ts`、`skill-yyy.ts`）。
+- **域内文件名**宜简短：父目录已表域（如 `services/skill/`），子文件可用 `platform-sync.ts`、`stats.ts` 等。
+- **反例**：`services/skill-platform-sync.ts`、`services/skill-stats.ts` 平铺。
+- **正例**：`services/skill/platform-sync.ts`、`services/skill/stats.ts`。
+- 新增同域能力优先落在既有域目录下；单目录文件过多时再分子目录，避免过深无意义嵌套。
 
 ### 目录规范（参考树）
 

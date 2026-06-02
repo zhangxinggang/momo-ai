@@ -3,10 +3,9 @@ import path from 'path';
 
 import { unzipSync } from 'fflate';
 
-import { getProjectRoot } from '../../../runtime-paths';
+import { getSkillsSourceDir } from '../../../runtime-paths';
 import { SkillInstaller } from '../installer';
 
-const SKILLHUB_CACHE_ROOT = 'temp/skills/skillhub';
 const SKILLHUB_COS_BASE_URL = 'https://skillhub-1388575217.cos.accelerate.myqcloud.com/skills';
 
 export interface IExtractSkillHubSkillResult {
@@ -79,10 +78,10 @@ async function findSkillMdFile(rootDir: string): Promise<string | null> {
 }
 
 function getSkillHubCacheDir(slug: string): string {
-  return path.join(getProjectRoot(), SKILLHUB_CACHE_ROOT, slug);
+  return path.join(getSkillsSourceDir(), 'skillhub', slug);
 }
 
-/** 下载 SkillHub 压缩包并解压到 temp/skills/skillhub/{slug} */
+/** 下载 SkillHub 压缩包并解压到 data/skills/source/skillhub/{slug} */
 export async function extractSkillHubSkillToCache(
   slug: string,
   version?: string,

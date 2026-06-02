@@ -1,4 +1,4 @@
-﻿import { FileEditor, type IFileEditorHandle } from '@momo/file-editor';
+import { FileEditor, type IFileEditorHandle } from '@momo/file-editor';
 import { useToast } from '@renderer/components/ui/Toast';
 import { useUnsavedLeaveGuard } from '@renderer/hooks/useUnsavedLeaveGuard';
 import { createSkillFileEditorAdapter } from '@renderer/services/file-editor/skill-adapter';

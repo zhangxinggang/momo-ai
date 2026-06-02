@@ -97,6 +97,7 @@ const Content = forwardRef((props: IContentProps, ref: ForwardedRef<unknown>) =>
         onGetCatalog={props.onGetCatalog}
         mdHeadingId={props.mdHeadingId}
         noMermaid={props.noMermaid}
+        noPlantuml={props.noPlantuml}
         sanitize={props.sanitize}
         noKatex={props.noKatex}
         formatCopiedText={props.formatCopiedText}
@@ -122,6 +123,7 @@ const Content = forwardRef((props: IContentProps, ref: ForwardedRef<unknown>) =>
     props.noImgZoomIn,
     props.noKatex,
     props.noMermaid,
+    props.noPlantuml,
     props.onChange,
     props.onGetCatalog,
     props.onRemount,

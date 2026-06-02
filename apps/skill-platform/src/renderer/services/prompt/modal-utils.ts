@@ -1,4 +1,4 @@
-﻿import type { DCreatePrompt, DUpdatePrompt, IPrompt } from '@/types/modules';
+import type { DCreatePrompt, DUpdatePrompt, IPrompt } from '@/types/modules';
 
 export interface IPromptFormData {
   title: string;

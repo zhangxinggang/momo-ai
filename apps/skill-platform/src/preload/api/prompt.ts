@@ -1,12 +1,5 @@
 ﻿import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
-import type {
-  DCreatePrompt,
-  DPromptSearch,
-  DUpdatePrompt,
-  IFolder,
-  IPrompt,
-  IPromptVersion,
-} from '@/types/modules';
+import type { DCreatePrompt, DPromptSearch, DUpdatePrompt, IPrompt } from '@/types/modules';
 import { ipcRenderer } from 'electron';
 
 export const promptApi = {
@@ -21,17 +14,4 @@ export const promptApi = {
     ipcRenderer.invoke(IPC_CHANNELS.PROMPT_COPY, id, variables),
   insertDirect: (prompt: IPrompt) => ipcRenderer.invoke(IPC_CHANNELS.PROMPT_INSERT_DIRECT, prompt),
   syncWorkspace: () => ipcRenderer.invoke(IPC_CHANNELS.PROMPT_SYNC_WORKSPACE),
-  /**
-   * Atomically migrate legacy IndexedDB data into SQLite via a single
-   * main-process transaction. Safe to call multiple times — the handler
-   * returns { imported: false } when the target already has data.
-   *
-   * 原子批量迁移：通过单事务将 IndexedDB 数据写入 SQLite。
-   * 幂等：目标已有数据时返回 { imported: false }。
-   */
-  migrateIdbBatch: (payload: {
-    folders: IFolder[];
-    prompts: IPrompt[];
-    versions: IPromptVersion[];
-  }) => ipcRenderer.invoke(IPC_CHANNELS.PROMPT_MIGRATE_IDB_BATCH, payload),
 };

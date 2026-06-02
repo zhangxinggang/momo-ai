@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   DCreateSkill,
   DUpdateSkill,
   ESkillSafetyLevel,
@@ -15,6 +15,7 @@
 } from '@/types/modules';
 import { chatCompletion } from '@renderer/services/ai';
 import { resolveScenarioAIConfig } from '@renderer/services/ai/defaults';
+import { isClawHubDownloadUrl } from '@renderer/services/skill/clawhub-store';
 import { filterVisibleScannedSkills, filterVisibleSkills } from '@renderer/services/skill/filter';
 import { normalizeSkill, normalizeSkills } from '@renderer/services/skill/normalize';
 import {
@@ -22,7 +23,10 @@ import {
   isSkillHubDownloadUrl,
   resolveRegistrySkillSourceDir,
 } from '@renderer/services/skill/skillhub-store';
-import { isClawHubDownloadUrl } from '@renderer/services/skill/clawhub-store';
+import {
+  getRegistrySkillDirectory,
+  isSkillsShRegistrySkill,
+} from '@renderer/services/skill/skills-sh-store';
 import {
   validateStoreSourceInput,
   type ECustomStoreSourceType,
@@ -444,6 +448,7 @@ interface ISkillState {
   registrySkills: IRegistrySkill[];
   isLoadingRegistry: boolean;
   storeSearchQuery: string;
+  storeCategory: string;
   selectedRegistrySlug: string | null;
   customStoreSources: ISkillStoreSource[];
   selectedStoreSourceId: string;
@@ -521,6 +526,7 @@ interface ISkillState {
   installFromRegistry: (slug: string) => Promise<ISkill | null>;
   uninstallRegistrySkill: (slug: string) => Promise<boolean>;
   setStoreSearchQuery: (query: string) => void;
+  setStoreCategory: (category: string) => void;
   selectRegistrySkill: (slug: string | null) => void;
   selectStoreSource: (id: string) => void;
   upsertRegistrySkills: (skills: IRegistrySkill[]) => void;
@@ -589,9 +595,10 @@ export const useSkillStore = create<ISkillState>()(
       registrySkills: [] as IRegistrySkill[],
       isLoadingRegistry: false,
       storeSearchQuery: '',
+      storeCategory: 'all',
       selectedRegistrySlug: null,
       customStoreSources: [] as ISkillStoreSource[],
-      selectedStoreSourceId: 'claude-code',
+      selectedStoreSourceId: '',
       remoteStoreEntries: {},
 
       loadSkills: async () => {
@@ -636,9 +643,7 @@ export const useSkillStore = create<ISkillState>()(
               data.instructions || data.content || newSkill.instructions || newSkill.content || '';
             if (typeof repoContent === 'string') {
               try {
-                await window.api.skill.writeLocalFile(newSkill.id, 'SKILL.md', repoContent, {
-                  skipVersionSnapshot: true,
-                });
+                await window.api.skill.writeLocalFile(newSkill.id, 'SKILL.md', repoContent);
                 const repoPath = await window.api.skill.getRepoPath(newSkill.id);
                 if (repoPath) {
                   storedSkill = { ...newSkill, local_repo_path: repoPath };
@@ -677,9 +682,7 @@ export const useSkillStore = create<ISkillState>()(
               updatedSkill.content;
             if (shouldSyncRepoContent && typeof nextContent === 'string') {
               try {
-                await window.api.skill.writeLocalFile(id, 'SKILL.md', nextContent, {
-                  skipVersionSnapshot: true,
-                });
+                await window.api.skill.writeLocalFile(id, 'SKILL.md', nextContent);
                 const repoPath = await window.api.skill.getRepoPath(id);
                 if (repoPath) {
                   storedSkill = { ...updatedSkill, local_repo_path: repoPath };
@@ -1115,11 +1118,6 @@ export const useSkillStore = create<ISkillState>()(
         }
 
         const installedSkill = check.installedSkill;
-        await window.api.skill.versionCreate(
-          installedSkill.id,
-          `Store update: ${installedSkill.version || 'unknown'} -> ${regSkill.version}`,
-        );
-
         const now = Date.now();
         const updatedSkill = await get().updateSkill(installedSkill.id, {
           description: regSkill.description,
@@ -1226,7 +1224,16 @@ export const useSkillStore = create<ISkillState>()(
           });
           if (newSkill) {
             try {
-              if (sourceDir) {
+              if (isSkillsShRegistrySkill(regSkill) && regSkill.source_url) {
+                const repoPath = await window.api.skill.saveRemoteGitToRepo(newSkill.id, {
+                  repoUrl: regSkill.source_url,
+                  directory: getRegistrySkillDirectory(regSkill),
+                  installName: regSkill.install_name,
+                });
+                if (repoPath) {
+                  await window.api.skill.syncFromRepo(newSkill.id);
+                }
+              } else if (sourceDir) {
                 const repoPath = await window.api.skill.saveToRepo(skillName, sourceDir);
                 if (repoPath) {
                   await window.api.skill.update(newSkill.id, {
@@ -1246,6 +1253,15 @@ export const useSkillStore = create<ISkillState>()(
                 `Failed to create local repo for registry skill "${regSkill.slug}":`,
                 repoError,
               );
+              if (isSkillsShRegistrySkill(regSkill)) {
+                await window.api.skill.delete(newSkill.id).catch((deleteError) => {
+                  console.warn(
+                    `Failed to roll back incomplete registry skill "${regSkill.slug}":`,
+                    deleteError,
+                  );
+                });
+                throw repoError;
+              }
             }
             await get().loadSkills();
             return newSkill;
@@ -1282,6 +1298,10 @@ export const useSkillStore = create<ISkillState>()(
 
       setStoreSearchQuery: (query) => {
         set({ storeSearchQuery: query });
+      },
+
+      setStoreCategory: (category) => {
+        set({ storeCategory: category });
       },
 
       selectRegistrySkill: (slug) => {
@@ -1338,7 +1358,7 @@ export const useSkillStore = create<ISkillState>()(
         set((state) => {
           const nextSources = state.customStoreSources.filter((source) => source.id !== id);
           const nextSelectedStoreSourceId =
-            state.selectedStoreSourceId === id ? 'claude-code' : state.selectedStoreSourceId;
+            state.selectedStoreSourceId === id ? '' : state.selectedStoreSourceId;
           const nextRemoteStoreEntries = { ...state.remoteStoreEntries };
           delete nextRemoteStoreEntries[id];
 
@@ -1540,11 +1560,14 @@ Rules:
     {
       name: 'skill-store',
       migrate: (persisted) => {
+        if (!persisted || typeof persisted !== 'object') {
+          return persisted;
+        }
         const state = persisted as { filterType?: string };
         if (state.filterType === 'favorites') {
-          return { ...persisted, filterType: 'all' };
+          return { ...state, filterType: 'all' satisfies ESkillFilterType };
         }
-        return persisted;
+        return state;
       },
       partialize: (state) => ({
         viewMode: state.viewMode,

@@ -3,7 +3,7 @@ import type { BrowserWindowConstructorOptions } from 'electron';
 import { app, BrowserWindow, dialog } from 'electron';
 import { join } from 'path';
 import { getMainWindow, setMainWindow } from '../main-window';
-import { getAppConfig, getSystemLogo, isMac } from '../utils';
+import { configureAppUserDataPath, getAppConfig, getSystemLogo, isMac } from '../utils';
 import { loadWindowContent } from './events/page';
 import { winEvent } from './events/win';
 import { registerIpcHandlers } from './ipc';
@@ -16,6 +16,8 @@ const { openDevTools, browserWindow = {} } = appConf;
 interface ICreateShellWindowOptions {
   config?: BrowserWindowConstructorOptions;
 }
+
+configureAppUserDataPath();
 
 async function createWindow({ config = {} }: ICreateShellWindowOptions): Promise<BrowserWindow> {
   const getWebPreferences = () => {
@@ -85,7 +87,6 @@ function init({
         resolve(null);
         return;
       }
-      await startServer(serverConfig);
       registerIpcHandlers();
       buildMenu();
       const win = await createWindow({ config });
@@ -97,16 +98,21 @@ function init({
       await onAppReady?.();
       resolve(win);
     };
-    app.whenReady().then(() => {
-      void appWhenReady().catch((error) => {
-        console.error('Failed to initialize app:', error);
-        dialog.showErrorBox(
-          '启动错误',
-          `应用启动时发生错误：\n\n${error instanceof Error ? error.message : String(error)}\n\n堆栈：\n${error instanceof Error ? error.stack : ''}`,
-        );
-        app.quit();
+    app
+      .whenReady()
+      .then(() => {
+        void appWhenReady().catch((error) => {
+          console.error('Failed to initialize app:', error);
+          dialog.showErrorBox(
+            '启动错误',
+            `应用启动时发生错误：\n\n${error instanceof Error ? error.message : String(error)}\n\n堆栈：\n${error instanceof Error ? error.stack : ''}`,
+          );
+          app.quit();
+        });
+      })
+      .then(() => {
+        startServer(serverConfig);
       });
-    });
     app.on('window-all-closed', () => {
       if (!isMac) app.quit();
     });

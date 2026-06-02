@@ -1,4 +1,4 @@
-﻿import type { IFolder } from '@/types/modules';
+import type { IFolder } from '@/types/modules';
 
 /** 树形文件夹节点 */
 export interface IFolderTreeNode extends IFolder {

@@ -1,11 +1,8 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-import {
-  buildSkillModuleSearchPaths,
-  ensureSkillRuntimePackages,
-  getSkillRuntimeDir,
-} from '../runtime/node-runtime';
+import { getSkillRuntimeDir } from '../../../runtime-paths';
+import { buildSkillModuleSearchPaths, ensureSkillRuntimePackages } from '../runtime/node-runtime';
 import { runSkillCommandLine } from './command-runner';
 
 export interface IEnsureSkillWorkspaceDepsInput {

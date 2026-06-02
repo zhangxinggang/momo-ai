@@ -160,9 +160,10 @@ export interface IRunSkillLangGraphChatInput {
   activeSkillId?: string;
   priorTranscript: string;
   knowledgeContext?: string;
-  /** 工作流节点产出目录（ISkill 执行与 artifact 写入） */
+  /** 工作流节点产出目录（技能执行与 artifact 写入） */
   workflowOutput?: {
     workflowName: string;
+    businessId: string;
     nodeName: string;
     outputDir: string;
   };
@@ -187,6 +188,7 @@ async function appendSkillExecutionResults(
   if (workflowOut) {
     writtenPaths = await writeWorkflowNodeArtifacts(
       workflowOut.workflowName,
+      workflowOut.businessId,
       workflowOut.nodeName,
       artifacts,
     );

@@ -1,4 +1,4 @@
-import { getModelCategory } from '@renderer/components/Settings/AiWorkbench/helpers';
+import { getModelCategory } from '@renderer/components/Settings/ai-workbench/helpers';
 import type { IModelInfo } from '@renderer/services/ai';
 import {
   getImageScenarioModels,

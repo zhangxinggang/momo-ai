@@ -17,6 +17,7 @@ import type { IScanLocalResult, IScannedSkill, ISkillManifest } from '@/types/mo
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import type { SkillDB } from '../../../database';
+import { buildGitHubInstallDirName, parseGitHubOwnerRepo } from '../install-path';
 import { sanitizeImportedSkillDraft } from '../safety/import-sanitize';
 import { parseSkillMd } from '../safety/validator';
 import { getPlatformSkillsDir, gitClone, resolvePlatformPath } from './utils';
@@ -43,6 +44,7 @@ import {
   uninstallSkillMd,
 } from './platform';
 import { fetchRemoteBuffer, fetchRemoteText } from './remote';
+import { saveRemoteGitSkillToLocalRepo } from './remote-git-install';
 import {
   copyExternalFilesToLocalRepoByPath,
   createLocalRepoDir,
@@ -92,6 +94,25 @@ export class SkillInstaller {
   // ---- Repo CRUD (delegated) ----
   static isManagedRepoPath = isManagedRepoPath;
   static saveToLocalRepo = saveToLocalRepo;
+  static saveRemoteGitSkillToLocalRepo = async (
+    skillName: string,
+    options: {
+      repoUrl: string;
+      branch?: string;
+      directory?: string;
+      installName?: string;
+    },
+  ) => {
+    await SkillInstaller.init();
+    return saveRemoteGitSkillToLocalRepo({
+      skillName,
+      repoUrl: options.repoUrl,
+      branch: options.branch,
+      directory: options.directory,
+      installName: options.installName,
+      skillsDir: SkillInstaller.skillsDir,
+    });
+  };
   static saveContentToLocalRepo = saveContentToLocalRepo;
   static readLocalRepoFiles = readLocalRepoFiles;
   static readLocalRepoFilesByPath = readLocalRepoFilesByPath;
@@ -208,15 +229,12 @@ export class SkillInstaller {
     await this.init();
 
     // Validate and extract owner/repo from GitHub URL
-    const matches = url.match(
-      /^https?:\/\/github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+?)(?:\.git)?\/?$/,
-    );
-    if (!matches) {
+    const parsed = parseGitHubOwnerRepo(url);
+    if (!parsed) {
       throw new Error('Invalid GitHub URL: must be https://github.com/{owner}/{repo}');
     }
-    const userDir = matches[1];
-    const repoName = matches[2];
-    const installDir = path.join(this.skillsDir, `${userDir}-${repoName}`);
+    const { owner: userDir, repo: repoName } = parsed;
+    const installDir = path.join(this.skillsDir, buildGitHubInstallDirName(userDir, repoName));
 
     // Validate installDir is inside skillsDir before writing to DB
     const skillsDirResolved = path.resolve(this.skillsDir);

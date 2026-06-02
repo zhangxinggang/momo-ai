@@ -1,7 +1,6 @@
-﻿import type { ISkillPlatform } from '@/types/constants/platforms';
+import type { ISkillPlatform } from '@/types/constants/platforms';
 import type { ISkill } from '@/types/modules';
 import { PlatformIcon } from '@renderer/components/ui/PlatformIcon';
-import { getRuntimeCapabilities } from '@renderer/runtime';
 import { getProtocolDisplayLabel, getSkillSourceMeta } from '@renderer/services/skill/detail-utils';
 import { Button } from 'antd';
 import {
@@ -53,20 +52,16 @@ export function SkillPlatformPanel({
   onBatchInstall,
 }: IProps) {
   const sourceMeta = getSkillSourceMeta(selectedSkill);
-  const runtimeCapabilities = getRuntimeCapabilities();
-  const showPlatformIntegration = runtimeCapabilities.skillPlatformIntegration;
-  const showLocalSourceShortcut =
-    runtimeCapabilities.desktopWindowControls && sourceMeta?.kind === 'local';
 
   return (
     <div className='flex h-full min-h-0 flex-col'>
       <div className='space-y-6'>
         <h3 className='text-muted-foreground flex items-center justify-between text-xs font-bold uppercase tracking-[0.2em]'>
-          <span>{showPlatformIntegration ? '平台集成' : '技能工作区'}</span>
+          <span>{'平台集成'}</span>
           <span className='text-[10px]'>SKILL.md</span>
         </h3>
 
-        {showPlatformIntegration && availablePlatforms.length > 0 && (
+        {availablePlatforms.length > 0 && (
           <section className='app-wallpaper-panel border-border space-y-4 rounded-2xl border p-5'>
             <div className='bg-accent/50 flex items-center gap-1 rounded-lg p-1'>
               <Button
@@ -259,7 +254,7 @@ export function SkillPlatformPanel({
 
       <div className='pt-6'>
         {sourceMeta &&
-          (sourceMeta.kind === 'local' && showLocalSourceShortcut ? (
+          (sourceMeta.kind === 'local' ? (
             <Button
               onClick={() => window.electron?.openPath?.(sourceMeta.value)}
               className='bg-accent/70 border-border text-foreground hover:bg-accent flex h-auto min-h-[148px] w-full items-center justify-start gap-3 rounded-2xl border p-5 text-left'
@@ -272,18 +267,6 @@ export function SkillPlatformPanel({
                 </div>
               </div>
             </Button>
-          ) : sourceMeta.kind === 'local' ? (
-            <div
-              className='bg-accent/70 border-border text-foreground flex min-h-[148px] w-full items-center gap-3 rounded-2xl border p-5 text-left'
-              title={sourceMeta.displayValue}>
-              <FolderOpenIcon className='h-5 w-5 shrink-0' />
-              <div className='min-w-0 flex-1'>
-                <div className='break-words text-sm font-semibold'>{sourceMeta.sourceLabel}</div>
-                <div className='text-muted-foreground mt-1 whitespace-normal break-words text-xs leading-relaxed'>
-                  {sourceMeta.displayValue}
-                </div>
-              </div>
-            </div>
           ) : (
             <a
               href={sourceMeta.value}

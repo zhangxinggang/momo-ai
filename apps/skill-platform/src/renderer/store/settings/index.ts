@@ -1,4 +1,4 @@
-﻿import type { EAIProtocol, ISettings, ISkillProject } from '@/types/modules';
+import type { EAIProtocol, ISettings, ISkillProject } from '@/types/modules';
 import type {
   EAIUsageScenario,
   ECreationMode,

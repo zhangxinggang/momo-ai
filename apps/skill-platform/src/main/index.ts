@@ -1,6 +1,5 @@
 import {
   attachWindowCloseTrayBehavior,
-  configureAppUserDataPath,
   configureTrayDefaults,
   createTray,
   destroyTray,
@@ -8,18 +7,14 @@ import {
   getMainWindow,
   getSystemLogo,
   init,
-  inspectDataPath,
   isDev,
   isMac,
   isWin,
-  readConfiguredDataPath,
   registerWindowChromeIpc,
   setMainWindow,
-  writeConfiguredDataPath,
 } from '@momo/electron';
 import type { IRuntimeConfig } from '@momo/server';
 import type { Database } from 'better-sqlite3';
-import BetterSqlite3 from 'better-sqlite3';
 import {
   BrowserWindow,
   Notification,
@@ -33,26 +28,14 @@ import {
 import fs from 'fs';
 import path from 'path';
 import 'reflect-metadata';
-import {
-  FolderDB,
-  PromptDB,
-  SkillDB,
-  closeDatabase,
-  initDatabase,
-  withBetterSqlite3NativeBinding,
-} from './database';
+import { FolderDB, PromptDB, SkillDB, closeDatabase, initDatabase } from './database';
 import { registerAllIPC } from './ipc';
 import { registerNoteIPC } from './ipc/note';
 import { getMinimizeOnLaunchSetting } from './ipc/settings';
 import { createMenu } from './menu';
 import { getImagesDir, getVideosDir } from './runtime-paths';
-import {
-  bootstrapPromptWorkspace,
-  detectResidualLegacyEntries,
-  migrateLegacyDataLayout,
-  startSilentExternalSkillImportSchedule,
-} from './services';
-import { registerWebviewExternalLinkHandlers } from './webview-external-links';
+import { bootstrapPromptWorkspace, startSilentExternalSkillImportSchedule } from './services';
+import { noteWorkspaceService } from './services/note';
 
 /** 根目录 appConf.js 中的桌面相关配置（与 @momo/electron README 约定一致） */
 interface IDeskAppConf {
@@ -118,38 +101,6 @@ protocol.registerSchemesAsPrivileged([
     },
   },
 ]);
-
-configureAppUserDataPath({
-  productName: 'PromptHub',
-  configDirName: 'PromptHub',
-  dataMarkers: [
-    'prompthub.db',
-    'data',
-    'config',
-    'backups',
-    'logs',
-    'workspace',
-    'IndexedDB',
-    'Local Storage',
-    'Session Storage',
-    'images',
-    'videos',
-    'skills',
-    'shortcuts.json',
-    'shortcut-mode.json',
-  ],
-});
-
-const projectConfig = {
-  appDataPath: app.getPath('appData'),
-  userDataPath: app.getPath('userData'),
-  productName: 'PromptHub',
-  exePath: process.execPath,
-  isPackaged: app.isPackaged,
-  platform: process.platform,
-};
-
-registerWebviewExternalLinkHandlers();
 
 async function createWindow() {
   const win = await init({
@@ -252,27 +203,6 @@ async function createWindow() {
           }
         });
 
-        try {
-          const layoutMigration = await migrateLegacyDataLayout(
-            app.getPath('userData'),
-            app.getVersion(),
-          );
-
-          // 若有旧版条目因迁移失败而残留在根目录，记录警告；源目录仍会保留以防数据丢失
-          if (layoutMigration.failedEntries.length > 0) {
-            const residual = detectResidualLegacyEntries(app.getPath('userData'));
-            if (residual.length > 0) {
-              console.warn(
-                '[startup] Some legacy data directories could not be moved automatically. ' +
-                  'Source directories are preserved — no data was lost.',
-                { residualEntries: residual },
-              );
-            }
-          }
-        } catch (error) {
-          console.warn('[startup] data layout migration bootstrap failed, continuing:', error);
-        }
-
         // Initialize database
         // 初始化数据库
         const db = await initDatabase();
@@ -287,10 +217,7 @@ async function createWindow() {
         try {
           const bootstrapResult = await bootstrapPromptWorkspace(new PromptDB(), new FolderDB());
           if (bootstrapResult.quadrant === 'empty') {
-            console.warn(
-              '[startup] Both database and workspace are empty. ' +
-                'If this is an upgrade, restore data manually from backups or installer artifacts.',
-            );
+            console.warn('[startup] Both database and workspace are empty.');
           }
         } catch (error) {
           console.error(
@@ -298,6 +225,13 @@ async function createWindow() {
             error,
           );
         }
+
+        try {
+          noteWorkspaceService.bootstrapCursorRulesFromProject();
+        } catch (error) {
+          console.error('[startup] bootstrapCursorRulesFromProject failed:', error);
+        }
+
         appDb = db;
         registerAllIPC(db);
 
@@ -400,6 +334,28 @@ ipcMain.handle('dialog:selectFolder', async () => {
   return null;
 });
 
+ipcMain.handle('dialog:selectFolders', async () => {
+  const result = await dialog.showOpenDialog(getMainWindow()!, {
+    properties: ['openDirectory', 'multiSelections'],
+    title: '选择工作区目录',
+  });
+  if (!result.canceled && result.filePaths.length > 0) {
+    return result.filePaths;
+  }
+  return [];
+});
+
+ipcMain.handle('fs:pathExists', async (_event, targetPath: string) => {
+  if (!targetPath?.trim()) {
+    return false;
+  }
+  try {
+    return fs.existsSync(targetPath);
+  } catch {
+    return false;
+  }
+});
+
 // Get current data directory
 // 获取当前数据目录
 ipcMain.handle('data:getPath', () => {
@@ -407,146 +363,10 @@ ipcMain.handle('data:getPath', () => {
 });
 
 ipcMain.handle('data:getStatus', () => {
-  const currentPath = app.getPath('userData');
-  const configuredPath = readConfiguredDataPath(projectConfig);
-  const resolvedCurrentPath = path.resolve(currentPath);
-  const resolvedConfiguredPath = configuredPath ? path.resolve(configuredPath) : null;
-
   return {
-    configuredPath,
-    currentPath,
-    needsRestart: !!resolvedConfiguredPath && resolvedConfiguredPath !== resolvedCurrentPath,
+    currentPath: app.getPath('userData'),
   };
 });
-
-/**
- * Build the list of candidate paths where a previous database might reside.
- * On Windows this includes %APPDATA%/PromptHub (the Electron default).
- */
-type DataPathChangeAction = 'migrate' | 'switch' | 'overwrite';
-
-interface IDataPathSummary {
-  promptCount: number;
-  folderCount: number;
-  skillCount: number;
-  available: boolean;
-  error?: string;
-}
-
-const DATA_PATH_MIGRATION_ITEMS = [
-  'prompthub.db',
-  'data',
-  'config',
-  'backups',
-  'logs',
-  'workspace',
-  'IndexedDB',
-  'Local Storage',
-  'Session Storage',
-  'images',
-  'videos',
-  'skills',
-  'shortcuts.json',
-  'shortcut-mode.json',
-];
-
-function getObjectNumberValue(source: unknown, key: string): number {
-  if (!source || typeof source !== 'object') {
-    return 0;
-  }
-
-  const value = Reflect.get(source, key);
-  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
-}
-
-function databaseTableExists(db: Database, tableName: string): boolean {
-  const row = db
-    .prepare("SELECT 1 AS exists_flag FROM sqlite_master WHERE type = 'table' AND name = ?")
-    .get(tableName);
-  return getObjectNumberValue(row, 'exists_flag') === 1;
-}
-
-function countDatabaseTable(db: Database, tableName: string): number {
-  if (!databaseTableExists(db, tableName)) {
-    return 0;
-  }
-
-  const row = db.prepare(`SELECT COUNT(*) AS count FROM ${tableName}`).get();
-  return getObjectNumberValue(row, 'count');
-}
-
-function summarizeDatabase(db: Database): IDataPathSummary {
-  return {
-    promptCount: countDatabaseTable(db, 'prompts'),
-    folderCount: countDatabaseTable(db, 'folders'),
-    skillCount: countDatabaseTable(db, 'skills'),
-    available: true,
-  };
-}
-
-function summarizeDataPath(targetPath: string): IDataPathSummary {
-  const resolvedTargetPath = path.resolve(targetPath);
-  const currentPath = path.resolve(app.getPath('userData'));
-
-  try {
-    if (appDb && resolvedTargetPath === currentPath) {
-      return summarizeDatabase(appDb);
-    }
-
-    const dbPath = path.join(resolvedTargetPath, 'prompthub.db');
-    if (!fs.existsSync(dbPath)) {
-      return {
-        promptCount: 0,
-        folderCount: 0,
-        skillCount: 0,
-        available: false,
-      };
-    }
-
-    const db = new BetterSqlite3(dbPath, withBetterSqlite3NativeBinding({ readonly: true }));
-    try {
-      return summarizeDatabase(db);
-    } finally {
-      db.close();
-    }
-  } catch (error) {
-    return {
-      promptCount: 0,
-      folderCount: 0,
-      skillCount: 0,
-      available: false,
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
-}
-
-function isSensitiveDataPathTarget(resolvedNewPath: string): string | null {
-  const sensitiveRoots = [
-    '/etc',
-    '/usr',
-    '/bin',
-    '/sbin',
-    '/var',
-    '/tmp',
-    '/System',
-    '/Library',
-    'C:\\Windows',
-    'C:\\Program Files',
-  ];
-
-  return (
-    sensitiveRoots.find((root) => resolvedNewPath.toLowerCase().startsWith(root.toLowerCase())) ??
-    null
-  );
-}
-
-function isPathInside(parentPath: string, childPath: string): boolean {
-  const resolvedParent = path.resolve(parentPath);
-  const resolvedChild = path.resolve(childPath);
-  return (
-    resolvedChild !== resolvedParent && resolvedChild.startsWith(`${resolvedParent}${path.sep}`)
-  );
-}
 
 type ShowAppWindowLike = Pick<
   BrowserWindow,
@@ -609,204 +429,6 @@ registerWindowChromeIpc({
   destroyTray,
   toggleWindowForShowApp,
   scheduleAppRelaunch,
-});
-
-function copyFileForDataPath(sourcePath: string, destPath: string, overwrite: boolean): void {
-  if (fs.existsSync(destPath)) {
-    if (!overwrite) {
-      throw new Error(`Target already contains ${path.basename(destPath)}`);
-    }
-    fs.rmSync(destPath, { recursive: true, force: true });
-  }
-
-  fs.mkdirSync(path.dirname(destPath), { recursive: true });
-  fs.copyFileSync(sourcePath, destPath);
-}
-
-function copyDirForDataPath(sourcePath: string, destPath: string, overwrite: boolean): void {
-  if (fs.existsSync(destPath)) {
-    if (!overwrite) {
-      throw new Error(`Target already contains ${path.basename(destPath)}`);
-    }
-    fs.rmSync(destPath, { recursive: true, force: true });
-  }
-
-  const entries = fs.readdirSync(sourcePath, { withFileTypes: true });
-  fs.mkdirSync(destPath, { recursive: true });
-
-  for (const entry of entries) {
-    const nextSourcePath = path.join(sourcePath, entry.name);
-    const nextDestPath = path.join(destPath, entry.name);
-
-    if (entry.isDirectory()) {
-      copyDirForDataPath(nextSourcePath, nextDestPath, false);
-    } else {
-      copyFileForDataPath(nextSourcePath, nextDestPath, false);
-    }
-  }
-}
-
-function copyDataPathItem(sourcePath: string, destPath: string, overwrite: boolean): void {
-  const sourceStat = fs.statSync(sourcePath);
-  if (sourceStat.isDirectory()) {
-    copyDirForDataPath(sourcePath, destPath, overwrite);
-    return;
-  }
-
-  copyFileForDataPath(sourcePath, destPath, overwrite);
-}
-
-async function applyDataPathChange(
-  newPath: string,
-  action: DataPathChangeAction,
-): Promise<{
-  success: boolean;
-  message?: string;
-  newPath?: string;
-  needsRestart?: boolean;
-  error?: string;
-}> {
-  if (typeof newPath !== 'string' || newPath.trim().length === 0) {
-    return {
-      success: false,
-      error: 'data path change requires a non-empty newPath string',
-    };
-  }
-  if (action !== 'migrate' && action !== 'switch' && action !== 'overwrite') {
-    return {
-      success: false,
-      error: `Unsupported data path change action: ${action}`,
-    };
-  }
-
-  const currentPath = app.getPath('userData');
-  const resolvedTargetPath = path.resolve(newPath);
-  if (path.resolve(currentPath) === resolvedTargetPath) {
-    return {
-      success: true,
-      message: 'Data directory is already current',
-      newPath: resolvedTargetPath,
-      needsRestart: false,
-    };
-  }
-
-  const sensitiveRoot = isSensitiveDataPathTarget(resolvedTargetPath);
-  if (sensitiveRoot) {
-    return {
-      success: false,
-      error: `Cannot use system directory as data directory: ${resolvedTargetPath}`,
-    };
-  }
-
-  if (action !== 'switch' && isPathInside(currentPath, resolvedTargetPath)) {
-    return {
-      success: false,
-      error: 'Cannot migrate data into a child directory of the current data directory',
-    };
-  }
-
-  const targetInspection = inspectDataPath(projectConfig, resolvedTargetPath);
-  if (action === 'switch') {
-    if (!targetInspection.exists) {
-      return {
-        success: false,
-        error: `Cannot switch to a directory that does not exist: ${resolvedTargetPath}`,
-      };
-    }
-
-    writeConfiguredDataPath(projectConfig, resolvedTargetPath);
-    return {
-      success: true,
-      message: 'Data directory switched',
-      newPath: resolvedTargetPath,
-      needsRestart: true,
-    };
-  }
-
-  if (action === 'migrate' && targetInspection.hasExistingData) {
-    return {
-      success: false,
-      error:
-        'Target directory already contains PromptHub data. Switch to it or choose overwrite instead.',
-    };
-  }
-
-  try {
-    if (!fs.existsSync(resolvedTargetPath)) {
-      fs.mkdirSync(resolvedTargetPath, { recursive: true });
-    }
-
-    let migratedCount = 0;
-    for (const item of DATA_PATH_MIGRATION_ITEMS) {
-      const sourcePath = path.join(currentPath, item);
-      const destPath = path.join(resolvedTargetPath, item);
-      if (!fs.existsSync(sourcePath)) {
-        continue;
-      }
-
-      copyDataPathItem(sourcePath, destPath, action === 'overwrite');
-      migratedCount++;
-    }
-
-    writeConfiguredDataPath(projectConfig, resolvedTargetPath);
-
-    return {
-      success: true,
-      message: `Successfully migrated ${migratedCount} items`,
-      newPath: resolvedTargetPath,
-      needsRestart: true,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    };
-  }
-}
-
-ipcMain.handle('data:previewDataPathChange', async (_event, newPath: string) => {
-  if (typeof newPath !== 'string' || newPath.trim().length === 0) {
-    return {
-      success: false,
-      error: 'data:previewDataPathChange requires a non-empty newPath string',
-    };
-  }
-
-  const currentPath = app.getPath('userData');
-  const resolvedTargetPath = path.resolve(newPath);
-  const inspection = inspectDataPath(projectConfig, resolvedTargetPath);
-  const isCurrentPath = path.resolve(currentPath) === resolvedTargetPath;
-
-  return {
-    success: true,
-    targetPath: resolvedTargetPath,
-    currentPath,
-    exists: inspection.exists,
-    hasExistingData: inspection.hasExistingData,
-    isCurrentPath,
-    markers: inspection.markers,
-    currentSummary: summarizeDataPath(currentPath),
-    targetSummary: summarizeDataPath(resolvedTargetPath),
-    recommendedAction: isCurrentPath ? 'switch' : inspection.hasExistingData ? 'switch' : 'migrate',
-  };
-});
-
-ipcMain.handle(
-  'data:applyDataPathChange',
-  async (_event, params: { newPath?: unknown; action?: unknown }) => {
-    const newPath = typeof params?.newPath === 'string' ? params.newPath : '';
-    const action =
-      params?.action === 'switch' || params?.action === 'overwrite' || params?.action === 'migrate'
-        ? params.action
-        : 'migrate';
-    return applyDataPathChange(newPath, action);
-  },
-);
-
-// Migrate data to a new directory
-// 迁移数据到新目录
-ipcMain.handle('data:migrate', async (_event, newPath: string) => {
-  return applyDataPathChange(newPath, 'migrate');
 });
 
 // Open a folder in the system file manager

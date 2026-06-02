@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { createDefaultAiChatServices } from '../adapters/create-services';
 import type { IAiChatServices } from '../adapters/types';
 
@@ -11,7 +11,7 @@ export function AiChatConfigProvider({
   children: ReactNode;
   services?: Partial<IAiChatServices>;
 }) {
-  const merged = createDefaultAiChatServices(services);
+  const merged = useMemo(() => createDefaultAiChatServices(services), [services]);
   return <AiChatConfigContext.Provider value={merged}>{children}</AiChatConfigContext.Provider>;
 }
 

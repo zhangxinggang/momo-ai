@@ -3,57 +3,26 @@ import { contextBridge, ipcRenderer } from 'electron';
 import {
   aiApi,
   aichatApi,
+  claudeCodeApi,
   folderApi,
   ioApi,
   kbApi,
   noteApi,
+  onlineConfApi,
   promptApi,
   scraperApi,
   settingsApi,
   skillApi,
+  systemApi,
   versionApi,
   workflowAgentApi,
   workflowApi,
+  workflowBusinessApi,
+  workflowFolderApi,
   workspaceApi,
 } from './api';
 
 const listenerMap = new Map<(...args: any[]) => void, (...args: any[]) => void>();
-
-type DataPathChangeAction = 'migrate' | 'switch' | 'overwrite';
-
-interface IDataPathSummary {
-  promptCount: number;
-  folderCount: number;
-  skillCount: number;
-  available: boolean;
-  error?: string;
-}
-
-interface IDataPathChangePreview {
-  success: boolean;
-  error?: string;
-  targetPath?: string;
-  currentPath?: string;
-  exists?: boolean;
-  hasPromptHubData?: boolean;
-  isCurrentPath?: boolean;
-  markers?: Array<{
-    name: string;
-    path: string;
-    type: 'file' | 'directory' | 'other';
-  }>;
-  currentSummary?: IDataPathSummary;
-  targetSummary?: IDataPathSummary;
-  recommendedAction?: 'migrate' | 'switch';
-}
-
-interface IDataPathChangeResult {
-  success: boolean;
-  message?: string;
-  newPath?: string;
-  needsRestart?: boolean;
-  error?: string;
-}
 
 const api = {
   // Window controls
@@ -71,13 +40,18 @@ const api = {
   note: noteApi,
   kb: kbApi,
   settings: settingsApi,
+  system: systemApi,
   io: ioApi,
   ai: aiApi,
   aichat: aichatApi,
+  claudeCode: claudeCodeApi,
   workflow: workflowApi,
   workflowAgent: workflowAgentApi,
+  workflowBusiness: workflowBusinessApi,
+  workflowFolder: workflowFolderApi,
   workspace: workspaceApi,
   scraper: scraperApi,
+  onlineConf: onlineConfApi,
 
   // Listen to main process events (with whitelist)
   // 监听主进程事件（使用白名单）
@@ -153,6 +127,9 @@ contextBridge.exposeInMainWorld('electron', {
     ipcRenderer.send('window:closeDialogCancel');
   },
   selectFolder: () => ipcRenderer.invoke('dialog:selectFolder'),
+  selectFolders: () => ipcRenderer.invoke('dialog:selectFolders') as Promise<string[]>,
+  pathExists: (targetPath: string) =>
+    ipcRenderer.invoke('fs:pathExists', targetPath) as Promise<boolean>,
   openPath: (path: string) => ipcRenderer.invoke('shell:openPath', path),
   openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url),
   showNotification: (title: string, body: string) =>
@@ -161,11 +138,6 @@ contextBridge.exposeInMainWorld('electron', {
   // 数据目录
   getDataPath: () => ipcRenderer.invoke('data:getPath'),
   getDataPathStatus: () => ipcRenderer.invoke('data:getStatus'),
-  previewDataPathChange: (newPath: string) =>
-    ipcRenderer.invoke('data:previewDataPathChange', newPath),
-  applyDataPathChange: (newPath: string, action: DataPathChangeAction) =>
-    ipcRenderer.invoke('data:applyDataPathChange', { newPath, action }),
-  migrateData: (newPath: string) => ipcRenderer.invoke('data:migrate', newPath),
   // Images
   // 图片
   selectImage: () => ipcRenderer.invoke('dialog:selectImage'),
@@ -236,6 +208,8 @@ declare global {
       sendCloseDialogResult?: (action: 'minimize' | 'exit', remember: boolean) => void;
       sendCloseDialogCancel?: () => void;
       selectFolder?: () => Promise<string | null>;
+      selectFolders?: () => Promise<string[]>;
+      pathExists?: (targetPath: string) => Promise<boolean>;
       openPath?: (path: string) => Promise<{ success: boolean; error?: string }>;
       openExternal?: (url: string) => Promise<{ success: boolean; error?: string }>;
       showNotification?: (title: string, body: string) => Promise<boolean>;
@@ -244,15 +218,7 @@ declare global {
       getDataPath?: () => Promise<string>;
       getDataPathStatus?: () => Promise<{
         currentPath: string;
-        configuredPath?: string | null;
-        needsRestart: boolean;
       }>;
-      previewDataPathChange?: (newPath: string) => Promise<IDataPathChangePreview>;
-      applyDataPathChange?: (
-        newPath: string,
-        action: DataPathChangeAction,
-      ) => Promise<IDataPathChangeResult>;
-      migrateData?: (newPath: string) => Promise<IDataPathChangeResult>;
       selectImage?: () => Promise<string[]>;
       saveImage?: (paths: string[]) => Promise<string[]>;
       saveBase64Image?: (base64: string) => Promise<string | null>;

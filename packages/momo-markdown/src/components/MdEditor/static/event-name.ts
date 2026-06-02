@@ -6,9 +6,6 @@ export const CHANGE_CATALOG_VISIBLE = 'changeCatalogVisible';
 // 切换屏幕全屏
 export const CHANGE_FULL_SCREEN = 'changeFullscreen';
 
-// 切换页面全屏
-export const PAGE_FULL_SCREEN_CHANGED = 'pageFullscreenChanged';
-
 // 屏幕全屏状态变化
 export const FULL_SCREEN_CHANGED = 'fullscreenChanged';
 

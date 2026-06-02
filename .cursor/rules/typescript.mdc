@@ -1,19 +1,21 @@
 ---
 description: >-
-  TypeScript 类型命名、类型变量生成规范：D 后台接口类型、E 枚举、I 业务接口、camelCase 变量
-
+  TypeScript 类型命名：D 后台接口、E 枚举、I 业务接口；IProps 组件 Props；
+  camelCase 变量与函数；类型别名、泛型、类名约定。
 alwaysApply: true
 ---
 
 # TypeScript 类型与变量命名规范
 
-生成或修改 TS/TSX 代码时，须遵守本规则；通用标识符约定见 `common.mdc`，React 组件 Props 细则见 `react.mdc`。
+生成或修改 TS/TSX 代码时须遵守本规则。通用标识符与路径命名见 `common.mdc`；React 组件实践见 `react.mdc`。
 
 ---
 
-## 类型定义
+## 类型定义位置
 
-- 定义在 import 之后，紧挨 import
+- 定义在 import 之后，紧挨 import。
+
+---
 
 ## 类型前缀（PascalCase）
 
@@ -29,17 +31,15 @@ alwaysApply: true
 
 - 描述与后端交互的数据形状：请求体、响应体、分页结构、错误载荷等。
 - 命名：`D` + 业务语义，如 `DLoginRequest`、`DLoginResponse`、`DServiceListItem`。
-- 可与 API 路径或资源名对应，但前缀 **D** 表示 Data/API 层，而非 Domain 泛称。
+- 前缀 **D** 表示 Data/API 层，而非 Domain 泛称。
 
 ```typescript
-// 后台列表项
 export interface DService {
   id: string;
   name: string;
   categoryId: number;
 }
 
-// 分页响应
 export interface DPageResult<T> {
   list: T[];
   total: number;
@@ -66,12 +66,12 @@ export enum EWorkflowStatus {
 }
 ```
 
-- 若仅需常量映射、不需枚举类型，优先 `as const` 对象 + 推导类型；若用户或模块已约定枚举，则统一 **E** 前缀。
+- 若仅需常量映射、不需枚举类型，优先 `as const` 对象 + 推导类型；若模块已约定枚举，则统一 **E** 前缀。
 
 ### I — 业务接口
 
 - 前端业务层、组件层、服务层内部契约：Props、State、Context、领域实体等。
-- 命名：`I` + 语义，如 `IProps`、`IWorkflowGraph`、` IFileEditorAdapter`。
+- 命名：`I` + 语义，如 `IProps`、`IWorkflowGraph`、`IFileEditorAdapter`。
 
 ```typescript
 export interface IProps {
@@ -88,22 +88,8 @@ export interface IWorkflowGraph {
 ### React 组件 Props（固定 `IProps`）
 
 - 每个 React 组件的 Props 类型 **固定命名为 `IProps`**，不使用 `I{ComponentName}Props` 或其它变体。
-- Props 定义放在组件同目录的 `types.ts`，或组件文件顶部（与 `react.mdc` 目录约定一致时优先 `types.ts`）。
+- Props 定义放在组件同目录的 `types.ts`，或组件文件顶部（优先 `types.ts`）。
 - 组件签名：`function ComponentName(props: IProps)` 或 `const ComponentName: FC<IProps> = (props) => { ... }`。
-
-```typescript
-// types.ts 或 index.tsx 顶部
-export interface IProps {
-  workflowId: string;
-  onSave?: (graph: IWorkflowGraph) => void;
-}
-
-export function WorkflowListView(props: IProps) {
-  const { workflowId, onSave } = props;
-  // ...
-}
-```
-
 - 子组件、并列多个组件时，各自独立文件内各自使用 `IProps`；**禁止**在同一文件内为多个组件重复导出同名 `IProps`（应拆文件或拆 `types.ts`）。
 
 ---
@@ -111,9 +97,9 @@ export function WorkflowListView(props: IProps) {
 ## 变量与函数（camelCase）
 
 - **变量、函数、方法、属性**：**camelCase**。
-- **布尔**：`is` / `has` / `can` 前缀，如 `isLoading`、`hasError`。
-- **事件处理**：`handle` 前缀，如 `handleSubmit`。
-- **数组**：名词复数或 `List` 后缀，如 `userList`、`nodeList`。
+- **布尔**：`is` / `has` / `can` 前缀。
+- **事件处理**：`handle` 前缀。
+- **数组**：名词复数或 `List` 后缀。
 
 ```typescript
 const serviceList: DService[] = [];
@@ -135,7 +121,8 @@ function handleCategoryChange(category: ECategory): void {
 
 - **type 别名**：与 interface 同前缀规则（`D*` / `I*` / 枚举用 `enum E*`）。
 - **泛型参数**：单字母或短 PascalCase（`T`、`TItem`、`TResponse`），不与 D/E/I 业务前缀混用。
-- **类名**：PascalCase，无强制 D/E/I 前缀；若类表示 API 客户端可命名为 `ServiceApi`，其方法参数/返回值仍用 `D*` / `I*`。
+- **类名**：PascalCase，无强制 D/E/I 前缀；API 客户端可命名为 `ServiceApi`，其方法参数/返回值仍用 `D*` / `I*`。
+- 启用严格模式；为 props、state 定义清晰接口；使用类型保护处理 `undefined` / `null`；按需使用泛型与工具类型（`Partial`、`Pick`、`Omit`）；扩展对象结构时优先 `interface` 而非 `type`。
 
 ---
 

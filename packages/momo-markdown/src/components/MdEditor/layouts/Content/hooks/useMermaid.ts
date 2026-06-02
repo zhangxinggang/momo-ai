@@ -5,6 +5,13 @@ import { EditorContext } from '~/context';
 import { CDN_IDS } from '~/static';
 import { ERROR_CATCHER } from '~/static/event-name';
 import { mermaidCache } from '~/utils/cache';
+import {
+  hasNativeCynefinSupport,
+  isCynefinBetaSource,
+  renderCynefinPolyfill,
+} from '~/utils/chart/cynefin-polyfill';
+import { registerMermaidPlugins } from '~/utils/chart/mermaid-plugins';
+import { normalizeMermaidSource } from '~/utils/chart/mermaid-source';
 import { appendHandler } from '~/utils/dom';
 import eventBus from '~/utils/event-bus';
 
@@ -21,7 +28,7 @@ const useMermaid = (props: IContentPreviewProps) => {
   const mermaidRef = useRef(globalConfig.editorExtensions.mermaid!.instance);
   const [reRender, setReRender] = useState(-1);
 
-  const configMermaid = useCallback(() => {
+  const configMermaid = useCallback(async () => {
     mermaidCache.clear();
     const mermaid = mermaidRef.current;
 
@@ -49,6 +56,7 @@ const useMermaid = (props: IContentPreviewProps) => {
               },
             };
 
+      await registerMermaidPlugins(mermaid);
       mermaid.initialize(globalConfig.mermaidConfig(mermaidBaseConfig));
 
       // 严格模式下，如果reRender是boolean型，会执行两次，这是reRender将不会effect
@@ -56,7 +64,9 @@ const useMermaid = (props: IContentPreviewProps) => {
     }
   }, [noMermaid, theme]);
 
-  useEffect(configMermaid, [configMermaid]);
+  useEffect(() => {
+    void configMermaid();
+  }, [configMermaid]);
 
   useEffect(() => {
     const { editorExtensions, editorExtensionsAttrs } = globalConfig;
@@ -65,48 +75,65 @@ const useMermaid = (props: IContentPreviewProps) => {
       return;
     }
 
-    // 没有提供实例，引入mermaid
-    const jsSrc = editorExtensions.mermaid!.js as string;
+    const loadBundledMermaid = async () => {
+      try {
+        const module = await import('mermaid');
+        mermaidRef.current = module.default;
+        void configMermaid();
+        return true;
+      } catch {
+        return false;
+      }
+    };
 
-    if (/\.mjs/.test(jsSrc)) {
-      appendHandler('link', {
-        ...editorExtensionsAttrs.mermaid?.js,
-        rel: 'modulepreload',
-        href: jsSrc,
-        id: CDN_IDS.mermaidM,
-      });
+    void loadBundledMermaid().then((loaded) => {
+      if (loaded || mermaidRef.current) {
+        return;
+      }
 
-      import(
-        /* @vite-ignore */
-        /* webpackIgnore: true */
-        jsSrc
-      )
-        .then((module) => {
-          mermaidRef.current = module.default;
-          configMermaid();
-        })
-        .catch((error) => {
-          eventBus.emit(editorId, ERROR_CATCHER, {
-            name: 'mermaid',
-            message: `Failed to load mermaid module: ${error.message}`,
-            error,
-          });
-        });
-    } else {
-      appendHandler(
-        'script',
-        {
+      // 未打包 mermaid 时回退到 CDN
+      const jsSrc = editorExtensions.mermaid!.js as string;
+
+      if (/\.mjs/.test(jsSrc)) {
+        appendHandler('link', {
           ...editorExtensionsAttrs.mermaid?.js,
-          src: jsSrc,
-          id: CDN_IDS.mermaid,
-          onload() {
-            mermaidRef.current = window.mermaid;
-            configMermaid();
+          rel: 'modulepreload',
+          href: jsSrc,
+          id: CDN_IDS.mermaidM,
+        });
+
+        import(
+          /* @vite-ignore */
+          /* webpackIgnore: true */
+          jsSrc
+        )
+          .then((module) => {
+            mermaidRef.current = module.default;
+            void configMermaid();
+          })
+          .catch((error) => {
+            eventBus.emit(editorId, ERROR_CATCHER, {
+              name: 'mermaid',
+              message: `Failed to load mermaid module: ${error.message}`,
+              error,
+            });
+          });
+      } else {
+        appendHandler(
+          'script',
+          {
+            ...editorExtensionsAttrs.mermaid?.js,
+            src: jsSrc,
+            id: CDN_IDS.mermaid,
+            onload() {
+              mermaidRef.current = window.mermaid;
+              void configMermaid();
+            },
           },
-        },
-        'mermaid',
-      );
-    }
+          'mermaid',
+        );
+      }
+    });
   }, [configMermaid, editorId, noMermaid]);
 
   const replaceMermaid = useCallback(async () => {
@@ -137,21 +164,26 @@ const useMermaid = (props: IContentPreviewProps) => {
               return false;
             }
 
-            const code = item.innerText;
+            const rawCode = item.innerText;
+            const code = normalizeMermaidSource(rawCode);
             let mermaidHtml = mermaidCache.get(code) as string;
 
             if (!mermaidHtml) {
               const idRand = randomId();
               let result: { svg: string } = { svg: '' };
               try {
-                result = await mermaidRef.current.render(idRand, code, svgContainingElement);
+                if (isCynefinBetaSource(code) && !hasNativeCynefinSupport(mermaidRef.current)) {
+                  result = { svg: renderCynefinPolyfill(code, idRand) };
+                } else {
+                  result = await mermaidRef.current.render(idRand, code, svgContainingElement);
+                }
 
                 mermaidHtml = await sanitizeMermaid(result.svg);
 
                 const p = document.createElement('p');
                 p.className = `${prefix}-mermaid`;
                 p.setAttribute('data-processed', '');
-                p.setAttribute('data-content', code);
+                p.setAttribute('data-content', rawCode);
                 p.innerHTML = mermaidHtml;
                 p.children[0]?.removeAttribute('height');
 

@@ -1,4 +1,4 @@
-﻿import type { IKbLlmConfig } from '@/types/modules/kb';
+import type { IKbLlmConfig } from '@/types/modules/kb';
 
 import { resolveScenarioModel } from '@renderer/services/ai/defaults';
 import type { IAIModelConfig, IScenarioModelDefaults } from '@renderer/types/settings';

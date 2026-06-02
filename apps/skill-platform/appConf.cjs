@@ -8,6 +8,7 @@ module.exports = {
   openDevTools: true,
   closeConfirm: false,
   bundledNodeServer: true,
+  onlineConfUrl: 'https://biaobida.oss-cn-beijing.aliyuncs.com/1/1780316365784/momo-ai-conf.json',
   server: {
     httpPort: 28081,
     upload: {

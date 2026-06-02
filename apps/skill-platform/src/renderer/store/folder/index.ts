@@ -1,4 +1,4 @@
-﻿import type { DCreateFolder, DUpdateFolder, IFolder } from '@/types/modules';
+import type { DCreateFolder, DUpdateFolder, IFolder } from '@/types/modules';
 import * as db from '@renderer/services/database';
 import { canSetParent } from '@renderer/utils/folder/tree';
 import { create } from 'zustand';

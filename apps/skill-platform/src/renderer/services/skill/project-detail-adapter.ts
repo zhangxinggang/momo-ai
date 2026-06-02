@@ -1,4 +1,4 @@
-﻿import type { IScannedSkill, ISkill } from '@/types/modules';
+import type { IScannedSkill, ISkill } from '@/types/modules';
 
 export interface IProjectDetailSkillContext {
   scannedSkill: IScannedSkill;

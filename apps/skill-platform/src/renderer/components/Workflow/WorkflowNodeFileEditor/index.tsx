@@ -5,6 +5,7 @@ import { useCallback, useMemo } from 'react';
 
 interface IProps {
   workflowName: string;
+  businessId: string;
   nodeName: string;
   refreshToken?: number;
   onFilesChange?: () => void;
@@ -13,6 +14,7 @@ interface IProps {
 /** 工作流节点文件编辑器（基于通用 @momo/file-editor） */
 export function WorkflowNodeFileEditor({
   workflowName,
+  businessId,
   nodeName,
   refreshToken = 0,
   onFilesChange,
@@ -20,8 +22,8 @@ export function WorkflowNodeFileEditor({
   const { showToast } = useToast();
 
   const adapter = useMemo(
-    () => createWorkflowFileEditorAdapter(workflowName, nodeName),
-    [nodeName, workflowName],
+    () => createWorkflowFileEditorAdapter(workflowName, businessId, nodeName),
+    [businessId, nodeName, workflowName],
   );
 
   const handleNotify = useCallback(

@@ -1,10 +1,12 @@
 import services from '@momo/server';
-import merge from 'merge';
-import config from './config';
+import { mergeDeep } from '@momo/utils';
 
 const startServer = async (pcf: Record<string, any> = {}) => {
-  merge.recursive(config, pcf);
-  await services(config);
+  import('./config').then((data) => {
+    const config = data.default || data;
+    mergeDeep(config, pcf);
+    services(config);
+  });
 };
 
 export default startServer;

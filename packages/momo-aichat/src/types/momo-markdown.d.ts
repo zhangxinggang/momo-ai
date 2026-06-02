@@ -1,7 +1,7 @@
 declare module '@momo/markdown' {
   import type { CSSProperties, FC } from 'react';
 
-  export const MdPreview: FC<{
+  export interface IMdPreviewProps {
     id?: string;
     value?: string;
     theme?: 'light' | 'dark';
@@ -11,5 +11,7 @@ declare module '@momo/markdown' {
     className?: string;
     style?: CSSProperties;
     showCodeRowNumber?: boolean;
-  }>;
+  }
+
+  export const MdPreview: FC<IMdPreviewProps>;
 }

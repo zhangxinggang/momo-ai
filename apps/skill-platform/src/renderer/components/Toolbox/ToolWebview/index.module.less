@@ -1,0 +1,36 @@
+.tool-webview {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border) / 0.6);
+  background: hsl(var(--background));
+
+  &-frame {
+    min-height: 0;
+    flex: 1;
+    width: 100%;
+    border: 0;
+    background: hsl(var(--background));
+  }
+
+  &-loading {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: hsl(var(--background) / 0.72);
+    backdrop-filter: blur(4px);
+    transition: opacity 200ms ease;
+  }
+
+  &-loading--hidden {
+    pointer-events: none;
+    opacity: 0;
+  }
+}

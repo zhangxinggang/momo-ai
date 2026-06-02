@@ -1,4 +1,4 @@
-﻿import type { IKbSearchItem } from '@/types/modules/kb';
+import type { IKbSearchItem } from '@/types/modules/kb';
 import type { IChatStreamMessage, IKbChunk } from '@momo/aichat';
 
 import { kbListCollections, kbSearch } from '@renderer/services/kb';

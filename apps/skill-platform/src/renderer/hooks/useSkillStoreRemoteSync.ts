@@ -1,61 +1,41 @@
-﻿import type {
+import type {
   DMarketplaceReferenceEntry,
   DMarketplaceRegistryDocument,
   DMarketplaceSkillEntry,
   IDeviceManagementSettings,
   IRegistrySkill,
+  ISkillStoreSource,
 } from '@/types/modules';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { loadClawHubStorePage } from '@renderer/services/skill/clawhub-store';
 import { mapScannedSkillsToRegistry } from '@renderer/services/skill/git-store-mapper';
 import { parseFrontmatter, toTitleCase } from '@renderer/services/skill/github-store';
+import {
+  mergeOnlineSkillStoreSources,
+  type IRemoteSkillStoreSource,
+} from '@renderer/services/skill/online-store-sources';
 import { loadSkillHubStorePage } from '@renderer/services/skill/skillhub-store';
-import { loadClawHubStorePage } from '@renderer/services/skill/clawhub-store';
-import { isLikelyLocalSource } from '@renderer/services/skill/store-source';
-import { readWebDeviceSettings } from '@renderer/services/web/device-settings-storage';
-import { useSkillStore } from '@renderer/store';
+import {
+  filterSkillsShLeaderboardEntries,
+  getSkillsShIndexUrl,
+  normalizeSkillsShFilterKey,
+  parseSkillsShDetail,
+  parseSkillsShLeaderboard,
+  parseSkillsShTotalCount,
+  type ISkillsShLeaderboardEntry,
+} from '@renderer/services/skill/skills-sh-store';
+import { slugify } from '@renderer/services/skill/store-mapper-utils';
+import { useOnlineConfStore, useSkillStore } from '@renderer/store';
 
 const MAX_REMOTE_STORE_DEPTH = 3;
 const SKILLHUB_PAGE_SIZE = 24;
+const SKILLS_SH_PAGE_SIZE = 24;
+const SKILLS_SH_CONCURRENCY = 4;
 
-export const BUILTIN_REMOTE_STORES: Record<
-  string,
-  {
-    id: string;
-    type: 'git-repo' | 'skillhub' | 'clawhub';
-    url: string;
-    gitRef?: string;
-  }
-> = {
-  'claude-code': {
-    id: 'claude-code',
-    type: 'git-repo',
-    url: 'https://github.com/anthropics/skills.git',
-    gitRef: 'main',
-  },
-  'openai-codex': {
-    id: 'openai-codex',
-    type: 'git-repo',
-    url: 'https://github.com/openai/skills.git',
-    gitRef: 'main',
-  },
-  community: {
-    id: 'community',
-    type: 'git-repo',
-    url: 'https://github.com/ComposioHQ/awesome-claude-skills.git',
-    gitRef: 'master',
-  },
-  skillhub: {
-    id: 'skillhub',
-    type: 'skillhub',
-    url: 'https://api.skillhub.cn/api/skills',
-  },
-  clawhub: {
-    id: 'clawhub',
-    type: 'clawhub',
-    url: 'https://wry-manatee-359.convex.cloud/api/query',
-  },
-};
+type TResolvedStoreSource =
+  | (IRemoteSkillStoreSource & { enabled?: boolean })
+  | (ISkillStoreSource & { gitRef?: string });
 
 export interface ILoadStoreSourceOptions {
   append?: boolean;
@@ -66,14 +46,37 @@ interface IUseSkillStoreRemoteSyncOptions {
   eagerRemoteSources?: 'selected' | 'all';
   selectedStoreSourceId?: string;
   skillhubKeyword?: string;
+  skillsShFilterKey?: string;
+  skillsShSearchQuery?: string;
 }
 
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+interface ISkillsShIndexCache {
+  entries: ISkillsShLeaderboardEntry[];
+  totalCount?: number;
+}
+
+function getOffsetFromCursor(cursor?: string | null): number {
+  return Math.max(0, Number.parseInt(cursor ?? '0', 10) || 0);
+}
+
+async function runWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  worker: (item: T, index: number) => Promise<R | null>,
+): Promise<R[]> {
+  const results: Array<R | null> = new Array(items.length).fill(null);
+  let nextIndex = 0;
+
+  const runWorker = async () => {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      results[currentIndex] = await worker(items[currentIndex], currentIndex);
+    }
+  };
+
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => runWorker()));
+  return results.filter(isDefined);
 }
 
 function resolveUrl(baseUrl: string, value?: string | null) {
@@ -150,6 +153,11 @@ function sortSkillsByName(skills: IRegistrySkill[]) {
 export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions = {}) {
   const eagerRemoteSources = options.eagerRemoteSources ?? 'all';
   const selectedStoreSourceId = options.selectedStoreSourceId;
+  const onlineConfig = useOnlineConfStore((state) => state.config);
+  const onlineStoreSources = useMemo(
+    () => mergeOnlineSkillStoreSources(onlineConfig),
+    [onlineConfig],
+  );
   const customStoreSources = useSkillStore((state) => state.customStoreSources) ?? [];
   const remoteStoreEntries = useSkillStore((state) => state.remoteStoreEntries) ?? {};
   const setRemoteStoreEntry = useSkillStore((state) => state.setRemoteStoreEntry);
@@ -158,6 +166,8 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
   const [loadingSourceId, setLoadingSourceId] = useState<string | null>(null);
   const remoteStoreEntriesRef = useRef(remoteStoreEntries);
   const inflightStoreLoadsRef = useRef(new Map<string, Promise<void>>());
+  const skillsShIndexCacheRef = useRef(new Map<string, ISkillsShIndexCache>());
+  const skillsShDetailCacheRef = useRef(new Map<string, IRegistrySkill | null>());
   const loadStoreSourceRef = useRef<
     (
       sourceId: string,
@@ -172,6 +182,33 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
         .map((source) => [source.id, source.type, source.url, source.enabled ? '1' : '0'].join(':'))
         .join('|'),
     [customStoreSources],
+  );
+
+  const onlineStoreSourcesSyncKey = useMemo(
+    () =>
+      onlineStoreSources
+        .map((source) =>
+          [
+            source.id,
+            source.type,
+            source.url,
+            source.gitRef ?? '',
+            source.enabled ? '1' : '0',
+          ].join(':'),
+        )
+        .join('|'),
+    [onlineStoreSources],
+  );
+
+  const resolveStoreSource = useCallback(
+    (sourceId: string): TResolvedStoreSource | null => {
+      const onlineSource = onlineStoreSources.find((item) => item.id === sourceId);
+      if (onlineSource) {
+        return onlineSource;
+      }
+      return customStoreSources.find((item) => item.id === sourceId) ?? null;
+    },
+    [customStoreSources, onlineStoreSources],
   );
 
   useEffect(() => {
@@ -320,6 +357,81 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
     });
   }, []);
 
+  const loadSkillsShIndex = useCallback(async (filterKey: string): Promise<ISkillsShIndexCache> => {
+    const normalizedFilterKey = normalizeSkillsShFilterKey(filterKey);
+    const cached = skillsShIndexCacheRef.current.get(normalizedFilterKey);
+    if (cached) {
+      return cached;
+    }
+
+    const leaderboardHtml = await window.api.skill.fetchRemoteContent(
+      getSkillsShIndexUrl(normalizedFilterKey),
+    );
+    const nextCache = {
+      entries: parseSkillsShLeaderboard(leaderboardHtml, {
+        limit: Number.MAX_SAFE_INTEGER,
+      }),
+      totalCount: parseSkillsShTotalCount(leaderboardHtml),
+    };
+    skillsShIndexCacheRef.current.set(normalizedFilterKey, nextCache);
+    return nextCache;
+  }, []);
+
+  const loadSkillsShDetail = useCallback(
+    async (entry: ISkillsShLeaderboardEntry): Promise<IRegistrySkill | null> => {
+      if (skillsShDetailCacheRef.current.has(entry.detailUrl)) {
+        return skillsShDetailCacheRef.current.get(entry.detailUrl) ?? null;
+      }
+
+      try {
+        const detailHtml = await window.api.skill.fetchRemoteContent(entry.detailUrl);
+        const parsed = parseSkillsShDetail(detailHtml, entry);
+        skillsShDetailCacheRef.current.set(entry.detailUrl, parsed);
+        return parsed;
+      } catch {
+        skillsShDetailCacheRef.current.set(entry.detailUrl, null);
+        return null;
+      }
+    },
+    [],
+  );
+
+  const loadSkillsShStore = useCallback(
+    async (cursor: string | null | undefined, searchQuery: string, filterKey: string) => {
+      const normalizedFilterKey = normalizeSkillsShFilterKey(filterKey);
+      const index = await loadSkillsShIndex(normalizedFilterKey);
+      const filteredEntries = filterSkillsShLeaderboardEntries(index.entries, searchQuery);
+      const offset = getOffsetFromCursor(cursor);
+      const pageEntries = filteredEntries.slice(offset, offset + SKILLS_SH_PAGE_SIZE);
+
+      const skillsFromDetails = await runWithConcurrency(
+        pageEntries,
+        SKILLS_SH_CONCURRENCY,
+        async (entry) => loadSkillsShDetail(entry),
+      );
+
+      const nextOffset = offset + SKILLS_SH_PAGE_SIZE;
+      const normalizedSearchQuery = searchQuery.trim();
+      const indexedResultCount =
+        normalizedFilterKey === 'all'
+          ? (index.totalCount ?? filteredEntries.length)
+          : filteredEntries.length;
+      const resultCount = normalizedSearchQuery ? filteredEntries.length : indexedResultCount;
+
+      return {
+        skills: dedupeRegistrySkills(skillsFromDetails),
+        pagination: {
+          page: Math.floor(offset / SKILLS_SH_PAGE_SIZE) + 1,
+          total: resultCount,
+          hasMore: nextOffset < filteredEntries.length,
+          nextCursor: nextOffset < filteredEntries.length ? String(nextOffset) : undefined,
+        },
+        query: `${normalizedFilterKey}:${normalizedSearchQuery}`,
+      };
+    },
+    [loadSkillsShDetail, loadSkillsShIndex],
+  );
+
   const loadStoreSource = useCallback(
     async (sourceId: string, forceRefresh = false, loadOptions: ILoadStoreSourceOptions = {}) => {
       if (typeof setRemoteStoreEntry !== 'function') {
@@ -329,16 +441,23 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
         return;
       }
 
-      const source =
-        BUILTIN_REMOTE_STORES[sourceId] ?? customStoreSources.find((item) => item.id === sourceId);
+      const source = resolveStoreSource(sourceId);
 
       if (!source) return;
-      if ('enabled' in source && !source.enabled) return;
+      if ('enabled' in source && source.enabled === false) return;
 
       const append = Boolean(loadOptions.append);
-      const skillhubKeyword = sourceId === 'skillhub' ? (options.skillhubKeyword ?? '').trim() : '';
+      const skillhubKeyword =
+        source.type === 'skillhub' ? (options.skillhubKeyword ?? '').trim() : '';
+      const skillsShFilterKey =
+        source.type === 'skills-sh'
+          ? normalizeSkillsShFilterKey(options.skillsShFilterKey ?? 'all')
+          : 'all';
+      const skillsShSearchQuery =
+        source.type === 'skills-sh' ? (options.skillsShSearchQuery ?? '').trim() : '';
+      const skillsShQueryKey = `${skillsShFilterKey}:${skillsShSearchQuery}`;
       const skillhubPage = loadOptions.page ?? 1;
-      const loadKey = `${sourceId}:${skillhubKeyword}:${append ? 'append' : 'replace'}:${skillhubPage}:${forceRefresh ? 'force' : 'cached'}`;
+      const loadKey = `${sourceId}:${source.type === 'skills-sh' ? skillsShQueryKey : skillhubKeyword}:${append ? 'append' : 'replace'}:${skillhubPage}:${forceRefresh ? 'force' : 'cached'}`;
       const inflightLoad = inflightStoreLoadsRef.current.get(loadKey);
       if (inflightLoad) {
         await inflightLoad;
@@ -348,11 +467,12 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
       const cachedEntry = remoteStoreEntriesRef.current[sourceId];
       const hasCachedFailure = Boolean(cachedEntry?.error);
 
-      if (sourceId === 'skillhub') {
-        if (append && cachedEntry?.pagination && !cachedEntry?.pagination.hasMore) {
-          return;
-        }
-      } else if (sourceId === 'clawhub') {
+      if (forceRefresh && source.type === 'skills-sh') {
+        skillsShIndexCacheRef.current.clear();
+        skillsShDetailCacheRef.current.clear();
+      }
+
+      if (source.type === 'skillhub' || source.type === 'clawhub' || source.type === 'skills-sh') {
         if (append && cachedEntry?.pagination && !cachedEntry.pagination.hasMore) {
           return;
         }
@@ -367,10 +487,8 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
           let pagination = cachedEntry?.pagination;
 
           if (source.type === 'git-repo') {
-            const gitRef = 'gitRef' in source && source.gitRef ? source.gitRef : 'main';
-            skillsForSource = isLikelyLocalSource(source.url)
-              ? await loadLocalDirectoryStore(source.url)
-              : await loadGitDownloadStore(source.url, forceRefresh, gitRef);
+            const gitRef = source.gitRef || 'main';
+            skillsForSource = await loadGitDownloadStore(source.url, forceRefresh, gitRef);
             pagination = undefined;
           } else if (source.type === 'skillhub') {
             const nextPage =
@@ -403,6 +521,22 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
               hasMore: pageResult.hasMore,
               nextCursor: pageResult.nextCursor,
             };
+          } else if (source.type === 'skills-sh') {
+            const nextCursor =
+              append && !forceRefresh ? cachedEntry?.pagination?.nextCursor : undefined;
+            const pageResult = await loadSkillsShStore(
+              nextCursor,
+              skillsShSearchQuery,
+              skillsShFilterKey,
+            );
+            if (pageResult.query !== skillsShQueryKey) {
+              return;
+            }
+            skillsForSource =
+              append && !forceRefresh
+                ? dedupeRegistrySkills([...skillsForSource, ...pageResult.skills])
+                : pageResult.skills;
+            pagination = pageResult.pagination;
           } else if (source.type === 'marketplace-json') {
             skillsForSource = await loadMarketplaceStore(source.url);
             pagination = undefined;
@@ -435,13 +569,16 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
       await loadPromise;
     },
     [
-      customStoreSources,
+      loadClawHubStore,
       loadGitDownloadStore,
       loadLocalDirectoryStore,
       loadMarketplaceStore,
       loadSkillHubStore,
-      loadClawHubStore,
+      loadSkillsShStore,
       options.skillhubKeyword,
+      options.skillsShFilterKey,
+      options.skillsShSearchQuery,
+      resolveStoreSource,
       setRemoteStoreEntry,
     ],
   );
@@ -465,6 +602,14 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
     await loadStoreSource('clawhub', false, { append: true });
   }, [loadStoreSource]);
 
+  const loadMoreSkillsSh = useCallback(async () => {
+    const cachedEntry = remoteStoreEntriesRef.current['skills-sh'];
+    if (!cachedEntry?.pagination?.hasMore) {
+      return;
+    }
+    await loadStoreSource('skills-sh', false, { append: true });
+  }, [loadStoreSource]);
+
   useEffect(() => {
     loadStoreSourceRef.current = loadStoreSource;
   }, [loadStoreSource]);
@@ -481,11 +626,7 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
       .filter((source) => source.enabled)
       .map((source) => source.id);
     const remoteSourceIds = [
-      'claude-code',
-      'openai-codex',
-      'community',
-      'skillhub',
-      'clawhub',
+      ...onlineStoreSources.filter((source) => source.enabled).map((source) => source.id),
       ...enabledCustomSourceIds,
     ];
 
@@ -506,9 +647,8 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
     };
 
     const configure = async () => {
-      const deviceSettings = readWebDeviceSettings();
-      const autoSyncEnabled = deviceSettings?.storeAutoSync ?? true;
-      const intervalMs = cadenceToMs(deviceSettings?.storeSyncCadence ?? '1d');
+      const autoSyncEnabled = true;
+      const intervalMs = cadenceToMs('1d');
 
       if (disposed) {
         return;
@@ -537,13 +677,22 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
         window.clearInterval(intervalId);
       }
     };
-  }, [customStoreSources, customStoreSourcesSyncKey, eagerRemoteSources, selectedStoreSourceId]);
+  }, [
+    customStoreSources,
+    customStoreSourcesSyncKey,
+    eagerRemoteSources,
+    onlineStoreSources,
+    onlineStoreSourcesSyncKey,
+    selectedStoreSourceId,
+  ]);
 
   return {
     loadingSourceId,
     loadStoreSource,
     loadMoreSkillHub,
     loadMoreClawHub,
+    loadMoreSkillsSh,
+    onlineStoreSources,
     remoteStoreEntries,
   };
 }

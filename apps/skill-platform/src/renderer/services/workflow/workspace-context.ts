@@ -19,11 +19,10 @@ function isTextFilePath(relativePath: string): boolean {
 
 /**
  * 构建工作流节点/根目录的 AI 工作区上下文（递归读取文本文件）
- * @param workflowName 工作流名称
- * @param nodeName 节点名称；为 null 时读取工作流根目录顶层文件
  */
 export async function buildWorkflowWorkspaceContext(
   workflowName: string,
+  businessId: string,
   nodeName: string | null,
 ): Promise<string> {
   if (!workflowName.trim()) {
@@ -34,14 +33,19 @@ export async function buildWorkflowWorkspaceContext(
   let totalChars = 0;
 
   if (nodeName) {
-    const entries = await listWorkflowNodeFileTree(workflowName, nodeName);
+    const entries = await listWorkflowNodeFileTree(workflowName, businessId, nodeName);
     const files = entries.filter((e) => !e.isDirectory && isTextFilePath(e.relativePath));
 
     for (const file of files.slice(0, MAX_FILES)) {
       if (totalChars >= MAX_TOTAL_CHARS) {
         break;
       }
-      const content = await readWorkflowNodeFile(workflowName, nodeName, file.relativePath);
+      const content = await readWorkflowNodeFile(
+        workflowName,
+        businessId,
+        nodeName,
+        file.relativePath,
+      );
       if (!content.trim()) {
         continue;
       }
@@ -52,7 +56,7 @@ export async function buildWorkflowWorkspaceContext(
       totalChars += clipped.length;
     }
 
-    const label = `${workflowName}/${nodeName}`;
+    const label = `${workflowName}/${businessId}/${nodeName}`;
     if (blocks.length === 0) {
       return `当前工作区目录：${label}\n（目录内无可读取的文本文件，请基于目录结构回答）`;
     }
@@ -63,7 +67,7 @@ export async function buildWorkflowWorkspaceContext(
     ].join('\n\n');
   }
 
-  const entries = await listWorkflowAgentDir(workflowName);
+  const entries = await listWorkflowAgentDir(workflowName, businessId);
   const files = entries.filter((e) => e.type === 'file');
 
   for (const file of files.slice(0, MAX_FILES)) {
@@ -84,13 +88,13 @@ export async function buildWorkflowWorkspaceContext(
     totalChars += clipped.length;
   }
 
-  const label = workflowName;
+  const label = `${workflowName}/${businessId}`;
   if (blocks.length === 0) {
     return `当前工作区目录：agent/${label}\n（目录内无可读取的文本文件，请基于目录结构回答）`;
   }
   return [
     `当前工作区目录：agent/${label}`,
-    '以下为工作流根目录中的文件内容（可能已截断），回答时请优先参考：',
+    '以下为业务根目录中的文件内容（可能已截断），回答时请优先参考：',
     ...blocks,
   ].join('\n\n');
 }

@@ -1,4 +1,4 @@
-﻿import type { IScannedSkill, ISkill, ISkillProject } from '@/types/modules';
+import type { IScannedSkill, ISkill, ISkillProject } from '@/types/modules';
 import { useToast } from '@renderer/components/ui/Toast';
 import { filterVisibleScannedSkills } from '@renderer/services/skill/filter';
 import { buildProjectDetailSkill } from '@renderer/services/skill/project-detail-adapter';

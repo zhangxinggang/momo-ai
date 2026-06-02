@@ -91,5 +91,5 @@ export async function extractText(options: {
     return sanitizeText(text);
   }
 
-  throw new Error('不支持的文件类型');
+  return sanitizeText('');
 }

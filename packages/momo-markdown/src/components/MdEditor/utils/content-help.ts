@@ -3,6 +3,7 @@ import CodeMirrorUt from '~/layouts/Content/codemirror';
 import { ERROR_CATCHER } from '~/static/event-name';
 import { TInsertContentGenerator, TUploadImgCallBackParam } from '~/type';
 import bus from '~/utils/event-bus';
+import { getChartFenceLang, getChartTemplate } from './chart/templates';
 
 export type TToolDirective =
   | 'bold'
@@ -28,6 +29,7 @@ export type TToolDirective =
   | 'sup'
   | 'prettier'
   | 'flow'
+  | 'flowLR'
   | 'sequence'
   | 'gantt'
   | 'class'
@@ -35,6 +37,46 @@ export type TToolDirective =
   | 'pie'
   | 'relationship'
   | 'journey'
+  | 'erDiagram'
+  | 'requirement'
+  | 'gitGraph'
+  | 'c4Context'
+  | 'mindmap'
+  | 'timeline'
+  | 'sankey'
+  | 'xychart'
+  | 'block'
+  | 'packet'
+  | 'kanban'
+  | 'architecture'
+  | 'radar'
+  | 'eventModeling'
+  | 'treemap'
+  | 'venn'
+  | 'ishikawa'
+  | 'wardley'
+  | 'cynefin'
+  | 'treeView'
+  | 'zenuml'
+  | 'plantumlSequence'
+  | 'plantumlClass'
+  | 'plantumlActivity'
+  | 'plantumlUseCase'
+  | 'plantumlComponent'
+  | 'plantumlState'
+  | 'plantumlObject'
+  | 'plantumlDeployment'
+  | 'plantumlTiming'
+  | 'plantumlRegex'
+  | 'plantumlNwdiag'
+  | 'plantumlSalt'
+  | 'plantumlArchimate'
+  | 'plantumlGantt'
+  | 'plantumlMindmap'
+  | 'plantumlWbs'
+  | 'plantumlEbnf'
+  | 'plantumlJson'
+  | 'plantumlYaml'
   | 'katexInline'
   | 'katexBlock'
   | 'universal';
@@ -101,14 +143,57 @@ export const directive2flag = async (
       return handleImage(params, codeMirrorUt);
     }
     case 'flow':
+    case 'flowLR':
     case 'sequence':
     case 'gantt':
     case 'class':
     case 'state':
     case 'pie':
     case 'relationship':
-    case 'journey': {
-      return handleMermaid(direct);
+    case 'journey':
+    case 'erDiagram':
+    case 'requirement':
+    case 'gitGraph':
+    case 'c4Context':
+    case 'mindmap':
+    case 'timeline':
+    case 'sankey':
+    case 'xychart':
+    case 'block':
+    case 'packet':
+    case 'kanban':
+    case 'architecture':
+    case 'radar':
+    case 'eventModeling':
+    case 'treemap':
+    case 'venn':
+    case 'ishikawa':
+    case 'wardley':
+    case 'cynefin':
+    case 'treeView':
+    case 'zenuml': {
+      return handleChartBlock(direct);
+    }
+    case 'plantumlSequence':
+    case 'plantumlClass':
+    case 'plantumlActivity':
+    case 'plantumlUseCase':
+    case 'plantumlComponent':
+    case 'plantumlState':
+    case 'plantumlObject':
+    case 'plantumlDeployment':
+    case 'plantumlTiming':
+    case 'plantumlRegex':
+    case 'plantumlNwdiag':
+    case 'plantumlSalt':
+    case 'plantumlArchimate':
+    case 'plantumlGantt':
+    case 'plantumlMindmap':
+    case 'plantumlWbs':
+    case 'plantumlEbnf':
+    case 'plantumlJson':
+    case 'plantumlYaml': {
+      return handleChartBlock(direct);
     }
 
     case 'universal': {
@@ -255,24 +340,22 @@ const handleCodeBlock = (params: any, codeMirrorUt: CodeMirrorUt) => {
 };
 
 /**
- * 处理 Mermaid 图表
+ * 处理 Mermaid / PlantUML 图表代码块插入
  */
-const handleMermaid = (type: string) => {
-  const mermaidTemplates: Record<string, string> = {
-    flow: 'flowchart TD \n  Start --> Stop',
-    sequence: 'sequenceDiagram\n  A->>B: hello!\n  B-->>A: hi!',
-    gantt: 'gantt\ntitle Gantt Chart\ndateFormat  YYYY-MM-DD',
-    class: 'classDiagram\n  class Animal',
-    state: 'stateDiagram-v2\n  s1 --> s2',
-    pie: 'pie\n  "Dogs" : 386\n  "Cats" : 85\n  "Rats" : 15',
-    relationship: 'erDiagram\n  CAR ||--o{ NAMED-DRIVER : allows',
-    journey: 'journey\n  title My Journey',
-    ...globalConfig.editorConfig.mermaidTemplate,
-  };
+const handleChartBlock = (direct: TToolDirective) => {
+  const fenceLang = getChartFenceLang(direct);
+  const template = getChartTemplate(direct) || '';
+
+  if (!fenceLang || !template) {
+    return { text: '', options: {} };
+  }
+
+  const fencePrefix = fenceLang === 'mermaid' ? 'mermaid' : 'plantuml';
+  const deviationStart = fenceLang === 'mermaid' ? 12 : 13;
 
   return {
-    text: `\n\`\`\`mermaid\n${mermaidTemplates[type]}\n\`\`\`\n`,
-    options: { deviationStart: 12, deviationEnd: -5 },
+    text: `\n\`\`\`${fencePrefix}\n${template}\n\`\`\`\n`,
+    options: { deviationStart, deviationEnd: -5 },
   };
 };
 

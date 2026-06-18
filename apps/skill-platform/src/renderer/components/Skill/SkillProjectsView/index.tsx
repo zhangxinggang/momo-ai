@@ -1,4 +1,5 @@
 import type { IScannedSkill, ISkill, ISkillProject } from '@/types/modules';
+import { useAppName } from '@renderer/hooks/useAppName';
 import { useToast } from '@renderer/components/ui/Toast';
 import { filterVisibleScannedSkills } from '@renderer/services/skill/filter';
 import { buildProjectDetailSkill } from '@renderer/services/skill/project-detail-adapter';
@@ -37,6 +38,7 @@ interface IProps {
 }
 
 function ProjectFormModal({ isOpen, project, onClose, onSubmit }: IProps) {
+  const appName = useAppName();
   const [name, setName] = useState('');
   const [rootPath, setRootPath] = useState('');
   const [scanPathInput, setScanPathInput] = useState('');
@@ -205,7 +207,7 @@ function ProjectFormModal({ isOpen, project, onClose, onSubmit }: IProps) {
             </Button>
           </div>
           <p className='text-muted-foreground text-xs'>
-            {'如果留空，PromptHub 会扫描项目根目录。'}
+            {`如果留空，${appName} 会扫描项目根目录。`}
           </p>
           <div className='space-y-2'>
             {scanPaths.length === 0 ? (
@@ -271,6 +273,7 @@ function inferDisplayPath(localPath: string): string {
 }
 
 export function SkillProjectsView() {
+  const appName = useAppName();
   const { showToast } = useToast();
   const skills = useSkillStore((state) => state.skills);
   const searchQuery = useSkillStore((state) => state.searchQuery);
@@ -587,9 +590,7 @@ export function SkillProjectsView() {
                           {'还没有扫描结果'}
                         </div>
                         <div className='text-muted-foreground mt-2 max-w-xl text-sm'>
-                          {
-                            '先执行扫描来发现项目中的 SKILL.md 文件，再决定是导入到 PromptHub，还是仅直接管理源路径。'
-                          }
+                          {`先执行扫描来发现项目中的 SKILL.md 文件，再决定是导入到 ${appName}，还是仅直接管理源路径。`}
                         </div>
                       </div>
                     ) : visibleProjectSkills.length === 0 ? (

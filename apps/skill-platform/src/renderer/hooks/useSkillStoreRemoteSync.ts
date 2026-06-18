@@ -1,7 +1,4 @@
 import type {
-  DMarketplaceReferenceEntry,
-  DMarketplaceRegistryDocument,
-  DMarketplaceSkillEntry,
   IDeviceManagementSettings,
   IRegistrySkill,
   ISkillStoreSource,
@@ -9,29 +6,22 @@ import type {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { loadClawHubStorePage } from '@renderer/services/skill/clawhub-store';
-import { mapScannedSkillsToRegistry } from '@renderer/services/skill/git-store-mapper';
-import { parseFrontmatter, toTitleCase } from '@renderer/services/skill/github-store';
 import {
   mergeOnlineSkillStoreSources,
   type IRemoteSkillStoreSource,
 } from '@renderer/services/skill/online-store-sources';
-import { loadSkillHubStorePage } from '@renderer/services/skill/skillhub-store';
 import {
-  filterSkillsShLeaderboardEntries,
-  getSkillsShIndexUrl,
-  normalizeSkillsShFilterKey,
-  parseSkillsShDetail,
-  parseSkillsShLeaderboard,
-  parseSkillsShTotalCount,
-  type ISkillsShLeaderboardEntry,
-} from '@renderer/services/skill/skills-sh-store';
-import { slugify } from '@renderer/services/skill/store-mapper-utils';
+  createSkillsShStoreLoader,
+  loadGitDownloadStore,
+  loadLocalDirectoryStore,
+  loadMarketplaceStore,
+} from '@renderer/services/skill/remote-store';
+import { loadSkillHubStorePage } from '@renderer/services/skill/skillhub-store';
+import { normalizeSkillsShFilterKey } from '@renderer/services/skill/skills-sh-store';
+import { dedupeRegistrySkills } from '@renderer/services/skill/store-mapper-utils';
 import { useOnlineConfStore, useSkillStore } from '@renderer/store';
 
-const MAX_REMOTE_STORE_DEPTH = 3;
 const SKILLHUB_PAGE_SIZE = 24;
-const SKILLS_SH_PAGE_SIZE = 24;
-const SKILLS_SH_CONCURRENCY = 4;
 
 type TResolvedStoreSource =
   | (IRemoteSkillStoreSource & { enabled?: boolean })
@@ -48,69 +38,6 @@ interface IUseSkillStoreRemoteSyncOptions {
   skillhubKeyword?: string;
   skillsShFilterKey?: string;
   skillsShSearchQuery?: string;
-}
-
-interface ISkillsShIndexCache {
-  entries: ISkillsShLeaderboardEntry[];
-  totalCount?: number;
-}
-
-function getOffsetFromCursor(cursor?: string | null): number {
-  return Math.max(0, Number.parseInt(cursor ?? '0', 10) || 0);
-}
-
-async function runWithConcurrency<T, R>(
-  items: T[],
-  limit: number,
-  worker: (item: T, index: number) => Promise<R | null>,
-): Promise<R[]> {
-  const results: Array<R | null> = new Array(items.length).fill(null);
-  let nextIndex = 0;
-
-  const runWorker = async () => {
-    while (nextIndex < items.length) {
-      const currentIndex = nextIndex;
-      nextIndex += 1;
-      results[currentIndex] = await worker(items[currentIndex], currentIndex);
-    }
-  };
-
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => runWorker()));
-  return results.filter(isDefined);
-}
-
-function resolveUrl(baseUrl: string, value?: string | null) {
-  if (!value) return null;
-  try {
-    return new URL(value, baseUrl).toString();
-  } catch {
-    return value;
-  }
-}
-
-function dedupeRegistrySkills(skills: IRegistrySkill[]) {
-  const bySlug = new Map<string, IRegistrySkill>();
-  const seenNames = new Set<string>();
-  for (const skill of skills) {
-    if (bySlug.has(skill.slug)) continue;
-    const normalizedName = (skill.install_name || skill.slug).toLowerCase();
-    if (seenNames.has(normalizedName)) continue;
-    bySlug.set(skill.slug, skill);
-    seenNames.add(normalizedName);
-  }
-  return Array.from(bySlug.values());
-}
-
-function parseJson<T>(raw: string, fallback: T): T {
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-function isDefined<T>(value: T | null | undefined): value is T {
-  return value !== null && value !== undefined;
 }
 
 function cadenceToMs(cadence: IDeviceManagementSettings['storeSyncCadence']): number | null {
@@ -137,19 +64,6 @@ function shouldForceRefreshSource(
   return Date.now() - loadedAt >= intervalMs;
 }
 
-function resolveMarketplaceReference(
-  entry: string | DMarketplaceReferenceEntry,
-): string | undefined {
-  if (typeof entry === 'string') return entry;
-  return entry.url || entry.index || entry.manifest;
-}
-
-function sortSkillsByName(skills: IRegistrySkill[]) {
-  return [...skills].sort((left, right) =>
-    left.name.localeCompare(right.name, 'en', { sensitivity: 'base' }),
-  );
-}
-
 export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions = {}) {
   const eagerRemoteSources = options.eagerRemoteSources ?? 'all';
   const selectedStoreSourceId = options.selectedStoreSourceId;
@@ -166,8 +80,7 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
   const [loadingSourceId, setLoadingSourceId] = useState<string | null>(null);
   const remoteStoreEntriesRef = useRef(remoteStoreEntries);
   const inflightStoreLoadsRef = useRef(new Map<string, Promise<void>>());
-  const skillsShIndexCacheRef = useRef(new Map<string, ISkillsShIndexCache>());
-  const skillsShDetailCacheRef = useRef(new Map<string, IRegistrySkill | null>());
+  const skillsShLoaderRef = useRef(createSkillsShStoreLoader());
   const loadStoreSourceRef = useRef<
     (
       sourceId: string,
@@ -215,132 +128,6 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
     remoteStoreEntriesRef.current = remoteStoreEntries;
   }, [remoteStoreEntries]);
 
-  const loadGitDownloadStore = useCallback(
-    async (repoUrl: string, forceRefresh = false, gitRef = 'main') => {
-      const result = await window.api.skill.syncGitStore(repoUrl, forceRefresh, gitRef);
-      return mapScannedSkillsToRegistry(result.skills, repoUrl);
-    },
-    [],
-  );
-
-  const loadMarketplaceStore = useCallback(
-    async (url: string, visited = new Set<string>(), depth = 0): Promise<IRegistrySkill[]> => {
-      const resolvedUrl = resolveUrl(url, url);
-      if (!resolvedUrl || visited.has(resolvedUrl) || depth > MAX_REMOTE_STORE_DEPTH) {
-        return [];
-      }
-      visited.add(resolvedUrl);
-
-      const raw = await window.api.skill.fetchRemoteContent(resolvedUrl).catch(() => null);
-      if (!raw) return [];
-
-      const data = parseJson<DMarketplaceRegistryDocument>(raw, {});
-      const directSkills = Array.isArray(data.skills) ? data.skills : [];
-
-      const mappedSkills = await Promise.all(
-        directSkills.map(async (item: DMarketplaceSkillEntry) => {
-          const slug = item.slug || item.id || slugify(item.name || item.title || 'remote-skill');
-          if (!slug) return null;
-
-          const contentUrl =
-            resolveUrl(
-              resolvedUrl,
-              item.content_url ||
-                item.contentUrl ||
-                item.skill_url ||
-                item.skillUrl ||
-                item.raw_url ||
-                item.rawUrl,
-            ) || undefined;
-          const sourceUrl =
-            resolveUrl(
-              resolvedUrl,
-              item.source_url ||
-                item.sourceUrl ||
-                item.repo_url ||
-                item.repoUrl ||
-                item.repository ||
-                item.repo,
-            ) ||
-            contentUrl ||
-            resolvedUrl;
-
-          let content = typeof item.content === 'string' ? item.content : '';
-          if (!content && contentUrl) {
-            try {
-              content = await window.api.skill.fetchRemoteContent(contentUrl);
-            } catch {
-              content = '';
-            }
-          }
-
-          const parsed = content
-            ? parseFrontmatter(content)
-            : { name: '', description: '', tags: [] as string[] };
-          const description =
-            item.description || parsed.description || `${toTitleCase(slug)} skill`;
-
-          return {
-            slug,
-            name: item.name || item.title || parsed.name || toTitleCase(slug),
-            install_name: item.install_name || item.installName,
-            description,
-            category: item.category || 'general',
-            icon_url: item.icon_url || item.iconUrl,
-            icon_emoji: item.icon_emoji || item.iconEmoji,
-            author: item.author || 'Community',
-            source_url: sourceUrl,
-            store_url: item.store_url || item.storeUrl,
-            tags:
-              Array.isArray(item.tags) && item.tags.length > 0
-                ? item.tags
-                : parsed.tags.length > 0
-                  ? parsed.tags
-                  : slug.split(/[-_]/).filter(Boolean),
-            version: String(item.version || '1.0.0'),
-            content: content || `# ${item.name || parsed.name || toTitleCase(slug)}`,
-            content_url: contentUrl,
-            prerequisites: Array.isArray(item.prerequisites) ? item.prerequisites : undefined,
-            compatibility: Array.isArray(item.compatibility)
-              ? item.compatibility
-              : ['claude', 'cursor'],
-            weekly_installs: item.weekly_installs || item.weeklyInstalls,
-            github_stars: item.github_stars || item.githubStars,
-            installed_on: item.installed_on || item.installedOn,
-            security_audits: item.security_audits || item.securityAudits,
-          } satisfies IRegistrySkill;
-        }),
-      );
-
-      const nestedStoreRefs = [
-        ...(Array.isArray(data.marketplaces) ? data.marketplaces : []),
-        ...(Array.isArray(data.sources) ? data.sources : []),
-        ...(Array.isArray(data.registries) ? data.registries : []),
-      ]
-        .map((entry) => resolveMarketplaceReference(entry))
-        .filter(Boolean)
-        .map((entry: string) => resolveUrl(resolvedUrl, entry))
-        .filter((entry: string | null): entry is string => Boolean(entry));
-
-      const nestedSkills = await Promise.all(
-        nestedStoreRefs.map((entry) => loadMarketplaceStore(entry, visited, depth + 1)),
-      );
-
-      return sortSkillsByName(
-        dedupeRegistrySkills([...mappedSkills.filter(isDefined), ...nestedSkills.flat()]),
-      );
-    },
-    [],
-  );
-
-  const loadLocalDirectoryStore = useCallback(
-    async (dirPath: string): Promise<IRegistrySkill[]> => {
-      const scannedSkills = await scanLocalPreview([dirPath]);
-      return sortSkillsByName(mapScannedSkillsToRegistry(scannedSkills, dirPath));
-    },
-    [scanLocalPreview],
-  );
-
   const loadSkillHubStore = useCallback(async (page: number, keyword?: string) => {
     return loadSkillHubStorePage((url) => window.api.skill.fetchRemoteContent(url), {
       page,
@@ -356,81 +143,6 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
       numItems: 25,
     });
   }, []);
-
-  const loadSkillsShIndex = useCallback(async (filterKey: string): Promise<ISkillsShIndexCache> => {
-    const normalizedFilterKey = normalizeSkillsShFilterKey(filterKey);
-    const cached = skillsShIndexCacheRef.current.get(normalizedFilterKey);
-    if (cached) {
-      return cached;
-    }
-
-    const leaderboardHtml = await window.api.skill.fetchRemoteContent(
-      getSkillsShIndexUrl(normalizedFilterKey),
-    );
-    const nextCache = {
-      entries: parseSkillsShLeaderboard(leaderboardHtml, {
-        limit: Number.MAX_SAFE_INTEGER,
-      }),
-      totalCount: parseSkillsShTotalCount(leaderboardHtml),
-    };
-    skillsShIndexCacheRef.current.set(normalizedFilterKey, nextCache);
-    return nextCache;
-  }, []);
-
-  const loadSkillsShDetail = useCallback(
-    async (entry: ISkillsShLeaderboardEntry): Promise<IRegistrySkill | null> => {
-      if (skillsShDetailCacheRef.current.has(entry.detailUrl)) {
-        return skillsShDetailCacheRef.current.get(entry.detailUrl) ?? null;
-      }
-
-      try {
-        const detailHtml = await window.api.skill.fetchRemoteContent(entry.detailUrl);
-        const parsed = parseSkillsShDetail(detailHtml, entry);
-        skillsShDetailCacheRef.current.set(entry.detailUrl, parsed);
-        return parsed;
-      } catch {
-        skillsShDetailCacheRef.current.set(entry.detailUrl, null);
-        return null;
-      }
-    },
-    [],
-  );
-
-  const loadSkillsShStore = useCallback(
-    async (cursor: string | null | undefined, searchQuery: string, filterKey: string) => {
-      const normalizedFilterKey = normalizeSkillsShFilterKey(filterKey);
-      const index = await loadSkillsShIndex(normalizedFilterKey);
-      const filteredEntries = filterSkillsShLeaderboardEntries(index.entries, searchQuery);
-      const offset = getOffsetFromCursor(cursor);
-      const pageEntries = filteredEntries.slice(offset, offset + SKILLS_SH_PAGE_SIZE);
-
-      const skillsFromDetails = await runWithConcurrency(
-        pageEntries,
-        SKILLS_SH_CONCURRENCY,
-        async (entry) => loadSkillsShDetail(entry),
-      );
-
-      const nextOffset = offset + SKILLS_SH_PAGE_SIZE;
-      const normalizedSearchQuery = searchQuery.trim();
-      const indexedResultCount =
-        normalizedFilterKey === 'all'
-          ? (index.totalCount ?? filteredEntries.length)
-          : filteredEntries.length;
-      const resultCount = normalizedSearchQuery ? filteredEntries.length : indexedResultCount;
-
-      return {
-        skills: dedupeRegistrySkills(skillsFromDetails),
-        pagination: {
-          page: Math.floor(offset / SKILLS_SH_PAGE_SIZE) + 1,
-          total: resultCount,
-          hasMore: nextOffset < filteredEntries.length,
-          nextCursor: nextOffset < filteredEntries.length ? String(nextOffset) : undefined,
-        },
-        query: `${normalizedFilterKey}:${normalizedSearchQuery}`,
-      };
-    },
-    [loadSkillsShDetail, loadSkillsShIndex],
-  );
 
   const loadStoreSource = useCallback(
     async (sourceId: string, forceRefresh = false, loadOptions: ILoadStoreSourceOptions = {}) => {
@@ -468,8 +180,7 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
       const hasCachedFailure = Boolean(cachedEntry?.error);
 
       if (forceRefresh && source.type === 'skills-sh') {
-        skillsShIndexCacheRef.current.clear();
-        skillsShDetailCacheRef.current.clear();
+        skillsShLoaderRef.current.clearCache();
       }
 
       if (source.type === 'skillhub' || source.type === 'clawhub' || source.type === 'skills-sh') {
@@ -496,11 +207,10 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
                 ? (loadOptions.page ?? (cachedEntry?.pagination?.page ?? 0) + 1)
                 : 1;
             const pageResult = await loadSkillHubStore(nextPage, skillhubKeyword || undefined);
-            const nextSkills =
+            skillsForSource =
               append && !forceRefresh
                 ? dedupeRegistrySkills([...skillsForSource, ...pageResult.skills])
                 : pageResult.skills;
-            skillsForSource = nextSkills;
             pagination = {
               page: pageResult.page,
               total: pageResult.total,
@@ -510,21 +220,20 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
             const nextCursor =
               append && !forceRefresh ? cachedEntry?.pagination?.nextCursor : undefined;
             const pageResult = await loadClawHubStore(nextCursor);
-            const nextSkills =
+            skillsForSource =
               append && !forceRefresh
                 ? dedupeRegistrySkills([...skillsForSource, ...pageResult.skills])
                 : pageResult.skills;
-            skillsForSource = nextSkills;
             pagination = {
               page: append && !forceRefresh ? (cachedEntry?.pagination?.page ?? 1) + 1 : 1,
-              total: nextSkills.length,
+              total: skillsForSource.length,
               hasMore: pageResult.hasMore,
               nextCursor: pageResult.nextCursor,
             };
           } else if (source.type === 'skills-sh') {
             const nextCursor =
               append && !forceRefresh ? cachedEntry?.pagination?.nextCursor : undefined;
-            const pageResult = await loadSkillsShStore(
+            const pageResult = await skillsShLoaderRef.current.loadPage(
               nextCursor,
               skillsShSearchQuery,
               skillsShFilterKey,
@@ -541,7 +250,7 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
             skillsForSource = await loadMarketplaceStore(source.url);
             pagination = undefined;
           } else if (source.type === 'local-dir') {
-            skillsForSource = await loadLocalDirectoryStore(source.url);
+            skillsForSource = await loadLocalDirectoryStore(source.url, scanLocalPreview);
             pagination = undefined;
           }
 
@@ -570,15 +279,12 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
     },
     [
       loadClawHubStore,
-      loadGitDownloadStore,
-      loadLocalDirectoryStore,
-      loadMarketplaceStore,
       loadSkillHubStore,
-      loadSkillsShStore,
       options.skillhubKeyword,
       options.skillsShFilterKey,
       options.skillsShSearchQuery,
       resolveStoreSource,
+      scanLocalPreview,
       setRemoteStoreEntry,
     ],
   );

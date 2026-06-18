@@ -5,7 +5,7 @@ import type {
   IRegistrySkill,
 } from '@/types/modules';
 
-import { inferCategory, slugify } from './store-mapper-utils';
+import { dedupeRegistrySkills, inferCategory, slugify } from './store-mapper-utils';
 
 function stripQuotes(value: string): string {
   return value.trim().replace(/^['"]|['"]$/g, '');
@@ -118,23 +118,6 @@ export function mapGitHubStoreError(
 
 function isDefined<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
-}
-
-function dedupeRegistrySkills(skills: IRegistrySkill[]): IRegistrySkill[] {
-  const bySlug = new Map<string, IRegistrySkill>();
-  const seenNames = new Set<string>();
-  for (const skill of skills) {
-    if (bySlug.has(skill.slug)) {
-      continue;
-    }
-    const normalizedName = (skill.install_name || skill.slug).toLowerCase();
-    if (seenNames.has(normalizedName)) {
-      continue;
-    }
-    bySlug.set(skill.slug, skill);
-    seenNames.add(normalizedName);
-  }
-  return Array.from(bySlug.values());
 }
 
 function buildRawUrl(owner: string, repo: string, branch: string, filePath: string): string {

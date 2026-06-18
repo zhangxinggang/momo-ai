@@ -1,14 +1,14 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "com.prompthub.app",
-  "productName": "PromptHub",
+  "appId": "com.aim.app",
+  "productName": "AIM",
   "directories": {
-    "output": "dist"
+    "output": "release"
   },
   "extraMetadata": {
-    "main": "out/main/index.js"
+    "main": "dist/main/index.js"
   },
-  "files": ["out/**/*", "appConf.cjs", "static/**/*", "server/**/*", "!**/*.map"],
+  "files": ["dist/**/*", "appConf.cjs", "static/**/*", "server/**/*", "!**/*.map"],
   "electronLanguages": ["en-US", "zh-CN"],
   "extraResources": [],
   "asarUnpack": ["**/*.node"],

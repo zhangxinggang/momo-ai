@@ -1,12 +1,11 @@
 import { app, BrowserWindow, dialog, type WebContents } from 'electron';
 import { getMainWindow, setMainWindow } from '../../main-window';
 import { SYSTEM_EVENT } from '../../types';
-import { getAppConfig, getSystemLogo } from '../../utils';
+import { getAppConfig } from '../../utils';
+import { DEFAULT_WINDOW_ATTR } from '../../utils/constant';
 
 const appConf = getAppConfig();
 const { openDevTools, closeConfirm } = appConf;
-const { ico } = getSystemLogo();
-
 const toolBrowserWindows = new Set<BrowserWindow>();
 
 function isExternalHttpUrl(url: string): boolean {
@@ -148,13 +147,8 @@ function openToolBrowserWindow(url: string, parent?: BrowserWindow | null): void
   const parentWindow = parent && !parent.isDestroyed() ? parent : (getMainWindow() ?? undefined);
 
   const win = new BrowserWindow({
-    width: 1024,
-    height: 720,
-    minWidth: 480,
-    minHeight: 360,
+    ...DEFAULT_WINDOW_ATTR,
     frame: true,
-    backgroundColor: '#1a1d23',
-    ...(ico ? { icon: ico } : {}),
     ...(parentWindow ? { parent: parentWindow } : {}),
     show: false,
     webPreferences: {

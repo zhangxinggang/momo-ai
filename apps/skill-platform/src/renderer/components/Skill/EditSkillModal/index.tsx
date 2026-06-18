@@ -2,6 +2,7 @@ import type { ISkill } from '@/types/modules';
 import { useUnsavedLeaveGuard } from '@renderer/hooks/useUnsavedLeaveGuard';
 import { SKILL_NAME_REGEX } from '@renderer/services/skill/detail-utils';
 import {
+  buildSkillTagActions,
   getExistingSkillTags,
   getUserSkillTags,
   inferOriginalSkillTags,
@@ -11,15 +12,14 @@ import { Button, Input, Modal } from 'antd';
 import {
   AlertCircleIcon,
   FolderOpenIcon,
-  HashIcon,
   Maximize2Icon,
   Minimize2Icon,
   SaveIcon,
-  XIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { SkillFileEditor } from '../SkillFileEditor';
 import { SkillIconPicker } from '../SkillIconPicker';
+import { SkillTagEditor } from '../SkillTagEditor';
 interface IProps {
   isOpen: boolean;
   onClose: () => void;
@@ -195,24 +195,12 @@ export function EditSkillModal({ isOpen, onClose, skill }: IProps) {
     return null;
   }
 
-  const handleAddTag = () => {
-    const trimmed = tagInput.trim().toLowerCase();
-    if (trimmed && !tags.includes(trimmed)) {
-      setTags([...tags, trimmed]);
-    }
-    setTagInput('');
-  };
-
-  const handleRemoveTag = (tag: string) => {
-    setTags(tags.filter((t) => t !== tag));
-  };
-
-  const handleTagKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddTag();
-    }
-  };
+  const tagActions = buildSkillTagActions({
+    tags,
+    tagInput,
+    setTags,
+    setTagInput,
+  });
 
   return (
     <>
@@ -328,59 +316,15 @@ export function EditSkillModal({ isOpen, onClose, skill }: IProps) {
             />
           </div>
 
-          {/* Tags */}
-          <div className='space-y-1.5'>
-            <label className='text-foreground block text-sm font-medium'>{'标签（可选）'}</label>
-            <div className='mb-2 flex flex-wrap gap-2'>
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className='bg-primary inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-white'>
-                  <HashIcon className='h-3 w-3' />
-                  {tag}
-                  <Button
-                    type='text'
-                    size='small'
-                    className='ml-1 !h-auto !min-w-0 !p-0 text-white hover:!text-white/70'
-                    onClick={() => handleRemoveTag(tag)}
-                    icon={<XIcon className='h-3 w-3' />}
-                  />
-                </span>
-              ))}
-            </div>
-            {existingTags.length > 0 && (
-              <div className='mb-2'>
-                <div className='text-muted-foreground mb-1.5 text-xs'>{'选择已有标签：'}</div>
-                <div className='flex flex-wrap gap-1.5'>
-                  {existingTags
-                    .filter((existingTag) => !tags.includes(existingTag))
-                    .map((existingTag) => (
-                      <Button
-                        key={existingTag}
-                        type='default'
-                        size='small'
-                        className='!h-auto rounded-full px-2 py-1 text-xs'
-                        onClick={() => setTags([...tags, existingTag])}
-                        icon={<HashIcon className='h-3 w-3' />}>
-                        {existingTag}
-                      </Button>
-                    ))}
-                </div>
-              </div>
-            )}
-            <div className='flex gap-2'>
-              <Input
-                className='flex-1'
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={handleTagKeyDown}
-                placeholder={'输入新标签后按回车'}
-              />
-              <Button type='default' onClick={handleAddTag} disabled={!tagInput.trim()}>
-                {'添加标签'}
-              </Button>
-            </div>
-          </div>
+          <SkillTagEditor
+            tags={tags}
+            tagInput={tagInput}
+            existingTags={existingTags}
+            onTagInputChange={setTagInput}
+            onAddTag={tagActions.handleAddTag}
+            onRemoveTag={tagActions.handleRemoveTag}
+            onExistingTagClick={tagActions.handleAddExistingTag}
+          />
 
           <div className='border-border bg-accent/20 space-y-3 rounded-xl border p-4'>
             <div className='flex items-start justify-between gap-4'>

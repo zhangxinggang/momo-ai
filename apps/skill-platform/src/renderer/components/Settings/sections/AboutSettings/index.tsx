@@ -2,12 +2,14 @@ import { compareVersions } from '@/utils/version';
 import { MarkdownRenderer } from '@momo/aichat';
 import { SettingItem, SettingSection } from '@renderer/components/Settings/SettingPrimitives';
 import { useAiChatViewTheme } from '@renderer/hooks/useAiChatViewTheme';
+import { useAppName } from '@renderer/hooks/useAppName';
 import { useOnlineConfStore } from '@renderer/store/online-conf';
 import { Button, Modal } from 'antd';
 import { useState } from 'react';
 
 /** 关于 - 版本信息与更新 */
 export function AboutSettings() {
+  const appName = useAppName();
   const chatTheme = useAiChatViewTheme();
   const localVersion = useOnlineConfStore((state) => state.localVersion);
   const config = useOnlineConfStore((state) => state.config);
@@ -35,7 +37,7 @@ export function AboutSettings() {
     <>
       <div className='space-y-6'>
         <SettingSection title={'版本信息'}>
-          <SettingItem label={'当前版本'} description={'本机已安装的 PromptHub 版本号'}>
+          <SettingItem label={'当前版本'} description={`本机已安装的 ${appName} 版本号`}>
             <div className='flex items-center gap-2 text-sm'>
               <span>{localVersion}</span>
               {hasNewVersion && remoteVersion ? (

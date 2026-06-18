@@ -1,5 +1,6 @@
 import type { IRegistrySkill } from '@/types/modules';
 
+import { parseFrontmatter } from './github-store';
 import { slugify } from './store-mapper-utils';
 
 export const SKILLS_SH_BASE_URL = 'https://skills.sh';
@@ -155,35 +156,6 @@ function getStandardSkillsShPackageLocation(entry: ISkillsShLeaderboardEntry):
   return {
     sourceDirectory,
     canonicalSkillPath: `${sourceDirectory}/SKILL.md`,
-  };
-}
-
-function parseFrontmatter(content: string): {
-  name?: string;
-  description?: string;
-  tags: string[];
-} {
-  const match = content.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) {
-    return { tags: [] };
-  }
-
-  const block = match[1];
-  const tagsLine = block.match(/^tags:\s*\[(.+)\]$/m)?.[1] ?? '';
-
-  return {
-    name: block
-      .match(/^name:\s*(.+)$/m)?.[1]
-      ?.trim()
-      .replace(/^['"]|['"]$/g, ''),
-    description: block
-      .match(/^description:\s*(.+)$/m)?.[1]
-      ?.trim()
-      .replace(/^['"]|['"]$/g, ''),
-    tags: tagsLine
-      .split(',')
-      .map((tag) => tag.trim().replace(/^['"]|['"]$/g, ''))
-      .filter(Boolean),
   };
 }
 

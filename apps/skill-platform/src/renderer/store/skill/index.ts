@@ -38,6 +38,7 @@ import {
   getRegistrySkillUpdateStatus,
   type IRegistrySkillUpdateCheck,
 } from '@renderer/services/skill/store-update';
+import { sortSkillsByName } from '@renderer/services/skill/store-mapper-utils';
 import { useSettingsStore } from '@renderer/store';
 import type { ESkillFilterType, ESkillStoreView, ESkillViewMode } from '@renderer/types/skill';
 import { create } from 'zustand';
@@ -1414,13 +1415,8 @@ export const useSkillStore = create<ISkillState>()(
           );
         }
 
-        const sortByName = (list: IRegistrySkill[]) =>
-          [...list].sort((left, right) =>
-            left.name.localeCompare(right.name, 'en', { sensitivity: 'base' }),
-          );
-
-        const installed = sortByName(filtered.filter((s) => installedSlugs.includes(s.slug)));
-        const recommended = sortByName(filtered.filter((s) => !installedSlugs.includes(s.slug)));
+        const installed = sortSkillsByName(filtered.filter((s) => installedSlugs.includes(s.slug)));
+        const recommended = sortSkillsByName(filtered.filter((s) => !installedSlugs.includes(s.slug)));
 
         return { installed, recommended };
       },

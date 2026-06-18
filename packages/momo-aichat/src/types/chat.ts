@@ -79,14 +79,31 @@ export interface IChatContext {
   updateSessionTitle: (sessionId: string, title: string) => void;
 
   // 消息管理方法
-  addMessage: (sessionId: string, message: Omit<IChatMessage, 'id' | 'timestamp'>) => void;
+  addMessage: (sessionId: string, message: Omit<IChatMessage, 'id' | 'timestamp'>) => IChatMessage;
   updateMessage: (sessionId: string, messageId: string, updates: Partial<IChatMessage>) => void;
+  /** 删除用户消息；若其后有助手回复则一并删除 */
+  deleteUserMessage: (userMessageId: string) => void;
+  /** 在原有问答记录上重试（不新增用户消息） */
+  retryAssistantReply: (userMessageId: string) => Promise<void>;
 
   // AI交互方法
   sendMessage: (
     content: string,
     attachmentsMeta?: IChatAttachmentMeta[],
-    options?: { displayContent?: string },
+    options?: {
+      displayContent?: string;
+      /** 生图模型：参考图 base64 */
+      referenceImages?: Array<{
+        name?: string;
+        mimeType: string;
+        base64: string;
+      }>;
+      /** 重试模式：复用已有用户/助手消息，不新增记录 */
+      retry?: {
+        userMessageId: string;
+        assistantMessageId: string;
+      };
+    },
   ) => Promise<void>;
   // 停止生成方法
   stopGeneration: (sessionId: string) => void;
@@ -187,6 +204,8 @@ export interface IChatAttachment {
   ext: string;
   text: string;
   snippet: string;
+  /** 图片附件的 base64 数据（不含 data URL 前缀） */
+  imageBase64?: string;
 }
 
 // 消息中展示的附件精简信息
@@ -196,4 +215,6 @@ export type IChatAttachmentMeta = Pick<
   'id' | 'name' | 'size' | 'mime' | 'ext' | 'snippet'
 > & {
   charCount?: number;
+  /** 图片附件 base64，用于生图重试 */
+  imageBase64?: string;
 };

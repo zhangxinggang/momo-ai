@@ -1,5 +1,7 @@
 import type { EAIProtocol } from '@/types/modules';
 
+import { EImageBackend, resolveImageBackend } from './image/backends';
+import { buildDashScopeMultimodalEndpoint } from './image/protocols/dashscope-multimodal';
 import type { TResolvedProtocol } from './internal/types';
 import type { IAIConfig } from './types';
 import { getBaseUrl } from './url';
@@ -176,7 +178,10 @@ export function getApiEndpointPreview(apiUrl: string, protocol: EAIProtocol = 'o
  * 如果用户输入以 # 结尾，则不自动填充后续路径
  * 获取生图 API 端点预览（用于显示）
  */
-export function getImageApiEndpointPreview(apiUrl: string): string {
+export function getImageApiEndpointPreview(
+  apiUrl: string,
+  modelHint?: Pick<IAIConfig, 'provider' | 'model'>,
+): string {
   if (!apiUrl) return '';
 
   // If ends with #, just return the part before # without any auto-fill
@@ -185,11 +190,24 @@ export function getImageApiEndpointPreview(apiUrl: string): string {
     return apiUrl.trim().slice(0, -1);
   }
 
+  const backendHint: IAIConfig = {
+    provider: modelHint?.provider ?? '',
+    apiUrl,
+    apiKey: '',
+    model: modelHint?.model ?? '',
+    type: 'image',
+  };
+  const backend = resolveImageBackend(backendHint);
+
+  if (backend === EImageBackend.EDashscopeMultimodal) {
+    return buildDashScopeMultimodalEndpoint(apiUrl);
+  }
+
   const baseUrl = getBaseUrl(apiUrl);
 
   // Gemini is not OpenAI's images/generations specification
   // Gemini（Google Generative ELanguage API）并非 OpenAI 的 images/generations 规范
-  if (baseUrl.includes('generativelanguage.googleapis.com')) {
+  if (backend === EImageBackend.EGemini || baseUrl.includes('generativelanguage.googleapis.com')) {
     const geminiBaseUrl = baseUrl.replace(/\/openai$/, '');
     if (geminiBaseUrl.match(/\/v\d+(?:beta)?$/)) {
       return geminiBaseUrl + '/models';

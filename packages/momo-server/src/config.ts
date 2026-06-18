@@ -137,7 +137,7 @@ const config: IRuntimeConfig = {
   },
   project: {
     name: 'nk',
-    favIcon: path.join(__dirname, './assets/favIcon.ico'),
+    favIcon: path.join(__dirname, './assets/favIcon.png'),
   },
 };
 

@@ -16,11 +16,11 @@ export default [
   {
     ignores: [
       'dist/**',
-      'out/**',
+      'release/**',
       'node_modules/**',
       'coverage/**',
       'website/**',
-      'src/renderer/out/**',
+      'src/renderer/dist/**',
       '**/*.d.ts',
       '**/*.js',
       '*.tsbuildinfo',

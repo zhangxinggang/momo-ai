@@ -1,4 +1,5 @@
 import { useSettingsStore } from '@renderer/store';
+import { fetchAppName } from '@renderer/hooks/useAppName';
 import { Button } from 'antd';
 import { AlertTriangleIcon, CheckCircleIcon, InfoIcon, XCircleIcon, XIcon } from 'lucide-react';
 import { createContext, useCallback, useContext, useState } from 'react';
@@ -40,7 +41,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               : type === 'warning'
                 ? 'Warning'
                 : 'Info';
-        window.electron.showNotification(`PromptHub - ${title}`, message);
+        void fetchAppName().then((appName) => {
+          window.electron?.showNotification?.(`${appName} - ${title}`, message);
+        });
       }
 
       // Auto disappear after 3 seconds

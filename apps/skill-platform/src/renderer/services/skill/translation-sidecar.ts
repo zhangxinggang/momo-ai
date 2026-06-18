@@ -24,7 +24,7 @@ function getTranslationBaseDir(
   translationMode: 'immersive' | 'full',
 ): string {
   return [
-    '.prompthub',
+    '.aim',
     'translations',
     sanitizePathSegment(targetLanguage),
     sanitizePathSegment(translationMode),

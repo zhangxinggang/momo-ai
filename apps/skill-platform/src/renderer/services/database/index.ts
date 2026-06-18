@@ -5,7 +5,7 @@
 
 import type { IFolder, IPrompt, IPromptVersion } from '@/types/modules';
 
-const DB_NAME = 'PromptHubDB';
+const DB_NAME = 'AIMDB';
 const DB_VERSION = 1;
 
 // Generate UUID using browser native API

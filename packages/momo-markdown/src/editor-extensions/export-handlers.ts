@@ -1,31 +1,34 @@
 import { buildDocxBlobFromPreview } from './export-docx';
-import { buildExportProgress, resolveExportBasename, type IExportProgress } from './export-utils';
+import { buildExportProgress, downloadBlob, resolveExportBasename, type IExportProgress } from './export-utils';
 import {
   getMarkdownExportPreviewElement,
   getMarkdownExportShellElement,
   prepareExportShellForPrint,
   withMarkdownExportPreview,
+  type IMarkdownPreviewExportOptions,
 } from './preview-export';
-import type { IExportDocxHandler, IExportPdfHandler } from './toolbar-export';
+import type { IExportDocxHandler, IExportPdfHandler, IMarkdownExportContext } from './toolbar-export';
 
-async function saveBlob(blob: Blob, filename: string): Promise<void> {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.rel = 'noopener';
-  anchor.style.display = 'none';
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+function buildPreviewOptions(params: IMarkdownExportContext): IMarkdownPreviewExportOptions {
+  return {
+    markdown: params.content,
+    theme: params.theme,
+    previewTheme: params.previewTheme,
+    codeTheme: params.codeTheme,
+    language: params.language,
+    onProgress: params.onProgress,
+  };
 }
 
-async function exportPreviewToPdf(
-  _preview: HTMLElement,
-  _filename: string,
-  reportProgress?: (progress: IExportProgress) => void,
-): Promise<void> {
+async function withPreparedExportPreview<T>(
+  params: IMarkdownExportContext,
+  run: () => Promise<T>,
+): Promise<T> {
+  params.onProgress?.(buildExportProgress('preparing', '正在准备导出...'));
+  return withMarkdownExportPreview(buildPreviewOptions(params), run);
+}
+
+async function exportPreviewToPdf(reportProgress?: (progress: IExportProgress) => void): Promise<void> {
   const shell = getMarkdownExportShellElement();
   if (!shell) {
     throw new Error('导出容器不存在');
@@ -51,56 +54,32 @@ async function exportPreviewToPdf(
 
 /** 浏览器端 PDF 导出（A4 宽 + 默认页边距） */
 export const defaultExportMarkdownPdf: IExportPdfHandler = async (params) => {
-  const basename = resolveExportBasename(params.defaultName || params.title || 'document');
-  params.onProgress?.(buildExportProgress('preparing', '正在准备导出...'));
-
-  return withMarkdownExportPreview(
-    {
-      markdown: params.content,
-      theme: params.theme,
-      previewTheme: params.previewTheme,
-      codeTheme: params.codeTheme,
-      language: params.language,
-      onProgress: params.onProgress,
-    },
-    async () => {
-      const preview = getMarkdownExportPreviewElement();
-      if (!preview) {
-        return { success: false };
-      }
-      try {
-        await exportPreviewToPdf(preview, basename, params.onProgress);
-        return { success: true };
-      } catch {
-        return { success: false };
-      }
-    },
-  );
+  return withPreparedExportPreview(params, async () => {
+    const preview = getMarkdownExportPreviewElement();
+    if (!preview) {
+      return { success: false };
+    }
+    try {
+      await exportPreviewToPdf(params.onProgress);
+      return { success: true };
+    } catch {
+      return { success: false };
+    }
+  });
 };
 
 /** 浏览器端 DOCX 导出（docx 包，避免 html-to-docx 在 Vite 下动态加载失败） */
 export const defaultExportMarkdownDocx: IExportDocxHandler = async (params) => {
   const basename = resolveExportBasename(params.defaultName || params.title || 'document');
-  params.onProgress?.(buildExportProgress('preparing', '正在准备导出...'));
 
-  await withMarkdownExportPreview(
-    {
-      markdown: params.content,
-      theme: params.theme,
-      previewTheme: params.previewTheme,
-      codeTheme: params.codeTheme,
-      language: params.language,
-      onProgress: params.onProgress,
-    },
-    async () => {
-      const preview = getMarkdownExportPreviewElement();
-      if (!preview) {
-        throw new Error('预览渲染失败');
-      }
-      params.onProgress?.(buildExportProgress('converting', '正在生成 DOCX...'));
-      const blob = await buildDocxBlobFromPreview(preview);
-      params.onProgress?.(buildExportProgress('saving', '正在保存 DOCX...'));
-      await saveBlob(blob, `${basename}.docx`);
-    },
-  );
+  await withPreparedExportPreview(params, async () => {
+    const preview = getMarkdownExportPreviewElement();
+    if (!preview) {
+      throw new Error('预览渲染失败');
+    }
+    params.onProgress?.(buildExportProgress('converting', '正在生成 DOCX...'));
+    const blob = await buildDocxBlobFromPreview(preview);
+    params.onProgress?.(buildExportProgress('saving', '正在保存 DOCX...'));
+    downloadBlob(blob, `${basename}.docx`);
+  });
 };

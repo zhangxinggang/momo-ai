@@ -5,7 +5,7 @@ function isHiddenSkillRepoEntry(repoPath: string): boolean {
   return repoPath
     .split(/[/\\]+/)
     .filter(Boolean)
-    .some((segment) => segment === '.git' || segment === '.prompthub');
+    .some((segment) => segment === '.git' || segment === '.aim');
 }
 
 export interface ISkillFileEditorAdapterOptions {

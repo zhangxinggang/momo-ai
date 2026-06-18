@@ -1,4 +1,5 @@
 ﻿import { IPC_CHANNELS } from '@/types/constants';
+import { getAppConfig } from '@momo/electron';
 import { dialog, ipcMain, shell } from 'electron';
 import fs from 'fs/promises';
 import * as http from 'http';
@@ -93,6 +94,7 @@ async function downloadImageBuffer(
 
   const resolvedAddress = await resolvePublicAddress(parsedUrl.hostname);
   const requestModule = getRequestModule(parsedUrl.protocol);
+  const { appName } = getAppConfig() as { appName?: string };
 
   return new Promise((resolve, reject) => {
     const request = requestModule.request(
@@ -106,7 +108,7 @@ async function downloadImageBuffer(
         method: 'GET',
         headers: {
           Host: parsedUrl.host,
-          'User-Agent': 'PromptHub/image-download',
+          'User-Agent': `${appName}/image-download`,
           Accept: 'image/*',
         },
         timeout: IMAGE_DOWNLOAD_TIMEOUT_MS,

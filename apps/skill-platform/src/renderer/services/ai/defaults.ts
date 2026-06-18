@@ -4,17 +4,17 @@ import type {
   IScenarioModelDefaults,
 } from '@renderer/types/settings';
 import type { IAIConfig } from './types';
+import { isImageModel } from './image/backends';
 
-/** 模型名/显示名命中以下模式时，视为可用于生图场景（即使类型仍为对话模型） */
-const IMAGE_CAPABLE_MODEL_PATTERN =
-  /dall-e|dalle|flux|stable-diffusion|stable_diffusion|midjourney|imagen|gpt-image|image-preview|seedream|wanx|text-to-image|text2image|qwen-image|[-_]image[-_]|[-_]image$/i;
-
-export function isImageCapableModel(model: IAIModelConfig): boolean {
-  if (model.type === 'image') {
-    return true;
-  }
-  const hint = `${model.model || ''} ${model.name || ''}`.toLowerCase();
-  return IMAGE_CAPABLE_MODEL_PATTERN.test(hint);
+export function isImageCapableModel(
+  model: Pick<IAIModelConfig, 'type' | 'model' | 'provider' | 'apiUrl'>,
+): boolean {
+  return isImageModel({
+    type: model.type ?? 'chat',
+    model: model.model,
+    provider: model.provider,
+    apiUrl: model.apiUrl,
+  });
 }
 
 export function getImageScenarioModels(aiModels: IAIModelConfig[]): IAIModelConfig[] {
@@ -28,7 +28,7 @@ export function getModelsByType(
   if (type === 'image') {
     return getImageScenarioModels(aiModels);
   }
-  return aiModels.filter((model) => (model.type ?? 'chat') === 'chat');
+  return aiModels.filter((model) => (model.type ?? 'chat') === 'chat' && !isImageCapableModel(model));
 }
 
 export function resolveScenarioModel(

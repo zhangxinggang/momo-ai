@@ -12,6 +12,7 @@ import {
   normalizeSkillsShFilterKey,
 } from '@renderer/services/skill/skills-sh-store';
 import { findInstalledRegistrySkill } from '@renderer/services/skill/store-update';
+import { sortSkillsByName } from '@renderer/services/skill/store-mapper-utils';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
 import { Button, Input } from 'antd';
 import {
@@ -48,12 +49,6 @@ const CUSTOM_SOURCE_TYPE_OPTIONS: Array<{
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
-}
-
-function sortByName(skills: IRegistrySkill[]) {
-  return [...skills].sort((left, right) =>
-    left.name.localeCompare(right.name, 'en', { sensitivity: 'base' }),
-  );
 }
 
 export function SkillStore() {
@@ -234,7 +229,7 @@ export function SkillStore() {
     [skills],
   );
 
-  const allStoreSkills = useMemo(() => sortByName(sourceRegistrySkills), [sourceRegistrySkills]);
+  const allStoreSkills = useMemo(() => sortSkillsByName(sourceRegistrySkills), [sourceRegistrySkills]);
 
   const handleQuickInstall = async (skill: IRegistrySkill, e: React.MouseEvent) => {
     e.stopPropagation();

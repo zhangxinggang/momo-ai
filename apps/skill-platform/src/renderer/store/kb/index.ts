@@ -23,7 +23,7 @@ export const useKbStore = create<IKbState>()(
       setCreateModalOpen: (open) => set({ isCreateModalOpen: open }),
     }),
     {
-      name: 'prompthub-kb',
+      name: 'aim-kb',
       partialize: (state) => ({ activeCollectionId: state.activeCollectionId }),
     },
   ),

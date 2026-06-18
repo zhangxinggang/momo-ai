@@ -1,4 +1,6 @@
 import type { DImageGenerationResponse, IAIConfig, IImageReferenceAttachment } from '../types';
+import { EImageBackend, resolveImageBackend } from './backends';
+import { generateImageViaProtocol } from './protocols';
 
 export async function generateImage(
   config: IAIConfig,
@@ -13,7 +15,7 @@ export async function generateImage(
     referenceImages?: IImageReferenceAttachment[];
   },
 ): Promise<DImageGenerationResponse> {
-  const { apiKey, apiUrl, model, provider } = config;
+  const { apiKey, apiUrl, model } = config;
   const mergedOptions = {
     ...config.imageParams,
     ...options,
@@ -27,50 +29,37 @@ export async function generateImage(
     throw new Error('API URL is not configured');
   }
 
-  // 根据供应商选择不同的 API 调用方式
-  // Choose different API calling methods based on provider
-  const providerLower = (provider || '').toLowerCase();
-  const modelLower = (model || '').toLowerCase();
-
-  // FLUX (Black Forest Labs)
-  if (providerLower === 'flux' || apiUrl.includes('bfl.ai')) {
-    return await generateImageFlux(apiKey, apiUrl, model, prompt, mergedOptions);
+  const backend = resolveImageBackend(config);
+  if (!backend) {
+    throw new Error('当前配置不是生图模型，请先在设置中将模型类型设为「图像模型」');
   }
 
-  // Ideogram
-  if (providerLower === 'ideogram' || apiUrl.includes('ideogram.ai')) {
-    return await generateImageIdeogram(apiKey, apiUrl, model, prompt, mergedOptions);
+  if (backend === EImageBackend.EDashscopeMultimodal) {
+    const protocolResult = await generateImageViaProtocol(config, prompt, mergedOptions);
+    if (protocolResult) {
+      return protocolResult;
+    }
+    throw new Error('DashScope 生图协议调用失败');
   }
 
-  // Recraft
-  if (providerLower === 'recraft' || apiUrl.includes('recraft.ai')) {
-    return await generateImageRecraft(apiKey, apiUrl, model, prompt, mergedOptions);
+  switch (backend) {
+    case EImageBackend.EFlux:
+      return await generateImageFlux(apiKey, apiUrl, model, prompt, mergedOptions);
+    case EImageBackend.EIdeogram:
+      return await generateImageIdeogram(apiKey, apiUrl, model, prompt, mergedOptions);
+    case EImageBackend.ERecraft:
+      return await generateImageRecraft(apiKey, apiUrl, model, prompt, mergedOptions);
+    case EImageBackend.EReplicate:
+      return await generateImageReplicate(apiKey, model, prompt, mergedOptions);
+    case EImageBackend.EStability:
+      return await generateImageStability(apiKey, apiUrl, model, prompt, mergedOptions);
+    case EImageBackend.EGemini:
+      return await generateImageGemini(apiKey, apiUrl, model, prompt, mergedOptions);
+    case EImageBackend.EOpenAiImages:
+      return await generateImageOpenAI(apiKey, apiUrl, model, prompt, mergedOptions);
+    default:
+      throw new Error(`未支持的生图后端: ${backend}`);
   }
-
-  // Replicate
-  if (providerLower === 'replicate' || apiUrl.includes('replicate.com')) {
-    return await generateImageReplicate(apiKey, model, prompt, mergedOptions);
-  }
-
-  // Stability AI
-  if (providerLower === 'stability' || apiUrl.includes('stability.ai')) {
-    return await generateImageStability(apiKey, apiUrl, model, prompt, mergedOptions);
-  }
-
-  // Google/Gemini Image Generation (uses generateContent API, not OpenAI format)
-  // Match on provider='google'/'gemini', URL containing googleapis, or model name heuristics
-  if (
-    providerLower === 'google' ||
-    providerLower === 'gemini' ||
-    apiUrl.includes('generativelanguage.googleapis.com') ||
-    (modelLower.includes('gemini') &&
-      (modelLower.includes('image') || modelLower.includes('imagen')))
-  ) {
-    return await generateImageGemini(apiKey, apiUrl, model, prompt, mergedOptions);
-  }
-
-  // OpenAI-compatible format (includes OpenAI, Azure, etc.)
-  return await generateImageOpenAI(apiKey, apiUrl, model, prompt, mergedOptions);
 }
 
 // Google Gemini Image Generation via generateContent API

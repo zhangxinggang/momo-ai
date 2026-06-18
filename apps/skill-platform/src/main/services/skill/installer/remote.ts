@@ -8,8 +8,11 @@ import * as dns from 'dns/promises';
 import * as http from 'http';
 import * as https from 'https';
 import * as nodeNet from 'net';
+import { getAppConfig } from '@momo/electron';
 
 // ==================== Constants ====================
+
+const { appName } = getAppConfig() as { appName?: string };
 
 const REMOTE_FETCH_TIMEOUT_MS = 30_000;
 /** Total time allowed for reading the response body (protects against slowloris) */
@@ -280,7 +283,7 @@ export async function fetchRemoteText(targetUrl: string, redirectCount = 0): Pro
         method: 'GET',
         headers: {
           Host: parsedUrl.host,
-          'User-Agent': 'PromptHub/remote-skill-fetch',
+          'User-Agent': `${appName}/remote-skill-fetch`,
           Accept: 'text/plain, application/json;q=0.9, */*;q=0.1',
         },
         timeout: REMOTE_FETCH_TIMEOUT_MS,
@@ -386,7 +389,7 @@ export async function fetchRemoteBuffer(targetUrl: string, redirectCount = 0): P
         method: 'GET',
         headers: {
           Host: parsedUrl.host,
-          'User-Agent': 'PromptHub/remote-skill-fetch',
+          'User-Agent': `${appName}/remote-skill-fetch`,
           Accept: 'application/zip, application/octet-stream, */*;q=0.1',
         },
         timeout: REMOTE_FETCH_TIMEOUT_MS,

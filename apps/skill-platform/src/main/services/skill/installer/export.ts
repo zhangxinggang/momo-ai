@@ -41,7 +41,7 @@ export function exportAsSkillMd(skill: {
   }
   const compatibilityList = Array.isArray(skill.compatibility)
     ? skill.compatibility
-    : [skill.compatibility || 'prompthub'];
+    : [skill.compatibility || 'aim'];
   frontmatter.push(`compatibility: [${compatibilityList.map(yamlStr).join(', ')}]`);
   frontmatter.push('---');
   frontmatter.push('');

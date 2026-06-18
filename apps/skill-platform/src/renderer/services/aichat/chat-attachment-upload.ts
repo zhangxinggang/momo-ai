@@ -35,8 +35,25 @@ async function fileToBase64(file: File): Promise<string> {
   return btoa(binary);
 }
 
-async function readFileText(file: File): Promise<{ text: string; snippet: string }> {
+async function readFileText(
+  file: File,
+): Promise<{ text: string; snippet: string; imageBase64?: string }> {
   const ext = getFileExtension(file.name);
+  const isImage = file.type.startsWith('image/') || ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'].includes(ext);
+
+  if (isImage) {
+    try {
+      const imageBase64 = await fileToBase64(file);
+      const snippet = `[图片附件 ${file.name}]`;
+      return {
+        text: snippet,
+        snippet,
+        imageBase64,
+      };
+    } catch {
+      // 继续走占位提示
+    }
+  }
 
   if (typeof window !== 'undefined' && window.api?.aichat?.parseAttachment) {
     try {
@@ -93,7 +110,7 @@ export async function uploadChatAttachmentFiles(
     const file = files[index];
     onProgress?.(index, 10);
     const ext = getFileExtension(file.name);
-    const { text, snippet } = await readFileText(file);
+    const { text, snippet, imageBase64 } = await readFileText(file);
     onProgress?.(index, 100);
 
     results.push({
@@ -104,6 +121,7 @@ export async function uploadChatAttachmentFiles(
       ext,
       text,
       snippet,
+      imageBase64,
     });
   }
 

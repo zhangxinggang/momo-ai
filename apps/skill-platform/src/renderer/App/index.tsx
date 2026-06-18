@@ -4,6 +4,7 @@ import { MainContent, Sidebar, TitleBar, TopBar } from '@renderer/components/Lay
 import { BackgroundImageBackdrop } from '@renderer/components/ui/BackgroundImageBackdrop';
 import { CloseDialog } from '@renderer/components/ui/CloseDialog';
 import { WorkflowModalsHost } from '@renderer/components/Workflow';
+import { useAppName } from '@renderer/hooks/useAppName';
 import { useConfirmLeaveEditors } from '@renderer/hooks/useConfirmLeaveEditors';
 import { initDatabase } from '@renderer/services/database';
 import { configureKbService } from '@renderer/services/kb';
@@ -42,6 +43,7 @@ type PageType = 'home' | 'settings';
 configureKbService(() => useSettingsStore.getState().aiModels);
 
 function App() {
+  const appName = useAppName();
   const fetchPrompts = usePromptStore((state) => state.fetchPrompts);
   const fetchFolders = useFolderStore((state) => state.fetchFolders);
   const applyTheme = useSettingsStore((state) => state.applyTheme);
@@ -70,6 +72,12 @@ function App() {
   // Close dialog state (Windows)
   // 关闭对话框状态（Windows）
   const [showCloseDialog, setShowCloseDialog] = useState(false);
+
+  useEffect(() => {
+    if (appName) {
+      document.title = appName;
+    }
+  }, [appName]);
 
   const normalizedBackgroundImageFileName = backgroundImageFileName?.trim();
   const hasBackgroundImage = typeof normalizedBackgroundImageFileName === 'string';

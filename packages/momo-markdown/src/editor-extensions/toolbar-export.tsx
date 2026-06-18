@@ -4,7 +4,12 @@ import { memo, useCallback, useContext, useMemo, useState } from 'react';
 import DropdownToolbar from '../components/DropdownToolbar';
 import { EditorContext } from '../components/MdEditor/context';
 import ExportProgressOverlay from './ExportProgressOverlay';
-import { buildExportProgress, resolveExportBasename, type IExportProgress } from './export-utils';
+import {
+  buildExportProgress,
+  downloadBlob,
+  resolveExportBasename,
+  type IExportProgress,
+} from './export-utils';
 
 export interface IMarkdownExportContext {
   title: string;
@@ -38,15 +43,6 @@ interface IProps {
   onExportDocx?: IExportDocxHandler;
 }
 
-function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
-
 /** 导出下拉工具栏：Markdown / PDF / DOCX（鼠标移入展开） */
 function ToolbarExport({
   title = '导出',
@@ -57,7 +53,7 @@ function ToolbarExport({
   onExportPdf,
   onExportDocx,
 }: IProps) {
-  const { theme, previewTheme, codeTheme, language, rootRef } = useContext(EditorContext);
+  const { theme, previewTheme, codeTheme, language } = useContext(EditorContext);
   const [visible, setVisible] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState<IExportProgress | null>(null);
@@ -147,7 +143,7 @@ function ToolbarExport({
 
   return (
     <>
-      <ExportProgressOverlay anchor={rootRef?.current ?? null} progress={exportProgress} />
+      <ExportProgressOverlay progress={exportProgress} />
       <DropdownToolbar
         disabled={disabled || exporting}
         overlay={overlay}

@@ -42,6 +42,8 @@ export const IPC_CHANNELS = {
 
   // 内置 HTTP 服务（system_api）
   SYSTEM_GET_UPLOAD_URL: 'system:getUploadUrl',
+  SYSTEM_GET_SYSTEM_LOGO: 'system:getSystemLogo',
+  SYSTEM_GET_APP_NAME: 'system:getAppName',
 
   // AI transport
   AI_HTTP_REQUEST: 'ai:httpRequest',

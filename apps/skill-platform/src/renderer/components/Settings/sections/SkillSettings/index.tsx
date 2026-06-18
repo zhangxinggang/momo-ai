@@ -13,6 +13,7 @@ import { SKILL_PLATFORMS, getPlatformRootTemplate } from '@/types/constants/plat
 import { SettingItem, SettingSection } from '@renderer/components/Settings/SettingPrimitives';
 import { PlatformIcon } from '@renderer/components/ui/PlatformIcon';
 import { useToast } from '@renderer/components/ui/Toast';
+import { useAppName } from '@renderer/hooks/useAppName';
 import { getSafetyScanAIConfig } from '@renderer/services/skill/detail-utils';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
 import { sortSkillPlatformsByPreference } from '@renderer/utils/skill/platform-sort';
@@ -65,6 +66,7 @@ function reorderPlatformIds(
 }
 
 export function SkillSettings() {
+  const appName = useAppName();
   const settings = useSettingsStore();
   const orderedPlatforms = useOrderedPlatforms();
   const currentPlatformKey = getCurrentPlatformKey();
@@ -139,7 +141,7 @@ export function SkillSettings() {
       <SettingSection title={'ISkill 安装方式'}>
         <div className='space-y-3 p-4'>
           <p className='text-muted-foreground text-xs'>
-            {'选择从 PromptHub 库向 AI 工具平台安装 ISkill 的方式。'}
+            {`选择从 ${appName} 库向 AI 工具平台安装 ISkill 的方式。`}
           </p>
           <Segmented
             block
@@ -152,7 +154,7 @@ export function SkillSettings() {
                   <div className='px-1 py-1 text-left'>
                     <div className='text-sm font-semibold'>{'软链接'}</div>
                     <p className='text-muted-foreground mt-1 text-[11px] font-normal leading-snug'>
-                      {'在平台目录创建软链接指向 PromptHub 的 Skills 目录，同步更新更高效'}
+                      {`在平台目录创建软链接指向 ${appName} 的 Skills 目录，同步更新更高效`}
                     </p>
                   </div>
                 ),
@@ -245,7 +247,7 @@ export function SkillSettings() {
       <SettingSection title={'平台根目录'}>
         <div className='space-y-3 p-4'>
           <p className='text-muted-foreground text-xs'>
-            {'为每个 AI 工具覆写平台根目录。PromptHub 会从这里派生 skills、全局规则等内部路径。'}
+            {`为每个 AI 工具覆写平台根目录。${appName} 会从这里派生 skills、全局规则等内部路径。`}
           </p>
           <div className='border-border overflow-hidden rounded-lg border'>
             {orderedPlatforms.map((platform) => {

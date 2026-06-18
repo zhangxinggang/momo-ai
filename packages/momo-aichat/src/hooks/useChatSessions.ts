@@ -27,6 +27,7 @@ export const useChatSessions = () => {
     defaultModel,
     storageKeyPrefix = 'momo-aichat',
     chatStorage,
+    isImageModel,
   } = useAiChatConfig();
   const storageKeys = useMemo(() => buildStorageKeys(storageKeyPrefix), [storageKeyPrefix]);
   const isAuthenticated = getIsAuthenticated?.() ?? false;
@@ -507,9 +508,22 @@ export const useChatSessions = () => {
     async (
       content: string,
       attachmentsMeta?: IChatAttachmentMeta[],
-      options?: { displayContent?: string },
+      options?: {
+        displayContent?: string;
+        referenceImages?: Array<{
+          name?: string;
+          mimeType: string;
+          base64: string;
+        }>;
+        retry?: {
+          userMessageId: string;
+          assistantMessageId: string;
+        };
+      },
     ) => {
-      if (!content.trim() || isAILoading) return;
+      const isRetry = Boolean(options?.retry);
+      const hasReferenceImages = (options?.referenceImages?.length ?? 0) > 0;
+      if ((!content.trim() && !hasReferenceImages) || isAILoading) return;
 
       let activeSessionId = currentSessionId;
       if (!activeSessionId) {
@@ -532,16 +546,20 @@ export const useChatSessions = () => {
 
       const displayContent = (options?.displayContent ?? content).trim();
 
-      addMessage(activeSessionId, {
-        role: 'user',
-        content: displayContent,
-        attachments: attachmentsMeta,
-      });
+      if (!isRetry) {
+        addMessage(activeSessionId, {
+          role: 'user',
+          content: displayContent,
+          attachments: attachmentsMeta,
+        });
+      }
 
       // 如果是会话的第一条用户消息，更新会话标题
       const session = sessions.find((s) => s.id === activeSessionId);
       const isFirstUserMessage =
-        session && session.messages.filter((m) => m.role === 'user').length === 0;
+        !isRetry &&
+        session &&
+        session.messages.filter((m) => m.role === 'user').length === 0;
 
       // 构造云端保存内容：对用户消息用包装格式保留附件元信息（不保存大段文本）
       const buildCloudContent = (
@@ -582,7 +600,7 @@ export const useChatSessions = () => {
             // 不影响用户体验，消息已在本地保存
           }
         }
-      } else {
+      } else if (!isRetry) {
         // 不是第一条消息，正常保存
         if (isAuthenticated) {
           try {
@@ -599,12 +617,30 @@ export const useChatSessions = () => {
         }
       }
 
-      // 添加AI加载消息
-      const loadingMessage = addMessage(activeSessionId, {
-        role: 'assistant',
-        content: '',
-        isLoading: true,
-      });
+      let loadingMessage: IChatMessage;
+      if (isRetry && options?.retry) {
+        updateMessage(activeSessionId, options.retry.assistantMessageId, {
+          content: '',
+          thinkingContent: undefined,
+          stats: undefined,
+          isLoading: true,
+          isError: false,
+        });
+        loadingMessage = {
+          id: options.retry.assistantMessageId,
+          role: 'assistant',
+          content: '',
+          timestamp: Date.now(),
+          isLoading: true,
+        };
+      } else {
+        // 添加AI加载消息
+        loadingMessage = addMessage(activeSessionId, {
+          role: 'assistant',
+          content: '',
+          isLoading: true,
+        });
+      }
 
       // 设置当前会话的加载状态
       setSessionLoading(activeSessionId, true);
@@ -693,19 +729,33 @@ export const useChatSessions = () => {
         }
 
         // 准备发送给AI的消息历史
-        const chatMessages: IChatStreamMessage[] =
-          session?.messages
-            .filter((m) => !m.isLoading && m.content && m.content.trim() && m.role !== 'system')
-            .map((m) => ({
-              role: m.role,
-              content: m.content,
-            })) || [];
+        let chatMessages: IChatStreamMessage[] = [];
+        if (isRetry && options?.retry && session) {
+          const userIdx = session.messages.findIndex((m) => m.id === options.retry!.userMessageId);
+          if (userIdx >= 0) {
+            chatMessages = session.messages
+              .slice(0, userIdx + 1)
+              .filter((m) => !m.isLoading && m.content && m.content.trim() && m.role !== 'system')
+              .map((m) => ({
+                role: m.role,
+                content: m.content,
+              }));
+          }
+        } else {
+          chatMessages =
+            session?.messages
+              .filter((m) => !m.isLoading && m.content && m.content.trim() && m.role !== 'system')
+              .map((m) => ({
+                role: m.role,
+                content: m.content,
+              })) || [];
 
-        // 添加当前用户消息
-        chatMessages.push({
-          role: 'user',
-          content: content.trim(),
-        });
+          // 添加当前用户消息
+          chatMessages.push({
+            role: 'user',
+            content: content.trim(),
+          });
+        }
 
         // 用于累积流式响应内容
         let accumulatedContent = '';
@@ -827,9 +877,10 @@ export const useChatSessions = () => {
             top_p: topPRef.current,
             abortController,
             user_system_prompt: superpowerSystemPrompt,
-            kb_enabled: kbEnabledRef.current,
+            kb_enabled: isImageModel?.(currentModel) ? false : kbEnabledRef.current,
             kb_collection_id: kbCollectionIdRef.current,
             kb_top_k: 6,
+            referenceImages: options?.referenceImages,
             onThinking: (chunk: string) => {
               thinkingChunkBuffer += chunk;
               if (!thinkingTimer) {
@@ -907,6 +958,94 @@ export const useChatSessions = () => {
       superpowerPrompts,
       workspace,
     ],
+  );
+
+  // 删除用户消息（若其后紧跟助手回复则一并删除）
+  const deleteUserMessage = useCallback(
+    (userMessageId: string) => {
+      if (!currentSessionId) {
+        return;
+      }
+
+      setSessions((prev) => {
+        const prevSessions = Array.isArray(prev) ? prev : [];
+        const updated = prevSessions.map((session) => {
+          if (session.id !== currentSessionId) {
+            return session;
+          }
+
+          const userIdx = session.messages.findIndex((m) => m.id === userMessageId);
+          if (userIdx < 0) {
+            return session;
+          }
+
+          const idsToRemove = new Set<string>([userMessageId]);
+          const nextMessage = session.messages[userIdx + 1];
+          if (nextMessage?.role === 'assistant') {
+            idsToRemove.add(nextMessage.id);
+          }
+
+          return {
+            ...session,
+            messages: session.messages.filter((m) => !idsToRemove.has(m.id)),
+            updatedAt: Date.now(),
+          };
+        });
+
+        debouncedSave(updated, currentSessionId);
+        return updated;
+      });
+    },
+    [currentSessionId, debouncedSave],
+  );
+
+  // 在原有问答记录上重试（不新增用户消息）
+  const retryAssistantReply = useCallback(
+    async (userMessageId: string) => {
+      if (isAILoading || !currentSessionId) {
+        return;
+      }
+
+      const session = sessions.find((s) => s.id === currentSessionId);
+      if (!session) {
+        return;
+      }
+
+      const userIdx = session.messages.findIndex((m) => m.id === userMessageId);
+      if (userIdx < 0) {
+        return;
+      }
+
+      const userMessage = session.messages[userIdx];
+      if (userMessage.role !== 'user' || !userMessage.content.trim()) {
+        return;
+      }
+
+      const assistantMessage = session.messages[userIdx + 1];
+      if (
+        !assistantMessage ||
+        assistantMessage.role !== 'assistant' ||
+        !assistantMessage.isError
+      ) {
+        return;
+      }
+
+      await sendMessage(userMessage.content, userMessage.attachments, {
+        displayContent: userMessage.content,
+        referenceImages: (userMessage.attachments ?? [])
+          .filter((attachment) => attachment.imageBase64 && attachment.mime?.startsWith('image/'))
+          .map((attachment) => ({
+            name: attachment.name,
+            mimeType: attachment.mime || 'image/png',
+            base64: attachment.imageBase64!,
+          })),
+        retry: {
+          userMessageId,
+          assistantMessageId: assistantMessage.id,
+        },
+      });
+    },
+    [currentSessionId, isAILoading, sendMessage, sessions],
   );
 
   // 新建对话：仅进入草稿态，待用户首次发送后再落库
@@ -1090,6 +1229,8 @@ export const useChatSessions = () => {
     updateSessionTitle,
     addMessage,
     updateMessage,
+    deleteUserMessage,
+    retryAssistantReply,
     sendMessage,
     stopGeneration,
     setCurrentModel: handleSetCurrentModel,

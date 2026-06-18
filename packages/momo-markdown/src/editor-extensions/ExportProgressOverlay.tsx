@@ -4,7 +4,6 @@ import { createPortal } from 'react-dom';
 import type { IExportProgress } from './export-utils';
 
 interface IProps {
-  anchor: HTMLElement | null;
   progress: IExportProgress | null;
 }
 

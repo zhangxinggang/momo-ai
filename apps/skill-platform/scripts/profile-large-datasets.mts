@@ -1,4 +1,8 @@
-import { performance } from "node:perf_hooks";
+import { createRequire } from 'node:module';
+import { performance } from 'node:perf_hooks';
+
+const require = createRequire(import.meta.url);
+const { appName } = require('../appConf.cjs') as { appName: string };
 
 import type { Folder, Prompt, Skill } from "../src/shared/types/index.ts";
 import {
@@ -147,7 +151,7 @@ const results = [
 ];
 
 console.log(
-  `PromptHub large dataset baseline (prompts=${promptCount}, skills=${skillCount}, iterations=${iterations})`,
+  `${appName} large dataset baseline (prompts=${promptCount}, skills=${skillCount}, iterations=${iterations})`,
 );
 console.table(results);
 

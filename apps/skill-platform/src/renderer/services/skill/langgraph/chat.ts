@@ -1,25 +1,21 @@
-import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
-
 import type { IAIConfig, IChatMessage } from '@renderer/services/ai';
 import { chatCompletion } from '@renderer/services/ai';
 import { writeWorkflowNodeArtifacts } from '@renderer/services/workflow/agent-files';
 import { ensureSkillRepoPath, parseSkillArtifacts, writeSkillArtifacts } from '../skill-artifacts';
 import { parseSkillRunCommands } from '../skill-run-commands';
 
-/** LangGraph 状态：基于当前 SKILL 与用户输入动态规划并回答 */
-const SkillChatState = Annotation.Root({
-  userInput: Annotation<string>,
-  skillsSummary: Annotation<string>,
-  activeSkillLine: Annotation<string>,
-  activeSkillInstructions: Annotation<string>,
-  activeSkillId: Annotation<string>,
-  priorTranscript: Annotation<string>,
-  knowledgeContext: Annotation<string>,
-  workflowPlan: Annotation<string>,
-  assistantReply: Annotation<string>,
-});
+interface ISkillChatState {
+  userInput: string;
+  skillsSummary: string;
+  activeSkillLine: string;
+  activeSkillInstructions: string;
+  activeSkillId: string;
+  priorTranscript: string;
+  knowledgeContext: string;
+  workflowPlan: string;
+}
 
-function buildPlanMessages(state: typeof SkillChatState.State): IChatMessage[] {
+function buildPlanMessages(state: ISkillChatState): IChatMessage[] {
   const skillBody = state.activeSkillInstructions.trim();
   const system = skillBody
     ? `你是 SKILL 执行规划助手。你的任务是分析用户选中的 SKILL 完整指令，结合用户目标，输出一份**可直接执行**的实施计划。
@@ -58,7 +54,7 @@ function buildPlanMessages(state: typeof SkillChatState.State): IChatMessage[] {
   ];
 }
 
-function buildAnswerMessages(state: typeof SkillChatState.State): IChatMessage[] {
+function buildAnswerMessages(state: ISkillChatState): IChatMessage[] {
   const skillBody = state.activeSkillInstructions.trim();
   const system = skillBody
     ? `你是 SKILL 执行引擎。你必须严格按照用户选中的 SKILL 指令完成用户的任务，并产出实际可交付的文件。
@@ -117,39 +113,6 @@ ${skillBody}
     { role: 'system', content: system },
     { role: 'user', content: blocks },
   ];
-}
-
-function createPlanWorkflowNode(aiConfig: IAIConfig) {
-  return async (state: typeof SkillChatState.State) => {
-    const messages = buildPlanMessages(state);
-    const result = await chatCompletion(aiConfig, messages, {
-      stream: false,
-      maxTokens: 2048,
-    });
-    return { workflowPlan: result.content ?? '' };
-  };
-}
-
-function createAnswerWithWorkflowNode(aiConfig: IAIConfig) {
-  return async (state: typeof SkillChatState.State) => {
-    const messages = buildAnswerMessages(state);
-    const result = await chatCompletion(aiConfig, messages, {
-      stream: false,
-      maxTokens: 8192,
-    });
-    return { assistantReply: result.content ?? '' };
-  };
-}
-
-/** 编译 SKILL 对话用 LangGraph（规划 → 回答） */
-export function compileSkillLangGraph(aiConfig: IAIConfig) {
-  return new StateGraph(SkillChatState)
-    .addNode('planWorkflow', createPlanWorkflowNode(aiConfig))
-    .addNode('answerWithWorkflow', createAnswerWithWorkflowNode(aiConfig))
-    .addEdge(START, 'planWorkflow')
-    .addEdge('planWorkflow', 'answerWithWorkflow')
-    .addEdge('answerWithWorkflow', END)
-    .compile();
 }
 
 export interface IRunSkillLangGraphChatInput {
@@ -272,13 +235,12 @@ async function appendSkillExecutionResults(
   return next;
 }
 
-/** 执行一次完整图调用，返回助手正文 */
+/** 规划 → 回答 两步对话，返回助手正文 */
 export async function runSkillLangGraphChat(
   aiConfig: IAIConfig,
   input: IRunSkillLangGraphChatInput,
 ) {
-  const graph = compileSkillLangGraph(aiConfig);
-  const out = await graph.invoke({
+  const chatState: ISkillChatState = {
     userInput: input.userInput,
     skillsSummary: input.skillsSummary,
     activeSkillLine: input.activeSkillLine,
@@ -287,8 +249,18 @@ export async function runSkillLangGraphChat(
     priorTranscript: input.priorTranscript,
     knowledgeContext: input.knowledgeContext ?? '',
     workflowPlan: '',
-    assistantReply: '',
+  };
+
+  const planResult = await chatCompletion(aiConfig, buildPlanMessages(chatState), {
+    stream: false,
+    maxTokens: 2048,
   });
-  const reply = out.assistantReply ?? '';
+  chatState.workflowPlan = planResult.content ?? '';
+
+  const answerResult = await chatCompletion(aiConfig, buildAnswerMessages(chatState), {
+    stream: false,
+    maxTokens: 8192,
+  });
+  const reply = answerResult.content ?? '';
   return appendSkillExecutionResults(reply, input);
 }

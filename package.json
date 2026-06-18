@@ -7,7 +7,7 @@
     "commit": "git-cz",
     "dev:electron": "pnpm --filter @momo/electron electron-dev",
     "dev:server": "pnpm --filter @momo/server dev",
-    "dev:skills": "pnpm --filter @prompthub/desktop electron:dev",
+    "dev:skills": "pnpm --filter AIM electron:dev",
     "format": "prettier --write \"./apps/**/*.{js,ts,tsx,css,less,scss}\" \"./packages/**/*.{js,ts,tsx,css,less,scss}\"",
     "lint-staged": "lint-staged",
     "prepare": "husky"
@@ -36,18 +36,18 @@
     "typescript": "^6.0.3"
   },
   "pnpm": {
-    "overrides": {
-      "stylelint": "^16.8.2",
-      "stylelint-config-standard": "^36.0.1",
-      "@browserbasehq/stagehand": "3.5.0"
-    },
     "peerDependencyRules": {
       "allowedVersions": {
-        "stylelint-config-prettier>stylelint": ">=16",
-        "tailwindcss-animate>tailwindcss": "3",
         "@langchain/community>typeorm": "1",
-        "openai>zod": "4"
+        "openai>zod": "4",
+        "stylelint-config-prettier>stylelint": ">=16",
+        "tailwindcss-animate>tailwindcss": "3"
       }
+    },
+    "overrides": {
+      "@browserbasehq/stagehand": "3.5.0",
+      "stylelint": "^16.8.2",
+      "stylelint-config-standard": "^36.0.1"
     }
   }
 }

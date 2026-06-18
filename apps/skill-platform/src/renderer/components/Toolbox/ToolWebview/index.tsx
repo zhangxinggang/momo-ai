@@ -1,6 +1,6 @@
 import { CenteredLoading } from '@renderer/components/ui/CenteredLoading';
 import { clsx } from 'clsx';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import styles from './index.module.less';
 
@@ -9,37 +9,14 @@ interface IProps {
   title?: string;
 }
 
-/** 工具箱内嵌页面：Electron webview */
+/** 工具箱内嵌页面：iframe（新窗口由主进程 setWindowOpenHandler 拦截） */
 export function ToolWebview(props: IProps) {
   const { href, title } = props;
   const [isLoading, setIsLoading] = useState(true);
-  const webviewRef = useRef<HTMLElement>(null);
-
-  const handleLoadComplete = useCallback(() => {
-    setIsLoading(false);
-  }, []);
 
   useEffect(() => {
     setIsLoading(true);
   }, [href]);
-
-  useEffect(() => {
-    const webview = webviewRef.current;
-    if (!webview) {
-      return;
-    }
-
-    const onDomReady = () => handleLoadComplete();
-    const onDidStopLoading = () => handleLoadComplete();
-
-    webview.addEventListener('dom-ready', onDomReady);
-    webview.addEventListener('did-stop-loading', onDidStopLoading);
-
-    return () => {
-      webview.removeEventListener('dom-ready', onDomReady);
-      webview.removeEventListener('did-stop-loading', onDidStopLoading);
-    };
-  }, [handleLoadComplete, href]);
 
   return (
     <div className={styles['tool-webview']} aria-label={title}>
@@ -50,12 +27,13 @@ export function ToolWebview(props: IProps) {
         )}>
         <CenteredLoading />
       </div>
-      <webview
+      <iframe
         key={href}
-        ref={webviewRef}
         className={styles['tool-webview-frame']}
         src={href}
-        allowpopups
+        title={title ?? href}
+        sandbox='allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads'
+        onLoad={() => setIsLoading(false)}
       />
     </div>
   );

@@ -39,6 +39,7 @@ import {
 import {
   getModelsByType,
   isConfiguredModel,
+  isImageCapableModel,
   resolveScenarioModel,
 } from '@renderer/services/ai/defaults';
 import { useSettingsStore } from '@renderer/store';
@@ -265,7 +266,14 @@ export function AiSettings() {
     setTestingModelId(editingModelId || '__draft__');
     const modelName = modelForm.name.trim() || modelForm.model.trim() || 'AI';
     try {
-      if (modelForm.type === 'image') {
+      if (
+        isImageCapableModel({
+          type: modelForm.type,
+          model: modelForm.model,
+          provider: modelForm.provider,
+          apiUrl: modelForm.apiUrl,
+        })
+      ) {
         const result = await testImageGeneration(
           {
             provider: modelForm.provider,
@@ -273,6 +281,7 @@ export function AiSettings() {
             apiKey: modelForm.apiKey,
             apiUrl: modelForm.apiUrl,
             model: modelForm.model,
+            type: modelForm.type,
           },
           'A minimal product illustration on a clean background',
         );
@@ -401,7 +410,7 @@ export function AiSettings() {
     setTestingModelId(model.id);
     const modelName = getModelDisplayName(model, 'AI');
     try {
-      if ((model.type ?? 'chat') === 'image') {
+      if (isImageCapableModel(model)) {
         const result = await testImageGeneration(
           {
             provider: model.provider,
@@ -409,6 +418,7 @@ export function AiSettings() {
             apiKey: model.apiKey,
             apiUrl: model.apiUrl,
             model: model.model,
+            type: model.type,
           },
           'A minimal product illustration on a clean background',
         );
@@ -446,7 +456,7 @@ export function AiSettings() {
 
     setTestingEndpointKey(group.key);
     try {
-      if ((targetModel.type ?? 'chat') === 'image') {
+      if (isImageCapableModel(targetModel)) {
         const result = await testImageGeneration(
           {
             provider: targetModel.provider,
@@ -454,6 +464,7 @@ export function AiSettings() {
             apiKey: targetModel.apiKey,
             apiUrl: targetModel.apiUrl,
             model: targetModel.model,
+            type: targetModel.type,
           },
           'A minimal product illustration on a clean background',
         );
@@ -524,6 +535,27 @@ export function AiSettings() {
   const closeEndpointForm = () => {
     setShowEndpointForm(false);
     setEndpointDraft(null);
+  };
+
+  const handleDeleteEndpoint = (group: IEndpointGroup) => {
+    modal.confirm({
+      title: '确认删除端点？',
+      content: '删除当前端点将清空该端点下所有的模型',
+      okText: '确定',
+      cancelText: '取消',
+      okButtonProps: { danger: true },
+      onOk: () => {
+        for (const model of group.models) {
+          settings.deleteAiModel(model.id);
+        }
+        setEndpointStatuses((prev) => {
+          const next = { ...prev };
+          delete next[group.key];
+          return next;
+        });
+        showToast('端点已删除', 'success');
+      },
+    });
   };
 
   const handleSaveEndpoint = () => {
@@ -611,6 +643,7 @@ export function AiSettings() {
         modelScenarioBadges={modelScenarioBadges}
         onTestEndpoint={(group) => void handleTestEndpoint(group)}
         onEditEndpoint={openEditEndpoint}
+        onDeleteEndpoint={handleDeleteEndpoint}
         onAddModel={openAddModel}
         onSetDefaultModel={(modelId) => settings.setDefaultAiModel(modelId)}
         onTestModel={(model) => void handleTestModel(model)}

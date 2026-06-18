@@ -3,7 +3,8 @@ import type { BrowserWindowConstructorOptions } from 'electron';
 import { app, BrowserWindow, dialog } from 'electron';
 import { join } from 'path';
 import { getMainWindow, setMainWindow } from '../main-window';
-import { configureAppUserDataPath, getAppConfig, getSystemLogo, isMac } from '../utils';
+import { configureAppUserDataPath, getAppConfig, isMac } from '../utils';
+import { DEFAULT_WINDOW_ATTR } from '../utils/constant';
 import { loadWindowContent } from './events/page';
 import { winEvent } from './events/win';
 import { registerIpcHandlers } from './ipc';
@@ -29,14 +30,8 @@ async function createWindow({ config = {} }: ICreateShellWindowOptions): Promise
       ...fromConfig,
     };
   };
-  const { ico } = getSystemLogo();
   const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 800,
-    minHeight: 600,
-    title: 'ELE',
-    icon: ico,
+    ...DEFAULT_WINDOW_ATTR,
     webPreferences: getWebPreferences(),
     ...config,
     ...browserWindow,

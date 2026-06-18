@@ -1,4 +1,5 @@
 import type { ISkillStoreSource } from '@/types/modules';
+import { useAppName } from '@renderer/hooks/useAppName';
 import { Button, Input } from 'antd';
 interface IProps {
   handleAddSource: () => void;
@@ -26,6 +27,8 @@ export function SkillStoreSourceForm({
   sourceUrl,
   typeOptions,
 }: IProps) {
+  const appName = useAppName();
+
   return (
     <div className='app-wallpaper-surface border-border space-y-4 rounded-2xl border p-4'>
       <div className='space-y-2'>
@@ -43,10 +46,10 @@ export function SkillStoreSourceForm({
                   : '本地目录';
             const hint =
               option.value === 'marketplace-json'
-                ? '适合直接填写 marketplace.json 地址，PromptHub 会按索引拉取商店内容。'
+                ? `适合直接填写 marketplace.json 地址，${appName} 会按索引拉取商店内容。`
                 : option.value === 'git-repo'
-                  ? '适合填写 GitHub / Git 仓库地址，PromptHub 会识别其中的 SKILL.md 或商店索引。'
-                  : '适合填写本地文件夹路径，PromptHub 会扫描其中的 skill 文件夹。';
+                  ? `适合填写 GitHub / Git 仓库地址，${appName} 会识别其中的 SKILL.md 或商店索引。`
+                  : `适合填写本地文件夹路径，${appName} 会扫描其中的 skill 文件夹。`;
 
             return (
               <Button

@@ -142,7 +142,7 @@ export function registerSkillCrudHandlers({ db }: ISkillIPCContext): void {
     const skill = await db.getById(id);
     if (skill?.name) {
       // Only uninstall SKILL.md from platforms, do NOT delete the source directory.
-      // Deletion from PromptHub only removes the library record, not the original files.
+      // Deletion from the app library only removes the library record, not the original files.
       try {
         const platforms = SkillInstaller.getSupportedPlatforms();
         await Promise.allSettled(

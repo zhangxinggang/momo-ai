@@ -18,6 +18,7 @@ import CollapsibleThinking from '../CollapsibleThinking';
 import DropOverlay from '../DropOverlay';
 import MarkdownRenderer from '../MarkdownRenderer';
 import { MessageCopyAction } from '../MessageCopyAction';
+import { MessageUserActions } from '../MessageUserActions';
 
 export interface IProps {
   /** 外部同步的输入值（如 Prompt 测试预填用户提示词） */
@@ -47,8 +48,9 @@ export const AiChatView: React.FC<IProps> = ({
   codeTheme = 'atom',
   renderAssistantMessageActions,
 }) => {
-  const { message } = App.useApp();
-  const { uploadFiles, validateLocalFiles } = useAiChatConfig();
+  const { message, modal } = App.useApp();
+  const { uploadFiles, validateLocalFiles, isImageModel, getImageModelInputHint } =
+    useAiChatConfig();
   // 用户输入内容
   const [inputValue, setInputValue] = useState(externalInputValue ?? '');
 
@@ -150,11 +152,18 @@ export const AiChatView: React.FC<IProps> = ({
   const {
     currentSession,
     currentSessionId,
+    currentModel,
     isAILoading,
     isSessionGenerating,
     sendMessage,
     stopGeneration,
+    deleteUserMessage,
+    retryAssistantReply,
   } = useChatContext();
+
+  const isCurrentImageModel = isImageModel?.(currentModel) ?? false;
+  const inputPlaceholder =
+    getImageModelInputHint?.(currentModel) ?? placeholder;
 
   // 获取距离底部的像素距离
   const getDistanceFromBottom = () => {
@@ -357,7 +366,16 @@ export const AiChatView: React.FC<IProps> = ({
   // 发送消息处理函数
   const handleSendMessage = async () => {
     const hasText = !!inputValue.trim();
-    if ((!hasText && attachments.length === 0) || isAILoading || isUploading) return;
+    const hasImageAttachments = attachments.some(
+      (file) => file.imageBase64 && file.mime.startsWith('image/'),
+    );
+    if (
+      (!hasText && !(isCurrentImageModel && hasImageAttachments) && attachments.length === 0) ||
+      isAILoading ||
+      isUploading
+    ) {
+      return;
+    }
 
     const userContent = inputValue.trim();
 
@@ -390,10 +408,21 @@ export const AiChatView: React.FC<IProps> = ({
     };
 
     const attachmentsPrompt = buildAttachmentsPrompt(attachments);
-    const finalUserContent =
-      attachments.length > 0
-        ? `${attachmentsPrompt}\n\n我的问题：\n${userContent || '(基于以上文件，请给出总结/见解)'}`
-        : userContent;
+    const referenceImages = attachments
+      .filter((file) => file.imageBase64 && file.mime.startsWith('image/'))
+      .map((file) => ({
+        name: file.name,
+        mimeType: file.mime || 'image/png',
+        base64: file.imageBase64!,
+      }));
+
+    let finalUserContent = userContent;
+    if (!isCurrentImageModel && attachments.length > 0) {
+      finalUserContent = `${attachmentsPrompt}\n\n我的问题：\n${userContent || '(基于以上文件，请给出总结/见解)'}`;
+    } else if (isCurrentImageModel && !userContent && referenceImages.length > 0) {
+      finalUserContent = '请根据参考图生成或编辑图片';
+    }
+
     const displayContent = userContent || (attachments.length > 0 ? '（已发送附件）' : '');
 
     try {
@@ -404,12 +433,17 @@ export const AiChatView: React.FC<IProps> = ({
         mime: a.mime,
         ext: a.ext,
         snippet: a.snippet,
+        imageBase64: a.imageBase64,
       }));
       // 用户点击发送后，立即清空输入面板中的待发送附件区
       setAttachments([]);
       setProgressMap({});
 
-      await sendMessage(finalUserContent, attachmentsMeta, { displayContent });
+      await sendMessage(finalUserContent, attachmentsMeta, {
+        displayContent,
+        referenceImages:
+          isCurrentImageModel && referenceImages.length > 0 ? referenceImages : undefined,
+      });
       onAfterSend?.();
     } catch (error) {
       console.error('发送消息失败:', error);
@@ -430,6 +464,46 @@ export const AiChatView: React.FC<IProps> = ({
     if (currentSessionId) {
       stopGeneration(currentSessionId);
     }
+  };
+
+  const getAssistantReplyForUser = (userMessageId: string): IChatMessage | undefined => {
+    const messages = currentSession?.messages ?? [];
+    const userIdx = messages.findIndex((m) => m.id === userMessageId);
+    if (userIdx < 0) {
+      return undefined;
+    }
+    const nextMessage = messages[userIdx + 1];
+    return nextMessage?.role === 'assistant' ? nextMessage : undefined;
+  };
+
+  const handleEditUserMessage = (msg: IChatMessage) => {
+    handleInputChange(msg.content);
+    chatInputRef.current?.focus();
+  };
+
+  const handleDeleteUserMessage = (msg: IChatMessage) => {
+    const assistantReply = getAssistantReplyForUser(msg.id);
+    const performDelete = () => {
+      deleteUserMessage(msg.id);
+    };
+
+    if (assistantReply) {
+      modal.confirm({
+        title: '删除消息',
+        content: '将删除当前问答及对应的回复，是否继续？',
+        okText: '删除',
+        cancelText: '取消',
+        okButtonProps: { danger: true },
+        onOk: performDelete,
+      });
+      return;
+    }
+
+    performDelete();
+  };
+
+  const handleRetryUserMessage = (msg: IChatMessage) => {
+    void retryAssistantReply(msg.id);
   };
 
   // 处理文件选择/上传
@@ -613,7 +687,7 @@ export const AiChatView: React.FC<IProps> = ({
                 </div>
               ) : (
                 // 用户消息 - 气泡样式，右对齐
-                <div className='flex justify-end'>
+                <div className='group flex justify-end'>
                   <div className='max-w-[70%]'>
                     <div className='whitespace-pre-wrap break-words rounded-l-2xl rounded-br-sm rounded-tr-2xl bg-[var(--user-bubble-bg)] px-4 py-2 text-[var(--user-bubble-text)] transition-colors'>
                       {message.content}
@@ -639,6 +713,14 @@ export const AiChatView: React.FC<IProps> = ({
                         })}
                       </div>
                     )}
+                    <MessageUserActions
+                      content={message.content}
+                      disabled={isAILoading}
+                      showRetry={getAssistantReplyForUser(message.id)?.isError === true}
+                      onEdit={() => handleEditUserMessage(message)}
+                      onRetry={() => handleRetryUserMessage(message)}
+                      onDelete={() => handleDeleteUserMessage(message)}
+                    />
                   </div>
                 </div>
               )}
@@ -660,7 +742,7 @@ export const AiChatView: React.FC<IProps> = ({
             onSend={handleSendMessage}
             onStop={handleStopGeneration}
             onKeyDown={handleKeyPress}
-            placeholder={placeholder}
+            placeholder={inputPlaceholder}
             loading={isAILoading}
             isGenerating={isCurrentSessionGenerating}
             attachments={attachments.map((a) => ({

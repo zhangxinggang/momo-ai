@@ -27,7 +27,7 @@ export function BaseFields({
 }) {
   return (
     <>
-      <div className='grid gap-4 md:grid-cols-2'>
+      <div className={isEditing ? 'grid gap-4 md:grid-cols-2' : undefined}>
         <div>
           <label className='text-muted-foreground mb-1 block text-xs'>{'模型类型'}</label>
           <Select
@@ -46,17 +46,19 @@ export function BaseFields({
             ]}
           />
         </div>
-        <div>
-          <label className='text-muted-foreground mb-1 block text-xs'>{'自定义名称（可选）'}</label>
-          <Input
-            size='middle'
-            value={modelForm.name}
-            onChange={(event) => setModelForm((prev) => ({ ...prev, name: event.target.value }))}
-            aria-label={'自定义名称（可选）'}
-            placeholder={'例如：我的 GPT-4o、工作用'}
-            className='bg-muted w-full rounded-lg text-sm'
-          />
-        </div>
+        {isEditing ? (
+          <div>
+            <label className='text-muted-foreground mb-1 block text-xs'>{'自定义名称（可选）'}</label>
+            <Input
+              size='middle'
+              value={modelForm.name}
+              onChange={(event) => setModelForm((prev) => ({ ...prev, name: event.target.value }))}
+              aria-label={'自定义名称（可选）'}
+              placeholder={'例如：我的 GPT-4o、工作用'}
+              className='bg-muted w-full rounded-lg text-sm'
+            />
+          </div>
+        ) : null}
       </div>
 
       {isEditing ? null : (

@@ -157,7 +157,7 @@ export class SkillInstaller {
   // ========================================================================
 
   /**
-   * 各 AI 工具链下的 skills 目录（不含本应用 PromptHub 库目录）。
+   * 各 AI 工具链下的 skills 目录（不含本应用库目录）。
    * 用于本地预览与静默导入，避免把应用库内技能当作「待导入项」列出。
    */
   private static getExternalPlatformScanEntries(): Array<{
@@ -619,7 +619,7 @@ export class SkillInstaller {
    * the default platform paths are intentionally excluded to avoid duplicates
    * (the same skill may exist in both a user's custom directory and a default
    * platform directory like ~/.claude/skills).  When called with no arguments,
-   * only external tool-chain directories are scanned (not PromptHub's skills
+   * only external tool-chain directories are scanned (not the app's skills
    * library folder).
    *
    * @param customPaths - If provided, ONLY these directories are scanned.

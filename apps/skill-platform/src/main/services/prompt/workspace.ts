@@ -12,8 +12,8 @@ const PROMPT_FILE_NAME = 'prompt.md';
 const VERSIONS_DIR_NAME = 'versions';
 const VERSION_ROOT_DIR_NAME = '.versions';
 const TRASH_DIR_NAME = '.trash';
-const SYSTEM_MARKER = '<!-- PROMPTHUB:SYSTEM -->';
-const USER_MARKER = '<!-- PROMPTHUB:USER -->';
+const SYSTEM_MARKER = '<!-- SYSTEM -->';
+const USER_MARKER = '<!-- USER -->';
 
 /**
  * On Windows and macOS (default HFS+/APFS), filesystems are case-insensitive.

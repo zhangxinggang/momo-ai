@@ -90,7 +90,7 @@ export function DataSettings() {
         <SettingSection title={'本地数据路径'}>
           <div className='text-muted-foreground space-y-1 p-4 text-sm'>
             {currentDataPath ? (
-              ['prompthub.db', 'data/', 'config/', 'skills/', 'logs/'].map((sub) => (
+              ['aim.db', 'data/', 'config/', 'skills/', 'logs/'].map((sub) => (
                 <p key={sub} className='break-all font-mono text-xs'>
                   {currentDataPath.replace(/\/$/, '')}/{sub}
                 </p>

@@ -1,3 +1,4 @@
+import { useAppName } from '@renderer/hooks/useAppName';
 import { Button } from 'antd';
 import { MinusIcon, SquareIcon, XIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -6,13 +7,21 @@ import { useEffect, useState } from 'react';
  * 仅在 Windows 平台显示
  */
 export function TitleBar() {
+  const appName = useAppName();
   const [isMaximized, setIsMaximized] = useState(false);
   const [isWindows, setIsWindows] = useState(false);
+  const [ico, setIco] = useState<string>();
 
   useEffect(() => {
     // 检测是否为 Windows 平台
     const platform = navigator.userAgent.toLowerCase();
     setIsWindows(platform.includes('win'));
+  }, []);
+
+  useEffect(() => {
+    void window.api.system.getSystemLogo().then((systemLogo) => {
+      setIco(systemLogo);
+    });
   }, []);
 
   // 非 Windows 平台不显示
@@ -35,10 +44,8 @@ export function TitleBar() {
     <div className='app-wallpaper-panel-strong titlebar-drag border-border flex h-8 select-none items-center justify-between border-b'>
       {/* 应用图标和标题 */}
       <div className='flex items-center gap-2 px-3'>
-        <div className='bg-primary flex h-4 w-4 items-center justify-center rounded'>
-          <span className='text-[10px] font-bold text-white'>P</span>
-        </div>
-        <span className='text-muted-foreground text-xs'>PromptHub</span>
+        {ico ? <img src={ico} alt='' className='h-4 w-4 object-contain' draggable={false} /> : null}
+        <span className='text-muted-foreground text-xs'>{appName}</span>
       </div>
 
       {/* 窗口控制按钮（antd Button，保留 titlebar-no-drag 以支持拖拽区） */}

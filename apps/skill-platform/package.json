@@ -1,11 +1,11 @@
 {
-  "name": "@prompthub/desktop",
+  "name": "AIM",
   "version": "1.0.0",
   "private": true,
-  "description": "PromptHub Desktop - Electron application for AI prompt management",
-  "main": "out/main/index.js",
+  "description": "AIM Desktop - Electron application for AI prompt management",
+  "main": "dist/main/index.js",
   "bin": {
-    "prompthub": "bin/prompthub.cjs"
+    "aim": "bin/aim.cjs"
   },
   "files": [
     "bin",
@@ -29,7 +29,6 @@
     "@ant-design/icons": "^6.2.2",
     "@langchain/community": "^1.1.29",
     "@langchain/core": "^1.1.48",
-    "@langchain/langgraph": "^1.3.0",
     "@langchain/textsplitters": "^1.0.1",
     "@log4js-node/smtp": "^1.1.0",
     "@momo/aichat": "workspace:*",

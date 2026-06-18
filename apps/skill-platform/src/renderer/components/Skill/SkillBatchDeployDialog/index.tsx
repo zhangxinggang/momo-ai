@@ -1,6 +1,7 @@
 import type { ISkillPlatform } from '@/types/constants/platforms';
 import type { ISkill } from '@/types/modules';
 import { PlatformIcon } from '@renderer/components/ui/PlatformIcon';
+import { useAppName } from '@renderer/hooks/useAppName';
 import { useToast } from '@renderer/components/ui/Toast';
 import {
   syncSkillsToPlatforms,
@@ -26,6 +27,7 @@ interface IProps {
 }
 
 export function SkillBatchDeployDialog({ skills, onClose, onComplete }: IProps) {
+  const appName = useAppName();
   const { showToast } = useToast();
   const [actionMode, setActionMode] = useState<'deploy' | 'undeploy'>('deploy');
   const skillInstallMethod = useSettingsStore((state) => state.skillInstallMethod);
@@ -252,7 +254,7 @@ export function SkillBatchDeployDialog({ skills, onClose, onComplete }: IProps) 
             </div>
           ) : (
             <div className='border-border app-wallpaper-surface text-muted-foreground mt-3 rounded-xl border px-4 py-3 text-sm'>
-              {'从选定平台目录移除对应 skill，不影响 PromptHub 本地仓库。'}
+              {`从选定平台目录移除对应 skill，不影响 ${appName} 本地仓库。`}
             </div>
           )}
         </section>
@@ -294,7 +296,7 @@ export function SkillBatchDeployDialog({ skills, onClose, onComplete }: IProps) 
               <div className='border-primary/15 bg-primary/[0.04] text-muted-foreground mb-3 rounded-2xl border px-4 py-3 text-xs leading-6'>
                 {actionMode === 'deploy'
                   ? '默认已选中当前检测到的平台。开始批量同步前请先确认目标平台。'
-                  : '仅会从所选平台移除 PromptHub 分发出去的 skill，不会删除本地仓库中的原始文件。'}
+                  : `仅会从所选平台移除 ${appName} 分发出去的 skill，不会删除本地仓库中的原始文件。`}
               </div>
               <div className='grid gap-3 sm:grid-cols-2'>
                 {availablePlatforms.map((platform) => {

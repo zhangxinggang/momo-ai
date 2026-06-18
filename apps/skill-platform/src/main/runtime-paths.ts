@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 /** ISkill 全局 Node 运行时 npm 包名 */
-const SKILL_RUNTIME_PACKAGE_NAME = '@prompthub/skill-runtime';
+const SKILL_RUNTIME_PACKAGE_NAME = '@aim/skill-runtime';
 
 export function getUserDataPath(): string {
   return path.resolve(app.getPath('userData'));

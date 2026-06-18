@@ -117,6 +117,40 @@ export function findInstalledRegistrySkill(
   );
 }
 
+/** 根据远程商店条目计算本地技能是否有可用更新 */
+export function computeSkillIdsWithStoreUpdates(
+  skills: ISkill[],
+  remoteStoreEntries: Record<string, { skills?: IRegistrySkill[] } | undefined>,
+): Set<string> {
+  const registrySkillBySlug = new Map(
+    Object.values(remoteStoreEntries)
+      .flatMap((entry) => entry?.skills ?? [])
+      .map((registrySkill) => [registrySkill.slug, registrySkill]),
+  );
+
+  return new Set(
+    skills
+      .filter((skill) => {
+        if (!skill.registry_slug) {
+          return false;
+        }
+
+        const registrySkill = registrySkillBySlug.get(skill.registry_slug);
+        if (!registrySkill) {
+          return false;
+        }
+
+        if (skill.installed_content_hash) {
+          return skill.installed_version !== registrySkill.version;
+        }
+
+        const installedVersion = skill.installed_version ?? skill.version;
+        return Boolean(installedVersion && installedVersion !== registrySkill.version);
+      })
+      .map((skill) => skill.id),
+  );
+}
+
 export async function getRegistrySkillUpdateStatus(
   installedSkill: ISkill | null,
   registrySkill: IRegistrySkill,

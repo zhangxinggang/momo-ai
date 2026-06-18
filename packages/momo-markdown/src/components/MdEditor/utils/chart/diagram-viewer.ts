@@ -2,12 +2,12 @@ import copy2Clipboard from '@vavt/copy2clipboard';
 import StrIcon from '~/components/Icon/Str';
 import { prefix } from '~/config';
 import { ICustomIcon } from '~/type';
+import { buildPlantumlPngUrl } from '../plantuml-encoder';
 import {
   canvasElementToPngData,
   fetchUrlAsBlob,
   imgElementToPngData,
-} from '../../../../editor-extensions/export-dom-image';
-import { buildPlantumlPngUrl } from '../plantuml-encoder';
+} from './dom-to-png';
 import { svgElementToPngBlob } from './svg-to-image';
 
 interface IDiagramMetrics {

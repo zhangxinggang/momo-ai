@@ -1,11 +1,11 @@
 import type { BrowserWindow } from 'electron';
 import { Menu, Tray, app, nativeImage } from 'electron';
-import path from 'path';
 import { getMainWindow } from '../../main-window';
 import { getSystemLogo } from '../../utils';
 import { isMac, isWin } from '../../utils/env';
 
 let tray: Tray | null = null;
+const systemLogo = getSystemLogo();
 
 /** 创建托盘时的可选配置（可通过 configureTrayDefaults 设置应用级默认值） */
 export interface ICreateTrayOptions {
@@ -38,9 +38,7 @@ export interface IAttachWindowCloseTrayBehaviorOptions {
  * macOS 下无宿主路径时使用静态目录中的 png 兜底
  */
 function createMacTrayIconFallback(): Electron.NativeImage {
-  const { png } = getSystemLogo();
-  const pngPath = png ?? '';
-  const icon = nativeImage.createFromPath(pngPath);
+  const icon = nativeImage.createFromPath(systemLogo);
   if (!icon.isEmpty()) {
     icon.setTemplateImage(true);
     return icon.resize({ width: 18, height: 18 });
@@ -56,36 +54,17 @@ export function createTray(options?: ICreateTrayOptions): void {
   const merged: ICreateTrayOptions = { ...defaultCreateTrayOptions, ...options };
   const toolTip = merged.toolTip ?? app.getName();
   const onBeforeAppQuit = merged.onBeforeAppQuit;
-  const { ico, png } = getSystemLogo();
-  try {
-    let icon: Electron.NativeImage;
-    if (isMac) {
-      icon = createMacTrayIconFallback();
-    } else {
-      const icoPath = ico ?? '';
-      icon = nativeImage.createFromPath(icoPath);
-      if (icon.isEmpty()) {
-        console.error('Tray icon is empty, trying alternative path');
-        const altPath = path.join(
-          process.resourcesPath,
-          'app.asar.unpacked',
-          'resources',
-          'icon.ico',
-        );
-        icon = nativeImage.createFromPath(altPath);
-      }
-      if (!icon.isEmpty()) {
-        icon = icon.resize({ width: 16, height: 16 });
-      }
+  let icon: Electron.NativeImage;
+  if (isMac) {
+    icon = createMacTrayIconFallback();
+  } else {
+    icon = nativeImage.createFromPath(systemLogo);
+    if (!icon.isEmpty()) {
+      icon = icon.resize({ width: 18, height: 18 });
     }
-
-    tray = new Tray(icon);
-  } catch (e) {
-    console.error('Failed to load tray icon:', e);
-    const pngPath = png ?? '';
-    const fallbackIcon = nativeImage.createFromPath(pngPath);
-    tray = new Tray(fallbackIcon.resize({ width: 18, height: 18 }));
   }
+
+  tray = new Tray(icon);
 
   const contextMenu = Menu.buildFromTemplate([
     {

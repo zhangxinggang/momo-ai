@@ -17,7 +17,6 @@ const { databaseName = 'database.sql' } = appConf;
 /** 全局 TypeORM DataSource（better-sqlite3 + 全表实体） */
 let dataSource: DataSource | null = null;
 
-/** 创建并初始化 DataSource，底层与 prompthub.db 单一连接 */
 export async function initializeDataSource(
   options: { entities?: EntityCtor[] } = {},
 ): Promise<DataSource> {

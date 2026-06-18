@@ -1,21 +1,12 @@
 import type { IRegistrySkill, ISkill, ISkillSafetyReport } from '@/types/modules';
 import { useToast } from '@renderer/components/ui/Toast';
+import { useSkillContentTranslation } from '@renderer/hooks/useSkillContentTranslation';
+import { useSkillSafetyScan } from '@renderer/hooks/useSkillSafetyScan';
 import {
-  formatSkillTranslationError,
   getErrorMessage,
-  getSafetyScanAIConfig,
-  groupSkillSafetyFindings,
   renderImmersiveSegments,
-  resolveSkillDescription,
   stripFrontmatter,
 } from '@renderer/services/skill/detail-utils';
-import { computeSkillContentFingerprint } from '@renderer/services/skill/store-update';
-import {
-  isSkillTranslationStale,
-  readSkillTranslationSidecar,
-  writeSkillTranslationSidecar,
-  type ISkillTranslationSidecar,
-} from '@renderer/services/skill/translation-sidecar';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
 import { Button, Modal } from 'antd';
 import {
@@ -30,7 +21,7 @@ import {
   TagIcon,
   TrashIcon,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { SkillIcon } from '../SkillIcon';
 import { SkillMarkdown } from '../SkillMarkdown';
 import { SkillQuickInstall } from '../SkillQuickInstall';
@@ -52,13 +43,8 @@ export function SkillStoreDetail({ skill, isInstalled, onClose }: IProps) {
   const getRegistrySkillUpdateStatus = useSkillStore((state) => state.getRegistrySkillUpdateStatus);
   const uninstallRegistrySkill = useSkillStore((state) => state.uninstallRegistrySkill);
   const skills = useSkillStore((state) => state.skills);
-  const saveSafetyReport = useSkillStore((state) => state.saveSafetyReport);
-  const translateContent = useSkillStore((state) => state.translateContent);
-  const getTranslationState = useSkillStore((state) => state.getTranslationState);
-  const clearTranslation = useSkillStore((state) => state.clearTranslation);
   const translationMode = useSettingsStore((state) => state.translationMode);
   const autoScanBeforeInstall = useSettingsStore((state) => state.autoScanStoreSkillsBeforeInstall);
-  const aiModels = useSettingsStore((state) => state.aiModels);
   const [isInstalling, setIsInstalling] = useState(false);
   const [isUninstalling, setIsUninstalling] = useState(false);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
@@ -66,24 +52,11 @@ export function SkillStoreDetail({ skill, isInstalled, onClose }: IProps) {
   const [updateStatus, setUpdateStatus] = useState<string | null>(null);
   const [justInstalled, setJustInstalled] = useState(false);
   const [justUninstalled, setJustUninstalled] = useState(false);
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [isScanningSafety, setIsScanningSafety] = useState(false);
-  const [safetyReport, setSafetyReport] = useState<ISkillSafetyReport | null>(null);
   const [pendingHighRiskInstallReport, setPendingHighRiskInstallReport] =
     useState<ISkillSafetyReport | null>(null);
-  const groupedSafetyFindings = safetyReport
-    ? groupSkillSafetyFindings(safetyReport.findings ?? [])
-    : [];
-  const [showTranslation, setShowTranslation] = useState(false);
-  const [showRetranslatePrompt, setShowRetranslatePrompt] = useState(false);
   const [deploySkill, setDeploySkill] = useState<ISkill | null>(null);
-  const stalePromptFingerprintRef = useRef<string | null>(null);
-  const [translationSidecar, setTranslationSidecar] = useState<ISkillTranslationSidecar | null>(
-    null,
-  );
 
   const targetLang = '中文';
-
   const installedSkill = skills.find(
     (item) => item.registry_slug === skill.slug || item.name === skill.name,
   );
@@ -91,20 +64,25 @@ export function SkillStoreDetail({ skill, isInstalled, onClose }: IProps) {
   const registrySkillMdContent = typeof skill.content === 'string' ? skill.content : '';
   const originalSkillMdContent =
     installedSkillMdContent.trim() || registrySkillMdContent.trim() || skill.description;
-  const translationCacheKey = `storedoc_v2_${skill.slug}_${targetLang}_${translationMode}`;
-  const translationFingerprint = useMemo(
-    () => computeSkillContentFingerprint(originalSkillMdContent),
-    [originalSkillMdContent],
-  );
-  const translationState = getTranslationState(translationCacheKey, translationFingerprint);
-  const hasStaleTranslation = translationSidecar
-    ? isSkillTranslationStale(translationSidecar, originalSkillMdContent)
-    : translationState.isStale;
-  const cachedTranslation = hasStaleTranslation
-    ? null
-    : (translationSidecar?.content ?? translationState.value);
-  const effectiveSkillMdContent =
-    showTranslation && cachedTranslation ? cachedTranslation : originalSkillMdContent;
+
+  const {
+    isTranslating,
+    showTranslation,
+    cachedTranslation,
+    effectiveContent: effectiveSkillMdContent,
+    resolvedDescription,
+    isRetranslatePromptOpen: showRetranslatePrompt,
+    setIsRetranslatePromptOpen: setShowRetranslatePrompt,
+    handleTranslate,
+  } = useSkillContentTranslation({
+    cacheKey: `storedoc_v2_${skill.slug}_${targetLang}_${translationMode}`,
+    sourceContent: originalSkillMdContent,
+    targetLang,
+    sidecarSkillId: installedSkill?.id,
+    fallbackDescription: skill.description,
+    resetKey: skill.slug,
+  });
+
   const effectiveRenderedContent = useMemo(
     () => stripFrontmatter(effectiveSkillMdContent),
     [effectiveSkillMdContent],
@@ -113,188 +91,29 @@ export function SkillStoreDetail({ skill, isInstalled, onClose }: IProps) {
     () => (cachedTranslation ? stripFrontmatter(cachedTranslation) : null),
     [cachedTranslation],
   );
-  const resolvedDescription = useMemo(
-    () => resolveSkillDescription(effectiveSkillMdContent) || skill.description,
-    [effectiveSkillMdContent, skill.description],
+
+  const safetyScanInput = useMemo(
+    () => ({
+      name: skill.name,
+      content: skill.content,
+      sourceUrl: skill.source_url,
+      contentUrl: skill.content_url,
+      securityAudits: skill.security_audits,
+    }),
+    [skill.content, skill.content_url, skill.name, skill.security_audits, skill.source_url],
   );
 
-  const scanSafety = useCallback(async () => {
-    setIsScanningSafety(true);
-    try {
-      const report = await window.api.skill.scanSafety({
-        name: skill.name,
-        content: skill.content,
-        sourceUrl: skill.source_url,
-        contentUrl: skill.content_url,
-        securityAudits: skill.security_audits,
-        aiConfig: getSafetyScanAIConfig(aiModels),
-      });
-      setSafetyReport(report);
-      // If already installed, persist to DB
-      const installedSkill = skills.find(
-        (s) => s.registry_slug === skill.slug || s.name === skill.name,
-      );
-      if (installedSkill) {
-        try {
-          await saveSafetyReport(installedSkill.id, report);
-        } catch (err) {
-          console.warn('Failed to persist store safety report:', err);
-        }
-      }
-      return report;
-    } catch (error: unknown) {
-      showToast(`安全扫描失败: ${getErrorMessage(error)}`, 'error');
-      return null;
-    } finally {
-      setIsScanningSafety(false);
-    }
-  }, [
-    aiModels,
-    saveSafetyReport,
-    showToast,
-    skill.content,
-    skill.content_url,
-    skill.name,
-    skill.security_audits,
-    skills,
-    skill.source_url,
-  ]);
+  const {
+    isScanningSafety,
+    safetyReport,
+    groupedSafetyFindings,
+    runSafetyScan: scanSafety,
+  } = useSkillSafetyScan({
+    scanInput: safetyScanInput,
+    persistSkillId: installedSkill?.id,
+  });
 
-  const handleTranslate = async () => {
-    if (cachedTranslation) {
-      setShowTranslation(!showTranslation);
-      return;
-    }
-    setIsTranslating(true);
-    try {
-      const translated = await translateContent(
-        originalSkillMdContent,
-        translationCacheKey,
-        targetLang,
-        {
-          sourceFingerprint: translationFingerprint,
-        },
-      );
-
-      if (!translated) {
-        throw new Error('TRANSLATION_EMPTY');
-      }
-
-      if (installedSkill && originalSkillMdContent.trim()) {
-        const sidecar = await writeSkillTranslationSidecar({
-          skillId: installedSkill.id,
-          sourceContent: originalSkillMdContent,
-          translatedContent: translated,
-          targetLanguage: targetLang,
-          translationMode,
-        });
-        setTranslationSidecar(sidecar);
-      }
-
-      setShowTranslation(true);
-      showToast('翻译完成', 'success');
-    } catch (error: unknown) {
-      showToast(formatSkillTranslationError(error), 'error');
-    } finally {
-      setIsTranslating(false);
-    }
-  };
-
-  const handleRefreshTranslation = async () => {
-    setIsTranslating(true);
-    try {
-      clearTranslation(translationCacheKey);
-      const translated = await translateContent(
-        originalSkillMdContent,
-        translationCacheKey,
-        targetLang,
-        {
-          forceRefresh: true,
-          sourceFingerprint: translationFingerprint,
-        },
-      );
-
-      if (!translated) {
-        throw new Error('TRANSLATION_EMPTY');
-      }
-
-      if (installedSkill && originalSkillMdContent.trim()) {
-        const sidecar = await writeSkillTranslationSidecar({
-          skillId: installedSkill.id,
-          sourceContent: originalSkillMdContent,
-          translatedContent: translated,
-          targetLanguage: targetLang,
-          translationMode,
-        });
-        setTranslationSidecar(sidecar);
-      }
-
-      setShowTranslation(true);
-      setShowRetranslatePrompt(false);
-      showToast('翻译已刷新', 'success');
-    } catch (error: unknown) {
-      showToast(formatSkillTranslationError(error), 'error');
-    } finally {
-      setIsTranslating(false);
-    }
-  };
-
-  useEffect(() => {
-    stalePromptFingerprintRef.current = null;
-    setShowRetranslatePrompt(false);
-    setTranslationSidecar(null);
-  }, [skill.slug]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadTranslationSidecar() {
-      if (!installedSkill) {
-        setTranslationSidecar(null);
-        return;
-      }
-
-      try {
-        const sidecar = await readSkillTranslationSidecar(
-          installedSkill.id,
-          targetLang,
-          translationMode,
-        );
-        if (!cancelled) {
-          setTranslationSidecar(sidecar);
-        }
-      } catch {
-        if (!cancelled) {
-          setTranslationSidecar(null);
-        }
-      }
-    }
-
-    void loadTranslationSidecar();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [installedSkill?.id, targetLang, translationMode]);
-
-  useEffect(() => {
-    setShowTranslation(Boolean(cachedTranslation));
-  }, [cachedTranslation]);
-
-  useEffect(() => {
-    if (!hasStaleTranslation) {
-      stalePromptFingerprintRef.current = null;
-      return;
-    }
-
-    setShowTranslation(false);
-    if (stalePromptFingerprintRef.current === translationFingerprint) {
-      return;
-    }
-
-    stalePromptFingerprintRef.current = translationFingerprint;
-    setShowRetranslatePrompt(true);
-  }, [hasStaleTranslation, translationFingerprint]);
+  const handleRefreshTranslation = () => handleTranslate(true);
 
   const handleInstall = async () => {
     if (isInstalling || installed) {
@@ -548,7 +367,7 @@ export function SkillStoreDetail({ skill, isInstalled, onClose }: IProps) {
             <div className='flex items-center gap-2'>
               <Button
                 size='small'
-                onClick={handleTranslate}
+                onClick={() => void handleTranslate()}
                 disabled={isTranslating}
                 icon={
                   isTranslating ? (

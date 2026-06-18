@@ -290,14 +290,6 @@ export async function getSkillMdInstallStatus(skillName: string): Promise<Record
   return status;
 }
 
-/**
- * Install SKILL.md to a platform via symlink (soft install)
- *
- * Creates a platform skill directory that symlinks only the canonical
- * `SKILL.md` file from PromptHub's managed repo. This preserves shared
- * updates without exposing PromptHub-internal sidecar directories such as
- * `.prompthub/` to external platform skill folders.
- */
 export async function installSkillMdSymlink(
   skillName: string,
   skillMdContent: string,
@@ -312,7 +304,7 @@ export async function installSkillMdSymlink(
 
   await initSkillsDir();
 
-  // 1. Write the canonical copy into PromptHub's own skills dir
+  // 1. Write the canonical copy into the app's own skills dir
   const canonicalDir = path.join(mainSkillsDir, skillName);
   await fs.mkdir(canonicalDir, { recursive: true });
   await fs.writeFile(path.join(canonicalDir, 'SKILL.md'), skillMdContent, 'utf-8');

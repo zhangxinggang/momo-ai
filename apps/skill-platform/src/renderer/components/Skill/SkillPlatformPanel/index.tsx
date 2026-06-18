@@ -1,6 +1,7 @@
 import type { ISkillPlatform } from '@/types/constants/platforms';
 import type { ISkill } from '@/types/modules';
 import { PlatformIcon } from '@renderer/components/ui/PlatformIcon';
+import { useAppName } from '@renderer/hooks/useAppName';
 import { getProtocolDisplayLabel, getSkillSourceMeta } from '@renderer/services/skill/detail-utils';
 import { Button } from 'antd';
 import {
@@ -51,6 +52,7 @@ export function SkillPlatformPanel({
   uninstalledPlatforms,
   onBatchInstall,
 }: IProps) {
+  const appName = useAppName();
   const sourceMeta = getSkillSourceMeta(selectedSkill);
 
   return (
@@ -89,8 +91,8 @@ export function SkillPlatformPanel({
             </div>
             <p className='text-muted-foreground text-[10px] leading-relaxed'>
               {installMode === 'copy'
-                ? '复制：将 SKILL.md 文件复制到每个平台目录。各副本独立互不影响，在 PromptHub 中编辑后不会自动同步。'
-                : '软链接：创建指向源文件的符号链接。所有平台共享同一份内容，在 PromptHub 中编辑后自动同步，但需要文件系统支持。'}
+                ? `复制：将 SKILL.md 文件复制到每个平台目录。各副本独立互不影响，在 ${appName} 中编辑后不会自动同步。`
+                : `软链接：创建指向源文件的符号链接。所有平台共享同一份内容，在 ${appName} 中编辑后自动同步，但需要文件系统支持。`}
             </p>
 
             {uninstalledPlatforms.length > 0 && (

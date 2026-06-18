@@ -29,7 +29,7 @@ export function withBetterSqlite3NativeBinding(options: any): Database {
 
 function getDbPath(): string {
   const userDataPath = getUserDataPath();
-  return path.join(userDataPath, 'prompthub.db');
+  return path.join(userDataPath, 'aim.db');
 }
 
 // ── ISkill repo path resolution hook ──────────────────────────────────────────

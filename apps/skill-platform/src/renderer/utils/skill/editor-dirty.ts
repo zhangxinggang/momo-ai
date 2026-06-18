@@ -1,5 +1,5 @@
 /** 与 SkillFileEditor 同步：标记技能文件编辑器是否存在未保存更改 */
-export const SKILL_EDITOR_DIRTY_WINDOW_KEY = '__PROMPTHUB_SKILL_EDITOR_DIRTY' as const;
+export const SKILL_EDITOR_DIRTY_WINDOW_KEY = '__AIM_SKILL_EDITOR_DIRTY' as const;
 
 type WindowWithSkillEditorDirty = Window &
   Partial<Record<typeof SKILL_EDITOR_DIRTY_WINDOW_KEY, boolean>>;

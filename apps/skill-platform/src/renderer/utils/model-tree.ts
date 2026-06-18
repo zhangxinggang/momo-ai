@@ -1,9 +1,9 @@
 import { getModelCategory } from '@renderer/components/Settings/ai-workbench/helpers';
 import type { IModelInfo } from '@renderer/services/ai';
+import { suggestRemoteModelAsImage } from '@renderer/services/ai/image/backends';
 import {
   getImageScenarioModels,
   getModelsByType,
-  isImageCapableModel,
 } from '@renderer/services/ai/defaults';
 import type { IAIModelConfig } from '@renderer/types/settings';
 
@@ -79,15 +79,7 @@ function sortVendors(vendors: string[]): string[] {
 }
 
 function resolveRemoteModelTypeGroup(model: IModelInfo): EModelTypeGroup {
-  const asConfig = {
-    id: model.id,
-    model: model.id,
-    name: model.id,
-    provider: model.owned_by ?? '',
-    apiKey: '',
-    apiUrl: '',
-  } as IAIModelConfig;
-  return isImageCapableModel(asConfig) ? '生图' : '对话';
+  return suggestRemoteModelAsImage(model.id, model.owned_by) ? '生图' : '对话';
 }
 
 /** 从已配置模型构建树形条目 */

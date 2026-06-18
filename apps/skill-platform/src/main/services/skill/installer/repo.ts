@@ -70,7 +70,7 @@ const TEXT_EXTENSIONS = new Set([
   '.rs',
 ]);
 
-const INTERNAL_REPO_DIRS = new Set(['.git', '.prompthub']);
+const INTERNAL_REPO_DIRS = new Set(['.git', '.aim']);
 
 export function isInternalSkillRepoEntry(relativePath: string): boolean {
   return relativePath.split(/[\\/]+/).some((segment) => INTERNAL_REPO_DIRS.has(segment));

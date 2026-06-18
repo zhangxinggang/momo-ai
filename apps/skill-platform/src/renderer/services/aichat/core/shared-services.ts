@@ -5,8 +5,10 @@ import { createClaudeSlashCommandsConfig } from '@/claude-code/renderer/claude-s
 import {
   getImageScenarioModels,
   getModelsByType,
+  isImageCapableModel,
   toAIConfig,
 } from '@renderer/services/ai/defaults';
+import { resolveImageModelCapabilities } from '@renderer/services/ai/image/capabilities';
 import type { IAIModelConfig } from '@renderer/types/settings';
 import { uploadChatAttachmentFiles, validateChatAttachmentFiles } from '../chat-attachment-upload';
 import { MAIN_AI_CHAT_STORAGE_PREFIX } from '../chat-history-bridge';
@@ -151,6 +153,21 @@ export function buildSharedAiChatServices(
     chatModelOptionGroups,
     renderModelSelect: (props) => renderChatModelSelect(options.aiModels, props),
     workspace: options.workspace,
+    isImageModel: (modelId: string) => {
+      const model = options.aiModels.find((item) => item.id === modelId);
+      return model ? isImageCapableModel(model) : false;
+    },
+    getImageModelInputHint: (modelId: string) => {
+      const model = options.aiModels.find((item) => item.id === modelId);
+      if (!model || !isImageCapableModel(model)) {
+        return undefined;
+      }
+      const capabilities = resolveImageModelCapabilities(toAIConfig(model));
+      if (capabilities.maxReferenceImages > 0) {
+        return `描述你想生成的图片，可上传最多 ${capabilities.maxReferenceImages} 张参考图`;
+      }
+      return '描述你想生成的图片内容';
+    },
     ...cliSuperpowerOverrides,
   });
 }

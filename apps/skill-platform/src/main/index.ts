@@ -45,7 +45,7 @@ interface IDeskAppConf {
   bundledNodeServer?: boolean;
 }
 
-const deskAppConf = getAppConfig() as IDeskAppConf;
+const { appName, openDevTools } = getAppConfig() as IDeskAppConf & { appName?: string };
 
 // Disable GPU acceleration (optional; may be needed on some systems)
 // 禁用 GPU 加速（可选，某些系统上可能需要）
@@ -63,10 +63,10 @@ let closeAction: 'ask' | 'minimize' | 'exit' = 'ask';
 // 是否正在等待用户选择关闭行为
 let pendingCloseAction = false;
 let isDebugMode = false;
-const { ico } = getSystemLogo();
+const systemLogo = getSystemLogo();
 
 configureTrayDefaults({
-  toolTip: 'PromptHub',
+  toolTip: appName,
   onBeforeAppQuit: () => {
     isQuitting = true;
   },
@@ -105,13 +105,11 @@ protocol.registerSchemesAsPrivileged([
 async function createWindow() {
   const win = await init({
     config: {
-      ...(ico ? { icon: ico } : {}),
       webPreferences: {
         preload: path.join(__dirname, '../preload/index.js'),
         nodeIntegration: false,
         contextIsolation: true,
         sandbox: true,
-        webviewTag: true,
       },
       // Use frameless window on Windows, native title bar on macOS
       // Windows 使用无边框窗口，macOS 使用原生标题栏
@@ -121,9 +119,6 @@ async function createWindow() {
       // Dark background for Windows title bar
       // Windows 深色标题栏
       backgroundColor: '#1a1d23',
-      // Don't show immediately - wait for ready-to-show to check minimizeOnLaunch setting
-      // 不立即显示 - 等待 ready-to-show 事件检查 minimizeOnLaunch 设置
-      show: false,
     },
     serverConfig: {
       services: {
@@ -293,7 +288,7 @@ async function createWindow() {
     console.log('Loading dev server:', devServerUrl);
     try {
       await win.loadURL(devServerUrl);
-      if (deskAppConf.openDevTools !== false) {
+      if (openDevTools !== false) {
         win.webContents.openDevTools();
       }
     } catch (error) {
@@ -506,7 +501,7 @@ ipcMain.handle('notification:show', async (_event, options: { title: string; bod
     const notification = new Notification({
       title: options.title,
       body: options.body,
-      icon: ico,
+      icon: systemLogo,
     });
     notification.show();
     return true;

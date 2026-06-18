@@ -3,7 +3,7 @@
  * loadURL 非空时优先于默认 Vite / renderer 入口。
  */
 module.exports = {
-  appName: 'PromptHub',
+  appName: 'AIM',
   loadURL: '',
   openDevTools: true,
   closeConfirm: false,

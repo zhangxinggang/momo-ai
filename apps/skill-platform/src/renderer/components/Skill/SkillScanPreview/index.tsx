@@ -1,4 +1,5 @@
 import type { IScannedSkill } from '@/types/modules';
+import { normalizeSkillTag } from '@renderer/services/skill/modal-utils';
 import { Button, Checkbox, Input, Modal } from 'antd';
 import {
   CheckCircle2Icon,
@@ -10,16 +11,16 @@ import {
   SearchIcon,
   TagsIcon,
   Trash2Icon,
-  XIcon,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { SkillTagEditor } from '../SkillTagEditor';
 interface IProps {
   scannedSkills: IScannedSkill[];
   /**
-   * Set of localPath values for skills already in the PromptHub library.
+   * Set of localPath values for skills already in the app library.
    * Using localPath (folder path) instead of name avoids false "Installed"
    * flags when a different tool happens to have a skill with the same name.
-   * 已存在于 PromptHub 库中的 skill 文件夹路径集合（精准比对，避免同名误判）
+   * 已存在于应用库中的 skill 文件夹路径集合（精准比对，避免同名误判）
    */
   installedPaths: Set<string>;
   onImport: (skills: IScannedSkill[], userTagsByPath?: Record<string, string[]>) => Promise<number>;
@@ -159,8 +160,7 @@ export function SkillScanPreview({
   };
 
   const handleAddTag = (localPath: string) => {
-    const raw = tagInputs[localPath] || '';
-    const nextTag = raw.trim().toLowerCase();
+    const nextTag = normalizeSkillTag(tagInputs[localPath] || '');
     if (!nextTag) return;
 
     setTagDrafts((prev) => {
@@ -443,60 +443,25 @@ export function SkillScanPreview({
                         </div>
 
                         {!skill.isInstalled && isSelected && showOptionalTags && (
-                          <div className='border-border bg-accent/20 mt-4 space-y-2 rounded-xl border p-3'>
-                            <div className='text-foreground text-[11px] font-medium'>
-                              {'导入标签（可选）'}
-                            </div>
-                            <div className='flex flex-wrap gap-1.5'>
-                              {(tagDrafts[skill.localPath] || []).map((tag) => (
-                                <span
-                                  key={tag}
-                                  className='bg-primary inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium text-white'>
-                                  {tag}
-                                  <Button
-                                    type='text'
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      handleRemoveTag(skill.localPath, tag);
-                                    }}
-                                    className='h-auto min-w-0 p-0 text-white hover:text-white/70'
-                                    icon={<XIcon className='h-3 w-3' />}
-                                  />
-                                </span>
-                              ))}
-                            </div>
-                            <div className='flex gap-2'>
-                              <Input
-                                value={tagInputs[skill.localPath] || ''}
-                                onClick={(event) => event.stopPropagation()}
-                                onChange={(event) =>
-                                  setTagInputs((prev) => ({
-                                    ...prev,
-                                    [skill.localPath]: event.target.value,
-                                  }))
-                                }
-                                onKeyDown={(event) => {
-                                  if (event.key === 'Enter') {
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                    handleAddTag(skill.localPath);
-                                  }
-                                }}
-                                placeholder={'输入新标签后按回车'}
-                                className='app-wallpaper-surface placeholder:text-muted-foreground h-9 flex-1 rounded-xl border-0 text-xs'
-                              />
-                              <Button
-                                size='small'
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  handleAddTag(skill.localPath);
-                                }}
-                                disabled={!tagInputs[skill.localPath]?.trim()}
-                                className='app-wallpaper-surface text-foreground hover:app-wallpaper-surface rounded-xl px-3 text-xs font-medium'>
-                                {'添加标签'}
-                              </Button>
-                            </div>
-                          </div>
+                          <SkillTagEditor
+                            variant='compact'
+                            bordered
+                            label='导入标签（可选）'
+                            tags={tagDrafts[skill.localPath] || []}
+                            tagInput={tagInputs[skill.localPath] || ''}
+                            onTagInputChange={(value) =>
+                              setTagInputs((prev) => ({
+                                ...prev,
+                                [skill.localPath]: value,
+                              }))
+                            }
+                            onAddTag={() => handleAddTag(skill.localPath)}
+                            onRemoveTag={(tag) => handleRemoveTag(skill.localPath, tag)}
+                            onInputClick={(event) => event.stopPropagation()}
+                            onAddButtonClick={(event) => event.stopPropagation()}
+                            onRemoveTagButtonClick={(event) => event.stopPropagation()}
+                            className='mt-4'
+                          />
                         )}
 
                         <div

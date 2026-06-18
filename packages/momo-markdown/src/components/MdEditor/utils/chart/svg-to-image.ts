@@ -1,15 +1,12 @@
 import { prefix } from '~/config';
 
-export interface IExportImageData {
-  data: Uint8Array;
-  width: number;
-  height: number;
-}
+import {
+  blobToUint8Array,
+  canvasToPngBlob,
+  type IExportImageData,
+} from './dom-to-png';
 
-async function blobToUint8Array(blob: Blob): Promise<Uint8Array> {
-  const buffer = await blob.arrayBuffer();
-  return new Uint8Array(buffer);
-}
+export type { IExportImageData };
 
 function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -17,23 +14,6 @@ function blobToDataUrl(blob: Blob): Promise<string> {
     reader.onload = () => resolve(reader.result as string);
     reader.onerror = () => reject(new Error('读取图片失败'));
     reader.readAsDataURL(blob);
-  });
-}
-
-/** toBlob 在画布被跨域污染时会同步抛出 SecurityError */
-function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    try {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          resolve(blob);
-        } else {
-          reject(new Error('PNG 转换失败'));
-        }
-      }, 'image/png');
-    } catch (error) {
-      reject(error instanceof Error ? error : new Error('PNG 转换失败'));
-    }
   });
 }
 

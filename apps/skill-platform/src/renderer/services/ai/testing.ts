@@ -1,4 +1,6 @@
 import { chatCompletion } from './chat';
+import { isImageGenerationConfig } from './image/capabilities';
+import { testImageGeneration } from './image/test';
 import { resolveAIProtocol } from './protocol';
 import type {
   IAIConfig,
@@ -14,6 +16,19 @@ export async function testAIConnection(
   testPrompt?: string,
   streamCallbacks?: IStreamCallbacks,
 ): Promise<IAITestResult> {
+  if (isImageGenerationConfig(config)) {
+    const imageResult = await testImageGeneration(config, testPrompt);
+    return {
+      id: config.id,
+      success: imageResult.success,
+      response: imageResult.success ? 'Image generation succeeded' : undefined,
+      error: imageResult.error,
+      latency: imageResult.latency,
+      model: imageResult.model,
+      provider: imageResult.provider,
+    };
+  }
+
   const startTime = Date.now();
   const prompt = testPrompt || 'Hello! Please respond with a brief greeting.';
   const useStream =

@@ -34,6 +34,12 @@ export interface IChatStreamOptions {
   kb_enabled?: boolean;
   kb_collection_id?: number;
   kb_top_k?: number;
+  /** 生图模型：当前轮用户上传的参考图 */
+  referenceImages?: Array<{
+    name?: string;
+    mimeType: string;
+    base64: string;
+  }>;
   /** 思考内容流式回调（增量 chunk） */
   onThinking?: (chunk: string) => void;
 }
@@ -136,6 +142,10 @@ export interface IAiChatServices {
   };
   /** 输入框斜杠命令补全（由宿主注入，如 Claude Code） */
   slashCommands?: ISlashCommandsConfig;
+  /** 判断模型 id 是否为生图模型 */
+  isImageModel?: (modelId: string) => boolean;
+  /** 生图模型输入框占位提示 */
+  getImageModelInputHint?: (modelId: string) => string | undefined;
 }
 
 export type { IChatAttachment, IChatAttachmentMeta, IChatSession };

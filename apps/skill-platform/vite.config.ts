@@ -1,3 +1,4 @@
+import fs from 'fs';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig, type PluginOption } from 'vite';
@@ -39,6 +40,42 @@ function stripUseClientDirective(): PluginOption {
   };
 }
 
+const STATIC_SRC_DIR = path.resolve(__dirname, 'static');
+const STATIC_OUT_DIR = path.resolve(__dirname, 'dist/static');
+
+/** dev / build 时将 static 同步到 dist/static，供主进程运行时读取 */
+function copyStaticToDist(): PluginOption {
+  function syncStatic() {
+    if (!fs.existsSync(STATIC_SRC_DIR)) {
+      return;
+    }
+    if (fs.existsSync(STATIC_OUT_DIR)) {
+      fs.rmSync(STATIC_OUT_DIR, { recursive: true, force: true });
+    }
+    fs.mkdirSync(path.dirname(STATIC_OUT_DIR), { recursive: true });
+    fs.cpSync(STATIC_SRC_DIR, STATIC_OUT_DIR, { recursive: true });
+  }
+
+  return {
+    name: 'copy-static-to-dist',
+    buildStart() {
+      syncStatic();
+    },
+    configureServer(server) {
+      server.watcher.add(STATIC_SRC_DIR);
+      const handleStaticChange = (changedPath: string) => {
+        const relativePath = path.relative(STATIC_SRC_DIR, changedPath);
+        if (relativePath && !relativePath.startsWith('..') && !path.isAbsolute(relativePath)) {
+          syncStatic();
+        }
+      };
+      server.watcher.on('change', handleStaticChange);
+      server.watcher.on('add', handleStaticChange);
+      server.watcher.on('unlink', handleStaticChange);
+    },
+  };
+}
+
 function suppressModuleLevelDirectiveWarn(): PluginOption {
   return {
     name: 'suppress-module-level-directive-warn',
@@ -69,6 +106,7 @@ const sharedResolveAlias = {
 
 export default defineConfig({
   plugins: [
+    copyStaticToDist(),
     stripUseClientDirective(),
     suppressModuleLevelDirectiveWarn(),
     react(),
@@ -91,7 +129,7 @@ export default defineConfig({
             alias: sharedResolveAlias,
           },
           build: {
-            outDir: 'out/main',
+            outDir: 'dist/main',
             rollupOptions: {
               // log4js 在运行时用动态 require 加载 @log4js-node/smtp 等 appender，
               // @napi-rs/canvas 含 .node 原生模块，须整包外置由 Node 运行时加载。
@@ -116,7 +154,7 @@ export default defineConfig({
             alias: sharedResolveAlias,
           },
           build: {
-            outDir: 'out/preload',
+            outDir: 'dist/preload',
           },
         },
       },
@@ -159,7 +197,7 @@ export default defineConfig({
     exclude: ['typeorm', 'expo-sqlite'],
   },
   build: {
-    outDir: 'out/renderer',
+    outDir: 'dist/renderer',
     // Performance: Disable sourcemap in production to reduce bundle size
     // 性能：生产环境禁用 sourcemap 以减少打包体积
     sourcemap: process.env.NODE_ENV === 'development',

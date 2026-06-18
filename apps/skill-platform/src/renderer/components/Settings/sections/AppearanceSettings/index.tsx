@@ -1,3 +1,4 @@
+import { useAppName } from '@renderer/hooks/useAppName';
 import { SettingSection } from '@renderer/components/Settings/SettingPrimitives';
 import { BackgroundImageBackdrop } from '@renderer/components/ui/BackgroundImageBackdrop';
 import { useSettingsStore } from '@renderer/store';
@@ -98,6 +99,7 @@ function BackgroundPreviewStage({
 }
 
 export function AppearanceSettings() {
+  const appName = useAppName();
   const settings = useSettingsStore();
   const [isPickingBackground, setIsPickingBackground] = useState(false);
 
@@ -360,9 +362,7 @@ export function AppearanceSettings() {
                 {'桌面背景'}
               </div>
               <p className='text-muted-foreground mt-1 text-xs leading-6'>
-                {
-                  '选一张喜欢的本地图片，就能把它设成桌面端背景，让 PromptHub 更贴近你的工作氛围，图片会统一保存在 PromptHub 图片目录里，设置中只保留引用。'
-                }
+                {`选一张喜欢的本地图片，就能把它设成桌面端背景，让 ${appName} 更贴近你的工作氛围，图片会统一保存在 ${appName} 图片目录里，设置中只保留引用。`}
               </p>
             </div>
             <Space className='shrink-0' wrap>

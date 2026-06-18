@@ -27,7 +27,7 @@ export function stripRedundantSkillPathPrefix(filePath: string, repoFolderName: 
 
 /**
  * 修正命令行中错误的 skills/<skill>/ 路径前缀。
- * 技能在 PromptHub 仓库根目录执行时，不应再带 monorepo 式 skills/<name>/ 前缀。
+ * 技能在应用仓库根目录执行时，不应再带 monorepo 式 skills/<name>/ 前缀。
  */
 export function normalizeRepoPathsInCommand(commandLine: string, repoPath: string): string {
   const folderName = getRepoFolderBaseName(repoPath);

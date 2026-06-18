@@ -1,26 +1,18 @@
-import type { ISkill, ISkillSafetyReport } from '@/types/modules';
+import type { ISkill } from '@/types/modules';
+import { useAppName } from '@renderer/hooks/useAppName';
 import { useToast } from '@renderer/components/ui/Toast';
 import { APP_LOCALE } from '@renderer/constants/common';
+import { useSkillContentTranslation } from '@renderer/hooks/useSkillContentTranslation';
 import { useSkillPlatform } from '@renderer/hooks/useSkillPlatform';
+import { useSkillSafetyScan } from '@renderer/hooks/useSkillSafetyScan';
 import { useUnsavedLeaveGuard } from '@renderer/hooks/useUnsavedLeaveGuard';
 import {
   downloadSkillExport,
   downloadSkillZipExport,
-  formatSkillTranslationError,
   getErrorMessage,
-  getSafetyScanAIConfig,
-  groupSkillSafetyFindings,
-  resolveSkillDescription,
 } from '@renderer/services/skill/detail-utils';
 import type { ESkillInstallMode } from '@renderer/services/skill/platform-sync';
 import type { IProjectDetailSkillContext } from '@renderer/services/skill/project-detail-adapter';
-import { computeSkillContentFingerprint } from '@renderer/services/skill/store-update';
-import {
-  isSkillTranslationStale,
-  readSkillTranslationSidecar,
-  writeSkillTranslationSidecar,
-  type ISkillTranslationSidecar,
-} from '@renderer/services/skill/translation-sidecar';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
 import { Button, Modal } from 'antd';
 import 'highlight.js/styles/github-dark.css';
@@ -61,6 +53,7 @@ interface IProps {
 }
 
 export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: IProps = {}) {
+  const appName = useAppName();
   const { showToast } = useToast();
   const selectedSkillId = useSkillStore((state) => state.selectedSkillId);
   const skills = useSkillStore((state) => state.skills);
@@ -68,7 +61,6 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
   const deleteSkill = useSkillStore((state) => state.deleteSkill);
   const loadSkills = useSkillStore((state) => state.loadSkills);
   const syncSkillFromRepo = useSkillStore((state) => state.syncSkillFromRepo);
-  const saveSafetyReport = useSkillStore((state) => state.saveSafetyReport);
 
   const selectedSkill = useMemo(() => {
     if (overrideSkill) {
@@ -85,26 +77,66 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
   const translationMode = useSettingsStore((state) => state.translationMode);
   const skillInstallMethod = useSettingsStore((state) => state.skillInstallMethod);
   const autoScanInstalledSkills = useSettingsStore((state) => state.autoScanInstalledSkills);
-  const aiModels = useSettingsStore((state) => state.aiModels);
   const [installMode, setInstallMode] = useState<ESkillInstallMode>(() => skillInstallMethod);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [showTranslation, setShowTranslation] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [isScanningSafety, setIsScanningSafety] = useState(false);
   const [isSafetyModalOpen, setIsSafetyModalOpen] = useState(false);
-  const [safetyReport, setSafetyReport] = useState<ISkillSafetyReport | null>(
-    () => selectedSkill?.safetyReport ?? null,
-  );
   const [resolvedSkillMdContent, setResolvedSkillMdContent] = useState('');
   const [fileEditorHasUnsavedChanges, setFileEditorHasUnsavedChanges] = useState(false);
   const fileEditorRef = useRef<ISkillFileEditorHandle>(null);
-  const translateContent = useSkillStore((state) => state.translateContent);
-  const getTranslationState = useSkillStore((state) => state.getTranslationState);
-  const clearTranslation = useSkillStore((state) => state.clearTranslation);
   const contentScrollRef = useRef<HTMLDivElement>(null);
-  const stalePromptFingerprintRef = useRef<string | null>(null);
-  const [isRetranslatePromptOpen, setIsRetranslatePromptOpen] = useState(false);
+
+  const targetLang = '中文';
+  const translationCacheKey = selectedSkill
+    ? `skilldoc_v2_${selectedSkill.id}_${targetLang}_${translationMode}`
+    : '';
+
+  const {
+    isTranslating,
+    showTranslation,
+    hasStaleTranslation,
+    hasDisplayableTranslation,
+    cachedTranslation: effectiveInstructionsTranslation,
+    effectiveContent: effectiveSkillMdContent,
+    resolvedDescription,
+    isRetranslatePromptOpen,
+    setIsRetranslatePromptOpen,
+    handleTranslate: handleTranslateSkill,
+  } = useSkillContentTranslation({
+    cacheKey: translationCacheKey,
+    sourceContent: resolvedSkillMdContent,
+    targetLang,
+    sidecarSkillId: isProjectDetail ? undefined : selectedSkill?.id,
+    fallbackDescription: selectedSkill?.description,
+    resetKey: selectedSkill?.id,
+  });
+
+  const safetyScanInput = useMemo(() => {
+    if (!selectedSkill) {
+      return null;
+    }
+    return {
+      name: selectedSkill.name,
+      content:
+        resolvedSkillMdContent || selectedSkill.instructions || selectedSkill.content || '',
+      sourceUrl: selectedSkill.source_url,
+      contentUrl: selectedSkill.content_url,
+      localRepoPath: selectedSkill.local_repo_path,
+    };
+  }, [resolvedSkillMdContent, selectedSkill]);
+
+  const {
+    isScanningSafety,
+    safetyReport,
+    groupedSafetyFindings,
+    safetyTone,
+    runSafetyScan,
+  } = useSkillSafetyScan({
+    scanInput: safetyScanInput,
+    persistSkillId: isProjectDetail ? undefined : selectedSkill?.id,
+    autoScan: Boolean(autoScanInstalledSkills && selectedSkill && !isProjectDetail),
+    initialReport: selectedSkill?.safetyReport ?? null,
+  });
 
   const { confirmLeave, UnsavedLeaveDialog } = useUnsavedLeaveGuard({
     isDirty: () => activeTab === 'files' && fileEditorHasUnsavedChanges,
@@ -128,77 +160,11 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
     [activeTab, confirmLeave, fileEditorHasUnsavedChanges],
   );
 
-  const targetLang = useMemo(() => '中文', []);
-
-  const safetyTone =
-    safetyReport?.level === 'blocked'
-      ? 'border-destructive/40 bg-destructive/5 text-destructive'
-      : safetyReport?.level === 'high-risk'
-        ? 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-300'
-        : safetyReport?.level === 'warn'
-          ? 'border-yellow-500/40 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300'
-          : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
-  const groupedSafetyFindings = useMemo(
-    () => groupSkillSafetyFindings(safetyReport?.findings ?? []),
-    [safetyReport?.findings],
-  );
-
-  const translationCacheKey = selectedSkill
-    ? `skilldoc_v2_${selectedSkill.id}_${targetLang}_${translationMode}`
-    : '';
-  const instructionsTranslationFingerprint = useMemo(
-    () => computeSkillContentFingerprint(resolvedSkillMdContent),
-    [resolvedSkillMdContent],
-  );
-  const instructionsTranslationState = translationCacheKey
-    ? getTranslationState(translationCacheKey, instructionsTranslationFingerprint)
-    : { value: null, hasTranslation: false, isStale: false };
-  const [translationSidecar, setTranslationSidecar] = useState<ISkillTranslationSidecar | null>(
-    null,
-  );
-  const hasSidecarTranslation = Boolean(translationSidecar?.content);
-  const hasStaleTranslation = translationSidecar
-    ? isSkillTranslationStale(translationSidecar, resolvedSkillMdContent)
-    : instructionsTranslationState.isStale;
-  const hasSavedTranslation = hasSidecarTranslation || instructionsTranslationState.hasTranslation;
-  const effectiveInstructionsTranslation = hasStaleTranslation
-    ? null
-    : (translationSidecar?.content ?? instructionsTranslationState.value);
-  const hasDisplayableTranslation = Boolean(effectiveInstructionsTranslation);
-  const effectiveSkillMdContent =
-    showTranslation && effectiveInstructionsTranslation
-      ? effectiveInstructionsTranslation
-      : resolvedSkillMdContent;
-  const resolvedDescription = useMemo(
-    () => resolveSkillDescription(effectiveSkillMdContent) || selectedSkill?.description || '',
-    [effectiveSkillMdContent, selectedSkill?.description],
-  );
-  // Refresh when skill changes
   useEffect(() => {
     if (selectedSkill) {
-      stalePromptFingerprintRef.current = null;
-      setShowTranslation(false);
-      setIsRetranslatePromptOpen(false);
-      setTranslationSidecar(null);
       setResolvedSkillMdContent(selectedSkill.instructions || selectedSkill.content || '');
-      // Restore persisted safety report when switching skills
-      setSafetyReport(selectedSkill.safetyReport ?? null);
     }
   }, [selectedSkill?.id]);
-
-  useEffect(() => {
-    if (!selectedSkill) {
-      setShowTranslation(false);
-      return;
-    }
-
-    if (hasStaleTranslation) {
-      setShowTranslation(false);
-      return;
-    }
-
-    setShowTranslation(hasSavedTranslation);
-  }, [hasSavedTranslation, hasStaleTranslation, selectedSkill?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -260,112 +226,6 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
     syncSkillFromRepo,
   ]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadTranslationSidecar() {
-      if (!selectedSkill) {
-        setTranslationSidecar(null);
-        return;
-      }
-
-      if (isProjectDetail) {
-        setTranslationSidecar(null);
-        return;
-      }
-
-      try {
-        const sidecar = await readSkillTranslationSidecar(
-          selectedSkill.id,
-          targetLang,
-          translationMode,
-        );
-
-        if (!cancelled) {
-          setTranslationSidecar(sidecar);
-        }
-      } catch {
-        if (!cancelled) {
-          setTranslationSidecar(null);
-        }
-      }
-    }
-
-    void loadTranslationSidecar();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isProjectDetail, selectedSkill?.id, targetLang, translationMode]);
-
-  useEffect(() => {
-    if (!selectedSkill || !resolvedSkillMdContent.trim()) {
-      stalePromptFingerprintRef.current = null;
-      return;
-    }
-
-    if (!hasStaleTranslation) {
-      stalePromptFingerprintRef.current = null;
-      return;
-    }
-
-    if (stalePromptFingerprintRef.current === instructionsTranslationFingerprint) {
-      return;
-    }
-
-    stalePromptFingerprintRef.current = instructionsTranslationFingerprint;
-    setIsRetranslatePromptOpen(true);
-  }, [
-    hasStaleTranslation,
-    instructionsTranslationFingerprint,
-    resolvedSkillMdContent,
-    selectedSkill?.id,
-  ]);
-
-  useEffect(() => {
-    if (!selectedSkill || !autoScanInstalledSkills) {
-      return;
-    }
-
-    let cancelled = false;
-
-    const runScan = async () => {
-      setIsScanningSafety(true);
-      try {
-        const report = await window.api.skill.scanSafety({
-          name: selectedSkill.name,
-          content: resolvedSkillMdContent || selectedSkill.instructions || selectedSkill.content,
-          sourceUrl: selectedSkill.source_url,
-          contentUrl: selectedSkill.content_url,
-          localRepoPath: selectedSkill.local_repo_path,
-          aiConfig: getSafetyScanAIConfig(aiModels),
-        });
-        if (!cancelled) {
-          setSafetyReport(report);
-          // Persist to DB + update store
-          try {
-            await saveSafetyReport(selectedSkill.id, report);
-          } catch (err) {
-            console.warn('Failed to persist auto-scan safety report:', err);
-          }
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.warn('Failed to auto-scan skill safety:', error);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsScanningSafety(false);
-        }
-      }
-    };
-
-    void runScan();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [aiModels, autoScanInstalledSkills, resolvedSkillMdContent, selectedSkill]);
   const {
     availablePlatforms,
     batchInstall: installSelectedPlatforms,
@@ -408,33 +268,6 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
 
   if (!selectedSkill) return null;
 
-  const runSafetyScan = async () => {
-    setIsScanningSafety(true);
-    try {
-      const report = await window.api.skill.scanSafety({
-        name: selectedSkill.name,
-        content: resolvedSkillMdContent || selectedSkill.instructions || selectedSkill.content,
-        sourceUrl: selectedSkill.source_url,
-        contentUrl: selectedSkill.content_url,
-        localRepoPath: selectedSkill.local_repo_path,
-        aiConfig: getSafetyScanAIConfig(aiModels),
-      });
-      setSafetyReport(report);
-      // Persist to DB + update store
-      try {
-        await saveSafetyReport(selectedSkill.id, report);
-      } catch (err) {
-        console.warn('Failed to persist safety report:', err);
-      }
-      return report;
-    } catch (error) {
-      showToast(`安全扫描失败: ${getErrorMessage(error)}`, 'error');
-      return null;
-    } finally {
-      setIsScanningSafety(false);
-    }
-  };
-
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
     setCopyStatus({ ...copyStatus, [key]: true });
@@ -475,55 +308,6 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
     await deleteSkill(selectedSkill.id);
     setIsDeleteConfirmOpen(false);
     selectSkill(null);
-  };
-
-  const handleTranslateSkill = async (forceRefresh = false) => {
-    if (!selectedSkill) return;
-
-    if (!forceRefresh && hasDisplayableTranslation && !hasStaleTranslation) {
-      setShowTranslation(!showTranslation);
-      return;
-    }
-
-    setIsTranslating(true);
-    try {
-      if (forceRefresh) {
-        clearTranslation(translationCacheKey);
-      }
-
-      const translated = await translateContent(
-        resolvedSkillMdContent,
-        translationCacheKey,
-        targetLang,
-        {
-          forceRefresh,
-          sourceFingerprint: instructionsTranslationFingerprint,
-        },
-      );
-
-      if (!translated) {
-        throw new Error('TRANSLATION_EMPTY');
-      }
-
-      if (!isProjectDetail) {
-        const nextSidecar = await writeSkillTranslationSidecar({
-          skillId: selectedSkill.id,
-          sourceContent: resolvedSkillMdContent,
-          translatedContent: translated,
-          targetLanguage: targetLang,
-          translationMode,
-        });
-
-        setTranslationSidecar(nextSidecar);
-      }
-      setShowTranslation(true);
-      setIsRetranslatePromptOpen(false);
-      showToast(forceRefresh ? '翻译已刷新' : '翻译完成', 'success');
-    } catch (error: unknown) {
-      showToast(formatSkillTranslationError(error), 'error');
-    } finally {
-      setIsTranslating(false);
-    }
   };
 
   const handleContentScroll = () => {
@@ -789,7 +573,7 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
         <div className='space-y-2'>
           <p>{`确定要删除技能"${name}"吗？`}</p>
           <p className='text-muted-foreground/80 text-xs'>
-            {'只会从 PromptHub 资料库中移除。源文件会保留，平台安装也会一并卸载。'}
+            {`只会从 ${appName} 资料库中移除。源文件会保留，平台安装也会一并卸载。`}
           </p>
         </div>
       </Modal>

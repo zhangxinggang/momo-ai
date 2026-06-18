@@ -1,4 +1,7 @@
+import { getAppConfig } from '@momo/electron';
 import { BrowserWindow, Menu, app, shell } from 'electron';
+
+const { appName } = getAppConfig() as { appName?: string };
 
 /**
  * Create application menu
@@ -109,13 +112,13 @@ export function createMenu(): void {
         {
           label: '文档',
           click: () => {
-            shell.openExternal('https://github.com/xxx/PromptHub');
+            shell.openExternal(`https://github.com/xxx/${appName}`);
           },
         },
         {
           label: '报告问题',
           click: () => {
-            shell.openExternal('https://github.com/xxx/PromptHub/issues');
+            shell.openExternal(`https://github.com/xxx/${appName}/issues`);
           },
         },
       ],

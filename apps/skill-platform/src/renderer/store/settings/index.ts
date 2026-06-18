@@ -900,7 +900,7 @@ export const useSettingsStore = create<ISettingsState>()(
       };
     },
     {
-      name: 'prompthub-settings',
+      name: 'aim-settings',
       version: 9,
       migrate: (state, version) => {
         if (!state || typeof state !== 'object') {

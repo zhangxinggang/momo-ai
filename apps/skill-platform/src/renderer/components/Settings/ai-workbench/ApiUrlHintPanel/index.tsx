@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import type { EAIProtocol } from '@/types/modules';
 import { getProviderInfo } from '@renderer/components/Settings/ai-workbench/helpers';
+import { useAppName } from '@renderer/hooks/useAppName';
 import {
   getApiEndpointPreview,
   getBaseUrl,
@@ -14,19 +15,27 @@ interface IProps {
   apiUrl: string;
   apiProtocol: EAIProtocol;
   provider: string;
+  model?: string;
   modelType?: EModelType;
 }
 
-export function ApiUrlHintPanel({ apiUrl, apiProtocol, provider, modelType = 'chat' }: IProps) {
+export function ApiUrlHintPanel({
+  apiUrl,
+  apiProtocol,
+  provider,
+  model,
+  modelType = 'chat',
+}: IProps) {
+  const appName = useAppName();
   const trimmedApiUrl = apiUrl.trim();
   const normalizedInput = useMemo(() => normalizeApiUrlInput(apiUrl), [apiUrl]);
   const baseUrlPreview = useMemo(() => getBaseUrl(apiUrl), [apiUrl]);
   const requestPreview = useMemo(
     () =>
       modelType === 'image'
-        ? getImageApiEndpointPreview(apiUrl)
+        ? getImageApiEndpointPreview(apiUrl, { provider, model })
         : getApiEndpointPreview(apiUrl, apiProtocol),
-    [apiProtocol, apiUrl, modelType],
+    [apiProtocol, apiUrl, model, modelType, provider],
   );
   const fullEndpointDetected = Boolean(
     trimmedApiUrl &&
@@ -56,9 +65,7 @@ export function ApiUrlHintPanel({ apiUrl, apiProtocol, provider, modelType = 'ch
   return (
     <div className='border-border/60 bg-muted/20 mt-2 space-y-2 rounded-lg border p-3 text-xs'>
       <div className='text-muted-foreground'>
-        {
-          '这里只填供应商基础地址或版本根路径即可，不用手动补 /chat/completions 或 /images/generations，PromptHub 会自动补全。'
-        }
+        {`这里只填供应商基础地址或版本根路径即可，不用手动补 /chat/completions 或 /images/generations，${appName} 会自动补全。`}
       </div>
       <div className='text-muted-foreground'>
         <span className='text-foreground font-medium'>{'示例'}:</span>{' '}

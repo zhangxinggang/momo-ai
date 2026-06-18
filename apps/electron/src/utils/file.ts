@@ -20,27 +20,26 @@ function getFolderAllFiles(dirPath: string, arrayOfFiles: string[]) {
 /**
  * 解析应用静态资源目录下的图标路径（存在则返回，否则尝试备用名）
  */
-function getSystemLogo(): { ico: string | undefined; png: string | undefined } {
-  const ico = path.join(getStaticPath(), 'favicon.ico');
-  const icoLogo = path.join(getStaticPath(), 'logo.ico');
-  const png = path.join(getStaticPath(), 'favicon.png');
-  const pngLogo = path.join(getStaticPath(), 'logo.png');
-  let icoData: string | undefined = ico;
-  let pngData: string | undefined = png;
-  if (!fs.existsSync(icoData)) {
-    icoData = fs.existsSync(icoLogo) ? icoLogo : undefined;
-    if (!icoData) {
-      const momoServerPath = require.resolve('@momo/server');
-      const momoServerIcon = path.join(momoServerPath, '../assets/favicon.ico');
-      if (fs.existsSync(momoServerIcon)) {
-        icoData = momoServerIcon;
-      }
+function getSystemLogo(): string | undefined {
+  const faviconPng = path.join(getStaticPath(), 'favicon.png');
+  const logoPng = path.join(getStaticPath(), 'logo.png');
+  let systemLogo: string | undefined = undefined;
+  const existFaviconPng = fs.existsSync(faviconPng);
+  const existLogoPng = fs.existsSync(logoPng);
+  if (existFaviconPng || existLogoPng) {
+    if (existFaviconPng) {
+      systemLogo = faviconPng;
+    } else {
+      systemLogo = logoPng;
+    }
+  } else {
+    const momoServerPath = require.resolve('@momo/server');
+    const momoServerIcon = path.join(momoServerPath, '../assets/favicon.png');
+    if (fs.existsSync(momoServerIcon)) {
+      systemLogo = momoServerIcon;
     }
   }
-  if (!fs.existsSync(pngData)) {
-    pngData = fs.existsSync(pngLogo) ? pngLogo : undefined;
-  }
-  return { ico: icoData, png: pngData };
+  return systemLogo;
 }
 
 const getUploadUrl = () =>

@@ -1,6 +1,7 @@
 import { buildChatWorkspaceConfig, type IChatWorkspaceConfig } from '@momo/aichat';
 import { useCallback, useMemo } from 'react';
 
+import { checkPathExists, openFolderPath, pickFolders } from '@renderer/services/desktop';
 import { useChatWorkspaceStore } from '@renderer/store/chat';
 
 /** 绑定桌面端目录选择与持久化 store，供各 AI 对话场景复用 */
@@ -18,34 +19,14 @@ export function useChatWorkspaceBinding(): IChatWorkspaceConfig {
   const deleteWorkspacePreset = useChatWorkspaceStore((s) => s.deleteWorkspacePreset);
 
   const handleAddWorkspaceFolder = useCallback(async () => {
-    const selectedList = await window.electron?.selectFolders?.();
-    if (selectedList?.length) {
-      for (const selected of selectedList) {
-        if (selected?.trim()) {
-          addWorkspacePath(selected);
-        }
-      }
-      return;
-    }
-    const selected = await window.electron?.selectFolder?.();
-    if (selected) {
+    const paths = await pickFolders();
+    for (const selected of paths) {
       addWorkspacePath(selected);
     }
   }, [addWorkspacePath]);
 
   const handleOpenFolderPath = useCallback(async (folderPath: string) => {
-    const exists = await window.electron?.pathExists?.(folderPath);
-    if (!exists) {
-      return;
-    }
-    await window.electron?.openPath?.(folderPath);
-  }, []);
-
-  const checkPathExists = useCallback(async (folderPath: string) => {
-    if (!window.electron?.pathExists) {
-      return true;
-    }
-    return window.electron.pathExists(folderPath);
+    await openFolderPath(folderPath);
   }, []);
 
   return useMemo(
@@ -71,7 +52,6 @@ export function useChatWorkspaceBinding(): IChatWorkspaceConfig {
       }),
     [
       activePresetId,
-      checkPathExists,
       deleteWorkspacePreset,
       handleAddWorkspaceFolder,
       handleOpenFolderPath,

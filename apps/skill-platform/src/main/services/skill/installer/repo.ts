@@ -5,6 +5,7 @@
  * listing, deleting, and atomic replacement of repo contents.
  */
 import type { ISkillLocalFileEntry, ISkillLocalFileTreeEntry } from '@/types/modules';
+import { isTextFilePath } from '@/utils/text-file';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import {
@@ -34,46 +35,20 @@ const MAX_WALK_FILES = 500;
 /** Maximum file size (1 MB) for reading text content */
 const MAX_FILE_SIZE_BYTES = 1_048_576;
 
-/**
- * Text file extensions recognized for content reading (all lowercase).
- */
-const TEXT_EXTENSIONS = new Set([
-  '.md',
-  '.py',
-  '.js',
-  '.ts',
-  '.json',
-  '.yaml',
-  '.yml',
-  '.txt',
-  '.sh',
-  '.toml',
-  '.cfg',
-  '.ini',
-  '.css',
-  '.html',
-  '.xml',
-  '.sql',
-  '.r',
-  '.jl',
-  '.lua',
-  '.rb',
-  '.go',
-  '.java',
-  '.kt',
-  '.swift',
-  '.c',
-  '.cpp',
-  '.h',
-  '.hpp',
-  '.cs',
-  '.rs',
-]);
-
 const INTERNAL_REPO_DIRS = new Set(['.git', '.aim']);
 
 export function isInternalSkillRepoEntry(relativePath: string): boolean {
   return relativePath.split(/[\\/]+/).some((segment) => INTERNAL_REPO_DIRS.has(segment));
+}
+
+/** 导出 zip 时需排除的敏感或本地配置文件 */
+export function isSkillExportExcludedEntry(relativePath: string): boolean {
+  const normalized = relativePath.replace(/\\/g, '/');
+  const baseName = normalized.slice(normalized.lastIndexOf('/') + 1).toLowerCase();
+  if (baseName === '.env' || baseName.startsWith('.env.')) {
+    return true;
+  }
+  return false;
 }
 
 // ==================== Internal helpers ====================
@@ -148,8 +123,7 @@ async function walkRepoDir<T>(opts: {
  * oversized files.  Shared by walkRepoDir callers and readLocalRepoFileByPath.
  */
 async function readFileContent(fullPath: string, fileName: string): Promise<string> {
-  const ext = path.extname(fileName).toLowerCase();
-  if (!TEXT_EXTENSIONS.has(ext)) {
+  if (!isTextFilePath(fileName)) {
     return '[binary file]';
   }
   const stat = await fs.stat(fullPath);
@@ -371,6 +345,33 @@ export async function readLocalRepoFile(
   await initSkillsDir();
   const absolutePath = path.join(skillsDir, skillName);
   return readLocalRepoFileByPath(absolutePath, relativePath);
+}
+
+export async function readLocalRepoFileBufferByPath(
+  absoluteBasePath: string,
+  relativePath: string,
+): Promise<Uint8Array | null> {
+  const { fullPath, realBasePath } = await resolveRepoTargetPath(absoluteBasePath, relativePath, {
+    allowOutsideSkillsDir: true,
+  });
+  if (!(await fileExists(fullPath))) {
+    return null;
+  }
+
+  const lstat = await fs.lstat(fullPath);
+  if (lstat.isSymbolicLink()) {
+    throw new Error('Symlinked files are not allowed in managed repos');
+  }
+  const realFullPath = await fs.realpath(fullPath).catch(() => fullPath);
+  if (!isPathWithin(realBasePath, realFullPath)) {
+    throw new Error('Repo file path resolves outside managed repo');
+  }
+  const stat = await fs.stat(fullPath);
+  if (stat.isDirectory()) {
+    return null;
+  }
+
+  return fs.readFile(fullPath);
 }
 
 export async function readLocalRepoFileByPath(

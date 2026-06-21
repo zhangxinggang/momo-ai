@@ -1,0 +1,24 @@
+:global {
+  .momo-file-editor__binary-preview {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .momo-file-editor__binary-preview-viewer {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .momo-file-editor__binary-preview-loading,
+  .momo-file-editor__binary-preview-empty {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.875rem;
+  }
+}

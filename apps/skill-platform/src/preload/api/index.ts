@@ -1,12 +1,15 @@
 export { aiApi } from './ai';
 export { aichatApi } from './aichat';
 export { claudeCodeApi } from './claude-code';
+export { desktopApi } from './desktop';
 export { folderApi } from './folder';
 export { ioApi } from './io';
 export { kbApi } from './kb';
+export { mediaApi } from './media';
 export { noteApi } from './note';
 export { onlineConfApi } from './online-conf';
 export { promptApi } from './prompt';
+export { rulesApi } from './rules';
 export { scraperApi } from './scraper';
 export { settingsApi } from './settings';
 export { skillApi } from './skill';

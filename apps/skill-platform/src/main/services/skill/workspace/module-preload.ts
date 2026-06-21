@@ -12,12 +12,45 @@ export async function ensureSkillModulePreloadScript(): Promise<string> {
   const preloadPath = path.join(runtimeDir, PRELOAD_FILE_NAME);
   const content = `'use strict';
 const path = require('path');
-const dirs = (process.env.SKILL_MODULE_PATHS || '')
+const Module = require('module');
+
+const runtimeDirs = (process.env.SKILL_MODULE_PATHS || '')
   .split(path.delimiter)
   .map((item) => item.trim())
   .filter(Boolean);
-for (const dir of dirs) {
+
+for (const dir of runtimeDirs) {
   module.paths.unshift(dir);
+}
+
+const workspaceRoot = (process.env.SKILL_REPO_PATH || '').trim();
+
+function isAllowedNodeModulesPath(candidate) {
+  const resolved = path.resolve(candidate);
+  if (path.basename(resolved) !== 'node_modules') {
+    return false;
+  }
+  for (const dir of runtimeDirs) {
+    if (resolved === path.resolve(dir)) {
+      return true;
+    }
+  }
+  if (workspaceRoot) {
+    const ws = path.resolve(workspaceRoot);
+    if (resolved.startsWith(ws + path.sep)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+if (runtimeDirs.length > 0 || workspaceRoot) {
+  const originalNodeModulePaths = Module._nodeModulePaths;
+  Module._nodeModulePaths = function skillNodeModulePaths(from) {
+    const paths = originalNodeModulePaths.call(this, from);
+    const filtered = paths.filter(isAllowedNodeModulesPath);
+    return filtered.length > 0 ? filtered : paths.slice(0, 1);
+  };
 }
 `;
   await fs.writeFile(preloadPath, content, 'utf8');

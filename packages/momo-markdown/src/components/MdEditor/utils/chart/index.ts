@@ -1,6 +1,6 @@
 export * from './cynefin-polyfill';
-export * from './dom-to-png';
 export * from './diagram-viewer';
+export * from './dom-to-png';
 export * from './icons';
 export * from './mermaid-plugins';
 export * from './mermaid-source';

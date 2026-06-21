@@ -12,6 +12,7 @@ import type {
 
 import type { IAIModelConfig, IScenarioModelDefaults } from '@renderer/types/settings';
 
+import { getKbIpc } from '../ipc';
 import { getKbAiModels } from './context';
 import { resolveKbEmbeddingConfig } from './embedding-config';
 import { requireKbLlmConfig } from './llm-config';
@@ -23,10 +24,10 @@ export interface IKbEmbeddingOptions {
 }
 
 function getKbApi() {
-  if (!window.api?.kb) {
+  const kb = getKbIpc();
+  if (!kb) {
     throw new Error('知识库 API 不可用，请在桌面客户端中使用');
   }
-  const kb = window.api.kb;
   if (typeof kb.listChunks !== 'function') {
     throw new Error('知识库 API 版本过旧，请完全重启应用后再试');
   }

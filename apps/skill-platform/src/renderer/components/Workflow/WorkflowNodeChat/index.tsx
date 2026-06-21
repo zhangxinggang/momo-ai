@@ -2,6 +2,8 @@ import type { ISkill } from '@/types/modules';
 import {
   AiChatView,
   buildChatWorkspaceConfig,
+  isAbsoluteLocalPath,
+  joinLocalPath,
   useChatContext,
   type IAiChatServices,
   type IChatMessage,
@@ -13,6 +15,7 @@ import { WorkflowAiChatShell } from '@renderer/components/Workflow/WorkflowAiCha
 import { useToast } from '@renderer/components/ui/Toast';
 import { useAiChatViewTheme } from '@renderer/hooks/useAiChatViewTheme';
 import { useChatWorkspaceBinding } from '@renderer/hooks/useChatWorkspaceBinding';
+import { useLocalPathBinding } from '@renderer/hooks/useLocalPathBinding';
 import { useRankedChatModelGroups } from '@renderer/hooks/useRankedChatModelGroups';
 import { useStableModelResolver } from '@renderer/hooks/useStableModelResolver';
 import { useStableRef } from '@renderer/hooks/useStableRef';
@@ -21,6 +24,7 @@ import {
   createPromptTestStream,
   createSkillLangGraphStream,
 } from '@renderer/services/aichat';
+import { checkPathExists, openFolderPath } from '@renderer/services/desktop';
 import { buildActiveSkillLine, buildSkillsSummary } from '@renderer/services/skill/chat-context';
 import { persistWorkflowArtifactsFromReply } from '@renderer/services/workflow/artifact-writer';
 import type { IParallelPreviousResultItem } from '@renderer/services/workflow/parallel-context';
@@ -208,6 +212,22 @@ export function WorkflowNodeChat({
   const modelResolverRef = useStableModelResolver(aiModels);
   const chatModelOptionGroups = useRankedChatModelGroups(aiModels);
   const globalWorkspace = useChatWorkspaceBinding();
+  const globalLocalPath = useLocalPathBinding();
+  const localPath = useMemo(() => {
+    if (nodeWorkspacePaths && nodeWorkspacePaths.length > 0) {
+      return {
+        ...globalLocalPath,
+        resolveLocalPath: (rawPath: string) => {
+          const trimmed = rawPath.trim();
+          if (isAbsoluteLocalPath(trimmed)) {
+            return trimmed;
+          }
+          return joinLocalPath(nodeWorkspacePaths[0], trimmed);
+        },
+      };
+    }
+    return globalLocalPath;
+  }, [globalLocalPath, nodeWorkspacePaths]);
   const workspace = useMemo(() => {
     if (nodeWorkspacePaths && nodeWorkspacePaths.length > 0) {
       return buildChatWorkspaceConfig({
@@ -217,10 +237,9 @@ export function WorkflowNodeChat({
         onAddFolder: () => undefined,
         onRemoveFolder: () => undefined,
         onOpenFolderPath: (folderPath) => {
-          void window.electron?.openPath?.(folderPath);
+          void openFolderPath(folderPath);
         },
-        checkPathExists: (folderPath) =>
-          window.electron?.pathExists?.(folderPath) ?? Promise.resolve(true),
+        checkPathExists,
       });
     }
     return globalWorkspace;
@@ -353,6 +372,7 @@ export function WorkflowNodeChat({
       aiModels,
       chatModelOptionGroups,
       workspace,
+      localPath,
       storageKeyPrefix: storagePrefix,
       defaultModel: executionModel?.trim() || undefined,
       enableSuperpower: resourceKind !== 'prompt',
@@ -368,6 +388,7 @@ export function WorkflowNodeChat({
     executionModel,
     handleNeedModel,
     handleReplyComplete,
+    localPath,
     modelResolverRef,
     businessIdRef,
     nodeNameRef,

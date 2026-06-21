@@ -174,7 +174,9 @@ function EndpointModelCategories({
           label: (
             <span className='text-muted-foreground text-xs font-medium'>
               {'对话'}
-              <span className='text-muted-foreground/70 ml-1.5 font-normal'>{chatModels.length}</span>
+              <span className='text-muted-foreground/70 ml-1.5 font-normal'>
+                {chatModels.length}
+              </span>
             </span>
           ),
           children: (
@@ -201,7 +203,9 @@ function EndpointModelCategories({
           label: (
             <span className='text-muted-foreground text-xs font-medium'>
               {'生图'}
-              <span className='text-muted-foreground/70 ml-1.5 font-normal'>{imageModels.length}</span>
+              <span className='text-muted-foreground/70 ml-1.5 font-normal'>
+                {imageModels.length}
+              </span>
             </span>
           ),
           children: (

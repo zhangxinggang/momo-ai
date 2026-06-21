@@ -3,6 +3,16 @@ import { collectFirstLevelFolderIds, type IMomoTreeNode } from '@momo/tree';
 import { create } from 'zustand';
 
 import {
+  createWorkflowFolder,
+  createWorkflow as createWorkflowRecord,
+  deleteWorkflowFolder,
+  listWorkflowFolders,
+  listWorkflows,
+  updateWorkflowFolder,
+  updateWorkflowFolderOrders,
+  updateWorkflow as updateWorkflowRecord,
+} from '@renderer/services/workflow/api';
+import {
   buildWorkflowTree,
   collectWorkflowFolderIds,
   filterWorkflowTreeByQuery,
@@ -57,14 +67,8 @@ export const useWorkflowStore = create<IWorkflowState>()((set, get) => ({
   },
 
   fetchFolders: async () => {
-    const api = window.api?.workflowFolder;
-    if (!api?.getAll) {
-      set({ folders: [] });
-      get().refreshTree();
-      return;
-    }
     try {
-      const folders = await api.getAll();
+      const folders = await listWorkflowFolders();
       set({ folders });
       get().refreshTree();
     } catch {
@@ -74,15 +78,9 @@ export const useWorkflowStore = create<IWorkflowState>()((set, get) => ({
   },
 
   fetchWorkflows: async () => {
-    const api = window.api?.workflow;
-    if (!api?.getAll) {
-      set({ workflows: [], isLoading: false });
-      get().refreshTree();
-      return;
-    }
     set({ isLoading: true });
     try {
-      const list = await api.getAll();
+      const list = await listWorkflows();
       set({ workflows: list, isLoading: false });
     } catch {
       set({ workflows: [], isLoading: false });
@@ -100,11 +98,7 @@ export const useWorkflowStore = create<IWorkflowState>()((set, get) => ({
   setExpandedKeys: (keys) => set({ expandedKeys: keys }),
 
   createFolder: async (data) => {
-    const api = window.api?.workflowFolder;
-    if (!api?.create) {
-      throw new Error('当前环境不支持工作流目录（需桌面端）');
-    }
-    const folder = await api.create({
+    const folder = await createWorkflowFolder({
       name: data.name,
       parentId: data.parentId,
     });
@@ -114,11 +108,7 @@ export const useWorkflowStore = create<IWorkflowState>()((set, get) => ({
   },
 
   updateFolder: async (id, data) => {
-    const api = window.api?.workflowFolder;
-    if (!api?.update) {
-      throw new Error('当前环境不支持工作流目录（需桌面端）');
-    }
-    const updated = await api.update(id, data);
+    const updated = await updateWorkflowFolder(id, data);
     set((state) => ({
       folders: state.folders.map((folder) => (folder.id === id ? updated : folder)),
     }));
@@ -126,11 +116,7 @@ export const useWorkflowStore = create<IWorkflowState>()((set, get) => ({
   },
 
   deleteFolder: async (id) => {
-    const api = window.api?.workflowFolder;
-    if (!api?.delete) {
-      throw new Error('当前环境不支持工作流目录（需桌面端）');
-    }
-    await api.delete(id);
+    await deleteWorkflowFolder(id);
     set((state) => ({
       folders: state.folders.filter((folder) => folder.id !== id),
     }));
@@ -138,11 +124,6 @@ export const useWorkflowStore = create<IWorkflowState>()((set, get) => ({
   },
 
   moveFolder: async (id, newParentId, newIndex) => {
-    const api = window.api?.workflowFolder;
-    if (!api?.update || !api.updateOrders) {
-      throw new Error('当前环境不支持工作流目录（需桌面端）');
-    }
-
     const { folders } = get();
     const folderToMove = folders.find((folder) => folder.id === id);
     if (!folderToMove) {
@@ -185,8 +166,8 @@ export const useWorkflowStore = create<IWorkflowState>()((set, get) => ({
     }));
 
     try {
-      await api.update(id, { parentId: newParentId || undefined });
-      await api.updateOrders(orderUpdates);
+      await updateWorkflowFolder(id, { parentId: newParentId || undefined });
+      await updateWorkflowFolderOrders(orderUpdates);
       get().refreshTree();
     } catch (error) {
       console.error('移动工作流目录失败:', error);
@@ -196,11 +177,7 @@ export const useWorkflowStore = create<IWorkflowState>()((set, get) => ({
   },
 
   createWorkflow: async (data) => {
-    const api = window.api?.workflow;
-    if (!api?.create) {
-      throw new Error('当前环境不支持工作流持久化（需桌面端）');
-    }
-    const created = await api.create(data);
+    const created = await createWorkflowRecord(data);
     set((state) => ({ workflows: [created, ...state.workflows] }));
     get().refreshTree();
     return created;
@@ -234,11 +211,7 @@ export const useWorkflowStore = create<IWorkflowState>()((set, get) => ({
   },
 
   updateWorkflow: async (id, data) => {
-    const api = window.api?.workflow;
-    if (!api?.update) {
-      throw new Error('当前环境不支持工作流持久化（需桌面端）');
-    }
-    const updated = await api.update(id, data);
+    const updated = await updateWorkflowRecord(id, data);
     set((state) => ({
       workflows: state.workflows.map((workflow) => (workflow.id === id ? updated : workflow)),
     }));

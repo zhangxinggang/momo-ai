@@ -214,7 +214,7 @@ export function EditPromptModal({
         onClose={exitNativeFullscreen}
         zIndex={9999}
         getContainer={() => document.body}
-        destroyOnClose={false}>
+        destroyOnHidden={false}>
         <PromptFullscreenEditor
           value={fullscreenValue}
           onChange={updateFullscreenValue}

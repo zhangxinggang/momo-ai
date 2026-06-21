@@ -115,7 +115,7 @@ export function buildMoveTargetTreeData(
         value: node.id,
         title: node.name,
         children: childFolders.length ? buildFolderNodes(node.children!) : undefined,
-      });
+      } as TreeDataNode);
     }
     return result;
   };
@@ -126,6 +126,6 @@ export function buildMoveTargetTreeData(
       value: rootId,
       title: rootLabel,
       children: buildFolderNodes(nodes),
-    },
+    } as TreeDataNode,
   ];
 }

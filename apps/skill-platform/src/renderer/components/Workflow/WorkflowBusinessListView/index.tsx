@@ -14,10 +14,12 @@ import { InlineEditableCell } from '@renderer/components/ui/InlineEditableCell';
 import { WorkflowCreateBusinessModal } from '@renderer/components/Workflow/WorkflowCreateBusinessModal';
 import { WorkflowStepsBar } from '@renderer/components/Workflow/WorkflowStepsBar';
 import { deleteWorkflowBusinessAgentDir } from '@renderer/services/workflow/agent-files';
+import { getWorkflow, isWorkflowAvailable } from '@renderer/services/workflow/api';
 import {
   createBusiness,
   deleteBusiness,
   fetchBusinessList,
+  isWorkflowBusinessPersistenceAvailable,
   updateBusiness,
 } from '@renderer/services/workflow/business';
 import { deleteWorkflowBusinessChats } from '@renderer/services/workflow/chat-storage';
@@ -35,7 +37,7 @@ interface IProps {
 /** 工作流业务列表：步骤预览 + 业务表格 */
 export function WorkflowBusinessListView({ workflowId }: IProps) {
   const { message, modal } = App.useApp();
-  const wfApi = window.api?.workflow;
+  const isWorkflowReady = isWorkflowAvailable();
 
   const businessListQuery = useUIStore((s) => s.businessListQuery);
   const setBusinessListQuery = useUIStore((s) => s.setBusinessListQuery);
@@ -69,7 +71,7 @@ export function WorkflowBusinessListView({ workflowId }: IProps) {
   }, []);
 
   const reloadData = useCallback(async () => {
-    if (!wfApi?.get) {
+    if (!isWorkflowReady) {
       setWorkflow(null);
       setBusinessList([]);
       setSteps([]);
@@ -78,7 +80,7 @@ export function WorkflowBusinessListView({ workflowId }: IProps) {
     setIsLoading(true);
     try {
       const [found, list] = await Promise.all([
-        wfApi.get(workflowId),
+        getWorkflow(workflowId),
         fetchBusinessList(workflowId),
       ]);
       if (!found) {
@@ -97,7 +99,7 @@ export function WorkflowBusinessListView({ workflowId }: IProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [buildStepsFromWorkflow, message, wfApi, workflowId]);
+  }, [buildStepsFromWorkflow, isWorkflowReady, message, workflowId]);
 
   useEffect(() => {
     void reloadData();
@@ -115,7 +117,7 @@ export function WorkflowBusinessListView({ workflowId }: IProps) {
 
   const handleCreateConfirm = useCallback(
     async (values: { name: string; remark: string }) => {
-      if (!window.api?.workflowBusiness?.create) {
+      if (!isWorkflowBusinessPersistenceAvailable()) {
         message.warning('当前环境不支持业务持久化（需桌面端 SQLite）');
         return;
       }
@@ -138,7 +140,7 @@ export function WorkflowBusinessListView({ workflowId }: IProps) {
 
   const handleDeleteBusiness = useCallback(
     (business: IWorkflowBusiness) => {
-      if (!window.api?.workflowBusiness?.delete) {
+      if (!isWorkflowBusinessPersistenceAvailable()) {
         message.warning('当前环境不支持业务持久化（需桌面端 SQLite）');
         return;
       }
@@ -251,7 +253,7 @@ export function WorkflowBusinessListView({ workflowId }: IProps) {
             </Button>
             <Button
               danger
-              disabled={!window.api?.workflowBusiness}
+              disabled={!isWorkflowBusinessPersistenceAvailable()}
               icon={<Trash2Icon className='h-3.5 w-3.5' />}
               onClick={() => handleDeleteBusiness(record)}
               size='small'
@@ -295,7 +297,7 @@ export function WorkflowBusinessListView({ workflowId }: IProps) {
         )}
         <Button
           className={styles['workflow-business-list-create-btn']}
-          disabled={!window.api?.workflowBusiness}
+          disabled={!isWorkflowBusinessPersistenceAvailable()}
           icon={<PlusIcon className='h-4 w-4' />}
           onClick={() => setIsCreateModalOpen(true)}
           type='primary'>
@@ -323,7 +325,7 @@ export function WorkflowBusinessListView({ workflowId }: IProps) {
               type='secondary'>
               {businessListQuery.trim()
                 ? '尝试调整搜索关键词'
-                : !window.api?.workflowBusiness
+                : !isWorkflowBusinessPersistenceAvailable()
                   ? '当前环境不支持业务管理（需桌面端）'
                   : '点击上方「新建业务」开始执行工作流'}
             </Typography.Text>

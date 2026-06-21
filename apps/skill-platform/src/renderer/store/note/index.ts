@@ -1,11 +1,19 @@
 import type { INoteTreeNode } from '@/types/modules';
 import { collectFirstLevelFolderIds, type IMomoTreeNode } from '@momo/tree';
+import {
+  bootstrapCursorRules,
+  copyNoteFile,
+  createNoteFile,
+  createNoteFolder,
+  deleteNote,
+  listNoteTree,
+  moveNote,
+  readNoteFile,
+  renameNote,
+  writeNoteFile,
+} from '@renderer/services/note/api';
 import { collectNoteFolderIds, filterNoteTreeByQuery } from '@renderer/services/note/tree-filter';
 import { create } from 'zustand';
-
-function getNoteApi() {
-  return window.api?.note;
-}
 
 function mapToMomoNodes(nodes: INoteTreeNode[]): IMomoTreeNode[] {
   return nodes.map((node) => ({
@@ -84,14 +92,10 @@ export const useNoteStore = create<INoteState>((set, get) => ({
   },
 
   loadTree: async () => {
-    const api = getNoteApi();
-    if (!api?.listTree) {
-      return;
-    }
     set({ isLoadingTree: true });
     try {
-      await api.bootstrapCursorRules?.();
-      const nodes = mapToMomoNodes(await api.listTree());
+      await bootstrapCursorRules();
+      const nodes = mapToMomoNodes(await listNoteTree());
       const { treeSearchQuery } = get();
       const treeData = buildVisibleTree(nodes, treeSearchQuery);
       const expandedKeys = resolveExpandedKeys(treeData, treeSearchQuery, get().expandedKeys);
@@ -116,11 +120,6 @@ export const useNoteStore = create<INoteState>((set, get) => ({
   },
 
   selectFile: async (fileId) => {
-    const api = getNoteApi();
-    if (!api?.readFile) {
-      return;
-    }
-
     const { selectedId, editorContent, savedContent } = get();
     if (selectedId && selectedId !== fileId && editorContent !== savedContent) {
       await get().saveCurrentFile();
@@ -128,10 +127,11 @@ export const useNoteStore = create<INoteState>((set, get) => ({
 
     set({ isLoadingFile: true, selectedId: fileId });
     try {
-      const result = await api.readFile(fileId);
+      const result = await readNoteFile(fileId);
+      const content = typeof result === 'string' ? result : (result?.content ?? '');
       set({
-        editorContent: result.content ?? '',
-        savedContent: result.content ?? '',
+        editorContent: content,
+        savedContent: content,
       });
     } catch (err) {
       console.error('[note] readFile failed:', err);
@@ -148,14 +148,13 @@ export const useNoteStore = create<INoteState>((set, get) => ({
     })),
 
   saveCurrentFile: async () => {
-    const api = getNoteApi();
     const { selectedId, editorContent, savedContent } = get();
-    if (!api?.writeFile || !selectedId || editorContent === savedContent) {
+    if (!selectedId || editorContent === savedContent) {
       return;
     }
     set({ isSaving: true });
     try {
-      await api.writeFile(selectedId, editorContent);
+      await writeNoteFile(selectedId, editorContent);
       set({ savedContent: editorContent });
     } finally {
       set({ isSaving: false });
@@ -163,20 +162,12 @@ export const useNoteStore = create<INoteState>((set, get) => ({
   },
 
   createRootFolder: async (name) => {
-    const api = getNoteApi();
-    if (!api?.createFolder) {
-      return;
-    }
-    await api.createFolder(null, name);
+    await createNoteFolder(null, name);
     await get().loadTree();
   },
 
   createFolder: async (parentId, name) => {
-    const api = getNoteApi();
-    if (!api?.createFolder) {
-      return;
-    }
-    await api.createFolder(parentId, name);
+    await createNoteFolder(parentId, name);
     if (parentId) {
       const { expandedKeys } = get();
       if (!expandedKeys.includes(parentId)) {
@@ -187,11 +178,8 @@ export const useNoteStore = create<INoteState>((set, get) => ({
   },
 
   createNote: async (parentId, name) => {
-    const api = getNoteApi();
-    if (!api?.createFile) {
-      return;
-    }
-    const created = await api.createFile(parentId, name);
+    const created = await createNoteFile(parentId, name);
+    const createdId = typeof created === 'string' ? created : created.id;
     if (parentId) {
       const { expandedKeys } = get();
       if (!expandedKeys.includes(parentId)) {
@@ -199,15 +187,11 @@ export const useNoteStore = create<INoteState>((set, get) => ({
       }
     }
     await get().loadTree();
-    await get().selectFile(created.id);
+    await get().selectFile(createdId);
   },
 
   renameNode: async (nodeId, newName) => {
-    const api = getNoteApi();
-    if (!api?.rename) {
-      return;
-    }
-    const renamed = await api.rename(nodeId, newName);
+    const renamed = await renameNote(nodeId, newName);
     const { selectedId } = get();
     if (selectedId === nodeId && renamed.kind === 'file') {
       set({ selectedId: renamed.id });
@@ -216,11 +200,7 @@ export const useNoteStore = create<INoteState>((set, get) => ({
   },
 
   deleteNode: async (nodeId) => {
-    const api = getNoteApi();
-    if (!api?.delete) {
-      return;
-    }
-    await api.delete(nodeId);
+    await deleteNote(nodeId);
     const { selectedId } = get();
     if (selectedId === nodeId || selectedId?.startsWith(`${nodeId}/`)) {
       set({ selectedId: null, editorContent: '', savedContent: '' });
@@ -229,11 +209,7 @@ export const useNoteStore = create<INoteState>((set, get) => ({
   },
 
   moveNode: async (nodeId, targetParentId) => {
-    const api = getNoteApi();
-    if (!api?.move) {
-      return;
-    }
-    const moved = await api.move(nodeId, targetParentId);
+    const moved = await moveNote(nodeId, targetParentId);
     const { selectedId } = get();
     if (selectedId === nodeId) {
       set({ selectedId: moved.id });
@@ -248,11 +224,7 @@ export const useNoteStore = create<INoteState>((set, get) => ({
   },
 
   copyFile: async (fileId) => {
-    const api = getNoteApi();
-    if (!api?.copyFile) {
-      return;
-    }
-    const copied = await api.copyFile(fileId);
+    const copied = await copyNoteFile(fileId);
     await get().loadTree();
     await get().selectFile(copied.id);
   },

@@ -1,3 +1,9 @@
+import {
+  createSkillLocalDir,
+  getSkillRepoPath,
+  readSkillLocalFile,
+  writeSkillLocalFile,
+} from '@renderer/services/skill/api';
 import { computeSkillContentFingerprint } from './store-update';
 
 export interface ISkillTranslationMeta {
@@ -48,7 +54,7 @@ export async function readSkillTranslationSidecar(
   targetLanguage: string,
   translationMode: 'immersive' | 'full',
 ): Promise<ISkillTranslationSidecar | null> {
-  const repoPath = await window.api.skill.getRepoPath(skillId);
+  const repoPath = await getSkillRepoPath(skillId);
   if (!repoPath) {
     return null;
   }
@@ -56,8 +62,8 @@ export async function readSkillTranslationSidecar(
   const { metaPath, skillMdPath } = buildSkillTranslationPaths(targetLanguage, translationMode);
 
   const [metaEntry, contentEntry] = await Promise.all([
-    window.api.skill.readLocalFile(skillId, metaPath),
-    window.api.skill.readLocalFile(skillId, skillMdPath),
+    readSkillLocalFile(skillId, metaPath),
+    readSkillLocalFile(skillId, skillMdPath),
   ]);
 
   if (!metaEntry || metaEntry.isDirectory || !contentEntry || contentEntry.isDirectory) {
@@ -100,9 +106,9 @@ export async function writeSkillTranslationSidecar(input: {
     translatedAt: Date.now(),
   };
 
-  await window.api.skill.createLocalDir(input.skillId, baseDir);
-  await window.api.skill.writeLocalFile(input.skillId, skillMdPath, input.translatedContent);
-  await window.api.skill.writeLocalFile(input.skillId, metaPath, JSON.stringify(meta, null, 2));
+  await createSkillLocalDir(input.skillId, baseDir);
+  await writeSkillLocalFile(input.skillId, skillMdPath, input.translatedContent);
+  await writeSkillLocalFile(input.skillId, metaPath, JSON.stringify(meta, null, 2));
 
   return {
     content: input.translatedContent,

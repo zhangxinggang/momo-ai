@@ -4,6 +4,7 @@ export * from './kb';
 export * from './note';
 export * from './online-conf';
 export * from './prompt';
+export * from './prompt-backup';
 export * from './rules';
 export * from './settings';
 export * from './skill';

@@ -11,6 +11,8 @@ declare module '@momo/markdown' {
     className?: string;
     style?: CSSProperties;
     showCodeRowNumber?: boolean;
+    onHtmlChanged?: (html: string) => void;
+    onRemount?: () => void;
   }
 
   export const MdPreview: FC<IMdPreviewProps>;

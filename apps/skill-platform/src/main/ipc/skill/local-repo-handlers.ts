@@ -5,7 +5,9 @@ import path from 'path';
 import {
   SkillInstaller,
   buildSkillSyncUpdateFromRepo,
+  ensureSkillSessionWorkspace,
   executeSkillWorkspace,
+  writeSessionWorkspaceFile,
 } from '../../services/skill';
 import type { ISkillIPCContext } from './shared';
 import { ensureLocalRepoPath } from './shared';
@@ -30,6 +32,22 @@ async function resolveManagedRepoPath(context: ISkillIPCContext, skillId: string
     await context.db.update(skillId, { local_repo_path: managedRepoPath });
   }
   return managedRepoPath;
+}
+
+async function resolveSkillRepoPath(context: ISkillIPCContext, skillId: string): Promise<string> {
+  const skill = await context.db.getById(skillId);
+  if (!skill) {
+    throw new Error(`ISkill not found: ${skillId}`);
+  }
+
+  let repoPath = skill.local_repo_path?.trim() || '';
+  if (!repoPath) {
+    repoPath = (await ensureLocalRepoPath(context.db, skillId)) || '';
+  }
+  if (!repoPath) {
+    repoPath = await resolveManagedRepoPath(context, skillId);
+  }
+  return repoPath;
 }
 
 async function syncSkillContentFromRepo(
@@ -188,6 +206,40 @@ export function registerSkillLocalRepoHandlers({ db }: ISkillIPCContext): void {
         return null;
       }
       return SkillInstaller.readLocalRepoFileByPath(localPath, relativePath);
+    },
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.SKILL_READ_LOCAL_FILE_BUFFER,
+    async (_, skillId: string, relativePath: string) => {
+      if (typeof skillId !== 'string' || skillId.trim() === '') {
+        return null;
+      }
+      if (typeof relativePath !== 'string' || relativePath.trim() === '') {
+        return null;
+      }
+      const skill = await db.getById(skillId);
+      if (!skill) return null;
+      const repoPath = await ensureLocalRepoPath(db, skillId);
+      if (!repoPath) {
+        return null;
+      }
+      const buffer = await SkillInstaller.readLocalRepoFileBufferByPath(repoPath, relativePath);
+      return buffer ? Buffer.from(buffer).toString('base64') : null;
+    },
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.SKILL_READ_LOCAL_FILE_BUFFER_BY_PATH,
+    async (_, localPath: string, relativePath: string) => {
+      if (typeof localPath !== 'string' || localPath.trim() === '') {
+        return null;
+      }
+      if (typeof relativePath !== 'string' || relativePath.trim() === '') {
+        return null;
+      }
+      const buffer = await SkillInstaller.readLocalRepoFileBufferByPath(localPath, relativePath);
+      return buffer ? Buffer.from(buffer).toString('base64') : null;
     },
   );
 
@@ -397,27 +449,61 @@ export function registerSkillLocalRepoHandlers({ db }: ISkillIPCContext): void {
   });
 
   ipcMain.handle(
+    IPC_CHANNELS.SKILL_ENSURE_SESSION_WORKSPACE,
+    async (_, skillId: string, sessionId: string) => {
+      if (typeof skillId !== 'string' || skillId.trim() === '') {
+        throw new Error('skill:ensureSessionWorkspace requires skillId');
+      }
+      if (typeof sessionId !== 'string' || sessionId.trim() === '') {
+        throw new Error('skill:ensureSessionWorkspace requires sessionId');
+      }
+      const repoPath = await resolveSkillRepoPath({ db }, skillId);
+      const workspaceDir = await ensureSkillSessionWorkspace(repoPath, sessionId);
+      return { workspaceDir };
+    },
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.SKILL_WRITE_SESSION_FILE,
+    async (_, sessionId: string, relativePath: string, content: string) => {
+      if (typeof sessionId !== 'string' || sessionId.trim() === '') {
+        throw new Error('skill:writeSessionFile requires sessionId');
+      }
+      if (typeof relativePath !== 'string' || relativePath.trim() === '') {
+        throw new Error('skill:writeSessionFile requires relativePath');
+      }
+      if (typeof content !== 'string') {
+        throw new Error('skill:writeSessionFile requires string content');
+      }
+      await writeSessionWorkspaceFile(sessionId, relativePath, content);
+    },
+  );
+
+  ipcMain.handle(
     IPC_CHANNELS.SKILL_EXECUTE_WORKSPACE,
     async (
       _,
       skillId: string,
       userInput: string,
-      options?: { commands?: string[]; outputDir?: string },
+      options?: { commands?: string[]; outputDir?: string; sessionId?: string },
     ) => {
       if (typeof skillId !== 'string' || skillId.trim() === '') {
         throw new Error('skill:executeWorkspace requires skillId');
       }
-      const skill = await db.getById(skillId);
-      if (!skill) {
-        throw new Error(`ISkill not found: ${skillId}`);
-      }
 
-      let repoPath = skill.local_repo_path?.trim() || '';
-      if (!repoPath) {
-        repoPath = (await ensureLocalRepoPath(db, skillId)) || '';
-      }
-      if (!repoPath) {
-        repoPath = await resolveManagedRepoPath({ db }, skillId);
+      const sessionId = typeof options?.sessionId === 'string' ? options.sessionId.trim() : '';
+      const repoPath = await resolveSkillRepoPath({ db }, skillId);
+
+      if (sessionId) {
+        const workspaceDir = await ensureSkillSessionWorkspace(repoPath, sessionId);
+        return executeSkillWorkspace({
+          repoPath: workspaceDir,
+          sourceRepoPath: repoPath,
+          userInput: typeof userInput === 'string' ? userInput : '',
+          skillId,
+          commands: Array.isArray(options?.commands) ? options.commands : undefined,
+          sessionMode: true,
+        });
       }
 
       return executeSkillWorkspace({

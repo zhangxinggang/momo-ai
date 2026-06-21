@@ -1,4 +1,6 @@
 import { useAppName } from '@renderer/hooks/useAppName';
+import { closeWindow, maximizeWindow, minimizeWindow } from '@renderer/services/desktop';
+import { getSystemLogo } from '@renderer/services/system';
 import { Button } from 'antd';
 import { MinusIcon, SquareIcon, XIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -19,7 +21,7 @@ export function TitleBar() {
   }, []);
 
   useEffect(() => {
-    void window.api.system.getSystemLogo().then((systemLogo) => {
+    void getSystemLogo().then((systemLogo) => {
       setIco(systemLogo);
     });
   }, []);
@@ -28,16 +30,16 @@ export function TitleBar() {
   if (!isWindows) return null;
 
   const handleMinimize = () => {
-    window.electron?.minimize?.();
+    minimizeWindow();
   };
 
   const handleMaximize = () => {
-    window.electron?.maximize?.();
+    maximizeWindow();
     setIsMaximized(!isMaximized);
   };
 
   const handleClose = () => {
-    window.electron?.close?.();
+    closeWindow();
   };
 
   return (

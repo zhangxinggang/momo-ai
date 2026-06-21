@@ -3,11 +3,7 @@ import StrIcon from '~/components/Icon/Str';
 import { prefix } from '~/config';
 import { ICustomIcon } from '~/type';
 import { buildPlantumlPngUrl } from '../plantuml-encoder';
-import {
-  canvasElementToPngData,
-  fetchUrlAsBlob,
-  imgElementToPngData,
-} from './dom-to-png';
+import { canvasElementToPngData, fetchUrlAsBlob, imgElementToPngData } from './dom-to-png';
 import { svgElementToPngBlob } from './svg-to-image';
 
 interface IDiagramMetrics {

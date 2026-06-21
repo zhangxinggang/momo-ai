@@ -4,6 +4,7 @@ import type { IRuleFileId } from '@/types/modules/rules';
 import { ConfirmDialog } from '@renderer/components/ui/ConfirmDialog';
 import { PlatformIcon } from '@renderer/components/ui/PlatformIcon';
 import { useToast } from '@renderer/components/ui/Toast';
+import { openPath } from '@renderer/services/desktop';
 import { generateTextDiff } from '@renderer/services/rules/text-diff';
 import { useRulesStore } from '@renderer/store/rules';
 import {
@@ -98,7 +99,7 @@ export function RulesManager() {
       return;
     }
 
-    const result = await window.electron?.openPath?.(getParentDirectory(currentFile.path));
+    const result = await openPath(getParentDirectory(currentFile.path));
     if (result && !result.success) {
       showToast(result.error || '无法打开文件位置', 'error');
     }

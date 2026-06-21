@@ -1,5 +1,5 @@
 import { CloseOutlined, FolderAddOutlined, StarFilled, StarOutlined } from '@ant-design/icons';
-import { Button, Input, Switch, Tooltip } from 'antd';
+import { Button, Input, type InputRef, Switch, Tooltip } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 
 import type { IChatWorkspaceConfig, IChatWorkspacePreset } from '../../types/workspace';
@@ -16,8 +16,8 @@ export function ChatWorkspaceToolbar({ workspace }: IProps) {
   const [presetNameDraft, setPresetNameDraft] = useState('');
   const [renamingPresetId, setRenamingPresetId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
-  const createInputRef = useRef<HTMLInputElement>(null);
-  const renameInputRef = useRef<HTMLInputElement>(null);
+  const createInputRef = useRef<InputRef>(null);
+  const renameInputRef = useRef<InputRef>(null);
 
   const presets = workspace.presets ?? [];
   const activePresetId = workspace.activePresetId ?? null;

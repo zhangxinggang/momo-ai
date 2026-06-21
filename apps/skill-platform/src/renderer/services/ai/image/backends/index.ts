@@ -1,4 +1,3 @@
-export { EImageBackend, type IImageBackendConfig } from './types';
 export {
   detectDashScopeImageBackend,
   detectFluxBackend,
@@ -11,3 +10,4 @@ export {
 } from './detect';
 export { isImageGenerationConfig, isImageModel, resolveImageBackend } from './resolve';
 export { suggestRemoteModelAsImage } from './suggest';
+export { EImageBackend, type IImageBackendConfig } from './types';

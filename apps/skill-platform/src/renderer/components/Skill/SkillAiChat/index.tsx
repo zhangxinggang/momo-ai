@@ -7,6 +7,7 @@ import { AiChatShell } from '@renderer/components/Chat/AiChatShell';
 import { useToast } from '@renderer/components/ui/Toast';
 import { useAiChatViewTheme } from '@renderer/hooks/useAiChatViewTheme';
 import { useChatWorkspaceBinding } from '@renderer/hooks/useChatWorkspaceBinding';
+import { useLocalPathBinding } from '@renderer/hooks/useLocalPathBinding';
 import { useRankedChatModelGroups } from '@renderer/hooks/useRankedChatModelGroups';
 import { useStableModelResolver } from '@renderer/hooks/useStableModelResolver';
 import { useStableRef } from '@renderer/hooks/useStableRef';
@@ -39,6 +40,7 @@ export function SkillAiChat({
   const modelResolverRef = useStableModelResolver(aiModels);
   const chatModelOptionGroups = useRankedChatModelGroups(aiModels);
   const workspace = useChatWorkspaceBinding();
+  const localPath = useLocalPathBinding();
   const chatTheme = useAiChatViewTheme();
 
   const activeSkill = useMemo(
@@ -51,6 +53,7 @@ export function SkillAiChat({
   const skillsSummaryRef = useStableRef(skillsSummary);
   const activeSkillLineRef = useStableRef(activeSkillLine);
   const activeSkillRef = useStableRef(activeSkill);
+  const sessionIdRef = useStableRef(bootstrapSessionId);
 
   const handleNeedModel = useCallback(() => {
     showToast('请先在设置中配置并选择可用的对话模型', 'error');
@@ -62,6 +65,7 @@ export function SkillAiChat({
         aiModels,
         chatModelOptionGroups,
         workspace,
+        localPath,
         noAttachmentsMessage: 'SKILL 对话暂不支持附件，已忽略文件',
         onNoAttachments: (msg) => showToast(msg, 'warning'),
         callAIChatStream: createSkillLangGraphStream({
@@ -71,9 +75,10 @@ export function SkillAiChat({
           getActiveSkillLine: () => activeSkillLineRef.current,
           getActiveSkill: () => activeSkillRef.current,
           onNeedModel: handleNeedModel,
+          getSessionId: () => sessionIdRef.current,
         }),
       }),
-    [aiModels, chatModelOptionGroups, handleNeedModel, showToast, workspace],
+    [aiModels, chatModelOptionGroups, handleNeedModel, localPath, showToast, workspace],
   );
 
   return (
@@ -86,7 +91,7 @@ export function SkillAiChat({
         {activeSkill ? <SkillContextCard skill={activeSkill} /> : null}
         <p className={styles['skill-ai-chat-hint']}>
           {activeSkill
-            ? '将按当前 SKILL 完整指令执行：可写入仓库文件，并在检测到脚本时自动运行本地仓库命令'
+            ? '将按当前 SKILL 完整指令执行：产出写入临时工作区（不修改技能仓库），并在检测到脚本时自动运行'
             : '将结合您的全部 SKILL 进行规划与回答；选中具体技能后可按指令执行并产出文件'}
         </p>
       </div>

@@ -16,10 +16,13 @@ import { WorkflowStepsBar } from '@renderer/components/Workflow/WorkflowStepsBar
 import {
   ensureWorkflowAgentDir,
   ensureWorkflowBusinessAgentDir,
+  getWorkflowNodeDirPath,
   listWorkflowAgentDir,
   readWorkflowNodeMainMd,
   writeWorkflowNodeMainMd,
 } from '@renderer/services/workflow/agent-files';
+import { getWorkflow, isWorkflowAvailable } from '@renderer/services/workflow/api';
+import { fetchBusinessList } from '@renderer/services/workflow/business';
 import { getOrCreateWorkflowNodeSession } from '@renderer/services/workflow/chat-storage';
 import {
   getMacroUpstreamNodeName,
@@ -86,8 +89,7 @@ function isMacroStepAccessible(
  */
 export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
   const { message } = App.useApp();
-  const wfApi = window.api?.workflow;
-  const businessApi = window.api?.workflowBusiness;
+  const isWorkflowReady = isWorkflowAvailable();
   const prompts = usePromptStore((s) => s.prompts);
   const skills = useSkillStore((s) => s.skills);
   const aiModels = useSettingsStore((s) => s.aiModels);
@@ -121,17 +123,17 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
   );
 
   const loadWorkflow = useCallback(async () => {
-    if (!wfApi?.get || !businessApi?.getAll) {
+    if (!isWorkflowReady) {
       return;
     }
     try {
-      const found = await wfApi.get(workflowId);
+      const found = await getWorkflow(workflowId);
       if (!found) {
         message.error('加载工作流失败');
         onClose();
         return;
       }
-      const businesses = await businessApi.getAll(workflowId);
+      const businesses = await fetchBusinessList(workflowId);
       const foundBusiness = businesses.find((item) => item.id === businessId) ?? null;
       if (!foundBusiness) {
         message.error('加载业务失败');
@@ -174,12 +176,11 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
 
       for (let i = 0; i < resourceSteps.length; i++) {
         const step = resourceSteps[i];
-        const nodeRes = await window.api?.workflowAgent?.listDir(
+        outputDirs[step.nodeId] = await getWorkflowNodeDirPath(
           found.name,
           businessId,
           step.nodeName,
         );
-        outputDirs[step.nodeId] = nodeRes?.dirPath ?? null;
 
         const macroIndex = viewMacroSteps.findIndex((macro) => {
           if (macro.kind === 'resource') {
@@ -202,7 +203,7 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
       console.error(e);
       message.error('加载工作流失败');
     }
-  }, [businessApi, businessId, message, onClose, refreshNodeFilesState, wfApi, workflowId]);
+  }, [businessId, isWorkflowReady, message, onClose, refreshNodeFilesState, workflowId]);
 
   useEffect(() => {
     void loadWorkflow();

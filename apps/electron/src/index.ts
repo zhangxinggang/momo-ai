@@ -3,6 +3,8 @@ import type { IElectronShellInitOptions } from './main';
 
 export type { IElectronShellInitOptions };
 
+export type * from './types/config';
+
 export async function init(options: IElectronShellInitOptions): Promise<BrowserWindow | null> {
   const { default: runInit } = await import('./main');
   return runInit(options);

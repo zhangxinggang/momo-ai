@@ -1,6 +1,7 @@
 import { SettingItem, SettingSection } from '@renderer/components/Settings/SettingPrimitives';
 import { useToast } from '@renderer/components/ui/Toast';
 import { clearDatabase } from '@renderer/services/database';
+import { getUserDataPath, getUserDataPathStatus, openPath } from '@renderer/services/desktop';
 import { Button, Modal } from 'antd';
 import { ExternalLinkIcon, FolderIcon, TrashIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -18,8 +19,8 @@ export function DataSettings() {
     let mounted = true;
 
     void (async () => {
-      const status = await window.electron?.getDataPathStatus?.();
-      const resolvedPath = status?.currentPath ?? (await window.electron?.getDataPath?.()) ?? '';
+      const status = await getUserDataPathStatus();
+      const resolvedPath = status?.currentPath ?? (await getUserDataPath());
       if (mounted && resolvedPath) {
         setCurrentDataPath(resolvedPath);
       }
@@ -64,7 +65,7 @@ export function DataSettings() {
                 <p className='text-sm font-medium'>{'数据目录'}</p>
                 <Button
                   type='link'
-                  onClick={() => currentDataPath && window.electron?.openPath?.(currentDataPath)}
+                  onClick={() => currentDataPath && void openPath(currentDataPath)}
                   className='text-primary mt-0.5 flex h-auto cursor-pointer items-center gap-1 p-0 font-mono text-xs hover:underline'
                   title={'打开文件夹'}>
                   {currentDataPath || '加载中…'}

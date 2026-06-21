@@ -24,13 +24,16 @@ export function buildMacroStepViewModels(
   steps: IWorkflowStep[],
   nodeMap: Map<string, Node<IWorkflowResourceNodeData>>,
 ): IMacroStepViewModel[] {
-  return steps.flatMap((step) => {
+  const result: IMacroStepViewModel[] = [];
+
+  for (const step of steps) {
     if (step.kind === 'resource') {
       const node = nodeMap.get(step.step.nodeId);
       if (!node) {
-        return [];
+        continue;
       }
-      return [{ kind: 'resource' as const, ...step.step, node }];
+      result.push({ kind: 'resource', ...step.step, node });
+      continue;
     }
 
     const children = step.children
@@ -46,24 +49,25 @@ export function buildMacroStepViewModels(
       );
 
     if (children.length === 0) {
-      return [];
+      continue;
     }
 
     if (children.length === 1) {
       const only = children[0]!;
-      return [{ kind: 'resource' as const, ...only, node: only.node }];
+      result.push({ kind: 'resource', ...only, node: only.node });
+      continue;
     }
 
-    return [
-      {
-        kind: 'parallel' as const,
-        nodeId: step.nodeId,
-        nodeName: step.nodeName,
-        label: step.label,
-        children,
-      },
-    ];
-  });
+    result.push({
+      kind: 'parallel',
+      nodeId: step.nodeId,
+      nodeName: step.nodeName,
+      label: step.label,
+      children,
+    });
+  }
+
+  return result;
 }
 
 export function resolveActiveResourceStep(

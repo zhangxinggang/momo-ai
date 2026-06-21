@@ -1,49 +1,9 @@
+import { expandCompoundSkillCommand, filterSkillRunCommands } from './skill-command-filter';
+
 const CODE_BLOCK_RE = /```(?:skill-run|bash|sh|shell|powershell|cmd|zsh)\n([\s\S]*?)```/gi;
 
-const SKIP_COMMAND_PREFIXES = [
-  'find ',
-  'cat ',
-  'ls ',
-  'head ',
-  'tail ',
-  'grep ',
-  'echo ',
-  'pwd',
-  'which ',
-  'type ',
-  'dir ',
-  'more ',
-  'less ',
-];
-
-const RUN_COMMAND_PREFIXES = [
-  'python',
-  'py ',
-  'node ',
-  'npm ',
-  'npx ',
-  'pnpm ',
-  'yarn ',
-  'bash ',
-  'sh ',
-  'powershell',
-  '.\\',
-  './',
-];
-
 function isExecutableSkillCommand(line: string): boolean {
-  const trimmed = line.trim();
-  if (!trimmed || trimmed.startsWith('#')) {
-    return false;
-  }
-  const lower = trimmed.toLowerCase();
-  if (SKIP_COMMAND_PREFIXES.some((prefix) => lower.startsWith(prefix))) {
-    return false;
-  }
-  if (RUN_COMMAND_PREFIXES.some((prefix) => lower.startsWith(prefix))) {
-    return true;
-  }
-  return /\.(py|js|mjs|ps1|sh|bat|cmd)(\s|$)/i.test(trimmed);
+  return expandCompoundSkillCommand(line).length > 0;
 }
 
 /** 从 AI 回复文本中解析 skill-run / shell 命令块 */
@@ -56,8 +16,10 @@ export function parseSkillRunCommandsFromText(reply: string): string[] {
     const block = match[1] ?? '';
     for (const rawLine of block.split('\n')) {
       const line = rawLine.trim();
-      if (isExecutableSkillCommand(line)) {
-        commands.push(line);
+      for (const command of expandCompoundSkillCommand(line)) {
+        if (isExecutableSkillCommand(command)) {
+          commands.push(command);
+        }
       }
     }
   }
@@ -65,14 +27,26 @@ export function parseSkillRunCommandsFromText(reply: string): string[] {
   return [...new Set(commands)];
 }
 
-/** 清洗并规范化待执行的命令行（去重、去空、过滤只读探索命令） */
-export function sanitizeSkillCommandLines(commandLines: string[]): string[] {
+/** 清洗命令行并过滤 install / QA 等 */
+export function prepareSkillCommandLines(commandLines: string[]): {
+  commands: string[];
+  optionalCommands: Set<string>;
+  skippedNotes: string[];
+} {
   const cleaned: string[] = [];
   for (const raw of commandLines) {
-    const line = raw.trim().replace(/^[`'"]+|[`'"]+$/g, '');
-    if (isExecutableSkillCommand(line)) {
-      cleaned.push(line);
+    for (const part of expandCompoundSkillCommand(raw.trim().replace(/^[`'"]+|[`'"]+$/g, ''))) {
+      if (isExecutableSkillCommand(part)) {
+        cleaned.push(part);
+      }
     }
   }
-  return [...new Set(cleaned)];
+  return filterSkillRunCommands([...new Set(cleaned)]);
 }
+
+/** 清洗并规范化待执行的命令行（去重、去空、过滤 install/QA 等） */
+export function sanitizeSkillCommandLines(commandLines: string[]): string[] {
+  return prepareSkillCommandLines(commandLines).commands;
+}
+
+export { filterSkillRunCommands };

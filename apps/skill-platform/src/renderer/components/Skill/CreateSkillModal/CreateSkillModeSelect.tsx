@@ -1,11 +1,5 @@
 import { Button } from 'antd';
-import {
-  BrainIcon,
-  CuboidIcon,
-  EditIcon,
-  FolderOpenIcon,
-  GithubIcon,
-} from 'lucide-react';
+import { BrainIcon, CuboidIcon, EditIcon, FolderOpenIcon, GithubIcon } from 'lucide-react';
 
 import type { ECreateMode } from './types';
 

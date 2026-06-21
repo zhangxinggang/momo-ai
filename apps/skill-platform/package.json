@@ -13,12 +13,12 @@
     "LICENSE"
   ],
   "scripts": {
-    "dev": "pnpm --filter @momo/server run build && vite",
+    "dev": "pnpm --filter @momo/server run build && pnpm --filter @momo/file-editor run build && vite",
     "dev:web": "vite --config vite.web.config.ts",
-    "electron:build:linux": "vite build && electron-builder --linux --x64 --publish never",
-    "electron:build:mac": "vite build && electron-builder --mac --x64 --arm64 --publish never",
-    "electron:build:win": "vite build && electron-builder --win --x64 --publish never",
-    "electron:dev": "pnpm --filter @momo/server run build && pnpm --filter @momo/electron run build && vite",
+    "electron:build:linux": "pnpm --filter @momo/file-editor run build && vite build && electron-builder --linux --x64 --publish never",
+    "electron:build:mac": "pnpm --filter @momo/file-editor run build && vite build && electron-builder --mac --x64 --arm64 --publish never",
+    "electron:build:win": "pnpm --filter @momo/file-editor run build && vite build && electron-builder --win --x64 --publish never",
+    "electron:dev": "pnpm --filter @momo/server run build && pnpm --filter @momo/electron run build && pnpm --filter @momo/file-editor run build && vite",
     "perf:budget": "node --experimental-strip-types scripts/check-large-data-budgets.mts",
     "perf:budget:ci": "node --experimental-strip-types scripts/profile-large-datasets.mts --prompts=5000 --skills=2000 --iterations=20",
     "perf:large-data": "node --experimental-strip-types scripts/profile-large-datasets.mts",

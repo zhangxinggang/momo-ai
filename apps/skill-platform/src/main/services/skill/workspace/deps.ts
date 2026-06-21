@@ -59,7 +59,6 @@ const IMPORT_RE = /(?:import\s+[^'"]+\s+from|import)\s+['"]([^'"]+)['"]/g;
 const PY_IMPORT_RE = /^\s*import\s+([a-zA-Z_][\w.]*)/gm;
 const PY_FROM_IMPORT_RE = /^\s*from\s+([a-zA-Z_][\w.]*)\s+import/gm;
 
-/** Python import 名与 PyPI 包名不一致时的映射 */
 const PYTHON_IMPORT_TO_PIP: Record<string, string> = {
   PIL: 'Pillow',
   cv2: 'opencv-python',
@@ -77,6 +76,39 @@ const PYTHON_IMPORT_TO_PIP: Record<string, string> = {
   ruamel: 'ruamel.yaml',
   googleapiclient: 'google-api-python-client',
 };
+
+/** Python 标准库，无需 pip 安装 */
+const PYTHON_STDLIB_MODULES = new Set([
+  'os',
+  'sys',
+  'socket',
+  'subprocess',
+  'tempfile',
+  'pathlib',
+  'json',
+  're',
+  'io',
+  'shutil',
+  'glob',
+  'argparse',
+  'typing',
+  'datetime',
+  'collections',
+  'itertools',
+  'functools',
+  'contextlib',
+  'importlib',
+  'zipfile',
+  'xml',
+  'html',
+  'urllib',
+  'http',
+  'email',
+  'logging',
+  'traceback',
+  'unittest',
+  'office',
+]);
 
 async function pathExists(targetPath: string): Promise<boolean> {
   try {
@@ -158,7 +190,7 @@ function parsePythonImportName(specifier: string): string | null {
     return null;
   }
   const topLevel = trimmed.split('.')[0];
-  if (!topLevel || topLevel === '__future__') {
+  if (!topLevel || topLevel === '__future__' || PYTHON_STDLIB_MODULES.has(topLevel)) {
     return null;
   }
   return topLevel;
@@ -291,6 +323,9 @@ async function collectPythonDependencies(
       const entries = await fs.readdir(scriptsDir, { withFileTypes: true });
       for (const entry of entries) {
         if (!entry.isFile() || !/\.py$/i.test(entry.name)) {
+          continue;
+        }
+        if (entry.name === 'soffice.py') {
           continue;
         }
         for (const dep of await collectPythonImportsFromFile(path.join(scriptsDir, entry.name))) {

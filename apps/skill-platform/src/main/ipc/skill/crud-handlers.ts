@@ -6,6 +6,7 @@ import {
   SkillInstaller,
   hasMetadataChanges,
   isInternalSkillRepoEntry,
+  isSkillExportExcludedEntry,
   syncFrontmatterToRepo,
 } from '../../services/skill';
 import type { ISkillIPCContext } from './shared';
@@ -203,7 +204,7 @@ export function registerSkillCrudHandlers({ db }: ISkillIPCContext): void {
     const zipFiles: Record<string, Uint8Array> = {};
 
     for (const file of fileEntries) {
-      if (isInternalSkillRepoEntry(file.path)) {
+      if (isInternalSkillRepoEntry(file.path) || isSkillExportExcludedEntry(file.path)) {
         continue;
       }
       zipFiles[file.path.replace(/\\/g, '/')] = file.data;

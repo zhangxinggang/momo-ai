@@ -1,86 +1,10 @@
 import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
+import { isTextFilePath } from '@/utils/text-file';
 import { ipcMain } from 'electron';
 import fs from 'fs';
 import path from 'path';
 
 const MAX_FILE_SIZE = 1024 * 50;
-const TEXT_EXTENSIONS = new Set([
-  '.txt',
-  '.md',
-  '.json',
-  '.js',
-  '.ts',
-  '.tsx',
-  '.jsx',
-  '.py',
-  '.java',
-  '.c',
-  '.cpp',
-  '.h',
-  '.hpp',
-  '.cs',
-  '.go',
-  '.rs',
-  '.rb',
-  '.php',
-  '.swift',
-  '.kt',
-  '.scala',
-  '.sh',
-  '.bash',
-  '.zsh',
-  '.fish',
-  '.bat',
-  '.cmd',
-  '.ps1',
-  '.html',
-  '.htm',
-  '.css',
-  '.scss',
-  '.less',
-  '.sass',
-  '.xml',
-  '.yaml',
-  '.yml',
-  '.toml',
-  '.ini',
-  '.cfg',
-  '.conf',
-  '.sql',
-  '.graphql',
-  '.proto',
-  '.dockerfile',
-  '.env',
-  '.gitignore',
-  '.editorconfig',
-  '.prettierrc',
-  '.eslintrc',
-  '.vue',
-  '.svelte',
-  '.astro',
-  '.csv',
-  '.log',
-  '.lock',
-]);
-
-function isTextFile(filePath: string): boolean {
-  const ext = path.extname(filePath).toLowerCase();
-  const baseName = path.basename(filePath).toLowerCase();
-  if (TEXT_EXTENSIONS.has(ext)) return true;
-  if (
-    [
-      'makefile',
-      'dockerfile',
-      'readme',
-      'license',
-      'changelog',
-      'authors',
-      'contributors',
-    ].includes(baseName)
-  )
-    return true;
-  return false;
-}
 
 interface IDirEntry {
   name: string;
@@ -149,7 +73,7 @@ export function registerWorkspaceIPC(): void {
       return { success: false, error: '文件路径不能为空', content: '' };
     }
     try {
-      if (!isTextFile(filePath)) {
+      if (!isTextFilePath(filePath)) {
         return { success: false, error: '非文本文件，跳过', content: '', skipped: true };
       }
       const stat = fs.statSync(filePath);

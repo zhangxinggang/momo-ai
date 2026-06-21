@@ -1,5 +1,12 @@
 import type { INoteTreeNode } from '@/types/modules/note';
 import type { IChatMessage } from '@momo/aichat';
+import {
+  createNoteFile,
+  isNoteApiAvailable,
+  listNoteTree,
+  readNoteFile,
+  writeNoteFile,
+} from '@renderer/services/note/api';
 import { App, Button, Input, Modal, TreeSelect } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -66,7 +73,7 @@ export function SaveToNoteAction({ message }: IProps) {
   );
 
   const loadTree = useCallback(async () => {
-    const list = await window.api?.note?.listTree?.();
+    const list = await listNoteTree();
     if (!Array.isArray(list)) {
       setTreeNodes([]);
       return;
@@ -82,7 +89,7 @@ export function SaveToNoteAction({ message }: IProps) {
   }, [loadTree, open]);
 
   const handleSave = async () => {
-    if (!selectedPath || !window.api?.note) {
+    if (!selectedPath || !isNoteApiAvailable()) {
       toast.warning('请选择保存位置');
       return;
     }
@@ -100,15 +107,15 @@ export function SaveToNoteAction({ message }: IProps) {
           toast.warning('请输入文件名称');
           return;
         }
-        const created = await window.api.note.createFile(selectedPath, name, 'text');
+        const created = await createNoteFile(selectedPath, name, 'text');
         const filePath = typeof created === 'string' ? created : created.id;
-        await window.api.note.writeFile(filePath, content);
+        await writeNoteFile(filePath, content);
       } else {
-        const existingFile = await window.api.note.readFile(selectedPath);
+        const existingFile = await readNoteFile(selectedPath);
         const existing =
           typeof existingFile === 'string' ? existingFile : (existingFile?.content ?? '');
         const merged = `${existing}\n\n${content}`;
-        await window.api.note.writeFile(selectedPath, merged);
+        await writeNoteFile(selectedPath, merged);
       }
       toast.success('保存成功');
       setOpen(false);

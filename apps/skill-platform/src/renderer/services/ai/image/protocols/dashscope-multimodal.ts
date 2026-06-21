@@ -1,5 +1,5 @@
-import { detectDashScopeImageBackend } from '../backends';
 import type { DImageGenerationResponse, IAIConfig } from '../../types';
+import { detectDashScopeImageBackend } from '../backends';
 import type { IImageGenerateOptions, IImageProtocolAdapter } from './types';
 
 function resolveDashScopeHost(apiUrl: string): string {
@@ -31,7 +31,11 @@ function normalizeDashScopeSize(size?: string): string | undefined {
 
 function buildImagePayload(image: { mimeType: string; base64: string }): string {
   const trimmed = image.base64.trim();
-  if (trimmed.startsWith('data:') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+  if (
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://')
+  ) {
     return trimmed;
   }
   const mimeType = image.mimeType || 'image/png';
@@ -67,9 +71,13 @@ function parseDashScopeErrorMessage(errorText: string, fallback: string): string
   }
 }
 
-function extractImagesFromDashScopeResponse(result: Record<string, unknown>): DImageGenerationResponse['data'] {
+function extractImagesFromDashScopeResponse(
+  result: Record<string, unknown>,
+): DImageGenerationResponse['data'] {
   const output = result.output as Record<string, unknown> | undefined;
-  const choices = (output?.choices ?? output?.results) as Array<Record<string, unknown>> | undefined;
+  const choices = (output?.choices ?? output?.results) as
+    | Array<Record<string, unknown>>
+    | undefined;
   const message = choices?.[0]?.message as Record<string, unknown> | undefined;
   const content = message?.content as Array<Record<string, unknown>> | undefined;
 
@@ -133,7 +141,9 @@ async function generateDashScopeMultimodalImage(
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(parseDashScopeErrorMessage(errorText, `DashScope 生图失败 (${response.status})`));
+    throw new Error(
+      parseDashScopeErrorMessage(errorText, `DashScope 生图失败 (${response.status})`),
+    );
   }
 
   const result = (await response.json()) as Record<string, unknown>;

@@ -8,13 +8,16 @@ import { NoteTreePanel } from '@renderer/components/Note/NoteTreePanel';
 import { PromptTreePanel } from '@renderer/components/Prompt/PromptTreePanel';
 import badgeStyles from '@renderer/components/Settings/SettingBadge/index.module.less';
 import { ToolboxPanel, useHasToolboxModule } from '@renderer/components/Toolbox';
+import { useToast } from '@renderer/components/ui/Toast';
 import { WorkflowTreePanel } from '@renderer/components/Workflow/WorkflowTreePanel';
 import { useConfirmLeaveEditors } from '@renderer/hooks/useConfirmLeaveEditors';
 import {
   useOnlineStoreSources,
   useSyncDefaultOnlineStoreSource,
 } from '@renderer/hooks/useOnlineStoreSources';
+import { usePromptBackup } from '@renderer/hooks/usePromptBackup';
 import { useTreeRootCreate } from '@renderer/hooks/useTreeRootCreate';
+import { isWindowFullscreen } from '@renderer/services/desktop';
 import { buildPromptStats } from '@renderer/services/prompt/filter';
 import { buildSkillStats } from '@renderer/services/skill/stats';
 import {
@@ -34,6 +37,7 @@ import {
   Clock3Icon,
   CommandIcon,
   CuboidIcon,
+  DownloadIcon,
   FolderPlusIcon,
   GitBranchIcon,
   GlobeIcon,
@@ -42,6 +46,7 @@ import {
   PlusIcon,
   SettingsIcon,
   StoreIcon,
+  UploadIcon,
   WrenchIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -211,6 +216,66 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
       if (currentPage !== 'home') onNavigate('home');
     },
   });
+
+  const { showToast } = useToast();
+  const {
+    exportAllPrompts,
+    importPromptBackup: importPromptBackupFile,
+    isExporting: isExportingPrompts,
+    isImporting: isImportingPrompts,
+  } = usePromptBackup();
+
+  const handleExportPrompts = useCallback(async () => {
+    try {
+      const result = await exportAllPrompts();
+      if (result.canceled) {
+        return;
+      }
+      showToast(`已导出 ${result.promptCount ?? 0} 个提示词`, 'success');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '导出失败';
+      showToast(message, 'error');
+    }
+  }, [exportAllPrompts, showToast]);
+
+  const handleImportPrompts = useCallback(async () => {
+    try {
+      const result = await importPromptBackupFile();
+      if (result.canceled) {
+        return;
+      }
+      showToast(
+        `已导入 ${result.promptCount ?? 0} 个提示词、${result.folderCount ?? 0} 个目录`,
+        'success',
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '导入失败';
+      showToast(message, 'error');
+    }
+  }, [importPromptBackupFile, showToast]);
+
+  const promptBackupActions = (
+    <>
+      <button
+        type='button'
+        className='text-muted-foreground hover:text-foreground rounded p-1 transition-colors disabled:opacity-50'
+        title='导出提示词'
+        aria-label='导出提示词'
+        disabled={isExportingPrompts}
+        onClick={() => void handleExportPrompts()}>
+        <DownloadIcon className='h-4 w-4' />
+      </button>
+      <button
+        type='button'
+        className='text-muted-foreground hover:text-foreground rounded p-1 transition-colors disabled:opacity-50'
+        title='导入提示词'
+        aria-label='导入提示词'
+        disabled={isImportingPrompts}
+        onClick={() => void handleImportPrompts()}>
+        <UploadIcon className='h-4 w-4' />
+      </button>
+    </>
+  );
 
   const noteRootCreate = useTreeRootCreate({
     treeData: noteTreeData,
@@ -394,10 +459,8 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
     setIsMac(platform.includes('mac'));
 
     const checkFullscreen = async () => {
-      if (window.electron?.isFullscreen) {
-        const full = await window.electron.isFullscreen();
-        setIsFullscreen(full);
-      }
+      const full = await isWindowFullscreen();
+      setIsFullscreen(full);
     };
 
     checkFullscreen();
@@ -610,6 +673,7 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
                   onCreateDirectory={promptRootCreate.openCreateFolder}
                   createItemTitle={'新建提示词'}
                   onCreateItem={promptRootCreate.openCreateItem}
+                  extraActions={promptBackupActions}
                 />
                 {promptRootCreate.createModal}
 

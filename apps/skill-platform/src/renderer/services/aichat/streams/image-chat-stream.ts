@@ -1,11 +1,15 @@
-import type { DImageGenerationResponse, IAIConfig, IImageReferenceAttachment } from '@renderer/services/ai';
+import type { IChatStreamMessage, IChatStreamStats } from '@momo/aichat';
+import type {
+  DImageGenerationResponse,
+  IAIConfig,
+  IImageReferenceAttachment,
+} from '@renderer/services/ai';
 import { generateImage } from '@renderer/services/ai';
 import {
   EImageCapability,
   isImageGenerationConfig,
   resolveImageModelCapabilities,
 } from '@renderer/services/ai/image/capabilities';
-import type { IChatStreamMessage, IChatStreamStats } from '@momo/aichat';
 
 export interface IImageChatStreamInput {
   config: IAIConfig;
@@ -75,8 +79,7 @@ export async function runImageGenerationInChat(input: IImageChatStreamInput): Pr
   try {
     const result = await generateImage(config, prompt, {
       n: 1,
-      referenceImages:
-        refs.length > 0 ? refs.slice(0, capabilities.maxReferenceImages) : undefined,
+      referenceImages: refs.length > 0 ? refs.slice(0, capabilities.maxReferenceImages) : undefined,
     });
 
     const markdown = formatImageResultAsMarkdown(result);

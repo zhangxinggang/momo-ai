@@ -1,11 +1,11 @@
 import type { IScannedSkill, ISkill } from '@/types/modules';
 import { CenteredLoading } from '@renderer/components/ui/CenteredLoading';
 import { useToast } from '@renderer/components/ui/Toast';
+import { useAppName } from '@renderer/hooks/useAppName';
 import {
   SKILL_GALLERY_STAGGER,
   useIncrementalSkillRender,
 } from '@renderer/hooks/useIncrementalSkillRender';
-import { useAppName } from '@renderer/hooks/useAppName';
 import { useSkillStoreRemoteSync } from '@renderer/hooks/useSkillStoreRemoteSync';
 import { updateSkillTags, type ESkillBatchTagMode } from '@renderer/services/skill/batch-utils';
 import { filterVisibleSkills } from '@renderer/services/skill/filter';
@@ -24,7 +24,7 @@ import {
   TrashIcon,
   XIcon,
 } from 'lucide-react';
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { SkillAiChatModal } from '../SkillAiChatModal';
 import { SkillGalleryCard } from '../SkillGalleryCard';
 import { SkillQuickInstall } from '../SkillQuickInstall';
@@ -119,8 +119,9 @@ export function SkillLibraryView() {
     skills,
   ]);
 
-  const { renderedCount, largeListThreshold, isChunkRendering } =
-    useIncrementalSkillRender(filteredSkills.length);
+  const { renderedCount, largeListThreshold, isChunkRendering } = useIncrementalSkillRender(
+    filteredSkills.length,
+  );
 
   const visibleSkills = useMemo(() => {
     if (filteredSkills.length <= largeListThreshold) {

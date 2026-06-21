@@ -22,3 +22,17 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+.local-path {
+  cursor: pointer;
+  color: hsl(var(--primary, 210 100% 45%));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.wrap :global(.md-editor-preview) .local-path,
+.wrap :global(.md-editor-previewOnly) .local-path,
+.plain .local-path {
+  cursor: pointer;
+  pointer-events: auto;
+}

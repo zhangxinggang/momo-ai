@@ -1,4 +1,5 @@
 import type { IRegistrySkill } from '@/types/modules';
+import { fetchSkillRemoteContent } from '@renderer/services/skill/api';
 
 import {
   filterSkillsShLeaderboardEntries,
@@ -36,9 +37,7 @@ export function createSkillsShStoreLoader() {
       return cached;
     }
 
-    const leaderboardHtml = await window.api.skill.fetchRemoteContent(
-      getSkillsShIndexUrl(normalizedFilterKey),
-    );
+    const leaderboardHtml = await fetchSkillRemoteContent(getSkillsShIndexUrl(normalizedFilterKey));
     const nextCache = {
       entries: parseSkillsShLeaderboard(leaderboardHtml, {
         limit: Number.MAX_SAFE_INTEGER,
@@ -55,7 +54,7 @@ export function createSkillsShStoreLoader() {
     }
 
     try {
-      const detailHtml = await window.api.skill.fetchRemoteContent(entry.detailUrl);
+      const detailHtml = await fetchSkillRemoteContent(entry.detailUrl);
       const parsed = parseSkillsShDetail(detailHtml, entry);
       detailCache.set(entry.detailUrl, parsed);
       return parsed;

@@ -1,5 +1,5 @@
-import fs from 'fs';
 import react from '@vitejs/plugin-react';
+import fs from 'fs';
 import path from 'path';
 import { defineConfig, type PluginOption } from 'vite';
 import electron from 'vite-plugin-electron';
@@ -105,6 +105,7 @@ const sharedResolveAlias = {
 };
 
 export default defineConfig({
+  base: './',
   plugins: [
     copyStaticToDist(),
     stripUseClientDirective(),
@@ -171,7 +172,6 @@ export default defineConfig({
         '../../packages/momo-aichat/src/styles/chat.css',
       ),
       '@momo/workflow': path.resolve(__dirname, '../../packages/momo-workflow/src/index.ts'),
-      '@momo/file-editor': path.resolve(__dirname, '../../packages/momo-file-editor/src/index.ts'),
       '@momo/tree': path.resolve(__dirname, '../../packages/momo-tree/src/index.ts'),
       // 须先于 @momo/markdown，否则 @momo/markdown/src/... 会被错误归到主入口
       '@momo/markdown/src': path.resolve(__dirname, '../../packages/momo-markdown/src'),

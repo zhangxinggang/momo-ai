@@ -3,8 +3,10 @@ import * as path from 'path';
 
 import { getSkillRuntimeDir, getSkillTempOutputDir } from '../../../runtime-paths';
 import { runSkillCommandLines } from './command-runner';
+import { resolveCommandScriptsInWorkspace } from './command-script-resolve';
 import { ensureSkillWorkspaceDependencies } from './deps';
-import { sanitizeSkillCommandLines } from './sanitize-commands';
+import { prepareSkillCommandLines } from './sanitize-commands';
+import { validateNodeScripts } from './script-validation';
 
 export interface ISkillWorkspaceExecuteInput {
   repoPath: string;
@@ -12,8 +14,12 @@ export interface ISkillWorkspaceExecuteInput {
   skillId?: string;
   /** AI 回复中解析出的可执行命令（优先于自动探测） */
   commands?: string[];
-  /** 自定义产出目录（工作流节点目录等）；默认使用 temp/<skillId> */
+  /** 自定义产出目录（工作流节点目录等）；默认使用 temp/<skillId> 或 workspace/output */
   outputDir?: string;
+  /** 会话沙箱模式：cwd 已在 temp/<sessionId>，不再复制产出到 temp */
+  sessionMode?: boolean;
+  /** 会话沙箱模式下只读源技能仓库路径（用于补拷贝缺失脚本） */
+  sourceRepoPath?: string;
 }
 
 export interface ISkillWorkspaceExecuteResult {
@@ -34,6 +40,10 @@ export interface ISkillWorkspaceExecuteResult {
   dependencySetup?: string;
   /** 全局 ISkill Node 运行时目录 */
   skillRuntimeDir?: string;
+  /** 可选 QA 步骤失败列表（不影响退出码） */
+  optionalFailures?: string[];
+  /** 被跳过的 skill-run 命令说明 */
+  skippedCommandNotes?: string[];
 }
 
 interface IRunnableCommand {
@@ -91,6 +101,16 @@ async function pythonScriptNeedsArgs(fullPath: string): Promise<boolean> {
 
 const PYTHON_CMD_RE = /\b(?:python|py)\s+(?:-[^\s]+\s+)*["']?([^\s"']+\.py)["']?(.*)$/i;
 
+/** 不应自动补参的 Python 工具脚本 */
+const PYTHON_SKIP_ARG_PATCH = new Set([
+  'soffice.py',
+  'validate.py',
+  'unpack.py',
+  'pack.py',
+  'thumbnail.py',
+  'clean.py',
+]);
+
 async function ensurePythonCommandHasArgs(
   commandLine: string,
   repoPath: string,
@@ -104,6 +124,15 @@ async function ensurePythonCommandHasArgs(
   const scriptRelPath = match[1];
   const scriptPath = path.resolve(repoPath, scriptRelPath);
   const existingArgs = (match[2] ?? '').trim();
+  const scriptBaseName = path.basename(scriptRelPath).toLowerCase();
+
+  if (PYTHON_SKIP_ARG_PATCH.has(scriptBaseName)) {
+    return commandLine;
+  }
+
+  if (existingArgs.startsWith('-')) {
+    return commandLine;
+  }
 
   if (!(await pythonScriptNeedsArgs(scriptPath))) {
     return commandLine;
@@ -424,11 +453,23 @@ async function copyRepoFilesToTempDir(
   return copied;
 }
 
-function mergeRunOutput(results: Awaited<ReturnType<typeof runSkillCommandLines>>): {
+function stderrIndicatesRuntimeFailure(stderr: string): boolean {
+  const text = stderr.trim();
+  if (!text) {
+    return false;
+  }
+  return /^Error[:：]/m.test(text) || /\n\s+at\s+\S/m.test(text);
+}
+
+function mergeRunOutput(
+  results: Awaited<ReturnType<typeof runSkillCommandLines>>,
+  optionalIndices: Set<number>,
+): {
   stdout: string;
   stderr: string;
   exitCode: number | null;
   commands: string[];
+  optionalFailures: string[];
 } {
   const commands = results.map((item) => item.commandLine);
   const stdout = results
@@ -439,13 +480,32 @@ function mergeRunOutput(results: Awaited<ReturnType<typeof runSkillCommandLines>
     .map((item) => item.stderr)
     .filter(Boolean)
     .join('\n\n');
-  const lastExit = results.length > 0 ? results[results.length - 1].exitCode : null;
-  const hasFailure = results.some((item) => item.exitCode !== 0 && item.exitCode !== null);
+
+  const optionalFailures: string[] = [];
+  let lastRequiredExit: number | null = 0;
+  let hasRequiredFailure = false;
+
+  results.forEach((item, index) => {
+    const exitFailed = item.exitCode !== 0 && item.exitCode !== null;
+    const stderrFailed = item.exitCode === 0 && stderrIndicatesRuntimeFailure(item.stderr);
+    const failed = exitFailed || stderrFailed;
+    if (!failed) {
+      return;
+    }
+    if (optionalIndices.has(index)) {
+      optionalFailures.push(item.commandLine.trim());
+      return;
+    }
+    hasRequiredFailure = true;
+    lastRequiredExit = stderrFailed && !exitFailed ? 1 : item.exitCode;
+  });
+
   return {
     stdout,
     stderr,
-    exitCode: hasFailure ? lastExit : lastExit,
+    exitCode: hasRequiredFailure ? lastRequiredExit : 0,
     commands,
+    optionalFailures,
   };
 }
 
@@ -455,9 +515,12 @@ export async function executeSkillWorkspace(
 ): Promise<ISkillWorkspaceExecuteResult> {
   const repoPath = path.normalize(input.repoPath?.trim() || '');
   const skillId = input.skillId?.trim() || 'skill';
+  const sessionMode = input.sessionMode === true;
   const outputDir = input.outputDir?.trim()
     ? path.normalize(input.outputDir.trim())
-    : getSkillTempOutputDir(skillId);
+    : sessionMode
+      ? path.join(path.normalize(input.repoPath?.trim() || ''), 'output')
+      : getSkillTempOutputDir(skillId);
 
   if (!repoPath) {
     return {
@@ -485,9 +548,16 @@ export async function executeSkillWorkspace(
 
   await fs.mkdir(outputDir, { recursive: true });
 
-  const explicitCommands = sanitizeSkillCommandLines(input.commands ?? []);
+  const prepared = prepareSkillCommandLines(input.commands ?? []);
+  const skippedCommandNotes = prepared.skippedNotes;
+  const optionalIndices = new Set<number>();
+  prepared.commands.forEach((cmd, index) => {
+    if (prepared.optionalCommands.has(cmd)) {
+      optionalIndices.add(index);
+    }
+  });
 
-  let plannedCommands = [...explicitCommands];
+  let plannedCommands = [...prepared.commands];
   if (plannedCommands.length === 0) {
     const runnable = await detectRunnable(repoPath);
     if (!runnable) {
@@ -510,6 +580,41 @@ export async function executeSkillWorkspace(
     supplementedCommands.push(await ensurePythonCommandHasArgs(cmd, repoPath, outputDir));
   }
   plannedCommands = supplementedCommands;
+
+  if (sessionMode && input.sourceRepoPath?.trim()) {
+    const scriptResolve = await resolveCommandScriptsInWorkspace({
+      workspaceDir: repoPath,
+      sourceRepoPath: input.sourceRepoPath.trim(),
+      commandLines: plannedCommands,
+    });
+    if (scriptResolve.error) {
+      return {
+        attempted: true,
+        stdout: '',
+        stderr: scriptResolve.error,
+        exitCode: 1,
+        outputFiles: [],
+        tempOutputFiles: [],
+        outputDir,
+        error: scriptResolve.error,
+      };
+    }
+    plannedCommands = scriptResolve.commandLines;
+  }
+
+  const scriptValidationError = await validateNodeScripts(repoPath, plannedCommands);
+  if (scriptValidationError) {
+    return {
+      attempted: true,
+      stdout: '',
+      stderr: scriptValidationError,
+      exitCode: 1,
+      outputFiles: [],
+      tempOutputFiles: [],
+      outputDir,
+      error: `脚本校验失败：${scriptValidationError}。请修正脚本后重试。`,
+    };
+  }
 
   const depSetup = await ensureSkillWorkspaceDependencies({
     repoPath,
@@ -542,20 +647,33 @@ export async function executeSkillWorkspace(
     depSetup.moduleSearchPaths,
   );
 
-  const merged = mergeRunOutput(runResults);
+  const merged = mergeRunOutput(runResults, optionalIndices);
   const setupPrefix = depSetup.logs.length > 0 ? `${depSetup.logs.join('\n')}\n\n` : '';
+  const skippedPrefix =
+    skippedCommandNotes.length > 0 ? `${skippedCommandNotes.join('\n')}\n\n` : '';
   const outputFiles = await collectRepoOutputFiles(repoPath, startedAt - 2000);
-  const copiedToTemp = await copyRepoFilesToTempDir(repoPath, outputDir, outputFiles);
-  const directTempFiles = await collectTempOutputFiles(outputDir, startedAt - 2000);
-  const tempOutputFiles = [
-    ...new Set([...copiedToTemp, ...directTempFiles.map((p) => path.resolve(p))]),
-  ];
+  let tempOutputFiles: string[] = [];
+  if (sessionMode) {
+    const directTempFiles = await collectTempOutputFiles(outputDir, startedAt - 2000);
+    const workspaceOutputFiles = outputFiles.map((relativePath) =>
+      path.resolve(repoPath, relativePath),
+    );
+    tempOutputFiles = [
+      ...new Set([...workspaceOutputFiles, ...directTempFiles.map((p) => path.resolve(p))]),
+    ];
+  } else {
+    const copiedToTemp = await copyRepoFilesToTempDir(repoPath, outputDir, outputFiles);
+    const directTempFiles = await collectTempOutputFiles(outputDir, startedAt - 2000);
+    tempOutputFiles = [
+      ...new Set([...copiedToTemp, ...directTempFiles.map((p) => path.resolve(p))]),
+    ];
+  }
 
   return {
     attempted: true,
     command: merged.commands.join(' && '),
     commands: merged.commands,
-    stdout: `${setupPrefix}${merged.stdout}`.trim(),
+    stdout: `${skippedPrefix}${setupPrefix}${merged.stdout}`.trim(),
     stderr: merged.stderr,
     exitCode: merged.exitCode,
     outputFiles,
@@ -563,5 +681,7 @@ export async function executeSkillWorkspace(
     outputDir,
     dependencySetup: depSetup.logs.length > 0 ? depSetup.logs.join('\n') : undefined,
     skillRuntimeDir: getSkillRuntimeDir(),
+    optionalFailures: merged.optionalFailures.length > 0 ? merged.optionalFailures : undefined,
+    skippedCommandNotes: skippedCommandNotes.length > 0 ? skippedCommandNotes : undefined,
   };
 }

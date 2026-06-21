@@ -1,8 +1,5 @@
-import type {
-  IDeviceManagementSettings,
-  IRegistrySkill,
-  ISkillStoreSource,
-} from '@/types/modules';
+import type { IDeviceManagementSettings, IRegistrySkill, ISkillStoreSource } from '@/types/modules';
+import { fetchSkillRemoteContent, fetchSkillRemotePost } from '@renderer/services/skill/api';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { loadClawHubStorePage } from '@renderer/services/skill/clawhub-store';
@@ -129,7 +126,7 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
   }, [remoteStoreEntries]);
 
   const loadSkillHubStore = useCallback(async (page: number, keyword?: string) => {
-    return loadSkillHubStorePage((url) => window.api.skill.fetchRemoteContent(url), {
+    return loadSkillHubStorePage((url) => fetchSkillRemoteContent(url), {
       page,
       pageSize: SKILLHUB_PAGE_SIZE,
       preferZh: true,
@@ -138,7 +135,7 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
   }, []);
 
   const loadClawHubStore = useCallback(async (cursor?: string) => {
-    return loadClawHubStorePage((url, body) => window.api.skill.fetchRemotePost(url, body), {
+    return loadClawHubStorePage((url, body) => fetchSkillRemotePost(url, body), {
       cursor,
       numItems: 25,
     });

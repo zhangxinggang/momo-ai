@@ -7,6 +7,7 @@ import {
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { renameWorkflowAgentDir } from '@renderer/services/workflow/agent-files';
+import { isWorkflowAvailable } from '@renderer/services/workflow/api';
 import { deleteWorkflowWithCleanup } from '@renderer/services/workflow/delete-workflow';
 import { buildWorkflowTree, toFolderLikeList } from '@renderer/services/workflow/tree';
 import { useUIStore, useWorkflowStore } from '@renderer/store';
@@ -196,7 +197,7 @@ export function WorkflowTreePanel() {
     [selectWorkflow],
   );
 
-  if (!window.api?.workflow) {
+  if (!isWorkflowAvailable()) {
     return null;
   }
 

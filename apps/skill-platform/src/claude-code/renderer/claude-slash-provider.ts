@@ -1,6 +1,10 @@
 import type { ISlashCommandItem, ISlashCommandsConfig } from '@momo/aichat';
 import { CLI_MODEL_PREFIX, ECliAgent } from '@momo/aichat';
 
+import {
+  isClaudeCodeApiAvailable,
+  listClaudeSlashCommands,
+} from '@renderer/services/claude-code/api';
 import { EClaudeSlashSource, type IClaudeSlashItem } from '../types';
 
 const SOURCE_LABELS: Record<EClaudeSlashSource, string> = {
@@ -23,7 +27,7 @@ function mapItem(item: IClaudeSlashItem): ISlashCommandItem {
 
 /** 构建注入 momo-aichat 的斜杠命令配置（仅桌面端 + cli:claude） */
 export function createClaudeSlashCommandsConfig(): ISlashCommandsConfig | undefined {
-  if (typeof window.api?.claudeCode?.listSlashCommands !== 'function') {
+  if (!isClaudeCodeApiAvailable()) {
     return undefined;
   }
 
@@ -34,11 +38,14 @@ export function createClaudeSlashCommandsConfig(): ISlashCommandsConfig | undefi
     list: async (query, ctx) => {
       const workspacePaths =
         ctx.workspaceEnabled && ctx.workspacePaths.length > 0 ? ctx.workspacePaths : [];
-      const result = await window.api.claudeCode.listSlashCommands({
+      const result = await listClaudeSlashCommands({
         query,
         workspacePaths,
         cwd: workspacePaths[0],
       });
+      if (!result) {
+        return { items: [], warning: undefined };
+      }
       return {
         items: result.items.map(mapItem),
         warning: result.warning,

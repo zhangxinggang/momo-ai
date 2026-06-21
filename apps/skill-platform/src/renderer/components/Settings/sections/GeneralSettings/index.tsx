@@ -1,5 +1,5 @@
-import { useAppName } from '@renderer/hooks/useAppName';
 import { SettingItem, SettingSection } from '@renderer/components/Settings/SettingPrimitives';
+import { useAppName } from '@renderer/hooks/useAppName';
 import { useSettingsStore } from '@renderer/store';
 import { Select, Switch } from 'antd';
 

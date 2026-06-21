@@ -1,3 +1,4 @@
+import { getAPPRootPath } from '@momo/electron';
 import { app } from 'electron';
 import fs from 'fs';
 import path from 'path';
@@ -120,15 +121,30 @@ export function getSkillsSourceDir(): string {
   return path.join(getDataDir(), 'skills', 'source');
 }
 
-/** 启动项目根目录（开发/打包均以 process.cwd() 为准） */
+/** 应用根目录（与 @momo/electron getAPPRootPath 一致） */
 export function getProjectRoot(): string {
-  return process.cwd();
+  return getAPPRootPath();
 }
 
-/** 技能执行产出目录：<项目根>/temp/<skillId> */
+/** 应用临时目录：<应用根>/temp */
+export function getAppTempDir(): string {
+  return path.join(getProjectRoot(), 'temp');
+}
+
+/** 消毒会话 id，用于 temp 子目录名 */
+export function sanitizeSessionId(sessionId: string): string {
+  return sessionId.replace(/[^a-zA-Z0-9_-]/g, '_') || 'session';
+}
+
+/** SKILL 对话会话工作区：<应用根>/temp/<sessionId> */
+export function getSkillSessionWorkspaceDir(sessionId: string): string {
+  return path.join(getAppTempDir(), sanitizeSessionId(sessionId));
+}
+
+/** 技能执行产出目录（非会话模式）：<应用根>/temp/<skillId> */
 export function getSkillTempOutputDir(skillId: string): string {
   const safeId = skillId.replace(/[^a-zA-Z0-9_-]/g, '_') || 'skill';
-  return path.join(getProjectRoot(), 'temp', safeId);
+  return path.join(getAppTempDir(), safeId);
 }
 
 /** 工作流 Agent 根目录：<userData>/agent */

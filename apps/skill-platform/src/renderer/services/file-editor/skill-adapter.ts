@@ -1,5 +1,19 @@
 import type { IFileEditorAdapter, IFileTreeEntry } from '@momo/file-editor';
 import { normalizeRelativePath } from '@momo/file-editor';
+import {
+  createSkillLocalDir,
+  createSkillLocalDirByPath,
+  deleteSkillLocalFile,
+  deleteSkillLocalFileByPath,
+  listSkillLocalFiles,
+  listSkillLocalFilesByPath,
+  readSkillLocalFile,
+  readSkillLocalFileBuffer,
+  readSkillLocalFileBufferByPath,
+  readSkillLocalFileByPath,
+  writeSkillLocalFile,
+  writeSkillLocalFileByPath,
+} from '@renderer/services/skill/api';
 
 function isHiddenSkillRepoEntry(repoPath: string): boolean {
   return repoPath
@@ -23,8 +37,8 @@ export function createSkillFileEditorAdapter(
   return {
     async listTree() {
       const list = isPathMode
-        ? await window.api.skill.listLocalFilesByPath(localPath!)
-        : await window.api.skill.listLocalFiles(skillId);
+        ? await listSkillLocalFilesByPath(localPath!)
+        : await listSkillLocalFiles(skillId);
       return list.map((entry) => ({
         relativePath: normalizeRelativePath(entry.path),
         isDirectory: entry.isDirectory,
@@ -45,17 +59,28 @@ export function createSkillFileEditorAdapter(
 
     async readFile(relativePath: string) {
       const result = isPathMode
-        ? await window.api.skill.readLocalFileByPath(localPath!, relativePath)
-        : await window.api.skill.readLocalFile(skillId, relativePath);
+        ? await readSkillLocalFileByPath(localPath!, relativePath)
+        : await readSkillLocalFile(skillId, relativePath);
       return result?.content ?? '';
+    },
+
+    async readFileBuffer(relativePath: string) {
+      try {
+        return isPathMode
+          ? await readSkillLocalFileBufferByPath(localPath!, relativePath)
+          : await readSkillLocalFileBuffer(skillId, relativePath);
+      } catch (error) {
+        console.error(error);
+        return null;
+      }
     },
 
     async writeFile(relativePath: string, content: string) {
       try {
         if (isPathMode) {
-          await window.api.skill.writeLocalFileByPath(localPath!, relativePath, content);
+          await writeSkillLocalFileByPath(localPath!, relativePath, content);
         } else {
-          await window.api.skill.writeLocalFile(skillId, relativePath, content);
+          await writeSkillLocalFile(skillId, relativePath, content);
         }
         return true;
       } catch (error) {
@@ -67,9 +92,9 @@ export function createSkillFileEditorAdapter(
     async deletePath(relativePath: string) {
       try {
         if (isPathMode) {
-          await window.api.skill.deleteLocalFileByPath(localPath!, relativePath);
+          await deleteSkillLocalFileByPath(localPath!, relativePath);
         } else {
-          await window.api.skill.deleteLocalFile(skillId, relativePath);
+          await deleteSkillLocalFile(skillId, relativePath);
         }
         return true;
       } catch (error) {
@@ -81,9 +106,9 @@ export function createSkillFileEditorAdapter(
     async createDirectory(relativePath: string) {
       try {
         if (isPathMode) {
-          await window.api.skill.createLocalDirByPath(localPath!, relativePath);
+          await createSkillLocalDirByPath(localPath!, relativePath);
         } else {
-          await window.api.skill.createLocalDir(skillId, relativePath);
+          await createSkillLocalDir(skillId, relativePath);
         }
         return true;
       } catch (error) {

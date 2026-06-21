@@ -5,14 +5,13 @@
  */
 
 import {
-  EditorSelection,
   EditorState,
   Extension,
   RangeSetBuilder,
   StateEffect,
   StateField,
 } from '@codemirror/state';
-import { Decoration, DecorationSet, EditorView, WidgetType } from '@codemirror/view';
+import { Decoration, DecorationSet, EditorView, ViewPlugin, WidgetType } from '@codemirror/view';
 
 export interface IFindTextsContext {
   state: EditorState;
@@ -77,6 +76,96 @@ interface IShortenerState {
 
 const isExpandedRange = (ranges: ShortenedRange[], from: number, to: number) => {
   return ranges.some((range) => range.from === from && range.to === to);
+};
+
+const addExpandedRange = (ranges: ShortenedRange[], from: number, to: number): ShortenedRange[] => {
+  if (isExpandedRange(ranges, from, to)) {
+    return ranges;
+  }
+  return [...ranges, { from, to }];
+};
+
+const selectionOverlapsRange = (selFrom: number, selTo: number, from: number, to: number) => {
+  return selFrom <= to && selTo >= from;
+};
+
+const collectSelectionExpandedRanges = (
+  state: EditorState,
+  expanded: ShortenedRange[],
+  options: ITextShortenerOptions,
+): ShortenedRange[] => {
+  const selection = state.selection.main;
+  if (selection.empty && selection.from === 0 && selection.to === 0) {
+    return expanded;
+  }
+
+  let nextExpanded = expanded;
+
+  for (let i = 1; i <= state.doc.lines; i++) {
+    const line = state.doc.line(i);
+    const text = line.text;
+    defaultTextRegex.lastIndex = 0;
+    const ranges =
+      options.findTexts?.({
+        state,
+        lineText: text,
+        lineNumber: line.number,
+        lineFrom: line.from,
+        lineTo: line.to,
+        defaultTextRegex,
+      }) ?? findDefaultTextRanges(text);
+
+    for (const range of ranges) {
+      if (!range) continue;
+
+      const [relativeFrom, relativeTo] = range;
+      if (
+        typeof relativeFrom !== 'number' ||
+        typeof relativeTo !== 'number' ||
+        relativeFrom < 0 ||
+        relativeTo <= relativeFrom ||
+        relativeFrom >= text.length ||
+        relativeTo > text.length
+      ) {
+        continue;
+      }
+
+      const raw = text.slice(relativeFrom, relativeTo);
+      if (!raw || raw.length <= options.maxLength) {
+        continue;
+      }
+
+      const from = line.from + relativeFrom;
+      const to = line.from + relativeTo;
+      if (selectionOverlapsRange(selection.from, selection.to, from, to)) {
+        nextExpanded = addExpandedRange(nextExpanded, from, to);
+      }
+    }
+  }
+
+  return nextExpanded;
+};
+
+const HOVER_COLLAPSE_DELAY_MS = 120;
+
+const shouldKeepRangeExpanded = (
+  view: EditorView,
+  expanded: ShortenedRange[],
+  event: MouseEvent,
+): boolean => {
+  if ((event.target as Element | null)?.closest('.cm-short-text')) {
+    return true;
+  }
+
+  const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+  const selection = view.state.selection.main;
+
+  return expanded.some(({ from, to }) => {
+    if (pos != null && pos >= from && pos <= to) {
+      return true;
+    }
+    return selectionOverlapsRange(selection.from, selection.to, from, to);
+  });
 };
 
 export const createTextShortener = (options: ITextShortenerOptions): Extension => {
@@ -161,21 +250,14 @@ export const createTextShortener = (options: ITextShortenerOptions): Extension =
       span.title = this.raw;
       span.style.display = 'inline';
       span.style.textDecoration = 'underline';
-      span.addEventListener('mousedown', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
+      span.addEventListener('mouseenter', () => {
         view.dispatch({
-          selection: EditorSelection.cursor(this.from),
           effects: toggleShortTextEffect.of({
             from: this.from,
             to: this.to,
             expand: true,
           }),
         });
-        view.focus();
-      });
-      span.addEventListener('click', (event) => {
-        event.preventDefault();
       });
       return span;
     }
@@ -216,7 +298,7 @@ export const createTextShortener = (options: ITextShortenerOptions): Extension =
       for (const effect of tr.effects) {
         if (effect.is(toggleShortTextEffect)) {
           if (effect.value.expand) {
-            expanded = [{ from: effect.value.from, to: effect.value.to }];
+            expanded = addExpandedRange(expanded, effect.value.from, effect.value.to);
           } else {
             expanded = expanded.filter(
               ({ from, to }) => from !== effect.value.from || to !== effect.value.to,
@@ -229,11 +311,18 @@ export const createTextShortener = (options: ITextShortenerOptions): Extension =
         }
       }
 
+      if (tr.selection) {
+        const selectionExpanded = collectSelectionExpandedRanges(tr.state, expanded, options);
+        if (selectionExpanded !== expanded) {
+          expanded = selectionExpanded;
+        }
+      }
+
       if (!expandedChanged && expanded !== value.expanded) {
         expandedChanged = true;
       }
 
-      if (tr.docChanged || expandedChanged) {
+      if (tr.docChanged || tr.selection || expandedChanged) {
         const result = shorten(tr.state, expanded);
         return result;
       }
@@ -244,30 +333,46 @@ export const createTextShortener = (options: ITextShortenerOptions): Extension =
     provide: (field) => EditorView.decorations.compute([field], (state) => state.field(field).deco),
   });
 
-  const collapse = EditorView.domEventHandlers({
-    mousedown(event, view) {
-      const state = view.state.field(shortenerField, false);
+  const hoverCollapsePlugin = ViewPlugin.fromClass(
+    class {
+      private leaveTimer: ReturnType<typeof setTimeout> | null = null;
 
-      if (!state || state.expanded.length === 0) {
-        return false;
-      }
+      constructor(readonly view: EditorView) {}
 
-      const target = event.target as Node | null;
-
-      if (target && view.dom.contains(target)) {
-        const pos = view.posAtDOM(target, 0);
-        if (pos != null && pos !== -1) {
-          const isInsideExpanded = state.expanded.some(({ from, to }) => pos >= from && pos <= to);
-          if (isInsideExpanded) {
-            return false;
-          }
+      destroy() {
+        if (this.leaveTimer) {
+          clearTimeout(this.leaveTimer);
         }
       }
 
-      view.dispatch({ effects: collapseShortTextEffect.of(undefined) });
-      return false;
+      scheduleCollapseCheck(event: MouseEvent) {
+        if (this.leaveTimer) {
+          clearTimeout(this.leaveTimer);
+        }
+        this.leaveTimer = setTimeout(() => {
+          this.leaveTimer = null;
+          const field = this.view.state.field(shortenerField, false);
+          if (!field?.expanded.length) {
+            return;
+          }
+          if (shouldKeepRangeExpanded(this.view, field.expanded, event)) {
+            return;
+          }
+          this.view.dispatch({ effects: collapseShortTextEffect.of(undefined) });
+        }, HOVER_COLLAPSE_DELAY_MS);
+      }
     },
-  });
+    {
+      eventHandlers: {
+        mousemove(event) {
+          this.scheduleCollapseCheck(event);
+        },
+        mouseleave(event) {
+          this.scheduleCollapseCheck(event);
+        },
+      },
+    },
+  );
 
-  return [shortenerField, collapse];
+  return [shortenerField, hoverCollapsePlugin];
 };

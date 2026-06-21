@@ -1,4 +1,11 @@
-import type { EAIProtocol, ISettings, ISkillProject } from '@/types/modules';
+import type { EAIProtocol, ISkillProject } from '@/types/modules';
+import {
+  setAutoLaunch,
+  setCloseAction,
+  setDebugMode,
+  setMinimizeToTray,
+} from '@renderer/services/desktop';
+import { syncSettingsToMain } from '@renderer/services/settings/api';
 import type {
   EAIUsageScenario,
   ECreationMode,
@@ -345,16 +352,6 @@ interface ISettingsState {
   setAutoScanStoreSkillsBeforeInstall: (enabled: boolean) => void;
 }
 
-function syncSettingsToMain(settings: Partial<ISettings>): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  void window.api?.settings
-    ?.set(settings)
-    .catch((error: unknown) => console.warn('Failed to sync settings to main process:', error));
-}
-
 export const useSettingsStore = create<ISettingsState>()(
   persist(
     (set, get) => {
@@ -563,28 +560,28 @@ export const useSettingsStore = create<ISettingsState>()(
           // Update auto launch with current minimizeOnLaunch setting
           // 更新开机自启，同时传递 minimizeOnLaunch 设置
           const minimizeOnLaunch = get().minimizeOnLaunch;
-          window.electron?.setAutoLaunch?.(enabled, minimizeOnLaunch);
+          setAutoLaunch(enabled, minimizeOnLaunch);
         },
         setMinimizeOnLaunch: (enabled) => {
           setTouched({ minimizeOnLaunch: enabled });
           // Notify main process to update tray status
           // 通知主进程更新托盘状态
-          window.electron?.setMinimizeToTray?.(enabled);
+          setMinimizeToTray(enabled);
           // If auto launch is enabled, update the openAsHidden setting
           // 如果开机自启已启用，更新 openAsHidden 设置
           const launchAtStartup = get().launchAtStartup;
           if (launchAtStartup) {
-            window.electron?.setAutoLaunch?.(true, enabled);
+            setAutoLaunch(true, enabled);
           }
         },
         setCloseAction: (action) => {
           setTouched({ closeAction: action });
           // Notify main process of close action change / 通知主进程更新关闭行为
-          window.electron?.setCloseAction?.(action);
+          setCloseAction(action);
         },
         setDebugMode: (enabled) => {
           setTouched({ debugMode: enabled });
-          window.electron?.setDebugMode?.(enabled);
+          setDebugMode(enabled);
         },
         setEnableNotifications: (enabled) => setTouched({ enableNotifications: enabled }),
         setShowCopyNotification: (enabled) => setTouched({ showCopyNotification: enabled }),
@@ -729,14 +726,14 @@ export const useSettingsStore = create<ISettingsState>()(
           // Initialize tray status
           // 初始化托盘状态
           if (state.minimizeOnLaunch) {
-            window.electron?.setMinimizeToTray?.(true);
+            setMinimizeToTray(true);
           }
           if (state.debugMode) {
-            window.electron?.setDebugMode?.(true);
+            setDebugMode(true);
           }
           // Sync close action
           if (state.closeAction) {
-            window.electron?.setCloseAction?.(state.closeAction);
+            setCloseAction(state.closeAction);
           }
         },
 

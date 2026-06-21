@@ -1,4 +1,9 @@
-import { MdEditor, type IExposeParam, type TToolbarNames, type TUploadImgEvent } from '@momo/markdown';
+import {
+  MdEditor,
+  type IExposeParam,
+  type TToolbarNames,
+  type TUploadImgEvent,
+} from '@momo/markdown';
 import type { UploadProps } from 'antd';
 import { Button, Input, Upload } from 'antd';
 import { AlertCircleIcon, SparklesIcon, UploadIcon } from 'lucide-react';
@@ -29,7 +34,10 @@ interface IProps {
   isGenerating: boolean;
   skillMdEditorRef: RefObject<IExposeParam | null>;
   skillMdToolbars: TToolbarNames[];
-  onFieldChange: <K extends keyof IManualSkillFormState>(key: K, value: IManualSkillFormState[K]) => void;
+  onFieldChange: <K extends keyof IManualSkillFormState>(
+    key: K,
+    value: IManualSkillFormState[K],
+  ) => void;
   onMdFileUpload: UploadProps['beforeUpload'];
   onAIPolish: () => void;
   onDrop: (event: DragEvent) => void;
@@ -128,7 +136,10 @@ export function CreateSkillManualPanel({
         <div className='mb-2 flex flex-wrap items-center justify-between gap-2'>
           <label className='block text-sm font-medium'>{'指令 (SKILL.md)'}</label>
           <div className='flex flex-wrap items-center gap-2'>
-            <Upload showUploadList={false} accept='.md,.markdown,.txt' beforeUpload={onMdFileUpload}>
+            <Upload
+              showUploadList={false}
+              accept='.md,.markdown,.txt'
+              beforeUpload={onMdFileUpload}>
               <Button type='default' size='small' icon={<UploadIcon className='h-3.5 w-3.5' />}>
                 {'上传 .md'}
               </Button>

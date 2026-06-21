@@ -1,8 +1,9 @@
 import type { ISkillPlatform } from '@/types/constants/platforms';
 import type { ISkill } from '@/types/modules';
 import { PlatformIcon } from '@renderer/components/ui/PlatformIcon';
-import { useAppName } from '@renderer/hooks/useAppName';
 import { useToast } from '@renderer/components/ui/Toast';
+import { useAppName } from '@renderer/hooks/useAppName';
+import { detectSkillPlatforms, getSupportedSkillPlatforms } from '@renderer/services/skill/api';
 import {
   syncSkillsToPlatforms,
   unsyncSkillsFromPlatforms,
@@ -71,8 +72,8 @@ export function SkillBatchDeployDialog({ skills, onClose, onComplete }: IProps) 
       setLoadingPlatforms(true);
       try {
         const [platforms, detected] = await Promise.all([
-          window.api.skill.getSupportedPlatforms(),
-          window.api.skill.detectPlatforms(),
+          getSupportedSkillPlatforms(),
+          detectSkillPlatforms(),
         ]);
         if (cancelled) {
           return;

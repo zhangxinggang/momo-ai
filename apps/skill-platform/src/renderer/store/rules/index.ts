@@ -7,6 +7,16 @@ import type {
 } from '@/types/modules/rules';
 import { create } from 'zustand';
 
+import {
+  addRuleProject,
+  listRules,
+  readRule,
+  removeRuleProject,
+  resolveRuleConflict,
+  rewriteRule,
+  saveRule,
+  scanRules,
+} from '@renderer/services/rules/api';
 import { getOrderedGlobalRuleFiles } from '@renderer/services/rules/platform-order';
 import { useSettingsStore } from '@renderer/store/settings';
 
@@ -89,9 +99,7 @@ export const useRulesStore = create<IRulesState>((set, get) => ({
     const requestId = ++latestLoadFilesRequestId;
     set({ isLoading: true, error: null });
     try {
-      const allFiles = options?.force
-        ? await window.api.rules.scan()
-        : await window.api.rules.list();
+      const allFiles = options?.force ? await scanRules() : await listRules();
       const files = filterVisibleRuleFiles(allFiles);
       if (requestId !== latestLoadFilesRequestId) {
         return;
@@ -127,7 +135,7 @@ export const useRulesStore = create<IRulesState>((set, get) => ({
     const requestId = ++latestSelectRuleRequestId;
     set({ selectedRuleId: ruleId, isLoading: true, error: null, aiSummary: null });
     try {
-      const file = await window.api.rules.read(ruleId);
+      const file = await readRule(ruleId);
       if (requestId !== latestSelectRuleRequestId || get().selectedRuleId !== ruleId) {
         return;
       }
@@ -157,7 +165,7 @@ export const useRulesStore = create<IRulesState>((set, get) => ({
 
     set({ isSaving: true, error: null });
     try {
-      const updated = await window.api.rules.save(selectedRuleId, get().draftContent);
+      const updated = await saveRule(selectedRuleId, get().draftContent);
       const nextFiles = get().files.map((file) =>
         file.id === updated.id ? { ...file, exists: true, path: updated.path } : file,
       );
@@ -182,7 +190,7 @@ export const useRulesStore = create<IRulesState>((set, get) => ({
 
     set({ isSaving: true, error: null });
     try {
-      const updated = await window.api.rules.resolveConflict(selectedRuleId, strategy);
+      const updated = await resolveRuleConflict(selectedRuleId, strategy);
       const nextFiles = get().files.map((file) =>
         file.id === updated.id
           ? {
@@ -229,7 +237,7 @@ export const useRulesStore = create<IRulesState>((set, get) => ({
 
     set({ isRewriting: true, error: null, aiSummary: null });
     try {
-      const result = await window.api.rules.rewrite({
+      const result = await rewriteRule({
         instruction,
         currentContent: get().draftContent,
         fileName: currentFile.name,
@@ -256,8 +264,8 @@ export const useRulesStore = create<IRulesState>((set, get) => ({
   addProjectRule: async (input) => {
     set({ isLoading: true, error: null });
     try {
-      await window.api.rules.addProject(input);
-      const files = await window.api.rules.list();
+      await addRuleProject(input);
+      const files = await listRules();
       const created = files.find(
         (file) =>
           file.id.startsWith('project:') &&
@@ -282,8 +290,8 @@ export const useRulesStore = create<IRulesState>((set, get) => ({
   removeProjectRule: async (projectId) => {
     set({ isLoading: true, error: null });
     try {
-      await window.api.rules.removeProject(projectId);
-      const files = await window.api.rules.list();
+      await removeRuleProject(projectId);
+      const files = await listRules();
       const removedRuleId = `project:${projectId}`;
       const nextSelectedRuleId =
         get().selectedRuleId === removedRuleId ? (files[0]?.id ?? null) : get().selectedRuleId;

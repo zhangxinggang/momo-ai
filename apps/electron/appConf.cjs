@@ -11,6 +11,7 @@ module.exports = {
   server: {
     httpPort: 8081,
     httpsPort: 8080,
+    filePreviewBaseUrl: 'https://demo.file-viewer.app',
     upload: {
       maxFileSize: 1000 * 1024 * 1024,
     },

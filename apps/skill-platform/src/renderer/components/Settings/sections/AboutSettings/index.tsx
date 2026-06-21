@@ -3,6 +3,7 @@ import { MarkdownRenderer } from '@momo/aichat';
 import { SettingItem, SettingSection } from '@renderer/components/Settings/SettingPrimitives';
 import { useAiChatViewTheme } from '@renderer/hooks/useAiChatViewTheme';
 import { useAppName } from '@renderer/hooks/useAppName';
+import { openExternalUrl } from '@renderer/services/desktop';
 import { useOnlineConfStore } from '@renderer/store/online-conf';
 import { Button, Modal } from 'antd';
 import { useState } from 'react';
@@ -30,7 +31,7 @@ export function AboutSettings() {
     if (!downloadUrl) {
       return;
     }
-    void window.electron?.openExternal?.(downloadUrl);
+    void openExternalUrl(downloadUrl);
   };
 
   return (

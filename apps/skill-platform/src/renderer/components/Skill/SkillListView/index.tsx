@@ -1,6 +1,11 @@
 import type { ISkillPlatform } from '@/types/constants/platforms';
 import type { ESkillSafetyLevel, ISkill } from '@/types/modules';
 import { PlatformIcon } from '@renderer/components/ui/PlatformIcon';
+import {
+  detectSkillPlatforms,
+  getSkillMdInstallStatusBatch,
+  getSupportedSkillPlatforms,
+} from '@renderer/services/skill/api';
 import { useSkillStore } from '@renderer/store';
 import { Button } from 'antd';
 import {
@@ -108,9 +113,9 @@ export function SkillListView({
   useEffect(() => {
     const loadPlatforms = async () => {
       try {
-        const platforms = await window.api.skill.getSupportedPlatforms();
+        const platforms = await getSupportedSkillPlatforms();
         setSupportedPlatforms(platforms);
-        const detected = await window.api.skill.detectPlatforms();
+        const detected = await detectSkillPlatforms();
         setDetectedPlatforms(detected);
       } catch (e) {
         console.error('Failed to load platforms:', e);
@@ -138,9 +143,10 @@ export function SkillListView({
       }
 
       try {
-        const statusByName = (await window.api.skill.getMdInstallStatusBatch(
-          missingNames,
-        )) as Record<string, unknown>;
+        const statusByName = (await getSkillMdInstallStatusBatch(missingNames)) as Record<
+          string,
+          unknown
+        >;
 
         for (const [name, status] of Object.entries(statusByName)) {
           skillPlatformStatusCache.set(name, normalizePlatformStatusMap(status));

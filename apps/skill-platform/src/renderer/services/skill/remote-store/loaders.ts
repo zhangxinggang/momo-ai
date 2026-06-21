@@ -3,6 +3,7 @@ import type {
   DMarketplaceSkillEntry,
   IRegistrySkill,
 } from '@/types/modules';
+import { fetchSkillRemoteContent, syncSkillGitStore } from '@renderer/services/skill/api';
 
 import { mapScannedSkillsToRegistry } from '../git-store-mapper';
 import { parseFrontmatter, toTitleCase } from '../github-store';
@@ -16,7 +17,7 @@ export async function loadGitDownloadStore(
   forceRefresh = false,
   gitRef = 'main',
 ): Promise<IRegistrySkill[]> {
-  const result = await window.api.skill.syncGitStore(repoUrl, forceRefresh, gitRef);
+  const result = await syncSkillGitStore(repoUrl, forceRefresh, gitRef);
   return mapScannedSkillsToRegistry(result.skills, repoUrl);
 }
 
@@ -39,7 +40,7 @@ export async function loadMarketplaceStore(
   }
   visited.add(resolvedUrl);
 
-  const raw = await window.api.skill.fetchRemoteContent(resolvedUrl).catch(() => null);
+  const raw = await fetchSkillRemoteContent(resolvedUrl).catch(() => null);
   if (!raw) return [];
 
   const data = parseJson<DMarketplaceRegistryDocument>(raw, {});
@@ -76,7 +77,7 @@ export async function loadMarketplaceStore(
       let content = typeof item.content === 'string' ? item.content : '';
       if (!content && contentUrl) {
         try {
-          content = await window.api.skill.fetchRemoteContent(contentUrl);
+          content = await fetchSkillRemoteContent(contentUrl);
         } catch {
           content = '';
         }

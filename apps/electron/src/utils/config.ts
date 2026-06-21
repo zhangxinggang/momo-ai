@@ -5,8 +5,9 @@ import packageJson from '../../package.json';
 import { mergeDeep } from '@momo/utils';
 import { CONFIG_FILE } from './constant';
 import { getAPPRootPath, getPackagePath } from './path';
+import type { IAppConfig } from '../types/config';
 
-export const getAppConfig = () => {
+export const getAppConfig = (): IAppConfig => {
   const rootPath = getAPPRootPath();
   const promisePath = path.join(rootPath, CONFIG_FILE);
   const selfBuildPath = path.join(getPackagePath(), CONFIG_FILE);

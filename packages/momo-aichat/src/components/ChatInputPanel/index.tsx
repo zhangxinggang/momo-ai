@@ -11,11 +11,14 @@ import React, {
 import { useAiChatConfig } from '../../contexts/AiChatConfigContext';
 import { useChatContext } from '../../contexts/ChatContext';
 import { useSlashCommandTrigger } from '../../hooks/useSlashCommandTrigger';
+import { useNoteReferenceTrigger } from '../../hooks/useNoteReferenceTrigger';
 import '../../styles/chat.css';
 import { ChatAttachmentIcon } from '../../utils/attachment-icon';
 import { ChatAgentModeControl } from '../ChatAgentModeControl';
 import { ChatFeatureDropdown } from '../ChatFeatureDropdown';
+import { ChatMentionTextarea, type IChatMentionTextareaRef } from '../ChatMentionTextarea';
 import { ChatWorkspaceToolbar } from '../ChatWorkspaceToolbar';
+import { NoteReferencePopover } from '../NoteReferencePopover';
 import { SlashCommandPopover } from '../SlashCommandPopover';
 
 export interface IChatInputPanelRef {
@@ -64,7 +67,9 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
     ref,
   ) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const mentionTextareaRef = useRef<IChatMentionTextareaRef>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [selectionStart, setSelectionStart] = useState(0);
     const chatCtx = useChatContext();
     const {
       listKbCollections,
@@ -73,6 +78,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       renderModelSelect,
       workspace,
       slashCommands,
+      noteReferences,
     } = useAiChatConfig();
     const [collections, setCollections] = useState<{ id: number; name: string }[]>([]);
     const [loadingKb, setLoadingKb] = useState(false);
@@ -156,48 +162,57 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       ref,
       () => ({
         focus: () => {
+          if (noteReferences) {
+            mentionTextareaRef.current?.focus();
+            return;
+          }
           textareaRef.current?.focus();
         },
       }),
-      [],
+      [noteReferences],
     );
 
+    const getActiveTextarea = () =>
+      noteReferences ? mentionTextareaRef.current?.getTextareaElement() ?? null : textareaRef.current;
+
     const adjustTextareaHeight = () => {
-      const textarea = textareaRef.current;
-      if (textarea) {
-        const currentHeight = textarea.style.height;
-        textarea.style.transition = 'none';
-        textarea.style.height = 'auto';
-        const scrollHeight = textarea.scrollHeight;
-        const maxHeight = 192;
-        const newHeight = Math.min(scrollHeight, maxHeight);
-        if (currentHeight) {
-          textarea.style.height = currentHeight;
-        }
-        setTimeout(() => {
-          textarea.style.transition = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-          textarea.style.height = `${newHeight}px`;
-        }, 0);
+      const textarea = getActiveTextarea();
+      if (!textarea) {
+        return;
       }
+      const currentHeight = textarea.style.height;
+      textarea.style.transition = 'none';
+      textarea.style.height = 'auto';
+      const scrollHeight = textarea.scrollHeight;
+      const maxHeight = 192;
+      const newHeight = Math.min(scrollHeight, maxHeight);
+      if (currentHeight) {
+        textarea.style.height = currentHeight;
+      }
+      setTimeout(() => {
+        textarea.style.transition = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        textarea.style.height = `${newHeight}px`;
+      }, 0);
     };
 
     useEffect(() => {
-      const textarea = textareaRef.current;
-      if (textarea) {
-        textarea.style.transition = 'none';
-        textarea.style.height = 'auto';
-        const scrollHeight = textarea.scrollHeight;
-        const maxHeight = 120;
-        textarea.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
-        requestAnimationFrame(() => {
-          textarea.style.transition = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-        });
+      const textarea = getActiveTextarea();
+      if (!textarea) {
+        return;
       }
-    }, []);
+      textarea.style.transition = 'none';
+      textarea.style.height = 'auto';
+      const scrollHeight = textarea.scrollHeight;
+      const maxHeight = 120;
+      textarea.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+      requestAnimationFrame(() => {
+        textarea.style.transition = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+      });
+    }, [noteReferences]);
 
     useEffect(() => {
       adjustTextareaHeight();
-    }, [value]);
+    }, [value, noteReferences]);
 
     const slash = useSlashCommandTrigger({
       value,
@@ -208,9 +223,23 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       workspaceEnabled: workspace?.enabled ?? false,
     });
 
+    const noteRef = useNoteReferenceTrigger({
+      value,
+      onChange,
+      noteReferences,
+      selectionStart,
+      onSelectionChange: (next) => {
+        setSelectionStart(next);
+        mentionTextareaRef.current?.setSelectionStart(next);
+      },
+    });
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (loading && e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
+        return;
+      }
+      if (noteRef.handleKeyDown(e)) {
         return;
       }
       if (slash.handleKeyDown(e)) {
@@ -337,20 +366,50 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
             onSelect={slash.handleSelect}
             onHover={slash.setSelectedIndex}
           />
-          <textarea
-            ref={textareaRef}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            className='chat-input-textarea min-h-[24px] w-full resize-none border-none bg-transparent text-base leading-6 placeholder-gray-400 outline-none focus-visible:ring-0 dark:placeholder-gray-500'
-            style={{
-              fontSize: '16px',
-              lineHeight: '1.5',
-              fontFamily: 'inherit',
-              transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
+          <NoteReferencePopover
+            ref={noteRef.popoverRef}
+            open={noteRef.open}
+            tree={noteRef.tree}
+            loading={noteRef.loading}
+            selectedFileId={noteRef.selectedFileId}
+            expandedKeys={noteRef.expandedKeys}
+            onToggleFolder={noteRef.toggleFolder}
+            onSelectFile={noteRef.handleSelectFile}
           />
+          {noteReferences ? (
+            <ChatMentionTextarea
+              ref={mentionTextareaRef}
+              value={value}
+              onChange={onChange}
+              onKeyDown={handleKeyDown}
+              onSelectionChange={setSelectionStart}
+              onMentionClick={noteRef.openReplaceMenu}
+              placeholder={placeholder}
+              disabled={disabled}
+              className='chat-input-textarea min-h-[24px] w-full resize-none border-none bg-transparent text-base leading-6 placeholder-gray-400 outline-none focus-visible:ring-0 dark:placeholder-gray-500'
+              style={{
+                fontSize: '16px',
+                lineHeight: '1.5',
+                fontFamily: 'inherit',
+                transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+            />
+          ) : (
+            <textarea
+              ref={textareaRef}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              className='chat-input-textarea min-h-[24px] w-full resize-none border-none bg-transparent text-base leading-6 placeholder-gray-400 outline-none focus-visible:ring-0 dark:placeholder-gray-500'
+              style={{
+                fontSize: '16px',
+                lineHeight: '1.5',
+                fontFamily: 'inherit',
+                transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+            />
+          )}
           <input
             ref={fileInputRef}
             type='file'

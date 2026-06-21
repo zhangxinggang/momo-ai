@@ -4,6 +4,23 @@
  */
 
 import type { IFolder, IPrompt, IPromptVersion } from '@/types/modules';
+import { clearImages, clearVideos } from '@renderer/services/media';
+import {
+  ipcCreateFolder,
+  ipcCreatePrompt,
+  ipcCreatePromptVersion,
+  ipcDeleteFolder,
+  ipcDeletePrompt,
+  ipcDeletePromptVersion,
+  ipcGetAllFolders,
+  ipcGetAllPrompts,
+  ipcGetPrompt,
+  ipcGetPromptVersions,
+  ipcMovePrompts,
+  ipcUpdateFolder,
+  ipcUpdateFolderOrders,
+  ipcUpdatePrompt,
+} from '@renderer/services/prompt/api';
 
 const DB_NAME = 'AIMDB';
 const DB_VERSION = 1;
@@ -157,8 +174,9 @@ export async function resetDatabase(): Promise<void> {
 // ==================== IPrompt Operations ====================
 
 export async function getAllPrompts(): Promise<IPrompt[]> {
-  if (window.api?.prompt?.getAll) {
-    return (await window.api.prompt.getAll()) ?? [];
+  const prompts = await ipcGetAllPrompts();
+  if (prompts) {
+    return prompts;
   }
 
   return legacyGetAllPrompts();
@@ -177,8 +195,9 @@ async function legacyGetAllPrompts(): Promise<IPrompt[]> {
 }
 
 export async function getPromptById(id: string): Promise<IPrompt | undefined> {
-  if (window.api?.prompt?.get) {
-    return (await window.api.prompt.get(id)) ?? undefined;
+  const prompt = await ipcGetPrompt(id);
+  if (prompt !== null) {
+    return prompt;
   }
 
   const database = await getDatabase();
@@ -195,18 +214,9 @@ export async function getPromptById(id: string): Promise<IPrompt | undefined> {
 export async function createPrompt(
   data: Omit<IPrompt, 'id' | 'createdAt' | 'updatedAt' | 'version'>,
 ): Promise<IPrompt> {
-  if (window.api?.prompt?.create) {
-    return window.api.prompt.create({
-      title: data.title,
-      systemPrompt: data.systemPrompt ?? undefined,
-      systemPromptEn: data.systemPromptEn ?? undefined,
-      userPrompt: data.userPrompt,
-      userPromptEn: data.userPromptEn ?? undefined,
-      variables: data.variables,
-      tags: data.tags,
-      folderId: data.folderId ?? undefined,
-      source: data.source ?? undefined,
-    });
+  const created = await ipcCreatePrompt(data);
+  if (created) {
+    return created;
   }
 
   const database = await getDatabase();
@@ -234,25 +244,8 @@ export async function updatePrompt(
   data: Partial<IPrompt>,
   incrementVersion = true,
 ): Promise<IPrompt> {
-  if (window.api?.prompt?.update) {
-    const updated = await window.api.prompt.update(id, {
-      title: data.title,
-      systemPrompt: data.systemPrompt ?? undefined,
-      systemPromptEn: data.systemPromptEn ?? undefined,
-      userPrompt: data.userPrompt,
-      userPromptEn: data.userPromptEn ?? undefined,
-      variables: data.variables,
-      tags: data.tags,
-      folderId: data.folderId ?? undefined,
-      isFavorite: data.isFavorite,
-      isPinned: data.isPinned,
-      usageCount: data.usageCount,
-      source: data.source ?? undefined,
-      lastAiResponse: data.lastAiResponse ?? undefined,
-    });
-    if (!updated) {
-      throw new Error(`IPrompt not found: ${id}`);
-    }
+  const updated = await ipcUpdatePrompt(id, data);
+  if (updated) {
     return updated;
   }
 
@@ -265,7 +258,7 @@ export async function updatePrompt(
   const hasContentChange = data.systemPrompt !== undefined || data.userPrompt !== undefined;
   const shouldIncrementVersion = incrementVersion && hasContentChange;
 
-  const updated: IPrompt = {
+  const updatedPrompt: IPrompt = {
     ...existing,
     ...data,
     id,
@@ -276,16 +269,15 @@ export async function updatePrompt(
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(STORES.PROMPTS, 'readwrite');
     const store = transaction.objectStore(STORES.PROMPTS);
-    const request = store.put(updated);
+    const request = store.put(updatedPrompt);
 
-    request.onsuccess = () => resolve(updated);
+    request.onsuccess = () => resolve(updatedPrompt);
     request.onerror = () => reject(request.error);
   });
 }
 
 export async function deletePrompt(id: string): Promise<void> {
-  if (window.api?.prompt?.delete) {
-    await window.api.prompt.delete(id);
+  if (await ipcDeletePrompt(id)) {
     return;
   }
 
@@ -305,8 +297,7 @@ export async function deletePrompt(id: string): Promise<void> {
  * Batch move prompts to a folder
  */
 export async function movePrompts(ids: string[], folderId: string): Promise<void> {
-  if (window.api?.prompt?.update) {
-    await Promise.all(ids.map((id) => window.api.prompt.update(id, { folderId })));
+  if (await ipcMovePrompts(ids, folderId)) {
     return;
   }
 
@@ -342,8 +333,9 @@ export async function movePrompts(ids: string[], folderId: string): Promise<void
 // ==================== Version Operations ====================
 
 export async function getPromptVersions(promptId: string): Promise<IPromptVersion[]> {
-  if (window.api?.version?.getAll) {
-    return (await window.api.version.getAll(promptId)) ?? [];
+  const versions = await ipcGetPromptVersions(promptId);
+  if (versions) {
+    return versions;
   }
 
   return legacyGetPromptVersions(promptId);
@@ -369,11 +361,8 @@ export async function createPromptVersion(
   promptId: string,
   data: { systemPrompt?: string; userPrompt: string; version: number },
 ): Promise<IPromptVersion> {
-  if (window.api?.version?.create) {
-    const version = await window.api.version.create(promptId);
-    if (!version) {
-      throw new Error(`Failed to create version for prompt: ${promptId}`);
-    }
+  const version = await ipcCreatePromptVersion(promptId);
+  if (version) {
     return version;
   }
 
@@ -400,8 +389,7 @@ export async function createPromptVersion(
 }
 
 export async function deletePromptVersion(versionId: string): Promise<void> {
-  if (window.api?.version?.delete) {
-    await window.api.version.delete(versionId);
+  if (await ipcDeletePromptVersion(versionId)) {
     return;
   }
 
@@ -421,8 +409,9 @@ export async function deletePromptVersion(versionId: string): Promise<void> {
 // ==================== Folder Operations ====================
 
 export async function getAllFolders(): Promise<IFolder[]> {
-  if (window.api?.folder?.getAll) {
-    return (await window.api.folder.getAll()) ?? [];
+  const folders = await ipcGetAllFolders();
+  if (folders) {
+    return folders;
   }
 
   return legacyGetAllFolders();
@@ -448,14 +437,9 @@ async function legacyGetAllFolders(): Promise<IFolder[]> {
 export async function createFolder(
   data: Omit<IFolder, 'id' | 'createdAt' | 'updatedAt'>,
 ): Promise<IFolder> {
-  if (window.api?.folder?.create) {
-    return window.api.folder.create({
-      name: data.name,
-      icon: data.icon,
-      parentId: data.parentId,
-      isPrivate: data.isPrivate,
-      visibility: data.visibility,
-    });
+  const createdFolder = await ipcCreateFolder(data);
+  if (createdFolder) {
+    return createdFolder;
   }
 
   const database = await getDatabase();
@@ -478,18 +462,8 @@ export async function createFolder(
 }
 
 export async function updateFolder(id: string, data: Partial<IFolder>): Promise<IFolder> {
-  if (window.api?.folder?.update) {
-    const updated = await window.api.folder.update(id, {
-      name: data.name,
-      icon: data.icon,
-      parentId: data.parentId,
-      order: data.order,
-      isPrivate: data.isPrivate,
-      visibility: data.visibility,
-    });
-    if (!updated) {
-      throw new Error(`Folder not found: ${id}`);
-    }
+  const updated = await ipcUpdateFolder(id, data);
+  if (updated) {
     return updated;
   }
 
@@ -521,8 +495,7 @@ export async function updateFolder(id: string, data: Partial<IFolder>): Promise<
 }
 
 export async function deleteFolder(id: string): Promise<void> {
-  if (window.api?.folder?.delete) {
-    await window.api.folder.delete(id);
+  if (await ipcDeleteFolder(id)) {
     return;
   }
 
@@ -538,8 +511,7 @@ export async function deleteFolder(id: string): Promise<void> {
 }
 
 export async function updateFolderOrders(updates: { id: string; order: number }[]): Promise<void> {
-  if (window.api?.folder?.update) {
-    await Promise.all(updates.map(({ id, order }) => window.api.folder.update(id, { order })));
+  if (await ipcUpdateFolderOrders(updates)) {
     return;
   }
 
@@ -603,7 +575,7 @@ export async function clearDatabase(): Promise<void> {
   // 清除图片文件
   // Clear image files
   try {
-    await window.electron?.clearImages?.();
+    await clearImages();
     console.log('Images cleared');
   } catch (error) {
     console.warn('Failed to clear images:', error);
@@ -612,7 +584,7 @@ export async function clearDatabase(): Promise<void> {
   // 清除视频文件
   // Clear video files
   try {
-    await window.electron?.clearVideos?.();
+    await clearVideos();
     console.log('Videos cleared');
   } catch (error) {
     console.warn('Failed to clear videos:', error);

@@ -2,6 +2,7 @@ import type { ISkillPlatform } from '@/types/constants/platforms';
 import type { ISkill } from '@/types/modules';
 import { PlatformIcon } from '@renderer/components/ui/PlatformIcon';
 import { useAppName } from '@renderer/hooks/useAppName';
+import { openPath } from '@renderer/services/desktop';
 import { getProtocolDisplayLabel, getSkillSourceMeta } from '@renderer/services/skill/detail-utils';
 import { Button } from 'antd';
 import {
@@ -258,7 +259,7 @@ export function SkillPlatformPanel({
         {sourceMeta &&
           (sourceMeta.kind === 'local' ? (
             <Button
-              onClick={() => window.electron?.openPath?.(sourceMeta.value)}
+              onClick={() => void openPath(sourceMeta.value)}
               className='bg-accent/70 border-border text-foreground hover:bg-accent flex h-auto min-h-[148px] w-full items-center justify-start gap-3 rounded-2xl border p-5 text-left'
               title={sourceMeta.displayValue}>
               <FolderOpenIcon className='h-5 w-5 shrink-0' />

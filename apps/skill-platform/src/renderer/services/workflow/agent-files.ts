@@ -1,8 +1,9 @@
 /** 工作流 Agent 目录操作封装（渲染进程） */
 
 import type { ISkillArtifactFile } from '@renderer/services/skill/skill-artifacts';
+import { getWorkflowAgentApi } from '@renderer/services/workflow/agent-api';
 
-const getApi = () => window.api?.workflowAgent;
+const getApi = () => getWorkflowAgentApi();
 
 export interface IWorkflowAgentFileTreeEntry {
   relativePath: string;

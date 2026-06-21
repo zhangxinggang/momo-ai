@@ -1,4 +1,4 @@
-import { FileEditor } from '@momo/file-editor';
+import { FileEditor, useSyncedCodeEditorTheme } from '@momo/file-editor';
 import { useToast } from '@renderer/components/ui/Toast';
 import { createWorkflowFileEditorAdapter } from '@renderer/services/file-editor/workflow-adapter';
 import { useCallback, useMemo } from 'react';
@@ -9,6 +9,7 @@ interface IProps {
   nodeName: string;
   refreshToken?: number;
   onFilesChange?: () => void;
+  filePreviewBaseUrl?: string;
 }
 
 /** 工作流节点文件编辑器（基于通用 @momo/file-editor） */
@@ -18,8 +19,10 @@ export function WorkflowNodeFileEditor({
   nodeName,
   refreshToken = 0,
   onFilesChange,
+  filePreviewBaseUrl,
 }: IProps) {
   const { showToast } = useToast();
+  const codeEditorTheme = useSyncedCodeEditorTheme();
 
   const adapter = useMemo(
     () => createWorkflowFileEditorAdapter(workflowName, businessId, nodeName),
@@ -36,7 +39,9 @@ export function WorkflowNodeFileEditor({
   return (
     <FileEditor
       adapter={adapter}
+      codeEditorTheme={codeEditorTheme}
       defaultNewFileExtension='md'
+      filePreviewBaseUrl={filePreviewBaseUrl}
       onFilesChange={onFilesChange}
       onNotify={handleNotify}
       refreshToken={refreshToken}

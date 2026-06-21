@@ -33,10 +33,7 @@ function buildRunnerEnv(
   moduleSearchPaths: string[],
   pathEnv: string,
 ): NodeJS.ProcessEnv {
-  const nodePathParts = [
-    ...moduleSearchPaths,
-    ...(process.env.NODE_PATH?.split(path.delimiter) ?? []),
-  ].filter(Boolean);
+  const nodePathParts = [...moduleSearchPaths].filter(Boolean);
 
   return {
     ...process.env,

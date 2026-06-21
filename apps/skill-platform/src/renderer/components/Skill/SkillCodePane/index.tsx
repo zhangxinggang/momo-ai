@@ -1,4 +1,5 @@
 import type { ISkill } from '@/types/modules';
+import { openPath } from '@renderer/services/desktop';
 import { getProtocolDisplayLabel, getSkillSourceMeta } from '@renderer/services/skill/detail-utils';
 import { Button } from 'antd';
 import { CheckIcon, ChevronRightIcon, CopyIcon } from 'lucide-react';
@@ -53,7 +54,7 @@ export function SkillCodePane({ copyStatus, handleCopy, selectedSkill, skillCont
           onClick={(event) => {
             if (sourceMeta.kind === 'local') {
               event.preventDefault();
-              window.electron?.openPath?.(sourceMeta.value);
+              void openPath(sourceMeta.value);
             }
           }}
           target={sourceMeta.kind === 'local' ? undefined : '_blank'}

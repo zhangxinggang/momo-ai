@@ -11,6 +11,8 @@ export interface IFileEditorAdapter {
   listTree: () => Promise<IFileTreeEntry[]>;
   /** 读取文件文本内容 */
   readFile: (relativePath: string) => Promise<string>;
+  /** 读取二进制文件内容，用于 [binary file] 占位时的预览（可选） */
+  readFileBuffer?: (relativePath: string) => Promise<ArrayBuffer | null>;
   /** 写入文件，成功返回 true */
   writeFile: (relativePath: string, content: string) => Promise<boolean>;
   /** 删除文件或空目录 */

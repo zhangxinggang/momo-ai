@@ -1,5 +1,6 @@
 import { PlatformIcon } from '@renderer/components/ui/PlatformIcon';
 import { useToast } from '@renderer/components/ui/Toast';
+import { pickFolder } from '@renderer/services/desktop';
 import { useRulesStore } from '@renderer/store/rules';
 import {
   ChevronDownIcon,
@@ -54,7 +55,7 @@ export function RulesPanel({ collapsed = false, onNavigateHome }: IProps) {
   }, [loadFiles, showToast]);
 
   const handleAddProject = useCallback(async () => {
-    const folderPath = await window.electron?.selectFolder?.();
+    const folderPath = await pickFolder();
     if (!folderPath) {
       return;
     }

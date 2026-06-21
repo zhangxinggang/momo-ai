@@ -1,9 +1,10 @@
 ﻿import { SKILL_CREATOR_CONTENT_URL } from '@/types/constants/skill-registry';
 import type { IRegistrySkill, IScannedSkill } from '@/types/modules/skill';
-import { allToolbar } from '@momo/markdown';
 import type { IExposeParam } from '@momo/markdown';
+import { allToolbar } from '@momo/markdown';
 import { useUnsavedLeaveGuard } from '@renderer/hooks/useUnsavedLeaveGuard';
-import { generateSkillContent, type IAIConfig, polishSkillContent } from '@renderer/services/ai';
+import { generateSkillContent, polishSkillContent, type IAIConfig } from '@renderer/services/ai';
+import { fetchSkillRemoteContent, scanLocalSkillsPreview } from '@renderer/services/skill/api';
 import { loadGitHubSkillRepo } from '@renderer/services/skill/github-store';
 import { getExistingSkillTags } from '@renderer/services/skill/modal-utils';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
@@ -127,8 +128,7 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
     }
 
     let disposed = false;
-    void window.api.skill
-      .fetchRemoteContent(SKILL_CREATOR_CONTENT_URL)
+    void fetchSkillRemoteContent(SKILL_CREATOR_CONTENT_URL)
       .then((content) => {
         if (!disposed && content.trim()) {
           setSkillCreatorContent(content);
@@ -320,7 +320,7 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
       }
 
       const scannedSkills = await loadGitHubSkillRepo(githubUrl.trim(), {
-        fetchRemoteContent: (url) => window.api.skill.fetchRemoteContent(url),
+        fetchRemoteContent: (url) => fetchSkillRemoteContent(url),
         registrySkills: [],
         rateLimitMessage: 'GitHub API 请求限额已达到，请几分钟后重试，或切换网络后再试。',
         networkMessage: '无法连接到 GitHub，请检查当前网络，或切换网络后再试。',
@@ -365,9 +365,7 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
       selectedGitHubSkills.has(skill.slug),
     );
     setSelectedGitHubSkills(
-      allSelected
-        ? new Set()
-        : new Set(selectableGitHubResults.map((skill) => skill.slug)),
+      allSelected ? new Set() : new Set(selectableGitHubResults.map((skill) => skill.slug)),
     );
   };
 
@@ -537,7 +535,7 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
     setError(null);
 
     try {
-      const allResults: IScannedSkill[] = await window.api.skill.scanLocalPreview();
+      const allResults: IScannedSkill[] = await scanLocalSkillsPreview();
       const installedCount = allResults.filter((skill) =>
         installedScanPaths.has(skill.localPath),
       ).length;
@@ -578,7 +576,7 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
   const handleScanRescan = async (customPaths: string[]) => {
     const allResults = customPaths.length
       ? await useSkillStore.getState().scanLocalPreview(customPaths)
-      : await window.api.skill.scanLocalPreview();
+      : await scanLocalSkillsPreview();
     setScanResults(allResults);
   };
 
@@ -587,11 +585,7 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
   const isScanMode = mode === 'scan';
   const hasGitHubResults = githubScanDone && annotatedGitHubResults.length > 0;
 
-  const createSkillModalWidth = isManualMode
-    ? '100vw'
-    : isGitHubMode
-      ? 'min(92vw, 896px)'
-      : 512;
+  const createSkillModalWidth = isManualMode ? '100vw' : isGitHubMode ? 'min(92vw, 896px)' : 512;
 
   manualCreateRef.current = handleManualCreate;
 

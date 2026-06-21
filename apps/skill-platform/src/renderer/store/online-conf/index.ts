@@ -4,6 +4,7 @@ import type {
   DOnlineConfTool,
 } from '@/types/modules/online-conf';
 import { compareVersions } from '@/utils/version';
+import { fetchOnlineConfFromMain } from '@renderer/services/online-conf/api';
 import { create } from 'zustand';
 
 interface IOnlineConfState {
@@ -51,13 +52,13 @@ export const useOnlineConfStore = create<IOnlineConfState>((set, get) => ({
   hasFetched: false,
 
   fetchOnlineConf: async () => {
-    if (typeof window.api?.onlineConf?.fetch !== 'function') {
-      set({ hasFetched: true, isLoading: false });
-      return;
-    }
     set({ isLoading: true });
     try {
-      const result = await window.api.onlineConf.fetch();
+      const result = await fetchOnlineConfFromMain();
+      if (!result) {
+        set({ hasFetched: true, isLoading: false });
+        return;
+      }
       applyFetchResult(set, result);
     } catch (error) {
       const message = error instanceof Error ? error.message : '拉取在线配置失败';

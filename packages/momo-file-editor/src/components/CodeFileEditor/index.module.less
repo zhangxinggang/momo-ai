@@ -1,0 +1,20 @@
+:global {
+  .momo-file-editor__code-editor {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    overflow: hidden;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+
+    .cm-editor {
+      height: 100%;
+    }
+
+    .cm-gutters {
+      background: hsl(var(--muted) / 0.35);
+      border-right: 1px solid var(--border);
+      color: hsl(var(--muted-foreground));
+    }
+  }
+}

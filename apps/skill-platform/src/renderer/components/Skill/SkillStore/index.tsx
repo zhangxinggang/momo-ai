@@ -2,6 +2,7 @@ import type { IRegistrySkill, ISkillStoreSource } from '@/types/modules';
 import { useToast } from '@renderer/components/ui/Toast';
 import { useOnlineStoreSources } from '@renderer/hooks/useOnlineStoreSources';
 import { useSkillStoreRemoteSync } from '@renderer/hooks/useSkillStoreRemoteSync';
+import { scanSkillSafety } from '@renderer/services/skill/api';
 import { getSafetyScanAIConfig } from '@renderer/services/skill/detail-utils';
 import {
   isPagedRemoteStoreType,
@@ -11,8 +12,8 @@ import {
   SKILLS_SH_FILTERS,
   normalizeSkillsShFilterKey,
 } from '@renderer/services/skill/skills-sh-store';
-import { findInstalledRegistrySkill } from '@renderer/services/skill/store-update';
 import { sortSkillsByName } from '@renderer/services/skill/store-mapper-utils';
+import { findInstalledRegistrySkill } from '@renderer/services/skill/store-update';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
 import { Button, Input } from 'antd';
 import {
@@ -229,14 +230,17 @@ export function SkillStore() {
     [skills],
   );
 
-  const allStoreSkills = useMemo(() => sortSkillsByName(sourceRegistrySkills), [sourceRegistrySkills]);
+  const allStoreSkills = useMemo(
+    () => sortSkillsByName(sourceRegistrySkills),
+    [sourceRegistrySkills],
+  );
 
   const handleQuickInstall = async (skill: IRegistrySkill, e: React.MouseEvent) => {
     e.stopPropagation();
     setInstallingSlug(skill.slug);
     try {
       if (autoScanBeforeInstall) {
-        const report = await window.api.skill.scanSafety({
+        const report = await scanSkillSafety({
           name: skill.name,
           content: skill.content,
           sourceUrl: skill.source_url,

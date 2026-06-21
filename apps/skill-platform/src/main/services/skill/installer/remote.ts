@@ -4,11 +4,11 @@
  * Contains network-level utilities (DNS resolution, private IP detection,
  * HTTP(S) fetching) and the high-level install-from-remote methods.
  */
+import { getAppConfig } from '@momo/electron';
 import * as dns from 'dns/promises';
 import * as http from 'http';
 import * as https from 'https';
 import * as nodeNet from 'net';
-import { getAppConfig } from '@momo/electron';
 
 // ==================== Constants ====================
 

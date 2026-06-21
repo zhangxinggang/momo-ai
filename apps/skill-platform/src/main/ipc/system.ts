@@ -23,10 +23,7 @@ function pathToDataUrl(filePath: string | undefined): string | undefined {
 /** 注册内置 HTTP 服务相关 IPC */
 export function registerSystemIPC(): void {
   ipcMain.handle(IPC_CHANNELS.SYSTEM_GET_UPLOAD_URL, () => getUploadUrl());
-  ipcMain.handle(IPC_CHANNELS.SYSTEM_GET_APP_NAME, () => {
-    const { appName } = getAppConfig() as { appName?: string };
-    return appName ?? '';
-  });
+  ipcMain.handle(IPC_CHANNELS.SYSTEM_GET_APP_CONFIG, () => getAppConfig());
   ipcMain.handle(IPC_CHANNELS.SYSTEM_GET_SYSTEM_LOGO, () => {
     return pathToDataUrl(getSystemLogo());
   });

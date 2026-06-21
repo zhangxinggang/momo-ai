@@ -1,11 +1,16 @@
 import type { ISkill } from '@/types/modules';
-import { useAppName } from '@renderer/hooks/useAppName';
 import { useToast } from '@renderer/components/ui/Toast';
 import { APP_LOCALE } from '@renderer/constants/common';
+import { useAppName } from '@renderer/hooks/useAppName';
 import { useSkillContentTranslation } from '@renderer/hooks/useSkillContentTranslation';
 import { useSkillPlatform } from '@renderer/hooks/useSkillPlatform';
 import { useSkillSafetyScan } from '@renderer/hooks/useSkillSafetyScan';
 import { useUnsavedLeaveGuard } from '@renderer/hooks/useUnsavedLeaveGuard';
+import {
+  exportSkill,
+  exportSkillZip,
+  readSkillLocalFileByPath,
+} from '@renderer/services/skill/api';
 import {
   downloadSkillExport,
   downloadSkillZipExport,
@@ -117,26 +122,20 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
     }
     return {
       name: selectedSkill.name,
-      content:
-        resolvedSkillMdContent || selectedSkill.instructions || selectedSkill.content || '',
+      content: resolvedSkillMdContent || selectedSkill.instructions || selectedSkill.content || '',
       sourceUrl: selectedSkill.source_url,
       contentUrl: selectedSkill.content_url,
       localRepoPath: selectedSkill.local_repo_path,
     };
   }, [resolvedSkillMdContent, selectedSkill]);
 
-  const {
-    isScanningSafety,
-    safetyReport,
-    groupedSafetyFindings,
-    safetyTone,
-    runSafetyScan,
-  } = useSkillSafetyScan({
-    scanInput: safetyScanInput,
-    persistSkillId: isProjectDetail ? undefined : selectedSkill?.id,
-    autoScan: Boolean(autoScanInstalledSkills && selectedSkill && !isProjectDetail),
-    initialReport: selectedSkill?.safetyReport ?? null,
-  });
+  const { isScanningSafety, safetyReport, groupedSafetyFindings, safetyTone, runSafetyScan } =
+    useSkillSafetyScan({
+      scanInput: safetyScanInput,
+      persistSkillId: isProjectDetail ? undefined : selectedSkill?.id,
+      autoScan: Boolean(autoScanInstalledSkills && selectedSkill && !isProjectDetail),
+      initialReport: selectedSkill?.safetyReport ?? null,
+    });
 
   const { confirmLeave, UnsavedLeaveDialog } = useUnsavedLeaveGuard({
     isDirty: () => activeTab === 'files' && fileEditorHasUnsavedChanges,
@@ -177,7 +176,7 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
 
       if (isProjectDetail) {
         try {
-          const repoSkillMd = await window.api.skill.readLocalFileByPath(
+          const repoSkillMd = await readSkillLocalFileByPath(
             selectedSkill.local_repo_path || selectedSkill.source_url || '',
             'SKILL.md',
           );
@@ -280,10 +279,10 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
     if (!selectedSkill) return;
     try {
       if (format === 'zip') {
-        const zipResult = await window.api.skill.exportZip(selectedSkill.id);
+        const zipResult = await exportSkillZip(selectedSkill.id);
         downloadSkillZipExport(zipResult);
       } else {
-        const content = await window.api.skill.export(selectedSkill.id, format);
+        const content = await exportSkill(selectedSkill.id, format);
         downloadSkillExport(content, selectedSkill.name, format);
       }
 

@@ -1,4 +1,5 @@
 import { getImageScenarioModels, getModelsByType } from '@renderer/services/ai/defaults';
+import { fetchScraperModelRanking } from '@renderer/services/scraper/api';
 import type { IAIModelConfig } from '@renderer/types/settings';
 
 export interface IRankedModelInfo {
@@ -61,10 +62,7 @@ function sortModelsByRanking(
 
 /** 获取 CocoLoop 模型排行（一天缓存一次，由主进程处理） */
 export async function fetchModelRanking(): Promise<IScrapeRankingResult> {
-  if (typeof window.api?.scraper?.getModelRanking !== 'function') {
-    return { success: false, error: '当前环境不支持模型排行' };
-  }
-  return window.api.scraper.getModelRanking();
+  return fetchScraperModelRanking();
 }
 
 /** 按排行顺序构建分组模型选项：对话 / 图像 */

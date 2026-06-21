@@ -1,12 +1,14 @@
 import type { DAITransportResponse } from '@/types/modules';
 
+import { getAiApi } from '@renderer/services/ai/api';
+
 import type { IResponseLike } from './types';
 
 export function getAITransport() {
   if (typeof window === 'undefined') {
     return null;
   }
-  return window.api?.ai ?? null;
+  return getAiApi() ?? null;
 }
 
 export function createResponseLike(response: DAITransportResponse): IResponseLike {

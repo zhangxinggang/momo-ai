@@ -1,31 +1,55 @@
 {
   "name": "@momo/file-editor",
   "version": "0.1.0",
-  "description": "可复用的树形文件编辑器（Markdown 分屏编辑 + 文本文件）",
+  "description": "可复用的树形文件编辑器（Markdown 分屏编辑 + CodeMirror 文本 + 二进制预览）",
   "sideEffects": [
-    "**/*.less"
+    "**/*.less",
+    "**/*.css"
   ],
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js"
+    }
   },
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
   "types": "./src/index.ts",
   "files": [
-    "src"
+    "src",
+    "dist"
   ],
+  "scripts": {
+    "build": "vite build"
+  },
   "dependencies": {
+    "@codemirror/commands": "^6.10.3",
+    "@codemirror/language": "^6.11.3",
+    "@codemirror/language-data": "^6.5.1",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.38.2",
+    "@file-viewer/preset-all": "^2.1.0",
+    "@file-viewer/react": "^2.1.0",
+    "@lezer/highlight": "^1.2.1",
     "@momo/markdown": "workspace:*",
+    "@momo/utils": "workspace:*",
     "antd": "^6.3.7",
     "lucide-react": "^0.460.0"
   },
   "devDependencies": {
+    "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "antd": "^6.3.7",
+    "@vitejs/plugin-react": "^4.3.0",
     "less": "^4.4.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vite": "^7.1.5"
+  },
+  "peerDependencies": {
+    "antd": ">=5.0.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
   }
 }

@@ -164,27 +164,27 @@ export function buildWorkflowSteps(
   }
 
   const nodeById = new Map(macroNodes.map((n) => [n.id, n]));
-  const steps: IWorkflowStep[] = sorted.orderedIds.flatMap((id) => {
+  const steps: IWorkflowStep[] = [];
+
+  for (const id of sorted.orderedIds) {
     const node = nodeById.get(id);
     if (!node) {
-      return [];
+      continue;
     }
     if (isParallelNode(node)) {
-      return [
-        {
-          kind: 'parallel' as const,
-          nodeId: id,
-          nodeName: node.data.nodeName?.trim() || node.data.label?.trim() || '并行节点',
-          label: node.data.label,
-          children: buildParallelChildren(nodes, node),
-        },
-      ];
+      steps.push({
+        kind: 'parallel',
+        nodeId: id,
+        nodeName: node.data.nodeName?.trim() || node.data.label?.trim() || '并行节点',
+        label: node.data.label,
+        children: buildParallelChildren(nodes, node),
+      });
+      continue;
     }
     if (isResourceNode(node)) {
-      return [{ kind: 'resource' as const, step: toResourceStep(node) }];
+      steps.push({ kind: 'resource', step: toResourceStep(node) });
     }
-    return [];
-  });
+  }
 
   return { ok: true, steps };
 }

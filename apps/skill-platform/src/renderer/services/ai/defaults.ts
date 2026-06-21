@@ -3,8 +3,8 @@ import type {
   IAIModelConfig,
   IScenarioModelDefaults,
 } from '@renderer/types/settings';
-import type { IAIConfig } from './types';
 import { isImageModel } from './image/backends';
+import type { IAIConfig } from './types';
 
 export function isImageCapableModel(
   model: Pick<IAIModelConfig, 'type' | 'model' | 'provider' | 'apiUrl'>,
@@ -28,7 +28,9 @@ export function getModelsByType(
   if (type === 'image') {
     return getImageScenarioModels(aiModels);
   }
-  return aiModels.filter((model) => (model.type ?? 'chat') === 'chat' && !isImageCapableModel(model));
+  return aiModels.filter(
+    (model) => (model.type ?? 'chat') === 'chat' && !isImageCapableModel(model),
+  );
 }
 
 export function resolveScenarioModel(

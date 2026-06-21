@@ -1,3 +1,4 @@
+import { getWorkspaceApi } from '@renderer/services/workspace/api';
 import { useChatWorkspaceStore } from '@renderer/store/chat';
 
 const MAX_TOTAL_CHARS = 80000;
@@ -31,7 +32,7 @@ export async function buildWorkspaceContext(workspacePath: string): Promise<stri
     return '';
   }
 
-  const listResult = (await window.api?.workspace?.listDir?.(workspacePath)) as
+  const listResult = (await getWorkspaceApi()?.listDir?.(workspacePath)) as
     | IListDirResult
     | undefined;
   if (!listResult?.success || !listResult.entries?.length) {
@@ -48,7 +49,7 @@ export async function buildWorkspaceContext(workspacePath: string): Promise<stri
       break;
     }
 
-    const readResult = (await window.api?.workspace?.readFile?.(file.path)) as
+    const readResult = (await getWorkspaceApi()?.readFile?.(file.path)) as
       | IReadFileResult
       | undefined;
     if (!readResult?.success || readResult.skipped || !readResult.content) {

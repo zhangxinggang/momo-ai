@@ -1,10 +1,6 @@
 import { prefix } from '~/config';
 
-import {
-  blobToUint8Array,
-  canvasToPngBlob,
-  type IExportImageData,
-} from './dom-to-png';
+import { blobToUint8Array, canvasToPngBlob, type IExportImageData } from './dom-to-png';
 
 export type { IExportImageData };
 

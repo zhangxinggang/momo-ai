@@ -16,6 +16,7 @@ import {
 import { getModelsByType, resolveScenarioModel } from '@renderer/services/ai/defaults';
 import { buildSharedAiChatServices, createPromptTestStream } from '@renderer/services/aichat';
 import { createMainChatSession } from '@renderer/services/aichat/chat-history-bridge';
+import { downloadImage, readImageBase64, saveImageBase64 } from '@renderer/services/media';
 import { useSettingsStore } from '@renderer/store';
 import type { UploadProps } from 'antd';
 import { Button, Input, Upload } from 'antd';
@@ -342,7 +343,7 @@ export function AiTestModal({
   const buildImageReferenceAttachments = useCallback(async (): Promise<IChatImageAttachment[]> => {
     const savedReferences = await Promise.all<IChatImageAttachment | null>(
       selectedReferenceImages.map(async (fileName) => {
-        const base64 = await window.electron?.readImageBase64?.(fileName);
+        const base64 = await readImageBase64(fileName);
         if (!base64) return null;
 
         const extension = fileName.split('.').pop()?.toLowerCase();
@@ -663,7 +664,7 @@ export function AiTestModal({
     try {
       // 如果是外部 URL，需要先下载到本地
       if (imageUrl.startsWith('http')) {
-        const fileName = await window.electron?.downloadImage?.(imageUrl);
+        const fileName = await downloadImage(imageUrl);
         if (fileName) {
           onAddImage(fileName);
           showToast('图片已添加到 IPrompt', 'success');
@@ -675,7 +676,7 @@ export function AiTestModal({
         // 提取 base64 数据（去掉 data:image/png;base64, 前缀）
         const base64Data = imageUrl.split(',')[1];
         const fileName = `generated-${Date.now()}.png`;
-        await window.electron?.saveImageBase64?.(fileName, base64Data);
+        await saveImageBase64(fileName, base64Data);
         onAddImage(fileName);
         showToast('图片已添加到 IPrompt', 'success');
       }

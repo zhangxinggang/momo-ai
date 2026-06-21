@@ -1,10 +1,7 @@
 import { getModelCategory } from '@renderer/components/Settings/ai-workbench/helpers';
 import type { IModelInfo } from '@renderer/services/ai';
+import { getImageScenarioModels, getModelsByType } from '@renderer/services/ai/defaults';
 import { suggestRemoteModelAsImage } from '@renderer/services/ai/image/backends';
-import {
-  getImageScenarioModels,
-  getModelsByType,
-} from '@renderer/services/ai/defaults';
 import type { IAIModelConfig } from '@renderer/types/settings';
 
 export const TYPE_GROUP_ORDER = ['对话', '生图'] as const;

@@ -1,7 +1,7 @@
 export { getSkillRuntimeDir } from '../../runtime-paths';
 export { SkillInstaller } from './installer';
 export { isBlockedHostname, resolvePublicAddress } from './installer/remote';
-export { isInternalSkillRepoEntry } from './installer/repo';
+export { isInternalSkillRepoEntry, isSkillExportExcludedEntry } from './installer/repo';
 export { ensureSkillRuntimePackages } from './runtime/node-runtime';
 export type { IEnsureSkillRuntimePackagesResult } from './runtime/node-runtime';
 export { normalizeWindowsNpmCommands, runNpmInstallWithRetry } from './runtime/shell';
@@ -22,5 +22,6 @@ export {
 export { startSilentExternalSkillImportSchedule } from './sync/silent-external-sync';
 export { ensureSkillWorkspaceDependencies } from './workspace/deps';
 export type { IEnsureSkillWorkspaceDepsResult } from './workspace/deps';
+export { ensureSkillSessionWorkspace, writeSessionWorkspaceFile } from './workspace/session-workspace';
 export { executeSkillWorkspace } from './workspace/execute';
 export type { ISkillWorkspaceExecuteResult } from './workspace/execute';

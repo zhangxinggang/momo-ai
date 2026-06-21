@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import type { IChatStorageAdapter } from '../storage/chat-storage';
 import type { IChatAttachment, IChatAttachmentMeta, IChatSession } from '../types/chat';
 import type { ISlashCommandsConfig } from '../types/slash-command';
+import type { INoteReferencesConfig } from '../types/note-reference';
+import type { ILocalPathConfig } from '../types/local-path';
 import type { IChatWorkspaceConfig } from '../types/workspace';
 
 export interface IChatStreamMessage {
@@ -142,6 +144,10 @@ export interface IAiChatServices {
   };
   /** 输入框斜杠命令补全（由宿主注入，如 Claude Code） */
   slashCommands?: ISlashCommandsConfig;
+  /** 输入框 @ 笔记引用（由宿主注入） */
+  noteReferences?: INoteReferencesConfig;
+  /** 消息内本地路径点击（由宿主注入） */
+  localPath?: ILocalPathConfig;
   /** 判断模型 id 是否为生图模型 */
   isImageModel?: (modelId: string) => boolean;
   /** 生图模型输入框占位提示 */

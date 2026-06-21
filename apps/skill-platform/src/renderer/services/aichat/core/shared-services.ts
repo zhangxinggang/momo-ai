@@ -1,7 +1,8 @@
-import type { IAiChatServices, TCallAiChatStream } from '@momo/aichat';
+import type { IAiChatServices, ILocalPathConfig, TCallAiChatStream } from '@momo/aichat';
 import { CLI_AGENT_OPTIONS, createDefaultAiChatServices } from '@momo/aichat';
 
 import { createClaudeSlashCommandsConfig } from '@/claude-code/renderer/claude-slash-provider';
+import { createNoteReferencesConfig } from '../note-reference-config';
 import {
   getImageScenarioModels,
   getModelsByType,
@@ -86,6 +87,8 @@ export interface IBuildSharedAiChatServicesOptions {
   chatModelOptionGroups?: IAiChatServices['chatModelOptionGroups'];
   /** 工作区上下文配置 */
   workspace?: IAiChatServices['workspace'];
+  /** 消息内本地路径点击 */
+  localPath?: ILocalPathConfig;
   /** 是否启用 Superpowers 两阶段（默认 true；提示词测试等固定模板场景设为 false） */
   enableSuperpower?: boolean;
   /** 是否注入 CLI Agent（默认 true） */
@@ -153,6 +156,7 @@ export function buildSharedAiChatServices(
     chatModelOptionGroups,
     renderModelSelect: (props) => renderChatModelSelect(options.aiModels, props),
     workspace: options.workspace,
+    localPath: options.localPath,
     isImageModel: (modelId: string) => {
       const model = options.aiModels.find((item) => item.id === modelId);
       return model ? isImageCapableModel(model) : false;
@@ -168,6 +172,7 @@ export function buildSharedAiChatServices(
       }
       return '描述你想生成的图片内容';
     },
+    noteReferences: createNoteReferencesConfig(),
     ...cliSuperpowerOverrides,
   });
 }

@@ -1,8 +1,4 @@
-export {
-  loadGitDownloadStore,
-  loadLocalDirectoryStore,
-  loadMarketplaceStore,
-} from './loaders';
+export { loadGitDownloadStore, loadLocalDirectoryStore, loadMarketplaceStore } from './loaders';
 export { createSkillsShStoreLoader } from './skills-sh-loader';
 export {
   getOffsetFromCursor,

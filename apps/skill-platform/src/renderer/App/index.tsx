@@ -7,6 +7,11 @@ import { WorkflowModalsHost } from '@renderer/components/Workflow';
 import { useAppName } from '@renderer/hooks/useAppName';
 import { useConfirmLeaveEditors } from '@renderer/hooks/useConfirmLeaveEditors';
 import { initDatabase } from '@renderer/services/database';
+import {
+  setDebugMode,
+  subscribeFullscreenChanged,
+  subscribeShowCloseDialog,
+} from '@renderer/services/desktop';
 import { configureKbService } from '@renderer/services/kb';
 import {
   useFolderStore,
@@ -103,26 +108,22 @@ function App() {
     const handleFullscreenChanged = (isFullscreen: boolean) => {
       setIsOsFullscreen(isFullscreen);
     };
-    window.api?.on?.('window:fullscreen-changed', handleFullscreenChanged);
+    const unsubscribeFullscreen = subscribeFullscreenChanged(handleFullscreenChanged);
 
     // Listen for close dialog trigger (Windows)
     // 监听关闭对话框触发（Windows）
     const handleShowCloseDialog = () => setShowCloseDialog(true);
-    const offShowCloseDialog = window.electron?.onShowCloseDialog?.(handleShowCloseDialog);
+    const unsubscribeCloseDialog = subscribeShowCloseDialog(handleShowCloseDialog);
 
     return () => {
-      // Cleanup Electron/IPC listeners to prevent leaks on unmount/remount
-      // 清理 Electron/IPC 监听，避免卸载/重挂载导致重复触发
-      window.api?.off?.('window:fullscreen-changed', handleFullscreenChanged);
-      if (typeof offShowCloseDialog === 'function') {
-        offShowCloseDialog();
-      }
+      unsubscribeFullscreen();
+      unsubscribeCloseDialog();
     };
   }, []);
 
   // Sync debug mode
   useEffect(() => {
-    window.electron?.setDebugMode?.(debugMode);
+    setDebugMode(debugMode);
   }, [debugMode]);
 
   useEffect(() => {

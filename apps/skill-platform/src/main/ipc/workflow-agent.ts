@@ -3,31 +3,14 @@ import { ipcMain } from 'electron';
 import fs from 'fs';
 import path from 'path';
 
+import { assertRelativePathUnderBase } from '@/utils/path-under-base';
+import { isTextFilePath } from '@/utils/text-file';
 import {
   getAgentDir,
   getWorkflowAgentDir,
   getWorkflowBusinessAgentDir,
   getWorkflowBusinessNodeAgentDir,
 } from '../runtime-paths';
-
-const TEXT_EXTENSIONS = new Set([
-  '.md',
-  '.txt',
-  '.json',
-  '.js',
-  '.ts',
-  '.tsx',
-  '.jsx',
-  '.py',
-  '.html',
-  '.css',
-  '.less',
-  '.xml',
-  '.yaml',
-  '.yml',
-  '.csv',
-  '.log',
-]);
 
 function sanitizeDirName(name: string): string {
   return name.replace(/[^a-zA-Z0-9_-]/g, '_') || 'unnamed';
@@ -59,19 +42,6 @@ function resolveNodeDir(workflowName: string, businessId: string, nodeName: stri
   const businessDir = resolveBusinessDir(workflowName, businessId);
   if (!resolved.startsWith(businessDir)) {
     throw new Error('非法节点目录路径');
-  }
-  return resolved;
-}
-
-function resolveRelativePathInDir(dir: string, relativePath: string): string {
-  const normalized = relativePath.replace(/\\/g, '/').replace(/^\/+/, '');
-  if (!normalized || normalized.includes('..')) {
-    throw new Error('非法文件路径');
-  }
-  const resolved = path.resolve(dir, normalized);
-  const base = path.resolve(dir);
-  if (resolved !== base && !resolved.startsWith(`${base}${path.sep}`)) {
-    throw new Error('非法文件路径');
   }
   return resolved;
 }
@@ -239,12 +209,11 @@ export function registerWorkflowAgentIPC(): void {
     ) => {
       try {
         const dir = resolveNodeDir(workflowName, businessId, nodeName);
-        const filePath = resolveRelativePathInDir(dir, relativePath);
+        const filePath = assertRelativePathUnderBase(dir, relativePath);
         if (!fs.existsSync(filePath)) {
           return { success: false, error: '文件不存在' };
         }
-        const ext = path.extname(filePath).toLowerCase();
-        if (!TEXT_EXTENSIONS.has(ext)) {
+        if (!isTextFilePath(filePath)) {
           return { success: false, error: '不支持的文件类型', skipped: true };
         }
         const content = fs.readFileSync(filePath, 'utf-8');
@@ -267,7 +236,7 @@ export function registerWorkflowAgentIPC(): void {
     ) => {
       try {
         const dir = resolveNodeDir(workflowName, businessId, nodeName);
-        const filePath = resolveRelativePathInDir(dir, relativePath);
+        const filePath = assertRelativePathUnderBase(dir, relativePath);
         fs.mkdirSync(path.dirname(filePath), { recursive: true });
         fs.writeFileSync(filePath, content, 'utf-8');
         return { success: true, filePath };
@@ -384,7 +353,7 @@ export function registerWorkflowAgentIPC(): void {
     ) => {
       try {
         const dir = resolveNodeDir(workflowName, businessId, nodeName);
-        const filePath = resolveRelativePathInDir(dir, relativePath);
+        const filePath = assertRelativePathUnderBase(dir, relativePath);
         if (!fs.existsSync(filePath)) {
           return { success: false, error: '文件不存在' };
         }
@@ -412,7 +381,7 @@ export function registerWorkflowAgentIPC(): void {
     ) => {
       try {
         const dir = resolveNodeDir(workflowName, businessId, nodeName);
-        const target = resolveRelativePathInDir(dir, relativePath);
+        const target = assertRelativePathUnderBase(dir, relativePath);
         fs.mkdirSync(target, { recursive: true });
         return { success: true, dirPath: target };
       } catch (e) {
@@ -433,8 +402,8 @@ export function registerWorkflowAgentIPC(): void {
     ) => {
       try {
         const dir = resolveNodeDir(workflowName, businessId, nodeName);
-        const fromPath = resolveRelativePathInDir(dir, fromRelativePath);
-        const toPath = resolveRelativePathInDir(dir, toRelativePath);
+        const fromPath = assertRelativePathUnderBase(dir, fromRelativePath);
+        const toPath = assertRelativePathUnderBase(dir, toRelativePath);
         if (!fs.existsSync(fromPath)) {
           return { success: false, error: '源路径不存在' };
         }

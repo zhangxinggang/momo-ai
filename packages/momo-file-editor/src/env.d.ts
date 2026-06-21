@@ -3,4 +3,9 @@ declare module '*.less' {
   export default classes;
 }
 
+declare module '*.less?inline' {
+  const css: string;
+  export default css;
+}
+
 declare module '@momo/markdown-styles';

@@ -26,6 +26,12 @@ import {
   renameWorkflowAgentDir,
   renameWorkflowNodeForAllBusinesses,
 } from '@renderer/services/workflow/agent-files';
+import {
+  createWorkflow as createWorkflowRecord,
+  getWorkflow,
+  isWorkflowAvailable,
+  updateWorkflow as updateWorkflowRecord,
+} from '@renderer/services/workflow/api';
 import { fetchBusinessList, workflowHasBusinesses } from '@renderer/services/workflow/business';
 import { deleteWorkflowNodeChatForAllBusinesses } from '@renderer/services/workflow/chat-storage';
 import { isResourceNode } from '@renderer/services/workflow/graph-utils';
@@ -55,7 +61,7 @@ function setPaletteDragData(event: React.DragEvent, payload: IWorkflowPaletteDra
  */
 export function WorkflowStudio({ workflowId, onClose }: IProps) {
   const { message, modal } = App.useApp();
-  const wfApi = window.api?.workflow;
+  const isWorkflowReady = isWorkflowAvailable();
 
   const prompts = usePromptStore((s) => s.prompts);
   const skills = useSkillStore((s) => s.skills);
@@ -86,7 +92,7 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
   }, [fetchPrompts, loadSkills]);
 
   const loadWorkflow = useCallback(async () => {
-    if (!workflowId || !wfApi?.get) {
+    if (!workflowId || !isWorkflowReady) {
       setWorkflow(null);
       setWorkflowName('');
       setSavedName('');
@@ -96,7 +102,7 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
       return;
     }
     try {
-      const found = await wfApi.get(workflowId);
+      const found = await getWorkflow(workflowId);
       if (!found) {
         message.error('加载工作流失败');
         onClose();
@@ -113,7 +119,7 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
       console.error(e);
       message.error('加载工作流失败');
     }
-  }, [message, onClose, setEdges, setNodes, wfApi, workflowId]);
+  }, [message, onClose, setEdges, setNodes, isWorkflowReady, workflowId]);
 
   useEffect(() => {
     if (workflowId) {
@@ -299,7 +305,7 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
       message.error(err);
       return false;
     }
-    if (!wfApi) {
+    if (!isWorkflowReady) {
       message.warning('当前环境不支持工作流持久化（需桌面端 SQLite）');
       return false;
     }
@@ -329,7 +335,7 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
       const prevName = savedName.trim();
 
       if (!id) {
-        const created = await wfApi.create({ name: trimmedName, graphJson });
+        const created = await createWorkflowRecord({ name: trimmedName, graphJson });
         id = created.id;
         currentWorkflowIdRef.current = id;
         setWorkflow(created);
@@ -337,7 +343,7 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
         useWorkflowStore.getState().selectWorkflow(id);
         void useWorkflowStore.getState().fetchWorkflows();
       } else {
-        await wfApi.update(id, { name: trimmedName, graphJson });
+        await updateWorkflowRecord(id, { name: trimmedName, graphJson });
       }
 
       if (prevName && prevName !== trimmedName) {
@@ -403,7 +409,16 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
     } finally {
       setIsSaving(false);
     }
-  }, [currentGraphJson, edges, message, nodes, savedGraphJson, savedName, wfApi, workflowName]);
+  }, [
+    currentGraphJson,
+    edges,
+    isWorkflowReady,
+    message,
+    nodes,
+    savedGraphJson,
+    savedName,
+    workflowName,
+  ]);
 
   const discardChanges = useCallback(() => {
     setWorkflowName(savedName);

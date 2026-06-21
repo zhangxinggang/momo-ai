@@ -1,5 +1,6 @@
 import type { ISkillSafetyReport } from '@/types/modules';
 import { useToast } from '@renderer/components/ui/Toast';
+import { scanSkillSafety } from '@renderer/services/skill/api';
 import {
   getErrorMessage,
   getSafetyScanAIConfig,
@@ -54,7 +55,7 @@ export function useSkillSafetyScan(options: IUseSkillSafetyScanOptions) {
 
     setIsScanningSafety(true);
     try {
-      const report = await window.api.skill.scanSafety({
+      const report = await scanSkillSafety({
         name: options.scanInput.name,
         content: options.scanInput.content,
         sourceUrl: options.scanInput.sourceUrl,
@@ -98,7 +99,7 @@ export function useSkillSafetyScan(options: IUseSkillSafetyScanOptions) {
     const runScan = async () => {
       setIsScanningSafety(true);
       try {
-        const report = await window.api.skill.scanSafety({
+        const report = await scanSkillSafety({
           name: options.scanInput!.name,
           content: options.scanInput!.content,
           sourceUrl: options.scanInput!.sourceUrl,
@@ -133,13 +134,7 @@ export function useSkillSafetyScan(options: IUseSkillSafetyScanOptions) {
     return () => {
       cancelled = true;
     };
-  }, [
-    aiModels,
-    options.autoScan,
-    options.persistSkillId,
-    options.scanInput,
-    saveSafetyReport,
-  ]);
+  }, [aiModels, options.autoScan, options.persistSkillId, options.scanInput, saveSafetyReport]);
 
   return {
     isScanningSafety,

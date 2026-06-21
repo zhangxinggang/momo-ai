@@ -37,7 +37,9 @@ export function CreateSkillModal({ isOpen, onClose }: IProps) {
       <Button
         type='primary'
         loading={modal.isLoading}
-        disabled={modal.isLoading || (modal.githubScanDone && modal.selectedGitHubSkills.size === 0)}
+        disabled={
+          modal.isLoading || (modal.githubScanDone && modal.selectedGitHubSkills.size === 0)
+        }
         icon={<CheckIcon className='h-4 w-4' />}
         onClick={
           modal.githubScanDone ? modal.handleImportSelectedGitHubSkills : modal.handleGitHubInstall

@@ -6,6 +6,7 @@ import { FileIcon, FileTextIcon } from 'lucide-react';
 import { useId, useRef, useState, type ComponentType } from 'react';
 
 import { WorkflowNodeFileEditor } from '@renderer/components/Workflow/WorkflowNodeFileEditor';
+import { useFilePreviewBaseUrl } from '@renderer/hooks/useFilePreviewBaseUrl';
 import {
   SKILL_MD_TOOLBARS,
   useMarkdownEditorTheme,
@@ -52,6 +53,8 @@ export function WorkflowRunPanel({
     previewTheme: mdPreviewTheme,
     onPreviewThemeChange: setMdPreviewTheme,
   });
+  // filePreviewBaseUrl 由 fetchFilePreviewBaseUrl 从 appConf 按需读取
+  const filePreviewBaseUrl = useFilePreviewBaseUrl();
 
   return (
     <div className={styles['workflow-run-panel']}>
@@ -89,6 +92,7 @@ export function WorkflowRunPanel({
                     onDrop={handleDrop}
                     onUploadImg={handleUploadImg}
                     style={{ height: '100%' }}
+                    filePreviewBaseUrl={filePreviewBaseUrl}
                   />
                 </div>
               </div>
@@ -106,6 +110,7 @@ export function WorkflowRunPanel({
               <div className={styles['workflow-run-panel-files']}>
                 <WorkflowNodeFileEditor
                   businessId={businessId}
+                  filePreviewBaseUrl={filePreviewBaseUrl}
                   key={`${workflowName}-${businessId}-${nodeName}`}
                   nodeName={nodeName}
                   onFilesChange={onFilesChange}

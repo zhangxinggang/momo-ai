@@ -1,5 +1,14 @@
 import type { ISkillPlatform } from '@/types/constants/platforms';
 import type { ISkill } from '@/types/modules';
+import {
+  detectSkillPlatforms,
+  exportSkill,
+  getSkillMdInstallStatus,
+  getSupportedSkillPlatforms,
+  installSkillMd,
+  installSkillMdSymlink,
+  uninstallSkillMd,
+} from '@renderer/services/skill/api';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useSettingsStore, useSkillStore } from '@renderer/store';
@@ -27,8 +36,8 @@ export function useSkillPlatform(skill: ISkill | null | undefined, installMode: 
 
   const loadPlatforms = useCallback(async () => {
     const [platforms, detected] = await Promise.all([
-      window.api.skill.getSupportedPlatforms(),
-      window.api.skill.detectPlatforms(),
+      getSupportedSkillPlatforms(),
+      detectSkillPlatforms(),
     ]);
     setSupportedPlatforms(platforms);
     setDetectedPlatforms(detected);
@@ -40,7 +49,7 @@ export function useSkillPlatform(skill: ISkill | null | undefined, installMode: 
       setSelectedPlatforms(new Set());
       return;
     }
-    const status = await window.api.skill.getMdInstallStatus(skill.name);
+    const status = await getSkillMdInstallStatus(skill.name);
     setInstallStatus(status);
     setSelectedPlatforms(new Set());
     await loadDeployedStatus();
@@ -99,7 +108,7 @@ export function useSkillPlatform(skill: ISkill | null | undefined, installMode: 
     setInstallProgress({ current: 0, total: platformIds.length });
 
     try {
-      const skillMdContent = await window.api.skill.export(skill.id, 'skillmd');
+      const skillMdContent = await exportSkill(skill.id, 'skillmd');
       let successCount = 0;
 
       for (let index = 0; index < platformIds.length; index++) {
@@ -108,9 +117,9 @@ export function useSkillPlatform(skill: ISkill | null | undefined, installMode: 
 
         try {
           if (installMode === 'symlink') {
-            await window.api.skill.installMdSymlink(skill.name, skillMdContent, platformId);
+            await installSkillMdSymlink(skill.name, skillMdContent, platformId);
           } else {
-            await window.api.skill.installMd(skill.name, skillMdContent, platformId);
+            await installSkillMd(skill.name, skillMdContent, platformId);
           }
           successCount++;
         } catch (error) {
@@ -129,7 +138,7 @@ export function useSkillPlatform(skill: ISkill | null | undefined, installMode: 
   const uninstallFromPlatform = useCallback(
     async (platformId: string) => {
       if (!skill) return;
-      await window.api.skill.uninstallMd(skill.name, platformId);
+      await uninstallSkillMd(skill.name, platformId);
       await refreshInstallStatus();
     },
     [refreshInstallStatus, skill],
@@ -137,6 +146,7 @@ export function useSkillPlatform(skill: ISkill | null | undefined, installMode: 
 
   return {
     availablePlatforms,
+    uninstalledPlatforms,
     installProgress,
     installStatus,
     isBatchInstalling,
@@ -147,6 +157,5 @@ export function useSkillPlatform(skill: ISkill | null | undefined, installMode: 
     deselectAllPlatforms,
     batchInstall,
     uninstallFromPlatform,
-    uninstalledPlatforms,
   };
 }

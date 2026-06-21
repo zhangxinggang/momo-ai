@@ -15,6 +15,30 @@ import type {
 } from '@/types/modules';
 import { chatCompletion } from '@renderer/services/ai';
 import { resolveScenarioAIConfig } from '@renderer/services/ai/defaults';
+import {
+  createSkill,
+  deleteSkill,
+  extractClawhubArchive,
+  extractSkillHubArchive,
+  fetchSkillRemoteBinary,
+  fetchSkillRemoteContent,
+  getSkillMdInstallStatusBatch,
+  getSkillPlatformStatus,
+  getSkillRepoPath,
+  installSkillToPlatform,
+  listSkills,
+  readSkillLocalFileByPath,
+  saveRemoteGitSkillToRepo,
+  saveSkillSafetyReport,
+  saveSkillToRepo,
+  scanLocalSkills,
+  scanLocalSkillsPreview,
+  scanSkillSafety,
+  syncSkillFromRepo,
+  uninstallSkillFromPlatform,
+  updateSkill,
+  writeSkillLocalFile,
+} from '@renderer/services/skill/api';
 import { isClawHubDownloadUrl } from '@renderer/services/skill/clawhub-store';
 import { filterVisibleScannedSkills, filterVisibleSkills } from '@renderer/services/skill/filter';
 import { normalizeSkill, normalizeSkills } from '@renderer/services/skill/normalize';
@@ -27,6 +51,7 @@ import {
   getRegistrySkillDirectory,
   isSkillsShRegistrySkill,
 } from '@renderer/services/skill/skills-sh-store';
+import { sortSkillsByName } from '@renderer/services/skill/store-mapper-utils';
 import {
   validateStoreSourceInput,
   type ECustomStoreSourceType,
@@ -38,7 +63,6 @@ import {
   getRegistrySkillUpdateStatus,
   type IRegistrySkillUpdateCheck,
 } from '@renderer/services/skill/store-update';
-import { sortSkillsByName } from '@renderer/services/skill/store-mapper-utils';
 import { useSettingsStore } from '@renderer/store';
 import type { ESkillFilterType, ESkillStoreView, ESkillViewMode } from '@renderer/types/skill';
 import { create } from 'zustand';
@@ -235,10 +259,10 @@ function hasMeaningfulSkillBody(content?: string): boolean {
 function getRegistryContentFetchOptions() {
   return {
     readLocalFileByPath: (localPath: string, relativePath: string) =>
-      window.api.skill.readLocalFileByPath(localPath, relativePath),
+      readSkillLocalFileByPath(localPath, relativePath),
     extractSkillHubArchive: (slug: string, version?: string) =>
-      window.api.skill.extractSkillHubArchive(slug, version),
-    extractClawhubArchive: (slug: string) => window.api.skill.extractClawhubArchive(slug),
+      extractSkillHubArchive(slug, version),
+    extractClawhubArchive: (slug: string) => extractClawhubArchive(slug),
   };
 }
 
@@ -382,7 +406,7 @@ async function syncRemoteGitHubSkillRepo(
     return;
   }
 
-  const treeRaw = await window.api.skill.fetchRemoteContent(
+  const treeRaw = await fetchSkillRemoteContent(
     `https://api.github.com/repos/${location.owner}/${location.repo}/git/trees/${location.branch}?recursive=1`,
   );
   const treeData = parseJson<{
@@ -404,8 +428,8 @@ async function syncRemoteGitHubSkillRepo(
       return;
     }
     const rawUrl = `https://raw.githubusercontent.com/${location.owner}/${location.repo}/${location.branch}/${file.path}`;
-    const content = await window.api.skill.fetchRemoteContent(rawUrl);
-    await window.api.skill.writeLocalFile(skillId, relativePath, content);
+    const content = await fetchSkillRemoteContent(rawUrl);
+    await writeSkillLocalFile(skillId, relativePath, content);
   });
 }
 
@@ -605,7 +629,7 @@ export const useSkillStore = create<ISkillState>()(
       loadSkills: async () => {
         set({ isLoading: true, error: null });
         try {
-          const skills = normalizeSkills(await window.api.skill.getAll());
+          const skills = normalizeSkills(await listSkills());
           set({ skills, isLoading: false });
         } catch (error) {
           console.error('Failed to load skills:', error);
@@ -618,7 +642,7 @@ export const useSkillStore = create<ISkillState>()(
         const deployed = new Set<string>();
         try {
           const skillNames = skills.map((s) => s.name);
-          const results = await window.api.skill.getMdInstallStatusBatch(skillNames);
+          const results = await getSkillMdInstallStatusBatch(skillNames);
           for (const [name, status] of Object.entries(results)) {
             if (Object.values(status).some(Boolean)) {
               deployed.add(name);
@@ -637,15 +661,15 @@ export const useSkillStore = create<ISkillState>()(
       createSkill: async (data) => {
         set({ isLoading: true, error: null });
         try {
-          const newSkill = await window.api.skill.create(data);
+          const newSkill = await createSkill(data);
           if (newSkill) {
             let storedSkill = normalizeSkill(newSkill);
             const repoContent =
               data.instructions || data.content || newSkill.instructions || newSkill.content || '';
             if (typeof repoContent === 'string') {
               try {
-                await window.api.skill.writeLocalFile(newSkill.id, 'SKILL.md', repoContent);
-                const repoPath = await window.api.skill.getRepoPath(newSkill.id);
+                await writeSkillLocalFile(newSkill.id, 'SKILL.md', repoContent);
+                const repoPath = await getSkillRepoPath(newSkill.id);
                 if (repoPath) {
                   storedSkill = { ...newSkill, local_repo_path: repoPath };
                 }
@@ -670,7 +694,7 @@ export const useSkillStore = create<ISkillState>()(
 
       updateSkill: async (id, data) => {
         try {
-          const updatedSkill = await window.api.skill.update(id, data);
+          const updatedSkill = await updateSkill(id, data);
           if (updatedSkill) {
             let storedSkill = normalizeSkill(updatedSkill);
             const shouldSyncRepoContent =
@@ -683,8 +707,8 @@ export const useSkillStore = create<ISkillState>()(
               updatedSkill.content;
             if (shouldSyncRepoContent && typeof nextContent === 'string') {
               try {
-                await window.api.skill.writeLocalFile(id, 'SKILL.md', nextContent);
-                const repoPath = await window.api.skill.getRepoPath(id);
+                await writeSkillLocalFile(id, 'SKILL.md', nextContent);
+                const repoPath = await getSkillRepoPath(id);
                 if (repoPath) {
                   storedSkill = { ...updatedSkill, local_repo_path: repoPath };
                 }
@@ -709,7 +733,7 @@ export const useSkillStore = create<ISkillState>()(
 
       syncSkillFromRepo: async (id) => {
         try {
-          const syncedSkill = await window.api.skill.syncFromRepo(id);
+          const syncedSkill = await syncSkillFromRepo(id);
           if (!syncedSkill) {
             return null;
           }
@@ -727,7 +751,7 @@ export const useSkillStore = create<ISkillState>()(
 
       deleteSkill: async (id) => {
         try {
-          const success = await window.api.skill.delete(id);
+          const success = await deleteSkill(id);
           if (success) {
             set((state) => ({
               skills: state.skills.filter((s) => s.id !== id),
@@ -745,9 +769,9 @@ export const useSkillStore = create<ISkillState>()(
       scanLocalSkills: async () => {
         set({ isLoading: true, error: null });
         try {
-          const result: IScanLocalResult = await window.api.skill.scanLocal();
+          const result: IScanLocalResult = await scanLocalSkills();
           if (result.imported > 0) {
-            const skills = normalizeSkills(await window.api.skill.getAll());
+            const skills = normalizeSkills(await listSkills());
             set({ skills, isLoading: false });
           } else {
             set({ isLoading: false });
@@ -763,7 +787,7 @@ export const useSkillStore = create<ISkillState>()(
       scanLocalPreview: async (customPaths?: string[]) => {
         set({ isLoading: true, error: null });
         try {
-          const scannedSkills = await window.api.skill.scanLocalPreview(customPaths);
+          const scannedSkills = await scanLocalSkillsPreview(customPaths);
           set({ isLoading: false });
           return scannedSkills;
         } catch (error) {
@@ -794,7 +818,7 @@ export const useSkillStore = create<ISkillState>()(
 
             try {
               const userTags = userTagsByPath?.[scanned.localPath] ?? [];
-              const newSkill = await window.api.skill.create({
+              const newSkill = await createSkill({
                 name: scanned.name,
                 description: scanned.description,
                 instructions: scanned.instructions,
@@ -813,13 +837,10 @@ export const useSkillStore = create<ISkillState>()(
               // localPath is the parent directory of SKILL.md (skill folder path)
               if (scanned.localPath) {
                 try {
-                  const repoPath = await window.api.skill.saveToRepo(
-                    scanned.name,
-                    scanned.localPath,
-                  );
+                  const repoPath = await saveSkillToRepo(scanned.name, scanned.localPath);
                   // Write back the repo path so SkillFileEditor can find the files
                   if (repoPath && newSkill?.id) {
-                    await window.api.skill.update(newSkill.id, {
+                    await updateSkill(newSkill.id, {
                       local_repo_path: repoPath,
                     });
                   }
@@ -844,7 +865,7 @@ export const useSkillStore = create<ISkillState>()(
             }
           }
           // Refresh skills after import
-          const skills = normalizeSkills(await window.api.skill.getAll());
+          const skills = normalizeSkills(await listSkills());
           set({ skills, isLoading: false });
           return {
             importedCount: importCount,
@@ -883,7 +904,7 @@ export const useSkillStore = create<ISkillState>()(
         };
 
         for (const skill of targetSkills) {
-          const report = await window.api.skill.scanSafety({
+          const report = await scanSkillSafety({
             name: skill.name,
             content: skill.instructions || skill.content,
             sourceUrl: skill.source_url,
@@ -912,7 +933,7 @@ export const useSkillStore = create<ISkillState>()(
 
           // Persist to DB and update in-memory store
           try {
-            await window.api.skill.saveSafetyReport(skill.id, scored);
+            await saveSkillSafetyReport(skill.id, scored);
             set((state) => ({
               skills: state.skills.map((s) =>
                 s.id === skill.id ? { ...s, safetyReport: scored } : s,
@@ -931,7 +952,7 @@ export const useSkillStore = create<ISkillState>()(
           ...report,
           score: report.score ?? computeSafetyScore(report),
         };
-        await window.api.skill.saveSafetyReport(skillId, scored);
+        await saveSkillSafetyReport(skillId, scored);
         set((state) => ({
           skills: state.skills.map((s) => (s.id === skillId ? { ...s, safetyReport: scored } : s)),
         }));
@@ -939,7 +960,7 @@ export const useSkillStore = create<ISkillState>()(
 
       installToPlatform: async (platform, name, mcpConfig) => {
         try {
-          await window.api.skill.installToPlatform(platform, name, mcpConfig);
+          await installSkillToPlatform(platform, name, mcpConfig);
         } catch (error) {
           console.error(`Failed to install to ${platform}:`, error);
           throw error;
@@ -948,7 +969,7 @@ export const useSkillStore = create<ISkillState>()(
 
       uninstallFromPlatform: async (platform, name) => {
         try {
-          await window.api.skill.uninstallFromPlatform(platform, name);
+          await uninstallSkillFromPlatform(platform, name);
         } catch (error) {
           console.error(`Failed to uninstall from ${platform}:`, error);
           throw error;
@@ -957,7 +978,7 @@ export const useSkillStore = create<ISkillState>()(
 
       getPlatformStatus: async (name) => {
         try {
-          return await window.api.skill.getPlatformStatus(name);
+          return await getSkillPlatformStatus(name);
         } catch (error) {
           console.error(`Failed to get platform status for ${name}:`, error);
           return { claude: false, cursor: false };
@@ -1088,8 +1109,8 @@ export const useSkillStore = create<ISkillState>()(
       getRegistrySkillUpdateStatus: async (regSkill) => {
         const remoteContent = await fetchRegistrySkillRemoteContent(
           regSkill,
-          (url) => window.api.skill.fetchRemoteContent(url),
-          (url) => window.api.skill.fetchRemoteBinary(url),
+          (url) => fetchSkillRemoteContent(url),
+          (url) => fetchSkillRemoteBinary(url),
           getRegistryContentFetchOptions(),
         );
 
@@ -1174,8 +1195,8 @@ export const useSkillStore = create<ISkillState>()(
             } else {
               effectiveContent = await fetchRegistrySkillRemoteContent(
                 regSkill,
-                (url) => window.api.skill.fetchRemoteContent(url),
-                (url) => window.api.skill.fetchRemoteBinary(url),
+                (url) => fetchSkillRemoteContent(url),
+                (url) => fetchSkillRemoteBinary(url),
                 fetchOptions,
               );
               if (!sourceDir) {
@@ -1198,7 +1219,7 @@ export const useSkillStore = create<ISkillState>()(
           const skillName = getRegistrySkillInstallName(regSkill);
           const installedHash = await computeSkillContentHash(effectiveContent);
           const installedAt = Date.now();
-          const newSkill = await window.api.skill.create({
+          const newSkill = await createSkill({
             name: skillName,
             description: regSkill.description,
             instructions: effectiveContent,
@@ -1226,23 +1247,23 @@ export const useSkillStore = create<ISkillState>()(
           if (newSkill) {
             try {
               if (isSkillsShRegistrySkill(regSkill) && regSkill.source_url) {
-                const repoPath = await window.api.skill.saveRemoteGitToRepo(newSkill.id, {
+                const repoPath = await saveRemoteGitSkillToRepo(newSkill.id, {
                   repoUrl: regSkill.source_url,
                   directory: getRegistrySkillDirectory(regSkill),
                   installName: regSkill.install_name,
                 });
                 if (repoPath) {
-                  await window.api.skill.syncFromRepo(newSkill.id);
+                  await syncSkillFromRepo(newSkill.id);
                 }
               } else if (sourceDir) {
-                const repoPath = await window.api.skill.saveToRepo(skillName, sourceDir);
+                const repoPath = await saveSkillToRepo(skillName, sourceDir);
                 if (repoPath) {
-                  await window.api.skill.update(newSkill.id, {
+                  await updateSkill(newSkill.id, {
                     local_repo_path: repoPath,
                   });
                 }
               } else {
-                await window.api.skill.writeLocalFile(newSkill.id, 'SKILL.md', effectiveContent);
+                await writeSkillLocalFile(newSkill.id, 'SKILL.md', effectiveContent);
                 await syncRemoteGitHubSkillRepo(
                   newSkill.id,
                   regSkill.source_url,
@@ -1255,7 +1276,7 @@ export const useSkillStore = create<ISkillState>()(
                 repoError,
               );
               if (isSkillsShRegistrySkill(regSkill)) {
-                await window.api.skill.delete(newSkill.id).catch((deleteError) => {
+                await deleteSkill(newSkill.id).catch((deleteError) => {
                   console.warn(
                     `Failed to roll back incomplete registry skill "${regSkill.slug}":`,
                     deleteError,
@@ -1285,7 +1306,7 @@ export const useSkillStore = create<ISkillState>()(
         if (!skill) return false;
 
         try {
-          const success = await window.api.skill.delete(skill.id);
+          const success = await deleteSkill(skill.id);
           if (success) {
             await loadSkills();
             return true;
@@ -1416,7 +1437,9 @@ export const useSkillStore = create<ISkillState>()(
         }
 
         const installed = sortSkillsByName(filtered.filter((s) => installedSlugs.includes(s.slug)));
-        const recommended = sortSkillsByName(filtered.filter((s) => !installedSlugs.includes(s.slug)));
+        const recommended = sortSkillsByName(
+          filtered.filter((s) => !installedSlugs.includes(s.slug)),
+        );
 
         return { installed, recommended };
       },

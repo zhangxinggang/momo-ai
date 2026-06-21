@@ -1,55 +1,166 @@
-const ARTIFACT_BLOCK_RE = /```artifact:([^\n`]+)\n([\s\S]*?)```/g;
+import {
+  ensureSkillSessionWorkspace,
+  isSkillApiAvailable,
+  writeSessionWorkspaceFile,
+} from '@renderer/services/skill/api';
+
+import { parseSkillRunCommands } from './skill-run-commands';
+
+/** 带文件路径的代码块语言标记（```lang:相对路径） */
+const ARTIFACT_FILE_LANGS = new Set([
+  'artifact',
+  'json',
+  'javascript',
+  'js',
+  'typescript',
+  'ts',
+  'python',
+  'py',
+  'markdown',
+  'md',
+  'text',
+  'txt',
+  'yaml',
+  'yml',
+  'html',
+  'htm',
+  'css',
+  'xml',
+  'csv',
+  'sql',
+  'sh',
+  'bash',
+  'powershell',
+  'ps1',
+]);
+
+const ARTIFACT_PATH_BLOCK_RE = /```(\w+):([^\n`]+)\n([\s\S]*?)```/g;
+const LEGACY_ARTIFACT_BLOCK_RE = /```artifact:([^\n`]+)\n([\s\S]*?)```/g;
 
 export interface ISkillArtifactFile {
   path: string;
   content: string;
 }
 
-/** 从模型回复中解析 artifact 代码块 */
+function normalizeArtifactPath(filePath: string): string {
+  return filePath.trim().replace(/\\/g, '/').replace(/^\/+/, '');
+}
+
+function pushArtifact(
+  artifacts: ISkillArtifactFile[],
+  seenPaths: Set<string>,
+  filePath: string,
+  content: string,
+): void {
+  const normalizedPath = normalizeArtifactPath(filePath);
+  const body = content.replace(/\s+$/, '');
+  if (!normalizedPath || !body || seenPaths.has(normalizedPath)) {
+    return;
+  }
+  seenPaths.add(normalizedPath);
+  artifacts.push({ path: normalizedPath, content: body });
+}
+
+/** 从模型回复中解析可写入工作区的文件块（artifact: 与 lang:path 格式） */
 export function parseSkillArtifacts(text: string): ISkillArtifactFile[] {
   const artifacts: ISkillArtifactFile[] = [];
-  let match: RegExpExecArray | null = ARTIFACT_BLOCK_RE.exec(text);
+  const seenPaths = new Set<string>();
 
-  while (match) {
-    const filePath = match[1].trim();
-    const content = match[2].replace(/\s+$/, '');
-    if (filePath && content) {
-      artifacts.push({ path: filePath, content });
+  let match: RegExpExecArray | null;
+  ARTIFACT_PATH_BLOCK_RE.lastIndex = 0;
+  while ((match = ARTIFACT_PATH_BLOCK_RE.exec(text)) !== null) {
+    const lang = match[1].toLowerCase();
+    if (!ARTIFACT_FILE_LANGS.has(lang)) {
+      continue;
     }
-    match = ARTIFACT_BLOCK_RE.exec(text);
+    pushArtifact(artifacts, seenPaths, match[2], match[3]);
+  }
+
+  LEGACY_ARTIFACT_BLOCK_RE.lastIndex = 0;
+  while ((match = LEGACY_ARTIFACT_BLOCK_RE.exec(text)) !== null) {
+    pushArtifact(artifacts, seenPaths, match[1], match[2]);
   }
 
   return artifacts;
 }
 
-/** 确保技能本地仓库路径可用 */
-export async function ensureSkillRepoPath(skillId: string): Promise<string | null> {
-  if (!window.api?.skill?.getRepoPath) {
+/** 确保会话工作区已就绪（种子拷贝技能仓库） */
+export async function prepareSkillSessionWorkspace(
+  skillId: string,
+  sessionId: string,
+): Promise<string | null> {
+  if (!isSkillApiAvailable() || !skillId.trim() || !sessionId.trim()) {
     return null;
   }
   try {
-    const repoPath = await window.api.skill.getRepoPath(skillId);
-    return typeof repoPath === 'string' && repoPath.trim() ? repoPath.trim() : null;
+    const result = await ensureSkillSessionWorkspace(skillId, sessionId);
+    return result.workspaceDir?.trim() || null;
   } catch {
     return null;
   }
 }
 
-/** 将 artifact 写入技能本地仓库 */
-export async function writeSkillArtifacts(
+/** 将 artifact 写入 SKILL 对话会话工作区（不修改原技能仓库） */
+export async function writeSessionArtifacts(
   skillId: string,
+  sessionId: string,
   artifacts: ISkillArtifactFile[],
-): Promise<string[]> {
-  if (!window.api?.skill?.writeLocalFile || artifacts.length === 0) {
-    return [];
+): Promise<{ writtenPaths: string[]; workspaceDir: string | null }> {
+  if (!isSkillApiAvailable() || !sessionId.trim()) {
+    return { writtenPaths: [], workspaceDir: null };
   }
 
-  await ensureSkillRepoPath(skillId);
+  const workspaceDir = await prepareSkillSessionWorkspace(skillId, sessionId);
+  if (!workspaceDir || artifacts.length === 0) {
+    return { writtenPaths: [], workspaceDir };
+  }
 
   const written: string[] = [];
   for (const artifact of artifacts) {
-    await window.api.skill.writeLocalFile(skillId, artifact.path, artifact.content);
+    await writeSessionWorkspaceFile(sessionId, artifact.path, artifact.content);
     written.push(artifact.path);
   }
-  return written;
+  return { writtenPaths: written, workspaceDir };
+}
+
+/** 从 skill-run 命令中提取 node/python 脚本相对路径 */
+export function extractScriptPathFromCommand(commandLine: string): string | null {
+  const nodeMatch = commandLine.match(
+    /\bnode\s+(?:--[^\s]+\s+)*["']?((?:[\w.-]+[/\\])+\.(?:js|mjs|cjs))["']?/i,
+  );
+  if (nodeMatch?.[1]) {
+    return normalizeArtifactPath(nodeMatch[1]);
+  }
+  const pyMatch = commandLine.match(
+    /\b(?:python|py)\s+(?:-[^\s]+\s+)*["']?((?:[\w.-]+[/\\])+\.py)["']?/i,
+  );
+  if (pyMatch?.[1]) {
+    return normalizeArtifactPath(pyMatch[1]);
+  }
+  return null;
+}
+
+/** 检查 skill-run 引用的脚本是否已写入 artifact */
+export function findMissingArtifactScripts(
+  reply: string,
+  writtenPaths: string[],
+): string[] {
+  const writtenSet = new Set(writtenPaths.map(normalizeArtifactPath));
+  const parsedArtifacts = parseSkillArtifacts(reply);
+  const artifactPaths = new Set(parsedArtifacts.map((item) => normalizeArtifactPath(item.path)));
+
+  const missing: string[] = [];
+  for (const commandLine of parseSkillRunCommands(reply)) {
+    const scriptPath = extractScriptPathFromCommand(commandLine);
+    if (!scriptPath) {
+      continue;
+    }
+    if (writtenSet.has(scriptPath)) {
+      continue;
+    }
+    if (artifactPaths.has(scriptPath)) {
+      missing.push(scriptPath);
+    }
+  }
+  return [...new Set(missing)];
 }

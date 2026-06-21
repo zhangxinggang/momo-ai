@@ -1,4 +1,10 @@
 import type { ISkill } from '@/types/modules';
+import {
+  exportSkill,
+  installSkillMd,
+  installSkillMdSymlink,
+  uninstallSkillMd,
+} from '@renderer/services/skill/api';
 
 export type ESkillInstallMode = 'copy' | 'symlink';
 
@@ -41,7 +47,7 @@ export async function syncSkillsToPlatforms(
   const failures: IBatchSkillSyncFailure[] = [];
 
   for (const skill of skills) {
-    const skillMdContent = await window.api.skill.export(skill.id, 'skillmd');
+    const skillMdContent = await exportSkill(skill.id, 'skillmd');
 
     for (const platformId of platformIds) {
       current += 1;
@@ -54,9 +60,9 @@ export async function syncSkillsToPlatforms(
 
       try {
         if (installMode === 'symlink') {
-          await window.api.skill.installMdSymlink(skill.name, skillMdContent, platformId);
+          await installSkillMdSymlink(skill.name, skillMdContent, platformId);
         } else {
-          await window.api.skill.installMd(skill.name, skillMdContent, platformId);
+          await installSkillMd(skill.name, skillMdContent, platformId);
         }
         successCount += 1;
       } catch (error) {
@@ -101,7 +107,7 @@ export async function unsyncSkillsFromPlatforms(
       });
 
       try {
-        await window.api.skill.uninstallMd(skill.name, platformId);
+        await uninstallSkillMd(skill.name, platformId);
         successCount += 1;
       } catch (error) {
         failures.push({

@@ -16,6 +16,12 @@
       "require": "./dist/tools/url.js",
       "default": "./src/tools/url.ts"
     },
+    "./tools/file": {
+      "types": "./src/tools/file.ts",
+      "import": "./src/tools/file.ts",
+      "require": "./dist/tools/file.js",
+      "default": "./src/tools/file.ts"
+    },
     "./tools/fullscreen": {
       "types": "./src/tools/fullscreen.ts",
       "import": "./src/tools/fullscreen.ts",

@@ -43,7 +43,17 @@ export const IPC_CHANNELS = {
   // 内置 HTTP 服务（system_api）
   SYSTEM_GET_UPLOAD_URL: 'system:getUploadUrl',
   SYSTEM_GET_SYSTEM_LOGO: 'system:getSystemLogo',
-  SYSTEM_GET_APP_NAME: 'system:getAppName',
+  SYSTEM_GET_APP_CONFIG: 'system:getAppConfig',
+
+  // 桌面外壳（对话框、文件系统、Shell、通知、数据目录）
+  DIALOG_SELECT_FOLDER: 'dialog:selectFolder',
+  DIALOG_SELECT_FOLDERS: 'dialog:selectFolders',
+  FS_PATH_EXISTS: 'fs:pathExists',
+  DATA_GET_PATH: 'data:getPath',
+  DATA_GET_STATUS: 'data:getStatus',
+  SHELL_OPEN_PATH: 'shell:openPath',
+  SHELL_OPEN_EXTERNAL: 'shell:openExternal',
+  NOTIFICATION_SHOW: 'notification:show',
 
   // AI transport
   AI_HTTP_REQUEST: 'ai:httpRequest',
@@ -159,6 +169,7 @@ export const IPC_CHANNELS = {
   // Skill Local Repo Storage
   SKILL_LIST_LOCAL_FILES: 'skill:listLocalFiles',
   SKILL_READ_LOCAL_FILE: 'skill:readLocalFile',
+  SKILL_READ_LOCAL_FILE_BUFFER: 'skill:readLocalFileBuffer',
   SKILL_READ_LOCAL_FILES: 'skill:readLocalFiles',
   SKILL_RENAME_LOCAL_PATH: 'skill:renameLocalPath',
   SKILL_WRITE_LOCAL_FILE: 'skill:writeLocalFile',
@@ -166,6 +177,7 @@ export const IPC_CHANNELS = {
   SKILL_CREATE_LOCAL_DIR: 'skill:createLocalDir',
   SKILL_LIST_LOCAL_FILES_BY_PATH: 'skill:listLocalFilesByPath',
   SKILL_READ_LOCAL_FILE_BY_PATH: 'skill:readLocalFileByPath',
+  SKILL_READ_LOCAL_FILE_BUFFER_BY_PATH: 'skill:readLocalFileBufferByPath',
   SKILL_RENAME_LOCAL_PATH_BY_PATH: 'skill:renameLocalPathByPath',
   SKILL_WRITE_LOCAL_FILE_BY_PATH: 'skill:writeLocalFileByPath',
   SKILL_DELETE_LOCAL_FILE_BY_PATH: 'skill:deleteLocalFileByPath',
@@ -177,6 +189,8 @@ export const IPC_CHANNELS = {
   SKILL_GET_REPO_PATH: 'skill:getRepoPath',
   SKILL_SYNC_FROM_REPO: 'skill:syncFromRepo',
   SKILL_EXECUTE_WORKSPACE: 'skill:executeWorkspace',
+  SKILL_ENSURE_SESSION_WORKSPACE: 'skill:ensureSessionWorkspace',
+  SKILL_WRITE_SESSION_FILE: 'skill:writeSessionFile',
 
   // Image
   DIALOG_SELECT_IMAGE: 'dialog:selectImage',

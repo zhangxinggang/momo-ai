@@ -11,6 +11,7 @@ module.exports = {
   onlineConfUrl: 'https://biaobida.oss-cn-beijing.aliyuncs.com/1/1780316365784/momo-ai-conf.json',
   server: {
     httpPort: 28081,
+    filePreviewBaseUrl: 'https://demo.file-viewer.app',
     upload: {
       maxFileSize: 1000 * 1024 * 1024,
     },

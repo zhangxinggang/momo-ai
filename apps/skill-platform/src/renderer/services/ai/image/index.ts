@@ -1,9 +1,7 @@
-export { generateImage } from './generate';
-export { testImageGeneration } from './test';
 export {
   EImageBackend,
-  isImageModel,
   isImageGenerationConfig,
+  isImageModel,
   resolveImageBackend,
   suggestRemoteModelAsImage,
 } from './backends';
@@ -12,3 +10,5 @@ export {
   resolveImageModelCapabilities,
   supportsReferenceImages,
 } from './capabilities';
+export { generateImage } from './generate';
+export { testImageGeneration } from './test';

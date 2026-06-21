@@ -48,7 +48,9 @@ export function BaseFields({
         </div>
         {isEditing ? (
           <div>
-            <label className='text-muted-foreground mb-1 block text-xs'>{'自定义名称（可选）'}</label>
+            <label className='text-muted-foreground mb-1 block text-xs'>
+              {'自定义名称（可选）'}
+            </label>
             <Input
               size='middle'
               value={modelForm.name}

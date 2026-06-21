@@ -1,6 +1,7 @@
 import type { IScannedSkill, ISkill, ISkillProject } from '@/types/modules';
-import { useAppName } from '@renderer/hooks/useAppName';
 import { useToast } from '@renderer/components/ui/Toast';
+import { useAppName } from '@renderer/hooks/useAppName';
+import { openPath, pickFolder as pickDesktopFolder } from '@renderer/services/desktop';
 import { filterVisibleScannedSkills } from '@renderer/services/skill/filter';
 import { buildProjectDetailSkill } from '@renderer/services/skill/project-detail-adapter';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
@@ -84,8 +85,7 @@ function ProjectFormModal({ isOpen, project, onClose, onSubmit }: IProps) {
   };
 
   const pickFolder = useCallback(async (): Promise<string | null> => {
-    const selectedPath = await window.electron?.selectFolder?.();
-    return selectedPath?.trim() || null;
+    return pickDesktopFolder();
   }, []);
 
   const handlePickFolder = async (target: 'root' | 'scan') => {
@@ -648,9 +648,7 @@ export function SkillProjectsView() {
                               <div className='mt-4 flex flex-wrap gap-2'>
                                 <Button
                                   size='small'
-                                  onClick={() =>
-                                    void window.electron?.openPath?.(scannedSkill.localPath)
-                                  }
+                                  onClick={() => void openPath(scannedSkill.localPath)}
                                   icon={<FolderOpenIcon className='h-3.5 w-3.5' />}
                                   className='border-border text-foreground hover:bg-accent inline-flex items-center gap-1 rounded-lg border px-2.5'>
                                   {'打开文件夹'}

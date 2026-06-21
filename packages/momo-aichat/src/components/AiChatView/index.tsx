@@ -10,6 +10,7 @@ import {
   type IChatMessage,
 } from '../../types/chat';
 import { ChatAttachmentIcon } from '../../utils/attachment-icon';
+import { NoteReferenceText } from '../NoteReferenceText';
 import { ChatContextBanner } from '../ChatContextBanner';
 import type { IChatInputPanelRef } from '../ChatInputPanel';
 import ChatInputPanel from '../ChatInputPanel';
@@ -49,7 +50,7 @@ export const AiChatView: React.FC<IProps> = ({
   renderAssistantMessageActions,
 }) => {
   const { message, modal } = App.useApp();
-  const { uploadFiles, validateLocalFiles, isImageModel, getImageModelInputHint } =
+  const { uploadFiles, validateLocalFiles, isImageModel, getImageModelInputHint, noteReferences } =
     useAiChatConfig();
   // 用户输入内容
   const [inputValue, setInputValue] = useState(externalInputValue ?? '');
@@ -162,8 +163,7 @@ export const AiChatView: React.FC<IProps> = ({
   } = useChatContext();
 
   const isCurrentImageModel = isImageModel?.(currentModel) ?? false;
-  const inputPlaceholder =
-    getImageModelInputHint?.(currentModel) ?? placeholder;
+  const inputPlaceholder = getImageModelInputHint?.(currentModel) ?? placeholder;
 
   // 获取距离底部的像素距离
   const getDistanceFromBottom = () => {
@@ -407,6 +407,15 @@ export const AiChatView: React.FC<IProps> = ({
       );
     };
 
+    let resolvedUserContent = userContent;
+    if (noteReferences?.resolveContent) {
+      try {
+        resolvedUserContent = (await noteReferences.resolveContent(userContent)).trim();
+      } catch {
+        resolvedUserContent = userContent;
+      }
+    }
+
     const attachmentsPrompt = buildAttachmentsPrompt(attachments);
     const referenceImages = attachments
       .filter((file) => file.imageBase64 && file.mime.startsWith('image/'))
@@ -416,10 +425,10 @@ export const AiChatView: React.FC<IProps> = ({
         base64: file.imageBase64!,
       }));
 
-    let finalUserContent = userContent;
+    let finalUserContent = resolvedUserContent;
     if (!isCurrentImageModel && attachments.length > 0) {
-      finalUserContent = `${attachmentsPrompt}\n\n我的问题：\n${userContent || '(基于以上文件，请给出总结/见解)'}`;
-    } else if (isCurrentImageModel && !userContent && referenceImages.length > 0) {
+      finalUserContent = `${attachmentsPrompt}\n\n我的问题：\n${resolvedUserContent || '(基于以上文件，请给出总结/见解)'}`;
+    } else if (isCurrentImageModel && !resolvedUserContent && referenceImages.length > 0) {
       finalUserContent = '请根据参考图生成或编辑图片';
     }
 
@@ -690,7 +699,7 @@ export const AiChatView: React.FC<IProps> = ({
                 <div className='group flex justify-end'>
                   <div className='max-w-[70%]'>
                     <div className='whitespace-pre-wrap break-words rounded-l-2xl rounded-br-sm rounded-tr-2xl bg-[var(--user-bubble-bg)] px-4 py-2 text-[var(--user-bubble-text)] transition-colors'>
-                      {message.content}
+                      <NoteReferenceText content={message.content} />
                     </div>
                     {message.attachments && message.attachments.length > 0 && (
                       <div className='mt-2 space-y-2'>

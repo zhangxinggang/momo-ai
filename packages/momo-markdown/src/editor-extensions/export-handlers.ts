@@ -1,5 +1,10 @@
 import { buildDocxBlobFromPreview } from './export-docx';
-import { buildExportProgress, downloadBlob, resolveExportBasename, type IExportProgress } from './export-utils';
+import {
+  buildExportProgress,
+  downloadBlob,
+  resolveExportBasename,
+  type IExportProgress,
+} from './export-utils';
 import {
   getMarkdownExportPreviewElement,
   getMarkdownExportShellElement,
@@ -7,7 +12,11 @@ import {
   withMarkdownExportPreview,
   type IMarkdownPreviewExportOptions,
 } from './preview-export';
-import type { IExportDocxHandler, IExportPdfHandler, IMarkdownExportContext } from './toolbar-export';
+import type {
+  IExportDocxHandler,
+  IExportPdfHandler,
+  IMarkdownExportContext,
+} from './toolbar-export';
 
 function buildPreviewOptions(params: IMarkdownExportContext): IMarkdownPreviewExportOptions {
   return {
@@ -28,7 +37,9 @@ async function withPreparedExportPreview<T>(
   return withMarkdownExportPreview(buildPreviewOptions(params), run);
 }
 
-async function exportPreviewToPdf(reportProgress?: (progress: IExportProgress) => void): Promise<void> {
+async function exportPreviewToPdf(
+  reportProgress?: (progress: IExportProgress) => void,
+): Promise<void> {
   const shell = getMarkdownExportShellElement();
   if (!shell) {
     throw new Error('导出容器不存在');

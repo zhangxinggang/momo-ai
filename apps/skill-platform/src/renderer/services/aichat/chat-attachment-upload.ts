@@ -1,4 +1,5 @@
 import type { IChatAttachment } from '@momo/aichat';
+import { getAichatApi } from '@renderer/services/aichat/api';
 
 const MAX_COUNT = 10;
 const MAX_SINGLE = 10 * 1024 * 1024;
@@ -39,7 +40,8 @@ async function readFileText(
   file: File,
 ): Promise<{ text: string; snippet: string; imageBase64?: string }> {
   const ext = getFileExtension(file.name);
-  const isImage = file.type.startsWith('image/') || ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'].includes(ext);
+  const isImage =
+    file.type.startsWith('image/') || ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'].includes(ext);
 
   if (isImage) {
     try {
@@ -55,10 +57,10 @@ async function readFileText(
     }
   }
 
-  if (typeof window !== 'undefined' && window.api?.aichat?.parseAttachment) {
+  if (typeof window !== 'undefined' && getAichatApi()?.parseAttachment) {
     try {
       const base64 = await fileToBase64(file);
-      const parsed = await window.api.aichat.parseAttachment({ base64, ext, mime: file.type });
+      const parsed = await getAichatApi()!.parseAttachment({ base64, ext, mime: file.type });
       if (parsed?.text) {
         return { text: parsed.text, snippet: parsed.snippet || parsed.text.slice(0, 800) };
       }

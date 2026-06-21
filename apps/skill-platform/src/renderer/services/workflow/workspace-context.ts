@@ -1,3 +1,5 @@
+import { isTextFilePath } from '@/utils/text-file';
+import { getWorkspaceApi } from '@renderer/services/workspace/api';
 import {
   listWorkflowAgentDir,
   listWorkflowNodeFileTree,
@@ -6,16 +8,6 @@ import {
 
 const MAX_TOTAL_CHARS = 80000;
 const MAX_FILES = 30;
-
-const TEXT_FILE_PATTERN = /\.(md|txt|json|js|ts|tsx|jsx|py|html|css|less|xml|yaml|yml|csv|log)$/i;
-
-function isTextFilePath(relativePath: string): boolean {
-  const base = relativePath.split('/').pop() || relativePath;
-  if (TEXT_FILE_PATTERN.test(relativePath)) {
-    return true;
-  }
-  return ['makefile', 'dockerfile', 'readme', 'license'].includes(base.toLowerCase());
-}
 
 /**
  * 构建工作流节点/根目录的 AI 工作区上下文（递归读取文本文件）
@@ -74,7 +66,7 @@ export async function buildWorkflowWorkspaceContext(
     if (totalChars >= MAX_TOTAL_CHARS) {
       break;
     }
-    const readViaWorkspace = (await window.api?.workspace?.readFile?.(file.path)) as
+    const readViaWorkspace = (await getWorkspaceApi()?.readFile?.(file.path)) as
       | { success?: boolean; content?: string; skipped?: boolean }
       | undefined;
     const text =

@@ -1,4 +1,5 @@
 import type { ISkill } from '@/types/modules';
+import { isSkillApiAvailable, readSkillLocalFile } from '@renderer/services/skill/api';
 
 const MARKDOWN_LINK_MD_RE = /\[[^\]]*\]\(([^)]+\.md)\)/gi;
 const BACKTICK_MD_RE = /`([^`]+\.md)`/g;
@@ -54,9 +55,9 @@ export async function loadSkillInstructionsForChat(skill: ISkill): Promise<strin
   const skillId = skill.id;
   const skillName = skill.name?.trim() || '';
 
-  if (window.api?.skill?.readLocalFile) {
+  if (isSkillApiAvailable()) {
     try {
-      const skillMd = await window.api.skill.readLocalFile(skillId, 'SKILL.md');
+      const skillMd = await readSkillLocalFile(skillId, 'SKILL.md');
       if (skillMd?.content?.trim()) {
         body = skillMd.content.trim();
       }
@@ -68,10 +69,10 @@ export async function loadSkillInstructionsForChat(skill: ISkill): Promise<strin
   body = rewriteSkillMonorepoPaths(body, skillName);
 
   const refFiles = extractReferencedMdFiles(body);
-  if (window.api?.skill?.readLocalFile) {
+  if (isSkillApiAvailable()) {
     for (const ref of refFiles) {
       try {
-        const file = await window.api.skill.readLocalFile(skillId, ref);
+        const file = await readSkillLocalFile(skillId, ref);
         if (file?.content?.trim()) {
           body += `\n\n---\n\n## 参考文件：${ref}\n\n${file.content.trim()}`;
         }

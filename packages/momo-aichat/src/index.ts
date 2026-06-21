@@ -26,6 +26,7 @@ export { createDefaultAiChatServices } from './adapters/create-services';
 export type {
   IAiChatServices,
   IChatStreamMessage,
+  IChatStreamStats,
   IChatSyncAdapter,
   ICliAgentCallInput,
   ICliAgentCallResult,
@@ -34,6 +35,7 @@ export type {
   TCallAiChatStream,
   TCallCliAgent,
 } from './adapters/types';
+export type { ILocalPathConfig } from './types/local-path';
 
 export { CLI_AGENT_OPTIONS, CLI_MODEL_PREFIX, isCliModelId, parseCliAgent } from './utils/model-id';
 
@@ -60,11 +62,28 @@ export { default as StopGenerationButton } from './components/StopGenerationButt
 export { buildChatWorkspaceConfig, useChatWorkspaceConfig } from './hooks/useChatWorkspaceConfig';
 export type { IUseChatWorkspaceConfigOptions } from './hooks/useChatWorkspaceConfig';
 export { useSlashCommandTrigger } from './hooks/useSlashCommandTrigger';
+export { useNoteReferenceTrigger } from './hooks/useNoteReferenceTrigger';
 export type {
   ISlashCommandItem,
   ISlashCommandsConfig,
   ISlashCommandsListContext,
   ISlashCommandsListResult,
 } from './types/slash-command';
+export type { INoteReferenceNode, INoteReferencesConfig } from './types/note-reference';
+export { NoteReferenceChip } from './components/NoteReferenceChip';
+export { NoteReferenceText } from './components/NoteReferenceText';
+export { resolveNoteMentionsInContent, buildNoteMentionToken, getNoteMentionDisplayPath, parseNoteReferenceContent, valueToSurface } from './utils/note-mention';
+export { NoteReferencePopover } from './components/NoteReferencePopover';
+export { ChatMentionTextarea } from './components/ChatMentionTextarea';
+export type { IChatMentionTextareaRef } from './components/ChatMentionTextarea';
 export type { IChatWorkspaceConfig, IChatWorkspacePreset } from './types/workspace';
+export {
+  enhanceLocalPathElements,
+  isAbsoluteLocalPath,
+  isLocalPathLike,
+  joinLocalPath,
+  normalizeLocalPathValue,
+  splitPlainTextByLocalPaths,
+  stripCodeLanguagePrefix,
+} from './utils/local-path';
 export { formatWorkspaceDisplayPath } from './utils/workspace-display';

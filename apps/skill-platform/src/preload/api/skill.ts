@@ -91,6 +91,22 @@ export const skillApi = {
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_LIST_LOCAL_FILES, skillId),
   readLocalFile: (skillId: string, relativePath: string): Promise<ISkillLocalFileEntry | null> =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_READ_LOCAL_FILE, skillId, relativePath),
+  readLocalFileBuffer: async (skillId: string, relativePath: string): Promise<ArrayBuffer | null> => {
+    const base64 = await ipcRenderer.invoke(
+      IPC_CHANNELS.SKILL_READ_LOCAL_FILE_BUFFER,
+      skillId,
+      relativePath,
+    );
+    if (typeof base64 !== 'string' || base64.length === 0) {
+      return null;
+    }
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+    return bytes.buffer;
+  },
   readLocalFiles: (skillId: string): Promise<ISkillLocalFileEntry[]> =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_READ_LOCAL_FILES, skillId),
   renameLocalPath: (skillId: string, oldRelativePath: string, newRelativePath: string) =>
@@ -113,6 +129,25 @@ export const skillApi = {
     relativePath: string,
   ): Promise<ISkillLocalFileEntry | null> =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_READ_LOCAL_FILE_BY_PATH, localPath, relativePath),
+  readLocalFileBufferByPath: async (
+    localPath: string,
+    relativePath: string,
+  ): Promise<ArrayBuffer | null> => {
+    const base64 = await ipcRenderer.invoke(
+      IPC_CHANNELS.SKILL_READ_LOCAL_FILE_BUFFER_BY_PATH,
+      localPath,
+      relativePath,
+    );
+    if (typeof base64 !== 'string' || base64.length === 0) {
+      return null;
+    }
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+    return bytes.buffer;
+  },
   renameLocalPathByPath: (localPath: string, oldRelativePath: string, newRelativePath: string) =>
     ipcRenderer.invoke(
       IPC_CHANNELS.SKILL_RENAME_LOCAL_PATH_BY_PATH,
@@ -147,9 +182,13 @@ export const skillApi = {
     ),
   getRepoPath: (skillId: string) => ipcRenderer.invoke(IPC_CHANNELS.SKILL_GET_REPO_PATH, skillId),
   syncFromRepo: (skillId: string) => ipcRenderer.invoke(IPC_CHANNELS.SKILL_SYNC_FROM_REPO, skillId),
+  ensureSessionWorkspace: (skillId: string, sessionId: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILL_ENSURE_SESSION_WORKSPACE, skillId, sessionId),
+  writeSessionFile: (sessionId: string, relativePath: string, content: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILL_WRITE_SESSION_FILE, sessionId, relativePath, content),
   executeWorkspace: (
     skillId: string,
     userInput: string,
-    options?: { commands?: string[]; outputDir?: string },
+    options?: { commands?: string[]; outputDir?: string; sessionId?: string },
   ) => ipcRenderer.invoke(IPC_CHANNELS.SKILL_EXECUTE_WORKSPACE, skillId, userInput, options),
 };

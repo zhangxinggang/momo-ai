@@ -1,6 +1,7 @@
-import { useAppName } from '@renderer/hooks/useAppName';
 import { SettingSection } from '@renderer/components/Settings/SettingPrimitives';
 import { BackgroundImageBackdrop } from '@renderer/components/ui/BackgroundImageBackdrop';
+import { useAppName } from '@renderer/hooks/useAppName';
+import { saveImages, selectImages } from '@renderer/services/media';
 import { useSettingsStore } from '@renderer/store';
 import type { EThemeMode } from '@renderer/types/settings';
 import {
@@ -129,13 +130,13 @@ export function AppearanceSettings() {
 
     setIsPickingBackground(true);
     try {
-      const selectedPaths = await window.electron?.selectImage?.();
+      const selectedPaths = await selectImages();
       const nextImagePath = Array.isArray(selectedPaths) ? selectedPaths[0] : undefined;
       if (!nextImagePath) {
         return;
       }
 
-      const savedFileNames = await window.electron?.saveImage?.([nextImagePath]);
+      const savedFileNames = await saveImages([nextImagePath]);
       const fileName = Array.isArray(savedFileNames) ? savedFileNames[0] : undefined;
       if (!fileName) {
         return;

@@ -1,4 +1,5 @@
 ﻿import { IPC_CHANNELS } from '@/types/constants';
+import { resolvePathUnderBase } from '@/utils/path-under-base';
 import { getAppConfig } from '@momo/electron';
 import { dialog, ipcMain, shell } from 'electron';
 import fs from 'fs/promises';
@@ -199,10 +200,8 @@ function validateFileName(fileName: string, baseDir: string): string {
     throw new Error('Invalid filename: path traversal detected');
   }
 
-  const fullPath = path.join(baseDir, safeName);
-
-  // Double-check the resolved path is within the base directory
-  if (!fullPath.startsWith(baseDir + path.sep) && fullPath !== baseDir) {
+  const fullPath = resolvePathUnderBase(baseDir, safeName);
+  if (!fullPath) {
     throw new Error('Invalid filename: path traversal detected');
   }
 

@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { IPrompt, ISkill } from '@/types/modules';
 import { SkillContextCard } from '@renderer/components/Skill/SkillContextCard';
 import { ModelSelect } from '@renderer/components/ui/ModelSelect';
+import { pickFolders } from '@renderer/services/desktop';
 import type { IAIModelConfig } from '@renderer/types/settings';
 import { getSystemFileNameError } from '@renderer/utils/validation/system-name';
 import styles from './index.module.less';
@@ -119,20 +120,11 @@ export function WorkflowNodeEditPanel({
   };
 
   const handleAddWorkspacePath = async () => {
-    const selectedList = await window.electron?.selectFolders?.();
-    let paths: string[] = [];
-    if (selectedList?.length) {
-      paths = selectedList;
-    } else {
-      const single = await window.electron?.selectFolder?.();
-      if (single?.trim()) {
-        paths = [single.trim()];
-      }
-    }
+    const paths = await pickFolders();
     const merged = [...workspacePaths];
-    for (const path of paths) {
-      if (path?.trim() && !merged.includes(path.trim())) {
-        merged.push(path.trim());
+    for (const folderPath of paths) {
+      if (!merged.includes(folderPath)) {
+        merged.push(folderPath);
       }
     }
     setWorkspacePaths(merged);

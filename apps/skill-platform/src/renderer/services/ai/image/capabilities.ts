@@ -17,7 +17,7 @@ export interface IImageModelCapabilities {
 const IMAGE_EDIT_MODEL_PATTERN = /qwen-image-edit|image-edit|edit-plus|edit-max/i;
 
 /** 当前配置是否为生图模型 */
-export { isImageModel, isImageModel as isImageGenerationConfig } from './backends';
+export { isImageModel as isImageGenerationConfig, isImageModel } from './backends';
 
 /** 解析生图模型能力（文生图 / 参考图编辑） */
 export function resolveImageModelCapabilities(
@@ -40,7 +40,8 @@ export function resolveImageModelCapabilities(
         EImageCapability.EImageEdit,
         EImageCapability.EMultiImageEdit,
       ],
-      maxReferenceImages: modelLower.includes('edit-max') || modelLower.includes('edit-plus') ? 6 : 3,
+      maxReferenceImages:
+        modelLower.includes('edit-max') || modelLower.includes('edit-plus') ? 6 : 3,
       defaultSize: '1024*1024',
     };
   }

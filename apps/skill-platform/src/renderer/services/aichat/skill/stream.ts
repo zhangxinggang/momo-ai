@@ -38,6 +38,8 @@ export interface ISkillLangGraphStreamOptions {
   } | null;
   /** 对话完成后回调（用于解析 artifact 等） */
   onReplyComplete?: (reply: string) => void | Promise<void>;
+  /** SKILL 对话会话 id（bootstrapSessionId） */
+  getSessionId?: () => string | null;
 }
 
 /** 将 SKILL LangGraph 能力注入 momo-aichat 的 callAIChatStream */
@@ -86,6 +88,7 @@ export function createSkillLangGraphStream(
           : options.getActiveSkillLine(),
         activeSkillInstructions,
         activeSkillId: activeSkill?.id,
+        sessionId: options.getSessionId?.() ?? undefined,
         priorTranscript: formatPriorTranscript(messages),
         knowledgeContext,
         workflowOutput: workflowOutput ?? undefined,

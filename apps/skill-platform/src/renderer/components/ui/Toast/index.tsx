@@ -1,5 +1,6 @@
-import { useSettingsStore } from '@renderer/store';
 import { fetchAppName } from '@renderer/hooks/useAppName';
+import { showSystemNotification } from '@renderer/services/desktop';
+import { useSettingsStore } from '@renderer/store';
 import { Button } from 'antd';
 import { AlertTriangleIcon, CheckCircleIcon, InfoIcon, XCircleIcon, XIcon } from 'lucide-react';
 import { createContext, useCallback, useContext, useState } from 'react';
@@ -32,7 +33,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
       // Send system notification (if enabled and requested)
       // 发送系统通知（如果启用且请求）
-      if (sendSystemNotification && enableNotifications && window.electron?.showNotification) {
+      if (sendSystemNotification && enableNotifications) {
         const title =
           type === 'success'
             ? 'Success'
@@ -42,7 +43,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 ? 'Warning'
                 : 'Info';
         void fetchAppName().then((appName) => {
-          window.electron?.showNotification?.(`${appName} - ${title}`, message);
+          void showSystemNotification(`${appName} - ${title}`, message);
         });
       }
 

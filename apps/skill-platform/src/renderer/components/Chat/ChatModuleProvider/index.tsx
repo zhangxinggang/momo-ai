@@ -6,6 +6,7 @@ import { useMemo, type ReactNode } from 'react';
 
 import { useToast } from '@renderer/components/ui/Toast';
 import { useChatWorkspaceBinding } from '@renderer/hooks/useChatWorkspaceBinding';
+import { useLocalPathBinding } from '@renderer/hooks/useLocalPathBinding';
 import { useRankedChatModelGroups } from '@renderer/hooks/useRankedChatModelGroups';
 import { useStableModelResolver } from '@renderer/hooks/useStableModelResolver';
 import { buildSharedAiChatServices, createGeneralChatStream } from '@renderer/services/aichat';
@@ -22,6 +23,7 @@ export function ChatModuleProvider({ children }: IProps) {
   const modelResolverRef = useStableModelResolver(aiModels);
   const chatModelOptionGroups = useRankedChatModelGroups(aiModels);
   const workspace = useChatWorkspaceBinding();
+  const localPath = useLocalPathBinding();
 
   const chatServices = useMemo(
     () =>
@@ -29,6 +31,7 @@ export function ChatModuleProvider({ children }: IProps) {
         aiModels,
         chatModelOptionGroups,
         workspace,
+        localPath,
         storageKeyPrefix: 'skill-platform-ai-chat',
         callAIChatStream: createGeneralChatStream({
           getModelConfig: (modelKey) => modelResolverRef.current.getModelConfig(modelKey),
@@ -36,7 +39,7 @@ export function ChatModuleProvider({ children }: IProps) {
           onNeedModel: () => showToast('请先在设置中配置 AI 对话模型', 'error'),
         }),
       }),
-    [aiModels, chatModelOptionGroups, modelResolverRef, showToast, workspace],
+    [aiModels, chatModelOptionGroups, localPath, modelResolverRef, showToast, workspace],
   );
 
   return (

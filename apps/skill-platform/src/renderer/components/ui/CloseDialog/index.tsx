@@ -1,3 +1,4 @@
+import { sendCloseDialogCancel, sendCloseDialogResult } from '@renderer/services/desktop';
 import { useSettingsStore } from '@renderer/store';
 import { Button, Checkbox, Modal } from 'antd';
 import { LogOutIcon, MinusIcon } from 'lucide-react';
@@ -18,7 +19,7 @@ export function CloseDialog({ isOpen, onClose }: IProps) {
   }, [isOpen]);
 
   const handleCancel = () => {
-    window.electron?.sendCloseDialogCancel?.();
+    sendCloseDialogCancel();
     onClose();
   };
 
@@ -26,7 +27,7 @@ export function CloseDialog({ isOpen, onClose }: IProps) {
     if (rememberChoice) {
       setCloseAction('minimize');
     }
-    window.electron?.sendCloseDialogResult?.('minimize', rememberChoice);
+    sendCloseDialogResult('minimize', rememberChoice);
     onClose();
   };
 
@@ -34,7 +35,7 @@ export function CloseDialog({ isOpen, onClose }: IProps) {
     if (rememberChoice) {
       setCloseAction('exit');
     }
-    window.electron?.sendCloseDialogResult?.('exit', rememberChoice);
+    sendCloseDialogResult('exit', rememberChoice);
     onClose();
   };
 

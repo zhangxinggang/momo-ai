@@ -1,5 +1,5 @@
-import { useAppName } from '@renderer/hooks/useAppName';
 import type { IRegistrySkill } from '@/types/modules/skill';
+import { useAppName } from '@renderer/hooks/useAppName';
 import { Button, Input } from 'antd';
 import { CheckSquareIcon, FileTextIcon, SquareIcon } from 'lucide-react';
 

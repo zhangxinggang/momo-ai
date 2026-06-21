@@ -1,4 +1,4 @@
-import { MdEditor, useMarkdownEditorTheme, useMdPreviewTheme } from '@momo/markdown';
+import { MdEditor, buildMdPreviewThemeOptions, useMarkdownEditorTheme, useMdPreviewTheme } from '@momo/markdown';
 import '@momo/markdown-styles';
 import type { MenuProps, TreeDataNode } from 'antd';
 import { Button, Dropdown, Input, Modal, Select, Tree } from 'antd';
@@ -31,7 +31,15 @@ import type {
   IFileEditorNotifyPayload,
   IFileTreeEntry,
 } from '../../types/adapter';
+import { BinaryFilePreview } from '../BinaryFilePreview';
+import { CodeFileEditor } from '../CodeFileEditor';
+import { isCodeEditorPath } from '../../utils/code-editor-language';
+import { cloneArrayBuffer } from '../../utils/file-content';
 import { isMarkdownPath, MARKDOWN_TOOLBARS } from '../../utils/markdown-config';
+import {
+  DEFAULT_CODE_EDITOR_THEME,
+  type ECodeEditorTheme,
+} from '../../utils/code-editor-theme';
 import {
   buildFileTree,
   ensurePathWithExtension,
@@ -41,7 +49,6 @@ import {
   normalizeRelativePath,
   type IFileTreeNode,
 } from '../../utils/path';
-import './index.module.less';
 
 const MomoMdEditor = MdEditor as ComponentType<Record<string, unknown>>;
 
@@ -66,6 +73,10 @@ export interface IProps {
   className?: string;
   /** 操作反馈（由宿主注入 toast 等） */
   onNotify?: (payload: IFileEditorNotifyPayload) => void;
+  /** 代码编辑器主题，默认浅色；宿主可用 useSyncedCodeEditorTheme 跟随系统亮暗 */
+  codeEditorTheme?: ECodeEditorTheme;
+  /** 二进制预览 Worker/WASM 等静态资源根 URL，由宿主注入 */
+  filePreviewBaseUrl?: string;
 }
 
 interface IPathTarget {
@@ -113,6 +124,8 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
     defaultNewFileExtension = 'md',
     className,
     onNotify,
+    codeEditorTheme = DEFAULT_CODE_EDITOR_THEME,
+    filePreviewBaseUrl,
   },
   ref,
 ) {
@@ -120,6 +133,7 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
   const markdownEditorDomId = useId();
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [mdPreviewTheme, setMdPreviewTheme] = useMdPreviewTheme();
+  const previewThemeOptions = useMemo(() => buildMdPreviewThemeOptions(), []);
   const [entries, setEntries] = useState<IFileTreeEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
@@ -134,6 +148,8 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
   const [moveTarget, setMoveTarget] = useState<IPathTarget | null>(null);
   const [moveTargetDir, setMoveTargetDir] = useState('');
   const [uploadTargetDir, setUploadTargetDir] = useState<string | null>(null);
+  const [previewBuffer, setPreviewBuffer] = useState<ArrayBuffer | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
 
   const notify = useCallback(
     (message: string, type: IFileEditorNotifyPayload['type']) => {
@@ -179,8 +195,15 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
 
   const treeNodes = useMemo(() => buildFileTree(entries), [entries]);
   const directoryOptions = useMemo(() => collectDirectoryPaths(entries), [entries]);
-  const hasUnsaved = selectedPath !== null && fileContent !== savedContent;
   const isMarkdownActive = selectedPath ? isMarkdownPath(selectedPath) : false;
+  const isCodeEditorActive = Boolean(
+    selectedPath && !isMarkdownActive && isCodeEditorPath(selectedPath),
+  );
+  const isBinaryPreviewActive = Boolean(
+    selectedPath && !isMarkdownActive && !isCodeEditorActive,
+  );
+  const hasUnsaved =
+    selectedPath !== null && !isBinaryPreviewActive && fileContent !== savedContent;
 
   useEffect(() => {
     onUnsavedChange?.(hasUnsaved);
@@ -215,6 +238,41 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
     // 仅在切换文件时加载内容，避免保存后刷新树覆盖未保存编辑
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPath]);
+
+  useEffect(() => {
+    if (!selectedPath || !isBinaryPreviewActive || !adapter.readFileBuffer) {
+      setPreviewBuffer(null);
+      setIsPreviewLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsPreviewLoading(true);
+    setPreviewBuffer(null);
+
+    void adapter
+      .readFileBuffer(selectedPath)
+      .then((buffer) => {
+        if (!cancelled && buffer) {
+          setPreviewBuffer(cloneArrayBuffer(buffer));
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        if (!cancelled) {
+          notify('加载文件预览失败', 'error');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsPreviewLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [adapter, isBinaryPreviewActive, notify, selectedPath]);
 
   const handleSave = useCallback(async (): Promise<boolean> => {
     if (!selectedPath || !hasUnsaved) {
@@ -675,7 +733,23 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
                   {hasUnsaved ? <span className='momo-file-editor__tree-item-dot' /> : null}
                 </div>
                 <div className='momo-file-editor__editor-tabs'>
-                  {isMarkdownActive ? (
+                  {!isBinaryPreviewActive && isMarkdownActive ? (
+                    <div className='momo-file-editor__theme-select'>
+                      <span className='momo-file-editor__theme-select-label'>{'预览样式'}</span>
+                      <Select
+                        className='momo-file-editor__theme-select-control'
+                        options={previewThemeOptions}
+                        size='small'
+                        value={mdPreviewTheme}
+                        onChange={setMdPreviewTheme}
+                      />
+                    </div>
+                  ) : null}
+                  {isBinaryPreviewActive ? (
+                    <span className='momo-file-editor__editor-tab momo-file-editor__editor-tab--active momo-file-editor__editor-tab--readonly-label'>
+                      {'预览'}
+                    </span>
+                  ) : isMarkdownActive ? (
                     <span className='momo-file-editor__editor-tab momo-file-editor__editor-tab--active momo-file-editor__editor-tab--readonly-label'>
                       {'Markdown'}
                     </span>
@@ -684,14 +758,16 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
                       {'编辑'}
                     </span>
                   )}
-                  <Button
-                    type='text'
-                    className='momo-file-editor__editor-tab'
-                    disabled={!hasUnsaved}
-                    onClick={() => void handleSave()}
-                    title='保存'
-                    icon={<SaveIcon style={{ width: '0.875rem', height: '0.875rem' }} />}
-                  />
+                  {!isBinaryPreviewActive ? (
+                    <Button
+                      type='text'
+                      className='momo-file-editor__editor-tab'
+                      disabled={!hasUnsaved}
+                      onClick={() => void handleSave()}
+                      title='保存'
+                      icon={<SaveIcon style={{ width: '0.875rem', height: '0.875rem' }} />}
+                    />
+                  ) : null}
                 </div>
               </div>
 
@@ -715,12 +791,19 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
                       style={{ height: '100%' }}
                     />
                   </div>
-                ) : (
-                  <Input.TextArea
-                    className='momo-file-editor__textarea'
-                    onChange={(e) => setFileContent(e.target.value)}
-                    spellCheck={false}
+                ) : isCodeEditorActive ? (
+                  <CodeFileEditor
+                    onChange={setFileContent}
+                    relativePath={selectedPath}
+                    themeId={codeEditorTheme}
                     value={fileContent}
+                  />
+                ) : (
+                  <BinaryFilePreview
+                    buffer={previewBuffer}
+                    filePreviewBaseUrl={filePreviewBaseUrl}
+                    isLoading={isPreviewLoading}
+                    relativePath={selectedPath}
                   />
                 )}
               </div>

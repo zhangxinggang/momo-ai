@@ -7,15 +7,24 @@ import { WorkflowBusinessController } from '../database/controller/workflow-busi
 import { WorkflowFolderController } from '../database/controller/workflow-folder';
 import { registerAIIPC } from './ai';
 import { registerAichatIPC } from './aichat-handlers';
+import { registerDataIPC } from './data';
+import { registerDialogIPC } from './dialog';
 import { registerFolderIPC } from './folder';
+import { registerFsIPC } from './fs';
 import { registerImageIPC } from './image';
+import { registerIoIPC } from './io';
 import { registerKbIPC } from './kb';
+import { registerNoteIPC } from './note';
+import { registerNotificationIPC } from './notification';
 import { registerOnlineConfIPC } from './online-conf';
 import { registerPromptIPC } from './prompt';
+import { registerRulesIPC } from './rules';
 import { registerScraperIPC } from './scraper';
 import { registerSettingsIPC } from './settings';
+import { registerShellIPC } from './shell';
 import { registerSkillIPC } from './skill';
 import { registerSystemIPC } from './system';
+import { registerWindowChromeIPC } from './window-chrome';
 import { registerWorkflowIPC } from './workflow';
 import { registerWorkflowAgentIPC } from './workflow-agent';
 import { registerWorkflowBusinessIPC } from './workflow-business';
@@ -79,6 +88,8 @@ const REBINDABLE_DB_CHANNELS = [
   IPC_CHANNELS.SKILL_GET_REPO_PATH,
   IPC_CHANNELS.SKILL_SYNC_FROM_REPO,
   IPC_CHANNELS.SKILL_EXECUTE_WORKSPACE,
+  IPC_CHANNELS.SKILL_ENSURE_SESSION_WORKSPACE,
+  IPC_CHANNELS.SKILL_WRITE_SESSION_FILE,
   IPC_CHANNELS.WORKFLOW_CREATE,
   IPC_CHANNELS.WORKFLOW_GET,
   IPC_CHANNELS.WORKFLOW_GET_ALL,
@@ -111,6 +122,18 @@ function resetAllRegisteredIpcHandlers(): void {
 }
 
 /**
+ * 注册不依赖数据库的 IPC（应用启动时调用）
+ */
+export function registerBootstrapIPC(): void {
+  registerDialogIPC();
+  registerFsIPC();
+  registerDataIPC();
+  registerShellIPC();
+  registerNotificationIPC();
+  registerWindowChromeIPC();
+}
+
+/**
  * Register all IPC handlers
  * 注册所有 IPC 处理器
  */
@@ -125,6 +148,7 @@ export function registerAllIPC(db: Database): void {
   const workflowFolderDB = new WorkflowFolderController();
   registerPromptIPC(promptDB, folderDB);
   registerFolderIPC(folderDB, promptDB);
+  registerIoIPC(promptDB, folderDB);
   registerSkillIPC(skillDB);
   registerWorkflowIPC(workflowDB);
   registerWorkflowBusinessIPC(workflowBusinessDB);
@@ -140,4 +164,6 @@ export function registerAllIPC(db: Database): void {
   registerScraperIPC();
   registerOnlineConfIPC();
   registerSystemIPC();
+  registerRulesIPC();
+  registerNoteIPC();
 }

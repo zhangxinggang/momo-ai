@@ -1,5 +1,6 @@
-import { FileEditor, type IFileEditorHandle } from '@momo/file-editor';
+import { FileEditor, useSyncedCodeEditorTheme, type IFileEditorHandle } from '@momo/file-editor';
 import { useToast } from '@renderer/components/ui/Toast';
+import { useFilePreviewBaseUrl } from '@renderer/hooks/useFilePreviewBaseUrl';
 import { useUnsavedLeaveGuard } from '@renderer/hooks/useUnsavedLeaveGuard';
 import { createSkillFileEditorAdapter } from '@renderer/services/file-editor/skill-adapter';
 import { Modal } from 'antd';
@@ -36,6 +37,8 @@ export const SkillFileEditor = forwardRef<ISkillFileEditorHandle, IProps>(functi
   const isPathMode = Boolean(localPath);
   const editorRef = useRef<IFileEditorHandle>(null);
   const [hasUnsaved, setHasUnsaved] = useState(false);
+  const codeEditorTheme = useSyncedCodeEditorTheme();
+  const filePreviewBaseUrl = useFilePreviewBaseUrl();
 
   const adapter = useMemo(
     () => createSkillFileEditorAdapter({ skillId, localPath }),
@@ -106,7 +109,9 @@ export const SkillFileEditor = forwardRef<ISkillFileEditorHandle, IProps>(functi
     <FileEditor
       ref={editorRef}
       adapter={adapter}
+      codeEditorTheme={codeEditorTheme}
       defaultNewFileExtension='md'
+      filePreviewBaseUrl={filePreviewBaseUrl}
       onFilesChange={() => void handleFilesChange()}
       onNotify={handleNotify}
       onUnsavedChange={handleUnsavedChange}

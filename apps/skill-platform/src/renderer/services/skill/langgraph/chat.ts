@@ -1,7 +1,8 @@
 import type { IAIConfig, IChatMessage } from '@renderer/services/ai';
 import { chatCompletion } from '@renderer/services/ai';
+import { canExecuteSkillWorkspace, executeSkillWorkspace, getSkillRepoPath, isSkillApiAvailable } from '@renderer/services/skill/api';
 import { writeWorkflowNodeArtifacts } from '@renderer/services/workflow/agent-files';
-import { ensureSkillRepoPath, parseSkillArtifacts, writeSkillArtifacts } from '../skill-artifacts';
+import { findMissingArtifactScripts, parseSkillArtifacts, writeSessionArtifacts } from '../skill-artifacts';
 import { parseSkillRunCommands } from '../skill-run-commands';
 
 interface ISkillChatState {
@@ -22,7 +23,7 @@ function buildPlanMessages(state: ISkillChatState): IChatMessage[] {
 
 规划要求：
 1. 仔细阅读 SKILL 完整指令，理解技能的工作方式（脚本、模板、工具链等）
-2. 分析技能仓库中已有的脚本和文件结构
+2. 分析技能工作区中已有的脚本和文件结构（会话临时目录，非原仓库）
 3. 输出 3～8 步有序列表，每一步必须包含：
    - 要做什么（明确动作）
    - 用哪个脚本/工具（如 SKILL 指令中提到的）
@@ -63,18 +64,39 @@ function buildAnswerMessages(state: ISkillChatState): IChatMessage[] {
 1. **必须产出可执行内容**：不能只输出建议或说明，必须实际编写代码/脚本/文件
 2. **严格遵循 SKILL 指令**：SKILL 中提到的脚本、工具、流程必须照做
 3. **生成二进制交付物（PPT/Office/PDF/压缩包/SVG等）时**，必须：
-   a. 先用 \`\`\`artifact: 块编写生成脚本（如 JS/Python 脚本）
+   a. 先用带路径的代码块写入数据与脚本（格式见下）
    b. 再用 \`\`\`skill-run 块执行该脚本
-   c. 脚本应将产出写入 process.env.SKILL_OUTPUT_DIR 或仓库 output/ 目录
+   c. 脚本应将产出写入 process.env.SKILL_OUTPUT_DIR 或工作区 output/ 目录
+
+## 文件写入格式（重要）
+
+写入工作区文件时使用 **语言:相对路径** 或 **artifact:相对路径**，例如：
+\`\`\`json:data/input.json
+{ "title": "示例" }
+\`\`\`
+\`\`\`javascript:scripts/generate_ppt.js
+// 脚本内容
+\`\`\`
+也支持 \`\`\`artifact:scripts/generate.js 格式。脚本 require 的本地文件（如 theme-colors.json）必须一并写入。
+
+## 工作区说明（重要）
+- 所有 artifact 与脚本产出写入**会话临时工作区**，**禁止**修改原始技能仓库
+- artifact 路径为相对于会话工作区的相对路径
+- 脚本在会话工作区内执行（已从技能仓库种子拷贝，含 scripts/ 等）
+- **禁止臆造 scripts/ 下不存在的脚本名**；skill-run 必须调用 SKILL 仓库内已有脚本，或先用 artifact 块写入该脚本
 
 ## 命令执行格式
 
-需要执行仓库内命令时，使用 skill-run 代码块（每行一条命令）：
-\`\`\`skill-run
-node scripts/generate.js
-\`\`\`
+skill-run **只写一条主生成命令**（如 node 脚本），**禁止**包含：
+- npm/pip install（依赖由 ISkill 运行时自动安装）
+- mkdir/cd 等 shell 前置步骤（output 目录由运行时自动创建）
+- soffice/markitdown/pdftoppm 等 QA 验证
+- mv/cp/echo 等 shell 后处理
 
-**禁止**在 skill-run 中使用 find/cat/ls/head/tail 等只读探索命令。
+示例：
+\`\`\`skill-run
+node scripts/generate.js data/input.json output
+\`\`\`
 
 ## 脚本参数处理（重要）
 
@@ -87,11 +109,14 @@ node scripts/generate.js
 3. 输出目录应使用 \`output\` 或 \`dist\` 等标准目录名
 4. **禁止**执行不带必要参数的脚本
 
+## 脚本运行环境
+- 脚本在 **headless 环境**执行（无浏览器、无完整前端构建），必须**严格遵循 SKILL 指令**指定的工具链与已有脚本
+- 不要自行引入 SKILL 未要求的依赖（如 React SSR、前端组件库等）
+
 ## 运行时说明
-- Node 脚本依赖（如 pptxgenjs、playwright、sharp 等）会由应用自动安装到全局 ISkill 运行时
-- Python 脚本依赖（如 Pillow、python-pptx 等）会在执行前自动扫描 import 并通过 pip 安装；若仓库有 requirements.txt 也会自动安装
+- Node / Python 脚本依赖会由应用自动扫描并安装到全局 ISkill 运行时；若仓库有 package.json 或 requirements.txt 也会自动安装
 - 无需在技能仓库内手动执行 npm install 或 pip install
-- 脚本中可直接 require/import 常见 npm 包和 Python 库
+- 原始技能仓库只读，不会被本对话修改
 
 --- SKILL 完整指令开始 ---
 ${skillBody}
@@ -121,6 +146,8 @@ export interface IRunSkillLangGraphChatInput {
   activeSkillLine: string;
   activeSkillInstructions?: string;
   activeSkillId?: string;
+  /** SKILL 对话会话 id，用于 temp/<sessionId> 工作区 */
+  sessionId?: string;
   priorTranscript: string;
   knowledgeContext?: string;
   /** 工作流节点产出目录（技能执行与 artifact 写入） */
@@ -142,11 +169,21 @@ async function appendSkillExecutionResults(
   }
 
   let next = reply;
-  const repoPath = await ensureSkillRepoPath(skillId);
+  const sessionId = input.sessionId?.trim();
+  let repoPath: string | null = null;
+  try {
+    if (isSkillApiAvailable()) {
+      const pathResult = await getSkillRepoPath(skillId);
+      repoPath = typeof pathResult === 'string' && pathResult.trim() ? pathResult.trim() : null;
+    }
+  } catch {
+    repoPath = null;
+  }
 
   const artifacts = parseSkillArtifacts(reply);
   const workflowOut = input.workflowOutput;
   let writtenPaths: string[] = [];
+  let sessionWorkspaceDir: string | null = null;
 
   if (workflowOut) {
     writtenPaths = await writeWorkflowNodeArtifacts(
@@ -159,31 +196,45 @@ async function appendSkillExecutionResults(
       next += `\n\n---\n\n**已写入工作流节点目录：**\n${writtenPaths.map((p) => `- \`${p}\``).join('\n')}`;
       next += `\n\n产出目录：\`${workflowOut.outputDir}\``;
     }
-  } else {
-    writtenPaths = await writeSkillArtifacts(skillId, artifacts);
+  } else if (sessionId) {
+    const sessionWrite = await writeSessionArtifacts(skillId, sessionId, artifacts);
+    writtenPaths = sessionWrite.writtenPaths;
+    sessionWorkspaceDir = sessionWrite.workspaceDir;
     if (writtenPaths.length > 0) {
-      next += `\n\n---\n\n**已写入技能仓库：**\n${writtenPaths.map((p) => `- \`${p}\``).join('\n')}`;
-      if (repoPath) {
-        next += `\n\n仓库路径：\`${repoPath}\``;
+      next += `\n\n---\n\n**已写入会话工作区：**\n${writtenPaths.map((p) => `- \`${p}\``).join('\n')}`;
+      if (sessionWorkspaceDir) {
+        next += `\n\n工作区路径：\`${sessionWorkspaceDir}\``;
       }
+    }
+
+    const missingArtifactScripts = findMissingArtifactScripts(reply, writtenPaths);
+    if (missingArtifactScripts.length > 0) {
+      next += `\n\n---\n\n**警告：** 以下脚本在回复中声明但未成功写入工作区：${missingArtifactScripts.map((p) => `\`${p}\``).join(', ')}`;
     }
   }
 
-  if (typeof window.api?.skill?.executeWorkspace !== 'function') {
+  if (!canExecuteSkillWorkspace()) {
     return next;
   }
 
   try {
     const runCommands = parseSkillRunCommands(reply);
-    const exec = await window.api.skill.executeWorkspace(skillId, input.userInput, {
+    if (sessionId && runCommands.length > 0 && writtenPaths.length === 0 && artifacts.length > 0) {
+      next += `\n\n---\n\n**技能执行已跳过：** 检测到 ${artifacts.length} 个待写入文件但均未成功落盘，请重试或检查工作区权限。`;
+      return next;
+    }
+    const exec = await executeSkillWorkspace(skillId, input.userInput, {
       commands: runCommands.length > 0 ? runCommands : undefined,
       outputDir: workflowOut?.outputDir,
+      sessionId: sessionId || undefined,
     });
     if (!exec.attempted) {
       if (exec.hint && writtenPaths.length === 0) {
         next += `\n\n---\n\n**技能执行说明：** ${exec.hint}`;
-        if (repoPath) {
-          next += `\n\n仓库路径：\`${repoPath}\`（可在技能文件编辑器中查看）`;
+        if (sessionWorkspaceDir) {
+          next += `\n\n工作区路径：\`${sessionWorkspaceDir}\``;
+        } else if (repoPath) {
+          next += `\n\n仓库路径：\`${repoPath}\``;
         }
       }
       return next;
@@ -198,7 +249,9 @@ async function appendSkillExecutionResults(
     if (exec.outputDir) {
       sections.push(`产出目录：\`${exec.outputDir}\``);
     }
-    if (repoPath) {
+    if (sessionWorkspaceDir) {
+      sections.push(`会话工作区：\`${sessionWorkspaceDir}\``);
+    } else if (repoPath) {
       sections.push(`仓库：\`${repoPath}\``);
     }
     if (exec.exitCode !== null) {
@@ -207,18 +260,30 @@ async function appendSkillExecutionResults(
     if (exec.skillRuntimeDir) {
       sections.push(`ISkill 运行时：\`${exec.skillRuntimeDir}\``);
     }
+    if (exec.skippedCommandNotes?.length) {
+      sections.push(
+        `\n已跳过命令：\n${exec.skippedCommandNotes.map((note) => `- ${note}`).join('\n')}`,
+      );
+    }
+    if (exec.optionalFailures?.length) {
+      sections.push(
+        `\n可选步骤失败（已忽略）：\n${exec.optionalFailures.map((c) => `- \`${c}\``).join('\n')}`,
+      );
+    }
     if (exec.dependencySetup) {
       sections.push(`\n依赖安装：\n\`\`\`\n${exec.dependencySetup.slice(0, 1500)}\n\`\`\``);
     }
     if (exec.stdout) {
       sections.push(`\n输出：\n\`\`\`\n${exec.stdout.slice(0, 2000)}\n\`\`\``);
     }
-    if (exec.stderr) {
+    if (exec.stderr && exec.exitCode !== 0) {
       sections.push(`\n错误输出：\n\`\`\`\n${exec.stderr.slice(0, 1000)}\n\`\`\``);
+    } else if (exec.stderr) {
+      sections.push(`\n警告：\n\`\`\`\n${exec.stderr.slice(0, 500)}\n\`\`\``);
     }
     if (exec.tempOutputFiles?.length) {
       sections.push(
-        `\n已生成文件（temp）：\n${exec.tempOutputFiles.map((p) => `- \`${p}\``).join('\n')}`,
+        `\n已生成文件：\n${exec.tempOutputFiles.map((p) => `- \`${p}\``).join('\n')}`,
       );
     } else if (exec.outputFiles?.length) {
       sections.push(`\n产出文件：\n${exec.outputFiles.map((p) => `- \`${p}\``).join('\n')}`);

@@ -107,15 +107,6 @@ importers:
       '@ant-design/icons':
         specifier: ^6.2.2
         version: 6.2.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      '@langchain/community':
-        specifier: ^1.1.29
-        version: 1.1.29(@browserbasehq/sdk@2.12.0)(@browserbasehq/stagehand@3.5.0(@cfworker/json-schema@4.1.1)(playwright-core@1.60.0)(zod@4.4.3))(@ibm-cloud/watsonx-ai@1.7.12)(@langchain/core@1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0)))(@opentelemetry/api@1.9.0)(@smithy/eventstream-codec@4.4.0)(@smithy/util-utf8@4.4.0)(better-sqlite3@12.9.0)(d3-dsv@3.0.1)(google-auth-library@10.7.0)(ibm-cloud-sdk-core@5.4.20)(ignore@7.0.5)(jsdom@27.4.0(@noble/hashes@1.8.0)(bufferutil@4.1.0))(jsonwebtoken@9.0.3)(lodash@4.18.1)(mammoth@1.12.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(pdf-parse@2.4.5)(playwright@1.60.0)(typeorm@1.0.0(better-sqlite3@12.9.0)(sql.js@1.14.1)(ts-node@10.9.2(@types/node@25.6.0)(typescript@6.0.3)))(ws@8.21.0(bufferutil@4.1.0))
-      '@langchain/core':
-        specifier: ^1.1.48
-        version: 1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0))
-      '@langchain/textsplitters':
-        specifier: ^1.0.1
-        version: 1.0.1(@langchain/core@1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0)))
       '@log4js-node/smtp':
         specifier: ^1.1.0
         version: 1.1.0
@@ -131,6 +122,9 @@ importers:
       '@momo/knowledge':
         specifier: workspace:*
         version: link:../../packages/momo-knowledge
+      '@momo/langchain':
+        specifier: workspace:*
+        version: link:../../packages/momo-langchain
       '@momo/markdown':
         specifier: workspace:*
         version: link:../../packages/momo-markdown
@@ -182,9 +176,6 @@ importers:
       mermaid:
         specifier: ^11.14.0
         version: 11.14.0
-      pdf-parse:
-        specifier: ^2.4.5
-        version: 2.4.5
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -392,9 +383,9 @@ importers:
 
   packages/momo-knowledge:
     dependencies:
-      '@langchain/textsplitters':
-        specifier: ^1.0.1
-        version: 1.0.1(@langchain/core@1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0)))
+      '@momo/langchain':
+        specifier: workspace:*
+        version: link:../momo-langchain
       antd:
         specifier: ^6.3.7
         version: 6.3.7(moment@2.30.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -405,12 +396,34 @@ importers:
         specifier: ^19.2.6
         version: 19.2.6(react@19.2.6)
     devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.6.0
       '@types/react':
         specifier: ^19.2.14
         version: 19.2.14
       '@types/react-dom':
         specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.14)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  packages/momo-langchain:
+    dependencies:
+      '@langchain/community':
+        specifier: ^1.1.29
+        version: 1.1.29(@browserbasehq/sdk@2.12.0)(@browserbasehq/stagehand@3.5.0(@cfworker/json-schema@4.1.1)(playwright-core@1.60.0)(zod@4.4.3))(@ibm-cloud/watsonx-ai@1.7.12)(@langchain/core@1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0)))(@opentelemetry/api@1.9.0)(@smithy/eventstream-codec@4.4.0)(@smithy/util-utf8@4.4.0)(better-sqlite3@12.9.0)(d3-dsv@3.0.1)(google-auth-library@10.7.0)(ibm-cloud-sdk-core@5.4.20)(ignore@7.0.5)(jsdom@27.4.0(@noble/hashes@1.8.0)(bufferutil@4.1.0))(jsonwebtoken@9.0.3)(lodash@4.18.1)(mammoth@1.12.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(pdf-parse@2.4.5)(playwright@1.60.0)(ws@8.21.0(bufferutil@4.1.0))
+      '@langchain/core':
+        specifier: ^1.1.48
+        version: 1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0))
+      '@langchain/textsplitters':
+        specifier: ^1.0.1
+        version: 1.0.1(@langchain/core@1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0)))
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.6.0
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -537,7 +550,7 @@ importers:
         version: 4.4.4(eslint-plugin-import@2.32.0)(eslint@8.57.1)
       eslint-plugin-import:
         specifier: ^2.32.0
-        version: 2.32.0(@typescript-eslint/parser@5.62.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@4.4.4)(eslint@8.57.1)
+        version: 2.32.0(@typescript-eslint/parser@5.62.0(eslint@8.57.1)(typescript@6.0.3))(eslint-import-resolver-typescript@4.4.4)(eslint@8.57.1)
       eslint-plugin-prettier:
         specifier: ^5.5.4
         version: 5.5.5(eslint-config-prettier@8.10.2(eslint@8.57.1))(eslint@8.57.1)(prettier@3.8.3)
@@ -12081,7 +12094,7 @@ snapshots:
       '@types/node': 20.5.1
       chalk: 4.1.2
       cosmiconfig: 8.3.6(typescript@5.9.3)
-      cosmiconfig-typescript-loader: 4.4.0(@types/node@20.5.1)(cosmiconfig@8.3.6(typescript@5.9.3))(ts-node@10.9.2(@types/node@25.6.0)(typescript@6.0.3))(typescript@5.9.3)
+      cosmiconfig-typescript-loader: 4.4.0(@types/node@20.5.1)(cosmiconfig@8.3.6(typescript@5.9.3))(ts-node@10.9.2(@types/node@20.5.1)(typescript@5.9.3))(typescript@5.9.3)
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       lodash.uniq: 4.5.0
@@ -12895,7 +12908,7 @@ snapshots:
 
   '@keyv/serialize@1.1.1': {}
 
-  '@langchain/classic@1.0.34(@langchain/core@1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0)))(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(typeorm@1.0.0(better-sqlite3@12.9.0)(sql.js@1.14.1)(ts-node@10.9.2(@types/node@25.6.0)(typescript@6.0.3)))(ws@8.21.0(bufferutil@4.1.0))':
+  '@langchain/classic@1.0.34(@langchain/core@1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0)))(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0))':
     dependencies:
       '@langchain/core': 1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0))
       '@langchain/openai': 1.4.7(@langchain/core@1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0)))(ws@8.21.0(bufferutil@4.1.0))
@@ -12908,7 +12921,6 @@ snapshots:
       zod: 4.4.3
     optionalDependencies:
       langsmith: 0.7.1(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0))
-      typeorm: 1.0.0(better-sqlite3@12.9.0)(sql.js@1.14.1)(ts-node@10.9.2(@types/node@25.6.0)(typescript@6.0.3))
     transitivePeerDependencies:
       - '@opentelemetry/api'
       - '@opentelemetry/exporter-trace-otlp-proto'
@@ -12916,11 +12928,11 @@ snapshots:
       - openai
       - ws
 
-  '@langchain/community@1.1.29(@browserbasehq/sdk@2.12.0)(@browserbasehq/stagehand@3.5.0(@cfworker/json-schema@4.1.1)(playwright-core@1.60.0)(zod@4.4.3))(@ibm-cloud/watsonx-ai@1.7.12)(@langchain/core@1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0)))(@opentelemetry/api@1.9.0)(@smithy/eventstream-codec@4.4.0)(@smithy/util-utf8@4.4.0)(better-sqlite3@12.9.0)(d3-dsv@3.0.1)(google-auth-library@10.7.0)(ibm-cloud-sdk-core@5.4.20)(ignore@7.0.5)(jsdom@27.4.0(@noble/hashes@1.8.0)(bufferutil@4.1.0))(jsonwebtoken@9.0.3)(lodash@4.18.1)(mammoth@1.12.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(pdf-parse@2.4.5)(playwright@1.60.0)(typeorm@1.0.0(better-sqlite3@12.9.0)(sql.js@1.14.1)(ts-node@10.9.2(@types/node@25.6.0)(typescript@6.0.3)))(ws@8.21.0(bufferutil@4.1.0))':
+  '@langchain/community@1.1.29(@browserbasehq/sdk@2.12.0)(@browserbasehq/stagehand@3.5.0(@cfworker/json-schema@4.1.1)(playwright-core@1.60.0)(zod@4.4.3))(@ibm-cloud/watsonx-ai@1.7.12)(@langchain/core@1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0)))(@opentelemetry/api@1.9.0)(@smithy/eventstream-codec@4.4.0)(@smithy/util-utf8@4.4.0)(better-sqlite3@12.9.0)(d3-dsv@3.0.1)(google-auth-library@10.7.0)(ibm-cloud-sdk-core@5.4.20)(ignore@7.0.5)(jsdom@27.4.0(@noble/hashes@1.8.0)(bufferutil@4.1.0))(jsonwebtoken@9.0.3)(lodash@4.18.1)(mammoth@1.12.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(pdf-parse@2.4.5)(playwright@1.60.0)(ws@8.21.0(bufferutil@4.1.0))':
     dependencies:
       '@browserbasehq/stagehand': 3.5.0(@cfworker/json-schema@4.1.1)(playwright-core@1.60.0)(zod@4.4.3)
       '@ibm-cloud/watsonx-ai': 1.7.12
-      '@langchain/classic': 1.0.34(@langchain/core@1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0)))(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(typeorm@1.0.0(better-sqlite3@12.9.0)(sql.js@1.14.1)(ts-node@10.9.2(@types/node@25.6.0)(typescript@6.0.3)))(ws@8.21.0(bufferutil@4.1.0))
+      '@langchain/classic': 1.0.34(@langchain/core@1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0)))(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0))
       '@langchain/core': 1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0))
       '@langchain/openai': 1.4.7(@langchain/core@1.1.49(@opentelemetry/api@1.9.0)(openai@6.39.0(ws@8.21.0(bufferutil@4.1.0))(zod@4.4.3))(ws@8.21.0(bufferutil@4.1.0)))(ws@8.21.0(bufferutil@4.1.0))
       binary-extensions: 2.3.0
@@ -12946,7 +12958,6 @@ snapshots:
       mammoth: 1.12.0
       pdf-parse: 2.4.5
       playwright: 1.60.0
-      typeorm: 1.0.0(better-sqlite3@12.9.0)(sql.js@1.14.1)(ts-node@10.9.2(@types/node@25.6.0)(typescript@6.0.3))
       ws: 8.21.0(bufferutil@4.1.0)
     transitivePeerDependencies:
       - '@opentelemetry/api'
@@ -15890,7 +15901,7 @@ snapshots:
     dependencies:
       layout-base: 2.0.1
 
-  cosmiconfig-typescript-loader@4.4.0(@types/node@20.5.1)(cosmiconfig@8.3.6(typescript@5.9.3))(ts-node@10.9.2(@types/node@25.6.0)(typescript@6.0.3))(typescript@5.9.3):
+  cosmiconfig-typescript-loader@4.4.0(@types/node@20.5.1)(cosmiconfig@8.3.6(typescript@5.9.3))(ts-node@10.9.2(@types/node@20.5.1)(typescript@5.9.3))(typescript@5.9.3):
     dependencies:
       '@types/node': 20.5.1
       cosmiconfig: 8.3.6(typescript@5.9.3)
@@ -16788,11 +16799,11 @@ snapshots:
       tinyglobby: 0.2.16
       unrs-resolver: 1.11.1
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@5.62.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@4.4.4)(eslint@8.57.1)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@5.62.0(eslint@8.57.1)(typescript@6.0.3))(eslint-import-resolver-typescript@4.4.4)(eslint@8.57.1)
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.1(@typescript-eslint/parser@5.62.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@4.4.4)(eslint@8.57.1):
+  eslint-module-utils@2.12.1(@typescript-eslint/parser@5.62.0(eslint@8.57.1)(typescript@6.0.3))(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@4.4.4)(eslint@8.57.1):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
@@ -16803,7 +16814,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@5.62.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@4.4.4)(eslint@8.57.1):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@5.62.0(eslint@8.57.1)(typescript@6.0.3))(eslint-import-resolver-typescript@4.4.4)(eslint@8.57.1):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
@@ -16814,7 +16825,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 8.57.1
       eslint-import-resolver-node: 0.3.10
-      eslint-module-utils: 2.12.1(@typescript-eslint/parser@5.62.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@4.4.4)(eslint@8.57.1)
+      eslint-module-utils: 2.12.1(@typescript-eslint/parser@5.62.0(eslint@8.57.1)(typescript@6.0.3))(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@4.4.4)(eslint@8.57.1)
       hasown: 2.0.3
       is-core-module: 2.16.1
       is-glob: 4.0.3
@@ -19317,10 +19328,12 @@ snapshots:
     dependencies:
       '@napi-rs/canvas': 0.1.80
       pdfjs-dist: 5.4.296
+    optional: true
 
   pdfjs-dist@5.4.296:
     optionalDependencies:
-      '@napi-rs/canvas': 0.1.80
+      '@napi-rs/canvas': 0.1.100
+    optional: true
 
   pdfjs-dist@6.0.227:
     optionalDependencies:

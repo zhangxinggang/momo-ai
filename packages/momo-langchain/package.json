@@ -1,8 +1,8 @@
 {
-  "name": "@momo/knowledge",
+  "name": "@momo/langchain",
   "version": "0.1.0",
   "private": true,
-  "description": "Knowledge base ingestion and document management (Dify-like workflow)",
+  "description": "LangChain 统一门面：文档加载、文本切分及可扩展 RAG 原语",
   "type": "module",
   "exports": {
     ".": {
@@ -14,15 +14,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@momo/langchain": "workspace:*",
-    "antd": "^6.3.7",
-    "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "@langchain/community": "^1.1.29",
+    "@langchain/core": "^1.1.48",
+    "@langchain/textsplitters": "^1.0.1"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
     "typescript": "^6.0.3"
   }
 }

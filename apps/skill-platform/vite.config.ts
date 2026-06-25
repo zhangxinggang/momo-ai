@@ -14,7 +14,6 @@ const MAIN_PROCESS_EXTERNALS = [
   'log4js',
   '@log4js-node/smtp',
   '@napi-rs/canvas',
-  'pdf-parse',
   'html-to-docx',
 ];
 
@@ -167,6 +166,7 @@ export default defineConfig({
       ...sharedResolveAlias,
       '@momo/aichat': path.resolve(__dirname, '../../packages/momo-aichat/src/index.ts'),
       '@momo/knowledge': path.resolve(__dirname, '../../packages/momo-knowledge/src/index.ts'),
+      '@momo/langchain': path.resolve(__dirname, '../../packages/momo-langchain/src/index.ts'),
       '@momo/aichat/styles.css': path.resolve(
         __dirname,
         '../../packages/momo-aichat/src/styles/chat.css',

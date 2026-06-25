@@ -27,14 +27,12 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.2",
-    "@langchain/community": "^1.1.29",
-    "@langchain/core": "^1.1.48",
-    "@langchain/textsplitters": "^1.0.1",
     "@log4js-node/smtp": "^1.1.0",
     "@momo/aichat": "workspace:*",
     "@momo/electron": "workspace:*",
     "@momo/file-editor": "workspace:*",
     "@momo/knowledge": "workspace:*",
+    "@momo/langchain": "workspace:*",
     "@momo/markdown": "workspace:*",
     "@momo/server": "workspace:*",
     "@momo/tree": "workspace:*",
@@ -52,7 +50,6 @@
     "markdown-it": "^14.1.1",
     "markdown-it-mermaid": "^0.2.5",
     "mermaid": "^11.14.0",
-    "pdf-parse": "^2.4.5",
     "reflect-metadata": "^0.2.2",
     "typeorm": "^1.0.0",
     "xlsx": "^0.18.5"

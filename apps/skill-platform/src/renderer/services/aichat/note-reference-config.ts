@@ -15,6 +15,8 @@ async function readNoteContent(path: string): Promise<string> {
 export function createNoteReferencesConfig(): INoteReferencesConfig | undefined {
   return {
     listTree: listNoteTree,
-    resolveContent: async (content: string) => resolveNoteMentionsInContent(content, readNoteContent),
+    readContent: readNoteContent,
+    resolveContent: async (content: string) =>
+      resolveNoteMentionsInContent(content, readNoteContent),
   };
 }

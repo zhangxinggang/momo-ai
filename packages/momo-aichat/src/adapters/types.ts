@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 import type { IChatStorageAdapter } from '../storage/chat-storage';
 import type { IChatAttachment, IChatAttachmentMeta, IChatSession } from '../types/chat';
-import type { ISlashCommandsConfig } from '../types/slash-command';
-import type { INoteReferencesConfig } from '../types/note-reference';
 import type { ILocalPathConfig } from '../types/local-path';
+import type { INoteReferencesConfig } from '../types/note-reference';
+import type { ISlashCommandsConfig } from '../types/slash-command';
 import type { IChatWorkspaceConfig } from '../types/workspace';
 
 export interface IChatStreamMessage {

@@ -10,8 +10,8 @@ import React, {
 } from 'react';
 import { useAiChatConfig } from '../../contexts/AiChatConfigContext';
 import { useChatContext } from '../../contexts/ChatContext';
-import { useSlashCommandTrigger } from '../../hooks/useSlashCommandTrigger';
 import { useNoteReferenceTrigger } from '../../hooks/useNoteReferenceTrigger';
+import { useSlashCommandTrigger } from '../../hooks/useSlashCommandTrigger';
 import '../../styles/chat.css';
 import { ChatAttachmentIcon } from '../../utils/attachment-icon';
 import { ChatAgentModeControl } from '../ChatAgentModeControl';
@@ -68,6 +68,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
   ) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const mentionTextareaRef = useRef<IChatMentionTextareaRef>(null);
+    const notePopoverAnchorRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [selectionStart, setSelectionStart] = useState(0);
     const chatCtx = useChatContext();
@@ -92,6 +93,8 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       agentMode,
       setAgentMode,
     } = chatCtx;
+
+    const inputPlaceholder = noteReferences ? '输入消息，@ 引用笔记' : placeholder;
 
     const flatModelIds = useMemo(() => {
       if (chatModelOptionGroups.length > 0) {
@@ -173,7 +176,9 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
     );
 
     const getActiveTextarea = () =>
-      noteReferences ? mentionTextareaRef.current?.getTextareaElement() ?? null : textareaRef.current;
+      noteReferences
+        ? (mentionTextareaRef.current?.getTextareaElement() ?? null)
+        : textareaRef.current;
 
     const adjustTextareaHeight = () => {
       const textarea = getActiveTextarea();
@@ -203,7 +208,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       textarea.style.transition = 'none';
       textarea.style.height = 'auto';
       const scrollHeight = textarea.scrollHeight;
-      const maxHeight = 120;
+      const maxHeight = 192;
       textarea.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
       requestAnimationFrame(() => {
         textarea.style.transition = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
@@ -356,7 +361,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
           </div>
         )}
 
-        <div className='relative px-4 pb-2 pt-4'>
+        <div ref={notePopoverAnchorRef} className='relative px-4 pb-2 pt-4'>
           <SlashCommandPopover
             open={slash.open}
             items={slash.items}
@@ -368,6 +373,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
           />
           <NoteReferencePopover
             ref={noteRef.popoverRef}
+            anchorRef={noteReferences ? notePopoverAnchorRef : undefined}
             open={noteRef.open}
             tree={noteRef.tree}
             loading={noteRef.loading}
@@ -384,12 +390,12 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
               onKeyDown={handleKeyDown}
               onSelectionChange={setSelectionStart}
               onMentionClick={noteRef.openReplaceMenu}
-              placeholder={placeholder}
+              placeholder={inputPlaceholder}
               disabled={disabled}
-              className='chat-input-textarea min-h-[24px] w-full resize-none border-none bg-transparent text-base leading-6 placeholder-gray-400 outline-none focus-visible:ring-0 dark:placeholder-gray-500'
+              className='chat-input-textarea min-h-[24px] w-full resize-none border-none bg-transparent text-base placeholder-gray-400 outline-none focus-visible:ring-0 dark:placeholder-gray-500'
               style={{
                 fontSize: '16px',
-                lineHeight: '1.5',
+                lineHeight: '24px',
                 fontFamily: 'inherit',
                 transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
@@ -401,10 +407,10 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
               onChange={(e) => onChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
-              className='chat-input-textarea min-h-[24px] w-full resize-none border-none bg-transparent text-base leading-6 placeholder-gray-400 outline-none focus-visible:ring-0 dark:placeholder-gray-500'
+              className='chat-input-textarea min-h-[24px] w-full resize-none border-none bg-transparent text-base placeholder-gray-400 outline-none focus-visible:ring-0 dark:placeholder-gray-500'
               style={{
                 fontSize: '16px',
-                lineHeight: '1.5',
+                lineHeight: '24px',
                 fontFamily: 'inherit',
                 transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               }}

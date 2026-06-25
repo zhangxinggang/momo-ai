@@ -1,4 +1,4 @@
-import type { ENoteType, INoteTreeNode } from '@/types/modules';
+import type { ENoteType, INoteTreeNode, IReadNoteFileResult } from '@/types/modules';
 
 import { getNoteIpc } from '../ipc';
 
@@ -25,7 +25,7 @@ export async function listNoteTree(): Promise<INoteTreeNode[]> {
   return api.listTree();
 }
 
-export async function readNoteFile(filePath: string): Promise<string | { content?: string }> {
+export async function readNoteFile(filePath: string): Promise<string | IReadNoteFileResult> {
   const api = getNoteApi();
   if (!api?.readFile) {
     throw new Error('当前环境不支持笔记读写');

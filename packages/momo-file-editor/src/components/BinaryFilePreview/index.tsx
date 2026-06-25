@@ -1,9 +1,13 @@
 import { FileViewer } from '@file-viewer/react';
-import { Loader2Icon } from 'lucide-react';
+import { Button } from 'antd';
+import { ExternalLinkIcon, Loader2Icon } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { cloneArrayBuffer } from '../../utils/file-content';
-import { buildFileViewerPreviewOptions } from '../../utils/file-viewer-config';
+import {
+  buildFileViewerPreviewOptions,
+  isFileViewerSupportedFile,
+} from '../../utils/file-viewer-config';
 import { getBaseName } from '../../utils/path';
 
 interface IProps {
@@ -12,12 +16,15 @@ interface IProps {
   isLoading: boolean;
   /** 二进制预览 Worker/WASM 等静态资源根 URL，由宿主注入 */
   filePreviewBaseUrl?: string;
+  /** 当前环境无法预览时，由宿主提供「使用默认应用打开」等能力 */
+  onUnSupport?: (relativePath: string) => void;
 }
 
 /** 二进制文件预览（基于 @file-viewer/react + preset-all 全格式 renderer） */
 export function BinaryFilePreview(props: IProps) {
-  const { relativePath, buffer, isLoading, filePreviewBaseUrl } = props;
+  const { relativePath, buffer, isLoading, filePreviewBaseUrl, onUnSupport } = props;
   const fileName = getBaseName(relativePath);
+  const isSupported = useMemo(() => isFileViewerSupportedFile(fileName), [fileName]);
   const viewerOptions = useMemo(
     () => buildFileViewerPreviewOptions(filePreviewBaseUrl),
     [filePreviewBaseUrl],
@@ -32,6 +39,26 @@ export function BinaryFilePreview(props: IProps) {
     return new File([clonedBuffer], fileName, { type: 'application/octet-stream' });
   }, [buffer, fileName, relativePath]);
 
+  const unsupportedPreview = (
+    <div className='momo-file-editor__binary-preview'>
+      <div className='momo-file-editor__binary-preview-empty'>
+        <span>{'当前环境不支持预览此文件'}</span>
+        {onUnSupport ? (
+          <Button
+            icon={<ExternalLinkIcon style={{ width: '0.875rem', height: '0.875rem' }} />}
+            onClick={() => onUnSupport(relativePath)}
+            type='default'>
+            {'使用默认应用打开'}
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+
+  if (!isSupported) {
+    return unsupportedPreview;
+  }
+
   if (isLoading) {
     return (
       <div className='momo-file-editor__binary-preview'>
@@ -44,11 +71,7 @@ export function BinaryFilePreview(props: IProps) {
   }
 
   if (!previewFile) {
-    return (
-      <div className='momo-file-editor__binary-preview'>
-        <div className='momo-file-editor__binary-preview-empty'>{'当前环境不支持预览此文件'}</div>
-      </div>
-    );
+    return unsupportedPreview;
   }
 
   return (

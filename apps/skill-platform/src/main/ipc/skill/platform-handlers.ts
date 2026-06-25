@@ -4,6 +4,7 @@ import { ipcMain } from 'electron';
 import {
   SkillInstaller,
   extractClawHubSkillToCache,
+  extractCocoloopSkillToCache,
   extractSkillHubSkillToCache,
   scanSkillSafety,
   syncGitStoreSource,
@@ -204,6 +205,19 @@ export function registerSkillPlatformHandlers(context: ISkillIPCContext): void {
     }
     return extractClawHubSkillToCache(slug);
   });
+
+  ipcMain.handle(
+    IPC_CHANNELS.SKILL_EXTRACT_COCOLOOP_ARCHIVE,
+    async (_, payload: { slug?: string; downloadUrl?: string }) => {
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+        throw new Error('skill:extractCocoloopArchive requires a payload object');
+      }
+      if (typeof payload.slug !== 'string' || payload.slug.trim().length === 0) {
+        throw new Error('skill:extractCocoloopArchive requires a non-empty slug');
+      }
+      return extractCocoloopSkillToCache(payload.slug, payload.downloadUrl);
+    },
+  );
 
   ipcMain.handle(IPC_CHANNELS.SKILL_FETCH_REMOTE_POST, async (_, url: string, body: unknown) => {
     if (typeof url !== 'string' || url.trim().length === 0) {

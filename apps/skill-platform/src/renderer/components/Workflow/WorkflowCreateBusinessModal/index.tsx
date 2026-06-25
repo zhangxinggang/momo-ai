@@ -42,7 +42,7 @@ export function WorkflowCreateBusinessModal({ open, onCancel, onConfirm }: IProp
   return (
     <Modal
       cancelText='取消'
-      destroyOnClose
+      destroyOnHidden
       okText='创建'
       onCancel={onCancel}
       onOk={() => void handleOk()}

@@ -1,16 +1,16 @@
-import { FileTextOutlined } from '@ant-design/icons';
 import {
   forwardRef,
   useCallback,
+  useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useMemo,
   useRef,
+  type CSSProperties,
   type KeyboardEvent,
-  type MouseEvent,
   type Ref,
 } from 'react';
 
-import { NoteReferenceChip } from '../NoteReferenceChip';
 import {
   removeMentionTokenAt,
   SURFACE_MENTION_REGEX,
@@ -19,6 +19,7 @@ import {
   valueIndexToSurfaceIndex,
   valueToSurface,
 } from '../../utils/note-mention';
+import { NoteReferenceChip } from '../NoteReferenceChip';
 import styles from './index.module.less';
 
 export interface IChatMentionTextareaRef {
@@ -99,16 +100,29 @@ function ChatMentionTextareaInner(props: IProps, ref: Ref<IChatMentionTextareaRe
   } = props;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mirrorRef = useRef<HTMLDivElement>(null);
+  const mirrorContentRef = useRef<HTMLDivElement>(null);
 
   const surfaceValue = useMemo(() => valueToSurface(value), [value]);
 
-  const syncMirrorScroll = useCallback(() => {
+  const mirrorTypographyStyle = useMemo<CSSProperties>(() => {
+    if (!style) {
+      return {};
+    }
+    const { height: _height, transition: _transition, ...typographyStyle } = style;
+    return typographyStyle;
+  }, [style]);
+
+  const syncMirrorLayout = useCallback(() => {
     const textarea = textareaRef.current;
     const mirror = mirrorRef.current;
-    if (!textarea || !mirror) {
+    const mirrorContent = mirrorContentRef.current;
+    if (!textarea || !mirror || !mirrorContent) {
       return;
     }
-    mirror.scrollTop = textarea.scrollTop;
+    mirrorContent.style.transform = `translate(${-textarea.scrollLeft}px, ${-textarea.scrollTop}px)`;
+    const scrollbarWidth = textarea.offsetWidth - textarea.clientWidth;
+    mirror.style.paddingRight = scrollbarWidth > 0 ? `${scrollbarWidth}px` : '0px';
+    mirror.style.height = `${textarea.clientHeight}px`;
   }, []);
 
   const notifySelection = useCallback(() => {
@@ -173,10 +187,38 @@ function ChatMentionTextareaInner(props: IProps, ref: Ref<IChatMentionTextareaRe
     onMentionClick?.(valueCursor);
   };
 
+  useLayoutEffect(() => {
+    syncMirrorLayout();
+  }, [surfaceValue, style, syncMirrorLayout]);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      return;
+    }
+    const resizeObserver = new ResizeObserver(() => {
+      syncMirrorLayout();
+    });
+    resizeObserver.observe(textarea);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [syncMirrorLayout]);
+
   return (
     <div className={styles['mention-input']}>
-      <div ref={mirrorRef} className={styles['mention-input-mirror']} aria-hidden='true'>
-        {surfaceValue ? renderMirrorContent(surfaceValue) : <span className={styles['mention-plain']} />}
+      <div
+        ref={mirrorRef}
+        className={styles['mention-input-mirror']}
+        style={mirrorTypographyStyle}
+        aria-hidden='true'>
+        <div ref={mirrorContentRef} className={styles['mention-input-mirror-content']}>
+          {surfaceValue ? (
+            renderMirrorContent(surfaceValue)
+          ) : (
+            <span className={styles['mention-plain']} />
+          )}
+        </div>
       </div>
       <textarea
         ref={textareaRef}
@@ -194,7 +236,7 @@ function ChatMentionTextareaInner(props: IProps, ref: Ref<IChatMentionTextareaRe
         onKeyUp={notifySelection}
         onClick={handleClick}
         onSelect={notifySelection}
-        onScroll={syncMirrorScroll}
+        onScroll={syncMirrorLayout}
         className={`${styles['mention-input-textarea']} ${className ?? ''}`}
         style={style}
       />

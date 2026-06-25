@@ -4,12 +4,20 @@ export type ENoteType = 'text' | 'image';
 /** 树节点种类 */
 export type ENoteNodeKind = 'folder' | 'file';
 
+/** 笔记 meta 条目（.notes-meta.json） */
+export interface INoteMetaEntry {
+  noteType: ENoteType;
+  noteId: string;
+}
+
 /** 笔记树节点（相对 notes 根目录的路径作为 id） */
 export interface INoteTreeNode {
   id: string;
   name: string;
   kind: ENoteNodeKind;
   noteType?: ENoteType;
+  /** 仅文件节点：稳定 UUID，用于 AI 写作状态绑定 */
+  noteId?: string;
   children?: INoteTreeNode[];
 }
 
@@ -38,4 +46,5 @@ export interface IReadNoteFileResult {
   path: string;
   content: string;
   noteType: ENoteType;
+  noteId: string;
 }

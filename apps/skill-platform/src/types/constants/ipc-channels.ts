@@ -147,6 +147,8 @@ export const IPC_CHANNELS = {
   SKILL_IMPORT: 'skill:import',
   SKILL_SCAN_LOCAL: 'skill:scanLocal',
   SKILL_SCAN_LOCAL_PREVIEW: 'skill:scanLocalPreview',
+  SKILL_LIST_DEFAULT_SKILLS: 'skill:listDefaultSkills',
+  SKILL_IMPORT_DEFAULT_SKILLS: 'skill:importDefaultSkills',
   SKILL_SCAN_SAFETY: 'skill:scanSafety',
   SKILL_SAVE_SAFETY_REPORT: 'skill:saveSafetyReport',
   SKILL_INSTALL_TO_PLATFORM: 'skill:installToPlatform',
@@ -220,6 +222,9 @@ export const IPC_CHANNELS = {
   // 工作区目录（AI 对话上下文）
   WORKSPACE_LIST_DIR: 'workspace:listDir',
   WORKSPACE_READ_FILE: 'workspace:readFile',
+  WORKSPACE_LIST_TREE: 'workspace:listTree',
+  WORKSPACE_GREP: 'workspace:grep',
+  WORKSPACE_READ_SNIPPET: 'workspace:readSnippet',
 
   // 爬虫（模型排行）
   SCRAPE_MODEL_RANKING: 'scrape:modelRanking',
@@ -235,6 +240,7 @@ export const IPC_CHANNELS = {
   // Skill 远程 POST 请求
   SKILL_FETCH_REMOTE_POST: 'skill:fetchRemotePost',
   SKILL_EXTRACT_CLAWHUB_ARCHIVE: 'skill:extractClawhubArchive',
+  SKILL_EXTRACT_COCOLOOP_ARCHIVE: 'skill:extractCocoloopArchive',
 
   // Rules 规则工作区
   RULES_LIST: 'rules:list',

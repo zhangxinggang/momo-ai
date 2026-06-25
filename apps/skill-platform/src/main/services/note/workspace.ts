@@ -1,7 +1,8 @@
-﻿import fs from 'fs';
+﻿import { randomUUID } from 'crypto';
+import fs from 'fs';
 import path from 'path';
 
-import type { ENoteType, INoteTreeNode } from '@/types/modules';
+import type { ENoteType, INoteMetaEntry, INoteTreeNode } from '@/types/modules';
 
 import { getNotesDir, getProjectRoot } from '../../runtime-paths';
 
@@ -9,7 +10,36 @@ const NOTE_FILE_EXT = '.md';
 const META_FILE_NAME = '.notes-meta.json';
 
 interface INotesMetaFile {
-  entries: Record<string, { noteType: ENoteType }>;
+  entries: Record<string, INoteMetaEntry>;
+}
+
+function ensureNoteId(meta: INotesMetaFile, relativePath: string, noteType?: ENoteType): string {
+  const entry = meta.entries[relativePath];
+  if (entry?.noteId) {
+    if (noteType && entry.noteType !== noteType) {
+      entry.noteType = noteType;
+    }
+    return entry.noteId;
+  }
+  const noteId = randomUUID();
+  meta.entries[relativePath] = {
+    noteType: noteType ?? entry?.noteType ?? 'text',
+    noteId,
+  };
+  return noteId;
+}
+
+function migrateMetaNoteIds(root: string, meta: INotesMetaFile): void {
+  let changed = false;
+  for (const key of Object.keys(meta.entries)) {
+    if (!meta.entries[key].noteId) {
+      meta.entries[key].noteId = randomUUID();
+      changed = true;
+    }
+  }
+  if (changed) {
+    saveMeta(root, meta);
+  }
 }
 
 function ensureNotesRoot(): string {
@@ -87,7 +117,7 @@ function getNoteType(relativePath: string, content?: string): ENoteType {
 function setNoteType(relativePath: string, noteType: ENoteType): void {
   const root = ensureNotesRoot();
   const meta = loadMeta(root);
-  meta.entries[relativePath] = { noteType };
+  ensureNoteId(meta, relativePath, noteType);
   saveMeta(root, meta);
 }
 
@@ -128,7 +158,11 @@ function buildDefaultContent(title: string, noteType?: ENoteType): string {
   return `# ${title}\n`;
 }
 
-function scanDirectory(dirPath: string, relativePrefix: string): INoteTreeNode[] {
+function scanDirectory(
+  dirPath: string,
+  relativePrefix: string,
+  meta: INotesMetaFile,
+): INoteTreeNode[] {
   const entries = fs.readdirSync(dirPath, { withFileTypes: true });
   const nodes: INoteTreeNode[] = [];
 
@@ -143,7 +177,7 @@ function scanDirectory(dirPath: string, relativePrefix: string): INoteTreeNode[]
   for (const entry of sorted) {
     const rel = relativePrefix ? `${relativePrefix}/${entry.name}` : entry.name;
     if (entry.isDirectory()) {
-      const children = scanDirectory(path.join(dirPath, entry.name), rel);
+      const children = scanDirectory(path.join(dirPath, entry.name), rel, meta);
       nodes.push({
         id: rel,
         name: entry.name,
@@ -162,11 +196,14 @@ function scanDirectory(dirPath: string, relativePrefix: string): INoteTreeNode[]
 
     const absFile = path.join(dirPath, entry.name);
     const content = fs.readFileSync(absFile, 'utf-8');
+    const noteType = getNoteType(rel, content);
+    const noteId = ensureNoteId(meta, rel, noteType);
     nodes.push({
       id: rel,
       name: entry.name,
       kind: 'file',
-      noteType: getNoteType(rel, content),
+      noteType,
+      noteId,
     });
   }
 
@@ -186,7 +223,11 @@ function uniqueName(dirAbs: string, baseName: string, isDir: boolean): string {
 export class NoteWorkspaceService {
   listTree(): INoteTreeNode[] {
     const root = ensureNotesRoot();
-    return scanDirectory(root, '');
+    const meta = loadMeta(root);
+    migrateMetaNoteIds(root, meta);
+    const tree = scanDirectory(root, '', meta);
+    saveMeta(root, meta);
+    return tree;
   }
 
   createFolder(parentPath: string | null, name: string): INoteTreeNode {
@@ -215,22 +256,27 @@ export class NoteWorkspaceService {
     const content = buildDefaultContent(baseName, noteType);
     fs.writeFileSync(abs, content, 'utf-8');
     const rel = parentRel ? `${parentRel}/${fileName}` : fileName;
-    if (noteType) {
-      setNoteType(rel, noteType);
-    }
-    return noteType
-      ? { id: rel, name: fileName, kind: 'file', noteType }
-      : { id: rel, name: fileName, kind: 'file' };
+    const root = ensureNotesRoot();
+    const meta = loadMeta(root);
+    const resolvedType = noteType ?? 'text';
+    const noteId = ensureNoteId(meta, rel, resolvedType);
+    saveMeta(root, meta);
+    return { id: rel, name: fileName, kind: 'file', noteType: resolvedType, noteId };
   }
 
-  readFile(relativePath: string): { content: string; noteType: ENoteType } {
+  readFile(relativePath: string): { content: string; noteType: ENoteType; noteId: string } {
     const safeRel = normalizeRelativePath(relativePath);
     const abs = resolveSafePath(safeRel);
     if (!fs.existsSync(abs) || !fs.statSync(abs).isFile()) {
       throw new Error('Note file not found');
     }
     const content = fs.readFileSync(abs, 'utf-8');
-    return { content, noteType: getNoteType(safeRel, content) };
+    const noteType = getNoteType(safeRel, content);
+    const root = ensureNotesRoot();
+    const meta = loadMeta(root);
+    const noteId = ensureNoteId(meta, safeRel, noteType);
+    saveMeta(root, meta);
+    return { content, noteType, noteId };
   }
 
   writeFile(relativePath: string, content: string): void {
@@ -271,20 +317,28 @@ export class NoteWorkspaceService {
     renameMetaEntry(safeRel, newRel);
 
     if (isDir) {
+      const root = ensureNotesRoot();
+      const meta = loadMeta(root);
       return {
         id: newRel,
         name: nextName,
         kind: 'folder',
-        children: scanDirectory(newAbs, newRel),
+        children: scanDirectory(newAbs, newRel, meta),
       };
     }
 
     const content = fs.readFileSync(newAbs, 'utf-8');
+    const noteType = getNoteType(newRel, content);
+    const root = ensureNotesRoot();
+    const meta = loadMeta(root);
+    const noteId = ensureNoteId(meta, newRel, noteType);
+    saveMeta(root, meta);
     return {
       id: newRel,
       name: nextName,
       kind: 'file',
-      noteType: getNoteType(newRel, content),
+      noteType,
+      noteId,
     };
   }
 
@@ -318,17 +372,19 @@ export class NoteWorkspaceService {
     const newRel = parentPrefix ? `${parentPrefix}/${fileName}` : fileName;
     const root = ensureNotesRoot();
     const meta = loadMeta(root);
-    if (meta.entries[safeRel]) {
-      meta.entries[newRel] = { ...meta.entries[safeRel] };
-      saveMeta(root, meta);
-    }
-
+    const sourceType = meta.entries[safeRel]?.noteType;
     const content = fs.readFileSync(destAbs, 'utf-8');
+    const noteType = sourceType ?? getNoteType(newRel, content);
+    const noteId = randomUUID();
+    meta.entries[newRel] = { noteType, noteId };
+    saveMeta(root, meta);
+
     return {
       id: newRel,
       name: fileName,
       kind: 'file',
-      noteType: getNoteType(newRel, content),
+      noteType,
+      noteId,
     };
   }
 
@@ -365,20 +421,28 @@ export class NoteWorkspaceService {
 
     const isDir = fs.statSync(destAbs).isDirectory();
     if (isDir) {
+      const root = ensureNotesRoot();
+      const meta = loadMeta(root);
       return {
         id: newRel,
         name: baseName,
         kind: 'folder',
-        children: scanDirectory(destAbs, newRel),
+        children: scanDirectory(destAbs, newRel, meta),
       };
     }
 
     const content = fs.readFileSync(destAbs, 'utf-8');
+    const noteType = getNoteType(newRel, content);
+    const root = ensureNotesRoot();
+    const meta = loadMeta(root);
+    const noteId = ensureNoteId(meta, newRel, noteType);
+    saveMeta(root, meta);
     return {
       id: newRel,
       name: baseName,
       kind: 'file',
-      noteType: getNoteType(newRel, content),
+      noteType,
+      noteId,
     };
   }
 

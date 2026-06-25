@@ -1,4 +1,4 @@
-import { buildStorageKeys, type IChatSession } from '@momo/aichat';
+import { AI_CHAT_SESSIONS_UPDATED_EVENT, buildStorageKeys, type IChatSession } from '@momo/aichat';
 
 import { createLocalChatStorage } from './core/web-chat-storage';
 
@@ -49,6 +49,9 @@ export function createMainChatSession(title: string): string {
     updatedAt: Date.now(),
   };
   saveSessions([newSession, ...sessions], storage.getItem(keys.CURRENT_SESSION_ID), storage);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(AI_CHAT_SESSIONS_UPDATED_EVENT));
+  }
   return sessionId;
 }
 

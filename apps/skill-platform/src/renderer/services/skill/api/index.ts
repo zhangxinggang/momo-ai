@@ -56,6 +56,14 @@ export function scanLocalSkillsPreview(customPaths?: string[]) {
   return requireSkillIpc().scanLocalPreview(customPaths);
 }
 
+export function listDefaultSkills() {
+  return requireSkillIpc().listDefaultSkills();
+}
+
+export function importDefaultSkills(zipFileNames: string[], options: { overwrite: boolean }) {
+  return requireSkillIpc().importDefaultSkills(zipFileNames, options);
+}
+
 export function syncSkillFromRepo(skillId: string) {
   return requireSkillIpc().syncFromRepo(skillId);
 }
@@ -106,6 +114,10 @@ export function extractSkillHubArchive(slug: string, version?: string) {
 
 export function extractClawhubArchive(slug: string) {
   return requireSkillIpc().extractClawhubArchive(slug);
+}
+
+export function extractCocoloopArchive(slug: string, downloadUrl?: string) {
+  return requireSkillIpc().extractCocoloopArchive(slug, downloadUrl);
 }
 
 export function fetchSkillRemoteContent(url: string) {
@@ -238,6 +250,34 @@ export function createSkillLocalDir(skillId: string, relativePath: string) {
 
 export function createSkillLocalDirByPath(localPath: string, relativePath: string) {
   return requireSkillIpc().createLocalDirByPath(localPath, relativePath);
+}
+
+export async function moveSkillLocalPath(
+  skillId: string,
+  fromRelativePath: string,
+  toRelativePath: string,
+): Promise<boolean> {
+  try {
+    await requireSkillIpc().renameLocalPath(skillId, fromRelativePath, toRelativePath);
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+}
+
+export async function moveSkillLocalPathByPath(
+  localPath: string,
+  fromRelativePath: string,
+  toRelativePath: string,
+): Promise<boolean> {
+  try {
+    await requireSkillIpc().renameLocalPathByPath(localPath, fromRelativePath, toRelativePath);
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
 }
 
 export function canExecuteSkillWorkspace(): boolean {

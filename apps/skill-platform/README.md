@@ -293,6 +293,13 @@ onlineConfUrl 数据格式
         "description": "内置 skills.sh 来源，浏览开放 Agent Skills 生态榜单。",
         "type": "skills-sh",
         "url": "https://skills.sh"
+      },
+      {
+        "id": "cocoloop",
+        "name": "CocoLoop 商店",
+        "description": "来自 CocoLoop 的精选 Skills，含 CLS 安全认证与国内镜像下载。",
+        "type": "cocoloop",
+        "url": "https://api.cocoloop.cn/api/v1/store/skills"
       }
     ]
   }

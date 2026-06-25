@@ -12,6 +12,8 @@ export interface IGeneralChatStreamOptions {
   getModelConfig: (modelKey: string) => IAIConfig | null;
   getDefaultConfig: () => IAIConfig | null;
   onNeedModel?: () => void;
+  /** 自定义工作区上下文（默认读侧栏全局工作区 store） */
+  resolveWorkspaceContext?: (userMessage?: string) => Promise<string>;
 }
 
 function toApiMessages(messages: IChatStreamMessage[]): IChatMessage[] {
@@ -47,7 +49,10 @@ export function createGeneralChatStream(options: IGeneralChatStreamOptions): TCa
       apiMessages = [{ role: 'system', content: ragSystemPrompt }, ...apiMessages];
     }
 
-    const workspaceContext = await getEnabledWorkspaceContext();
+    const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user')?.content;
+    const workspaceContext = options.resolveWorkspaceContext
+      ? await options.resolveWorkspaceContext(lastUserMessage)
+      : await getEnabledWorkspaceContext(lastUserMessage);
     if (workspaceContext.trim()) {
       apiMessages = [{ role: 'system', content: workspaceContext }, ...apiMessages];
     }

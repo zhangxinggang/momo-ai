@@ -90,7 +90,7 @@ export function KnowledgeChunkPanel({ open, document, onClose, onRetryIngest }: 
         width={920}
         onCancel={onClose}
         footer={null}
-        destroyOnClose>
+        destroyOnHidden>
         <div className={styles['kb-chunk-toolbar']}>
           <Input
             allowClear
@@ -182,7 +182,7 @@ export function KnowledgeChunkPanel({ open, document, onClose, onRetryIngest }: 
         okText='保存'
         cancelText='取消'
         width={720}
-        destroyOnClose>
+        destroyOnHidden>
         <Input.TextArea
           value={editingContent}
           onChange={(e) => setEditingContent(e.target.value)}

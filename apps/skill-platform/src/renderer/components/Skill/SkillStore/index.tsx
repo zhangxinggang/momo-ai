@@ -74,6 +74,8 @@ export function SkillStore() {
   );
   const skillhubKeyword =
     selectedOnlineSource?.type === 'skillhub' ? storeSearchQuery.trim() : undefined;
+  const cocoloopKeyword =
+    selectedOnlineSource?.type === 'cocoloop' ? storeSearchQuery.trim() : undefined;
   const skillsShFilterKey =
     selectedOnlineSource?.type === 'skills-sh'
       ? normalizeSkillsShFilterKey(storeCategory)
@@ -86,12 +88,14 @@ export function SkillStore() {
     loadStoreSource,
     loadMoreSkillHub,
     loadMoreClawHub,
+    loadMoreCocoloop,
     loadMoreSkillsSh,
     remoteStoreEntries,
   } = useSkillStoreRemoteSync({
     eagerRemoteSources: 'selected',
     selectedStoreSourceId,
     skillhubKeyword,
+    cocoloopKeyword,
     skillsShFilterKey,
     skillsShSearchQuery,
   });
@@ -132,6 +136,7 @@ export function SkillStore() {
     loadStoreSource,
     selectedStoreSourceId,
     skillhubKeyword,
+    cocoloopKeyword,
     skillsShFilterKey,
     skillsShSearchQuery,
   ]);
@@ -164,6 +169,10 @@ export function SkillStore() {
           void loadMoreSkillHub();
           return;
         }
+        if (pagedSourceId === 'cocoloop' || selectedOnlineSource?.type === 'cocoloop') {
+          void loadMoreCocoloop();
+          return;
+        }
         if (pagedSourceId === 'skills-sh' || selectedOnlineSource?.type === 'skills-sh') {
           void loadMoreSkillsSh();
           return;
@@ -177,9 +186,11 @@ export function SkillStore() {
     return () => observer.disconnect();
   }, [
     loadMoreClawHub,
+    loadMoreCocoloop,
     loadMoreSkillsSh,
     loadMoreSkillHub,
     loadingSourceId,
+    selectedOnlineSource?.type,
     selectedRemoteEntry?.pagination?.hasMore,
     selectedStoreSourceId,
   ]);

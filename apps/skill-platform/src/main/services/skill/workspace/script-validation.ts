@@ -2,7 +2,11 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 
 function extractNodeScriptPath(commandLine: string): string | null {
-  const candidates = [...commandLine.matchAll(/["']([^"']+\.(?:js|mjs|cjs))["']|(?:^|\s)([\w./\\-]+\.(?:js|mjs|cjs))(?=\s|$)/gi)]
+  const candidates = [
+    ...commandLine.matchAll(
+      /["']([^"']+\.(?:js|mjs|cjs))["']|(?:^|\s)([\w./\\-]+\.(?:js|mjs|cjs))(?=\s|$)/gi,
+    ),
+  ]
     .map((match) => (match[1] ?? match[2] ?? '').replace(/\\/g, '/'))
     .filter(Boolean)
     .filter((scriptPath) => !/skill-module-paths|node_modules/i.test(scriptPath));
@@ -18,7 +22,8 @@ const DISALLOWED_SCRIPT_PATTERNS: Array<{ pattern: RegExp; message: string }> = 
   },
   {
     pattern: /renderToStaticMarkup|react-dom\/server/,
-    message: '禁止在 headless 脚本中使用 React SSR（renderToStaticMarkup），请遵循 SKILL 指令指定的工具链',
+    message:
+      '禁止在 headless 脚本中使用 React SSR（renderToStaticMarkup），请遵循 SKILL 指令指定的工具链',
   },
   {
     pattern: /require\s*\(\s*['"]react-icons/,

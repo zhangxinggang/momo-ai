@@ -29,7 +29,7 @@ export function EndpointFormModal({
       onCancel={onClose}
       footer={null}
       width={600}
-      destroyOnClose
+      destroyOnHidden
       title={
         <div>
           <div>{'编辑端点'}</div>

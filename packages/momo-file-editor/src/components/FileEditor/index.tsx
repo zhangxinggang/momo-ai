@@ -1,4 +1,9 @@
-import { MdEditor, buildMdPreviewThemeOptions, useMarkdownEditorTheme, useMdPreviewTheme } from '@momo/markdown';
+import {
+  buildMdPreviewThemeOptions,
+  MdEditor,
+  useMarkdownEditorTheme,
+  useMdPreviewTheme,
+} from '@momo/markdown';
 import '@momo/markdown-styles';
 import type { MenuProps, TreeDataNode } from 'antd';
 import { Button, Dropdown, Input, Modal, Select, Tree } from 'antd';
@@ -31,15 +36,11 @@ import type {
   IFileEditorNotifyPayload,
   IFileTreeEntry,
 } from '../../types/adapter';
-import { BinaryFilePreview } from '../BinaryFilePreview';
-import { CodeFileEditor } from '../CodeFileEditor';
 import { isCodeEditorPath } from '../../utils/code-editor-language';
+import { DEFAULT_CODE_EDITOR_THEME, type ECodeEditorTheme } from '../../utils/code-editor-theme';
 import { cloneArrayBuffer } from '../../utils/file-content';
-import { isMarkdownPath, MARKDOWN_TOOLBARS } from '../../utils/markdown-config';
-import {
-  DEFAULT_CODE_EDITOR_THEME,
-  type ECodeEditorTheme,
-} from '../../utils/code-editor-theme';
+import { isMarkdownPath } from '../../utils/markdown-config';
+import { MARKDOWN_TOOLBARS } from '../../utils/markdown-toolbars';
 import {
   buildFileTree,
   ensurePathWithExtension,
@@ -49,6 +50,8 @@ import {
   normalizeRelativePath,
   type IFileTreeNode,
 } from '../../utils/path';
+import { BinaryFilePreview } from '../BinaryFilePreview';
+import { CodeFileEditor } from '../CodeFileEditor';
 
 const MomoMdEditor = MdEditor as ComponentType<Record<string, unknown>>;
 
@@ -77,6 +80,8 @@ export interface IProps {
   codeEditorTheme?: ECodeEditorTheme;
   /** 二进制预览 Worker/WASM 等静态资源根 URL，由宿主注入 */
   filePreviewBaseUrl?: string;
+  /** 二进制预览不可用时回调（如使用系统默认应用打开） */
+  onUnSupport?: (relativePath: string) => void;
 }
 
 interface IPathTarget {
@@ -92,7 +97,7 @@ function toAntTreeData(
     key: node.path,
     title: renderTitle(node),
     isLeaf: !node.isDirectory,
-    selectable: !node.isDirectory,
+    selectable: true,
     children: node.children.length > 0 ? toAntTreeData(node.children, renderTitle) : undefined,
   }));
 }
@@ -126,6 +131,7 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
     onNotify,
     codeEditorTheme = DEFAULT_CODE_EDITOR_THEME,
     filePreviewBaseUrl,
+    onUnSupport,
   },
   ref,
 ) {
@@ -140,7 +146,8 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
   const [fileContent, setFileContent] = useState('');
   const [savedContent, setSavedContent] = useState('');
   const [isNewFileOpen, setIsNewFileOpen] = useState(false);
-  const [newFilePath, setNewFilePath] = useState('');
+  const [newFileParentDir, setNewFileParentDir] = useState('');
+  const [newFileName, setNewFileName] = useState('');
   const [isNewFolderOpen, setIsNewFolderOpen] = useState(false);
   const [newFolderPath, setNewFolderPath] = useState('');
   const [renameTarget, setRenameTarget] = useState<IPathTarget | null>(null);
@@ -150,6 +157,7 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
   const [uploadTargetDir, setUploadTargetDir] = useState<string | null>(null);
   const [previewBuffer, setPreviewBuffer] = useState<ArrayBuffer | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
   const notify = useCallback(
     (message: string, type: IFileEditorNotifyPayload['type']) => {
@@ -195,13 +203,26 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
 
   const treeNodes = useMemo(() => buildFileTree(entries), [entries]);
   const directoryOptions = useMemo(() => collectDirectoryPaths(entries), [entries]);
+
+  useEffect(() => {
+    const allDirs = collectDirectoryPaths(entries);
+    setExpandedKeys((prev) => {
+      const merged = new Set([...prev, ...allDirs]);
+      return Array.from(merged);
+    });
+  }, [entries]);
+
+  const toggleDirectoryExpanded = useCallback((dirPath: string) => {
+    setExpandedKeys((prev) =>
+      prev.includes(dirPath) ? prev.filter((key) => key !== dirPath) : [...prev, dirPath],
+    );
+  }, []);
+
   const isMarkdownActive = selectedPath ? isMarkdownPath(selectedPath) : false;
   const isCodeEditorActive = Boolean(
     selectedPath && !isMarkdownActive && isCodeEditorPath(selectedPath),
   );
-  const isBinaryPreviewActive = Boolean(
-    selectedPath && !isMarkdownActive && !isCodeEditorActive,
-  );
+  const isBinaryPreviewActive = Boolean(selectedPath && !isMarkdownActive && !isCodeEditorActive);
   const hasUnsaved =
     selectedPath !== null && !isBinaryPreviewActive && fileContent !== savedContent;
 
@@ -289,6 +310,10 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
     notify('保存失败', 'error');
     return false;
   }, [adapter, fileContent, hasUnsaved, notify, onFilesChange, reloadTree, selectedPath]);
+
+  const handleEditorSave = useCallback(() => {
+    void handleSave();
+  }, [handleSave]);
 
   const discardChanges = useCallback(() => {
     setFileContent(savedContent);
@@ -446,15 +471,21 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
   }, [movePath, moveTarget, moveTargetDir, notify, onFilesChange, reloadTree, selectedPath]);
 
   const handleCreateFile = useCallback(async () => {
-    const raw = newFilePath.trim();
+    const raw = newFileName.trim();
     if (!raw) {
       return;
     }
-    const path = ensurePathWithExtension(raw, defaultNewFileExtension);
+    if (newFileParentDir && raw.includes('/')) {
+      notify('文件名不能包含路径分隔符', 'error');
+      return;
+    }
+    const relativePath = joinRelativePath(newFileParentDir, raw);
+    const path = ensurePathWithExtension(relativePath, defaultNewFileExtension);
     const ok = await adapter.writeFile(path, '');
     if (ok) {
       setIsNewFileOpen(false);
-      setNewFilePath('');
+      setNewFileParentDir('');
+      setNewFileName('');
       await reloadTree();
       setSelectedPath(path);
       notify('文件已创建', 'success');
@@ -462,7 +493,21 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
     } else {
       notify('创建失败', 'error');
     }
-  }, [adapter, defaultNewFileExtension, newFilePath, notify, onFilesChange, reloadTree]);
+  }, [
+    adapter,
+    defaultNewFileExtension,
+    newFileName,
+    newFileParentDir,
+    notify,
+    onFilesChange,
+    reloadTree,
+  ]);
+
+  const closeNewFileModal = useCallback(() => {
+    setIsNewFileOpen(false);
+    setNewFileParentDir('');
+    setNewFileName('');
+  }, []);
 
   const handleCreateFolder = useCallback(async () => {
     const path = normalizeRelativePath(newFolderPath.trim());
@@ -482,8 +527,8 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
   }, [adapter, newFolderPath, notify, onFilesChange, reloadTree]);
 
   const openNewFileInDir = useCallback((dirPath: string) => {
-    const prefix = dirPath ? `${dirPath}/` : '';
-    setNewFilePath(prefix);
+    setNewFileParentDir(normalizeRelativePath(dirPath));
+    setNewFileName('');
     setIsNewFileOpen(true);
   }, []);
 
@@ -664,7 +709,7 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
             <div className='momo-file-editor__tree-actions'>
               <button
                 className='momo-file-editor__tree-btn'
-                onClick={() => setIsNewFileOpen(true)}
+                onClick={() => openNewFileInDir('')}
                 title={'新建文件'}
                 type='button'>
                 <FilePlusIcon style={{ width: '0.875rem', height: '0.875rem' }} />
@@ -701,15 +746,22 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
                 blockNode
                 showLine
                 className='momo-file-editor__antd-tree'
+                expandedKeys={expandedKeys}
+                onExpand={(keys) => setExpandedKeys(keys.map(String))}
                 onSelect={(keys) => {
                   const key = String(keys[0] ?? '');
                   if (!key) {
                     return;
                   }
                   const entry = entries.find((e) => e.relativePath === key);
-                  if (entry && !entry.isDirectory) {
-                    setSelectedPath(key);
+                  if (!entry) {
+                    return;
                   }
+                  if (entry.isDirectory) {
+                    toggleDirectoryExpanded(key);
+                    return;
+                  }
+                  setSelectedPath(key);
                 }}
                 selectedKeys={selectedPath ? [selectedPath] : []}
                 treeData={treeData}
@@ -764,7 +816,7 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
                       className='momo-file-editor__editor-tab'
                       disabled={!hasUnsaved}
                       onClick={() => void handleSave()}
-                      title='保存'
+                      title='保存 (Ctrl+S)'
                       icon={<SaveIcon style={{ width: '0.875rem', height: '0.875rem' }} />}
                     />
                   ) : null}
@@ -779,6 +831,7 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
                       id={markdownEditorDomId}
                       value={fileContent}
                       onChange={setFileContent}
+                      onSave={handleEditorSave}
                       theme={mdTheme}
                       preview
                       previewTheme={mdPreviewTheme}
@@ -794,6 +847,7 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
                 ) : isCodeEditorActive ? (
                   <CodeFileEditor
                     onChange={setFileContent}
+                    onSave={handleEditorSave}
                     relativePath={selectedPath}
                     themeId={codeEditorTheme}
                     value={fileContent}
@@ -803,6 +857,7 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
                     buffer={previewBuffer}
                     filePreviewBaseUrl={filePreviewBaseUrl}
                     isLoading={isPreviewLoading}
+                    onUnSupport={onUnSupport}
                     relativePath={selectedPath}
                   />
                 )}
@@ -819,15 +874,20 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
       </div>
 
       <Modal
-        destroyOnClose
-        onCancel={() => setIsNewFileOpen(false)}
+        destroyOnHidden
+        key={isNewFileOpen ? `new-file-${newFileParentDir}` : 'new-file-closed'}
+        onCancel={closeNewFileModal}
         onOk={() => void handleCreateFile()}
         open={isNewFileOpen}
         title={'新建文件'}>
+        {newFileParentDir ? (
+          <p className='momo-file-editor__dialog-context'>{`创建位置：${newFileParentDir}/`}</p>
+        ) : null}
         <Input
-          onChange={(e) => setNewFilePath(e.target.value)}
-          placeholder={'例如 output/report 或 notes.md'}
-          value={newFilePath}
+          autoFocus
+          onChange={(e) => setNewFileName(e.target.value)}
+          placeholder={newFileParentDir ? '例如 report.md' : '例如 output/report 或 notes.md'}
+          value={newFileName}
         />
         <p className='momo-file-editor__dialog-hint'>
           {`未填写后缀时将默认创建 .${defaultNewFileExtension} 文件`}
@@ -835,7 +895,7 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
       </Modal>
 
       <Modal
-        destroyOnClose
+        destroyOnHidden
         onCancel={() => setIsNewFolderOpen(false)}
         onOk={() => void handleCreateFolder()}
         open={isNewFolderOpen}
@@ -848,7 +908,7 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
       </Modal>
 
       <Modal
-        destroyOnClose
+        destroyOnHidden
         okText='确定'
         onCancel={() => setRenameTarget(null)}
         onOk={() => void handleRenameConfirm()}
@@ -862,7 +922,7 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
       </Modal>
 
       <Modal
-        destroyOnClose
+        destroyOnHidden
         okText='移动'
         onCancel={() => setMoveTarget(null)}
         onOk={() => void handleMoveConfirm()}

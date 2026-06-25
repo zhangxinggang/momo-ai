@@ -4,6 +4,7 @@ export { ChatProvider, useChatContext } from './contexts/ChatContext';
 
 // 会话类型与工具
 export {
+  AI_CHAT_SESSIONS_UPDATED_EVENT,
   DEFAULT_SYSTEM_PROMPT_PLACEHOLDER,
   DEFAULT_WELCOME_MESSAGE,
   ECliAgent,
@@ -20,6 +21,7 @@ export type {
   IChatContext,
   IChatMessage,
   IChatSession,
+  INoteSnapshot,
 } from './types/chat';
 
 export { createDefaultAiChatServices } from './adapters/create-services';
@@ -51,31 +53,30 @@ export type {
 // UI 子组件（按需组合）
 export { default as ChatInputPanel } from './components/ChatInputPanel';
 export type { IChatInputPanelRef } from './components/ChatInputPanel';
+export { ChatMentionTextarea } from './components/ChatMentionTextarea';
+export type { IChatMentionTextareaRef } from './components/ChatMentionTextarea';
 export { ChatWorkspaceControl } from './components/ChatWorkspaceControl';
 export { ChatWorkspaceToolbar } from './components/ChatWorkspaceToolbar';
 export { default as CitationCard } from './components/CitationCard';
 export { default as CollapsibleThinking } from './components/CollapsibleThinking';
 export { default as DropOverlay } from './components/DropOverlay';
 export { default as MarkdownRenderer } from './components/MarkdownRenderer';
+export { NoteReferenceChip } from './components/NoteReferenceChip';
+export { NoteReferencePopover } from './components/NoteReferencePopover';
+export { NoteReferenceText } from './components/NoteReferenceText';
 export { SlashCommandPopover } from './components/SlashCommandPopover';
 export { default as StopGenerationButton } from './components/StopGenerationButton';
 export { buildChatWorkspaceConfig, useChatWorkspaceConfig } from './hooks/useChatWorkspaceConfig';
 export type { IUseChatWorkspaceConfigOptions } from './hooks/useChatWorkspaceConfig';
-export { useSlashCommandTrigger } from './hooks/useSlashCommandTrigger';
 export { useNoteReferenceTrigger } from './hooks/useNoteReferenceTrigger';
+export { useSlashCommandTrigger } from './hooks/useSlashCommandTrigger';
+export type { INoteReferenceNode, INoteReferencesConfig } from './types/note-reference';
 export type {
   ISlashCommandItem,
   ISlashCommandsConfig,
   ISlashCommandsListContext,
   ISlashCommandsListResult,
 } from './types/slash-command';
-export type { INoteReferenceNode, INoteReferencesConfig } from './types/note-reference';
-export { NoteReferenceChip } from './components/NoteReferenceChip';
-export { NoteReferenceText } from './components/NoteReferenceText';
-export { resolveNoteMentionsInContent, buildNoteMentionToken, getNoteMentionDisplayPath, parseNoteReferenceContent, valueToSurface } from './utils/note-mention';
-export { NoteReferencePopover } from './components/NoteReferencePopover';
-export { ChatMentionTextarea } from './components/ChatMentionTextarea';
-export type { IChatMentionTextareaRef } from './components/ChatMentionTextarea';
 export type { IChatWorkspaceConfig, IChatWorkspacePreset } from './types/workspace';
 export {
   enhanceLocalPathElements,
@@ -86,4 +87,17 @@ export {
   splitPlainTextByLocalPaths,
   stripCodeLanguagePrefix,
 } from './utils/local-path';
+export {
+  NOTE_SNAPSHOT_MAX_CHARS,
+  NOTE_SNAPSHOT_TRUNCATED_SUFFIX,
+  buildNoteMentionToken,
+  ensureNoteSnapshots,
+  expandNoteMentionsWithSnapshots,
+  getNoteMentionDisplayPath,
+  normalizeNotePath,
+  parseNoteReferenceContent,
+  resolveNoteMentionsInContent,
+  truncateNoteContent,
+  valueToSurface,
+} from './utils/note-mention';
 export { formatWorkspaceDisplayPath } from './utils/workspace-display';

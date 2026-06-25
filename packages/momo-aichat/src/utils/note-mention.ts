@@ -1,4 +1,15 @@
+import type { INoteSnapshot } from '../types/chat';
+
 /** 笔记引用 token：@[note:path]（path 为笔记相对路径，如 asdfa/f.md） */
+
+export const NOTE_SNAPSHOT_MAX_CHARS = 20_000;
+export const NOTE_SNAPSHOT_TRUNCATED_SUFFIX =
+  '（笔记过长，已截断至前 20000 字符，完整内容请打开笔记查看）';
+
+export function normalizeNotePath(path: string): string {
+  return path.replace(/\\/g, '/');
+}
+
 export const NOTE_MENTION_TOKEN_REGEX = /@\[note:([^\]|]+)(?:\|[^\]]+)?\]/g;
 
 export function buildNoteMentionToken(path: string): string {
@@ -191,9 +202,7 @@ export function findNoteMentions(value: string): INoteMentionMatch[] {
 /** 光标是否落在笔记引用 token 内 */
 export function findMentionAtCursor(value: string, cursorPos: number): INoteMentionMatch | null {
   return (
-    findNoteMentions(value).find(
-      (item) => cursorPos >= item.start && cursorPos <= item.end,
-    ) ?? null
+    findNoteMentions(value).find((item) => cursorPos >= item.start && cursorPos <= item.end) ?? null
   );
 }
 
@@ -257,6 +266,86 @@ export function removeMentionTokenAt(value: string, cursorPos: number): string |
     return null;
   }
   return `${value.slice(0, hit.start)}${value.slice(hit.end)}`;
+}
+
+export function truncateNoteContent(raw: string): {
+  content: string;
+  isTruncated: boolean;
+  originalLength: number;
+} {
+  const originalLength = raw.length;
+  if (originalLength <= NOTE_SNAPSHOT_MAX_CHARS) {
+    return {
+      content: raw,
+      isTruncated: false,
+      originalLength,
+    };
+  }
+  return {
+    content: raw.slice(0, NOTE_SNAPSHOT_MAX_CHARS) + NOTE_SNAPSHOT_TRUNCATED_SUFFIX,
+    isTruncated: true,
+    originalLength,
+  };
+}
+
+export function expandNoteMentionsWithSnapshots(
+  content: string,
+  snapshots: Record<string, INoteSnapshot>,
+): string {
+  const mentions = findNoteMentions(content);
+  if (mentions.length === 0) {
+    return content;
+  }
+
+  let result = content;
+  for (const mention of [...mentions].reverse()) {
+    const normalizedPath = normalizeNotePath(mention.path);
+    const displayPath = getNoteMentionDisplayPath(mention.path);
+    const snapshot = snapshots[normalizedPath] ?? snapshots[mention.path];
+
+    if (snapshot) {
+      const block = [
+        `--- 笔记: ${displayPath} START ---`,
+        snapshot.content,
+        `--- 笔记: ${displayPath} END ---`,
+      ].join('\n');
+      result = `${result.slice(0, mention.start)}${block}${result.slice(mention.end)}`;
+    } else {
+      result = `${result.slice(0, mention.start)}[笔记 ${displayPath} 未找到快照]${result.slice(mention.end)}`;
+    }
+  }
+  return result;
+}
+
+export async function ensureNoteSnapshots(
+  paths: string[],
+  snapshots: Record<string, INoteSnapshot>,
+  readContent: (path: string) => Promise<string>,
+): Promise<Record<string, INoteSnapshot>> {
+  const result = { ...snapshots };
+
+  for (const path of paths) {
+    const normalizedPath = normalizeNotePath(path);
+    if (result[normalizedPath]) {
+      continue;
+    }
+
+    try {
+      const raw = await readContent(path);
+      const truncated = truncateNoteContent(raw);
+      result[normalizedPath] = {
+        path: normalizedPath,
+        content: truncated.content,
+        snapshotAt: Date.now(),
+        isTruncated: truncated.isTruncated,
+        originalLength: truncated.originalLength,
+      };
+    } catch {
+      // 读取失败时不写入快照
+    }
+  }
+
+  return result;
 }
 
 export async function resolveNoteMentionsInContent(

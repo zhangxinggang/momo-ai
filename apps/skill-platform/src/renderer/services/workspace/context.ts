@@ -1,96 +1,173 @@
 import { getWorkspaceApi } from '@renderer/services/workspace/api';
 import { useChatWorkspaceStore } from '@renderer/store/chat';
 
-const MAX_TOTAL_CHARS = 80000;
-const MAX_FILES = 30;
+import { extractGrepKeywords } from './keyword-extract';
+import { isWorkspaceRelatedQuestion } from './relevance-heuristic';
 
-interface IDirEntry {
-  name: string;
-  path: string;
-  type: 'file' | 'directory';
-  size?: number;
-}
+const MAX_SNIPPET_TOTAL_CHARS = 24000;
 
-interface IListDirResult {
+interface IListTreeResult {
   success: boolean;
-  entries?: IDirEntry[];
+  treeText?: string;
+  truncated?: boolean;
   error?: string;
 }
 
-interface IReadFileResult {
+interface IGrepHit {
+  filePath: string;
+  line: number;
+  column: number;
+  snippet: string;
+}
+
+interface IGrepResult {
+  success: boolean;
+  hits?: IGrepHit[];
+}
+
+interface IReadSnippetResult {
   success: boolean;
   content?: string;
-  truncated?: boolean;
-  skipped?: boolean;
-  error?: string;
-  filePath?: string;
 }
 
-/** 读取工作区目录内文本文件，拼接为 AI 上下文 */
-export async function buildWorkspaceContext(workspacePath: string): Promise<string> {
-  if (!workspacePath.trim()) {
-    return '';
-  }
-
-  const listResult = (await getWorkspaceApi()?.listDir?.(workspacePath)) as
-    | IListDirResult
+/** 构建单个工作区的目录树摘要（不含文件内容） */
+async function buildWorkspaceTreeSummary(workspacePath: string): Promise<string> {
+  const treeResult = (await getWorkspaceApi()?.listTree?.(workspacePath)) as
+    | IListTreeResult
     | undefined;
-  if (!listResult?.success || !listResult.entries?.length) {
-    return '';
+  if (!treeResult?.success || !treeResult.treeText?.trim()) {
+    return `当前工作区：${workspacePath}\n（目录为空或不可读）`;
+  }
+  const truncatedHint = treeResult.truncated ? '\n（目录树已截断）' : '';
+  return `当前工作区：${workspacePath}\n目录结构（不含文件内容）：\n${treeResult.treeText}${truncatedHint}`;
+}
+
+/** 按关键词 Grep 并读取相关代码片段 */
+async function buildWorkspaceGrepSnippets(
+  workspacePaths: string[],
+  userMessage: string,
+): Promise<string[]> {
+  if (!isWorkspaceRelatedQuestion(userMessage)) {
+    return [];
   }
 
-  const textFiles = listResult.entries.filter((entry) => entry.type === 'file').slice(0, MAX_FILES);
+  const keywords = extractGrepKeywords(userMessage);
+  if (keywords.length === 0) {
+    return [];
+  }
 
-  const blocks: string[] = [];
+  const snippetBlocks: string[] = [];
   let totalChars = 0;
 
-  for (const file of textFiles) {
-    if (totalChars >= MAX_TOTAL_CHARS) {
-      break;
-    }
-
-    const readResult = (await getWorkspaceApi()?.readFile?.(file.path)) as
-      | IReadFileResult
-      | undefined;
-    if (!readResult?.success || readResult.skipped || !readResult.content) {
+  for (const root of workspacePaths) {
+    const grepResult = (await getWorkspaceApi()?.grep?.(root, keywords)) as IGrepResult | undefined;
+    if (!grepResult?.success || !grepResult.hits?.length) {
       continue;
     }
 
-    const remaining = MAX_TOTAL_CHARS - totalChars;
-    const content =
-      readResult.content.length > remaining
-        ? `${readResult.content.slice(0, remaining)}\n...(已截断)`
-        : readResult.content;
+    const seenFiles = new Set<string>();
+    for (const hit of grepResult.hits) {
+      if (seenFiles.has(hit.filePath)) {
+        continue;
+      }
+      seenFiles.add(hit.filePath);
 
-    blocks.push(`--- 文件: ${file.name} ---\n${content}`);
-    totalChars += content.length;
+      const snip = (await getWorkspaceApi()?.readSnippet?.(root, hit.filePath, hit.line)) as
+        | IReadSnippetResult
+        | undefined;
+      if (!snip?.success || !snip.content?.trim()) {
+        continue;
+      }
+
+      const block = `--- ${hit.filePath} (L${hit.line}) ---\n${snip.content}`;
+      if (totalChars + block.length > MAX_SNIPPET_TOTAL_CHARS) {
+        break;
+      }
+      snippetBlocks.push(block);
+      totalChars += block.length;
+    }
   }
 
-  if (blocks.length === 0) {
-    return `当前工作区目录：${workspacePath}\n（目录内无可读取的文本文件，请基于目录结构回答）`;
-  }
-
-  return [
-    `当前工作区目录：${workspacePath}`,
-    '以下为工作区中的文件内容（可能已截断），回答、编码、总结时请优先参考：',
-    ...blocks,
-  ].join('\n\n');
+  return snippetBlocks;
 }
 
-/** 若用户已启用工作区，则读取并返回 AI 上下文文本 */
-export async function getEnabledWorkspaceContext(): Promise<string> {
+interface IPersistedWorkspaceState {
+  workspaceEnabled: boolean;
+  workspacePaths: string[];
+}
+
+function readWorkspaceStateFromStorage(storageKey: string): IPersistedWorkspaceState {
+  if (typeof window === 'undefined') {
+    return { workspaceEnabled: false, workspacePaths: [] };
+  }
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) {
+      return { workspaceEnabled: false, workspacePaths: [] };
+    }
+    const parsed = JSON.parse(raw) as Partial<IPersistedWorkspaceState> & {
+      workspacePath?: string | null;
+    };
+    const legacyPath = typeof parsed.workspacePath === 'string' ? parsed.workspacePath.trim() : '';
+    const workspacePaths = Array.isArray(parsed.workspacePaths)
+      ? parsed.workspacePaths.filter((item) => typeof item === 'string' && item.trim())
+      : legacyPath
+        ? [legacyPath]
+        : [];
+    return {
+      workspaceEnabled: Boolean(parsed.workspaceEnabled),
+      workspacePaths,
+    };
+  } catch {
+    return { workspaceEnabled: false, workspacePaths: [] };
+  }
+}
+
+async function buildWorkspaceContextForPaths(
+  workspacePaths: string[],
+  userMessage?: string,
+): Promise<string> {
+  const blocks: string[] = [];
+
+  for (const workspacePath of workspacePaths) {
+    const summary = await buildWorkspaceTreeSummary(workspacePath);
+    if (summary.trim()) {
+      blocks.push(summary);
+    }
+  }
+
+  const lastMessage = userMessage?.trim() ?? '';
+  if (lastMessage) {
+    const snippets = await buildWorkspaceGrepSnippets(workspacePaths, lastMessage);
+    if (snippets.length > 0) {
+      blocks.push('以下为用户问题相关的代码片段（由 Grep 检索，可能已截断）：', ...snippets);
+    }
+  }
+
+  return blocks.join('\n\n');
+}
+
+/** 从指定 localStorage 键读取工作区并构建 AI 上下文（笔记 AI 写作等场景） */
+export async function getWorkspaceContextFromStorageKey(
+  storageKey: string,
+  userMessage?: string,
+): Promise<string> {
+  const { workspaceEnabled, workspacePaths } = readWorkspaceStateFromStorage(storageKey);
+  if (!workspaceEnabled || workspacePaths.length === 0) {
+    return '';
+  }
+  return buildWorkspaceContextForPaths(workspacePaths, userMessage);
+}
+
+/**
+ * 若用户已启用工作区，则返回 AI 上下文：
+ * - 始终包含目录树摘要
+ * - 相关问题追加 Grep 命中片段
+ */
+export async function getEnabledWorkspaceContext(userMessage?: string): Promise<string> {
   const { workspacePaths, workspaceEnabled } = useChatWorkspaceStore.getState();
   if (!workspaceEnabled || workspacePaths.length === 0) {
     return '';
   }
-
-  const blocks: string[] = [];
-  for (const workspacePath of workspacePaths) {
-    const context = await buildWorkspaceContext(workspacePath);
-    if (context.trim()) {
-      blocks.push(context);
-    }
-  }
-
-  return blocks.join('\n\n---\n\n');
+  return buildWorkspaceContextForPaths(workspacePaths, userMessage);
 }

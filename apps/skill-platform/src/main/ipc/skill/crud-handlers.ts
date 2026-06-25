@@ -5,8 +5,10 @@ import { zipSync } from 'fflate';
 import {
   SkillInstaller,
   hasMetadataChanges,
+  importDefaultSkills,
   isInternalSkillRepoEntry,
   isSkillExportExcludedEntry,
+  listDefaultSkillPreviews,
   syncFrontmatterToRepo,
 } from '../../services/skill';
 import type { ISkillIPCContext } from './shared';
@@ -165,6 +167,20 @@ export function registerSkillCrudHandlers({ db }: ISkillIPCContext): void {
     }
     return SkillInstaller.scanLocalPreview(customPaths, db);
   });
+
+  ipcMain.handle(IPC_CHANNELS.SKILL_LIST_DEFAULT_SKILLS, async () => {
+    return listDefaultSkillPreviews(db);
+  });
+
+  ipcMain.handle(
+    IPC_CHANNELS.SKILL_IMPORT_DEFAULT_SKILLS,
+    async (_, zipFileNames: string[], options: { overwrite: boolean }) => {
+      if (!Array.isArray(zipFileNames)) {
+        throw new Error('skill:importDefaultSkills expects zipFileNames array');
+      }
+      return importDefaultSkills(db, zipFileNames, { overwrite: Boolean(options?.overwrite) });
+    },
+  );
 
   ipcMain.handle(IPC_CHANNELS.SKILL_EXPORT, async (_, id: string, format) => {
     if (typeof id !== 'string' || id.trim().length === 0) {

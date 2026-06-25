@@ -1,6 +1,5 @@
 export type { IConfigureElectronBasePathsOptions, TElectronPathName } from './electron-path';
 
-export * from './constant';
 export type {
   IAppConfig,
   IAppConfigBrowserWindow,
@@ -8,3 +7,4 @@ export type {
   IAppConfigServer,
   IAppConfigServerUpload,
 } from './config';
+export * from './constant';

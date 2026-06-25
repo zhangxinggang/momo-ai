@@ -1,6 +1,40 @@
 import { allRenderers } from '@file-viewer/preset-all';
 import type { ViewerOptions } from '@file-viewer/react';
 
+/** 从 preset-all 的 renderer definitions 收集可预览扩展名 */
+function collectFileViewerSupportedExtensions(): ReadonlySet<string> {
+  const extensions = new Set<string>();
+  for (const renderer of allRenderers.renderers ?? []) {
+    for (const definition of renderer.definitions ?? []) {
+      for (const ext of definition.extensions ?? []) {
+        extensions.add(ext.toLowerCase());
+      }
+    }
+  }
+  return extensions;
+}
+
+export const FILE_VIEWER_SUPPORTED_EXTENSIONS = collectFileViewerSupportedExtensions();
+
+/** 从文件名提取小写扩展名（无点） */
+export function getFileExtension(fileName: string): string {
+  const baseName = fileName.split(/[/\\]/).pop() ?? fileName;
+  const dotIndex = baseName.lastIndexOf('.');
+  if (dotIndex <= 0) {
+    return '';
+  }
+  return baseName.slice(dotIndex + 1).toLowerCase();
+}
+
+/** 判断文件是否在 @file-viewer/preset-all 支持矩阵内 */
+export function isFileViewerSupportedFile(fileName: string): boolean {
+  const extension = getFileExtension(fileName);
+  if (!extension) {
+    return false;
+  }
+  return FILE_VIEWER_SUPPORTED_EXTENSIONS.has(extension);
+}
+
 /** 拼接静态资源路径，base 由宿主通过 filePreviewBaseUrl 注入 */
 function resolvePublicAsset(relativePath: string, base = ''): string {
   const normalizedBase = base.endsWith('/') ? base : `${base}/`;

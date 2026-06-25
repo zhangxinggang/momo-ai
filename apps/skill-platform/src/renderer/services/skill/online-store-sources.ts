@@ -2,6 +2,17 @@ import type { DOnlineConf, DOnlineConfSkillSource } from '@/types/modules/online
 
 export type TRemoteSkillStoreType = DOnlineConfSkillSource['type'];
 
+/** 内置商店来源：远程 onlineConf 未配置时生效，同 id 以远程为准 */
+const BUILTIN_ONLINE_SKILL_API_SOURCES: DOnlineConfSkillSource[] = [
+  {
+    id: 'cocoloop',
+    name: 'CocoLoop 商店',
+    description: '来自 CocoLoop 的精选 Skills，含 CLS 安全认证与国内镜像下载。',
+    type: 'cocoloop',
+    url: 'https://api.cocoloop.cn/api/v1/store/skills',
+  },
+];
+
 export interface IRemoteSkillStoreSource {
   id: string;
   name: string;
@@ -31,11 +42,12 @@ function normalizeOnlineSkillSource(item: DOnlineConfSkillSource): IRemoteSkillS
   };
 }
 
-/** 合并 onlineConf 的 fileSource 与 apiSource，合并后仅按 type / url 使用，不再区分来源 */
+/** 合并内置来源、onlineConf 的 fileSource 与 apiSource；同 id 时远程配置覆盖内置 */
 export function mergeOnlineSkillStoreSources(
   config: DOnlineConf | null,
 ): IRemoteSkillStoreSource[] {
   const mergedSources = [
+    ...BUILTIN_ONLINE_SKILL_API_SOURCES,
     ...(Array.isArray(config?.skills?.fileSource) ? config.skills.fileSource : []),
     ...(Array.isArray(config?.skills?.apiSource) ? config.skills.apiSource : []),
   ];
@@ -52,9 +64,9 @@ export function mergeOnlineSkillStoreSources(
 }
 
 export function isPagedRemoteStoreType(type: TRemoteSkillStoreType): boolean {
-  return type === 'skillhub' || type === 'clawhub' || type === 'skills-sh';
+  return type === 'skillhub' || type === 'clawhub' || type === 'cocoloop' || type === 'skills-sh';
 }
 
 export function isSearchRemoteStoreType(type: TRemoteSkillStoreType): boolean {
-  return type === 'skillhub' || type === 'skills-sh';
+  return type === 'skillhub' || type === 'cocoloop' || type === 'skills-sh';
 }

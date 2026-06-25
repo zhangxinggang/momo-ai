@@ -1,6 +1,6 @@
-import editorCss from './components/FileEditor/index.module.less?inline';
-import codeEditorCss from './components/CodeFileEditor/index.module.less?inline';
-import binaryPreviewCss from './components/BinaryFilePreview/index.module.less?inline';
+import binaryPreviewCss from './components/BinaryFilePreview/index.less?inline';
+import codeEditorCss from './components/CodeFileEditor/index.less?inline';
+import editorCss from './components/FileEditor/index.less?inline';
 
 function injectPackageStyles(css: string): void {
   if (!css.trim()) {
@@ -43,13 +43,14 @@ export {
 } from './utils/path';
 export type { IFileTreeNode } from './utils/path';
 
-export { MARKDOWN_TOOLBARS, buildMarkdownToolbars, isMarkdownPath } from './utils/markdown-config';
+export { isMarkdownPath } from './utils/markdown-config';
+export { MARKDOWN_TOOLBARS, buildMarkdownToolbars } from './utils/markdown-toolbars';
 
-export { BINARY_FILE_PLACEHOLDER, cloneArrayBuffer, isBinaryFilePlaceholder } from './utils/file-content';
+export { cloneArrayBuffer } from './utils/file-content';
 
 export {
-  buildFileViewerPreviewOptions,
   FILE_VIEWER_PREVIEW_OPTIONS,
+  buildFileViewerPreviewOptions,
 } from './utils/file-viewer-config';
 
 export {
@@ -61,6 +62,8 @@ export {
   resolveCodeEditorThemeFromDocument,
   useSyncedCodeEditorTheme,
 } from './utils/code-editor-theme';
+
+export { CODE_EDITOR_EXTENSIONS, isCodeEditorPath } from './utils/code-editor-language';
 
 export {
   DEFAULT_MD_PREVIEW_THEME,

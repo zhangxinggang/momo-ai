@@ -14,6 +14,7 @@ export interface IProps {
   value: string;
   relativePath: string;
   onChange: (value: string) => void;
+  onSave?: () => void;
   readOnly?: boolean;
   themeId?: ECodeEditorTheme;
 }
@@ -63,13 +64,16 @@ export function CodeFileEditor({
   value,
   relativePath,
   onChange,
+  onSave,
   readOnly = false,
   themeId = DEFAULT_CODE_EDITOR_THEME,
 }: IProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
+  const onSaveRef = useRef(onSave);
   onChangeRef.current = onChange;
+  onSaveRef.current = onSave;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -94,7 +98,18 @@ export function CodeFileEditor({
           editorTheme,
           lineNumbers(),
           history(),
-          keymap.of([...defaultKeymap, ...historyKeymap]),
+          keymap.of([
+            ...defaultKeymap,
+            ...historyKeymap,
+            {
+              key: 'Mod-s',
+              run: () => {
+                onSaveRef.current?.();
+                return true;
+              },
+              preventDefault: true,
+            },
+          ]),
           EditorView.lineWrapping,
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {

@@ -1,17 +1,23 @@
 ﻿import { SKILL_CREATOR_CONTENT_URL } from '@/types/constants/skill-registry';
-import type { IRegistrySkill, IScannedSkill } from '@/types/modules/skill';
+import type { IDefaultSkillPreview, IRegistrySkill, IScannedSkill } from '@/types/modules/skill';
 import type { IExposeParam } from '@momo/markdown';
 import { allToolbar } from '@momo/markdown';
+import { useToast } from '@renderer/components/ui/Toast';
 import { useUnsavedLeaveGuard } from '@renderer/hooks/useUnsavedLeaveGuard';
 import { generateSkillContent, polishSkillContent, type IAIConfig } from '@renderer/services/ai';
-import { fetchSkillRemoteContent, scanLocalSkillsPreview } from '@renderer/services/skill/api';
+import {
+  fetchSkillRemoteContent,
+  importDefaultSkills,
+  listDefaultSkills,
+  scanLocalSkillsPreview,
+} from '@renderer/services/skill/api';
 import { loadGitHubSkillRepo } from '@renderer/services/skill/github-store';
 import { getExistingSkillTags } from '@renderer/services/skill/modal-utils';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
 import type { IAIModelConfig } from '@renderer/types/settings';
 import { useMdEditorImageUpload } from '@renderer/utils/markdown/editor-config';
 import type { UploadProps } from 'antd';
-import { Upload } from 'antd';
+import { Modal, Upload } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { IManualSkillFormState } from './CreateSkillManualPanel';
@@ -38,6 +44,7 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
   const installRegistrySkill = useSkillStore((state) => state.installRegistrySkill);
   const importScannedSkills = useSkillStore((state) => state.importScannedSkills);
   const existingSkills = useSkillStore((state) => state.skills);
+  const { showToast } = useToast();
 
   // AI settings for generation
   // AI 生成设置
@@ -78,6 +85,11 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
   const [isScanning, setIsScanning] = useState(false);
   const [showScanPreview, setShowScanPreview] = useState(false);
 
+  const [defaultPreviews, setDefaultPreviews] = useState<IDefaultSkillPreview[]>([]);
+  const [isLoadingDefault, setIsLoadingDefault] = useState(false);
+  const [showDefaultPreview, setShowDefaultPreview] = useState(false);
+  const [defaultImportNotice, setDefaultImportNotice] = useState<string | null>(null);
+
   const installedScanPaths = useMemo(() => {
     return new Set(
       existingSkills.flatMap((skill) =>
@@ -105,6 +117,32 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
   const selectableGitHubResults = useMemo(
     () => annotatedGitHubResults.filter((skill) => !skill.isImported),
     [annotatedGitHubResults],
+  );
+
+  const defaultScanResults = useMemo<IScannedSkill[]>(
+    () =>
+      defaultPreviews.map((preview) => ({
+        name: preview.name,
+        description: preview.description,
+        version: preview.version,
+        author: preview.author,
+        tags: preview.tags,
+        instructions: preview.instructions,
+        filePath: `${preview.extractDir}/SKILL.md`,
+        localPath: `default:${preview.zipFileName}`,
+        platforms: ['default'],
+      })),
+    [defaultPreviews],
+  );
+
+  const installedDefaultNames = useMemo(
+    () =>
+      new Set<string>(
+        defaultPreviews
+          .filter((preview) => preview.isInstalled)
+          .map((preview) => preview.name.toLowerCase()),
+      ),
+    [defaultPreviews],
   );
 
   // Get default chat model for AI generation
@@ -201,6 +239,10 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
     setScanResults([]);
     setIsScanning(false);
     setShowScanPreview(false);
+    setDefaultPreviews([]);
+    setIsLoadingDefault(false);
+    setShowDefaultPreview(false);
+    setDefaultImportNotice(null);
     onClose();
   }, [onClose]);
 
@@ -580,9 +622,81 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
     setScanResults(allResults);
   };
 
+  const handleLoadDefaultSkills = useCallback(async () => {
+    setIsLoadingDefault(true);
+    setError(null);
+    setDefaultImportNotice(null);
+    setShowDefaultPreview(true);
+
+    try {
+      const previews = await listDefaultSkills();
+      setDefaultPreviews(previews);
+      if (previews.length === 0) {
+        setError('暂无默认技能包');
+      }
+    } catch (err) {
+      setError('加载默认技能失败：' + String(err));
+    } finally {
+      setIsLoadingDefault(false);
+    }
+  }, []);
+
+  const handleSelectMode = useCallback(
+    (nextMode: ECreateMode) => {
+      if (nextMode !== 'default') {
+        setShowDefaultPreview(false);
+      }
+      setMode(nextMode);
+      if (nextMode === 'default') {
+        void handleLoadDefaultSkills();
+      }
+    },
+    [handleLoadDefaultSkills],
+  );
+
+  const handleDefaultImport = async (skillsToImport: IScannedSkill[]) => {
+    const zipFileNames = skillsToImport.map((skill) => skill.localPath.replace(/^default:/, ''));
+    const duplicateCount = skillsToImport.filter((skill) =>
+      installedDefaultNames.has(skill.name.toLowerCase()),
+    ).length;
+
+    let overwrite = false;
+    if (duplicateCount > 0) {
+      overwrite = await new Promise<boolean>((resolve) => {
+        Modal.confirm({
+          title: '覆盖已有技能？',
+          content: `选中的技能中有 ${duplicateCount} 个与库中已有技能同名，是否覆盖？覆盖将替换本地文件和 SKILL.md 内容，此操作不可撤销。`,
+          okText: '全部覆盖',
+          cancelText: '跳过同名',
+          onOk: () => resolve(true),
+          onCancel: () => resolve(false),
+        });
+      });
+    }
+
+    const result = await importDefaultSkills(zipFileNames, { overwrite });
+    await useSkillStore.getState().loadSkills();
+
+    const summary = `成功 ${result.imported}，覆盖 ${result.overwritten}，跳过 ${result.skipped}，失败 ${result.failed.length}`;
+    setDefaultImportNotice(summary);
+    showToast(summary, result.failed.length > 0 ? 'warning' : 'success');
+
+    if (result.failed.length === 0 && result.imported + result.overwritten > 0) {
+      handleClose();
+    }
+
+    return result.imported + result.overwritten;
+  };
+
+  const handleCloseDefaultPreview = useCallback(() => {
+    setShowDefaultPreview(false);
+    setMode('select');
+  }, []);
+
   const isManualMode = mode === 'manual';
   const isGitHubMode = mode === 'github';
   const isScanMode = mode === 'scan';
+  const isDefaultMode = mode === 'default';
   const hasGitHubResults = githubScanDone && annotatedGitHubResults.length > 0;
 
   const createSkillModalWidth = isManualMode ? '100vw' : isGitHubMode ? 'min(92vw, 896px)' : 512;
@@ -596,7 +710,7 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
 
   return {
     mode,
-    setMode,
+    setMode: handleSelectMode,
     error,
     isLoading,
     isGenerating,
@@ -637,6 +751,14 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
     handleScanImport,
     handleScanRescan,
     handleCloseScanPreview,
+    handleDefaultImport,
+    handleCloseDefaultPreview,
+    defaultScanResults,
+    installedDefaultNames,
+    isLoadingDefault,
+    showDefaultPreview,
+    defaultImportNotice,
+    isDefaultMode,
     handleDrop,
     handleUploadImg,
     setName,

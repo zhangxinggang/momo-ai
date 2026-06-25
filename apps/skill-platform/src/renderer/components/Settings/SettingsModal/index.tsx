@@ -23,7 +23,13 @@ export function SettingsModal({ isOpen, onClose }: IProps) {
   ];
 
   return (
-    <Modal open={isOpen} onCancel={onClose} title={'设置'} width={500} footer={null} destroyOnClose>
+    <Modal
+      open={isOpen}
+      onCancel={onClose}
+      title={'设置'}
+      width={500}
+      footer={null}
+      destroyOnHidden>
       <div className='space-y-6'>
         <div className='space-y-3'>
           <h3 className='text-foreground flex items-center gap-2 text-sm font-semibold'>

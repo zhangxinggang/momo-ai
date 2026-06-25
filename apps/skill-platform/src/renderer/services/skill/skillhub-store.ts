@@ -1,6 +1,7 @@
 import type { ESkillCategory, IRegistrySkill } from '@/types/modules';
 import { unzipSync } from 'fflate';
 
+import { isCocoloopDownloadUrl } from './cocoloop-store';
 import { parseFrontmatter } from './github-store';
 import { inferCategory } from './store-mapper-utils';
 
@@ -197,6 +198,10 @@ export async function fetchRegistrySkillRemoteContent(
       slug: string,
       version?: string,
     ) => Promise<{ cacheDir: string; content: string }>;
+    extractCocoloopArchive?: (
+      slug: string,
+      downloadUrl?: string,
+    ) => Promise<{ cacheDir: string; content: string }>;
   },
 ): Promise<string> {
   if (regSkill.local_path && options?.readLocalFileByPath) {
@@ -212,6 +217,13 @@ export async function fetchRegistrySkillRemoteContent(
       return extracted.content;
     }
     return fetchSkillHubSkillContent(fetchBinary, regSkill.slug, regSkill.version);
+  }
+
+  if (isCocoloopDownloadUrl(regSkill.content_url)) {
+    if (options?.extractCocoloopArchive) {
+      const extracted = await options.extractCocoloopArchive(regSkill.slug, regSkill.content_url);
+      return extracted.content;
+    }
   }
 
   if (regSkill.content_url) {
@@ -231,6 +243,10 @@ export async function resolveRegistrySkillSourceDir(
     slug: string,
     version?: string,
   ) => Promise<{ cacheDir: string; content: string }>,
+  extractCocoloopArchive?: (
+    slug: string,
+    downloadUrl?: string,
+  ) => Promise<{ cacheDir: string; content: string }>,
 ): Promise<string | null> {
   if (regSkill.local_path?.trim()) {
     return regSkill.local_path;
@@ -238,6 +254,11 @@ export async function resolveRegistrySkillSourceDir(
 
   if (isSkillHubDownloadUrl(regSkill.content_url) && extractSkillHubArchive) {
     const extracted = await extractSkillHubArchive(regSkill.slug, regSkill.version);
+    return extracted.cacheDir;
+  }
+
+  if (isCocoloopDownloadUrl(regSkill.content_url) && extractCocoloopArchive) {
+    const extracted = await extractCocoloopArchive(regSkill.slug, regSkill.content_url);
     return extracted.cacheDir;
   }
 

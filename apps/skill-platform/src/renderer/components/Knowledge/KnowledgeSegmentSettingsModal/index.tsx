@@ -68,7 +68,7 @@ export function KnowledgeSegmentSettingsModal({
       confirmLoading={submitting}
       okText='确认并重新分段'
       cancelText='取消'
-      destroyOnClose>
+      destroyOnHidden>
       <SegmentSettingsPanel value={settings} onChange={setSettings} />
     </Modal>
   );

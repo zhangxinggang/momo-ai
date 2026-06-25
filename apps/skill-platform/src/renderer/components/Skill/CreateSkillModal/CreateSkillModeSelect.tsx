@@ -1,5 +1,12 @@
 import { Button } from 'antd';
-import { BrainIcon, CuboidIcon, EditIcon, FolderOpenIcon, GithubIcon } from 'lucide-react';
+import {
+  BrainIcon,
+  CuboidIcon,
+  EditIcon,
+  FolderOpenIcon,
+  GithubIcon,
+  PackageIcon,
+} from 'lucide-react';
 
 import type { ECreateMode } from './types';
 
@@ -65,6 +72,20 @@ export function CreateSkillModeSelect({ onSelectMode }: IProps) {
         type='default'
         block
         className='bg-accent/50 hover:bg-accent border-border !h-auto justify-start gap-4 rounded-xl border p-4 text-left'
+        onClick={() => onSelectMode('default')}>
+        <div className='bg-background group-hover:bg-primary/10 rounded-lg p-3 transition-colors'>
+          <PackageIcon className='text-foreground h-6 w-6' />
+        </div>
+        <div className='text-left'>
+          <h3 className='text-foreground font-medium'>{'导入默认'}</h3>
+          <p className='text-muted-foreground text-sm'>{'从应用内置技能包快速导入'}</p>
+        </div>
+      </Button>
+
+      <Button
+        type='default'
+        block
+        className='bg-accent/50 hover:bg-accent border-border !h-auto justify-start gap-4 rounded-xl border p-4 text-left'
         onClick={() => onSelectMode('scan')}>
         <div className='bg-background group-hover:bg-primary/10 rounded-lg p-3 transition-colors'>
           <FolderOpenIcon className='text-foreground h-6 w-6' />
@@ -90,6 +111,8 @@ export function getCreateSkillModalTitle(mode: ECreateMode) {
       return 'AI 草稿';
     case 'scan':
       return '扫描本地';
+    case 'default':
+      return '导入默认';
     default:
       return '新建技能';
   }

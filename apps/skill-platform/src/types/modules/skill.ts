@@ -356,3 +356,25 @@ export interface IScannedSkill {
    */
   nameConflict?: boolean;
 }
+
+/** 内置默认技能 zip 预览项 */
+export interface IDefaultSkillPreview {
+  zipFileName: string;
+  name: string;
+  description: string;
+  version?: string;
+  author: string;
+  tags: string[];
+  instructions: string;
+  extractDir: string;
+  isInstalled: boolean;
+  existingSkillId?: string;
+}
+
+/** 批量导入默认技能结果 */
+export interface IDefaultSkillImportResult {
+  imported: number;
+  overwritten: number;
+  skipped: number;
+  failed: Array<{ zipFileName: string; reason: string }>;
+}

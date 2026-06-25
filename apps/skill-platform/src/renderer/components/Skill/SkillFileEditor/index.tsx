@@ -1,8 +1,15 @@
-import { FileEditor, useSyncedCodeEditorTheme, type IFileEditorHandle } from '@momo/file-editor';
+import {
+  FileEditor,
+  normalizeRelativePath,
+  useSyncedCodeEditorTheme,
+  type IFileEditorHandle,
+} from '@momo/file-editor';
 import { useToast } from '@renderer/components/ui/Toast';
 import { useFilePreviewBaseUrl } from '@renderer/hooks/useFilePreviewBaseUrl';
 import { useUnsavedLeaveGuard } from '@renderer/hooks/useUnsavedLeaveGuard';
+import { openPath } from '@renderer/services/desktop';
 import { createSkillFileEditorAdapter } from '@renderer/services/file-editor/skill-adapter';
+import { getSkillRepoPath } from '@renderer/services/skill/api';
 import { Modal } from 'antd';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react';
 
@@ -23,6 +30,14 @@ interface IProps {
 export interface ISkillFileEditorHandle {
   saveUnsavedChanges: () => Promise<boolean>;
   discardUnsavedChanges: () => void;
+}
+
+/** 拼接仓库根目录与相对路径为系统绝对路径 */
+function joinRepoAbsolutePath(repoRoot: string, relativePath: string): string {
+  const separator = repoRoot.includes('\\') ? '\\' : '/';
+  const normalizedRelative = normalizeRelativePath(relativePath).split('/').join(separator);
+  const trimmedRoot = repoRoot.replace(/[/\\]+$/, '');
+  return `${trimmedRoot}${separator}${normalizedRelative}`;
 }
 
 /**
@@ -64,6 +79,25 @@ export const SkillFileEditor = forwardRef<ISkillFileEditorHandle, IProps>(functi
       onUnsavedChange?.(dirty);
     },
     [onUnsavedChange],
+  );
+
+  const handleBinaryPreviewUnSupport = useCallback(
+    async (relativePath: string) => {
+      let repoRoot = localPath?.trim() || '';
+      if (!repoRoot) {
+        repoRoot = (await getSkillRepoPath(skillId))?.trim() || '';
+      }
+      if (!repoRoot) {
+        showToast('无法定位文件路径', 'error');
+        return;
+      }
+      const absolutePath = joinRepoAbsolutePath(repoRoot, relativePath);
+      const result = await openPath(absolutePath);
+      if (result && !result.success) {
+        showToast(result.error ?? '打开文件失败', 'error');
+      }
+    },
+    [localPath, showToast, skillId],
   );
 
   const saveUnsavedChanges = useCallback(async () => {
@@ -114,6 +148,7 @@ export const SkillFileEditor = forwardRef<ISkillFileEditorHandle, IProps>(functi
       filePreviewBaseUrl={filePreviewBaseUrl}
       onFilesChange={() => void handleFilesChange()}
       onNotify={handleNotify}
+      onUnSupport={handleBinaryPreviewUnSupport}
       onUnsavedChange={handleUnsavedChange}
       treeTitle='文件'
     />
@@ -145,7 +180,7 @@ export const SkillFileEditor = forwardRef<ISkillFileEditorHandle, IProps>(functi
   return (
     <>
       <Modal
-        destroyOnClose={false}
+        destroyOnHidden={false}
         footer={null}
         onCancel={handleModalClose}
         open={isOpen}

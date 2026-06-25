@@ -2,7 +2,6 @@ import type { IAiChatServices, ILocalPathConfig, TCallAiChatStream } from '@momo
 import { CLI_AGENT_OPTIONS, createDefaultAiChatServices } from '@momo/aichat';
 
 import { createClaudeSlashCommandsConfig } from '@/claude-code/renderer/claude-slash-provider';
-import { createNoteReferencesConfig } from '../note-reference-config';
 import {
   getImageScenarioModels,
   getModelsByType,
@@ -15,6 +14,7 @@ import { uploadChatAttachmentFiles, validateChatAttachmentFiles } from '../chat-
 import { MAIN_AI_CHAT_STORAGE_PREFIX } from '../chat-history-bridge';
 import { renderChatModelSelect } from '../chat-model-select';
 import { createCliAgentCaller } from '../cli-agent-caller';
+import { createNoteReferencesConfig } from '../note-reference-config';
 import { SUPERPOWER_PROMPTS } from '../superpower-prompts';
 import { kbChunkCache } from './rag-context';
 import { createLocalChatStorage } from './web-chat-storage';

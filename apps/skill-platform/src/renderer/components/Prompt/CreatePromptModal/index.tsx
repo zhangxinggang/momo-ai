@@ -168,7 +168,7 @@ export function CreatePromptModal({ isOpen, onClose, onCreate, defaultFolderId }
             submitLabel='创建'
           />
         }
-        destroyOnClose={false}
+        destroyOnHidden={false}
         styles={{ body: { maxHeight: 'min(70vh, 720px)', overflowY: 'auto' } }}>
         <div className='space-y-5'>
           <div className='space-y-1.5'>

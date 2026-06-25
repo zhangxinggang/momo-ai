@@ -1,4 +1,4 @@
-import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
+import { splitTextRecursive } from '@momo/langchain';
 
 import { preprocessText } from './text-preprocess';
 import type { ISegmentSettings } from './types';
@@ -48,14 +48,12 @@ export async function chunkTextWithSettings(
   const chunkSize = Math.max(200, settings.maxChunkLength);
   const chunkOverlap = Math.min(settings.chunkOverlap, Math.floor(chunkSize / 2));
 
-  const splitter = new RecursiveCharacterTextSplitter({
+  const chunks = await splitTextRecursive(cleaned, {
     chunkSize,
     chunkOverlap,
     separators: resolveSeparators(settings.separator),
   });
-
-  const chunks = await splitter.splitText(cleaned);
-  return attachPositions(cleaned, chunks.filter(Boolean));
+  return attachPositions(cleaned, chunks);
 }
 
 /** 预览前若干块 */

@@ -39,9 +39,10 @@ export function UnsavedChangesDialog({ isOpen, onClose, onSave, onDiscard }: IPr
         </div>
       }
       centered
-      destroyOnClose
-      closable
-      maskClosable>
+      destroyOnHidden
+      mask={{
+        closable: false,
+      }}>
       <div className='mb-4 flex justify-center'>
         <div className='flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30'>
           <AlertCircleIcon className='h-6 w-6 text-amber-600 dark:text-amber-400' />

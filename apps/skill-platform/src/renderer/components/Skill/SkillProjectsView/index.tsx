@@ -123,7 +123,7 @@ function ProjectFormModal({ isOpen, project, onClose, onSubmit }: IProps) {
 
   return (
     <Modal
-      destroyOnClose
+      destroyOnHidden
       footer={null}
       onCancel={onClose}
       open={isOpen}

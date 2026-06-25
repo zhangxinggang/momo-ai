@@ -1,5 +1,6 @@
 import App from '@renderer/App';
 import { ToastProvider } from '@renderer/components/ui/Toast';
+import '@renderer/components/ui/Toast/context';
 import { AntdRoot } from '@renderer/providers/AntdRoot';
 import '@renderer/styles/globals.css';
 import React from 'react';

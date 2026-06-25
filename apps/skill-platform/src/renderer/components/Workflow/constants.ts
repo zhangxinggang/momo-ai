@@ -5,6 +5,7 @@ export const WORKFLOW_CREATE_REQUEST_EVENT = 'workflow:request-create';
 export const WORKFLOW_RESOURCE_TAG_COLORS = {
   prompt: '#e8f0ff',
   skill: '#d9ffde',
+  webpage: '#fff3e0',
 } as const;
 
 /** 并行步骤条卡片背景色 */

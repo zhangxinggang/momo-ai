@@ -3,6 +3,8 @@ import { app } from 'electron';
 
 import type { DOnlineConf, DOnlineConfFetchResult } from '@/types/modules/online-conf';
 
+import defaultConf from './defaultConf.json';
+
 const FETCH_TIMEOUT_MS = 15_000;
 
 interface IAppConfWithOnlineUrl {
@@ -18,18 +20,30 @@ function getLocalAppVersion(): string {
   return app.getVersion();
 }
 
+/** 读取本地默认在线配置 */
+function getDefaultOnlineConf(): DOnlineConf {
+  return defaultConf as DOnlineConf;
+}
+
+/** 拉取失败时回退到本地默认配置 */
+function buildFallbackResult(
+  localVersion: string,
+  onlineConfUrl: string,
+): DOnlineConfFetchResult {
+  return {
+    config: getDefaultOnlineConf(),
+    localVersion,
+    onlineConfUrl,
+  };
+}
+
 /** 拉取远程在线配置 */
 export async function fetchOnlineConf(): Promise<DOnlineConfFetchResult> {
   const onlineConfUrl = getOnlineConfUrl();
   const localVersion = getLocalAppVersion();
 
   if (!onlineConfUrl) {
-    return {
-      config: null,
-      localVersion,
-      onlineConfUrl,
-      error: '未配置 onlineConfUrl',
-    };
+    return buildFallbackResult(localVersion, onlineConfUrl);
   }
 
   const controller = new AbortController();
@@ -42,12 +56,7 @@ export async function fetchOnlineConf(): Promise<DOnlineConfFetchResult> {
     });
 
     if (!response.ok) {
-      return {
-        config: null,
-        localVersion,
-        onlineConfUrl,
-        error: `拉取在线配置失败 (${response.status})`,
-      };
+      return buildFallbackResult(localVersion, onlineConfUrl);
     }
 
     const config = (await response.json()) as DOnlineConf;
@@ -56,14 +65,8 @@ export async function fetchOnlineConf(): Promise<DOnlineConfFetchResult> {
       localVersion,
       onlineConfUrl,
     };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : '拉取在线配置失败';
-    return {
-      config: null,
-      localVersion,
-      onlineConfUrl,
-      error: message,
-    };
+  } catch {
+    return buildFallbackResult(localVersion, onlineConfUrl);
   } finally {
     clearTimeout(timer);
   }

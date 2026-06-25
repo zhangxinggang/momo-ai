@@ -716,7 +716,7 @@ export function FolderModal({ isOpen, onClose, folder }: IProps) {
         width={672}
         zIndex={50}
         footer={null}
-        destroyOnClose={false}
+        destroyOnHidden={false}
         styles={{ body: { padding: 0, maxHeight: 'min(85vh, 760px)' } }}>
         <form onSubmit={handleSubmit} className='flex max-h-[min(85vh,760px)] min-h-0 flex-col'>
           <div className='min-h-0 flex-1 space-y-5 overflow-y-auto p-5'>
@@ -994,7 +994,7 @@ export function FolderModal({ isOpen, onClose, folder }: IProps) {
         }}
         footer={null}
         width={480}
-        destroyOnClose>
+        destroyOnHidden>
         <Radio.Group
           className='flex w-full flex-col gap-2'
           value={deleteMode}
@@ -1060,7 +1060,7 @@ export function FolderModal({ isOpen, onClose, folder }: IProps) {
         }
         onCancel={() => setShowDuplicateConfirm(false)}
         footer={null}
-        destroyOnClose>
+        destroyOnHidden>
         <div className='flex justify-end gap-2'>
           <Button onClick={() => setShowDuplicateConfirm(false)}>{'取消'}</Button>
           <Button type='primary' onClick={handleDuplicateConfirm}>

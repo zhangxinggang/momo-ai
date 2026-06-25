@@ -1,8 +1,14 @@
-import type { IWorkflowResourceNodeData } from '@momo/workflow';
+import type { IWorkflowResourceNodeData, IWorkflowWebpageNodeData } from '@momo/workflow';
 import { isParallelGroupOutputReady } from '@momo/workflow';
 import { Popover, Tooltip } from 'antd';
 import { clsx } from 'clsx';
-import { ChevronRightIcon, CommandIcon, CuboidIcon, GitBranchIcon } from 'lucide-react';
+import {
+  ChevronRightIcon,
+  CommandIcon,
+  CuboidIcon,
+  GitBranchIcon,
+  GlobeIcon,
+} from 'lucide-react';
 import { Fragment, useCallback } from 'react';
 
 import { SkillIcon } from '@renderer/components/Skill/SkillIcon';
@@ -70,12 +76,27 @@ function isMacroStepAccessible(
 }
 
 function buildStepHoverContent(
-  d: IWorkflowResourceNodeData,
-  isPrompt: boolean,
+  step: IResourceStepViewModel,
   prompt: { title?: string; systemPrompt?: string; userPrompt?: string } | undefined,
   skill: { name?: string; description?: string } | undefined,
 ): React.ReactNode {
-  if (isPrompt) {
+  if (step.resourceKind === 'webpage') {
+    const d = step.node.data as IWorkflowWebpageNodeData;
+    const urlText = step.url?.trim() || d.url?.trim() || '';
+    return (
+      <div className={styles['workflow-step-tooltip']}>
+        <div className={styles['workflow-step-tooltip-title']}>{'网页'}</div>
+        {urlText ? (
+          <div className={styles['workflow-step-tooltip-text']}>{urlText}</div>
+        ) : (
+          <div className={styles['workflow-step-tooltip-text']}>{'未配置链接地址'}</div>
+        )}
+      </div>
+    );
+  }
+
+  const d = step.node.data as IWorkflowResourceNodeData;
+  if (step.resourceKind === 'prompt') {
     const systemText = d.systemPrompt?.trim() || prompt?.systemPrompt?.trim() || '';
     const userText = d.userPrompt?.trim() || prompt?.userPrompt?.trim() || '';
     return (
@@ -144,14 +165,31 @@ export function WorkflowStepsBar({
   );
 
   const renderResourceStepCard = (step: IResourceStepViewModel, index: number) => {
-    const d = step.node.data;
-    const isPrompt = d.resourceKind === 'prompt';
-    const skill = !isPrompt ? skills.find((s) => s.id === d.resourceId) : undefined;
-    const prompt = isPrompt ? prompts.find((p) => p.id === d.resourceId) : undefined;
-    const tagColor = WORKFLOW_RESOURCE_TAG_COLORS[isPrompt ? 'prompt' : 'skill'];
-    const displayTitle = isPrompt ? prompt?.title || d.label : skill?.name || d.label;
-    const displayRemark = d.remark?.trim() || '暂无备注';
-    const hoverContent = buildStepHoverContent(d, isPrompt, prompt, skill);
+    const isWebpage = step.resourceKind === 'webpage';
+    const isPrompt = step.resourceKind === 'prompt';
+    const resourceData = !isWebpage
+      ? (step.node.data as IWorkflowResourceNodeData)
+      : undefined;
+    const webpageData = isWebpage
+      ? (step.node.data as IWorkflowWebpageNodeData)
+      : undefined;
+    const skill =
+      step.resourceKind === 'skill' && resourceData
+        ? skills.find((s) => s.id === resourceData.resourceId)
+        : undefined;
+    const prompt =
+      isPrompt && resourceData
+        ? prompts.find((p) => p.id === resourceData.resourceId)
+        : undefined;
+    const tagColor = WORKFLOW_RESOURCE_TAG_COLORS[step.resourceKind];
+    const displayTitle = isWebpage
+      ? webpageData?.nodeName?.trim() || webpageData?.label?.trim() || step.nodeName || '网页'
+      : isPrompt
+        ? prompt?.title || resourceData?.label
+        : skill?.name || resourceData?.label;
+    const displayRemark =
+      (isWebpage ? webpageData?.remark : resourceData?.remark)?.trim() || '暂无备注';
+    const hoverContent = buildStepHoverContent(step, prompt, skill);
     const isAccessible = isInteractive
       ? isMacroStepAccessible(index, steps, runResults, nodeHasFiles)
       : true;
@@ -175,7 +213,9 @@ export function WorkflowStepsBar({
           {index + 1}
         </span>
         <span className={styles['workflow-step-icon']}>
-          {isPrompt ? (
+          {isWebpage ? (
+            <GlobeIcon className='h-3.5 w-3.5' />
+          ) : isPrompt ? (
             <CommandIcon className='h-3.5 w-3.5' />
           ) : skill ? (
             <SkillIcon name={skill.name} size='sm' />
@@ -215,8 +255,8 @@ export function WorkflowStepsBar({
     const popoverContent = (
       <ul className={styles['workflow-step-parallel-popover']}>
         {step.children.map((child, childIndex) => {
-          const d = child.node.data;
-          const isPrompt = d.resourceKind === 'prompt';
+          const isWebpage = child.resourceKind === 'webpage';
+          const isPrompt = child.resourceKind === 'prompt';
           const isChildReady = isResourceOutputReady(child.nodeId, runResults, nodeHasFiles);
           const isChildActive =
             isActive && isInteractive && childIndex === activeParallelChildIndex;
@@ -239,7 +279,9 @@ export function WorkflowStepsBar({
                   })}
                 />
                 <span className={styles['workflow-step-parallel-popover-icon']}>
-                  {isPrompt ? (
+                  {isWebpage ? (
+                    <GlobeIcon className='h-3.5 w-3.5' />
+                  ) : isPrompt ? (
                     <CommandIcon className='h-3.5 w-3.5' />
                   ) : (
                     <CuboidIcon className='h-3.5 w-3.5' />

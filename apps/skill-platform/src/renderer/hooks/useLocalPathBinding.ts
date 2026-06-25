@@ -1,9 +1,9 @@
 import type { ILocalPathConfig } from '@momo/aichat';
 import { useCallback, useMemo } from 'react';
 
+import { isAbsoluteLocalPath, joinLocalPath } from '@momo/aichat';
 import { checkPathExists, openPath } from '@renderer/services/desktop';
 import { useChatWorkspaceStore } from '@renderer/store/chat';
-import { isAbsoluteLocalPath, joinLocalPath } from '@momo/aichat';
 
 /** 绑定桌面端本地路径解析与打开能力，供 AI 对话消息内路径点击复用 */
 export function useLocalPathBinding(): ILocalPathConfig {

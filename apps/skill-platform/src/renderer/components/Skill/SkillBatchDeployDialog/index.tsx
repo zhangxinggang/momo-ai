@@ -204,7 +204,7 @@ export function SkillBatchDeployDialog({ skills, onClose, onComplete }: IProps) 
         body: { maxHeight: 'min(85vh, 720px)', overflowY: 'auto', padding: '24px' },
         mask: { backdropFilter: 'blur(4px)' },
       }}
-      destroyOnClose={false}>
+      destroyOnHidden={false}>
       <div className='space-y-4'>
         <section className='border-border bg-background/60 rounded-2xl border p-4'>
           <h3 className='text-sm font-semibold'>{'操作模式'}</h3>

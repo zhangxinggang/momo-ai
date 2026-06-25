@@ -1,12 +1,11 @@
 /**
  * Markdown 渲染：基于 @momo/markdown MdPreview，并支持本地路径点击
  */
-import { App } from 'antd';
 import { MdPreview, type IMdPreviewProps } from '@momo/markdown';
+import { App } from 'antd';
 import classNames from 'classnames';
 import { memo, useCallback, useEffect, useId, useMemo, useRef, type ComponentType } from 'react';
 import { useAiChatConfig } from '../../contexts/AiChatConfigContext';
-import { fixStreamingMarkdown, hasMarkdownSyntax } from '../../utils/markdownUtils';
 import {
   enhanceLocalPathElements,
   isAbsoluteLocalPath,
@@ -14,6 +13,7 @@ import {
   normalizeLocalPathValue,
   splitPlainTextByLocalPaths,
 } from '../../utils/local-path';
+import { fixStreamingMarkdown, hasMarkdownSyntax } from '../../utils/markdownUtils';
 import styles from './index.module.less';
 
 export interface IProps {

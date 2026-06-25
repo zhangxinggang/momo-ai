@@ -22,7 +22,7 @@ export function AiChatShell({
   children,
 }: IProps) {
   return (
-    <ChatProvider key={sessionKey} services={services}>
+    <ChatProvider key={sessionKey} services={services} bootstrapSessionId={bootstrapSessionId}>
       {bootstrapSessionId ? <ModalChatSessionBootstrap sessionId={bootstrapSessionId} /> : null}
       <div className={className}>{children}</div>
     </ChatProvider>

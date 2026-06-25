@@ -246,7 +246,7 @@ export function EditSkillModal({ isOpen, onClose, skill }: IProps) {
             paddingTop: 8,
           },
         }}
-        destroyOnClose={false}>
+        destroyOnHidden={false}>
         <div className='space-y-5'>
           {error && (
             <div className='bg-destructive/10 border-destructive/20 text-destructive flex items-center gap-2 rounded-lg border p-3 text-sm'>

@@ -1,6 +1,7 @@
 export { ParallelGroupNode } from './components/ParallelGroupNode';
 export { PromptResourceNode, SkillResourceNode } from './components/ResourceNode';
 export { EndTerminalNode, StartTerminalNode } from './components/TerminalNode';
+export { WebpageNode } from './components/WebpageNode';
 export { WorkflowEditor } from './components/WorkflowEditor';
 export type { IWorkflowEditorContextValue } from './context';
 export {
@@ -10,6 +11,7 @@ export {
   WORKFLOW_NODE_TYPE_PROMPT,
   WORKFLOW_NODE_TYPE_SKILL,
   WORKFLOW_NODE_TYPE_START,
+  WORKFLOW_NODE_TYPE_WEBPAGE,
   isPaletteDragEvent,
 } from './types';
 export type {
@@ -20,6 +22,7 @@ export type {
   IWorkflowParallelNodeData,
   IWorkflowResourceNodeData,
   IWorkflowTerminalNodeData,
+  IWorkflowWebpageNodeData,
 } from './types';
 export {
   buildWorkflowResourceSteps,
@@ -28,6 +31,7 @@ export {
   createParallelNode,
   createResourceNode,
   createStartNode,
+  createWebpageNode,
   emptyWorkflowGraphJson,
   isParallelGroupOutputReady,
   parseWorkflowGraphJson,
@@ -48,6 +52,8 @@ export {
   findParallelNodeAtPoint,
   getMacroNodes,
   isFreeResourceNode,
+  isLeafNode,
   isParallelNode,
   isResourceNode,
+  isWebpageNode,
 } from './utils/parallel-graph';

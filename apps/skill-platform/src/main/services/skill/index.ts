@@ -1,4 +1,9 @@
 export { getSkillRuntimeDir } from '../../runtime-paths';
+export {
+  getDefaultSkillsDir,
+  importDefaultSkills,
+  listDefaultSkillPreviews,
+} from './default-skills';
 export { SkillInstaller } from './installer';
 export { isBlockedHostname, resolvePublicAddress } from './installer/remote';
 export { isInternalSkillRepoEntry, isSkillExportExcludedEntry } from './installer/repo';
@@ -10,6 +15,8 @@ export type { ISkillShellEnv } from './runtime/toolchain';
 export { scanSkillSafety } from './safety/safety-scan';
 export { extractClawHubSkillToCache } from './store/clawhub-archive';
 export type { IExtractClawHubSkillResult } from './store/clawhub-archive';
+export { extractCocoloopSkillToCache } from './store/cocoloop-archive';
+export type { IExtractCocoloopSkillResult } from './store/cocoloop-archive';
 export { syncGitStoreSource } from './store/git-store-sync';
 export type { ISyncGitStoreOptions, ISyncGitStoreResult } from './store/git-store-sync';
 export { extractSkillHubSkillToCache } from './store/skillhub-archive';
@@ -22,6 +29,9 @@ export {
 export { startSilentExternalSkillImportSchedule } from './sync/silent-external-sync';
 export { ensureSkillWorkspaceDependencies } from './workspace/deps';
 export type { IEnsureSkillWorkspaceDepsResult } from './workspace/deps';
-export { ensureSkillSessionWorkspace, writeSessionWorkspaceFile } from './workspace/session-workspace';
 export { executeSkillWorkspace } from './workspace/execute';
 export type { ISkillWorkspaceExecuteResult } from './workspace/execute';
+export {
+  ensureSkillSessionWorkspace,
+  writeSessionWorkspaceFile,
+} from './workspace/session-workspace';

@@ -1,5 +1,3 @@
-process.env.NODE_ENV = 'development';
-
 const ChildProcess = require('child_process');
 const path = require('path');
 const chalk = require('chalk');
@@ -13,9 +11,55 @@ let electronProcessLocker = false;
 let rendererPort = 0;
 let isBuilding = false;
 
+const electronRoot = path.join(__dirname, '..');
+const repoRoot = path.join(electronRoot, '..', '..');
+
 /** 开发态从 dist/src/main/dev 启动，调用包导出的 init */
-const mainEntry = path.join(__dirname, '..', 'dist', 'src', 'main', 'dev.cjs');
-const srcPath = path.join(__dirname, '..', 'src');
+const mainEntry = path.join(electronRoot, 'dist', 'src', 'main', 'dev.cjs');
+const srcPath = path.join(electronRoot, 'src');
+
+/** 先编译 workspace 包，避免 Node 以 strip-only 方式直接执行 .ts 里的 import/export */
+function buildMomoUtils() {
+  return new Promise((resolve, reject) => {
+    const child = ChildProcess.exec('pnpm --filter @momo/utils run build', {
+      cwd: repoRoot,
+    });
+    child.stdout.on('data', (data) =>
+      process.stdout.write(chalk.cyanBright('[@momo/utils] ') + chalk.white(data.toString())),
+    );
+    child.stderr.on('data', (data) =>
+      process.stderr.write(chalk.cyanBright('[@momo/utils] ') + chalk.white(data.toString())),
+    );
+    child.on('exit', (exitCode) => {
+      if (exitCode > 0) {
+        reject(new Error('@momo/utils build failed'));
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
+function buildMomoServer() {
+  return new Promise((resolve, reject) => {
+    const child = ChildProcess.exec('pnpm --filter @momo/server run build', {
+      cwd: repoRoot,
+    });
+    child.stdout.on('data', (data) =>
+      process.stdout.write(chalk.cyanBright('[@momo/server] ') + chalk.white(data.toString())),
+    );
+    child.stderr.on('data', (data) =>
+      process.stdout.write(chalk.cyanBright('[@momo/server] ') + chalk.white(data.toString())),
+    );
+    child.on('exit', (exitCode) => {
+      if (exitCode > 0) {
+        reject(new Error('@momo/server build failed'));
+      } else {
+        resolve();
+      }
+    });
+  });
+}
 
 async function buildAndStartElectron() {
   if (isBuilding) {
@@ -23,6 +67,8 @@ async function buildAndStartElectron() {
   }
   isBuilding = true;
   try {
+    await buildMomoUtils();
+    await buildMomoServer();
     await prepare();
   } catch {
     console.log(chalk.redBright('Could not start Electron because of the above build error(s).'));
@@ -94,4 +140,7 @@ async function start() {
     });
 }
 
-start();
+if (require.main === module) {
+  process.env.NODE_ENV = 'development';
+  start();
+}

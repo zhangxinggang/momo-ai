@@ -31,7 +31,14 @@ export interface DOnlineConfSkillSource {
   id: string;
   name: string;
   description?: string;
-  type: 'git-repo' | 'skillhub' | 'clawhub' | 'skills-sh' | 'marketplace-json' | 'local-dir';
+  type:
+    | 'git-repo'
+    | 'skillhub'
+    | 'clawhub'
+    | 'cocoloop'
+    | 'skills-sh'
+    | 'marketplace-json'
+    | 'local-dir';
   url: string;
   gitRef?: string;
 }

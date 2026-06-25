@@ -5,7 +5,7 @@ import { getAppConfig } from '../../utils';
 import { DEFAULT_WINDOW_ATTR } from '../../utils/constant';
 
 const appConf = getAppConfig();
-const { openDevTools, closeConfirm } = appConf;
+const { closeConfirm } = appConf;
 const toolBrowserWindows = new Set<BrowserWindow>();
 
 function isExternalHttpUrl(url: string): boolean {
@@ -276,11 +276,6 @@ const winEvent = ({ win }: { win: BrowserWindow }) => {
       event.preventDefault();
     }
   });
-
-  if (openDevTools) {
-    win.webContents.openDevTools({ mode: 'right' });
-  }
-
   registerMainWindowBrowsingLinkHandlers(win);
 };
 

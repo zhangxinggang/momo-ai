@@ -43,6 +43,15 @@ export interface IChatMessage {
   attachments?: IChatAttachmentMeta[];
 }
 
+/** 笔记引用快照（会话级） */
+export interface INoteSnapshot {
+  path: string;
+  content: string;
+  snapshotAt: number;
+  isTruncated: boolean;
+  originalLength: number;
+}
+
 // 会话类型定义
 export interface IChatSession {
   id: string;
@@ -55,6 +64,8 @@ export interface IChatSession {
   cliAgentSessionId?: string;
   /** 创建 CLI 会话时的 agent 类型 */
   cliAgentType?: ECliAgent;
+  /** 笔记引用快照，key 为规范化路径 */
+  noteSnapshots?: Record<string, INoteSnapshot>;
 }
 
 // 会话状态管理接口
@@ -131,7 +142,13 @@ export interface IChatContext {
   /** 智能体模式：ask 直接问答，plan 计划梳理 */
   agentMode: EAgentMode;
   setAgentMode: (mode: EAgentMode) => void;
+
+  /** 从持久化存储重新加载会话（弹窗写入历史后刷新侧栏） */
+  refreshSessionsFromStorage: () => void;
 }
+
+/** 外部写入 AI 对话持久化后通知各 ChatProvider 刷新 */
+export const AI_CHAT_SESSIONS_UPDATED_EVENT = 'ai-chat:sessions-updated';
 
 // 本地存储键名常量（默认前缀）
 export const STORAGE_KEYS = {

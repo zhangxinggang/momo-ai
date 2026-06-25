@@ -1,5 +1,5 @@
 import type { IFileEditorAdapter, IFileTreeEntry } from '@momo/file-editor';
-import { normalizeRelativePath } from '@momo/file-editor';
+import { isCodeEditorPath, normalizeRelativePath } from '@momo/file-editor';
 import {
   createSkillLocalDir,
   createSkillLocalDirByPath,
@@ -7,6 +7,8 @@ import {
   deleteSkillLocalFileByPath,
   listSkillLocalFiles,
   listSkillLocalFilesByPath,
+  moveSkillLocalPath,
+  moveSkillLocalPathByPath,
   readSkillLocalFile,
   readSkillLocalFileBuffer,
   readSkillLocalFileBufferByPath,
@@ -61,7 +63,20 @@ export function createSkillFileEditorAdapter(
       const result = isPathMode
         ? await readSkillLocalFileByPath(localPath!, relativePath)
         : await readSkillLocalFile(skillId, relativePath);
-      return result?.content ?? '';
+      let content = result?.content ?? '';
+      if (isCodeEditorPath(relativePath)) {
+        try {
+          const buffer = isPathMode
+            ? await readSkillLocalFileBufferByPath(localPath!, relativePath)
+            : await readSkillLocalFileBuffer(skillId, relativePath);
+          if (buffer) {
+            content = new TextDecoder('utf-8').decode(buffer);
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      return content;
     },
 
     async readFileBuffer(relativePath: string) {
@@ -115,6 +130,12 @@ export function createSkillFileEditorAdapter(
         console.error(error);
         return false;
       }
+    },
+
+    movePath(fromRelativePath: string, toRelativePath: string) {
+      return isPathMode
+        ? moveSkillLocalPathByPath(localPath!, fromRelativePath, toRelativePath)
+        : moveSkillLocalPath(skillId, fromRelativePath, toRelativePath);
     },
   };
 }

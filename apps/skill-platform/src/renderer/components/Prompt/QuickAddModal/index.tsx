@@ -233,7 +233,7 @@ ${tagsString}
             </Button>
           </div>
         }
-        destroyOnClose
+        destroyOnHidden
         afterOpenChange={(open) => {
           if (open) {
             setTimeout(() => textareaRef.current?.focus?.(), 100);

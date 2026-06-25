@@ -1,13 +1,24 @@
 import type { Edge, Node } from '@xyflow/react';
 import { describe, expect, it } from 'vitest';
 
-import { WORKFLOW_NODE_TYPE_PARALLEL, type IWorkflowParallelNodeData } from '../types';
+import {
+  WORKFLOW_NODE_TYPE_PARALLEL,
+  WORKFLOW_NODE_TYPE_WEBPAGE,
+  type IWorkflowParallelNodeData,
+  type IWorkflowWebpageNodeData,
+} from '../types';
 import {
   buildWorkflowResourceSteps,
   buildWorkflowSteps,
   createResourceNode,
   validateWorkflowGraph,
 } from './graph';
+import {
+  createWebpageNode,
+  isLeafNode,
+  isResourceNode,
+  isWebpageNode,
+} from './parallel-graph';
 
 function makeParallel(id: string, childIds: string[]): Node<IWorkflowParallelNodeData> {
   return {
@@ -133,6 +144,62 @@ describe('buildWorkflowResourceSteps', () => {
     }
     expect(result.steps.map((s) => s.nodeName)).toEqual(['A', 'P1', 'P2', 'B']);
   });
+});
+
+it('createWebpageNode 生成 webpageResource，isResourceNode 为 false', () => {
+  const node = createWebpageNode({
+    nodeId: 'n-web',
+    nodeName: '文档页',
+    url: 'https://example.com',
+    remark: '说明',
+  });
+  expect(node.type).toBe(WORKFLOW_NODE_TYPE_WEBPAGE);
+  expect(isWebpageNode(node)).toBe(true);
+  expect(isResourceNode(node)).toBe(false);
+  expect(isLeafNode(node)).toBe(true);
+  expect((node.data as IWorkflowWebpageNodeData).url).toBe('https://example.com');
+});
+
+it('顶层网页节点进入 buildWorkflowSteps', () => {
+  const web = createWebpageNode({
+    nodeId: 'n-web',
+    nodeName: 'Web',
+    url: 'https://example.com',
+  });
+  const result = buildWorkflowSteps([web], []);
+  expect(result.ok).toBe(true);
+  if (!result.ok) return;
+  expect(result.steps).toHaveLength(1);
+  expect(result.steps[0]?.kind).toBe('resource');
+  if (result.steps[0]?.kind !== 'resource') return;
+  expect(result.steps[0].step.resourceKind).toBe('webpage');
+  expect(result.steps[0].step.url).toBe('https://example.com');
+  expect(result.steps[0].step.resourceId).toBe('');
+});
+
+it('并行组内网页子节点出现在 children', () => {
+  const web = createWebpageNode({
+    nodeId: 'n-web',
+    nodeName: 'Web',
+    url: 'https://a.com',
+  });
+  web.parentId = 'n-par';
+  web.extent = 'parent';
+  const skill = createResourceNode({
+    resourceKind: 'skill',
+    resourceId: 's1',
+    nodeName: 'S',
+    nodeId: 'n-s',
+  });
+  skill.parentId = 'n-par';
+  skill.extent = 'parent';
+  const par = makeParallel('n-par', ['n-web', 'n-s']);
+  const result = buildWorkflowSteps([web, skill, par], []);
+  expect(result.ok).toBe(true);
+  if (!result.ok) return;
+  expect(result.steps[0]?.kind).toBe('parallel');
+  if (result.steps[0]?.kind !== 'parallel') return;
+  expect(result.steps[0].children.map((c) => c.resourceKind)).toEqual(['webpage', 'skill']);
 });
 
 describe('validateWorkflowGraph', () => {

@@ -66,12 +66,19 @@ function expandCompoundSkillCommand(commandLine: string): string[] {
   if (!trimmed) {
     return [];
   }
-  const parts = trimmed.split(/\s*&&\s*|\s*;\s*/).map((part) => part.trim()).filter(Boolean);
+  const parts = trimmed
+    .split(/\s*&&\s*|\s*;\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean);
   if (parts.length <= 1) {
     return isMainRunSkillCommand(parts[0] ?? '') ? parts : [];
   }
   const runParts = parts.filter(isMainRunSkillCommand);
-  return runParts.length > 0 ? runParts : isMainRunSkillCommand(parts[parts.length - 1] ?? '') ? [parts[parts.length - 1]!] : [];
+  return runParts.length > 0
+    ? runParts
+    : isMainRunSkillCommand(parts[parts.length - 1] ?? '')
+      ? [parts[parts.length - 1]!]
+      : [];
 }
 
 function isExecutableSkillCommand(line: string): boolean {

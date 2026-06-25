@@ -20,7 +20,7 @@ export function WorkflowAiChatShell({
   children,
 }: IProps) {
   return (
-    <ChatProvider key={sessionKey} services={services}>
+    <ChatProvider key={sessionKey} services={services} bootstrapSessionId={bootstrapSessionId}>
       <WorkflowNodeChatBootstrap sessionId={bootstrapSessionId} />
       <div className={className}>{children}</div>
     </ChatProvider>

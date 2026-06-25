@@ -64,6 +64,8 @@ const REBINDABLE_DB_CHANNELS = [
   IPC_CHANNELS.SKILL_IMPORT,
   IPC_CHANNELS.SKILL_SCAN_LOCAL,
   IPC_CHANNELS.SKILL_SCAN_LOCAL_PREVIEW,
+  IPC_CHANNELS.SKILL_LIST_DEFAULT_SKILLS,
+  IPC_CHANNELS.SKILL_IMPORT_DEFAULT_SKILLS,
   IPC_CHANNELS.SKILL_SCAN_SAFETY,
   IPC_CHANNELS.SKILL_SAVE_SAFETY_REPORT,
   IPC_CHANNELS.SKILL_INSTALL_TO_PLATFORM,
@@ -131,6 +133,8 @@ export function registerBootstrapIPC(): void {
   registerShellIPC();
   registerNotificationIPC();
   registerWindowChromeIPC();
+  // 工作区检索不依赖数据库，提前注册避免窗口加载后调用 listTree/grep 无 handler
+  registerWorkspaceIPC();
 }
 
 /**
@@ -160,7 +164,6 @@ export function registerAllIPC(db: Database): void {
   registerAichatIPC();
   registerClaudeCodeIPC();
   registerKbIPC(db);
-  registerWorkspaceIPC();
   registerScraperIPC();
   registerOnlineConfIPC();
   registerSystemIPC();

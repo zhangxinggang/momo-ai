@@ -3,23 +3,12 @@ import { showSystemNotification } from '@renderer/services/desktop';
 import { useSettingsStore } from '@renderer/store';
 import { Button } from 'antd';
 import { AlertTriangleIcon, CheckCircleIcon, InfoIcon, XCircleIcon, XIcon } from 'lucide-react';
-import { createContext, useCallback, useContext, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
-// Toast type
-// Toast 类型
-type TToastType = 'success' | 'error' | 'info' | 'warning';
+import { ToastContext, type IToastItem, type TToastType } from './context';
 
-interface IToastItem {
-  id: string;
-  message: string;
-  type: TToastType;
-}
-
-interface IToastContextValue {
-  showToast: (message: string, type?: TToastType, sendSystemNotification?: boolean) => void;
-}
-
-const ToastContext = createContext<IToastContextValue | null>(null);
+export type { TToastType } from './context';
+export { useToast } from './context';
 
 // Toast Provider
 export function ToastProvider({ children }: { children: React.ReactNode }) {
@@ -117,14 +106,4 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       )}
     </ToastContext.Provider>
   );
-}
-
-// Hook
-// Hook
-export function useToast() {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
-  return context;
 }

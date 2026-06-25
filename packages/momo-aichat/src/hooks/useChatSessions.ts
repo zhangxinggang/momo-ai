@@ -2,22 +2,66 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { IChatStreamMessage } from '../adapters/types';
 import { useAiChatConfig } from '../contexts/AiChatConfigContext';
 import {
+  AI_CHAT_SESSIONS_UPDATED_EVENT,
   type IChatAttachmentMeta,
   type IChatMessage,
   type IChatSession,
+  type INoteSnapshot,
   buildStorageKeys,
   generateId,
   generateMessageId,
   generateSessionTitle,
 } from '../types/chat';
+import {
+  ensureNoteSnapshots,
+  expandNoteMentionsWithSnapshots,
+  findNoteMentions,
+  normalizeNotePath,
+} from '../utils/note-mention';
 import { isCliModelId, parseCliAgent } from '../utils/model-id';
 import { useChatSync } from './useChatSync';
+
+export interface IUseChatSessionsOptions {
+  /** 弹窗/子模块挂载时固定选中该会话，不恢复侧栏持久化的 CURRENT_SESSION_ID */
+  bootstrapSessionId?: string | null;
+}
+
+function toApiUserContent(
+  displayContent: string,
+  snapshots: Record<string, INoteSnapshot>,
+): string {
+  return expandNoteMentionsWithSnapshots(displayContent, snapshots);
+}
+
+async function collectAndEnsureSnapshots(
+  userMessages: Array<{ content: string }>,
+  currentContent: string,
+  existingSnapshots: Record<string, INoteSnapshot>,
+  readContent: (path: string) => Promise<string>,
+): Promise<Record<string, INoteSnapshot>> {
+  const allPaths: string[] = [];
+  for (const msg of userMessages) {
+    for (const m of findNoteMentions(msg.content)) {
+      allPaths.push(normalizeNotePath(m.path));
+    }
+  }
+  for (const m of findNoteMentions(currentContent)) {
+    allPaths.push(normalizeNotePath(m.path));
+  }
+  if (allPaths.length === 0) {
+    return existingSnapshots;
+  }
+  return ensureNoteSnapshots(allPaths, existingSnapshots, readContent);
+}
 
 /**
  * 会话状态管理Hook
  * 提供会话的创建、切换、删除等功能
  */
-export const useChatSessions = () => {
+export const useChatSessions = (options?: IUseChatSessionsOptions) => {
+  const bootstrapSessionId = options?.bootstrapSessionId ?? null;
+  const bootstrapSessionIdRef = useRef(bootstrapSessionId);
+  bootstrapSessionIdRef.current = bootstrapSessionId;
   const {
     callAIChatStream,
     callCliAgent,
@@ -28,6 +72,7 @@ export const useChatSessions = () => {
     storageKeyPrefix = 'momo-aichat',
     chatStorage,
     isImageModel,
+    noteReferences,
   } = useAiChatConfig();
   const storageKeys = useMemo(() => buildStorageKeys(storageKeyPrefix), [storageKeyPrefix]);
   const isAuthenticated = getIsAuthenticated?.() ?? false;
@@ -75,110 +120,116 @@ export const useChatSessions = () => {
   }, [agentMode]);
   // 存储每个会话的AbortController，用于中断流式响应
   const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
+  /** 流式 generation 令牌：用于忽略错误/停止后的延迟 chunk 更新 */
+  const streamTokensRef = useRef<Map<string, symbol>>(new Map());
   // 标记是否已经进行过登录后的数据同步
   const [hasSyncedAfterLogin, setHasSyncedAfterLogin] = useState(false);
 
-  // 防抖保存的引用
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const autoCreateTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const hasLoadedFromStorageRef = useRef(false);
+  const chatStorageRef = useRef(chatStorage);
+  const storageKeysRef = useRef(storageKeys);
+  chatStorageRef.current = chatStorage;
+  storageKeysRef.current = storageKeys;
 
   // 获取当前活跃会话
   const currentSession = sessions.find((session) => session.id === currentSessionId) || null;
 
   const isCliModel = isCliModelId(currentModel);
 
-  // 获取当前会话的加载状态
-  const isAILoading = currentSession?.isLoading || false;
-
   // 获取指定会话的生成状态
   const isSessionGenerating = useCallback(
     (sessionId: string) => {
       const session = sessions.find((s) => s.id === sessionId);
-      return session?.isLoading || false;
+      if (!session) {
+        return false;
+      }
+      if (session.isLoading) {
+        return true;
+      }
+      return session.messages.some((m) => m.isLoading);
     },
     [sessions],
+  );
+
+  const isAILoading =
+    currentSession?.isLoading ||
+    false ||
+    (currentSession?.messages.some((m) => m.isLoading) ?? false);
+
+  // 清除会话生成态（停止按钮、错误/超时兜底、持久化恢复后均可调用）
+  const clearSessionGeneratingState = useCallback(
+    (sessionId: string, options?: { appendStoppedMark?: boolean }) => {
+      streamTokensRef.current.delete(sessionId);
+      abortControllersRef.current.delete(sessionId);
+
+      setSessions((prevSessions) =>
+        prevSessions.map((s) => {
+          if (s.id !== sessionId) {
+            return s;
+          }
+
+          const loadingMessage = s.messages.find((m) => m.isLoading);
+          if (!loadingMessage) {
+            return { ...s, isLoading: false, updatedAt: Date.now() };
+          }
+
+          const hasContent = Boolean(loadingMessage.content?.trim());
+          const hasThinking = Boolean(loadingMessage.thinkingContent?.trim());
+
+          if (!hasContent) {
+            if (hasThinking) {
+              return {
+                ...s,
+                messages: s.messages.map((msg) =>
+                  msg.id === loadingMessage.id ? { ...msg, isLoading: false } : msg,
+                ),
+                isLoading: false,
+                updatedAt: Date.now(),
+              };
+            }
+            return {
+              ...s,
+              messages: s.messages.filter((m) => m.id !== loadingMessage.id),
+              isLoading: false,
+              updatedAt: Date.now(),
+            };
+          }
+
+          const stoppedSuffix =
+            options?.appendStoppedMark && !loadingMessage.content.includes('[生成已停止]')
+              ? '\n\n[生成已停止]'
+              : '';
+
+          return {
+            ...s,
+            messages: s.messages.map((msg) =>
+              msg.id === loadingMessage.id
+                ? {
+                    ...msg,
+                    content: stoppedSuffix ? msg.content + stoppedSuffix : msg.content,
+                    isLoading: false,
+                  }
+                : msg,
+            ),
+            isLoading: false,
+            updatedAt: Date.now(),
+          };
+        }),
+      );
+    },
+    [],
   );
 
   // 停止指定会话的生成
   const stopGeneration = useCallback(
     (sessionId: string) => {
       const abortController = abortControllersRef.current.get(sessionId);
-      if (abortController) {
-        abortController.abort();
-        abortControllersRef.current.delete(sessionId);
-
-        // 查找并更新正在加载的消息，同时清除会话的加载状态
-        const session = sessions.find((s) => s.id === sessionId);
-        if (session) {
-          const loadingMessage = session.messages.find((m) => m.isLoading);
-          if (loadingMessage) {
-            // 如果消息内容为空或只有空白字符，删除这条消息
-            if (!loadingMessage.content || !loadingMessage.content.trim()) {
-              if (loadingMessage.thinkingContent?.trim()) {
-                setSessions((prevSessions) =>
-                  prevSessions.map((s) =>
-                    s.id === sessionId
-                      ? {
-                          ...s,
-                          messages: s.messages.map((msg) =>
-                            msg.id === loadingMessage.id ? { ...msg, isLoading: false } : msg,
-                          ),
-                          isLoading: false,
-                          updatedAt: Date.now(),
-                        }
-                      : s,
-                  ),
-                );
-              } else {
-                // 删除空的加载消息，避免影响后续请求
-                setSessions((prevSessions) =>
-                  prevSessions.map((s) =>
-                    s.id === sessionId
-                      ? {
-                          ...s,
-                          messages: s.messages.filter((m) => m.id !== loadingMessage.id),
-                          isLoading: false, // 清除会话加载状态
-                          updatedAt: Date.now(),
-                        }
-                      : s,
-                  ),
-                );
-              }
-            } else {
-              // 如果有内容，添加停止标记
-              setSessions((prevSessions) =>
-                prevSessions.map((s) =>
-                  s.id === sessionId
-                    ? {
-                        ...s,
-                        messages: s.messages.map((msg) =>
-                          msg.id === loadingMessage.id
-                            ? {
-                                ...msg,
-                                content: msg.content + '\n\n[生成已停止]',
-                                isLoading: false,
-                              }
-                            : msg,
-                        ),
-                        isLoading: false, // 清除会话加载状态
-                        updatedAt: Date.now(),
-                      }
-                    : s,
-                ),
-              );
-            }
-          } else {
-            // 如果没有找到加载中的消息，只清除会话加载状态
-            setSessions((prevSessions) =>
-              prevSessions.map((s) =>
-                s.id === sessionId ? { ...s, isLoading: false, updatedAt: Date.now() } : s,
-              ),
-            );
-          }
-        }
-      }
+      abortController?.abort();
+      clearSessionGeneratingState(sessionId, { appendStoppedMark: true });
     },
-    [sessions, setSessions],
+    [clearSessionGeneratingState],
   );
 
   // 防抖保存到持久化存储（仅在游客模式下）
@@ -273,15 +324,18 @@ export const useChatSessions = () => {
       return;
     }
 
+    const activeChatStorage = chatStorageRef.current;
+    const activeStorageKeys = storageKeysRef.current;
+
     try {
-      const savedSessions = chatStorage.getItem(storageKeys.CHAT_SESSIONS);
-      const savedCurrentId = chatStorage.getItem(storageKeys.CURRENT_SESSION_ID);
-      const savedModel = chatStorage.getItem(storageKeys.CURRENT_MODEL);
-      const savedAdvanced = chatStorage.getItem(storageKeys.ADVANCED_SETTINGS);
+      const savedSessions = activeChatStorage.getItem(activeStorageKeys.CHAT_SESSIONS);
+      const savedCurrentId = activeChatStorage.getItem(activeStorageKeys.CURRENT_SESSION_ID);
+      const savedModel = activeChatStorage.getItem(activeStorageKeys.CURRENT_MODEL);
+      const savedAdvanced = activeChatStorage.getItem(activeStorageKeys.ADVANCED_SETTINGS);
 
       // 恢复模型选择
       if (savedModel) {
-        setCurrentModel(savedModel);
+        setCurrentModel((prev) => (prev === savedModel ? prev : savedModel));
       }
 
       // 恢复高级设置（含 RAG）
@@ -297,39 +351,76 @@ export const useChatSessions = () => {
           };
           const clamp = (v: number) => Math.min(1.0, Math.max(0.1, v));
           const round1 = (v: number) => Math.round(v * 10) / 10;
-          if (typeof parsed.temperature === 'number')
-            setTemperature(round1(clamp(parsed.temperature)));
-          if (typeof parsed.topP === 'number') setTopP(round1(clamp(parsed.topP)));
-          if (typeof parsed.systemPrompt === 'string')
-            setSystemPrompt(parsed.systemPrompt.trim() === '' ? '' : parsed.systemPrompt);
-          if (typeof parsed.kbEnabled === 'boolean') setKbEnabled(parsed.kbEnabled);
-          if (typeof parsed.kbCollectionId === 'number') setKbCollectionId(parsed.kbCollectionId);
-          if (parsed.agentMode === 'ask' || parsed.agentMode === 'plan')
-            setAgentMode(parsed.agentMode);
+          if (typeof parsed.temperature === 'number') {
+            const nextTemperature = round1(clamp(parsed.temperature));
+            setTemperature((prev) => (prev === nextTemperature ? prev : nextTemperature));
+          }
+          if (typeof parsed.topP === 'number') {
+            const nextTopP = round1(clamp(parsed.topP));
+            setTopP((prev) => (prev === nextTopP ? prev : nextTopP));
+          }
+          if (typeof parsed.systemPrompt === 'string') {
+            const nextSystemPrompt =
+              parsed.systemPrompt.trim() === '' ? '' : parsed.systemPrompt;
+            setSystemPrompt((prev) => (prev === nextSystemPrompt ? prev : nextSystemPrompt));
+          }
+          if (typeof parsed.kbEnabled === 'boolean') {
+            setKbEnabled((prev) => (prev === parsed.kbEnabled ? prev : parsed.kbEnabled!));
+          }
+          if (typeof parsed.kbCollectionId === 'number') {
+            setKbCollectionId((prev) =>
+              prev === parsed.kbCollectionId ? prev : parsed.kbCollectionId,
+            );
+          }
+          if (parsed.agentMode === 'ask' || parsed.agentMode === 'plan') {
+            setAgentMode((prev) => (prev === parsed.agentMode ? prev : parsed.agentMode!));
+          }
         } catch {}
       }
 
       if (savedSessions) {
-        const parsedSessions: IChatSession[] = JSON.parse(savedSessions);
-        setSessions(parsedSessions);
+        const parsedSessions: IChatSession[] = JSON.parse(savedSessions).map(
+          (session: IChatSession) => ({
+            ...session,
+            isLoading: false,
+            messages: (session.messages ?? [])
+              .filter((m) => !(m.isLoading && !m.content?.trim() && !m.thinkingContent?.trim()))
+              .map((m) => (m.isLoading ? { ...m, isLoading: false } : m)),
+          }),
+        );
+        const parsedSessionsJson = JSON.stringify(parsedSessions);
+        setSessions((prev) => {
+          if (JSON.stringify(prev) === parsedSessionsJson) {
+            return prev;
+          }
+          return parsedSessions;
+        });
 
-        // 恢复当前会话
-        if (savedCurrentId && parsedSessions.find((s) => s.id === savedCurrentId)) {
-          setCurrentSessionId(savedCurrentId);
+        // 恢复当前会话：弹窗 bootstrap 优先于侧栏持久化的 CURRENT_SESSION_ID
+        const pinnedSessionId = bootstrapSessionIdRef.current;
+        let nextCurrentSessionId: string | null = null;
+        if (pinnedSessionId && parsedSessions.some((s) => s.id === pinnedSessionId)) {
+          nextCurrentSessionId = pinnedSessionId;
+        } else if (savedCurrentId && parsedSessions.find((s) => s.id === savedCurrentId)) {
+          nextCurrentSessionId = savedCurrentId;
         } else if (parsedSessions.length > 0) {
-          // 如果没有保存的当前会话ID，选择最新的会话
           const latestSession = parsedSessions.sort((a, b) => b.updatedAt - a.updatedAt)[0];
-          setCurrentSessionId(latestSession.id);
+          nextCurrentSessionId = latestSession.id;
+        }
+        if (nextCurrentSessionId) {
+          setCurrentSessionId((prev) =>
+            prev === nextCurrentSessionId ? prev : nextCurrentSessionId,
+          );
         }
       }
     } catch (error) {
       console.error('加载会话数据失败:', error);
     }
-  }, [chatStorage, isAuthenticated, storageKeys]);
+  }, [isAuthenticated]);
 
-  // 持久化高级设置（含 RAG 设置，仅游客模式）
+  // 持久化高级设置（含 RAG 设置，仅游客模式；须等初次 loadFromStorage 完成后再写入）
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated || !hasLoadedFromStorageRef.current) {
       return;
     }
     const payload = JSON.stringify({
@@ -390,9 +481,38 @@ export const useChatSessions = () => {
       if (targetSession) {
         setCurrentSessionId(sessionId);
         debouncedSave(sessions, sessionId);
+        return;
+      }
+
+      // 会话可能由弹窗（如 SKILL 对话）直接写入持久化，内存中尚未加载
+      if (isAuthenticated) {
+        return;
+      }
+      try {
+        const savedSessions = chatStorage.getItem(storageKeys.CHAT_SESSIONS);
+        if (!savedSessions) {
+          return;
+        }
+        const parsedSessions: IChatSession[] = JSON.parse(savedSessions).map(
+          (session: IChatSession) => ({
+            ...session,
+            isLoading: false,
+            messages: (session.messages ?? [])
+              .filter((m) => !(m.isLoading && !m.content?.trim() && !m.thinkingContent?.trim()))
+              .map((m) => (m.isLoading ? { ...m, isLoading: false } : m)),
+          }),
+        );
+        if (!parsedSessions.some((session) => session.id === sessionId)) {
+          return;
+        }
+        setSessions(parsedSessions);
+        setCurrentSessionId(sessionId);
+        debouncedSave(parsedSessions, sessionId);
+      } catch (error) {
+        console.error('切换外部会话失败:', error);
       }
     },
-    [sessions, debouncedSave],
+    [chatStorage, debouncedSave, isAuthenticated, sessions, storageKeys],
   );
 
   // 删除会话
@@ -546,6 +666,25 @@ export const useChatSessions = () => {
 
       const displayContent = (options?.displayContent ?? content).trim();
 
+      let sessionForSnapshots = sessions.find((s) => s.id === activeSessionId);
+      let activeSnapshots: Record<string, INoteSnapshot> =
+        sessionForSnapshots?.noteSnapshots ?? {};
+
+      if (noteReferences?.readContent) {
+        const historyUserMessages = (sessionForSnapshots?.messages ?? []).filter(
+          (m) => m.role === 'user' && m.content.trim(),
+        );
+        activeSnapshots = await collectAndEnsureSnapshots(
+          historyUserMessages,
+          displayContent,
+          activeSnapshots,
+          noteReferences.readContent,
+        );
+        if (Object.keys(activeSnapshots).length > 0 || sessionForSnapshots?.noteSnapshots) {
+          updateSessionMeta(activeSessionId, { noteSnapshots: activeSnapshots });
+        }
+      }
+
       if (!isRetry) {
         addMessage(activeSessionId, {
           role: 'user',
@@ -646,6 +785,9 @@ export const useChatSessions = () => {
       // 创建AbortController用于中断请求
       const abortController = new AbortController();
       abortControllersRef.current.set(activeSessionId, abortController);
+      const streamToken = Symbol('stream');
+      streamTokensRef.current.set(activeSessionId, streamToken);
+      const isStreamActive = () => streamTokensRef.current.get(activeSessionId) === streamToken;
 
       try {
         // CLI Agent 路径：直接 spawn 系统命令，不复用 Superpowers 阶段
@@ -657,6 +799,7 @@ export const useChatSessions = () => {
               isError: true,
             });
             setSessionLoading(activeSessionId, false);
+            streamTokensRef.current.delete(activeSessionId);
             abortControllersRef.current.delete(activeSessionId);
             return;
           }
@@ -669,6 +812,7 @@ export const useChatSessions = () => {
               isError: true,
             });
             setSessionLoading(activeSessionId, false);
+            streamTokensRef.current.delete(activeSessionId);
             abortControllersRef.current.delete(activeSessionId);
             return;
           }
@@ -682,7 +826,7 @@ export const useChatSessions = () => {
           try {
             const result = await callCliAgent({
               agent,
-              prompt: content.trim(),
+              prompt: toApiUserContent(content.trim(), activeSnapshots),
               sessionId: activeSession?.cliAgentSessionId,
               cwd,
             });
@@ -721,6 +865,7 @@ export const useChatSessions = () => {
             });
           } finally {
             setSessionLoading(activeSessionId, false);
+            streamTokensRef.current.delete(activeSessionId);
             abortControllersRef.current.delete(activeSessionId);
           }
           return;
@@ -736,7 +881,8 @@ export const useChatSessions = () => {
               .filter((m) => !m.isLoading && m.content && m.content.trim() && m.role !== 'system')
               .map((m) => ({
                 role: m.role,
-                content: m.content,
+                content:
+                  m.role === 'user' ? toApiUserContent(m.content, activeSnapshots) : m.content,
               }));
           }
         } else {
@@ -745,13 +891,14 @@ export const useChatSessions = () => {
               .filter((m) => !m.isLoading && m.content && m.content.trim() && m.role !== 'system')
               .map((m) => ({
                 role: m.role,
-                content: m.content,
+                content:
+                  m.role === 'user' ? toApiUserContent(m.content, activeSnapshots) : m.content,
               })) || [];
 
           // 添加当前用户消息
           chatMessages.push({
             role: 'user',
-            content: content.trim(),
+            content: toApiUserContent(content.trim(), activeSnapshots),
           });
         }
 
@@ -768,6 +915,11 @@ export const useChatSessions = () => {
 
         // 合并chunk更新的函数
         const flushChunkBuffer = () => {
+          if (!isStreamActive()) {
+            chunkBuffer = '';
+            chunkTimer = null;
+            return;
+          }
           if (chunkBuffer) {
             accumulatedContent += chunkBuffer;
             updateMessage(activeSessionId, loadingMessage.id, {
@@ -780,6 +932,11 @@ export const useChatSessions = () => {
         };
 
         const flushThinkingBuffer = () => {
+          if (!isStreamActive()) {
+            thinkingChunkBuffer = '';
+            thinkingTimer = null;
+            return;
+          }
           if (thinkingChunkBuffer) {
             accumulatedThinking += thinkingChunkBuffer;
             updateMessage(activeSessionId, loadingMessage.id, {
@@ -814,6 +971,7 @@ export const useChatSessions = () => {
           },
           // onError: 错误处理回调
           (error: string) => {
+            streamTokensRef.current.delete(activeSessionId);
             // 清除pending的chunk更新
             if (chunkTimer) {
               clearTimeout(chunkTimer);
@@ -927,6 +1085,7 @@ export const useChatSessions = () => {
         }
       } catch (error) {
         console.error('AI回复失败:', error);
+        streamTokensRef.current.delete(activeSessionId);
 
         // 更新错误消息（统一为友好提示）
         updateMessage(activeSessionId, loadingMessage.id, {
@@ -936,6 +1095,7 @@ export const useChatSessions = () => {
         });
       } finally {
         // 清除当前会话的加载状态和AbortController
+        streamTokensRef.current.delete(activeSessionId);
         setSessionLoading(activeSessionId, false);
         abortControllersRef.current.delete(activeSessionId);
       }
@@ -955,6 +1115,7 @@ export const useChatSessions = () => {
       callCliAgent,
       superpowerPrompts,
       workspace,
+      noteReferences,
     ],
   );
 
@@ -1189,14 +1350,24 @@ export const useChatSessions = () => {
   }, [isAuthenticated, hasSyncedAfterLogin, loadFromStorage]);
 
   // 组件挂载时加载游客数据（仅在游客模式下，仅执行一次）
-  const hasLoadedFromStorageRef = useRef(false);
   useEffect(() => {
     if (isAuthenticated || hasLoadedFromStorageRef.current) {
       return;
     }
-    hasLoadedFromStorageRef.current = true;
     loadFromStorage();
+    hasLoadedFromStorageRef.current = true;
   }, [isAuthenticated, loadFromStorage]);
+
+  // 弹窗等外部写入持久化后刷新会话列表
+  useEffect(() => {
+    const handleExternalSessionsUpdate = () => {
+      loadFromStorage();
+    };
+    window.addEventListener(AI_CHAT_SESSIONS_UPDATED_EVENT, handleExternalSessionsUpdate);
+    return () => {
+      window.removeEventListener(AI_CHAT_SESSIONS_UPDATED_EVENT, handleExternalSessionsUpdate);
+    };
+  }, [loadFromStorage]);
 
   // 清理定时器
   useEffect(() => {
@@ -1244,5 +1415,6 @@ export const useChatSessions = () => {
     agentMode,
     setAgentMode,
     isCliModel,
+    refreshSessionsFromStorage: loadFromStorage,
   };
 };

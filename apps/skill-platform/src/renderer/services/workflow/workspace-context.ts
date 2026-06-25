@@ -1,4 +1,4 @@
-import { isTextFilePath } from '@/utils/text-file';
+import { isCodeEditorPath } from '@momo/file-editor';
 import { getWorkspaceApi } from '@renderer/services/workspace/api';
 import {
   listWorkflowAgentDir,
@@ -26,7 +26,7 @@ export async function buildWorkflowWorkspaceContext(
 
   if (nodeName) {
     const entries = await listWorkflowNodeFileTree(workflowName, businessId, nodeName);
-    const files = entries.filter((e) => !e.isDirectory && isTextFilePath(e.relativePath));
+    const files = entries.filter((e) => !e.isDirectory && isCodeEditorPath(e.relativePath));
 
     for (const file of files.slice(0, MAX_FILES)) {
       if (totalChars >= MAX_TOTAL_CHARS) {

@@ -42,6 +42,7 @@ import {
   WORKFLOW_NODE_TYPE_PROMPT,
   WORKFLOW_NODE_TYPE_SKILL,
   WORKFLOW_NODE_TYPE_START,
+  WORKFLOW_NODE_TYPE_WEBPAGE,
   type IProps,
   type IWorkflowPaletteDragPayload,
 } from '../../types';
@@ -50,14 +51,15 @@ import {
   findParallelNodeAtPoint,
   getParallelSize,
   isFreeResourceNode,
+  isLeafNode,
   isParallelNode,
-  isResourceNode,
   RESOURCE_NODE_HEIGHT,
   RESOURCE_NODE_WIDTH,
 } from '../../utils/parallel-graph';
 import { ParallelGroupNode } from '../ParallelGroupNode';
 import { PromptResourceNode, SkillResourceNode } from '../ResourceNode';
 import { EndTerminalNode, StartTerminalNode } from '../TerminalNode';
+import { WebpageNode } from '../WebpageNode';
 import styles from './index.module.less';
 
 const defaultEdgeOptions = {
@@ -71,6 +73,7 @@ const builtInNodeTypes = {
   [WORKFLOW_NODE_TYPE_START]: memo(StartTerminalNode),
   [WORKFLOW_NODE_TYPE_END]: memo(EndTerminalNode),
   [WORKFLOW_NODE_TYPE_PARALLEL]: memo(ParallelGroupNode),
+  [WORKFLOW_NODE_TYPE_WEBPAGE]: memo(WebpageNode),
 };
 
 function parseDragPayload(event: DragEvent): IWorkflowPaletteDragPayload | null {
@@ -314,7 +317,7 @@ function WorkflowEditorInner({
 
   const handleNodeDrag: OnNodeDrag = useCallback(
     (_, draggedNode) => {
-      if (readOnly || !isResourceNode(draggedNode)) {
+      if (readOnly || !isLeafNode(draggedNode)) {
         setParallelDropState(null);
         return;
       }
@@ -347,7 +350,7 @@ function WorkflowEditorInner({
   const handleNodeDragStop: NodeMouseHandler = useCallback(
     (_, draggedNode) => {
       setParallelDropState(null);
-      if (readOnly || !isResourceNode(draggedNode)) {
+      if (readOnly || !isLeafNode(draggedNode)) {
         return;
       }
 

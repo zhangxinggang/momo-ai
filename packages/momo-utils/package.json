@@ -22,6 +22,12 @@
       "require": "./dist/tools/file.js",
       "default": "./src/tools/file.ts"
     },
+    "./tools/merge": {
+      "types": "./src/tools/merge.ts",
+      "import": "./src/tools/merge.ts",
+      "require": "./dist/tools/merge.js",
+      "default": "./src/tools/merge.ts"
+    },
     "./tools/fullscreen": {
       "types": "./src/tools/fullscreen.ts",
       "import": "./src/tools/fullscreen.ts",

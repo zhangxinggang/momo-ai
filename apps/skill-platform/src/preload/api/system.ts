@@ -1,5 +1,5 @@
-import type { IAppConfig } from '@momo/electron';
 import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
+import type { IAppConfig } from '@momo/electron';
 import { ipcRenderer } from 'electron';
 
 export const systemApi = {

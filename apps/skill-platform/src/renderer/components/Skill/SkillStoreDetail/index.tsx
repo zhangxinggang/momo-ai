@@ -360,7 +360,7 @@ export function SkillStoreDetail({ skill, isInstalled, onClose }: IProps) {
           body: { maxHeight: 'min(70vh, 560px)', overflowY: 'auto', padding: '1.25rem' },
           mask: { backdropFilter: 'blur(4px)' },
         }}
-        destroyOnClose={false}>
+        destroyOnHidden={false}>
         <div className='scrollbar-hide'>
           {/* Translate button */}
           <div className='mb-3 flex items-center justify-end'>
@@ -731,7 +731,7 @@ export function SkillStoreDetail({ skill, isInstalled, onClose }: IProps) {
         cancelText={'取消'}
         okButtonProps={{ danger: true }}
         cancelButtonProps={{ autoFocus: true }}
-        destroyOnClose>
+        destroyOnHidden>
         {pendingHighRiskInstallReport ? (
           <div className='space-y-3 text-left'>
             <p>{pendingHighRiskInstallReport.summary}</p>
@@ -783,7 +783,7 @@ export function SkillStoreDetail({ skill, isInstalled, onClose }: IProps) {
         okText={'立即重新翻译'}
         cancelText={'取消'}
         cancelButtonProps={{ autoFocus: true }}
-        destroyOnClose>
+        destroyOnHidden>
         <p>{'这个技能的 SKILL.md 在上次翻译后已经发生变化，现在要重新翻译吗？'}</p>
       </Modal>
     </>

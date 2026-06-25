@@ -28,6 +28,19 @@ export const WORKFLOW_NODE_TYPE_SKILL = 'skillResource';
 export const WORKFLOW_NODE_TYPE_START = 'workflowStart';
 export const WORKFLOW_NODE_TYPE_END = 'workflowEnd';
 export const WORKFLOW_NODE_TYPE_PARALLEL = 'parallelGroup';
+export const WORKFLOW_NODE_TYPE_WEBPAGE = 'webpageResource';
+
+/** 网页节点 data */
+export interface IWorkflowWebpageNodeData extends Record<string, unknown> {
+  /** 画布展示标题，默认「网页节点」 */
+  label?: string;
+  /** 节点名称 */
+  nodeName?: string;
+  /** 备注 */
+  remark?: string;
+  /** 链接地址 */
+  url?: string;
+}
 
 /** 并行容器节点 data */
 export interface IWorkflowParallelNodeData extends Record<string, unknown> {
@@ -47,7 +60,7 @@ export interface IWorkflowTerminalNodeData extends Record<string, unknown> {
 
 /** 画布拖放载荷（palette → canvas） */
 export interface IWorkflowPaletteDragPayload {
-  kind: 'prompt' | 'skill' | 'start' | 'end' | 'parallel';
+  kind: 'prompt' | 'skill' | 'start' | 'end' | 'parallel' | 'webpage';
   resourceId?: string;
   label?: string;
 }

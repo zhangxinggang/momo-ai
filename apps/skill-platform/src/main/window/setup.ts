@@ -1,7 +1,11 @@
-import { attachWindowCloseTrayBehavior, createTray, isDev } from '@momo/electron';
+import {
+  attachWindowCloseTrayBehavior,
+  createTray,
+  isDev,
+  loadWindowContent,
+} from '@momo/electron';
 import type { Database } from 'better-sqlite3';
 import type { BrowserWindow } from 'electron';
-import path from 'path';
 import { getMinimizeOnLaunchSetting } from '../ipc/settings';
 import {
   attachWindowVisibilityListeners,
@@ -32,25 +36,12 @@ export function setupMainWindowReadyBehavior(win: BrowserWindow, appDb: Database
 }
 
 /** 加载开发服务器或生产构建页面 */
-export async function loadMainWindowContent(
-  win: BrowserWindow,
-  openDevTools: boolean | undefined,
-): Promise<void> {
+export async function loadMainWindowContent(win: BrowserWindow): Promise<void> {
+  let url = '';
   if (isDev) {
-    const devServerUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
-    console.log('Loading dev server:', devServerUrl);
-    try {
-      await win.loadURL(devServerUrl);
-      if (openDevTools !== false) {
-        win.webContents.openDevTools();
-      }
-    } catch (error) {
-      console.error('Failed to load dev server:', error);
-    }
-    return;
+    url = 'http://localhost:5173';
   }
-
-  await win.loadFile(path.join(__dirname, '../../renderer/index.html'));
+  await loadWindowContent(win, url);
 }
 
 /** 挂载窗口关闭行为（最小化到托盘 / 退出） */

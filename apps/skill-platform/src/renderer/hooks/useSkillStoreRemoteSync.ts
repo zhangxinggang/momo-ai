@@ -3,6 +3,7 @@ import { fetchSkillRemoteContent, fetchSkillRemotePost } from '@renderer/service
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { loadClawHubStorePage } from '@renderer/services/skill/clawhub-store';
+import { loadCocoloopStorePage } from '@renderer/services/skill/cocoloop-store';
 import {
   mergeOnlineSkillStoreSources,
   type IRemoteSkillStoreSource,
@@ -19,6 +20,7 @@ import { dedupeRegistrySkills } from '@renderer/services/skill/store-mapper-util
 import { useOnlineConfStore, useSkillStore } from '@renderer/store';
 
 const SKILLHUB_PAGE_SIZE = 24;
+const COCOLOOP_PAGE_SIZE = 24;
 
 type TResolvedStoreSource =
   | (IRemoteSkillStoreSource & { enabled?: boolean })
@@ -33,6 +35,7 @@ interface IUseSkillStoreRemoteSyncOptions {
   eagerRemoteSources?: 'selected' | 'all';
   selectedStoreSourceId?: string;
   skillhubKeyword?: string;
+  cocoloopKeyword?: string;
   skillsShFilterKey?: string;
   skillsShSearchQuery?: string;
 }
@@ -141,6 +144,15 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
     });
   }, []);
 
+  const loadCocoloopStore = useCallback(async (apiUrl: string, page: number, keyword?: string) => {
+    return loadCocoloopStorePage((url) => fetchSkillRemoteContent(url), {
+      apiUrl,
+      page,
+      pageSize: COCOLOOP_PAGE_SIZE,
+      keyword,
+    });
+  }, []);
+
   const loadStoreSource = useCallback(
     async (sourceId: string, forceRefresh = false, loadOptions: ILoadStoreSourceOptions = {}) => {
       if (typeof setRemoteStoreEntry !== 'function') {
@@ -158,6 +170,8 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
       const append = Boolean(loadOptions.append);
       const skillhubKeyword =
         source.type === 'skillhub' ? (options.skillhubKeyword ?? '').trim() : '';
+      const cocoloopKeyword =
+        source.type === 'cocoloop' ? (options.cocoloopKeyword ?? '').trim() : '';
       const skillsShFilterKey =
         source.type === 'skills-sh'
           ? normalizeSkillsShFilterKey(options.skillsShFilterKey ?? 'all')
@@ -165,8 +179,14 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
       const skillsShSearchQuery =
         source.type === 'skills-sh' ? (options.skillsShSearchQuery ?? '').trim() : '';
       const skillsShQueryKey = `${skillsShFilterKey}:${skillsShSearchQuery}`;
-      const skillhubPage = loadOptions.page ?? 1;
-      const loadKey = `${sourceId}:${source.type === 'skills-sh' ? skillsShQueryKey : skillhubKeyword}:${append ? 'append' : 'replace'}:${skillhubPage}:${forceRefresh ? 'force' : 'cached'}`;
+      const pagedPage = loadOptions.page ?? 1;
+      const searchKeyword =
+        source.type === 'skills-sh'
+          ? skillsShQueryKey
+          : source.type === 'cocoloop'
+            ? cocoloopKeyword
+            : skillhubKeyword;
+      const loadKey = `${sourceId}:${source.type === 'skills-sh' ? skillsShQueryKey : searchKeyword}:${append ? 'append' : 'replace'}:${pagedPage}:${forceRefresh ? 'force' : 'cached'}`;
       const inflightLoad = inflightStoreLoadsRef.current.get(loadKey);
       if (inflightLoad) {
         await inflightLoad;
@@ -180,7 +200,12 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
         skillsShLoaderRef.current.clearCache();
       }
 
-      if (source.type === 'skillhub' || source.type === 'clawhub' || source.type === 'skills-sh') {
+      if (
+        source.type === 'skillhub' ||
+        source.type === 'clawhub' ||
+        source.type === 'cocoloop' ||
+        source.type === 'skills-sh'
+      ) {
         if (append && cachedEntry?.pagination && !cachedEntry.pagination.hasMore) {
           return;
         }
@@ -226,6 +251,25 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
               total: skillsForSource.length,
               hasMore: pageResult.hasMore,
               nextCursor: pageResult.nextCursor,
+            };
+          } else if (source.type === 'cocoloop') {
+            const nextPage =
+              append && !forceRefresh
+                ? (loadOptions.page ?? (cachedEntry?.pagination?.page ?? 0) + 1)
+                : 1;
+            const pageResult = await loadCocoloopStore(
+              source.url,
+              nextPage,
+              cocoloopKeyword || undefined,
+            );
+            skillsForSource =
+              append && !forceRefresh
+                ? dedupeRegistrySkills([...skillsForSource, ...pageResult.skills])
+                : pageResult.skills;
+            pagination = {
+              page: pageResult.page,
+              total: pageResult.total,
+              hasMore: pageResult.hasMore,
             };
           } else if (source.type === 'skills-sh') {
             const nextCursor =
@@ -276,7 +320,9 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
     },
     [
       loadClawHubStore,
+      loadCocoloopStore,
       loadSkillHubStore,
+      options.cocoloopKeyword,
       options.skillhubKeyword,
       options.skillsShFilterKey,
       options.skillsShSearchQuery,
@@ -303,6 +349,17 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
       return;
     }
     await loadStoreSource('clawhub', false, { append: true });
+  }, [loadStoreSource]);
+
+  const loadMoreCocoloop = useCallback(async () => {
+    const cachedEntry = remoteStoreEntriesRef.current.cocoloop;
+    if (!cachedEntry?.pagination?.hasMore) {
+      return;
+    }
+    await loadStoreSource('cocoloop', false, {
+      append: true,
+      page: cachedEntry.pagination.page + 1,
+    });
   }, [loadStoreSource]);
 
   const loadMoreSkillsSh = useCallback(async () => {
@@ -394,6 +451,7 @@ export function useSkillStoreRemoteSync(options: IUseSkillStoreRemoteSyncOptions
     loadStoreSource,
     loadMoreSkillHub,
     loadMoreClawHub,
+    loadMoreCocoloop,
     loadMoreSkillsSh,
     onlineStoreSources,
     remoteStoreEntries,

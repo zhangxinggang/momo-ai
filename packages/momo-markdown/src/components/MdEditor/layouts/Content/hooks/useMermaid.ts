@@ -151,11 +151,21 @@ const useMermaid = (props: IContentPreviewProps) => {
       svgContainingElement.style.zIndex = '-10000';
       svgContainingElement.style.top = '-10000';
 
-      let count = mermaidSourceEles.length;
+      const count = mermaidSourceEles.length;
 
       if (count > 0) {
         document.body.appendChild(svgContainingElement);
       }
+
+      const buildRenderedNode = (rawCode: string, mermaidHtml: string) => {
+        const p = document.createElement('p');
+        p.className = `${prefix}-mermaid`;
+        p.setAttribute('data-processed', '');
+        p.setAttribute('data-content', rawCode);
+        p.innerHTML = mermaidHtml;
+        p.children[0]?.removeAttribute('height');
+        return p;
+      };
 
       await Promise.allSettled(
         Array.from(mermaidSourceEles).map((ele) => {
@@ -168,49 +178,50 @@ const useMermaid = (props: IContentPreviewProps) => {
             const code = normalizeMermaidSource(rawCode);
             let mermaidHtml = mermaidCache.get(code) as string;
 
-            if (!mermaidHtml) {
-              const idRand = randomId();
-              let result: { svg: string } = { svg: '' };
-              try {
-                if (isCynefinBetaSource(code) && !hasNativeCynefinSupport(mermaidRef.current)) {
-                  result = { svg: renderCynefinPolyfill(code, idRand) };
-                } else {
-                  result = await mermaidRef.current.render(idRand, code, svgContainingElement);
-                }
+            if (mermaidHtml) {
+              const p = buildRenderedNode(rawCode, mermaidHtml);
+              if (item.dataset.line !== undefined) {
+                p.dataset.line = item.dataset.line;
+              }
+              item.replaceWith(p);
+              return;
+            }
 
-                mermaidHtml = await sanitizeMermaid(result.svg);
-
-                const p = document.createElement('p');
-                p.className = `${prefix}-mermaid`;
-                p.setAttribute('data-processed', '');
-                p.setAttribute('data-content', rawCode);
-                p.innerHTML = mermaidHtml;
-                p.children[0]?.removeAttribute('height');
-
-                mermaidCache.set(code, p.innerHTML);
-
-                if (item.dataset.line !== undefined) {
-                  p.dataset.line = item.dataset.line;
-                }
-
-                item.replaceWith(p);
-              } catch (error: any) {
-                eventBus.emit(editorId, ERROR_CATCHER, {
-                  name: 'mermaid',
-                  message: error.message,
-                  error,
-                });
+            const idRand = randomId();
+            let result: { svg: string } = { svg: '' };
+            try {
+              if (isCynefinBetaSource(code) && !hasNativeCynefinSupport(mermaidRef.current)) {
+                result = { svg: renderCynefinPolyfill(code, idRand) };
+              } else {
+                result = await mermaidRef.current.render(idRand, code, svgContainingElement);
               }
 
-              if (--count === 0) {
-                svgContainingElement.remove();
+              mermaidHtml = await sanitizeMermaid(result.svg);
+
+              const p = buildRenderedNode(rawCode, mermaidHtml);
+              mermaidCache.set(code, p.innerHTML);
+
+              if (item.dataset.line !== undefined) {
+                p.dataset.line = item.dataset.line;
               }
+
+              item.replaceWith(p);
+            } catch (error: any) {
+              eventBus.emit(editorId, ERROR_CATCHER, {
+                name: 'mermaid',
+                message: error.message,
+                error,
+              });
             }
           };
 
           return handler(ele);
         }),
       );
+
+      if (count > 0) {
+        svgContainingElement.remove();
+      }
     }
   }, [editorId, noMermaid, rootRef, sanitizeMermaid]);
 

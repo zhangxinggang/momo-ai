@@ -7,18 +7,17 @@ interface IProps {
 
 /** 工作流节点对话：切换到独立存储的会话（不影响 AI 对话模块） */
 export function WorkflowNodeChatBootstrap({ sessionId }: IProps) {
-  const { switchToSession, sessions } = useChatContext();
+  const { switchToSession, sessions, currentSessionId } = useChatContext();
 
   useEffect(() => {
-    switchToSession(sessionId);
-  }, [sessionId, switchToSession]);
-
-  useEffect(() => {
+    if (currentSessionId === sessionId) {
+      return;
+    }
     const exists = sessions.some((session) => session.id === sessionId);
     if (exists) {
       switchToSession(sessionId);
     }
-  }, [sessionId, sessions, switchToSession]);
+  }, [sessionId, sessions, switchToSession, currentSessionId]);
 
   return null;
 }

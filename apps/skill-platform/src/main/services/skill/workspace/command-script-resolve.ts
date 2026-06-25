@@ -1,15 +1,10 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-import {
-  getRepoFolderBaseName,
-  stripRedundantSkillPathPrefix,
-} from './repo-path-normalize';
+import { getRepoFolderBaseName, stripRedundantSkillPathPrefix } from './repo-path-normalize';
 
-const NODE_SCRIPT_RE =
-  /\bnode\s+(?:--[^\s]+\s+)*["']?((?:[\w.-]+[/\\])+\.(?:js|mjs|cjs))["']?/i;
-const PYTHON_SCRIPT_RE =
-  /\b(?:python|py)\s+(?:-[^\s]+\s+)*["']?((?:[\w.-]+[/\\])+\.py)["']?/i;
+const NODE_SCRIPT_RE = /\bnode\s+(?:--[^\s]+\s+)*["']?((?:[\w.-]+[/\\])+\.(?:js|mjs|cjs))["']?/i;
+const PYTHON_SCRIPT_RE = /\b(?:python|py)\s+(?:-[^\s]+\s+)*["']?((?:[\w.-]+[/\\])+\.py)["']?/i;
 
 async function pathExists(targetPath: string): Promise<boolean> {
   try {

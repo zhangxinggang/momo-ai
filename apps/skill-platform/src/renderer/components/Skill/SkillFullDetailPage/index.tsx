@@ -568,7 +568,7 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
         cancelText={'取消'}
         okButtonProps={{ danger: true }}
         cancelButtonProps={{ autoFocus: true }}
-        destroyOnClose>
+        destroyOnHidden>
         <div className='space-y-2'>
           <p>{`确定要删除技能"${name}"吗？`}</p>
           <p className='text-muted-foreground/80 text-xs'>
@@ -585,7 +585,7 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
         okText={'立即重新翻译'}
         cancelText={'取消'}
         cancelButtonProps={{ autoFocus: true }}
-        destroyOnClose>
+        destroyOnHidden>
         <p>{'这个技能的 SKILL.md 在上次翻译后已经发生变化，现在要重新翻译吗？'}</p>
       </Modal>
       <UnsavedLeaveDialog />
@@ -600,7 +600,7 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
         styles={{
           body: { maxHeight: 'min(70vh, 720px)', overflowY: 'auto', paddingTop: 8 },
         }}
-        destroyOnClose>
+        destroyOnHidden>
         {safetyReport && (
           <div className='space-y-5'>
             {/* Header: level badge + meta */}

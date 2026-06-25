@@ -1,6 +1,6 @@
 {
-  "appId": "com.jgraph.drawio.desktop",
-  "copyright": "Copyright 2017-2026 draw.io Ltd",
+  "appId": "com.electron.desktop",
+  "copyright": "Copyright 2026 zhangxg Ltd",
   "asar": true,
   "extraMetadata": {
     "main": "src/main/index.cjs"

@@ -11,18 +11,23 @@ export interface IProps {
   children: ReactNode;
   /** 可选：注入 API 与同步能力 */
   services?: Partial<IAiChatServices>;
+  /** 弹窗/子模块打开时固定选中的会话 id（不恢复侧栏 CURRENT_SESSION_ID） */
+  bootstrapSessionId?: string | null;
 }
 
-export const ChatProvider: React.FC<IProps> = ({ children, services }) => {
+export const ChatProvider: React.FC<IProps> = ({ children, services, bootstrapSessionId }) => {
   return (
     <AiChatConfigProvider services={services}>
-      <ChatProviderInner>{children}</ChatProviderInner>
+      <ChatProviderInner bootstrapSessionId={bootstrapSessionId}>{children}</ChatProviderInner>
     </AiChatConfigProvider>
   );
 };
 
-const ChatProviderInner: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const chatState = useChatSessions();
+const ChatProviderInner: React.FC<{
+  children: ReactNode;
+  bootstrapSessionId?: string | null;
+}> = ({ children, bootstrapSessionId }) => {
+  const chatState = useChatSessions({ bootstrapSessionId });
   return <ChatContext.Provider value={chatState}>{children}</ChatContext.Provider>;
 };
 

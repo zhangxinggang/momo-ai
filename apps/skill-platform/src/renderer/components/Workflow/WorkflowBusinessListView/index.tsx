@@ -1,8 +1,10 @@
 import type { IWorkflow, IWorkflowBusiness } from '@/types/modules';
 import {
   buildWorkflowSteps,
+  isLeafNode,
   parseWorkflowGraphJson,
   type IWorkflowResourceNodeData,
+  type IWorkflowWebpageNodeData,
 } from '@momo/workflow';
 import type { Node } from '@xyflow/react';
 import { App, Button, Input, Table, Typography } from 'antd';
@@ -60,11 +62,8 @@ export function WorkflowBusinessListView({ workflowId }: IProps) {
 
     const nodeMap = new Map(
       nodes
-        .filter((n) => {
-          const d = n.data as IWorkflowResourceNodeData;
-          return d?.resourceKind === 'prompt' || d?.resourceKind === 'skill';
-        })
-        .map((n) => [n.id, n as Node<IWorkflowResourceNodeData>]),
+        .filter(isLeafNode)
+        .map((n) => [n.id, n as Node<IWorkflowResourceNodeData | IWorkflowWebpageNodeData>]),
     );
 
     setSteps(buildMacroStepViewModels(built.steps, nodeMap));

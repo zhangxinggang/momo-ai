@@ -42,7 +42,7 @@ export function SkillBatchTagDialog({ skills, onClose, onSubmit }: IProps) {
   };
 
   return (
-    <Modal open onCancel={onClose} title={'批量管理标签'} width={800} footer={null} destroyOnClose>
+    <Modal open onCancel={onClose} title={'批量管理标签'} width={800} footer={null} destroyOnHidden>
       <div className='space-y-4'>
         <div className='border-border bg-background/60 rounded-2xl border p-4'>
           <div className='text-foreground flex items-center gap-2 text-sm font-medium'>

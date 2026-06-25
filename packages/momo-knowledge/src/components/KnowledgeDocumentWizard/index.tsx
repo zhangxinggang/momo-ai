@@ -101,7 +101,7 @@ export function KnowledgeDocumentWizard({
       width={880}
       onCancel={handleClose}
       footer={null}
-      destroyOnClose>
+      destroyOnHidden>
       <Steps
         current={stepIndex}
         className='mb-6'

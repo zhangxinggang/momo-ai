@@ -112,8 +112,10 @@ export function DataSettings() {
         }
         open={showClearConfirm}
         onCancel={() => !clearLoading && setShowClearConfirm(false)}
-        maskClosable={!clearLoading}
-        destroyOnClose
+        mask={{
+          closable: !clearLoading,
+        }}
+        destroyOnHidden
         footer={[
           <Button key='cancel' disabled={clearLoading} onClick={() => setShowClearConfirm(false)}>
             {'取消'}

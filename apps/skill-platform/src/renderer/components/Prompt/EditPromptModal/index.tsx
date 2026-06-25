@@ -281,7 +281,7 @@ export function EditPromptModal({
       mask={!isPanel}
       centered={!isPanel}
       getContainer={isPanel ? false : undefined}
-      destroyOnClose={false}
+      destroyOnHidden={false}
       className={isPanel ? 'prompt-form-panel-modal' : undefined}
       style={
         isPanel

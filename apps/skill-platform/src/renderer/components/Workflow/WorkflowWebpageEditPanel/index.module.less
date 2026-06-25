@@ -1,0 +1,73 @@
+.workflow-node-panel-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: transparent;
+}
+
+.workflow-node-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  width: 320px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  border: 1px solid hsl(var(--border) / 0.8);
+  background: hsl(var(--background));
+  box-shadow: 0 8px 32px hsl(var(--foreground) / 0.08);
+}
+
+.workflow-node-panel-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+}
+
+.workflow-node-panel-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+
+  &:hover {
+    background: hsl(var(--muted) / 0.5);
+  }
+}
+
+.workflow-node-panel-body {
+  flex: 1;
+  overflow: auto;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.workflow-node-panel-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+  }
+}
+
+.workflow-node-panel-error {
+  font-size: 11px;
+  color: hsl(var(--destructive));
+}

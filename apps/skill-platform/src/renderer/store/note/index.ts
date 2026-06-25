@@ -12,6 +12,10 @@ import {
   renameNote,
   writeNoteFile,
 } from '@renderer/services/note/api';
+import {
+  clearNoteAiWritingStorage,
+  collectNoteIdsFromTree,
+} from '@renderer/services/note/note-ai-storage';
 import { collectNoteFolderIds, filterNoteTreeByQuery } from '@renderer/services/note/tree-filter';
 import { create } from 'zustand';
 
@@ -21,8 +25,24 @@ function mapToMomoNodes(nodes: INoteTreeNode[]): IMomoTreeNode[] {
     name: node.name,
     kind: node.kind,
     noteType: node.noteType,
+    noteId: node.noteId,
     children: node.children?.length ? mapToMomoNodes(node.children) : undefined,
   }));
+}
+
+function findNoteIdInTree(nodes: IMomoTreeNode[], fileId: string): string | null {
+  for (const node of nodes) {
+    if (node.id === fileId) {
+      return node.noteId ?? null;
+    }
+    if (node.children?.length) {
+      const found = findNoteIdInTree(node.children, fileId);
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return null;
 }
 
 function buildVisibleTree(rawTree: IMomoTreeNode[], searchQuery: string): IMomoTreeNode[] {
@@ -48,6 +68,7 @@ interface INoteState {
   treeData: IMomoTreeNode[];
   treeSearchQuery: string;
   selectedId: string | null;
+  selectedNoteId: string | null;
   expandedKeys: string[];
   editorContent: string;
   savedContent: string;
@@ -60,6 +81,8 @@ interface INoteState {
   toggleExpand: (folderId: string) => void;
   selectFolder: (folderId: string) => void;
   selectFile: (fileId: string) => Promise<void>;
+  /** 当前选中笔记缺少 noteId 时，从树或 readFile 补全 */
+  ensureSelectedNoteId: () => Promise<string | null>;
   setEditorContent: (content: string) => void;
   appendEditorContent: (content: string) => void;
   saveCurrentFile: () => Promise<void>;
@@ -77,6 +100,7 @@ export const useNoteStore = create<INoteState>((set, get) => ({
   treeData: [],
   treeSearchQuery: '',
   selectedId: null,
+  selectedNoteId: null,
   expandedKeys: [],
   editorContent: '',
   savedContent: '',
@@ -96,10 +120,14 @@ export const useNoteStore = create<INoteState>((set, get) => ({
     try {
       await bootstrapCursorRules();
       const nodes = mapToMomoNodes(await listNoteTree());
-      const { treeSearchQuery } = get();
+      const { treeSearchQuery, selectedId } = get();
       const treeData = buildVisibleTree(nodes, treeSearchQuery);
       const expandedKeys = resolveExpandedKeys(treeData, treeSearchQuery, get().expandedKeys);
-      set({ rawTree: nodes, treeData, expandedKeys });
+      const treeNoteId = selectedId ? findNoteIdInTree(nodes, selectedId) : null;
+      const { selectedNoteId: prevNoteId, selectedId: prevSelectedId } = get();
+      const selectedNoteId =
+        treeNoteId ?? (selectedId && prevSelectedId === selectedId ? prevNoteId : null);
+      set({ rawTree: nodes, treeData, expandedKeys, selectedNoteId });
     } finally {
       set({ isLoadingTree: false });
     }
@@ -119,6 +147,37 @@ export const useNoteStore = create<INoteState>((set, get) => ({
     get().toggleExpand(folderId);
   },
 
+  ensureSelectedNoteId: async () => {
+    const { selectedId, selectedNoteId, rawTree } = get();
+    if (!selectedId) {
+      return null;
+    }
+    if (selectedNoteId) {
+      return selectedNoteId;
+    }
+
+    let noteId = findNoteIdInTree(rawTree, selectedId);
+    if (!noteId) {
+      await get().loadTree();
+      noteId = findNoteIdInTree(get().rawTree, selectedId);
+    }
+    if (!noteId) {
+      try {
+        const result = await readNoteFile(selectedId);
+        if (typeof result !== 'string' && result.noteId) {
+          noteId = result.noteId;
+        }
+      } catch (err) {
+        console.error('[note] ensureSelectedNoteId readFile failed:', err);
+      }
+    }
+
+    if (noteId) {
+      set({ selectedNoteId: noteId });
+    }
+    return noteId;
+  },
+
   selectFile: async (fileId) => {
     const { selectedId, editorContent, savedContent } = get();
     if (selectedId && selectedId !== fileId && editorContent !== savedContent) {
@@ -128,14 +187,24 @@ export const useNoteStore = create<INoteState>((set, get) => ({
     set({ isLoadingFile: true, selectedId: fileId });
     try {
       const result = await readNoteFile(fileId);
-      const content = typeof result === 'string' ? result : (result?.content ?? '');
+      let content = '';
+      let noteId = findNoteIdInTree(get().rawTree, fileId);
+      if (typeof result === 'string') {
+        content = result;
+      } else {
+        content = result.content ?? '';
+        if (result.noteId) {
+          noteId = result.noteId;
+        }
+      }
       set({
         editorContent: content,
         savedContent: content,
+        selectedNoteId: noteId,
       });
     } catch (err) {
       console.error('[note] readFile failed:', err);
-      set({ selectedId: null, editorContent: '', savedContent: '' });
+      set({ selectedId: null, selectedNoteId: null, editorContent: '', savedContent: '' });
     } finally {
       set({ isLoadingFile: false });
     }
@@ -200,10 +269,15 @@ export const useNoteStore = create<INoteState>((set, get) => ({
   },
 
   deleteNode: async (nodeId) => {
+    const { rawTree } = get();
+    const noteIds = collectNoteIdsFromTree(rawTree, nodeId);
     await deleteNote(nodeId);
+    for (const id of noteIds) {
+      clearNoteAiWritingStorage(id);
+    }
     const { selectedId } = get();
     if (selectedId === nodeId || selectedId?.startsWith(`${nodeId}/`)) {
-      set({ selectedId: null, editorContent: '', savedContent: '' });
+      set({ selectedId: null, selectedNoteId: null, editorContent: '', savedContent: '' });
     }
     await get().loadTree();
   },

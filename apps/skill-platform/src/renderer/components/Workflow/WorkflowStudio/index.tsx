@@ -3,6 +3,9 @@ import {
   attachResourceNodeToParallel,
   createParallelNode,
   createResourceNode,
+  createWebpageNode,
+  isLeafNode,
+  isWebpageNode,
   parseWorkflowGraphJson,
   stringifyWorkflowGraph,
   validateWorkflowGraph,
@@ -11,6 +14,7 @@ import {
   type IWorkflowEditorNodeEvent,
   type IWorkflowPaletteDragPayload,
   type IWorkflowResourceNodeData,
+  type IWorkflowWebpageNodeData,
 } from '@momo/workflow';
 import type { Edge, Node } from '@xyflow/react';
 import { useEdgesState, useNodesState } from '@xyflow/react';
@@ -19,6 +23,7 @@ import { SaveIcon, XIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { WorkflowNodeEditPanel } from '@renderer/components/Workflow/WorkflowNodeEditPanel';
+import { WorkflowWebpageEditPanel } from '@renderer/components/Workflow/WorkflowWebpageEditPanel';
 import { useUnsavedLeaveGuard } from '@renderer/hooks/useUnsavedLeaveGuard';
 import {
   deleteWorkflowNodeForAllBusinesses,
@@ -222,6 +227,19 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
         );
         return;
       }
+      if (dragData.kind === 'webpage') {
+        const newNode = createWebpageNode({
+          position: flowPosition,
+          label: dragData.label ?? '网页节点',
+          nodeName: dragData.label ?? '网页节点',
+        });
+        setNodes((nds) =>
+          targetParallelId
+            ? attachResourceNodeToParallel([...nds, newNode], targetParallelId, newNode.id)
+            : [...nds, newNode],
+        );
+        return;
+      }
       if (dragData.kind === 'parallel') {
         setNodes((nds) => [
           ...nds,
@@ -233,30 +251,35 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
   );
 
   const handleNodeClick = useCallback(({ node }: IWorkflowEditorNodeEvent) => {
-    if (isResourceNode(node)) {
+    if (isResourceNode(node) || isWebpageNode(node)) {
       setSelectedNodeId(node.id);
     }
   }, []);
 
   const handleNodeEdit = useCallback(({ node }: IWorkflowEditorNodeEvent) => {
-    if (isResourceNode(node)) {
+    if (isResourceNode(node) || isWebpageNode(node)) {
       setSelectedNodeId(node.id);
     }
   }, []);
 
   const handleNodeDelete = useCallback(
     async ({ node }: IWorkflowEditorNodeEvent) => {
-      if (!isResourceNode(node)) {
+      if (!isResourceNode(node) && !isWebpageNode(node)) {
         return;
       }
       const data = node.data;
       const wfId = currentWorkflowIdRef.current;
+      const displayName =
+        data.label ||
+        (isResourceNode(node) ? node.data.resourceId : undefined) ||
+        data.nodeName ||
+        '未命名';
 
       const finishRemove = () => {
         if (selectedNodeId === node.id) {
           setSelectedNodeId(null);
         }
-        message.info(`已移除节点：${data.label || data.resourceId}`);
+        message.info(`已移除节点：${displayName}`);
         return true;
       };
 
@@ -264,15 +287,20 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
         return finishRemove();
       }
 
+      // 网页节点无 chat；有业务时仍提示目录清理，保存时仅资源节点删 chat
       const hasBusiness = await workflowHasBusinesses(wfId);
       if (!hasBusiness) {
         return finishRemove();
       }
 
+      const confirmContent = isWebpageNode(node)
+        ? '删除当前网页节点后，保存时会清理对应业务目录下的节点文件，是否继续？'
+        : '删除当前节点后，保存时会删除当前节点所有的历史业务记录，是否继续？';
+
       return new Promise<boolean>((resolve) => {
         modal.confirm({
           title: '删除节点',
-          content: '删除当前节点后，保存时会删除当前节点所有的历史业务记录，是否继续？',
+          content: confirmContent,
           okText: '继续',
           cancelText: '取消',
           onOk: () => resolve(finishRemove()),
@@ -285,6 +313,20 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
 
   const handleNodeUpdate = useCallback(
     (nodeId: string, patch: Partial<IWorkflowResourceNodeData>) => {
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id !== nodeId) {
+            return n;
+          }
+          return { ...n, data: { ...n.data, ...patch } };
+        }),
+      );
+    },
+    [setNodes],
+  );
+
+  const handleWebpageNodeUpdate = useCallback(
+    (nodeId: string, patch: Partial<IWorkflowWebpageNodeData>) => {
       setNodes((nds) =>
         nds.map((n) => {
           if (n.id !== nodeId) {
@@ -316,11 +358,16 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
       return false;
     }
 
+    // 叶子节点（资源 + 网页）均需校验节点名，保证 agent 目录可落盘
     for (const n of nodes) {
-      if (!isResourceNode(n)) {
+      if (!isLeafNode(n)) {
         continue;
       }
-      const nodeName = n.data.nodeName?.trim() || n.data.label?.trim() || n.data.resourceId || '';
+      const nodeName =
+        n.data.nodeName?.trim() ||
+        n.data.label?.trim() ||
+        (isResourceNode(n) ? n.data.resourceId : '') ||
+        '';
       const nodeErr = getSystemFileNameError(nodeName);
       if (nodeErr) {
         message.error(`节点「${n.data.label || nodeName}」：${nodeErr}`);
@@ -354,42 +401,51 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
       const oldGraph = parseWorkflowGraphJson(savedGraphJson);
       const oldNodeNames = new Map<string, string>();
       for (const n of oldGraph.nodes) {
-        if (!isResourceNode(n)) {
+        if (!isLeafNode(n)) {
           continue;
         }
-        const name = n.data.nodeName?.trim() || n.data.label?.trim() || n.data.resourceId || '';
+        const name =
+          n.data.nodeName?.trim() ||
+          n.data.label?.trim() ||
+          (isResourceNode(n) ? n.data.resourceId : '') ||
+          '';
         oldNodeNames.set(n.id, name);
       }
 
-      const newResourceNodeIds = new Set(
-        nodes.filter(isResourceNode).map((resourceNode) => resourceNode.id),
-      );
+      // 目录生命周期覆盖叶子节点；chat 清理仍仅资源节点
+      const newLeafNodeIds = new Set(nodes.filter(isLeafNode).map((leafNode) => leafNode.id));
       const businesses = id ? await fetchBusinessList(id) : [];
       const businessIds = businesses.map((item) => item.id);
 
       for (const oldNode of oldGraph.nodes) {
-        if (!isResourceNode(oldNode)) {
+        if (!isLeafNode(oldNode)) {
           continue;
         }
-        if (newResourceNodeIds.has(oldNode.id)) {
+        if (newLeafNodeIds.has(oldNode.id)) {
           continue;
         }
         const removedNodeName =
           oldNode.data.nodeName?.trim() ||
           oldNode.data.label?.trim() ||
-          oldNode.data.resourceId ||
+          (isResourceNode(oldNode) ? oldNode.data.resourceId : '') ||
           '';
         if (removedNodeName) {
           await deleteWorkflowNodeForAllBusinesses(trimmedName, removedNodeName);
-          deleteWorkflowNodeChatForAllBusinesses(id!, businessIds, oldNode.id);
+          if (isResourceNode(oldNode)) {
+            deleteWorkflowNodeChatForAllBusinesses(id!, businessIds, oldNode.id);
+          }
         }
       }
 
       for (const n of nodes) {
-        if (!isResourceNode(n)) {
+        if (!isLeafNode(n)) {
           continue;
         }
-        const nodeName = n.data.nodeName?.trim() || n.data.label?.trim() || n.data.resourceId || '';
+        const nodeName =
+          n.data.nodeName?.trim() ||
+          n.data.label?.trim() ||
+          (isResourceNode(n) ? n.data.resourceId : '') ||
+          '';
         const prevNodeName = oldNodeNames.get(n.id);
         if (prevNodeName && nodeName && prevNodeName !== nodeName) {
           await renameWorkflowNodeForAllBusinesses(trimmedName, prevNodeName, nodeName);
@@ -522,6 +578,16 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
                   {'并行节点'}
                 </div>
               </li>
+              <li>
+                <div
+                  className={`${styles['workflow-studio-palette-item']} ${styles['workflow-studio-palette-item--draggable']}`}
+                  draggable
+                  onDragStart={(e) =>
+                    setPaletteDragData(e, { kind: 'webpage', label: '网页节点' })
+                  }>
+                  {'网页节点'}
+                </div>
+              </li>
             </ul>
             <Typography.Text className={styles['workflow-studio-palette-title']}>
               {'提示词'}
@@ -604,6 +670,14 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
                 skills={skills}
                 onClose={() => setSelectedNodeId(null)}
                 onUpdate={handleNodeUpdate}
+              />
+            ) : null}
+            {selectedNode && isWebpageNode(selectedNode) ? (
+              <WorkflowWebpageEditPanel
+                key={selectedNode.id}
+                node={selectedNode}
+                onClose={() => setSelectedNodeId(null)}
+                onUpdate={handleWebpageNodeUpdate}
               />
             ) : null}
           </div>

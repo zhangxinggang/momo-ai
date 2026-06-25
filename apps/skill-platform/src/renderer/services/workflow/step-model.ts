@@ -2,12 +2,16 @@ import type {
   IWorkflowResourceNodeData,
   IWorkflowResourceStep,
   IWorkflowStep,
+  IWorkflowWebpageNodeData,
 } from '@momo/workflow';
 import type { Node } from '@xyflow/react';
 
+/** 宏观叶子节点数据：资源或网页 */
+type ILeafNodeData = IWorkflowResourceNodeData | IWorkflowWebpageNodeData;
+
 export interface IResourceStepViewModel extends IWorkflowResourceStep {
   kind: 'resource';
-  node: Node<IWorkflowResourceNodeData>;
+  node: Node<ILeafNodeData>;
 }
 
 export interface IParallelStepViewModel {
@@ -15,14 +19,14 @@ export interface IParallelStepViewModel {
   nodeId: string;
   nodeName: string;
   label?: string;
-  children: Array<IWorkflowResourceStep & { node: Node<IWorkflowResourceNodeData> }>;
+  children: Array<IWorkflowResourceStep & { node: Node<ILeafNodeData> }>;
 }
 
 export type IMacroStepViewModel = IResourceStepViewModel | IParallelStepViewModel;
 
 export function buildMacroStepViewModels(
   steps: IWorkflowStep[],
-  nodeMap: Map<string, Node<IWorkflowResourceNodeData>>,
+  nodeMap: Map<string, Node<ILeafNodeData>>,
 ): IMacroStepViewModel[] {
   const result: IMacroStepViewModel[] = [];
 
@@ -44,7 +48,7 @@ export function buildMacroStepViewModels(
         }
         return { ...child, node };
       })
-      .filter((item): item is IWorkflowResourceStep & { node: Node<IWorkflowResourceNodeData> } =>
+      .filter((item): item is IWorkflowResourceStep & { node: Node<ILeafNodeData> } =>
         Boolean(item),
       );
 

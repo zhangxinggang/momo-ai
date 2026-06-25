@@ -2,8 +2,8 @@ import { FileTextOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 
 import { getNoteMentionDisplayPath } from '../../utils/note-mention';
-import type { IProps } from './types';
 import styles from './index.module.less';
+import type { IProps } from './types';
 
 export function NoteReferenceChip(props: IProps) {
   const { path, measureText, showTooltip = true, className } = props;

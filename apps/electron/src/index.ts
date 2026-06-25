@@ -11,6 +11,7 @@ export async function init(options: IElectronShellInitOptions): Promise<BrowserW
 }
 export { getMainWindow, setMainWindow } from './main-window';
 export * from './main/database';
+export * from './main/events/page';
 export {
   attachWindowCloseTrayBehavior,
   configureTrayDefaults,

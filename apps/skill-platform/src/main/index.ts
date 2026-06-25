@@ -26,12 +26,11 @@ import {
 /** 根目录 appConf.js 中的桌面相关配置（与 @momo/electron README 约定一致） */
 interface IDeskAppConf {
   loadURL?: string;
-  openDevTools?: boolean;
   /** 为 false 时不启动 @momo/server 动态路由服务 */
   bundledNodeServer?: boolean;
 }
 
-const { appName, openDevTools } = getAppConfig() as IDeskAppConf & { appName?: string };
+const { appName } = getAppConfig() as IDeskAppConf & { appName?: string };
 
 let appDb: Database | null = null;
 /** 退出时停止静默技能同步定时器 */
@@ -96,7 +95,7 @@ async function createWindow() {
   setMainWindow(win);
 
   setupMainWindowReadyBehavior(win, appDb);
-  await loadMainWindowContent(win, openDevTools);
+  await loadMainWindowContent(win);
   attachMainWindowCloseBehavior(win);
 }
 createWindow();

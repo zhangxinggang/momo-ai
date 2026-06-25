@@ -1,23 +1,11 @@
-import { CenteredLoading } from '@renderer/components/ui/CenteredLoading';
 import { useSyncDefaultOnlineStoreSource } from '@renderer/hooks/useOnlineStoreSources';
 import { useSkillStore } from '@renderer/store';
-import { lazy, Suspense, useEffect } from 'react';
+import { useEffect } from 'react';
+import { SkillFullDetailPage } from '../SkillFullDetailPage';
 import { SkillLibraryView } from '../SkillLibraryView';
+import { SkillProjectsView } from '../SkillProjectsView';
 import { SkillRenderBoundary } from '../SkillRenderBoundary';
-
-const SkillFullDetailPage = lazy(() =>
-  import('@renderer/components/Skill/SkillFullDetailPage').then((m) => ({
-    default: m.SkillFullDetailPage,
-  })),
-);
-const SkillStore = lazy(() =>
-  import('@renderer/components/Skill/SkillStore').then((m) => ({ default: m.SkillStore })),
-);
-const SkillProjectsView = lazy(() =>
-  import('@renderer/components/Skill/SkillProjectsView').then((m) => ({
-    default: m.SkillProjectsView,
-  })),
-);
+import { SkillStore } from '../SkillStore';
 
 export function SkillManager() {
   useSyncDefaultOnlineStoreSource();
@@ -70,9 +58,7 @@ export function SkillManager() {
   if (storeView === 'store') {
     return (
       <div className='relative h-full min-h-0 flex-1'>
-        <Suspense fallback={<CenteredLoading label='加载中…' />}>
-          <SkillStore />
-        </Suspense>
+        <SkillStore />
       </div>
     );
   }
@@ -80,9 +66,7 @@ export function SkillManager() {
   if (storeView === 'projects') {
     return (
       <div className='relative h-full min-h-0 flex-1'>
-        <Suspense fallback={<CenteredLoading label='加载中…' />}>
-          <SkillProjectsView />
-        </Suspense>
+        <SkillProjectsView />
       </div>
     );
   }
@@ -90,20 +74,18 @@ export function SkillManager() {
   if (selectedSkillId) {
     return (
       <div className='relative h-full min-h-0 flex-1'>
-        <Suspense fallback={<CenteredLoading label='加载中…' />}>
-          <SkillRenderBoundary
-            resetKey={selectedSkillId}
-            title={'当前无法打开这个技能'}
-            description={'渲染错误已被隔离，页面仍可继续使用。你可以返回列表，或立即重试加载详情。'}
-            primaryActionLabel={'返回'}
-            onPrimaryAction={() => selectSkill(null)}
-            secondaryActionLabel={'重试'}
-            onSecondaryAction={() => {
-              void loadSkills().then(() => loadDeployedStatus());
-            }}>
-            <SkillFullDetailPage />
-          </SkillRenderBoundary>
-        </Suspense>
+        <SkillRenderBoundary
+          resetKey={selectedSkillId}
+          title={'当前无法打开这个技能'}
+          description={'渲染错误已被隔离，页面仍可继续使用。你可以返回列表，或立即重试加载详情。'}
+          primaryActionLabel={'返回'}
+          onPrimaryAction={() => selectSkill(null)}
+          secondaryActionLabel={'重试'}
+          onSecondaryAction={() => {
+            void loadSkills().then(() => loadDeployedStatus());
+          }}>
+          <SkillFullDetailPage />
+        </SkillRenderBoundary>
       </div>
     );
   }

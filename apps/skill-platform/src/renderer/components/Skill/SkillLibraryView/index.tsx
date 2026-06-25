@@ -592,7 +592,7 @@ export function SkillLibraryView() {
         cancelText={'取消'}
         okButtonProps={{ danger: true }}
         cancelButtonProps={{ autoFocus: true }}
-        destroyOnClose>
+        destroyOnHidden>
         <div className='space-y-2'>
           <p>
             {deleteConfirm.skillNames.length === 1

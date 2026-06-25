@@ -39,8 +39,8 @@ async function createWindow({ config = {} }: ICreateShellWindowOptions): Promise
   setMainWindow(win);
   winEvent({ win });
   await loadWindowContent(win);
-  if (openDevTools) {
-    win.webContents.openDevTools({ mode: 'detach' });
+  if (openDevTools && !app.isPackaged) {
+    win.webContents.openDevTools({ mode: 'right' });
   }
   return win;
 }

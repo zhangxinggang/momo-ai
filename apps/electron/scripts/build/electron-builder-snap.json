@@ -1,5 +1,5 @@
 {
-  "appId": "com.jgraph.drawio.desktop",
+  "appId": "com.electron.desktop",
   "copyright": "Copyright 2017-2026 draw.io Ltd",
   "asar": true,
   "files": ["**/*", "!**/WEB-INF{,/**}"],

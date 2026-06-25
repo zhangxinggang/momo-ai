@@ -14,7 +14,6 @@ const MAIN_PROCESS_EXTERNALS = [
   'log4js',
   '@log4js-node/smtp',
   '@napi-rs/canvas',
-  'pdf-parse',
   'html-to-docx',
 ];
 
@@ -115,8 +114,6 @@ export default defineConfig({
       {
         entry: 'src/main/index.ts',
         onstart(args) {
-          // Start Electron, vite-plugin-electron will auto-set VITE_DEV_SERVER_URL
-          // 启动 Electron，vite-plugin-electron 会自动设置 VITE_DEV_SERVER_URL
           // Override default argv to remove "--no-sandbox" which causes
           // "不支持的资源类型: --no-sandbox" on macOS with Electron 33.
           // The default startup() uses [".", "--no-sandbox"] but --no-sandbox
@@ -131,6 +128,7 @@ export default defineConfig({
           },
           build: {
             outDir: 'dist/main',
+            emptyOutDir: true,
             rollupOptions: {
               // log4js 在运行时用动态 require 加载 @log4js-node/smtp 等 appender，
               // @napi-rs/canvas 含 .node 原生模块，须整包外置由 Node 运行时加载。
@@ -163,10 +161,12 @@ export default defineConfig({
     renderer() as PluginOption,
   ],
   resolve: {
+    dedupe: ['react', 'react-dom'],
     alias: {
       ...sharedResolveAlias,
       '@momo/aichat': path.resolve(__dirname, '../../packages/momo-aichat/src/index.ts'),
       '@momo/knowledge': path.resolve(__dirname, '../../packages/momo-knowledge/src/index.ts'),
+      '@momo/langchain': path.resolve(__dirname, '../../packages/momo-langchain/src/index.ts'),
       '@momo/aichat/styles.css': path.resolve(
         __dirname,
         '../../packages/momo-aichat/src/styles/chat.css',
@@ -180,6 +180,7 @@ export default defineConfig({
         __dirname,
         '../../packages/momo-markdown/src/components/MdEditor/styles/style.less',
       ),
+      '@momo/file-editor': path.resolve(__dirname, '../../packages/momo-file-editor/src/index.ts'),
       '~': path.resolve(__dirname, '../../packages/momo-markdown/src/components/MdEditor'),
       '~~': path.resolve(__dirname, '../../packages/momo-markdown/src'),
     },

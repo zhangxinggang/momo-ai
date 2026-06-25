@@ -5,7 +5,7 @@
  * listing, deleting, and atomic replacement of repo contents.
  */
 import type { ISkillLocalFileEntry, ISkillLocalFileTreeEntry } from '@/types/modules';
-import { isTextFilePath } from '@/utils/text-file';
+import { isCodeEditorPath } from '@momo/file-editor/node';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import {
@@ -123,7 +123,7 @@ async function walkRepoDir<T>(opts: {
  * oversized files.  Shared by walkRepoDir callers and readLocalRepoFileByPath.
  */
 async function readFileContent(fullPath: string, fileName: string): Promise<string> {
-  if (!isTextFilePath(fileName)) {
+  if (!isCodeEditorPath(fileName)) {
     return '[binary file]';
   }
   const stat = await fs.stat(fullPath);

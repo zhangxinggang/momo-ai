@@ -1,7 +1,8 @@
 /**
- * 文件文本提取：参考 RAG-ChatBot-main，PDF 使用 LangChain WebPDFLoader
+ * 文件文本提取：参考 RAG-ChatBot-main，PDF 使用 @momo/langchain loadPdfText
  */
 
+import { loadPdfText } from '@momo/langchain';
 import mammoth from 'mammoth';
 
 function sanitizeText(input: string, maxLen = 200000): { text: string; snippet: string } {
@@ -20,13 +21,9 @@ function sanitizeText(input: string, maxLen = 200000): { text: string; snippet: 
   return { text, snippet };
 }
 
-/** PDF 解析：与 RAG-ChatBot-main 一致，使用 WebPDFLoader 按页加载 */
+/** PDF 解析：使用 @momo/langchain loadPdfText */
 async function extractPdfText(buffer: Buffer): Promise<string> {
-  const { WebPDFLoader } = await import('@langchain/community/document_loaders/web/pdf');
-  const blob = new Blob([new Uint8Array(buffer)], { type: 'application/pdf' });
-  const loader = new WebPDFLoader(blob);
-  const docs = await loader.load();
-  return docs.map((doc) => doc.pageContent).join('\n\n');
+  return loadPdfText(buffer);
 }
 
 async function extractExcelText(buffer: Buffer): Promise<string> {

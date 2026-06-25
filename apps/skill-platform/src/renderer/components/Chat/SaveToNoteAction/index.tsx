@@ -142,7 +142,7 @@ export function SaveToNoteAction({ message }: IProps) {
         confirmLoading={saving}
         okText={'保存'}
         cancelText={'取消'}
-        destroyOnClose>
+        destroyOnHidden>
         <TreeSelect
           className='w-full'
           placeholder={'选择笔记文件夹或文件'}

@@ -2,8 +2,10 @@ import type { Edge, Node } from '@xyflow/react';
 
 import {
   WORKFLOW_NODE_TYPE_PARALLEL,
+  WORKFLOW_NODE_TYPE_WEBPAGE,
   type IWorkflowParallelNodeData,
   type IWorkflowResourceNodeData,
+  type IWorkflowWebpageNodeData,
 } from '../types';
 
 export function isParallelNode(node: Node): node is Node<IWorkflowParallelNodeData> {
@@ -20,13 +22,24 @@ export function isResourceNode(node: Node): node is Node<IWorkflowResourceNodeDa
   );
 }
 
-/** 宏观图节点：并行容器 + 无 parentId 的顶层资源节点 */
+export function isWebpageNode(node: Node): node is Node<IWorkflowWebpageNodeData> {
+  return node.type === WORKFLOW_NODE_TYPE_WEBPAGE;
+}
+
+/** 可挂并行 / 可作宏观叶子：资源或网页（不含并行容器） */
+export function isLeafNode(
+  node: Node,
+): node is Node<IWorkflowResourceNodeData> | Node<IWorkflowWebpageNodeData> {
+  return isResourceNode(node) || isWebpageNode(node);
+}
+
+/** 宏观图节点：并行容器 + 无 parentId 的顶层叶子节点 */
 export function getMacroNodes(nodes: Node[]): Node[] {
   return nodes.filter((n) => {
     if (isParallelNode(n)) {
       return true;
     }
-    if (isResourceNode(n) && !n.parentId) {
+    if (isLeafNode(n) && !n.parentId) {
       return true;
     }
     return false;
@@ -39,7 +52,7 @@ export function isFreeResourceNode(nodes: Node[], edges: Edge[], nodeId: string)
     return false;
   }
   const node = nodes.find((n) => n.id === nodeId);
-  return !!node && isResourceNode(node) && !node.parentId;
+  return !!node && isLeafNode(node) && !node.parentId;
 }
 
 export const PARALLEL_CHILD_SLOT_WIDTH = 180;
@@ -88,7 +101,7 @@ export function findParallelNodeAtPoint(
   return null;
 }
 
-/** 将资源节点挂载到并行容器 */
+/** 将叶子节点（prompt / skill / webpage）挂载到并行容器 */
 export function attachResourceNodeToParallel(
   nodes: Node[],
   parallelId: string,
@@ -96,7 +109,7 @@ export function attachResourceNodeToParallel(
 ): Node[] {
   const parallel = nodes.find((n) => n.id === parallelId);
   const child = nodes.find((n) => n.id === childId);
-  if (!parallel || !isParallelNode(parallel) || !child || !isResourceNode(child)) {
+  if (!parallel || !isParallelNode(parallel) || !child || !isLeafNode(child)) {
     return nodes;
   }
 
@@ -143,5 +156,28 @@ export function createParallelNode(params?: {
       childNodeIds: [],
     },
     style: { width: 280, height: 160 },
+  };
+}
+
+export function createWebpageNode(params?: {
+  label?: string;
+  nodeName?: string;
+  remark?: string;
+  url?: string;
+  position?: { x: number; y: number };
+  nodeId?: string;
+}): Node<IWorkflowWebpageNodeData> {
+  const id = params?.nodeId ?? `wf-web-${crypto.randomUUID()}`;
+  const label = params?.label ?? '网页节点';
+  return {
+    id,
+    type: WORKFLOW_NODE_TYPE_WEBPAGE,
+    position: params?.position ?? { x: 0, y: 0 },
+    data: {
+      label,
+      nodeName: params?.nodeName?.trim() || label,
+      remark: params?.remark,
+      url: params?.url,
+    },
   };
 }

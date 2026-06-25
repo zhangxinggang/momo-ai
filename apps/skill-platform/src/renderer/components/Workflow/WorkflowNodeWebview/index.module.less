@@ -1,0 +1,45 @@
+.workflow-node-webview {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  background: hsl(var(--background));
+
+  &-frame {
+    min-height: 0;
+    flex: 1;
+    width: 100%;
+    border: 0;
+    background: hsl(var(--background));
+  }
+
+  &-loading {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: hsl(var(--background) / 0.72);
+    backdrop-filter: blur(4px);
+    transition: opacity 200ms ease;
+  }
+
+  &-loading--hidden {
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  &-empty {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    align-items: center;
+    justify-content: center;
+    color: hsl(var(--muted-foreground));
+    font-size: 14px;
+    background: hsl(var(--background));
+  }
+}

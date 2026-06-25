@@ -12,6 +12,8 @@ export interface IMomoTreeNode {
   children?: IMomoTreeNode[];
   /** 仅文件节点：笔记类型 */
   noteType?: EMomoTreeNoteType;
+  /** 仅文件节点：稳定 UUID（AI 写作等场景绑定） */
+  noteId?: string;
 }
 
 /** 树操作文案 */

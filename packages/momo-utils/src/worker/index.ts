@@ -1,5 +1,3 @@
-const webWorker = window.Worker;
-
 type IFunc = (e: MessageEvent) => void;
 type IInput = string | URL | IFunc;
 type ISource = IInput | IInput[];
@@ -24,6 +22,14 @@ const typeReflect = {
   array: '[object Array]',
   string: '[object String]',
 };
+
+/** 延迟读取 Worker，避免 Node / Electron 主进程加载模块时访问 window */
+function getWebWorker(): typeof Worker {
+  if (typeof globalThis !== 'undefined' && 'Worker' in globalThis) {
+    return globalThis.Worker as typeof Worker;
+  }
+  throw new Error('Worker 仅在浏览器环境中可用');
+}
 
 const initWorker = function (src: ISource, options: WorkerOptions): Worker {
   const type = Object.prototype.toString.call(src);
@@ -62,9 +68,9 @@ const initWorker = function (src: ISource, options: WorkerOptions): Worker {
         }
       });
       const url = getBlobUrl(sourceObj);
-      wk = new webWorker(url, options);
+      wk = new (getWebWorker())(url, options);
     } else {
-      wk = new webWorker(src as string | URL, options);
+      wk = new (getWebWorker())(src as string | URL, options);
     }
   };
   wrapWorker();

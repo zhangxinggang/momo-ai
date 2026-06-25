@@ -6,14 +6,16 @@ import type {
   IWorkflowTerminalNodeData,
 } from '../types';
 import { WORKFLOW_NODE_TYPE_END, WORKFLOW_NODE_TYPE_START } from '../types';
-import { getMacroNodes, isParallelNode, isResourceNode } from './parallel-graph';
+import { getMacroNodes, isLeafNode, isParallelNode, isWebpageNode } from './parallel-graph';
 
 export interface IWorkflowResourceStep {
   nodeId: string;
-  resourceKind: 'prompt' | 'skill';
+  resourceKind: 'prompt' | 'skill' | 'webpage';
   resourceId: string;
   nodeName: string;
   label?: string;
+  url?: string;
+  remark?: string;
 }
 
 export interface IWorkflowParallelStep {
@@ -84,7 +86,24 @@ function toResourceStep(node: Node<IWorkflowResourceNodeData>): IWorkflowResourc
     resourceId: d.resourceId,
     nodeName: d.nodeName?.trim() || d.label?.trim() || d.resourceId,
     label: d.label,
+    remark: d.remark,
   };
+}
+
+function toLeafStep(node: Node): IWorkflowResourceStep {
+  if (isWebpageNode(node)) {
+    const d = node.data;
+    return {
+      nodeId: node.id,
+      resourceKind: 'webpage',
+      resourceId: '',
+      nodeName: d.nodeName?.trim() || d.label?.trim() || '网页节点',
+      label: d.label,
+      url: d.url,
+      remark: d.remark,
+    };
+  }
+  return toResourceStep(node as Node<IWorkflowResourceNodeData>);
 }
 
 function buildParallelChildren(
@@ -94,8 +113,8 @@ function buildParallelChildren(
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
   return (parallelNode.data.childNodeIds ?? [])
     .map((childId) => nodeById.get(childId))
-    .filter((n): n is Node<IWorkflowResourceNodeData> => !!n && isResourceNode(n))
-    .map(toResourceStep);
+    .filter((n): n is Node => !!n && isLeafNode(n))
+    .map(toLeafStep);
 }
 
 function topologicalSortMacroNodes(
@@ -181,8 +200,8 @@ export function buildWorkflowSteps(
       });
       continue;
     }
-    if (isResourceNode(node)) {
-      steps.push({ kind: 'resource', step: toResourceStep(node) });
+    if (isLeafNode(node)) {
+      steps.push({ kind: 'resource', step: toLeafStep(node) });
     }
   }
 
@@ -236,7 +255,7 @@ function validateParallelStructure(nodes: Node[]): IWorkflowGraphValidation {
     const childIds = node.data.childNodeIds ?? [];
     for (const childId of childIds) {
       const child = nodeById.get(childId);
-      if (!child || !isResourceNode(child)) {
+      if (!child || !isLeafNode(child)) {
         return { ok: false, message: '请将并行节点与子节点正确关联' };
       }
       if (child.parentId !== node.id) {
@@ -246,7 +265,7 @@ function validateParallelStructure(nodes: Node[]): IWorkflowGraphValidation {
   }
 
   for (const node of nodes) {
-    if (!isResourceNode(node) || !node.parentId) {
+    if (!isLeafNode(node) || !node.parentId) {
       continue;
     }
     const parent = nodeById.get(node.parentId);
@@ -426,4 +445,4 @@ export function createResourceNode(params: {
   };
 }
 
-export { createParallelNode } from './parallel-graph';
+export { createParallelNode, createWebpageNode } from './parallel-graph';

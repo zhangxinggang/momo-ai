@@ -47,7 +47,7 @@ export function CloseDialog({ isOpen, onClose }: IProps) {
       onCancel={handleCancel}
       footer={null}
       width={400}
-      destroyOnClose={false}
+      destroyOnHidden={false}
       styles={{ mask: { backdropFilter: 'blur(8px)' } }}>
       <p className='text-muted-foreground mb-4 text-sm'>{'您想要关闭应用还是最小化到系统托盘？'}</p>
 

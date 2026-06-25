@@ -2,7 +2,7 @@ import { DeleteOutlined, EditOutlined, PlusCircleOutlined } from '@ant-design/ic
 import { useChatContext } from '@momo/aichat';
 import { Button, Input, Popconfirm } from 'antd';
 import { clsx } from 'clsx';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { SidebarEmptyState } from '@renderer/components/ui/SidebarEmptyState';
 import { useUIStore } from '@renderer/store';
@@ -25,7 +25,18 @@ function ChatPanelContent({ collapsed = false }: IProps) {
     handleNewChat,
     isSessionGenerating,
     stopGeneration,
+    refreshSessionsFromStorage,
   } = useChatContext();
+
+  const viewMode = useUIStore((s) => s.viewMode);
+  const refreshSessionsRef = useRef(refreshSessionsFromStorage);
+  refreshSessionsRef.current = refreshSessionsFromStorage;
+
+  useEffect(() => {
+    if (viewMode === 'chat') {
+      refreshSessionsRef.current();
+    }
+  }, [viewMode]);
 
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');

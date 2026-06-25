@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { assertRelativePathUnderBase } from '@/utils/path-under-base';
-import { isTextFilePath } from '@/utils/text-file';
+import { isCodeEditorPath } from '@momo/file-editor/node';
 import {
   getAgentDir,
   getWorkflowAgentDir,
@@ -213,7 +213,7 @@ export function registerWorkflowAgentIPC(): void {
         if (!fs.existsSync(filePath)) {
           return { success: false, error: '文件不存在' };
         }
-        if (!isTextFilePath(filePath)) {
+        if (!isCodeEditorPath(filePath)) {
           return { success: false, error: '不支持的文件类型', skipped: true };
         }
         const content = fs.readFileSync(filePath, 'utf-8');

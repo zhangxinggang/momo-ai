@@ -57,7 +57,10 @@ export function expandCompoundSkillCommand(commandLine: string): string[] {
     return [];
   }
 
-  const parts = trimmed.split(/\s*&&\s*|\s*;\s*/).map((part) => part.trim()).filter(Boolean);
+  const parts = trimmed
+    .split(/\s*&&\s*|\s*;\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean);
   if (parts.length <= 1) {
     return parts;
   }
@@ -118,7 +121,11 @@ export function filterSkillRunCommands(commandLines: string[]): {
   const seen = new Set<string>();
 
   for (const raw of commandLines) {
-    const parts = raw.trim().split(/\s*&&\s*|\s*;\s*/).map((part) => part.trim()).filter(Boolean);
+    const parts = raw
+      .trim()
+      .split(/\s*&&\s*|\s*;\s*/)
+      .map((part) => part.trim())
+      .filter(Boolean);
     const strippedPrep = parts.some((part) => SKIP_PREP_COMMAND_RE.test(part));
     const expanded = expandCompoundSkillCommand(raw);
 
@@ -140,7 +147,11 @@ export function filterSkillRunCommands(commandLines: string[]): {
       }
     }
 
-    if (strippedPrep && expanded.some(isMainRunSkillCommand) && !skippedNotes.includes(SKIP_PREP_NOTE)) {
+    if (
+      strippedPrep &&
+      expanded.some(isMainRunSkillCommand) &&
+      !skippedNotes.includes(SKIP_PREP_NOTE)
+    ) {
       skippedNotes.push(SKIP_PREP_NOTE);
     }
   }

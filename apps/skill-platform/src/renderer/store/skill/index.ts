@@ -19,6 +19,7 @@ import {
   createSkill,
   deleteSkill,
   extractClawhubArchive,
+  extractCocoloopArchive,
   extractSkillHubArchive,
   fetchSkillRemoteBinary,
   fetchSkillRemoteContent,
@@ -40,6 +41,7 @@ import {
   writeSkillLocalFile,
 } from '@renderer/services/skill/api';
 import { isClawHubDownloadUrl } from '@renderer/services/skill/clawhub-store';
+import { isCocoloopDownloadUrl } from '@renderer/services/skill/cocoloop-store';
 import { filterVisibleScannedSkills, filterVisibleSkills } from '@renderer/services/skill/filter';
 import { normalizeSkill, normalizeSkills } from '@renderer/services/skill/normalize';
 import {
@@ -263,6 +265,8 @@ function getRegistryContentFetchOptions() {
     extractSkillHubArchive: (slug: string, version?: string) =>
       extractSkillHubArchive(slug, version),
     extractClawhubArchive: (slug: string) => extractClawhubArchive(slug),
+    extractCocoloopArchive: (slug: string, downloadUrl?: string) =>
+      extractCocoloopArchive(slug, downloadUrl),
   };
 }
 
@@ -1192,6 +1196,13 @@ export const useSkillStore = create<ISkillState>()(
               const extracted = await fetchOptions.extractClawhubArchive!(regSkill.slug);
               effectiveContent = extracted.content;
               sourceDir = extracted.cacheDir;
+            } else if (isCocoloopDownloadUrl(regSkill.content_url)) {
+              const extracted = await fetchOptions.extractCocoloopArchive!(
+                regSkill.slug,
+                regSkill.content_url,
+              );
+              effectiveContent = extracted.content;
+              sourceDir = extracted.cacheDir;
             } else {
               effectiveContent = await fetchRegistrySkillRemoteContent(
                 regSkill,
@@ -1200,7 +1211,11 @@ export const useSkillStore = create<ISkillState>()(
                 fetchOptions,
               );
               if (!sourceDir) {
-                sourceDir = await resolveRegistrySkillSourceDir(regSkill);
+                sourceDir = await resolveRegistrySkillSourceDir(
+                  regSkill,
+                  fetchOptions.extractSkillHubArchive,
+                  fetchOptions.extractCocoloopArchive,
+                );
               }
             }
           } catch (fetchError) {

@@ -31,7 +31,7 @@ function normalizeOnlineSkillSource(item: DOnlineConfSkillSource): IRemoteSkillS
   };
 }
 
-/** 合并 onlineConf 的 fileSource 与 apiSource，合并后仅按 type / url 使用，不再区分来源 */
+/** 合并 onlineConf 的 fileSource 与 apiSource */
 export function mergeOnlineSkillStoreSources(
   config: DOnlineConf | null,
 ): IRemoteSkillStoreSource[] {
@@ -52,9 +52,9 @@ export function mergeOnlineSkillStoreSources(
 }
 
 export function isPagedRemoteStoreType(type: TRemoteSkillStoreType): boolean {
-  return type === 'skillhub' || type === 'clawhub' || type === 'skills-sh';
+  return type === 'skillhub' || type === 'clawhub' || type === 'cocoloop' || type === 'skills-sh';
 }
 
 export function isSearchRemoteStoreType(type: TRemoteSkillStoreType): boolean {
-  return type === 'skillhub' || type === 'skills-sh';
+  return type === 'skillhub' || type === 'cocoloop' || type === 'skills-sh';
 }

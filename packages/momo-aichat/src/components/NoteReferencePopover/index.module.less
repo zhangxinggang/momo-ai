@@ -13,6 +13,14 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
+/* Portal 模式：定位由 inline style 控制，避免被 overflow:hidden 裁切 */
+.note-popover-portal {
+  position: fixed;
+  right: auto;
+  bottom: auto;
+  margin-bottom: 0;
+}
+
 .note-popover-header {
   padding: 6px 10px;
   font-size: 11px;

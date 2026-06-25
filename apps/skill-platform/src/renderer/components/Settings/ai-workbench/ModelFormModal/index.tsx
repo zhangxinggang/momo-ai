@@ -54,7 +54,7 @@ export function ModelFormModal({
       onCancel={onClose}
       footer={null}
       width={800}
-      destroyOnClose
+      destroyOnHidden
       title={
         <div>
           <div>{editingModelId ? '编辑模型' : '添加模型'}</div>

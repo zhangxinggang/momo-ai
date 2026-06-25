@@ -1,9 +1,12 @@
 import type { IWorkflow, IWorkflowBusiness } from '@/types/modules';
 import {
   buildWorkflowSteps,
+  isLeafNode,
   isParallelGroupOutputReady,
+  isWebpageNode,
   parseWorkflowGraphJson,
   type IWorkflowResourceNodeData,
+  type IWorkflowWebpageNodeData,
 } from '@momo/workflow';
 import type { Node } from '@xyflow/react';
 import { App } from 'antd';
@@ -11,6 +14,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 
 import { FullscreenModal } from '@renderer/components/ui/FullscreenModal';
 import { WorkflowNodeChat } from '@renderer/components/Workflow/WorkflowNodeChat';
+import { WorkflowNodeWebview } from '@renderer/components/Workflow/WorkflowNodeWebview';
 import { WorkflowRunPanel } from '@renderer/components/Workflow/WorkflowRunPanel';
 import { WorkflowStepsBar } from '@renderer/components/Workflow/WorkflowStepsBar';
 import {
@@ -156,11 +160,8 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
 
       const nodeMap = new Map(
         nodes
-          .filter((n) => {
-            const d = n.data;
-            return d?.resourceKind === 'prompt' || d?.resourceKind === 'skill';
-          })
-          .map((n) => [n.id, n as Node<IWorkflowResourceNodeData>]),
+          .filter(isLeafNode)
+          .map((n) => [n.id, n as Node<IWorkflowResourceNodeData | IWorkflowWebpageNodeData>]),
       );
 
       const viewMacroSteps = buildMacroStepViewModels(built.steps, nodeMap);
@@ -283,8 +284,13 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
     [resolvedSidePanelWidth],
   );
 
+  const isWebpageStep =
+    !!activeStep &&
+    (activeStep.resourceKind === 'webpage' || isWebpageNode(activeStep.node));
+
+  // 网页节点不创建对话 session，避免无意义 bootstrap
   const chatBootstrap = useMemo(() => {
-    if (!activeStep) {
+    if (!activeStep || isWebpageStep) {
       return null;
     }
     return getOrCreateWorkflowNodeSession(
@@ -293,31 +299,41 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
       activeStep.nodeId,
       activeStep.nodeName,
     );
-  }, [activeStep, businessId, workflowId]);
+  }, [activeStep, businessId, isWebpageStep, workflowId]);
 
-  const activeNodeData = activeStep?.node.data;
+  const activeResourceData =
+    activeStep && !isWebpageStep
+      ? (activeStep.node.data as IWorkflowResourceNodeData)
+      : undefined;
   const linkedPrompt =
-    activeNodeData?.resourceKind === 'prompt'
-      ? prompts.find((p) => p.id === activeNodeData.resourceId)
+    activeResourceData?.resourceKind === 'prompt'
+      ? prompts.find((p) => p.id === activeResourceData.resourceId)
       : undefined;
   const linkedSkill =
-    activeNodeData?.resourceKind === 'skill'
-      ? skills.find((s) => s.id === activeNodeData.resourceId)
+    activeResourceData?.resourceKind === 'skill'
+      ? skills.find((s) => s.id === activeResourceData.resourceId)
       : undefined;
 
-  const systemPrompt = activeNodeData?.systemPrompt?.trim() || linkedPrompt?.systemPrompt || '';
-  const userPrompt = activeNodeData?.userPrompt?.trim() || linkedPrompt?.userPrompt || '';
+  const systemPrompt =
+    activeResourceData?.systemPrompt?.trim() || linkedPrompt?.systemPrompt || '';
+  const userPrompt = activeResourceData?.userPrompt?.trim() || linkedPrompt?.userPrompt || '';
 
   const prefillUserPrompt =
     !!activeStep &&
-    activeNodeData?.resourceKind === 'prompt' &&
+    activeResourceData?.resourceKind === 'prompt' &&
     !visitedPromptNodeIdsRef.current.has(activeStep.nodeId);
 
   useEffect(() => {
-    if (activeStep && activeNodeData?.resourceKind === 'prompt') {
+    if (activeStep && activeResourceData?.resourceKind === 'prompt') {
       visitedPromptNodeIdsRef.current.add(activeStep.nodeId);
     }
-  }, [activeStep, activeNodeData?.resourceKind]);
+  }, [activeStep, activeResourceData?.resourceKind]);
+
+  const webpageUrl =
+    activeStep?.url ??
+    (activeStep && isWebpageNode(activeStep.node)
+      ? (activeStep.node.data as IWorkflowWebpageNodeData).url
+      : undefined);
 
   const bumpFilesRefresh = useCallback((nodeId: string) => {
     setFilesRefreshTokens((prev) => ({
@@ -468,17 +484,24 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
               <main
                 className={styles['workflow-work-chat']}
                 style={{ flex: 'none', width: chatPanelWidth }}>
-                {activeStep && chatBootstrap ? (
+                {activeStep && isWebpageStep ? (
+                  <WorkflowNodeWebview
+                    title={activeStep.nodeName}
+                    url={webpageUrl}
+                  />
+                ) : activeStep && chatBootstrap ? (
                   <WorkflowNodeChat
                     activeSkillId={
-                      activeNodeData?.resourceKind === 'skill' ? activeNodeData.resourceId : null
+                      activeResourceData?.resourceKind === 'skill'
+                        ? activeResourceData.resourceId
+                        : null
                     }
                     aiModels={aiModels}
                     bootstrapSessionId={chatBootstrap.sessionId}
                     businessId={businessId}
-                    executionModel={activeNodeData?.executionModel}
-                    kbCollectionId={activeNodeData?.kbCollectionId}
-                    nodeWorkspacePaths={activeNodeData?.workspacePaths}
+                    executionModel={activeResourceData?.executionModel}
+                    kbCollectionId={activeResourceData?.kbCollectionId}
+                    nodeWorkspacePaths={activeResourceData?.workspacePaths}
                     key={chatBootstrap.sessionKey}
                     nodeName={activeStep.nodeName}
                     nodeOutputDir={nodeOutputDirs[activeStep.nodeId] ?? null}
@@ -487,7 +510,7 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
                     prefillUserPrompt={prefillUserPrompt}
                     previousNodeRunResult={previousNodeRunResult}
                     previousParallelResults={previousParallelResults}
-                    resourceKind={activeNodeData?.resourceKind ?? 'prompt'}
+                    resourceKind={activeResourceData?.resourceKind ?? 'prompt'}
                     sessionKey={chatBootstrap.sessionKey}
                     skills={skills}
                     storagePrefix={chatBootstrap.storagePrefix}

@@ -53,9 +53,12 @@ export default defineConfig({
     emptyOutDir: true,
     sourcemap: false,
     lib: {
-      entry: resolve(packageRoot, 'src/index.ts'),
+      entry: {
+        index: resolve(packageRoot, 'src/index.ts'),
+        node: resolve(packageRoot, 'src/node.ts'),
+      },
       formats: ['es'],
-      fileName: 'index',
+      fileName: (format, entryName) => `${entryName}.js`,
     },
     rollupOptions: {
       external: isExternalId,

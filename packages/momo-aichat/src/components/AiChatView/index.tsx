@@ -10,7 +10,6 @@ import {
   type IChatMessage,
 } from '../../types/chat';
 import { ChatAttachmentIcon } from '../../utils/attachment-icon';
-import { NoteReferenceText } from '../NoteReferenceText';
 import { ChatContextBanner } from '../ChatContextBanner';
 import type { IChatInputPanelRef } from '../ChatInputPanel';
 import ChatInputPanel from '../ChatInputPanel';
@@ -20,6 +19,7 @@ import DropOverlay from '../DropOverlay';
 import MarkdownRenderer from '../MarkdownRenderer';
 import { MessageCopyAction } from '../MessageCopyAction';
 import { MessageUserActions } from '../MessageUserActions';
+import { NoteReferenceText } from '../NoteReferenceText';
 
 export interface IProps {
   /** 外部同步的输入值（如 Prompt 测试预填用户提示词） */
@@ -50,7 +50,7 @@ export const AiChatView: React.FC<IProps> = ({
   renderAssistantMessageActions,
 }) => {
   const { message, modal } = App.useApp();
-  const { uploadFiles, validateLocalFiles, isImageModel, getImageModelInputHint, noteReferences } =
+  const { uploadFiles, validateLocalFiles, isImageModel, getImageModelInputHint } =
     useAiChatConfig();
   // 用户输入内容
   const [inputValue, setInputValue] = useState(externalInputValue ?? '');
@@ -407,15 +407,6 @@ export const AiChatView: React.FC<IProps> = ({
       );
     };
 
-    let resolvedUserContent = userContent;
-    if (noteReferences?.resolveContent) {
-      try {
-        resolvedUserContent = (await noteReferences.resolveContent(userContent)).trim();
-      } catch {
-        resolvedUserContent = userContent;
-      }
-    }
-
     const attachmentsPrompt = buildAttachmentsPrompt(attachments);
     const referenceImages = attachments
       .filter((file) => file.imageBase64 && file.mime.startsWith('image/'))
@@ -425,10 +416,10 @@ export const AiChatView: React.FC<IProps> = ({
         base64: file.imageBase64!,
       }));
 
-    let finalUserContent = resolvedUserContent;
+    let finalUserContent = userContent;
     if (!isCurrentImageModel && attachments.length > 0) {
-      finalUserContent = `${attachmentsPrompt}\n\n我的问题：\n${resolvedUserContent || '(基于以上文件，请给出总结/见解)'}`;
-    } else if (isCurrentImageModel && !resolvedUserContent && referenceImages.length > 0) {
+      finalUserContent = `${attachmentsPrompt}\n\n我的问题：\n${userContent || '(基于以上文件，请给出总结/见解)'}`;
+    } else if (isCurrentImageModel && !userContent && referenceImages.length > 0) {
       finalUserContent = '请根据参考图生成或编辑图片';
     }
 

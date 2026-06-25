@@ -13,10 +13,15 @@
   outline: none;
   resize: none;
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 24px;
   font-family: inherit;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  scrollbar-gutter: stable;
+  box-sizing: border-box;
+  letter-spacing: normal;
+  tab-size: 8;
 }
 
 .mention-input-mirror {
@@ -27,12 +32,31 @@
   overflow: hidden;
 }
 
+.mention-input-mirror-content {
+  width: 100%;
+  min-height: 24px;
+  will-change: transform;
+}
+
 .mention-input-textarea {
   position: relative;
   z-index: 1;
   background: transparent;
   color: transparent;
+  -webkit-text-fill-color: transparent;
   caret-color: var(--text-primary, #111827);
+  overflow-y: auto;
+}
+
+.mention-input-textarea::selection {
+  background: rgba(59, 130, 246, 0.35);
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.mention-input-textarea::-moz-selection {
+  background: rgba(59, 130, 246, 0.35);
+  color: transparent;
 }
 
 .mention-plain {

@@ -22,6 +22,9 @@ export const skillApi = {
   scanLocal: () => ipcRenderer.invoke(IPC_CHANNELS.SKILL_SCAN_LOCAL),
   scanLocalPreview: (customPaths?: string[]) =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_SCAN_LOCAL_PREVIEW, customPaths),
+  listDefaultSkills: () => ipcRenderer.invoke(IPC_CHANNELS.SKILL_LIST_DEFAULT_SKILLS),
+  importDefaultSkills: (zipFileNames: string[], options: { overwrite: boolean }) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILL_IMPORT_DEFAULT_SKILLS, zipFileNames, options),
   scanSafety: (input: ISkillSafetyScanInput): Promise<ISkillSafetyReport> =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_SCAN_SAFETY, input),
   saveSafetyReport: (skillId: string, report: ISkillSafetyReport): Promise<void> =>
@@ -65,6 +68,8 @@ export const skillApi = {
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_EXTRACT_SKILLHUB_ARCHIVE, { slug, version }),
   extractClawhubArchive: (slug: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_EXTRACT_CLAWHUB_ARCHIVE, slug),
+  extractCocoloopArchive: (slug: string, downloadUrl?: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILL_EXTRACT_COCOLOOP_ARCHIVE, { slug, downloadUrl }),
   fetchRemotePost: (url: string, body: unknown) =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_FETCH_REMOTE_POST, url, body),
   fetchRemoteBinary: async (url: string): Promise<ArrayBuffer> => {
@@ -91,7 +96,10 @@ export const skillApi = {
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_LIST_LOCAL_FILES, skillId),
   readLocalFile: (skillId: string, relativePath: string): Promise<ISkillLocalFileEntry | null> =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_READ_LOCAL_FILE, skillId, relativePath),
-  readLocalFileBuffer: async (skillId: string, relativePath: string): Promise<ArrayBuffer | null> => {
+  readLocalFileBuffer: async (
+    skillId: string,
+    relativePath: string,
+  ): Promise<ArrayBuffer | null> => {
     const base64 = await ipcRenderer.invoke(
       IPC_CHANNELS.SKILL_READ_LOCAL_FILE_BUFFER,
       skillId,

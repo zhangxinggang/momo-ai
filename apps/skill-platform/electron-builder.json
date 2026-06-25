@@ -1,20 +1,20 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "com.aim.app",
+  "icon": "dist/static/logo.png",
   "productName": "AIM",
   "directories": {
-    "output": "release"
+    "output": "out"
   },
-  "extraMetadata": {
-    "main": "dist/main/index.js"
-  },
-  "files": ["dist/**/*", "appConf.cjs", "static/**/*", "server/**/*", "!**/*.map"],
+  "files": ["dist/main/**/*", "dist/preload/**/*", "package.json"],
   "electronLanguages": ["en-US", "zh-CN"],
   "extraResources": [],
   "asarUnpack": ["**/*.node"],
   "asar": true,
   "npmRebuild": false,
   "nodeGypRebuild": false,
+  "buildDependenciesFromSource": false,
+  "afterPack": "./scripts/build/afterPack.cjs",
   "mac": {
     "target": [
       {

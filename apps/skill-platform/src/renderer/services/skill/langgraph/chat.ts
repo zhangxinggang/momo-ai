@@ -1,8 +1,18 @@
 import type { IAIConfig, IChatMessage } from '@renderer/services/ai';
 import { chatCompletion } from '@renderer/services/ai';
-import { canExecuteSkillWorkspace, executeSkillWorkspace, getSkillRepoPath, isSkillApiAvailable } from '@renderer/services/skill/api';
+import {
+  canExecuteSkillWorkspace,
+  executeSkillWorkspace,
+  getSkillRepoPath,
+  isSkillApiAvailable,
+} from '@renderer/services/skill/api';
 import { writeWorkflowNodeArtifacts } from '@renderer/services/workflow/agent-files';
-import { findMissingArtifactScripts, parseSkillArtifacts, writeSessionArtifacts } from '../skill-artifacts';
+import {
+  findMissingArtifactScripts,
+  findMissingEnvArtifacts,
+  parseSkillArtifacts,
+  writeSessionArtifacts,
+} from '../skill-artifacts';
 import { parseSkillRunCommands } from '../skill-run-commands';
 
 interface ISkillChatState {
@@ -78,6 +88,13 @@ function buildAnswerMessages(state: ISkillChatState): IChatMessage[] {
 // 脚本内容
 \`\`\`
 也支持 \`\`\`artifact:scripts/generate.js 格式。脚本 require 的本地文件（如 theme-colors.json）必须一并写入。
+
+写入凭据文件 \`.env\` 时，**必须**使用 \`text:.env\`、\`env:.env\` 或 \`ini:.env\` 格式，例如：
+\`\`\`text:.env
+ONES_EMAIL=user@example.com
+ONES_PASSWORD=secret
+\`\`\`
+**禁止**在回复中回显密码；**禁止**重写 SKILL 仓库内已有的 \`scripts/\` 脚本，应直接调用种子拷贝的脚本。
 
 ## 工作区说明（重要）
 - 所有 artifact 与脚本产出写入**会话临时工作区**，**禁止**修改原始技能仓库
@@ -211,6 +228,11 @@ async function appendSkillExecutionResults(
     if (missingArtifactScripts.length > 0) {
       next += `\n\n---\n\n**警告：** 以下脚本在回复中声明但未成功写入工作区：${missingArtifactScripts.map((p) => `\`${p}\``).join(', ')}`;
     }
+
+    const missingEnvArtifacts = findMissingEnvArtifacts(reply, writtenPaths);
+    if (missingEnvArtifacts.length > 0) {
+      next += `\n\n---\n\n**警告：** 凭据文件未落盘：${missingEnvArtifacts.map((p) => `\`${p}\``).join(', ')}。请使用 \`\`\`text:.env\` 格式重新写入，否则上传脚本将无法读取 ONES 凭据。`;
+    }
   }
 
   if (!canExecuteSkillWorkspace()) {
@@ -282,9 +304,7 @@ async function appendSkillExecutionResults(
       sections.push(`\n警告：\n\`\`\`\n${exec.stderr.slice(0, 500)}\n\`\`\``);
     }
     if (exec.tempOutputFiles?.length) {
-      sections.push(
-        `\n已生成文件：\n${exec.tempOutputFiles.map((p) => `- \`${p}\``).join('\n')}`,
-      );
+      sections.push(`\n已生成文件：\n${exec.tempOutputFiles.map((p) => `- \`${p}\``).join('\n')}`);
     } else if (exec.outputFiles?.length) {
       sections.push(`\n产出文件：\n${exec.outputFiles.map((p) => `- \`${p}\``).join('\n')}`);
     }

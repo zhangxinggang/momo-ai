@@ -93,7 +93,7 @@ export function SkillQuickInstall({ skill, onClose }: IProps) {
         body: { maxHeight: 'min(70vh, 560px)', overflowY: 'auto' },
         mask: { backdropFilter: 'blur(4px)' },
       }}
-      destroyOnClose={false}>
+      destroyOnHidden={false}>
       <div className='scrollbar-hide space-y-4'>
         {availablePlatforms.length === 0 ? (
           <div className='text-muted-foreground py-8 text-center'>

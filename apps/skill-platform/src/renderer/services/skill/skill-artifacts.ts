@@ -20,6 +20,8 @@ const ARTIFACT_FILE_LANGS = new Set([
   'md',
   'text',
   'txt',
+  'ini',
+  'env',
   'yaml',
   'yml',
   'html',
@@ -140,11 +142,32 @@ export function extractScriptPathFromCommand(commandLine: string): string | null
   return null;
 }
 
+/** 检测回复中声明了 .env 但未成功写入工作区的路径 */
+export function findMissingEnvArtifacts(reply: string, writtenPaths: string[]): string[] {
+  const writtenSet = new Set(writtenPaths.map(normalizeArtifactPath));
+  const envPathsInReply = new Set<string>();
+
+  let match: RegExpExecArray | null;
+  ARTIFACT_PATH_BLOCK_RE.lastIndex = 0;
+  while ((match = ARTIFACT_PATH_BLOCK_RE.exec(reply)) !== null) {
+    const filePath = normalizeArtifactPath(match[2]);
+    const baseName = filePath.slice(filePath.lastIndexOf('/') + 1).toLowerCase();
+    if (baseName === '.env' || baseName.startsWith('.env.')) {
+      envPathsInReply.add(filePath);
+    }
+  }
+
+  const missing: string[] = [];
+  for (const envPath of envPathsInReply) {
+    if (!writtenSet.has(envPath)) {
+      missing.push(envPath);
+    }
+  }
+  return missing;
+}
+
 /** 检查 skill-run 引用的脚本是否已写入 artifact */
-export function findMissingArtifactScripts(
-  reply: string,
-  writtenPaths: string[],
-): string[] {
+export function findMissingArtifactScripts(reply: string, writtenPaths: string[]): string[] {
   const writtenSet = new Set(writtenPaths.map(normalizeArtifactPath));
   const parsedArtifacts = parseSkillArtifacts(reply);
   const artifactPaths = new Set(parsedArtifacts.map((item) => normalizeArtifactPath(item.path)));

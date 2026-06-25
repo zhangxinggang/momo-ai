@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { IChatWorkspaceConfig } from '../types/workspace';
 
@@ -63,8 +63,21 @@ export function useChatWorkspaceConfig(
   const [workspacePaths, setWorkspacePathsState] = useState<string[]>(
     () => readPersistedState(storageKey).workspacePaths,
   );
+  const skipNextPersistRef = useRef(false);
+
+  // storageKey 变化时从对应 localStorage 重新加载，避免内存态串线
+  useEffect(() => {
+    const persisted = readPersistedState(storageKey);
+    setWorkspaceEnabledState(persisted.workspaceEnabled);
+    setWorkspacePathsState(persisted.workspacePaths);
+    skipNextPersistRef.current = true;
+  }, [storageKey]);
 
   useEffect(() => {
+    if (skipNextPersistRef.current) {
+      skipNextPersistRef.current = false;
+      return;
+    }
     writePersistedState(storageKey, { workspaceEnabled, workspacePaths });
   }, [storageKey, workspaceEnabled, workspacePaths]);
 

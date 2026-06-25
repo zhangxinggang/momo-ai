@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "emitDecoratorMetadata": true,
+    "paths": {
+      "@momo/server": ["../../packages/momo-server/src/index.ts"],
+      "@momo/server/*": ["../../packages/momo-server/src/*"],
+      "@momo/utils": ["../../packages/momo-utils/src/index.ts"],
+      "@momo/utils/*": ["../../packages/momo-utils/src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "out"]
+}

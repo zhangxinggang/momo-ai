@@ -30,26 +30,37 @@ export function ChatFeatureDropdown({
   const [open, setOpen] = useState(false);
 
   const panel = customPanel ? (
-    <div className='chat-feature-dropdown-panel chat-feature-dropdown-panel--custom min-w-[280px] px-3 py-2'>
+    <div className='chat-feature-dropdown-panel chat-feature-dropdown-panel--custom max-w-[320px] min-w-[280px] overflow-hidden px-3 py-2'>
       {customPanel}
     </div>
   ) : (
-    <div className='chat-feature-dropdown-panel min-w-[240px] py-1'>
+    <div className='chat-feature-dropdown-panel max-w-[280px] min-w-[240px] overflow-hidden py-1'>
       <div className='flex items-center justify-between gap-3 px-3 py-2'>
         <div className='min-w-0 flex-1'>
           <div className='text-sm text-gray-800 dark:text-gray-100'>{enableTitle}</div>
-          <div className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>{enableHint}</div>
+          {enableHint ? (
+            <div className='mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400' title={enableHint}>
+              {enableHint}
+            </div>
+          ) : null}
         </div>
         <Switch size='small' checked={enabled} onChange={onEnabledChange} />
       </div>
       {enabled && showExtraWhenEnabled && children ? (
-        <div className='border-surface border-t px-3 py-2'>{children}</div>
+        <div className='border-surface max-h-[220px] overflow-hidden border-t px-3 py-2'>{children}</div>
       ) : null}
     </div>
   );
 
   return (
-    <Popover content={panel} trigger='click' placement='topLeft' open={open} onOpenChange={setOpen}>
+    <Popover
+      content={panel}
+      trigger='click'
+      placement='topLeft'
+      autoAdjustOverflow
+      destroyOnHidden
+      open={open}
+      onOpenChange={setOpen}>
       <Button
         type='text'
         size='small'

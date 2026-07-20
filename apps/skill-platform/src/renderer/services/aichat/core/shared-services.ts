@@ -9,6 +9,7 @@ import {
   toAIConfig,
 } from '@renderer/services/ai/defaults';
 import { resolveImageModelCapabilities } from '@renderer/services/ai/image/capabilities';
+import { openExternalUrl } from '@renderer/services/desktop';
 import type { IAIModelConfig } from '@renderer/types/settings';
 import { uploadChatAttachmentFiles, validateChatAttachmentFiles } from '../chat-attachment-upload';
 import { MAIN_AI_CHAT_STORAGE_PREFIX } from '../chat-history-bridge';
@@ -89,6 +90,8 @@ export interface IBuildSharedAiChatServicesOptions {
   workspace?: IAiChatServices['workspace'];
   /** 消息内本地路径点击 */
   localPath?: ILocalPathConfig;
+  /** 消息内 http(s) 链接点击；默认注入系统浏览器打开 */
+  onOpenExternalUrl?: IAiChatServices['onOpenExternalUrl'];
   /** 是否启用 Superpowers 两阶段（默认 true；提示词测试等固定模板场景设为 false） */
   enableSuperpower?: boolean;
   /** 是否注入 CLI Agent（默认 true） */
@@ -157,6 +160,7 @@ export function buildSharedAiChatServices(
     renderModelSelect: (props) => renderChatModelSelect(options.aiModels, props),
     workspace: options.workspace,
     localPath: options.localPath,
+    onOpenExternalUrl: options.onOpenExternalUrl ?? openExternalUrl,
     isImageModel: (modelId: string) => {
       const model = options.aiModels.find((item) => item.id === modelId);
       return model ? isImageCapableModel(model) : false;

@@ -1,6 +1,7 @@
 export type {
   DChatCompletionRequest,
   DChatCompletionResponse,
+  DChatCompletionTool,
   DImageGenerationRequest,
   DImageGenerationResponse,
   IAIConfig,
@@ -10,6 +11,7 @@ export type {
   IChatMessage,
   IChatMessageContentPart,
   IChatParams,
+  IChatToolCall,
   IFetchModelsResult,
   IImageParams,
   IImageReferenceAttachment,
@@ -19,6 +21,7 @@ export type {
   IStreamCallbacks,
   ITokenUsage,
   TChatMessageContent,
+  TChatToolChoice,
 } from './types';
 
 export { buildMessagesFromPrompt } from '../prompt/messages';

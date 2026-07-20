@@ -18,10 +18,41 @@ export type IChatMessageContentPart =
 
 export type TChatMessageContent = string | IChatMessageContentPart[];
 
-export interface IChatMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: TChatMessageContent;
+export interface IChatToolCallFunction {
+  name: string;
+  arguments: string;
 }
+
+export interface IChatToolCall {
+  id: string;
+  type: 'function';
+  function: IChatToolCallFunction;
+}
+
+export interface IChatMessage {
+  role: 'system' | 'user' | 'assistant' | 'tool';
+  content: TChatMessageContent;
+  tool_calls?: IChatToolCall[];
+  tool_call_id?: string;
+  name?: string;
+}
+
+export interface DChatCompletionTool {
+  type: 'function';
+  function: {
+    name: string;
+    description?: string;
+    parameters?: Record<string, unknown>;
+  };
+}
+
+export type TChatToolChoice =
+  | 'auto'
+  | 'none'
+  | {
+      type: 'function';
+      function: { name: string };
+    };
 
 export interface DChatCompletionRequest {
   messages: IChatMessage[];
@@ -38,6 +69,8 @@ export interface DChatCompletionRequest {
     include_usage?: boolean;
   };
   enable_thinking?: boolean;
+  tools?: DChatCompletionTool[];
+  tool_choice?: TChatToolChoice;
   response_format?: {
     type: 'text' | 'json_object' | 'json_schema';
     json_schema?: {
@@ -59,6 +92,11 @@ export interface DChatCompletionResponse {
     delta?: {
       content?: string;
       reasoning_content?: string;
+      tool_calls?: Array<
+        Partial<IChatToolCall> & {
+          index?: number;
+        }
+      >;
     };
   }[];
   usage?: {
@@ -151,6 +189,7 @@ export interface IChatCompletionResult {
   content: string;
   thinkingContent?: string;
   usage?: ITokenUsage;
+  toolCalls?: IChatToolCall[];
 }
 
 export interface IAITestResult {

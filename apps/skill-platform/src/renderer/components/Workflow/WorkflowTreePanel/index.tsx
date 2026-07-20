@@ -10,11 +10,15 @@ import { renameWorkflowAgentDir } from '@renderer/services/workflow/agent-files'
 import { isWorkflowAvailable } from '@renderer/services/workflow/api';
 import { deleteWorkflowWithCleanup } from '@renderer/services/workflow/delete-workflow';
 import { buildWorkflowTree, toFolderLikeList } from '@renderer/services/workflow/tree';
+import { useToast } from '@renderer/components/ui/Toast';
+import { useWorkflowBackup } from '@renderer/hooks/useWorkflowBackup';
 import { useUIStore, useWorkflowStore } from '@renderer/store';
 import { getAllDescendantIds, getFolderDepth } from '@renderer/utils/folder/tree';
 
 /** 工作流侧栏树：目录 + 工作流，交互对齐提示词模块 */
 export function WorkflowTreePanel() {
+  const { showToast } = useToast();
+  const { exportWorkflow } = useWorkflowBackup();
   const treeData = useWorkflowStore((state) => state.treeData);
   const treeSearchQuery = useWorkflowStore((state) => state.treeSearchQuery);
   const folders = useWorkflowStore((state) => state.folders);
@@ -158,6 +162,14 @@ export function WorkflowTreePanel() {
         await duplicateWorkflow(nodeId);
         refreshTree();
       },
+      onExport: async (nodeId) => {
+        try {
+          await exportWorkflow(nodeId);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : '导出失败';
+          showToast(message, 'error');
+        }
+      },
       countNonFolderDescendants: (folderId) => countNonFolderDescendants(moveTreeData, folderId),
     }),
     [
@@ -165,6 +177,7 @@ export function WorkflowTreePanel() {
       createWorkflowAndOpenStudio,
       deleteFolder,
       duplicateWorkflow,
+      exportWorkflow,
       fetchFolders,
       fetchWorkflows,
       findNode,
@@ -174,6 +187,7 @@ export function WorkflowTreePanel() {
       refreshTree,
       selectWorkflow,
       selectedWorkflowId,
+      showToast,
       updateFolder,
       updateWorkflow,
     ],
@@ -212,6 +226,7 @@ export function WorkflowTreePanel() {
         createNote: '新建工作流',
         edit: '编辑',
         copy: '复制',
+        export: '导出',
         move: '移动',
         delete: '删除',
         rename: '重命名',

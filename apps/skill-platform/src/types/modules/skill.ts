@@ -378,3 +378,35 @@ export interface IDefaultSkillImportResult {
   skipped: number;
   failed: Array<{ zipFileName: string; reason: string }>;
 }
+
+/** 本地 zip 文件输入（renderer → main） */
+export interface ILocalZipFileInput {
+  fileName: string;
+  base64: string;
+}
+
+/** 本地 zip 预览项 */
+export interface ILocalZipPreviewItem {
+  fileName: string;
+  name: string;
+  description: string;
+  version?: string;
+  author: string;
+  tags: string[];
+  isInstalled: boolean;
+  existingSkillId?: string;
+  error?: string;
+}
+
+/** 本地 zip 导入项（含是否覆盖） */
+export interface ILocalZipImportItem extends ILocalZipFileInput {
+  overwrite: boolean;
+}
+
+/** 本地 zip 批量导入结果 */
+export interface ILocalZipImportResult {
+  imported: number;
+  overwritten: number;
+  skipped: number;
+  failed: Array<{ fileName: string; reason: string }>;
+}

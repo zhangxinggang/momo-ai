@@ -6,11 +6,14 @@ import {
   SkillInstaller,
   hasMetadataChanges,
   importDefaultSkills,
+  importLocalSkillZips,
   isInternalSkillRepoEntry,
   isSkillExportExcludedEntry,
   listDefaultSkillPreviews,
+  previewLocalSkillZips,
   syncFrontmatterToRepo,
 } from '../../services/skill';
+import type { ILocalZipFileInput, ILocalZipImportItem } from '../../services/skill';
 import type { ISkillIPCContext } from './shared';
 import { ensureLocalRepoPath } from './shared';
 
@@ -181,6 +184,20 @@ export function registerSkillCrudHandlers({ db }: ISkillIPCContext): void {
       return importDefaultSkills(db, zipFileNames, { overwrite: Boolean(options?.overwrite) });
     },
   );
+
+  ipcMain.handle(IPC_CHANNELS.SKILL_PREVIEW_LOCAL_ZIPS, async (_, files: ILocalZipFileInput[]) => {
+    if (!Array.isArray(files)) {
+      throw new Error('skill:previewLocalZips expects files array');
+    }
+    return previewLocalSkillZips(db, files);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.SKILL_IMPORT_LOCAL_ZIPS, async (_, items: ILocalZipImportItem[]) => {
+    if (!Array.isArray(items)) {
+      throw new Error('skill:importLocalZips expects items array');
+    }
+    return importLocalSkillZips(db, items);
+  });
 
   ipcMain.handle(IPC_CHANNELS.SKILL_EXPORT, async (_, id: string, format) => {
     if (typeof id !== 'string' || id.trim().length === 0) {

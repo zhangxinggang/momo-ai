@@ -36,6 +36,21 @@ export function normalizeSkillTag(raw: string): string {
   return raw.trim().toLowerCase();
 }
 
+/** 保存时合并原标签与用户标签，保证 tags 为全集且去重 */
+export function mergeSkillTagsForSave(originalTags: string[], userTags: string[]): string[] {
+  const merged: string[] = [];
+  const seen = new Set<string>();
+  for (const tag of [...originalTags, ...userTags]) {
+    const normalized = normalizeSkillTag(tag);
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    merged.push(normalized);
+  }
+  return merged;
+}
+
 interface ISkillTagActionsParams {
   tags: string[];
   tagInput: string;
@@ -70,8 +85,9 @@ export function buildSkillTagActions({
   };
 
   const handleAddExistingTag = (tag: string) => {
-    if (!tags.includes(tag)) {
-      setTags([...tags, tag]);
+    const normalized = normalizeSkillTag(tag);
+    if (normalized && !tags.includes(normalized)) {
+      setTags([...tags, normalized]);
     }
   };
 

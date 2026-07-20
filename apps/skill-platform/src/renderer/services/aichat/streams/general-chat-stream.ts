@@ -5,7 +5,12 @@ import { isImageGenerationConfig } from '@renderer/services/ai/image/capabilitie
 import { getEnabledWorkspaceContext } from '@renderer/services/workspace/context';
 import { MERMAID_SYSTEM_PROMPT } from '../core/mermaid-system-prompt';
 import { buildRagContext } from '../core/rag-context';
-import { resolveStreamModelConfig, runChatCompletionStream } from './chat-completion-stream';
+import { isMcpRelatedText } from '../mcp/intent';
+import {
+  resolveStreamModelConfig,
+  runChatCompletionStream,
+  runChatCompletionStreamWithMcp,
+} from './chat-completion-stream';
 import { runImageGenerationInChat } from './image-chat-stream';
 
 export interface IGeneralChatStreamOptions {
@@ -66,12 +71,17 @@ export function createGeneralChatStream(options: IGeneralChatStreamOptions): TCa
       ];
     }
 
+    // 仅当用户明确涉及 MCP/工具调用时才注入 MCP tools
+    const enableMcpTools = isMcpRelatedText(lastUserMessage);
+
     try {
-      const { elapsedSec, usage } = await runChatCompletionStream({
+      const runner = enableMcpTools ? runChatCompletionStreamWithMcp : runChatCompletionStream;
+      const { elapsedSec, usage } = await runner({
         config,
         apiMessages,
         onChunk,
         streamCallbacks: streamOptions,
+        ...(enableMcpTools ? { enableMcpTools: true } : {}),
       });
 
       onStats?.({

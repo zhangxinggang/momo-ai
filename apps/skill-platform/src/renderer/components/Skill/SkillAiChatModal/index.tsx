@@ -1,6 +1,6 @@
 import type { ISkill } from '@/types/modules';
 import { FullscreenModal } from '@renderer/components/ui/FullscreenModal';
-import { createMainChatSession } from '@renderer/services/aichat/chat-history-bridge';
+import { allocateMainChatSessionId } from '@renderer/services/aichat/chat-history-bridge';
 import { useSettingsStore } from '@renderer/store';
 import { useEffect, useMemo, useState } from 'react';
 import { SkillAiChat } from '../SkillAiChat';
@@ -22,6 +22,7 @@ export function SkillAiChatModal({ isOpen, skills, initialSkillId, onClose }: IP
   const [chatBootstrap, setChatBootstrap] = useState<{
     sessionId: string;
     sessionKey: string;
+    sessionTitle: string;
   } | null>(null);
 
   useEffect(() => {
@@ -30,10 +31,12 @@ export function SkillAiChatModal({ isOpen, skills, initialSkillId, onClose }: IP
       return;
     }
     const label = activeSkill?.name ?? '全部技能';
-    const sessionId = createMainChatSession(`SKILL 对话：${label}`);
+    // 仅分配 id，首条消息发送后再写入历史，避免空会话落库
+    const sessionId = allocateMainChatSessionId();
     setChatBootstrap({
       sessionId,
       sessionKey: `skill-chat-${sessionId}`,
+      sessionTitle: `SKILL 对话：${label}`,
     });
   }, [isOpen, activeSkill?.name, initialSkillId]);
 
@@ -50,6 +53,7 @@ export function SkillAiChatModal({ isOpen, skills, initialSkillId, onClose }: IP
           <SkillAiChat
             sessionKey={chatBootstrap.sessionKey}
             bootstrapSessionId={chatBootstrap.sessionId}
+            bootstrapSessionTitle={chatBootstrap.sessionTitle}
             skills={skills}
             activeSkillId={initialSkillId}
             aiModels={aiModels}

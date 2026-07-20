@@ -53,6 +53,7 @@ export type {
 // UI 子组件（按需组合）
 export { default as ChatInputPanel } from './components/ChatInputPanel';
 export type { IChatInputPanelRef } from './components/ChatInputPanel';
+export { ChatFeatureDropdown } from './components/ChatFeatureDropdown';
 export { ChatMentionTextarea } from './components/ChatMentionTextarea';
 export type { IChatMentionTextareaRef } from './components/ChatMentionTextarea';
 export { ChatWorkspaceControl } from './components/ChatWorkspaceControl';
@@ -86,13 +87,21 @@ export {
   normalizeLocalPathValue,
   splitPlainTextByLocalPaths,
   stripCodeLanguagePrefix,
+  stripTrailingPathPunctuation,
 } from './utils/local-path';
+export {
+  enhanceExternalUrlElements,
+  isHttpUrl,
+  splitPlainTextByHttpUrls,
+  trimUrlTrailingPunctuation,
+} from './utils/external-url';
 export {
   NOTE_SNAPSHOT_MAX_CHARS,
   NOTE_SNAPSHOT_TRUNCATED_SUFFIX,
   buildNoteMentionToken,
   ensureNoteSnapshots,
   expandNoteMentionsWithSnapshots,
+  stripEchoedNoteBlocks,
   getNoteMentionDisplayPath,
   normalizeNotePath,
   parseNoteReferenceContent,

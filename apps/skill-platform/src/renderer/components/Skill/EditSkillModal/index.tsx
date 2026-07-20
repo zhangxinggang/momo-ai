@@ -6,6 +6,7 @@ import {
   getExistingSkillTags,
   getUserSkillTags,
   inferOriginalSkillTags,
+  mergeSkillTagsForSave,
 } from '@renderer/services/skill/modal-utils';
 import { useSkillStore } from '@renderer/store';
 import { Button, Input, Modal } from 'antd';
@@ -114,6 +115,7 @@ export function EditSkillModal({ isOpen, onClose, skill }: IProps) {
     setError(null);
 
     try {
+      const originalTags = inferOriginalSkillTags(skill);
       await updateSkill(skill.id, {
         name,
         description: description.trim(),
@@ -121,8 +123,9 @@ export function EditSkillModal({ isOpen, onClose, skill }: IProps) {
         icon_url: iconUrl,
         icon_emoji: iconEmoji,
         icon_background: iconBackground,
-        original_tags: inferOriginalSkillTags(skill),
-        tags,
+        original_tags: originalTags,
+        // tags 存全集（原标签 + 用户标签），回填时再差集得到用户标签
+        tags: mergeSkillTagsForSave(originalTags, tags),
       });
       return true;
     } catch (err) {

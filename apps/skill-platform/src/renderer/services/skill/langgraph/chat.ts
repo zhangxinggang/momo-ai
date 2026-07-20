@@ -1,5 +1,5 @@
 import type { IAIConfig, IChatMessage } from '@renderer/services/ai';
-import { chatCompletion } from '@renderer/services/ai';
+import { runMcpToolLoop } from '@renderer/services/aichat/mcp/tool-loop';
 import {
   canExecuteSkillWorkspace,
   executeSkillWorkspace,
@@ -26,10 +26,22 @@ interface ISkillChatState {
   workflowPlan: string;
 }
 
+function skillRequiresScriptExecution(instructions: string): boolean {
+  const body = instructions.trim();
+  if (!body) {
+    return false;
+  }
+  return /skill-run|scripts\/|执行脚本|运行脚本|生成.*\.(pptx?|docx?|pdf|xlsx?|svg)/i.test(
+    body,
+  );
+}
+
 function buildPlanMessages(state: ISkillChatState): IChatMessage[] {
   const skillBody = state.activeSkillInstructions.trim();
+  const requiresScript = skillRequiresScriptExecution(skillBody);
   const system = skillBody
-    ? `你是 SKILL 执行规划助手。你的任务是分析用户选中的 SKILL 完整指令，结合用户目标，输出一份**可直接执行**的实施计划。
+    ? requiresScript
+      ? `你是 SKILL 执行规划助手。你的任务是分析用户选中的 SKILL 完整指令，结合用户目标，输出一份**可直接执行**的实施计划。
 
 规划要求：
 1. 仔细阅读 SKILL 完整指令，理解技能的工作方式（脚本、模板、工具链等）
@@ -45,6 +57,13 @@ function buildPlanMessages(state: ISkillChatState): IChatMessage[] {
 6. 最后一步应包含「执行生成脚本」并说明用 \`\`\`skill-run 代码块触发
 7. 输出目录统一使用 output/ 或 dist/ 等标准目录
 8. 只输出规划本身，不要寒暄，不要重复 SKILL 原文`
+      : `你是 SKILL 规划助手。根据用户选中的 SKILL 指令与用户目标，输出简洁的 Markdown 计划（建议 3～8 步）。
+
+规划要求：
+1. 仔细阅读 SKILL 完整指令，理解技能能力与约束
+2. 若用户只是问答/咨询，规划以「阅读指令并直接回答」为主，**不要**要求执行脚本或 skill-run
+3. 仅当用户目标明确需要产出文件或执行脚本，且 SKILL 指令也要求时，才规划脚本执行步骤
+4. 只输出规划本身，不要寒暄，不要重复 SKILL 原文`
     : `你是工作流规划助手。根据「用户目标」与「可用 SKILL 列表」，用中文输出一份简洁的 Markdown 工作流（建议 3～8 步，使用有序列表）。只输出规划本身，不要寒暄。`;
 
   const blocks = [
@@ -67,8 +86,10 @@ function buildPlanMessages(state: ISkillChatState): IChatMessage[] {
 
 function buildAnswerMessages(state: ISkillChatState): IChatMessage[] {
   const skillBody = state.activeSkillInstructions.trim();
+  const requiresScript = skillRequiresScriptExecution(skillBody);
   const system = skillBody
-    ? `你是 SKILL 执行引擎。你必须严格按照用户选中的 SKILL 指令完成用户的任务，并产出实际可交付的文件。
+    ? requiresScript
+      ? `你是 SKILL 执行引擎。你必须严格按照用户选中的 SKILL 指令完成用户的任务，并产出实际可交付的文件。
 
 ## 核心原则
 1. **必须产出可执行内容**：不能只输出建议或说明，必须实际编写代码/脚本/文件
@@ -138,6 +159,17 @@ node scripts/generate.js data/input.json output
 --- SKILL 完整指令开始 ---
 ${skillBody}
 --- SKILL 完整指令结束 ---`
+      : `你是 SKILL 对话助手。请严格依据「工作流计划」与 SKILL 指令回答用户问题。
+
+## 核心原则
+1. **默认问答**：用户咨询、解释、对比类问题，直接用 Markdown 回答即可
+2. **禁止擅自执行**：SKILL 未要求产出脚本/交付物，或用户未要求生成文件时，**不要**输出 \`\`\`skill-run 或可执行 bash 块
+3. **按需产出**：仅当用户明确要求生成文件且 SKILL 指令支持时，才使用 artifact / skill-run 格式
+4. **严格遵循 SKILL 指令**：不要调用 SKILL 未提及的 MCP、外部工具或无关脚本
+
+--- SKILL 完整指令开始 ---
+${skillBody}
+--- SKILL 完整指令结束 ---`
     : `你是技能平台的对话助手。请严格依据「工作流计划」组织回答，并充分结合 SKILL 摘要与当前聚焦技能；使用 Markdown，条理清晰。如果计划中包含生成脚本或文件的步骤，请直接编写对应代码。`;
 
   const blocks = [
@@ -163,6 +195,8 @@ export interface IRunSkillLangGraphChatInput {
   activeSkillLine: string;
   activeSkillInstructions?: string;
   activeSkillId?: string;
+  /** 是否允许注入 MCP tools（仅技能声明需要时为 true） */
+  enableMcpTools?: boolean;
   /** SKILL 对话会话 id，用于 temp/<sessionId> 工作区 */
   sessionId?: string;
   priorTranscript: string;
@@ -241,12 +275,16 @@ async function appendSkillExecutionResults(
 
   try {
     const runCommands = parseSkillRunCommands(reply);
-    if (sessionId && runCommands.length > 0 && writtenPaths.length === 0 && artifacts.length > 0) {
+    // 未显式写出 skill-run 时不自动探测/执行脚本
+    if (runCommands.length === 0) {
+      return next;
+    }
+    if (sessionId && writtenPaths.length === 0 && artifacts.length > 0) {
       next += `\n\n---\n\n**技能执行已跳过：** 检测到 ${artifacts.length} 个待写入文件但均未成功落盘，请重试或检查工作区权限。`;
       return next;
     }
     const exec = await executeSkillWorkspace(skillId, input.userInput, {
-      commands: runCommands.length > 0 ? runCommands : undefined,
+      commands: runCommands,
       outputDir: workflowOut?.outputDir,
       sessionId: sessionId || undefined,
     });
@@ -325,6 +363,7 @@ export async function runSkillLangGraphChat(
   aiConfig: IAIConfig,
   input: IRunSkillLangGraphChatInput,
 ) {
+  const enableMcpTools = input.enableMcpTools === true;
   const chatState: ISkillChatState = {
     userInput: input.userInput,
     skillsSummary: input.skillsSummary,
@@ -336,16 +375,30 @@ export async function runSkillLangGraphChat(
     workflowPlan: '',
   };
 
-  const planResult = await chatCompletion(aiConfig, buildPlanMessages(chatState), {
+  let planContent = '';
+  // 规划轮不注入 MCP，避免无关工具调用干扰规划
+  await runMcpToolLoop({
+    config: aiConfig,
+    apiMessages: buildPlanMessages(chatState),
     stream: false,
     maxTokens: 2048,
+    enableMcpTools: false,
+    onChunk: (chunk) => {
+      planContent += chunk;
+    },
   });
-  chatState.workflowPlan = planResult.content ?? '';
+  chatState.workflowPlan = planContent;
 
-  const answerResult = await chatCompletion(aiConfig, buildAnswerMessages(chatState), {
+  let reply = '';
+  await runMcpToolLoop({
+    config: aiConfig,
+    apiMessages: buildAnswerMessages(chatState),
     stream: false,
     maxTokens: 8192,
+    enableMcpTools,
+    onChunk: (chunk) => {
+      reply += chunk;
+    },
   });
-  const reply = answerResult.content ?? '';
   return appendSkillExecutionResults(reply, input);
 }

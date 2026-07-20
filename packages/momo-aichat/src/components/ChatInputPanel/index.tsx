@@ -80,6 +80,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       workspace,
       slashCommands,
       noteReferences,
+      renderInputToolbarLeftExtra,
     } = useAiChatConfig();
     const [collections, setCollections] = useState<{ id: number; name: string }[]>([]);
     const [loadingKb, setLoadingKb] = useState(false);
@@ -470,6 +471,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
                 label='工作区'
               />
             ) : null}
+            {renderInputToolbarLeftExtra?.()}
           </div>
 
           <div className='chat-input-toolbar-right flex shrink-0 items-center gap-1.5'>

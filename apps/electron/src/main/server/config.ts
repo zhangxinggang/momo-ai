@@ -51,7 +51,7 @@ const config = {
   },
   autoRunTask: {
     start: Boolean(autoRunDirs.length),
-    rootDirs: autoRunDirs,
+    rootDirs: autoRunDirs.map((dir) => path.join(process.cwd(), dir)),
   },
   logger: {
     start: true,

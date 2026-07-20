@@ -13,12 +13,23 @@ export interface IProps {
   services?: Partial<IAiChatServices>;
   /** 弹窗/子模块打开时固定选中的会话 id（不恢复侧栏 CURRENT_SESSION_ID） */
   bootstrapSessionId?: string | null;
+  /** bootstrap 会话标题；空会话不落库，首条消息时使用 */
+  bootstrapSessionTitle?: string | null;
 }
 
-export const ChatProvider: React.FC<IProps> = ({ children, services, bootstrapSessionId }) => {
+export const ChatProvider: React.FC<IProps> = ({
+  children,
+  services,
+  bootstrapSessionId,
+  bootstrapSessionTitle,
+}) => {
   return (
     <AiChatConfigProvider services={services}>
-      <ChatProviderInner bootstrapSessionId={bootstrapSessionId}>{children}</ChatProviderInner>
+      <ChatProviderInner
+        bootstrapSessionId={bootstrapSessionId}
+        bootstrapSessionTitle={bootstrapSessionTitle}>
+        {children}
+      </ChatProviderInner>
     </AiChatConfigProvider>
   );
 };
@@ -26,8 +37,9 @@ export const ChatProvider: React.FC<IProps> = ({ children, services, bootstrapSe
 const ChatProviderInner: React.FC<{
   children: ReactNode;
   bootstrapSessionId?: string | null;
-}> = ({ children, bootstrapSessionId }) => {
-  const chatState = useChatSessions({ bootstrapSessionId });
+  bootstrapSessionTitle?: string | null;
+}> = ({ children, bootstrapSessionId, bootstrapSessionTitle }) => {
+  const chatState = useChatSessions({ bootstrapSessionId, bootstrapSessionTitle });
   return <ChatContext.Provider value={chatState}>{children}</ChatContext.Provider>;
 };
 

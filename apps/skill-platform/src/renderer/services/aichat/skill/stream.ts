@@ -1,6 +1,7 @@
 import type { ISkill } from '@/types/modules';
 import type { IChatStreamMessage, TCallAiChatStream } from '@momo/aichat';
 import type { IAIConfig } from '@renderer/services/ai';
+import { shouldEnableMcpForSkill } from '@renderer/services/aichat/mcp/intent';
 import { buildActiveSkillLine } from '@renderer/services/skill/chat-context';
 import { loadSkillInstructionsForChat } from '@renderer/services/skill/instructions-for-chat';
 import { runSkillLangGraphChat } from '@renderer/services/skill/langgraph';
@@ -88,6 +89,7 @@ export function createSkillLangGraphStream(
           : options.getActiveSkillLine(),
         activeSkillInstructions,
         activeSkillId: activeSkill?.id,
+        enableMcpTools: shouldEnableMcpForSkill(activeSkill, activeSkillInstructions),
         sessionId: options.getSessionId?.() ?? undefined,
         priorTranscript: formatPriorTranscript(messages),
         knowledgeContext,

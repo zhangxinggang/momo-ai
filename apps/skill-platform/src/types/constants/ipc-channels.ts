@@ -34,6 +34,15 @@ export const IPC_CHANNELS = {
   SETTINGS_GET: 'settings:get',
   SETTINGS_SET: 'settings:set',
 
+  // MCP（应用内）
+  MCP_GET_CONFIG: 'mcp:getConfig',
+  MCP_SET_CONFIG: 'mcp:setConfig',
+  MCP_SET_SERVER_DISABLED: 'mcp:setServerDisabled',
+  MCP_LIST_SERVERS: 'mcp:listServers',
+  MCP_LIST_TOOLS: 'mcp:listTools',
+  MCP_CALL_TOOL: 'mcp:callTool',
+  MCP_RECONNECT: 'mcp:reconnect',
+
   // App lifecycle
   APP_RELAUNCH: 'app:relaunch',
 
@@ -102,6 +111,12 @@ export const IPC_CHANNELS = {
   WORKFLOW_UPDATE: 'workflow:update',
   WORKFLOW_DELETE: 'workflow:delete',
 
+  // 工作流模板导入导出
+  WORKFLOW_EXPORT_TEMPLATE: 'workflow:exportTemplate',
+  WORKFLOW_PREVIEW_IMPORT: 'workflow:previewImport',
+  WORKFLOW_COMMIT_IMPORT: 'workflow:commitImport',
+  WORKFLOW_CANCEL_IMPORT: 'workflow:cancelImport',
+
   // 工作流侧栏目录
   WORKFLOW_FOLDER_CREATE: 'workflowFolder:create',
   WORKFLOW_FOLDER_GET_ALL: 'workflowFolder:getAll',
@@ -149,6 +164,8 @@ export const IPC_CHANNELS = {
   SKILL_SCAN_LOCAL_PREVIEW: 'skill:scanLocalPreview',
   SKILL_LIST_DEFAULT_SKILLS: 'skill:listDefaultSkills',
   SKILL_IMPORT_DEFAULT_SKILLS: 'skill:importDefaultSkills',
+  SKILL_PREVIEW_LOCAL_ZIPS: 'skill:previewLocalZips',
+  SKILL_IMPORT_LOCAL_ZIPS: 'skill:importLocalZips',
   SKILL_SCAN_SAFETY: 'skill:scanSafety',
   SKILL_SAVE_SAFETY_REPORT: 'skill:saveSafetyReport',
   SKILL_INSTALL_TO_PLATFORM: 'skill:installToPlatform',

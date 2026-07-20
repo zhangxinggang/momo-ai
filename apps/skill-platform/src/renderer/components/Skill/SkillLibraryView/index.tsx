@@ -9,12 +9,14 @@ import {
 import { useSkillStoreRemoteSync } from '@renderer/hooks/useSkillStoreRemoteSync';
 import { updateSkillTags, type ESkillBatchTagMode } from '@renderer/services/skill/batch-utils';
 import { filterVisibleSkills } from '@renderer/services/skill/filter';
+import { importSkillZipFiles } from '@renderer/services/skill/import-zip';
 import { computeSkillIdsWithStoreUpdates } from '@renderer/services/skill/store-update';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
 import { Button, Modal } from 'antd';
 import {
   CheckSquareIcon,
   CuboidIcon,
+  FileArchiveIcon,
   FolderInputIcon,
   LayoutGridIcon,
   ListIcon,
@@ -24,7 +26,7 @@ import {
   TrashIcon,
   XIcon,
 } from 'lucide-react';
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import { SkillAiChatModal } from '../SkillAiChatModal';
 import { SkillGalleryCard } from '../SkillGalleryCard';
 import { SkillQuickInstall } from '../SkillQuickInstall';
@@ -55,6 +57,7 @@ export function SkillLibraryView() {
   const skills = useSkillStore((state) => state.skills);
   const deleteSkill = useSkillStore((state) => state.deleteSkill);
   const updateSkill = useSkillStore((state) => state.updateSkill);
+  const loadSkills = useSkillStore((state) => state.loadSkills);
   const isLoading = useSkillStore((state) => state.isLoading);
   const selectSkill = useSkillStore((state) => state.selectSkill);
   const filterType = useSkillStore((state) => state.filterType);
@@ -139,11 +142,68 @@ export function SkillLibraryView() {
   const [isScanning, setIsScanning] = useState(false);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedSkillIds, setSelectedSkillIds] = useState<Set<string>>(new Set());
+  const [isZipImporting, setIsZipImporting] = useState(false);
+  const [isZipDragOver, setIsZipDragOver] = useState(false);
+  const zipInputRef = useRef<HTMLInputElement>(null);
+  const zipDragDepthRef = useRef(0);
   const [deleteConfirm, setDeleteConfirm] = useState<{
     isOpen: boolean;
     skillIds: string[];
     skillNames: string[];
   }>({ isOpen: false, skillIds: [], skillNames: [] });
+
+  const canImportZip = !isDistributionView;
+
+  const handleImportZipFiles = useCallback(
+    async (fileList: FileList | File[]) => {
+      if (!canImportZip || isZipImporting) {
+        return;
+      }
+      const importCount = Array.from(fileList).filter((file) => {
+        const lowerName = file.name.toLowerCase();
+        return lowerName.endsWith('.zip') || lowerName === 'skill.md';
+      }).length;
+      if (importCount === 0) {
+        showToast('请拖入或选择 .zip 技能包或 SKILL.md', 'warning');
+        return;
+      }
+
+      setIsZipImporting(true);
+      try {
+        const result = await importSkillZipFiles(fileList);
+        await loadSkills();
+        await loadDeployedStatus();
+
+        const parts: string[] = [];
+        if (result.imported > 0) {
+          parts.push(`新增 ${result.imported}`);
+        }
+        if (result.overwritten > 0) {
+          parts.push(`覆盖 ${result.overwritten}`);
+        }
+        if (result.skipped > 0) {
+          parts.push(`跳过 ${result.skipped}`);
+        }
+        if (result.failed.length > 0) {
+          parts.push(`失败 ${result.failed.length}`);
+        }
+        if (parts.length === 0) {
+          showToast('未导入任何技能', 'info');
+        } else {
+          showToast(parts.join('，'), result.failed.length > 0 ? 'warning' : 'success');
+        }
+        if (result.failed[0]) {
+          console.warn('[import-zip] failures:', result.failed);
+        }
+      } catch (err) {
+        console.error('导入技能文件失败:', err);
+        showToast(err instanceof Error ? err.message : '导入技能文件失败', 'error');
+      } finally {
+        setIsZipImporting(false);
+      }
+    },
+    [canImportZip, isZipImporting, loadDeployedStatus, loadSkills, showToast],
+  );
 
   const { remoteStoreEntries } = useSkillStoreRemoteSync({
     eagerRemoteSources: 'all',
@@ -314,8 +374,60 @@ export function SkillLibraryView() {
     : null;
 
   return (
-    <div className='app-wallpaper-section relative flex h-full flex-1 flex-row overflow-hidden'>
+    <div
+      className='app-wallpaper-section relative flex h-full flex-1 flex-row overflow-hidden'
+      onDragEnter={
+        canImportZip
+          ? (event) => {
+              if (!Array.from(event.dataTransfer.types || []).includes('Files')) {
+                return;
+              }
+              event.preventDefault();
+              zipDragDepthRef.current += 1;
+              setIsZipDragOver(true);
+            }
+          : undefined
+      }
+      onDragLeave={
+        canImportZip
+          ? (event) => {
+              event.preventDefault();
+              zipDragDepthRef.current = Math.max(0, zipDragDepthRef.current - 1);
+              if (zipDragDepthRef.current === 0) {
+                setIsZipDragOver(false);
+              }
+            }
+          : undefined
+      }
+      onDragOver={
+        canImportZip
+          ? (event) => {
+              if (!Array.from(event.dataTransfer.types || []).includes('Files')) {
+                return;
+              }
+              event.preventDefault();
+              event.dataTransfer.dropEffect = 'copy';
+            }
+          : undefined
+      }
+      onDrop={
+        canImportZip
+          ? (event) => {
+              event.preventDefault();
+              zipDragDepthRef.current = 0;
+              setIsZipDragOver(false);
+              void handleImportZipFiles(event.dataTransfer.files);
+            }
+          : undefined
+      }>
       {isLoading && skills.length === 0 ? <CenteredLoading label='加载技能…' /> : null}
+      {canImportZip && isZipDragOver ? (
+        <div className='border-primary/40 bg-primary/10 pointer-events-none absolute inset-0 z-20 flex items-center justify-center border-2 border-dashed'>
+          <div className='app-wallpaper-surface text-foreground rounded-2xl px-6 py-4 text-sm font-medium shadow-lg'>
+            {isZipImporting ? '正在导入…' : '松开以导入技能（.zip / SKILL.md，支持多个）'}
+          </div>
+        </div>
+      ) : null}
       <div className='flex min-w-0 flex-1 flex-col'>
         <div className='border-border app-wallpaper-panel-strong z-10 border-b px-4 py-4 sm:px-6'>
           <div className='flex flex-col gap-4'>
@@ -337,7 +449,11 @@ export function SkillLibraryView() {
                     </span>
                   )}
                 </div>
-                <p className='text-muted-foreground mt-1.5 text-xs'>{headerSubtitle}</p>
+                <p className='text-muted-foreground mt-1.5 text-xs'>
+                  {canImportZip
+                    ? `${headerSubtitle} 也可直接拖入多个 .zip 或 SKILL.md 导入。`
+                    : headerSubtitle}
+                </p>
               </div>
 
               <div className='flex items-center gap-2 self-start lg:justify-end lg:self-center'>
@@ -376,6 +492,36 @@ export function SkillLibraryView() {
                 </div>
                 <>
                   <div className='bg-border h-4 w-px' />
+                  {canImportZip ? (
+                    <>
+                      <input
+                        ref={zipInputRef}
+                        type='file'
+                        accept='.zip,.md,application/zip,text/markdown'
+                        multiple
+                        className='hidden'
+                        onChange={(event) => {
+                          const files = event.target.files;
+                          if (files && files.length > 0) {
+                            void handleImportZipFiles(files);
+                          }
+                          event.target.value = '';
+                        }}
+                      />
+                      <Button
+                        type='text'
+                        onClick={() => zipInputRef.current?.click()}
+                        disabled={isZipImporting}
+                        className='text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg p-2'
+                        title={'导入 zip / SKILL.md'}
+                        icon={
+                          <FileArchiveIcon
+                            className={`h-4 w-4 ${isZipImporting ? 'animate-pulse' : ''}`}
+                          />
+                        }
+                      />
+                    </>
+                  ) : null}
                   <Button
                     type='text'
                     onClick={() => handleScanLocal(customSkillScanPaths)}
@@ -490,6 +636,11 @@ export function SkillLibraryView() {
                   </div>
                   <h3 className='text-foreground mb-2 text-xl font-semibold'>{emptyStateTitle}</h3>
                   <p className='mb-8 max-w-sm text-center text-sm opacity-70'>{emptyStateHint}</p>
+                  {canImportZip ? (
+                    <p className='text-muted-foreground max-w-sm text-center text-xs'>
+                      支持将多个技能 .zip 或 SKILL.md 拖入此页导入
+                    </p>
+                  ) : null}
                 </div>
               ) : (
                 <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'>

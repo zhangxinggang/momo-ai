@@ -18,11 +18,13 @@
     "dev": "pnpm --filter @momo/server run build && pnpm --filter @momo/file-editor run build && vite",
     "dev:web": "vite --config vite.web.config.ts",
     "electron:build:win": "pnpm run before:build && electron-builder --config ./scripts/build/electron-builder-win.json --win --x64 --publish never",
-    "electron:dev": "pnpm --filter @momo/server run build && pnpm --filter @momo/electron run build && pnpm --filter @momo/file-editor run build && vite"
+    "electron:dev": "pnpm --filter @momo/server run build && pnpm --filter @momo/electron run build && pnpm --filter @momo/file-editor run build && vite",
+    "test": "vitest run"
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.2",
     "@log4js-node/smtp": "^1.1.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@momo/aichat": "workspace:*",
     "@momo/electron": "workspace:*",
     "@momo/file-editor": "workspace:*",
@@ -79,6 +81,7 @@
     "vite": "^7.1.5",
     "vite-plugin-electron": "^0.28.8",
     "vite-plugin-electron-renderer": "^0.14.6",
+    "vitest": "^3.2.6",
     "xlsx": "^0.18.5",
     "zustand": "^5.0.0"
   },

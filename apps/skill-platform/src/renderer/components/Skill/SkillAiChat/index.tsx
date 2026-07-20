@@ -1,7 +1,7 @@
 import type { ISkill } from '@/types/modules';
 import { AiChatView, type IAiChatServices } from '@momo/aichat';
 import '@momo/markdown-styles';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AiChatShell } from '@renderer/components/Chat/AiChatShell';
 import { useToast } from '@renderer/components/ui/Toast';
@@ -14,7 +14,8 @@ import { useStableRef } from '@renderer/hooks/useStableRef';
 import { buildSharedAiChatServices, createSkillLangGraphStream } from '@renderer/services/aichat';
 import { buildActiveSkillLine, buildSkillsSummary } from '@renderer/services/skill/chat-context';
 import type { IAIModelConfig } from '@renderer/types/settings';
-import { SkillContextCard } from '../SkillContextCard';
+import { SkillChatSelectContext } from '../SkillChatSelectContext';
+import { SkillChatToolbarExtra } from '../SkillChatToolbarExtra';
 import styles from './index.module.less';
 
 export interface IProps {
@@ -22,6 +23,8 @@ export interface IProps {
   sessionKey: string;
   /** 绑定到 AI 对话历史的会话 id */
   bootstrapSessionId: string;
+  /** 首条消息写入历史时使用的会话标题 */
+  bootstrapSessionTitle?: string;
   /** 用户全部 SKILL（供 LangGraph 规划使用） */
   skills: ISkill[];
   /** 当前聚焦的 SKILL id */
@@ -32,8 +35,9 @@ export interface IProps {
 export function SkillAiChat({
   sessionKey,
   bootstrapSessionId,
+  bootstrapSessionTitle,
   skills,
-  activeSkillId,
+  activeSkillId: initialActiveSkillId,
   aiModels,
 }: IProps) {
   const { showToast } = useToast();
@@ -42,6 +46,11 @@ export function SkillAiChat({
   const workspace = useChatWorkspaceBinding();
   const localPath = useLocalPathBinding();
   const chatTheme = useAiChatViewTheme();
+  const [activeSkillId, setActiveSkillId] = useState<string | null>(initialActiveSkillId);
+
+  useEffect(() => {
+    setActiveSkillId(initialActiveSkillId);
+  }, [initialActiveSkillId]);
 
   const activeSkill = useMemo(
     () => (activeSkillId ? skills.find((s) => s.id === activeSkillId) : undefined),
@@ -58,6 +67,19 @@ export function SkillAiChat({
   const handleNeedModel = useCallback(() => {
     showToast('请先在设置中配置并选择可用的对话模型', 'error');
   }, [showToast]);
+
+  const handleSelectSkill = useCallback((skillId: string | null) => {
+    setActiveSkillId(skillId);
+  }, []);
+
+  const skillSelectValue = useMemo(
+    () => ({
+      skills,
+      selectedSkillId: activeSkillId,
+      onSelect: handleSelectSkill,
+    }),
+    [activeSkillId, handleSelectSkill, skills],
+  );
 
   const chatServices = useMemo(
     (): IAiChatServices =>
@@ -77,35 +99,34 @@ export function SkillAiChat({
           onNeedModel: handleNeedModel,
           getSessionId: () => sessionIdRef.current,
         }),
+        overrides: {
+          renderInputToolbarLeftExtra: () => <SkillChatToolbarExtra />,
+          skillBanner: activeSkill ? { name: activeSkill.name } : null,
+        },
       }),
-    [aiModels, chatModelOptionGroups, handleNeedModel, localPath, showToast, workspace],
+    [aiModels, chatModelOptionGroups, handleNeedModel, localPath, showToast, workspace, activeSkill],
   );
 
   return (
-    <AiChatShell
-      sessionKey={sessionKey}
-      bootstrapSessionId={bootstrapSessionId}
-      services={chatServices}
-      className={styles['skill-ai-chat']}>
-      <div className={styles['skill-ai-chat-context']}>
-        {activeSkill ? <SkillContextCard skill={activeSkill} /> : null}
-        <p className={styles['skill-ai-chat-hint']}>
-          {activeSkill
-            ? '将按当前 SKILL 完整指令执行：产出写入临时工作区（不修改技能仓库），并在检测到脚本时自动运行'
-            : '将结合您的全部 SKILL 进行规划与回答；选中具体技能后可按指令执行并产出文件'}
-        </p>
-      </div>
-      <div className={styles['skill-ai-chat-main']}>
-        <AiChatView
-          {...chatTheme}
-          hideWelcome
-          placeholder={
-            activeSkill
-              ? `描述要完成的任务，将按「${activeSkill.name}」技能指令执行…`
-              : '描述你的目标或问题，将结合您的 SKILL 进行规划与回答…'
-          }
-        />
-      </div>
-    </AiChatShell>
+    <SkillChatSelectContext.Provider value={skillSelectValue}>
+      <AiChatShell
+        sessionKey={sessionKey}
+        bootstrapSessionId={bootstrapSessionId}
+        bootstrapSessionTitle={bootstrapSessionTitle}
+        services={chatServices}
+        className={styles['skill-ai-chat']}>
+        <div className={styles['skill-ai-chat-main']}>
+          <AiChatView
+            {...chatTheme}
+            hideWelcome
+            placeholder={
+              activeSkill
+                ? `描述要完成的任务，将按「${activeSkill.name}」技能指令执行…`
+                : '描述你的目标或问题，将结合您的 SKILL 进行规划与回答…'
+            }
+          />
+        </div>
+      </AiChatShell>
+    </SkillChatSelectContext.Provider>
   );
 }

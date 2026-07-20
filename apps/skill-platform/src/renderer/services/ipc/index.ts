@@ -26,6 +26,10 @@ export function getKbIpc(): TApi['kb'] | undefined {
   return getAppApi()?.kb;
 }
 
+export function getMcpIpc(): TApi['mcp'] | undefined {
+  return getAppApi()?.mcp;
+}
+
 export function getNoteIpc(): TApi['note'] | undefined {
   return getAppApi()?.note;
 }
@@ -68,6 +72,10 @@ export function getWorkflowIpc(): TApi['workflow'] | undefined {
 
 export function getWorkflowAgentIpc(): TApi['workflowAgent'] | undefined {
   return getAppApi()?.workflowAgent;
+}
+
+export function getWorkflowBackupIpc(): TApi['workflowBackup'] | undefined {
+  return getAppApi()?.workflowBackup;
 }
 
 export function getWorkflowBusinessIpc(): TApi['workflowBusiness'] | undefined {

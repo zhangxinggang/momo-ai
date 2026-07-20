@@ -103,7 +103,8 @@ export class SkillService {
       data.version || '1.0.0',
       data.author || 'User',
       tagsJson,
-      data.original_tags ? JSON.stringify(data.original_tags) : tagsJson,
+      // 缺省写空数组，避免把用户标签误当作 original_tags
+      data.original_tags ? JSON.stringify(data.original_tags) : '[]',
       data.is_favorite ? 1 : 0,
       data.source_url || null,
       data.local_repo_path || null,
@@ -197,6 +198,10 @@ export class SkillService {
     if (data.tags !== undefined) {
       updates.push('tags = ?');
       values.push(JSON.stringify(data.tags));
+    }
+    if (data.original_tags !== undefined) {
+      updates.push('original_tags = ?');
+      values.push(JSON.stringify(data.original_tags));
     }
     if (data.is_favorite !== undefined) {
       updates.push('is_favorite = ?');
@@ -300,6 +305,7 @@ export class SkillService {
       ...(data.version !== undefined && { version: data.version }),
       ...(data.author !== undefined && { author: data.author }),
       ...(data.tags !== undefined && { tags: data.tags }),
+      ...(data.original_tags !== undefined && { original_tags: data.original_tags }),
       ...(data.is_favorite !== undefined && { is_favorite: data.is_favorite }),
       ...(data.source_url !== undefined && { source_url: data.source_url }),
       ...(data.local_repo_path !== undefined && { local_repo_path: data.local_repo_path }),

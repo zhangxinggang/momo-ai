@@ -14,6 +14,7 @@ import { registerFsIPC } from './fs';
 import { registerImageIPC } from './image';
 import { registerIoIPC } from './io';
 import { registerKbIPC } from './kb';
+import { registerMcpIPC, startMcpHub } from './mcp';
 import { registerNoteIPC } from './note';
 import { registerNotificationIPC } from './notification';
 import { registerOnlineConfIPC } from './online-conf';
@@ -27,6 +28,7 @@ import { registerSystemIPC } from './system';
 import { registerWindowChromeIPC } from './window-chrome';
 import { registerWorkflowIPC } from './workflow';
 import { registerWorkflowAgentIPC } from './workflow-agent';
+import { registerWorkflowBackupIPC } from './workflow-backup';
 import { registerWorkflowBusinessIPC } from './workflow-business';
 import { registerWorkflowFolderIPC } from './workflow-folder';
 import { registerWorkspaceIPC } from './workspace';
@@ -66,6 +68,8 @@ const REBINDABLE_DB_CHANNELS = [
   IPC_CHANNELS.SKILL_SCAN_LOCAL_PREVIEW,
   IPC_CHANNELS.SKILL_LIST_DEFAULT_SKILLS,
   IPC_CHANNELS.SKILL_IMPORT_DEFAULT_SKILLS,
+  IPC_CHANNELS.SKILL_PREVIEW_LOCAL_ZIPS,
+  IPC_CHANNELS.SKILL_IMPORT_LOCAL_ZIPS,
   IPC_CHANNELS.SKILL_SCAN_SAFETY,
   IPC_CHANNELS.SKILL_SAVE_SAFETY_REPORT,
   IPC_CHANNELS.SKILL_INSTALL_TO_PLATFORM,
@@ -97,6 +101,10 @@ const REBINDABLE_DB_CHANNELS = [
   IPC_CHANNELS.WORKFLOW_GET_ALL,
   IPC_CHANNELS.WORKFLOW_UPDATE,
   IPC_CHANNELS.WORKFLOW_DELETE,
+  IPC_CHANNELS.WORKFLOW_EXPORT_TEMPLATE,
+  IPC_CHANNELS.WORKFLOW_PREVIEW_IMPORT,
+  IPC_CHANNELS.WORKFLOW_COMMIT_IMPORT,
+  IPC_CHANNELS.WORKFLOW_CANCEL_IMPORT,
   IPC_CHANNELS.WORKFLOW_BUSINESS_CREATE,
   IPC_CHANNELS.WORKFLOW_BUSINESS_GET_ALL,
   IPC_CHANNELS.WORKFLOW_BUSINESS_UPDATE,
@@ -135,6 +143,11 @@ export function registerBootstrapIPC(): void {
   registerWindowChromeIPC();
   // 工作区检索不依赖数据库，提前注册避免窗口加载后调用 listTree/grep 无 handler
   registerWorkspaceIPC();
+  // MCP 不依赖数据库
+  registerMcpIPC();
+  void startMcpHub().catch((error) => {
+    console.error('[mcp] startMcpHub failed:', error);
+  });
 }
 
 /**
@@ -155,6 +168,7 @@ export function registerAllIPC(db: Database): void {
   registerIoIPC(promptDB, folderDB);
   registerSkillIPC(skillDB);
   registerWorkflowIPC(workflowDB);
+  registerWorkflowBackupIPC(workflowDB, promptDB, folderDB, skillDB);
   registerWorkflowBusinessIPC(workflowBusinessDB);
   registerWorkflowFolderIPC(workflowFolderDB);
   registerWorkflowAgentIPC();

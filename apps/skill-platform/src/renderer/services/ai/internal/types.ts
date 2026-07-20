@@ -1,5 +1,8 @@
 import type { EAIProtocol } from '@/types/modules';
 
+import type { IChatToolCall } from '../../types';
+import type { ITokenUsage } from './usage';
+
 export interface IResponseLike {
   ok: boolean;
   status: number;
@@ -9,14 +12,13 @@ export interface IResponseLike {
   json: <T = unknown>() => Promise<T>;
 }
 
-import type { ITokenUsage } from './usage';
-
 export interface IStreamState {
   fullContent: string;
   thinkingContent: string;
   buffer: string;
   chunkCount: number;
   usage?: ITokenUsage;
+  toolCalls?: IChatToolCall[];
 }
 
 export type TResolvedProtocol = {

@@ -1,111 +1,155 @@
+/* 会话绑定条：单行 chip 轨，压低高度、统一 token */
 .chat-context-banner {
+  position: relative;
   display: flex;
-  flex-direction: column;
   flex-shrink: 0;
-  align-items: stretch;
+  align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 10px 16px;
-  border-bottom: 1px solid rgb(148 163 184 / 28%);
-  background: rgb(248 250 252 / 95%);
+  min-height: 0;
+  padding: 5px 12px 5px 10px;
+  border-bottom: 1px solid rgb(148 163 184 / 22%);
+  background: linear-gradient(180deg, rgb(248 250 252 / 98%), rgb(241 245 249 / 88%));
 }
 
-.chat-context-banner-item {
+.chat-context-banner-rail {
+  flex-shrink: 0;
+  width: 2px;
+  align-self: stretch;
+  min-height: 16px;
+  margin: 2px 0;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #3b82f6, rgb(59 130 246 / 35%));
+}
+
+.chat-context-banner-row {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  width: 100%;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 2px;
   min-width: 0;
+}
+
+.chat-context-banner-chip {
+  display: inline-flex;
+  max-width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px 2px 6px;
+  border: 1px solid rgb(226 232 240 / 90%);
+  border-radius: 7px;
+  background: rgb(255 255 255 / 78%);
+}
+
+.chat-context-banner-chip + .chat-context-banner-chip {
+  margin-left: 2px;
 }
 
 .chat-context-banner-icon {
   flex-shrink: 0;
-  margin-top: 2px;
   color: #3b82f6;
 }
 
 .chat-context-banner-label {
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  line-height: 20px;
-  color: #475569;
+  letter-spacing: 0.02em;
+  line-height: 16px;
+  color: #64748b;
 }
 
-.chat-context-banner-value {
-  flex: 1;
+.chat-context-banner-tokens {
+  display: inline-flex;
+  max-width: min(360px, 42vw);
   min-width: 0;
-  font-size: 12px;
-  line-height: 20px;
-  color: #0f172a;
-}
-
-.chat-context-banner-paths {
-  display: flex;
-  flex: 1;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 4px;
-  min-width: 0;
+  overflow: hidden;
 }
 
-.chat-context-banner-path {
-  max-width: 100%;
+.chat-context-banner-token {
+  display: inline-block;
+  max-width: 160px;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding: 2px 8px;
-  border-radius: 999px;
+  padding: 1px 7px;
   border: 1px solid rgb(226 232 240);
+  border-radius: 5px;
   background: rgb(241 245 249);
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
   color: #0f172a;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
+}
 
-  &:hover {
+.chat-context-banner-token--action {
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
     background: rgb(226 232 240);
+    outline: none;
   }
 }
 
-.chat-context-banner-path--missing {
+.chat-context-banner-token--missing {
   border-color: rgb(248 113 113);
   background: rgb(254 226 226);
   color: #b91c1c;
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     background: rgb(254 202 202);
   }
 }
 
 :global(.dark) .chat-context-banner {
-  border-bottom-color: rgb(71 85 105 / 50%);
-  background: rgb(30 41 59 / 95%);
+  border-bottom-color: rgb(71 85 105 / 45%);
+  background: linear-gradient(180deg, rgb(30 41 59 / 96%), rgb(15 23 42 / 88%));
+}
+
+:global(.dark) .chat-context-banner-chip {
+  border-color: rgb(71 85 105 / 65%);
+  background: rgb(51 65 85 / 55%);
 }
 
 :global(.dark) .chat-context-banner-label {
   color: #94a3b8;
 }
 
-:global(.dark) .chat-context-banner-value {
+:global(.dark) .chat-context-banner-token {
+  border-color: rgb(71 85 105 / 70%);
+  background: rgb(30 41 59 / 85%);
   color: #e2e8f0;
 }
 
-:global(.dark) .chat-context-banner-path {
-  border-color: rgb(71 85 105 / 70%);
-  background: rgb(51 65 85);
-  color: #e2e8f0;
-
-  &:hover {
+:global(.dark) .chat-context-banner-token--action {
+  &:hover,
+  &:focus-visible {
     background: rgb(71 85 105);
   }
 }
 
-:global(.dark) .chat-context-banner-path--missing {
+:global(.dark) .chat-context-banner-token--missing {
   border-color: rgb(248 113 113 / 70%);
   background: rgb(127 29 29 / 40%);
   color: #fca5a5;
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     background: rgb(127 29 29 / 55%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-context-banner-token--action {
+    transition: none;
   }
 }

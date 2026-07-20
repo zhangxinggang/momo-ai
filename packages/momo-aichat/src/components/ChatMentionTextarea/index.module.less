@@ -16,7 +16,8 @@
   line-height: 24px;
   font-family: inherit;
   white-space: pre-wrap;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   word-wrap: break-word;
   scrollbar-gutter: stable;
   box-sizing: border-box;
@@ -36,29 +37,48 @@
   width: 100%;
   min-height: 24px;
   will-change: transform;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  word-wrap: break-word;
 }
 
 .mention-input-textarea {
   position: relative;
   z-index: 1;
+  overflow-y: auto;
+}
+
+/* 有笔记引用：透明字 + 镜像层展示 */
+.mention-input-textarea-overlay {
   background: transparent;
   color: transparent;
   -webkit-text-fill-color: transparent;
   caret-color: var(--text-primary, #111827);
-  overflow-y: auto;
 }
 
-.mention-input-textarea::selection {
+.mention-input-textarea-overlay::selection {
   background: rgba(59, 130, 246, 0.35);
   color: transparent;
   -webkit-text-fill-color: transparent;
 }
 
-.mention-input-textarea::-moz-selection {
+.mention-input-textarea-overlay::-moz-selection {
   background: rgba(59, 130, 246, 0.35);
   color: transparent;
 }
 
+/* 无笔记引用：直接显示文本，避免镜像换行与光标错位 */
+.mention-input-textarea-plain {
+  background: transparent;
+  color: inherit;
+  -webkit-text-fill-color: currentColor;
+  caret-color: currentColor;
+}
+
 .mention-plain {
-  color: var(--text-primary, #111827);
+  color: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }

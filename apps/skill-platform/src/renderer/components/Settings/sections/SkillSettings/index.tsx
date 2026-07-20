@@ -18,6 +18,8 @@ import { getSafetyScanAIConfig } from '@renderer/services/skill/detail-utils';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
 import { sortSkillPlatformsByPreference } from '@renderer/utils/skill/platform-sort';
 
+import { McpSettingsPanel } from './McpSettingsPanel';
+
 function getCurrentPlatformKey(): 'darwin' | 'win32' | 'linux' {
   const platform = navigator.userAgent.toLowerCase();
   if (platform.includes('win')) return 'win32';
@@ -73,6 +75,7 @@ export function SkillSettings() {
   const [newScanPath, setNewScanPath] = useState('');
   const [draggingPlatformId, setDraggingPlatformId] = useState<string | null>(null);
   const [dropTargetPlatformId, setDropTargetPlatformId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'skill' | 'mcp'>('skill');
 
   const movePlatformOrder = (platformId: string, direction: 'up' | 'down') => {
     const nextOrder = orderedPlatforms.map((platform) => platform.id);
@@ -138,6 +141,20 @@ export function SkillSettings() {
 
   return (
     <>
+      <div className='mb-4'>
+        <Segmented
+          value={activeTab}
+          onChange={(value) => setActiveTab(value as 'skill' | 'mcp')}
+          options={[
+            { label: '技能配置', value: 'skill' },
+            { label: 'MCP', value: 'mcp' },
+          ]}
+        />
+      </div>
+      {activeTab === 'mcp' ? (
+        <McpSettingsPanel />
+      ) : (
+        <>
       <SettingSection title={'ISkill 安装方式'}>
         <div className='space-y-3 p-4'>
           <p className='text-muted-foreground text-xs'>
@@ -367,6 +384,8 @@ export function SkillSettings() {
           )}
         </div>
       </SettingSection>
+        </>
+      )}
     </>
   );
 }

@@ -1,3 +1,4 @@
+import classNames from 'classnames';
 import {
   forwardRef,
   useCallback,
@@ -14,6 +15,7 @@ import {
 import {
   removeMentionTokenAt,
   SURFACE_MENTION_REGEX,
+  SURFACE_MENTION_START,
   surfaceIndexToValueIndex,
   surfaceToValue,
   valueIndexToSurfaceIndex,
@@ -83,6 +85,11 @@ function renderMirrorContent(surface: string) {
     );
   }
 
+  // 尾部换行时补 br，与 textarea 额外空行高度对齐
+  if (surface.endsWith('\n')) {
+    parts.push(<br key={`br-${index}`} />);
+  }
+
   return parts;
 }
 
@@ -103,6 +110,8 @@ function ChatMentionTextareaInner(props: IProps, ref: Ref<IChatMentionTextareaRe
   const mirrorContentRef = useRef<HTMLDivElement>(null);
 
   const surfaceValue = useMemo(() => valueToSurface(value), [value]);
+  // 无笔记引用时不走镜像层，避免中文多行换行与光标错位
+  const hasMentionSurface = surfaceValue.includes(SURFACE_MENTION_START);
 
   const mirrorTypographyStyle = useMemo<CSSProperties>(() => {
     if (!style) {
@@ -188,10 +197,16 @@ function ChatMentionTextareaInner(props: IProps, ref: Ref<IChatMentionTextareaRe
   };
 
   useLayoutEffect(() => {
+    if (!hasMentionSurface) {
+      return;
+    }
     syncMirrorLayout();
-  }, [surfaceValue, style, syncMirrorLayout]);
+  }, [surfaceValue, style, hasMentionSurface, syncMirrorLayout]);
 
   useEffect(() => {
+    if (!hasMentionSurface) {
+      return;
+    }
     const textarea = textareaRef.current;
     if (!textarea) {
       return;
@@ -203,23 +218,21 @@ function ChatMentionTextareaInner(props: IProps, ref: Ref<IChatMentionTextareaRe
     return () => {
       resizeObserver.disconnect();
     };
-  }, [syncMirrorLayout]);
+  }, [hasMentionSurface, syncMirrorLayout]);
 
   return (
     <div className={styles['mention-input']}>
-      <div
-        ref={mirrorRef}
-        className={styles['mention-input-mirror']}
-        style={mirrorTypographyStyle}
-        aria-hidden='true'>
-        <div ref={mirrorContentRef} className={styles['mention-input-mirror-content']}>
-          {surfaceValue ? (
-            renderMirrorContent(surfaceValue)
-          ) : (
-            <span className={styles['mention-plain']} />
-          )}
+      {hasMentionSurface ? (
+        <div
+          ref={mirrorRef}
+          className={styles['mention-input-mirror']}
+          style={mirrorTypographyStyle}
+          aria-hidden='true'>
+          <div ref={mirrorContentRef} className={styles['mention-input-mirror-content']}>
+            {renderMirrorContent(surfaceValue)}
+          </div>
         </div>
-      </div>
+      ) : null}
       <textarea
         ref={textareaRef}
         value={surfaceValue}
@@ -236,8 +249,14 @@ function ChatMentionTextareaInner(props: IProps, ref: Ref<IChatMentionTextareaRe
         onKeyUp={notifySelection}
         onClick={handleClick}
         onSelect={notifySelection}
-        onScroll={syncMirrorLayout}
-        className={`${styles['mention-input-textarea']} ${className ?? ''}`}
+        onScroll={hasMentionSurface ? syncMirrorLayout : undefined}
+        className={classNames(
+          styles['mention-input-textarea'],
+          hasMentionSurface
+            ? styles['mention-input-textarea-overlay']
+            : styles['mention-input-textarea-plain'],
+          className,
+        )}
         style={style}
       />
     </div>

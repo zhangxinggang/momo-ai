@@ -10,6 +10,10 @@ import type {
   ISkillMcpConfig,
   ISkillSafetyReport,
   ISkillSafetyScanInput,
+  ILocalZipFileInput,
+  ILocalZipImportItem,
+  ILocalZipImportResult,
+  ILocalZipPreviewItem,
 } from '@/types/modules';
 
 import { getSkillIpc } from '../../ipc';
@@ -62,6 +66,14 @@ export function listDefaultSkills() {
 
 export function importDefaultSkills(zipFileNames: string[], options: { overwrite: boolean }) {
   return requireSkillIpc().importDefaultSkills(zipFileNames, options);
+}
+
+export function previewLocalSkillZips(files: ILocalZipFileInput[]): Promise<ILocalZipPreviewItem[]> {
+  return requireSkillIpc().previewLocalZips(files);
+}
+
+export function importLocalSkillZips(items: ILocalZipImportItem[]): Promise<ILocalZipImportResult> {
+  return requireSkillIpc().importLocalZips(items);
 }
 
 export function syncSkillFromRepo(skillId: string) {

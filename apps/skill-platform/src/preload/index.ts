@@ -8,6 +8,7 @@ import {
   ioApi,
   kbApi,
   mediaApi,
+  mcpApi,
   noteApi,
   onlineConfApi,
   promptApi,
@@ -19,6 +20,7 @@ import {
   versionApi,
   workflowAgentApi,
   workflowApi,
+  workflowBackupApi,
   workflowBusinessApi,
   workflowFolderApi,
   workspaceApi,
@@ -41,11 +43,13 @@ const api = createPreloadApi({
   claudeCode: claudeCodeApi,
   workflow: workflowApi,
   workflowAgent: workflowAgentApi,
+  workflowBackup: workflowBackupApi,
   workflowBusiness: workflowBusinessApi,
   workflowFolder: workflowFolderApi,
   workspace: workspaceApi,
   scraper: scraperApi,
   onlineConf: onlineConfApi,
+  mcp: mcpApi,
 });
 
 contextBridge.exposeInMainWorld('api', api);

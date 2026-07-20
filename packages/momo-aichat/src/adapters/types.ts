@@ -148,6 +148,12 @@ export interface IAiChatServices {
   noteReferences?: INoteReferencesConfig;
   /** 消息内本地路径点击（由宿主注入） */
   localPath?: ILocalPathConfig;
+  /** 消息内 http(s) 链接点击（由宿主注入，如系统浏览器打开） */
+  onOpenExternalUrl?: (url: string) => void | Promise<void>;
+  /** 输入栏工具栏左侧额外区域（宿主注入，如技能选择） */
+  renderInputToolbarLeftExtra?: () => ReactNode;
+  /** 顶部上下文条中的技能摘要（宿主注入） */
+  skillBanner?: { name: string } | null;
   /** 判断模型 id 是否为生图模型 */
   isImageModel?: (modelId: string) => boolean;
   /** 生图模型输入框占位提示 */

@@ -35,6 +35,11 @@ function saveSessions(
   }
 }
 
+/** 仅分配会话 id，不写入历史（用于弹窗打开时延后持久化） */
+export function allocateMainChatSessionId(): string {
+  return generateSessionId();
+}
+
 /** 在 AI 对话历史中新建一条会话（不切换侧栏当前选中项） */
 export function createMainChatSession(title: string): string {
   const storage = createLocalChatStorage();

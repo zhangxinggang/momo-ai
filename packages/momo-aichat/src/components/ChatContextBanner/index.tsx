@@ -1,5 +1,5 @@
 import { App } from 'antd';
-import { Database, FolderOpen } from 'lucide-react';
+import { Cuboid, Database, FolderOpen } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useAiChatConfig } from '../../contexts/AiChatConfigContext';
@@ -7,10 +7,10 @@ import { useChatContext } from '../../contexts/ChatContext';
 import { formatWorkspaceDisplayPath } from '../../utils/workspace-display';
 import styles from './index.module.less';
 
-/** 对话顶部上下文条：展示已启用的 RAG 知识库与工作区选择 */
+/** 对话顶部上下文条：单行展示已启用的 RAG、工作区与技能 */
 export function ChatContextBanner() {
   const { message } = App.useApp();
-  const { listKbCollections, workspace } = useAiChatConfig();
+  const { listKbCollections, workspace, skillBanner } = useAiChatConfig();
   const { kbEnabled, kbCollectionId } = useChatContext();
   const [collections, setCollections] = useState<{ id: number; name: string }[]>([]);
   const [pathExistsMap, setPathExistsMap] = useState<Record<string, boolean>>({});
@@ -83,8 +83,10 @@ export function ChatContextBanner() {
 
   const showRag = Boolean(kbEnabled && kbName);
   const showWorkspace = Boolean(workspace?.enabled && workspacePaths.length > 0);
+  const skillName = skillBanner?.name?.trim() || '';
+  const showSkill = Boolean(skillName);
 
-  if (!showRag && !showWorkspace) {
+  if (!showRag && !showWorkspace && !showSkill) {
     return null;
   }
 
@@ -98,37 +100,53 @@ export function ChatContextBanner() {
   };
 
   return (
-    <div className={styles['chat-context-banner']}>
-      {showRag ? (
-        <div className={styles['chat-context-banner-item']}>
-          <Database aria-hidden className={styles['chat-context-banner-icon']} size={14} />
-          <span className={styles['chat-context-banner-label']}>RAG</span>
-          <span className={styles['chat-context-banner-value']}>{kbName}</span>
-        </div>
-      ) : null}
-      {showWorkspace ? (
-        <div className={styles['chat-context-banner-item']}>
-          <FolderOpen aria-hidden className={styles['chat-context-banner-icon']} size={14} />
-          <span className={styles['chat-context-banner-label']}>工作区</span>
-          <div className={styles['chat-context-banner-paths']}>
-            {workspacePaths.map((folderPath) => {
-              const isMissing = pathExistsMap[folderPath] === false;
-              return (
-                <button
-                  className={`${styles['chat-context-banner-path']} ${
-                    isMissing ? styles['chat-context-banner-path--missing'] : ''
-                  }`}
-                  key={folderPath}
-                  title={folderPath}
-                  type='button'
-                  onClick={() => handlePathClick(folderPath)}>
-                  {formatWorkspaceDisplayPath(folderPath)}
-                </button>
-              );
-            })}
+    <div
+      className={styles['chat-context-banner']}
+      aria-label='当前对话上下文'>
+      <span className={styles['chat-context-banner-rail']} aria-hidden />
+      <div className={styles['chat-context-banner-row']}>
+        {showRag ? (
+          <div className={styles['chat-context-banner-chip']}>
+            <Database aria-hidden className={styles['chat-context-banner-icon']} size={12} />
+            <span className={styles['chat-context-banner-label']}>RAG</span>
+            <span className={styles['chat-context-banner-token']} title={kbName ?? undefined}>
+              {kbName}
+            </span>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+        {showWorkspace ? (
+          <div className={styles['chat-context-banner-chip']}>
+            <FolderOpen aria-hidden className={styles['chat-context-banner-icon']} size={12} />
+            <span className={styles['chat-context-banner-label']}>工作区</span>
+            <div className={styles['chat-context-banner-tokens']}>
+              {workspacePaths.map((folderPath) => {
+                const isMissing = pathExistsMap[folderPath] === false;
+                return (
+                  <button
+                    className={`${styles['chat-context-banner-token']} ${styles['chat-context-banner-token--action']} ${
+                      isMissing ? styles['chat-context-banner-token--missing'] : ''
+                    }`}
+                    key={folderPath}
+                    title={folderPath}
+                    type='button'
+                    onClick={() => handlePathClick(folderPath)}>
+                    {formatWorkspaceDisplayPath(folderPath)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+        {showSkill ? (
+          <div className={styles['chat-context-banner-chip']}>
+            <Cuboid aria-hidden className={styles['chat-context-banner-icon']} size={12} />
+            <span className={styles['chat-context-banner-label']}>技能</span>
+            <span className={styles['chat-context-banner-token']} title={skillName}>
+              {skillName}
+            </span>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

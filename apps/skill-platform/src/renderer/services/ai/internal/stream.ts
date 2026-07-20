@@ -6,6 +6,7 @@ import type {
 } from '../types';
 import type { IResponseLike, IStreamState } from './types';
 import { normalizeTokenUsage } from './usage';
+import { aggregateToolCallDeltas } from '../tools/openai-tools';
 
 export function createStreamState(): IStreamState {
   return {
@@ -13,6 +14,7 @@ export function createStreamState(): IStreamState {
     thinkingContent: '',
     buffer: '',
     chunkCount: 0,
+    toolCalls: [],
   };
 }
 
@@ -84,6 +86,10 @@ export async function processStreamTextChunk(
         }
       }
 
+      if (Array.isArray(delta.tool_calls) && delta.tool_calls.length > 0) {
+        state.toolCalls = aggregateToolCallDeltas(state.toolCalls ?? [], delta.tool_calls);
+      }
+
       if (options?.yieldToUi && deltasSinceYield >= 20) {
         deltasSinceYield = 0;
         await yieldToEventLoop();
@@ -113,6 +119,7 @@ export function finalizeStreamState(
     content: state.fullContent,
     thinkingContent: state.thinkingContent || undefined,
     usage: state.usage,
+    toolCalls: state.toolCalls?.length ? state.toolCalls : undefined,
   };
 }
 

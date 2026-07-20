@@ -3,16 +3,22 @@ import type { IChatStreamMessage, TCallAiChatStream } from '@momo/aichat';
 import type { IAIConfig, IChatMessage } from '@renderer/services/ai';
 import { isImageGenerationConfig } from '@renderer/services/ai/image/capabilities';
 import { getEnabledWorkspaceContext } from '@renderer/services/workspace/context';
+import { ANSWER_FOCUS_SYSTEM_PROMPT } from '../core/answer-focus-system-prompt';
 import { MERMAID_SYSTEM_PROMPT } from '../core/mermaid-system-prompt';
 import { buildRagContext } from '../core/rag-context';
-import { resolveStreamModelConfig, runChatCompletionStream } from './chat-completion-stream';
+import { isMcpRelatedText } from '../mcp/intent';
+import {
+  resolveStreamModelConfig,
+  runChatCompletionStream,
+  runChatCompletionStreamWithMcp,
+} from './chat-completion-stream';
 import { runImageGenerationInChat } from './image-chat-stream';
 
 export interface IGeneralChatStreamOptions {
   getModelConfig: (modelKey: string) => IAIConfig | null;
   getDefaultConfig: () => IAIConfig | null;
   onNeedModel?: () => void;
-  /** 自定义工作区上下文（默认读侧栏全局工作区 store） */
+  /** 自定义工作区上下文（默认读当前对话项目绑定目录） */
   resolveWorkspaceContext?: (userMessage?: string) => Promise<string>;
 }
 
@@ -57,7 +63,11 @@ export function createGeneralChatStream(options: IGeneralChatStreamOptions): TCa
       apiMessages = [{ role: 'system', content: workspaceContext }, ...apiMessages];
     }
 
-    apiMessages = [{ role: 'system', content: MERMAID_SYSTEM_PROMPT }, ...apiMessages];
+    apiMessages = [
+      { role: 'system', content: ANSWER_FOCUS_SYSTEM_PROMPT },
+      { role: 'system', content: MERMAID_SYSTEM_PROMPT },
+      ...apiMessages,
+    ];
 
     if (streamOptions?.user_system_prompt?.trim()) {
       apiMessages = [
@@ -66,12 +76,17 @@ export function createGeneralChatStream(options: IGeneralChatStreamOptions): TCa
       ];
     }
 
+    // 仅当用户明确涉及 MCP/工具调用时才注入 MCP tools
+    const enableMcpTools = isMcpRelatedText(lastUserMessage);
+
     try {
-      const { elapsedSec, usage } = await runChatCompletionStream({
+      const runner = enableMcpTools ? runChatCompletionStreamWithMcp : runChatCompletionStream;
+      const { elapsedSec, usage } = await runner({
         config,
         apiMessages,
         onChunk,
         streamCallbacks: streamOptions,
+        ...(enableMcpTools ? { enableMcpTools: true } : {}),
       });
 
       onStats?.({

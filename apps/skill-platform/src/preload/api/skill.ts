@@ -2,6 +2,10 @@
 import type {
   DCreateSkill,
   DUpdateSkill,
+  ILocalZipFileInput,
+  ILocalZipImportItem,
+  ILocalZipImportResult,
+  ILocalZipPreviewItem,
   IMcpServerConfig,
   ISkillLocalFileEntry,
   ISkillLocalFileTreeEntry,
@@ -25,6 +29,10 @@ export const skillApi = {
   listDefaultSkills: () => ipcRenderer.invoke(IPC_CHANNELS.SKILL_LIST_DEFAULT_SKILLS),
   importDefaultSkills: (zipFileNames: string[], options: { overwrite: boolean }) =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_IMPORT_DEFAULT_SKILLS, zipFileNames, options),
+  previewLocalZips: (files: ILocalZipFileInput[]): Promise<ILocalZipPreviewItem[]> =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILL_PREVIEW_LOCAL_ZIPS, files),
+  importLocalZips: (items: ILocalZipImportItem[]): Promise<ILocalZipImportResult> =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILL_IMPORT_LOCAL_ZIPS, items),
   scanSafety: (input: ISkillSafetyScanInput): Promise<ISkillSafetyReport> =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_SCAN_SAFETY, input),
   saveSafetyReport: (skillId: string, report: ISkillSafetyReport): Promise<void> =>

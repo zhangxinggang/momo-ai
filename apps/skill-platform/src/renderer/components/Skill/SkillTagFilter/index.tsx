@@ -1,5 +1,4 @@
 import { clsx } from 'clsx';
-import { HashIcon, LayoutGridIcon } from 'lucide-react';
 
 import styles from './index.module.less';
 
@@ -28,10 +27,6 @@ export function SkillTagFilter({ tags, activeTag, onSelectAll, onSelectTag }: IP
           )}
           onClick={onSelectAll}
           type='button'>
-          <LayoutGridIcon
-            aria-hidden
-            className={clsx('h-3.5 w-3.5', styles['skill-tag-filter-chip-icon'])}
-          />
           <span className={styles['skill-tag-filter-chip-label']}>{'全部'}</span>
         </button>
         {tags.map((tag) => {
@@ -47,10 +42,6 @@ export function SkillTagFilter({ tags, activeTag, onSelectAll, onSelectTag }: IP
               onClick={() => onSelectTag(tag)}
               title={tag}
               type='button'>
-              <HashIcon
-                aria-hidden
-                className={clsx('h-3 w-3', styles['skill-tag-filter-chip-icon'])}
-              />
               <span className={styles['skill-tag-filter-chip-label']}>{tag}</span>
             </button>
           );

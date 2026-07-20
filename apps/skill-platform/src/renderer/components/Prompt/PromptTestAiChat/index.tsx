@@ -10,6 +10,8 @@ export interface IProps {
   sessionKey: string;
   /** 绑定到 AI 对话历史的会话 id */
   bootstrapSessionId: string;
+  /** 首条问答写入历史时使用的会话标题 */
+  bootstrapSessionTitle?: string;
   services: IAiChatServices;
   systemPrompt: string;
   userPrompt: string;
@@ -79,6 +81,7 @@ function PromptTestAiChatBridge({
 export function PromptTestAiChat({
   sessionKey,
   bootstrapSessionId,
+  bootstrapSessionTitle,
   services,
   systemPrompt,
   userPrompt,
@@ -90,6 +93,7 @@ export function PromptTestAiChat({
     <AiChatShell
       sessionKey={sessionKey}
       bootstrapSessionId={bootstrapSessionId}
+      bootstrapSessionTitle={bootstrapSessionTitle}
       services={services}
       className='flex min-h-0 flex-1 flex-col'>
       <PromptTestAiChatBridge

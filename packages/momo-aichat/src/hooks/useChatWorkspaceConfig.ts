@@ -121,9 +121,9 @@ export function buildChatWorkspaceConfig(input: {
   enabled: boolean;
   paths?: string[];
   path?: string | null;
-  onEnabledChange: (enabled: boolean) => void;
-  onAddFolder: () => void;
-  onRemoveFolder: (folderPath: string) => void;
+  onEnabledChange?: (enabled: boolean) => void;
+  onAddFolder?: () => void;
+  onRemoveFolder?: (folderPath: string) => void;
   presets?: IChatWorkspaceConfig['presets'];
   activePresetId?: string | null;
   onPresetSelect?: IChatWorkspaceConfig['onPresetSelect'];
@@ -147,6 +147,22 @@ export function buildChatWorkspaceConfig(input: {
     onPresetSave: input.onPresetSave,
     onPresetRename: input.onPresetRename,
     onPresetDelete: input.onPresetDelete,
+    onOpenFolderPath: input.onOpenFolderPath,
+    checkPathExists: input.checkPathExists,
+  };
+}
+
+/** 只读工作区配置：路径来自当前对话项目 */
+export function buildReadonlyChatWorkspaceConfig(input: {
+  paths: string[];
+  onOpenFolderPath?: (folderPath: string) => void;
+  checkPathExists?: (folderPath: string) => Promise<boolean>;
+}): IChatWorkspaceConfig {
+  const paths = input.paths;
+  return {
+    enabled: paths.length > 0,
+    paths,
+    path: paths[0] ?? null,
     onOpenFolderPath: input.onOpenFolderPath,
     checkPathExists: input.checkPathExists,
   };

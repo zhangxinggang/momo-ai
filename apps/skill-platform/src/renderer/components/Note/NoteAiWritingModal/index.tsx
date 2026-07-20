@@ -1,4 +1,11 @@
-import { AiChatView, ChatProvider, useChatWorkspaceConfig, type IChatMessage } from '@momo/aichat';
+import {
+  AiChatView,
+  ChatFeatureDropdown,
+  ChatProvider,
+  ChatWorkspaceToolbar,
+  useChatWorkspaceConfig,
+  type IChatMessage,
+} from '@momo/aichat';
 import { FullscreenModal } from '@renderer/components/ui/FullscreenModal';
 import { useToast } from '@renderer/components/ui/Toast';
 import { useAiChatViewTheme } from '@renderer/hooks/useAiChatViewTheme';
@@ -13,7 +20,7 @@ import {
 import { getWorkspaceContextFromStorageKey } from '@renderer/services/workspace/context';
 import { useNoteStore, useSettingsStore } from '@renderer/store';
 import { App, Button } from 'antd';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 interface IContentProps {
   filePath: string;
@@ -40,6 +47,17 @@ function NoteAiWritingContent({ filePath, noteId, onClose }: IContentProps) {
     },
   });
 
+  const renderWorkspaceToolbar = useCallback(
+    () => (
+      <ChatFeatureDropdown
+        customPanel={<ChatWorkspaceToolbar workspace={workspace} />}
+        enabled={workspace.enabled}
+        label='工作区'
+      />
+    ),
+    [workspace],
+  );
+
   const chatServices = useMemo(
     () =>
       buildSharedAiChatServices({
@@ -56,12 +74,16 @@ function NoteAiWritingContent({ filePath, noteId, onClose }: IContentProps) {
           resolveWorkspaceContext: (userMessage) =>
             getWorkspaceContextFromStorageKey(workspaceStorageKey, userMessage),
         }),
+        overrides: {
+          renderInputToolbarLeftExtra: renderWorkspaceToolbar,
+        },
       }),
     [
       aiModels,
       chatModelOptionGroups,
       modelResolverRef,
       noteId,
+      renderWorkspaceToolbar,
       showToast,
       workspace,
       workspaceStorageKey,

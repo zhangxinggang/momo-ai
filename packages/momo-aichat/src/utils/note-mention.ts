@@ -317,6 +317,18 @@ export function expandNoteMentionsWithSnapshots(
   return result;
 }
 
+/** 剥离助手回答中被复述的笔记全文块 */
+export function stripEchoedNoteBlocks(content: string): string {
+  if (!content || !content.includes('--- 笔记:')) {
+    return content;
+  }
+  const stripped = content
+    .replace(/--- 笔记:[^\n]*START ---\r?\n[\s\S]*?--- 笔记:[^\n]*END ---/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  return stripped.length > 0 ? stripped : content.trim();
+}
+
 export async function ensureNoteSnapshots(
   paths: string[],
   snapshots: Record<string, INoteSnapshot>,

@@ -87,3 +87,11 @@ export async function runChatCompletionStream(
     usage: result.usage,
   };
 }
+
+/** 带 MCP tool loop 的 chatCompletion 流式执行 */
+export async function runChatCompletionStreamWithMcp(
+  input: IRunChatCompletionStreamInput & { enableMcpTools?: boolean },
+): Promise<IRunChatCompletionStreamResult> {
+  const { runMcpToolLoop } = await import('../mcp/tool-loop');
+  return runMcpToolLoop(input);
+}

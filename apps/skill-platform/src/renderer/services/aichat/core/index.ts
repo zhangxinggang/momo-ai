@@ -1,3 +1,4 @@
+export { ANSWER_FOCUS_SYSTEM_PROMPT } from './answer-focus-system-prompt';
 export type { IWebStorageLike } from '@renderer/services/storage/key-value-storage';
 export { generateChatTitle } from './generate-chat-title';
 export { buildRagContext, kbChunkCache } from './rag-context';

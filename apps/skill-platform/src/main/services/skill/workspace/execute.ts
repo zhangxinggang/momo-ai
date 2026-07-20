@@ -12,7 +12,7 @@ export interface ISkillWorkspaceExecuteInput {
   repoPath: string;
   userInput: string;
   skillId?: string;
-  /** AI 回复中解析出的可执行命令（优先于自动探测） */
+  /** AI 回复中解析出的可执行命令（未传入则不执行） */
   commands?: string[];
   /** 自定义产出目录（工作流节点目录等）；默认使用 temp/<skillId> 或 workspace/output */
   outputDir?: string;
@@ -46,10 +46,6 @@ export interface ISkillWorkspaceExecuteResult {
   skippedCommandNotes?: string[];
 }
 
-interface IRunnableCommand {
-  commandLine: string;
-}
-
 const OUTPUT_DIR_NAMES = ['output', 'outputs', 'dist', 'out', 'generated', 'build'];
 const DELIVERABLE_EXTENSIONS = new Set([
   '.pptx',
@@ -73,10 +69,6 @@ const DELIVERABLE_EXTENSIONS = new Set([
   '.htm',
   '.svg',
 ]);
-
-const SKIP_SCRIPT_PATTERN =
-  /^(inventory|test_|_test|conftest|__init__|setup|lint|format|check|verify)/i;
-const PREFERRED_SCRIPT_KEYWORDS = ['generate', 'run', 'main', 'build', 'create', 'make', 'render'];
 
 async function pathExists(targetPath: string): Promise<boolean> {
   try {
@@ -206,149 +198,6 @@ async function prepareDefaultInputJson(repoPath: string): Promise<string> {
   const defaultPath = path.join(dataDir, 'input.json');
   await fs.writeFile(defaultPath, JSON.stringify({ pages: [] }, null, 2), 'utf8');
   return defaultPath;
-}
-
-function scoreScriptName(fileName: string): number {
-  const lower = fileName.toLowerCase();
-  if (SKIP_SCRIPT_PATTERN.test(lower)) {
-    return -100;
-  }
-  let score = 0;
-  for (let i = 0; i < PREFERRED_SCRIPT_KEYWORDS.length; i += 1) {
-    if (lower.includes(PREFERRED_SCRIPT_KEYWORDS[i])) {
-      score += 50 - i;
-    }
-  }
-  if (lower.endsWith('.js') || lower.endsWith('.mjs')) {
-    score += 20;
-  }
-  if (lower.endsWith('.py')) {
-    score += 10;
-  }
-  return score;
-}
-
-async function findScriptInDir(
-  dirPath: string,
-  relativeBase: string,
-): Promise<IRunnableCommand | null> {
-  let entries;
-  try {
-    entries = await fs.readdir(dirPath, { withFileTypes: true });
-  } catch {
-    return null;
-  }
-
-  const candidates = entries
-    .filter((entry) => entry.isFile())
-    .map((entry) => entry.name)
-    .filter((name) => /\.(py|js|mjs|ts|ps1|sh|bat|cmd)$/i.test(name))
-    .sort((a, b) => scoreScriptName(b) - scoreScriptName(a));
-
-  for (const fileName of candidates) {
-    if (scoreScriptName(fileName) < 0) {
-      continue;
-    }
-    const relative = relativeBase ? `${relativeBase}/${fileName}` : fileName;
-    if (fileName.endsWith('.py')) {
-      const fullScriptPath = path.join(dirPath, fileName);
-      const needsArgs = await pythonScriptNeedsArgs(fullScriptPath);
-      if (needsArgs) {
-        continue;
-      }
-      return { commandLine: `python "${relative}"` };
-    }
-    if (fileName.endsWith('.js') || fileName.endsWith('.mjs')) {
-      return { commandLine: `node "${relative}"` };
-    }
-    if (fileName.endsWith('.ps1')) {
-      return {
-        commandLine: `powershell -ExecutionPolicy Bypass -File "${relative}"`,
-      };
-    }
-    if (fileName.endsWith('.sh') && process.platform !== 'win32') {
-      return { commandLine: `bash "${relative}"` };
-    }
-    if (fileName.endsWith('.bat') || fileName.endsWith('.cmd')) {
-      return { commandLine: `"${relative}"` };
-    }
-  }
-
-  return null;
-}
-
-async function detectRunnable(repoPath: string): Promise<IRunnableCommand | null> {
-  const packageJsonPath = path.join(repoPath, 'package.json');
-  if (await pathExists(packageJsonPath)) {
-    try {
-      const raw = await fs.readFile(packageJsonPath, 'utf8');
-      const pkg = JSON.parse(raw) as { scripts?: Record<string, string> };
-      const scriptName = ['generate', 'execute', 'run', 'start', 'build'].find(
-        (key) => pkg.scripts?.[key],
-      );
-      if (scriptName) {
-        return { commandLine: `npm run ${scriptName}` };
-      }
-    } catch {
-      // 忽略 package.json 解析错误
-    }
-  }
-
-  const fixedCandidates = [
-    'scripts/generate.py',
-    'scripts/run.py',
-    'scripts/main.py',
-    'scripts/build.py',
-    'scripts/generate.js',
-    'scripts/run.js',
-    'main.py',
-    'run.py',
-    'generate.py',
-    'scripts/run.ps1',
-    'scripts/run.sh',
-    'run.ps1',
-    'run.sh',
-  ];
-
-  for (const relative of fixedCandidates) {
-    const fullPath = path.join(repoPath, relative);
-    if (!(await pathExists(fullPath))) {
-      continue;
-    }
-    if (relative.endsWith('.py')) {
-      const needsArgs = await pythonScriptNeedsArgs(fullPath);
-      if (needsArgs) {
-        return null;
-      }
-      return { commandLine: `python "${relative}"` };
-    }
-    if (relative.endsWith('.js')) {
-      return { commandLine: `node "${relative}"` };
-    }
-    if (relative.endsWith('.ps1')) {
-      return {
-        commandLine: `powershell -ExecutionPolicy Bypass -File "${relative}"`,
-      };
-    }
-    if (relative.endsWith('.sh') && process.platform !== 'win32') {
-      return { commandLine: `bash "${relative}"` };
-    }
-  }
-
-  const scriptsDir = path.join(repoPath, 'scripts');
-  if (await pathExists(scriptsDir)) {
-    const fromScripts = await findScriptInDir(scriptsDir, 'scripts');
-    if (fromScripts) {
-      return fromScripts;
-    }
-  }
-
-  const rootScript = await findScriptInDir(repoPath, '');
-  if (rootScript) {
-    return rootScript;
-  }
-
-  return null;
 }
 
 function isDeliverableFile(relativePath: string): boolean {
@@ -558,21 +407,18 @@ export async function executeSkillWorkspace(
   });
 
   let plannedCommands = [...prepared.commands];
+  // 未显式传入命令时不自动探测脚本，避免技能未声明也执行
   if (plannedCommands.length === 0) {
-    const runnable = await detectRunnable(repoPath);
-    if (!runnable) {
-      return {
-        attempted: false,
-        stdout: '',
-        stderr: '',
-        exitCode: null,
-        outputFiles: [],
-        tempOutputFiles: [],
-        outputDir,
-        hint: '仓库中未找到可执行脚本。请在回复中使用 ```skill-run 代码块写出要执行的命令（如 node scripts/generate.js），或使用 artifact 块写入交付文件。',
-      };
-    }
-    plannedCommands = [runnable.commandLine];
+    return {
+      attempted: false,
+      stdout: '',
+      stderr: '',
+      exitCode: null,
+      outputFiles: [],
+      tempOutputFiles: [],
+      outputDir,
+      hint: '未指定执行命令。请在回复中使用 ```skill-run 代码块写出要执行的命令（如 node scripts/generate.js），或使用 artifact 块写入交付文件。',
+    };
   }
 
   const supplementedCommands: string[] = [];

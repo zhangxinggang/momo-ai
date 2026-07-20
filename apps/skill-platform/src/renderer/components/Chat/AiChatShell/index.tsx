@@ -8,6 +8,8 @@ export interface IProps {
   sessionKey: string;
   /** 写入 AI 对话历史中的会话 id */
   bootstrapSessionId?: string;
+  /** 延后持久化时的会话标题（首条消息才落库） */
+  bootstrapSessionTitle?: string;
   services: IAiChatServices;
   className?: string;
   children: ReactNode;
@@ -17,12 +19,17 @@ export interface IProps {
 export function AiChatShell({
   sessionKey,
   bootstrapSessionId,
+  bootstrapSessionTitle,
   services,
   className,
   children,
 }: IProps) {
   return (
-    <ChatProvider key={sessionKey} services={services} bootstrapSessionId={bootstrapSessionId}>
+    <ChatProvider
+      key={sessionKey}
+      services={services}
+      bootstrapSessionId={bootstrapSessionId}
+      bootstrapSessionTitle={bootstrapSessionTitle}>
       {bootstrapSessionId ? <ModalChatSessionBootstrap sessionId={bootstrapSessionId} /> : null}
       <div className={className}>{children}</div>
     </ChatProvider>

@@ -13,7 +13,6 @@ import {
   CheckSquareIcon,
   CuboidIcon,
   DownloadIcon,
-  MessagesSquare,
   ShieldAlertIcon,
   ShieldCheckIcon,
   ShieldIcon,
@@ -74,8 +73,9 @@ function normalizePlatformStatusMap(value: unknown): Record<string, boolean> {
 interface IProps {
   skills: ISkill[];
   skillsWithStoreUpdates?: Set<string>;
+  updatingSkillId?: string | null;
   onQuickInstall: (skill: ISkill) => void;
-  onOpenSkillAiChat: (skillId: string) => void;
+  onUpdateFromStore?: (skill: ISkill) => void;
   onRequestDelete?: (skillId: string, skillName: string) => void;
   selectionMode?: boolean;
   selectedSkillIds?: Set<string>;
@@ -91,8 +91,9 @@ const skillPlatformStatusCache = new Map<string, Record<string, boolean>>();
 export function SkillListView({
   skills,
   skillsWithStoreUpdates = new Set<string>(),
+  updatingSkillId = null,
   onQuickInstall,
-  onOpenSkillAiChat,
+  onUpdateFromStore,
   onRequestDelete,
   selectionMode = false,
   selectedSkillIds = new Set<string>(),
@@ -275,12 +276,18 @@ export function SkillListView({
                       {skill.name}
                     </h3>
                     {hasStoreUpdate ? (
-                      <span
-                        className='inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-300'
-                        title={'有可用更新'}>
+                      <button
+                        type='button'
+                        disabled={updatingSkillId === skill.id}
+                        className='inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600 transition-colors hover:bg-amber-500/20 disabled:cursor-wait disabled:opacity-70 dark:text-amber-300'
+                        title={'点击从商店更新此技能'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onUpdateFromStore?.(skill);
+                        }}>
                         <BellDotIcon className='h-3 w-3 animate-pulse' />
-                        {'有可用更新'}
-                      </span>
+                        {updatingSkillId === skill.id ? '更新中…' : '有可用更新 · 点击更新'}
+                      </button>
                     ) : null}
                     {/* Safety shield icon */}
                     {skill.safetyReport ? (
@@ -332,16 +339,6 @@ export function SkillListView({
                 {/* Actions */}
                 {!selectionMode && (
                   <div className='flex shrink-0 items-center gap-1'>
-                    <Button
-                      type='text'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenSkillAiChat(skill.id);
-                      }}
-                      className='text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg p-2 active:scale-90'
-                      title={'AI 对话'}
-                      icon={<MessagesSquare className='h-4 w-4' />}
-                    />
                     <Button
                       type='text'
                       onClick={(e) => {

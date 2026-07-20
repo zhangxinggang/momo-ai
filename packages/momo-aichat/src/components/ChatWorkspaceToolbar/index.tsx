@@ -10,7 +10,7 @@ interface IProps {
   workspace: IChatWorkspaceConfig;
 }
 
-/** 工作区下拉面板内容：启用开关、常用预设、目录列表 */
+/** 工作区下拉面板：可编辑（启用/常用/添加）或只读（当前项目文件夹） */
 export function ChatWorkspaceToolbar({ workspace }: IProps) {
   const [isCreatingPreset, setIsCreatingPreset] = useState(false);
   const [presetNameDraft, setPresetNameDraft] = useState('');
@@ -19,6 +19,7 @@ export function ChatWorkspaceToolbar({ workspace }: IProps) {
   const createInputRef = useRef<InputRef>(null);
   const renameInputRef = useRef<InputRef>(null);
 
+  const isReadonly = !workspace.onEnabledChange;
   const presets = workspace.presets ?? [];
   const activePresetId = workspace.activePresetId ?? null;
   const activePreset = presets.find((item) => item.id === activePresetId);
@@ -62,6 +63,10 @@ export function ChatWorkspaceToolbar({ workspace }: IProps) {
     }
     setRenamingPresetId(null);
     setRenameDraft('');
+  };
+
+  const handleOpenPath = (folderPath: string) => {
+    workspace.onOpenFolderPath?.(folderPath);
   };
 
   const renderPresetButton = (preset: IChatWorkspacePreset) => {
@@ -120,12 +125,42 @@ export function ChatWorkspaceToolbar({ workspace }: IProps) {
     );
   };
 
+  if (isReadonly) {
+    return (
+      <div className={styles['chat-workspace']}>
+        {listPaths.length === 0 ? (
+          <div className={styles['chat-workspace-row']}>
+            <span>当前项目未配置文件夹</span>
+          </div>
+        ) : (
+          <ul className={styles['chat-workspace-path-list']}>
+            {listPaths.map((folderPath) => (
+              <li className={styles['chat-workspace-path-item']} key={folderPath}>
+                <button
+                  className={styles['chat-workspace-path-text']}
+                  onClick={() => handleOpenPath(folderPath)}
+                  title={folderPath}
+                  type='button'>
+                  {formatWorkspaceDisplayPath(folderPath)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className={styles['chat-workspace']}>
       <div className={styles['chat-workspace-row']}>
         <Tooltip title='启用后选择的目录作为上下文'>
           <div className={styles['chat-workspace-toggle']}>
-            <Switch checked={workspace.enabled} onChange={workspace.onEnabledChange} size='small' />
+            <Switch
+              checked={workspace.enabled}
+              onChange={(checked) => workspace.onEnabledChange?.(checked)}
+              size='small'
+            />
             <span>{workspace.enabled ? '启用' : '禁用'}</span>
           </div>
         </Tooltip>
@@ -174,7 +209,7 @@ export function ChatWorkspaceToolbar({ workspace }: IProps) {
               <Button
                 className={styles['chat-workspace-action-btn']}
                 icon={<FolderAddOutlined />}
-                onClick={workspace.onAddFolder}
+                onClick={() => workspace.onAddFolder?.()}
                 size='small'
                 type='text'
               />
@@ -190,11 +225,11 @@ export function ChatWorkspaceToolbar({ workspace }: IProps) {
               <span className={styles['chat-workspace-path-text']} title={folderPath}>
                 {formatWorkspaceDisplayPath(folderPath)}
               </span>
-              {!activePreset ? (
+              {!activePreset && workspace.onRemoveFolder ? (
                 <button
                   aria-label='移除目录'
                   className={styles['chat-workspace-path-remove']}
-                  onClick={() => workspace.onRemoveFolder(folderPath)}
+                  onClick={() => workspace.onRemoveFolder?.(folderPath)}
                   type='button'>
                   <CloseOutlined style={{ fontSize: 10 }} />
                 </button>

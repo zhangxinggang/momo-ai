@@ -22,6 +22,7 @@ export interface IMomoTreeLabels {
   createNote: string;
   edit?: string;
   copy?: string;
+  export?: string;
   move: string;
   delete: string;
   rename: string;
@@ -54,6 +55,8 @@ export interface IMomoTreeAdapter {
   onEdit?: (nodeId: string) => Promise<void>;
   /** 复制文件节点（非目录） */
   onCopy?: (nodeId: string) => Promise<void>;
+  /** 导出文件节点（非目录） */
+  onExport?: (nodeId: string) => Promise<void>;
   /** 统计目录下非目录节点数量，用于删除确认 */
   countNonFolderDescendants?: (folderId: string) => number;
 }

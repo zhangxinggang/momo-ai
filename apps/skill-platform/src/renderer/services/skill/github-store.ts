@@ -245,7 +245,7 @@ export async function loadGitHubSkillRepo(
           ? builtin.tags
           : parsed.tags.length
             ? parsed.tags
-            : slug.split(/[-_]/).filter(Boolean),
+            : [],
         version: builtin?.version || '1.0.0',
         content,
         content_url: rawUrl,
@@ -301,7 +301,7 @@ export async function loadGitHubSkillRepo(
         ? builtin.tags
         : parsed.tags.length
           ? parsed.tags
-          : slug.split(/[-_]/).filter(Boolean),
+          : [],
       version: builtin?.version || '1.0.0',
       content,
       content_url: rawUrl,

@@ -53,6 +53,7 @@ export type {
 // UI 子组件（按需组合）
 export { default as ChatInputPanel } from './components/ChatInputPanel';
 export type { IChatInputPanelRef } from './components/ChatInputPanel';
+export { ChatFeatureDropdown } from './components/ChatFeatureDropdown';
 export { ChatMentionTextarea } from './components/ChatMentionTextarea';
 export type { IChatMentionTextareaRef } from './components/ChatMentionTextarea';
 export { ChatWorkspaceControl } from './components/ChatWorkspaceControl';
@@ -66,7 +67,7 @@ export { NoteReferencePopover } from './components/NoteReferencePopover';
 export { NoteReferenceText } from './components/NoteReferenceText';
 export { SlashCommandPopover } from './components/SlashCommandPopover';
 export { default as StopGenerationButton } from './components/StopGenerationButton';
-export { buildChatWorkspaceConfig, useChatWorkspaceConfig } from './hooks/useChatWorkspaceConfig';
+export { buildChatWorkspaceConfig, buildReadonlyChatWorkspaceConfig, useChatWorkspaceConfig } from './hooks/useChatWorkspaceConfig';
 export type { IUseChatWorkspaceConfigOptions } from './hooks/useChatWorkspaceConfig';
 export { useNoteReferenceTrigger } from './hooks/useNoteReferenceTrigger';
 export { useSlashCommandTrigger } from './hooks/useSlashCommandTrigger';
@@ -78,6 +79,13 @@ export type {
   ISlashCommandsListResult,
 } from './types/slash-command';
 export type { IChatWorkspaceConfig, IChatWorkspacePreset } from './types/workspace';
+export type { IChatProject } from './types/project';
+export {
+  buildChatProjectUniqueKey,
+  getChatProjectDisplayName,
+  normalizeFolderPaths,
+} from './utils/chat-project';
+export { formatRelativeCompact } from './utils/relative-compact-time';
 export {
   enhanceLocalPathElements,
   isAbsoluteLocalPath,
@@ -86,13 +94,21 @@ export {
   normalizeLocalPathValue,
   splitPlainTextByLocalPaths,
   stripCodeLanguagePrefix,
+  stripTrailingPathPunctuation,
 } from './utils/local-path';
+export {
+  enhanceExternalUrlElements,
+  isHttpUrl,
+  splitPlainTextByHttpUrls,
+  trimUrlTrailingPunctuation,
+} from './utils/external-url';
 export {
   NOTE_SNAPSHOT_MAX_CHARS,
   NOTE_SNAPSHOT_TRUNCATED_SUFFIX,
   buildNoteMentionToken,
   ensureNoteSnapshots,
   expandNoteMentionsWithSnapshots,
+  stripEchoedNoteBlocks,
   getNoteMentionDisplayPath,
   normalizeNotePath,
   parseNoteReferenceContent,

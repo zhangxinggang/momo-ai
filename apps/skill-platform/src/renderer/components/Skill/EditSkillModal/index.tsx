@@ -5,7 +5,8 @@ import {
   buildSkillTagActions,
   getExistingSkillTags,
   getUserSkillTags,
-  inferOriginalSkillTags,
+  mergeSkillTagsForSave,
+  resolveOriginalSkillTagsForSave,
 } from '@renderer/services/skill/modal-utils';
 import { useSkillStore } from '@renderer/store';
 import { Button, Input, Modal } from 'antd';
@@ -114,6 +115,8 @@ export function EditSkillModal({ isOpen, onClose, skill }: IProps) {
     setError(null);
 
     try {
+      // 丢弃由 slug 拆词伪造的原标签，避免保存时带入 frontend/design 等脏标签
+      const originalTags = resolveOriginalSkillTagsForSave(skill);
       await updateSkill(skill.id, {
         name,
         description: description.trim(),
@@ -121,8 +124,9 @@ export function EditSkillModal({ isOpen, onClose, skill }: IProps) {
         icon_url: iconUrl,
         icon_emoji: iconEmoji,
         icon_background: iconBackground,
-        original_tags: inferOriginalSkillTags(skill),
-        tags,
+        original_tags: originalTags,
+        // tags 存全集（原标签 + 用户标签），回填时再差集得到用户标签
+        tags: mergeSkillTagsForSave(originalTags, tags),
       });
       return true;
     } catch (err) {

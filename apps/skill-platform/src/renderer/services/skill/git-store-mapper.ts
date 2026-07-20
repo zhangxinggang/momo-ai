@@ -23,7 +23,8 @@ export function mapScannedSkillsToRegistry(
       category: inferCategory(slug, description),
       author: skill.author || 'Community',
       source_url: repoUrl,
-      tags: skill.tags?.length ? skill.tags : slug.split('-').filter(Boolean),
+      // 无标签时保持空数组，禁止用 slug 拆词伪造标签（如 frontend-design → frontend/design）
+      tags: skill.tags?.length ? skill.tags : [],
       version: skill.version || '1.0.0',
       content: skill.instructions,
       content_url: skill.filePath,

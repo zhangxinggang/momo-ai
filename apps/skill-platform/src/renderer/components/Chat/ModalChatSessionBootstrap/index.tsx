@@ -12,7 +12,7 @@ interface IProps {
 
 /** 弹窗内切换到指定会话，关闭后恢复侧栏 AI 对话的当前选中会话 */
 export function ModalChatSessionBootstrap({ sessionId }: IProps) {
-  const { switchToSession, sessions, currentSessionId } = useChatContext();
+  const { switchToSession, currentSessionId } = useChatContext();
   const reservedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -24,16 +24,13 @@ export function ModalChatSessionBootstrap({ sessionId }: IProps) {
     };
   }, [sessionId]);
 
-  // 仅在尚未选中 bootstrap 会话时切换，避免发送消息后 sessions 更新被切回空会话
+  // 始终尝试切到 bootstrap 会话（可能尚未落库，由 switchToSession 创建内存会话）
   useEffect(() => {
     if (currentSessionId === sessionId) {
       return;
     }
-    const exists = sessions.some((session) => session.id === sessionId);
-    if (exists) {
-      switchToSession(sessionId);
-    }
-  }, [sessionId, sessions, switchToSession, currentSessionId]);
+    switchToSession(sessionId);
+  }, [sessionId, switchToSession, currentSessionId]);
 
   return null;
 }

@@ -1,11 +1,14 @@
 const URL_PREFIX_RE = /^https?:\/\//i;
 
+/** 含协议的 URL（避免 https:// 中的 s:/ 被当成 Windows 盘符） */
+const URL_SCHEME_RE = /:\/\//;
+
 /** 代码块语言前缀（如 javascript:scripts/foo.js） */
 const CODE_LANG_PREFIX_RE =
   /^(?:javascript|typescript|js|ts|python|py|bash|sh|shell|json|markdown|md|skill-run|text):/i;
 
-/** Windows 绝对路径 */
-const WINDOWS_ABS_PATH_RE = /^[A-Za-z]:[\\/][^\s<>"']+$/;
+/** Windows 绝对路径（排除 letter:// 形式的 URL 片段） */
+const WINDOWS_ABS_PATH_RE = /^[A-Za-z]:(?:(?:\\[^\\/:\s<>"']+)+|\/(?!\/)[^\s<>"']+)$/;
 
 /** Unix 绝对路径 */
 const UNIX_ABS_PATH_RE = /^\/[^\s<>"']+$/;
@@ -16,13 +19,17 @@ const TILDE_PATH_RE = /^~(?:[/\\][^\s<>"']+)?$/;
 /** Unix 路径前须为空白或行首，避免把 scripts/foo 中的 /foo 误判为绝对路径 */
 const UNIX_ABS_PATH_CANDIDATE_RE = /(?:^|[\s([{>])\/[^\s<>"']+/g;
 
-const WINDOWS_ABS_PATH_CANDIDATE_RE = /[A-Za-z]:[\\/][^\s<>"']+/g;
+/** Windows 盘符路径；排除 C:// 这类双斜杠 URL 形态 */
+const WINDOWS_ABS_PATH_CANDIDATE_RE = /[A-Za-z]:(?:(?:\\[^\\/:\s<>"']+)+|\/(?!\/)[^\s<>"']+)/g;
 
 const TILDE_PATH_CANDIDATE_RE = /~(?:[/\\][^\s<>"']+)?/g;
 
-const PATH_HINT_RE = /(?:[A-Za-z]:[\\/]|(?:^|[\s([{>])\/[^\s]|~[/\\])/;
+const PATH_HINT_RE = /(?:[A-Za-z]:(?:\\|\/(?!\/))|(?:^|[\s([{>])\/[^\s]|~[/\\])/;
 
-const SKIP_ENHANCE_TAGS = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT']);
+/** 路径末尾常被模型带上的标点 / 反引号，匹配后需剥离 */
+const TRAILING_PATH_PUNCT_RE = /[`'"）)」』\]}>.,;:!?。，、；：]+$/u;
+
+const SKIP_ENHANCE_TAGS = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT', 'A']);
 
 interface IPathMatch {
   start: number;
@@ -33,6 +40,11 @@ interface IPathMatch {
 /** 去掉代码块语言前缀 */
 export function stripCodeLanguagePrefix(text: string): string {
   return text.trim().replace(CODE_LANG_PREFIX_RE, '');
+}
+
+/** 剥离路径尾随标点，避免 exists 检查失败 */
+export function stripTrailingPathPunctuation(pathValue: string): string {
+  return pathValue.replace(TRAILING_PATH_PUNCT_RE, '');
 }
 
 function isAbsoluteLocalPathLike(text: string): boolean {
@@ -50,7 +62,7 @@ export function isLocalPathLike(text: string): boolean {
   if (!trimmed || trimmed.length > 512) {
     return false;
   }
-  if (URL_PREFIX_RE.test(trimmed)) {
+  if (URL_PREFIX_RE.test(trimmed) || URL_SCHEME_RE.test(trimmed)) {
     return false;
   }
   if (trimmed.includes('\n')) {
@@ -72,7 +84,7 @@ export function joinLocalPath(basePath: string, relativePath: string): string {
 
 /** 将识别到的路径规范化为可打开的值 */
 export function normalizeLocalPathValue(rawPath: string): string {
-  return stripCodeLanguagePrefix(rawPath);
+  return stripTrailingPathPunctuation(stripCodeLanguagePrefix(rawPath));
 }
 
 function createLocalPathSpan(className: string, pathValue: string): HTMLSpanElement {
@@ -94,10 +106,11 @@ function collectAbsolutePathMatches(content: string): IPathMatch[] {
     while (match) {
       const rawValue = match[0];
       const start = match.index + (rawValue.length - rawValue.trimStart().length);
-      const value = content.slice(start, start + rawValue.trimStart().length);
+      const rawMatched = content.slice(start, start + rawValue.trimStart().length);
+      const value = stripTrailingPathPunctuation(rawMatched);
       const end = start + value.length;
 
-      if (isLocalPathLike(value)) {
+      if (value && isLocalPathLike(value)) {
         matches.push({ start, end, value });
       }
 
@@ -158,7 +171,12 @@ export function enhanceLocalPathElements(root: HTMLElement, className: string): 
   let currentNode = walker.nextNode();
   while (currentNode) {
     const parent = currentNode.parentElement;
-    if (parent && !SKIP_ENHANCE_TAGS.has(parent.tagName) && !parent.closest('[data-local-path]')) {
+    if (
+      parent &&
+      !SKIP_ENHANCE_TAGS.has(parent.tagName) &&
+      !parent.closest('a') &&
+      !parent.closest('[data-local-path]')
+    ) {
       const text = currentNode.textContent ?? '';
       if (text.trim() && PATH_HINT_RE.test(text)) {
         const parts = splitPlainTextByLocalPaths(text);

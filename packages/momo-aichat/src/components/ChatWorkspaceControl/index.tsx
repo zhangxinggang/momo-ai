@@ -17,9 +17,9 @@ export function ChatWorkspaceControl({ workspace, tooltip, className }: IProps) 
   const pathCount = workspace.paths.length;
 
   const handleEnabledChange = (enabled: boolean) => {
-    workspace.onEnabledChange(enabled);
+    workspace.onEnabledChange?.(enabled);
     if (enabled && pathCount === 0) {
-      workspace.onAddFolder();
+      workspace.onAddFolder?.();
     }
   };
 

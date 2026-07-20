@@ -1,10 +1,19 @@
 import { getWorkspaceApi } from '@renderer/services/workspace/api';
-import { useChatWorkspaceStore } from '@renderer/store/chat';
+import { useChatProjectStore } from '@renderer/store/chat';
 
 import { extractGrepKeywords } from './keyword-extract';
-import { isWorkspaceRelatedQuestion } from './relevance-heuristic';
+import { isWorkspaceRelatedQuestion, shouldAttachWorkspaceContext } from './relevance-heuristic';
 
 const MAX_SNIPPET_TOTAL_CHARS = 24000;
+
+const WORKSPACE_CONTEXT_PREFIX = `以下为可选工作区参考资料。请严格围绕用户当前问题作答。
+
+使用规则：
+1. 若问题与工作区无关，请完全忽略本段内容
+2. 若用户在征求本产品的功能/UI/交互设计方案，必须基于下列已有代码与目录结构给出可落地方案，优先复用现有组件与数据流，不要改用无关脚本或虚构技能执行流程
+3. 不要把会话临时目录、skill-run、YAML Frontmatter 脚本当成默认答案，除非用户明确要求执行技能或生成脚本
+
+`;
 
 interface IListTreeResult {
   success: boolean;
@@ -127,6 +136,12 @@ async function buildWorkspaceContextForPaths(
   workspacePaths: string[],
   userMessage?: string,
 ): Promise<string> {
+  const lastMessage = userMessage?.trim() ?? '';
+  // 无用户问题或与工作区无关时不注入，避免闲聊被目录树带偏
+  if (!lastMessage || !shouldAttachWorkspaceContext(lastMessage)) {
+    return '';
+  }
+
   const blocks: string[] = [];
 
   for (const workspacePath of workspacePaths) {
@@ -136,15 +151,16 @@ async function buildWorkspaceContextForPaths(
     }
   }
 
-  const lastMessage = userMessage?.trim() ?? '';
-  if (lastMessage) {
-    const snippets = await buildWorkspaceGrepSnippets(workspacePaths, lastMessage);
-    if (snippets.length > 0) {
-      blocks.push('以下为用户问题相关的代码片段（由 Grep 检索，可能已截断）：', ...snippets);
-    }
+  const snippets = await buildWorkspaceGrepSnippets(workspacePaths, lastMessage);
+  if (snippets.length > 0) {
+    blocks.push('以下为用户问题相关的代码片段（由 Grep 检索，可能已截断）：', ...snippets);
   }
 
-  return blocks.join('\n\n');
+  if (blocks.length === 0) {
+    return '';
+  }
+
+  return WORKSPACE_CONTEXT_PREFIX + blocks.join('\n\n');
 }
 
 /** 从指定 localStorage 键读取工作区并构建 AI 上下文（笔记 AI 写作等场景） */
@@ -160,14 +176,14 @@ export async function getWorkspaceContextFromStorageKey(
 }
 
 /**
- * 若用户已启用工作区，则返回 AI 上下文：
- * - 始终包含目录树摘要
- * - 相关问题追加 Grep 命中片段
+ * 若当前对话项目绑定了文件夹，则按需返回 AI 上下文：
+ * - 仅当用户问题与工作区相关时注入
+ * - 相关时含目录树摘要，并可追加 Grep 命中片段
  */
 export async function getEnabledWorkspaceContext(userMessage?: string): Promise<string> {
-  const { workspacePaths, workspaceEnabled } = useChatWorkspaceStore.getState();
-  if (!workspaceEnabled || workspacePaths.length === 0) {
+  const { activeFolderPaths } = useChatProjectStore.getState();
+  if (activeFolderPaths.length === 0) {
     return '';
   }
-  return buildWorkspaceContextForPaths(workspacePaths, userMessage);
+  return buildWorkspaceContextForPaths(activeFolderPaths, userMessage);
 }

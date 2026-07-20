@@ -2,6 +2,10 @@ import type { ISkillPlatform } from '@/types/constants/platforms';
 import type {
   DCreateSkill,
   DUpdateSkill,
+  ILocalZipFileInput,
+  ILocalZipImportItem,
+  ILocalZipImportResult,
+  ILocalZipPreviewItem,
   IMcpServerConfig,
   IScanLocalResult,
   IScannedSkill,
@@ -62,6 +66,16 @@ export function listDefaultSkills() {
 
 export function importDefaultSkills(zipFileNames: string[], options: { overwrite: boolean }) {
   return requireSkillIpc().importDefaultSkills(zipFileNames, options);
+}
+
+export function previewLocalSkillZips(
+  files: ILocalZipFileInput[],
+): Promise<ILocalZipPreviewItem[]> {
+  return requireSkillIpc().previewLocalZips(files);
+}
+
+export function importLocalSkillZips(items: ILocalZipImportItem[]): Promise<ILocalZipImportResult> {
+  return requireSkillIpc().importLocalZips(items);
 }
 
 export function syncSkillFromRepo(skillId: string) {

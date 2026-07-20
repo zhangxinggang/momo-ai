@@ -104,7 +104,7 @@ export async function loadMarketplaceStore(
             ? item.tags
             : parsed.tags.length > 0
               ? parsed.tags
-              : slug.split(/[-_]/).filter(Boolean),
+              : [],
         version: String(item.version || '1.0.0'),
         content: content || `# ${item.name || parsed.name || toTitleCase(slug)}`,
         content_url: contentUrl,

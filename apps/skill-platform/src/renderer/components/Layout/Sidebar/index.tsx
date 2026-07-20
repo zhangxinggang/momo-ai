@@ -17,6 +17,8 @@ import {
 } from '@renderer/hooks/useOnlineStoreSources';
 import { usePromptBackup } from '@renderer/hooks/usePromptBackup';
 import { useTreeRootCreate } from '@renderer/hooks/useTreeRootCreate';
+import { useWorkflowBackup } from '@renderer/hooks/useWorkflowBackup';
+import WorkflowImportConflictModal from '@renderer/components/Workflow/WorkflowImportConflictModal';
 import { isWindowFullscreen } from '@renderer/services/desktop';
 import { buildPromptStats } from '@renderer/services/prompt/filter';
 import { buildSkillStats } from '@renderer/services/skill/stats';
@@ -225,6 +227,12 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
     isImporting: isImportingPrompts,
   } = usePromptBackup();
 
+  const {
+    importWorkflow,
+    isImporting: isImportingWorkflow,
+    conflictModalProps: workflowConflictModalProps,
+  } = useWorkflowBackup();
+
   const handleExportPrompts = useCallback(async () => {
     try {
       const result = await exportAllPrompts();
@@ -253,6 +261,27 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
       showToast(message, 'error');
     }
   }, [importPromptBackupFile, showToast]);
+
+  const handleImportWorkflow = useCallback(async () => {
+    try {
+      await importWorkflow();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '导入失败';
+      showToast(message, 'error');
+    }
+  }, [importWorkflow, showToast]);
+
+  const workflowImportActions = (
+    <button
+      type='button'
+      className='text-muted-foreground hover:text-foreground rounded p-1 transition-colors disabled:opacity-50'
+      title='导入工作流'
+      aria-label='导入工作流'
+      disabled={isImportingWorkflow}
+      onClick={() => void handleImportWorkflow()}>
+      <UploadIcon className='h-4 w-4' />
+    </button>
+  );
 
   const promptBackupActions = (
     <>
@@ -730,8 +759,10 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
                   onCreateDirectory={workflowRootCreate.openCreateFolder}
                   createItemTitle={'新建工作流'}
                   onCreateItem={workflowRootCreate.openCreateItem}
+                  extraActions={workflowImportActions}
                 />
                 {workflowRootCreate.createModal}
+                <WorkflowImportConflictModal {...workflowConflictModalProps} />
 
                 <div className='scrollbar-hide flex-1 overflow-y-auto overflow-x-hidden px-3 pb-4'>
                   <WorkflowTreePanel />

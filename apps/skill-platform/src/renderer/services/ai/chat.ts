@@ -17,10 +17,12 @@ import {
 import type {
   DChatCompletionRequest,
   DChatCompletionResponse,
+  DChatCompletionTool,
   IAIConfig,
   IChatCompletionResult,
   IChatMessage,
   IStreamCallbacks,
+  TChatToolChoice,
 } from './types';
 
 export async function chatCompletion(
@@ -37,6 +39,8 @@ export async function chatCompletion(
     enableThinking?: boolean;
     onStream?: (chunk: string) => void; // 兼容旧版 / Legacy compatibility
     streamCallbacks?: IStreamCallbacks;
+    tools?: DChatCompletionTool[];
+    toolChoice?: TChatToolChoice;
     // Output format options / 输出格式选项
     responseFormat?: {
       type: 'text' | 'json_object' | 'json_schema';
@@ -113,6 +117,9 @@ export async function chatCompletion(
   };
 
   if (isAnthropic) {
+    if (options?.tools?.length) {
+      console.warn('[AI Service] Anthropic 路径暂不支持 tools，已忽略（P3）');
+    }
     const anthropicMessages = messages
       .filter((message) => message.role !== 'system')
       .map((message) => ({
@@ -241,6 +248,15 @@ export async function chatCompletion(
           schema: options.responseFormat.jsonSchema.schema,
         },
       };
+    }
+  }
+
+  if (options?.tools?.length) {
+    if (isGemini) {
+      console.warn('[AI Service] Gemini 路径暂不支持 tools，已忽略（P3）');
+    } else {
+      body.tools = options.tools;
+      body.tool_choice = options.toolChoice ?? 'auto';
     }
   }
 
@@ -413,6 +429,7 @@ export async function chatCompletion(
       content: normalizeAssistantContent(message.content),
       thinkingContent: message.reasoning_content,
       usage: normalizeTokenUsage(data.usage),
+      toolCalls: message.tool_calls?.length ? message.tool_calls : undefined,
     };
   } catch (error) {
     if (error instanceof Error) {

@@ -23,7 +23,8 @@
   word-break: break-word;
 }
 
-.local-path {
+.local-path,
+.external-url {
   cursor: pointer;
   color: hsl(var(--primary, 210 100% 45%));
   text-decoration: underline;
@@ -32,7 +33,20 @@
 
 .wrap :global(.md-editor-preview) .local-path,
 .wrap :global(.md-editor-previewOnly) .local-path,
-.plain .local-path {
+.plain .local-path,
+.wrap :global(.md-editor-preview) .external-url,
+.wrap :global(.md-editor-previewOnly) .external-url,
+.plain .external-url {
   cursor: pointer;
   pointer-events: auto;
+}
+
+/* Markdown 内原生 <a> 链接可点击样式 */
+.wrap :global(.md-editor-preview) a[href^='http'],
+.wrap :global(.md-editor-previewOnly) a[href^='http'] {
+  cursor: pointer;
+  pointer-events: auto;
+  color: hsl(var(--primary, 210 100% 45%));
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }

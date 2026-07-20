@@ -1134,6 +1134,21 @@ export const useSkillStore = create<ISkillState>()(
           return { status: 'not-installed', check };
         }
         if (check.status === 'up-to-date') {
+          // 内容已最新时仍同步版本元数据，避免角标因版本字段落后一直显示
+          const installedSkill = check.installedSkill;
+          const needsMetaSync =
+            installedSkill.installed_version !== regSkill.version ||
+            installedSkill.version !== regSkill.version ||
+            installedSkill.installed_content_hash !== check.remoteHash;
+          if (needsMetaSync) {
+            await get().updateSkill(installedSkill.id, {
+              version: regSkill.version,
+              installed_version: regSkill.version,
+              installed_content_hash: check.remoteHash,
+              registry_slug: regSkill.slug,
+              content_url: regSkill.content_url,
+            });
+          }
           return { status: 'up-to-date', check };
         }
         if (

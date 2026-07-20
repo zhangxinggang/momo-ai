@@ -66,6 +66,8 @@ export interface IChatSession {
   cliAgentType?: ECliAgent;
   /** 笔记引用快照，key 为规范化路径 */
   noteSnapshots?: Record<string, INoteSnapshot>;
+  /** 所属对话项目 id */
+  projectId?: string;
 }
 
 // 会话状态管理接口
@@ -85,8 +87,14 @@ export interface IChatContext {
 
   // 会话管理方法
   createNewSession: () => IChatSession;
+  /** 在指定项目下立即创建并选中会话 */
+  createSessionInProject: (projectId: string) => IChatSession;
   switchToSession: (sessionId: string) => void;
   deleteSession: (sessionId: string) => void;
+  /** 删除某项目下全部会话（调用方应先停止生成） */
+  deleteSessionsByProjectId: (projectId: string) => void;
+  /** 将缺少 projectId 的会话归入默认项目 */
+  assignMissingProjectIds: (defaultProjectId: string) => void;
   updateSessionTitle: (sessionId: string, title: string) => void;
 
   // 消息管理方法
@@ -126,6 +134,8 @@ export interface IChatContext {
 
   // 智能新对话逻辑
   handleNewChat: () => void;
+  /** 在指定项目下进入草稿对话（首次问答后再落库并出现在侧栏） */
+  handleNewChatInProject: (projectId: string) => void;
 
   // 高级设置：温度、top_p 与系统提示词
   temperature: number;

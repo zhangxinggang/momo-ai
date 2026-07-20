@@ -5,7 +5,7 @@ const MARKDOWN_LINK_MD_RE = /\[[^\]]*\]\(([^)]+\.md)\)/gi;
 const BACKTICK_MD_RE = /`([^`]+\.md)`/g;
 
 const CHAT_PATH_HINT =
-  '\n\n---\n\n**执行环境说明**：当前技能命令在本地仓库根目录（SKILL.md 所在目录）执行，请使用相对仓库根的路径（如 `html2pptx.md`、`scripts/html2pptx.js`），不要使用 `skills/<技能名>/` 前缀。\n';
+  '\n\n---\n\n**执行环境说明**：当前技能命令在本地仓库根目录（SKILL.md 所在目录）执行；若需引用仓库文件，请使用相对仓库根的路径，不要使用 `skills/<技能名>/` 前缀。仅当 SKILL 指令要求执行脚本时才输出 skill-run。\n';
 
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

@@ -1,6 +1,7 @@
 export * from './ai';
 export * from './folder';
 export * from './kb';
+export * from './mcp';
 export * from './note';
 export * from './online-conf';
 export * from './prompt';
@@ -9,5 +10,6 @@ export * from './rules';
 export * from './settings';
 export * from './skill';
 export * from './workflow';
+export * from './workflow-backup';
 export * from './workflow-business';
 export * from './workflow-folder';

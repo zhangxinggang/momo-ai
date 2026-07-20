@@ -1,6 +1,7 @@
 import { buildStorageKeys } from '@momo/aichat';
 
 import { MAIN_AI_CHAT_STORAGE_PREFIX } from '@renderer/services/aichat/chat-history-bridge';
+import { useChatProjectStore } from '@renderer/store/chat';
 
 export interface IWorkflowNodeDefaultValues {
   executionModel: string;
@@ -27,20 +28,7 @@ export function readWorkflowNodeDefaultValues(): IWorkflowNodeDefaultValues {
         kbCollectionId = advanced.kbCollectionId;
       }
     }
-    const workspaceRaw = localStorage.getItem('chat-workspace-storage');
-    if (workspaceRaw) {
-      const workspaceState = JSON.parse(workspaceRaw) as {
-        state?: { workspaceEnabled?: boolean; workspacePaths?: string[] };
-      };
-      if (
-        workspaceState.state?.workspaceEnabled &&
-        Array.isArray(workspaceState.state.workspacePaths)
-      ) {
-        workspacePaths = workspaceState.state.workspacePaths.filter(
-          (item) => typeof item === 'string' && item.trim(),
-        );
-      }
-    }
+    workspacePaths = [...useChatProjectStore.getState().activeFolderPaths];
   } catch {
     // 忽略解析失败
   }

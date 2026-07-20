@@ -15,7 +15,7 @@ import {
 } from '@renderer/services/ai';
 import { getModelsByType, resolveScenarioModel } from '@renderer/services/ai/defaults';
 import { buildSharedAiChatServices, createPromptTestStream } from '@renderer/services/aichat';
-import { createMainChatSession } from '@renderer/services/aichat/chat-history-bridge';
+import { allocateMainChatSessionId } from '@renderer/services/aichat/chat-history-bridge';
 import { downloadImage, readImageBase64, saveImageBase64 } from '@renderer/services/media';
 import { useSettingsStore } from '@renderer/store';
 import type { UploadProps } from 'antd';
@@ -81,6 +81,7 @@ export function AiTestModal({
   const [chatBootstrap, setChatBootstrap] = useState<{
     sessionId: string;
     sessionKey: string;
+    sessionTitle: string;
   } | null>(null);
   // Separate loading states for single model and multi-model
   // 分离单模型和多模型的 loading 状态
@@ -420,10 +421,12 @@ export function AiTestModal({
       setChatBootstrap(null);
       return;
     }
-    const sessionId = createMainChatSession(`提示词测试：${prompt.title}`);
+    // 仅分配 id，首条问答后再写入历史，避免空会话落库
+    const sessionId = allocateMainChatSessionId();
     setChatBootstrap({
       sessionId,
       sessionKey: `prompt-test-${sessionId}`,
+      sessionTitle: `提示词测试：${prompt.title}`,
     });
   }, [isOpen, prompt?.id, prompt?.title]);
 
@@ -929,6 +932,7 @@ export function AiTestModal({
                     <PromptTestAiChat
                       sessionKey={chatBootstrap.sessionKey}
                       bootstrapSessionId={chatBootstrap.sessionId}
+                      bootstrapSessionTitle={chatBootstrap.sessionTitle}
                       services={promptTestServices}
                       systemPrompt={systemPrompt}
                       userPrompt={userPrompt}

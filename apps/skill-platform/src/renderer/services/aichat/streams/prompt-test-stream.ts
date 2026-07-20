@@ -1,9 +1,13 @@
 import type { IChatStreamMessage, TCallAiChatStream } from '@momo/aichat';
 
 import type { IAIConfig, IChatMessage } from '@renderer/services/ai';
-import { getEnabledWorkspaceContext } from '@renderer/services/workspace/context';
 import { buildRagContext } from '../core/rag-context';
-import { resolveStreamModelConfig, runChatCompletionStream } from './chat-completion-stream';
+import { isMcpRelatedText } from '../mcp/intent';
+import {
+  resolveStreamModelConfig,
+  runChatCompletionStream,
+  runChatCompletionStreamWithMcp,
+} from './chat-completion-stream';
 
 function normalizeContent(content: string): string {
   return content.trim();
@@ -85,19 +89,18 @@ export function createPromptTestStream(options: IPromptTestStreamOptions): TCall
       apiMessages = [{ role: 'system', content: ragSystemPrompt }, ...apiMessages];
     }
 
-    const workspaceContext = await getEnabledWorkspaceContext();
-    if (workspaceContext.trim()) {
-      apiMessages = [{ role: 'system', content: workspaceContext }, ...apiMessages];
-    }
-
     try {
-      const { elapsedSec, usage } = await runChatCompletionStream({
+      const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user')?.content;
+      const enableMcpTools = isMcpRelatedText(lastUserMessage);
+      const runner = enableMcpTools ? runChatCompletionStreamWithMcp : runChatCompletionStream;
+      const { elapsedSec, usage } = await runner({
         config,
         apiMessages,
         onChunk,
         streamCallbacks: streamOptions,
         responseFormat: options.getResponseFormat(),
         onComplete: options.onComplete,
+        ...(enableMcpTools ? { enableMcpTools: true } : {}),
       });
 
       onStats?.({

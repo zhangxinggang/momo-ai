@@ -12,14 +12,17 @@ export { createSkillLangGraphStream } from './skill';
 export type { ISkillLangGraphStreamOptions } from './skill';
 export {
   createGeneralChatStream,
+  createSkillAwareChatStream,
   createPromptTestStream,
   mergePromptTestApiMessages,
   resolveStreamModelConfig,
   runChatCompletionStream,
+  runChatCompletionStreamWithMcp,
 } from './streams';
 export type {
   IChatStreamCallbacks,
   IGeneralChatStreamOptions,
+  ISkillAwareChatStreamOptions,
   IModelConfigAccessors,
   IPromptTestStreamOptions,
   IResponseFormatOption,

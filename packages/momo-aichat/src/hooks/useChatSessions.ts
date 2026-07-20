@@ -17,6 +17,7 @@ import {
   expandNoteMentionsWithSnapshots,
   findNoteMentions,
   normalizeNotePath,
+  stripEchoedNoteBlocks,
 } from '../utils/note-mention';
 import { isCliModelId, parseCliAgent } from '../utils/model-id';
 import { useChatSync } from './useChatSync';
@@ -24,13 +25,50 @@ import { useChatSync } from './useChatSync';
 export interface IUseChatSessionsOptions {
   /** 弹窗/子模块挂载时固定选中该会话，不恢复侧栏持久化的 CURRENT_SESSION_ID */
   bootstrapSessionId?: string | null;
+  /** bootstrap 会话标题；空消息时不落库 */
+  bootstrapSessionTitle?: string | null;
 }
+
+/** 笔记引用注入 API 时的系统提示：禁止在回答中复述全文 */
+const NOTE_REFERENCE_SYSTEM_HINT =
+  '用户消息中以「--- 笔记: … START ---」与「--- 笔记: … END ---」包裹的内容仅为供你阅读的笔记上下文。请基于其内容作答，不要在回答中复述、粘贴或展开笔记全文。';
 
 function toApiUserContent(
   displayContent: string,
   snapshots: Record<string, INoteSnapshot>,
 ): string {
   return expandNoteMentionsWithSnapshots(displayContent, snapshots);
+}
+
+function createBootstrapSession(sessionId: string, title?: string | null): IChatSession {
+  return {
+    id: sessionId,
+    title: (title ?? '').trim() || '新对话',
+    messages: [],
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+}
+
+/** bootstrap 会话是否已有真实问答（仅 system 不算） */
+function hasBootstrapQaMessages(session: IChatSession): boolean {
+  return (session.messages ?? []).some(
+    (message) => message.role === 'user' || message.role === 'assistant',
+  );
+}
+
+function mergeBootstrapSession(
+  sessions: IChatSession[],
+  bootstrapSessionId: string | null,
+  bootstrapSessionTitle?: string | null,
+): IChatSession[] {
+  if (!bootstrapSessionId) {
+    return sessions;
+  }
+  if (sessions.some((session) => session.id === bootstrapSessionId)) {
+    return sessions;
+  }
+  return [createBootstrapSession(bootstrapSessionId, bootstrapSessionTitle), ...sessions];
 }
 
 async function collectAndEnsureSnapshots(
@@ -60,8 +98,11 @@ async function collectAndEnsureSnapshots(
  */
 export const useChatSessions = (options?: IUseChatSessionsOptions) => {
   const bootstrapSessionId = options?.bootstrapSessionId ?? null;
+  const bootstrapSessionTitle = options?.bootstrapSessionTitle ?? null;
   const bootstrapSessionIdRef = useRef(bootstrapSessionId);
+  const bootstrapSessionTitleRef = useRef(bootstrapSessionTitle);
   bootstrapSessionIdRef.current = bootstrapSessionId;
+  bootstrapSessionTitleRef.current = bootstrapSessionTitle;
   const {
     callAIChatStream,
     callCliAgent,
@@ -91,6 +132,8 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
   const temperatureRef = useRef(temperature);
   const topPRef = useRef(topP);
   const systemPromptRef = useRef(systemPrompt);
+  /** 草稿对话待归属的项目（首次发送时写入 session.projectId） */
+  const pendingProjectIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     temperatureRef.current = temperature;
@@ -246,8 +289,21 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
 
       saveTimeoutRef.current = setTimeout(() => {
         try {
-          chatStorage.setItem(storageKeys.CHAT_SESSIONS, JSON.stringify(sessionsToSave));
-          if (currentId) {
+          const pinnedId = bootstrapSessionIdRef.current;
+          // bootstrap 未问答（空或仅 system）不写入历史
+          const persistableSessions = sessionsToSave.filter((session) => {
+            if (pinnedId && session.id === pinnedId && !hasBootstrapQaMessages(session)) {
+              return false;
+            }
+            return true;
+          });
+          chatStorage.setItem(storageKeys.CHAT_SESSIONS, JSON.stringify(persistableSessions));
+
+          const pinnedEmpty =
+            pinnedId &&
+            currentId === pinnedId &&
+            !persistableSessions.some((session) => session.id === pinnedId);
+          if (currentId && !pinnedEmpty) {
             chatStorage.setItem(storageKeys.CURRENT_SESSION_ID, currentId);
           }
           if (modelId) {
@@ -388,29 +444,46 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
               .map((m) => (m.isLoading ? { ...m, isLoading: false } : m)),
           }),
         );
-        const parsedSessionsJson = JSON.stringify(parsedSessions);
+        const pinnedSessionId = bootstrapSessionIdRef.current;
+        const withBootstrap = mergeBootstrapSession(
+          parsedSessions,
+          pinnedSessionId,
+          bootstrapSessionTitleRef.current,
+        );
+        const parsedSessionsJson = JSON.stringify(withBootstrap);
         setSessions((prev) => {
           if (JSON.stringify(prev) === parsedSessionsJson) {
             return prev;
           }
-          return parsedSessions;
+          return withBootstrap;
         });
 
         // 恢复当前会话：弹窗 bootstrap 优先于侧栏持久化的 CURRENT_SESSION_ID
-        const pinnedSessionId = bootstrapSessionIdRef.current;
         let nextCurrentSessionId: string | null = null;
-        if (pinnedSessionId && parsedSessions.some((s) => s.id === pinnedSessionId)) {
+        if (pinnedSessionId && withBootstrap.some((s) => s.id === pinnedSessionId)) {
           nextCurrentSessionId = pinnedSessionId;
-        } else if (savedCurrentId && parsedSessions.find((s) => s.id === savedCurrentId)) {
+        } else if (savedCurrentId && withBootstrap.find((s) => s.id === savedCurrentId)) {
           nextCurrentSessionId = savedCurrentId;
-        } else if (parsedSessions.length > 0) {
-          const latestSession = parsedSessions.sort((a, b) => b.updatedAt - a.updatedAt)[0];
+        } else if (withBootstrap.length > 0) {
+          const latestSession = [...withBootstrap].sort((a, b) => b.updatedAt - a.updatedAt)[0];
           nextCurrentSessionId = latestSession.id;
         }
         if (nextCurrentSessionId) {
           setCurrentSessionId((prev) =>
             prev === nextCurrentSessionId ? prev : nextCurrentSessionId,
           );
+        }
+      } else {
+        // 无历史时仍注入 bootstrap 空会话（仅内存）
+        const pinnedSessionId = bootstrapSessionIdRef.current;
+        if (pinnedSessionId) {
+          const withBootstrap = mergeBootstrapSession(
+            [],
+            pinnedSessionId,
+            bootstrapSessionTitleRef.current,
+          );
+          setSessions(withBootstrap);
+          setCurrentSessionId(pinnedSessionId);
         }
       }
     } catch (error) {
@@ -474,13 +547,138 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     return newSession;
   }, [debouncedSave]);
 
+  /** 在指定项目下创建并选中会话 */
+  const createSessionInProject = useCallback(
+    (projectId: string): IChatSession => {
+      const trimmedProjectId = projectId.trim();
+      const newSession: IChatSession = {
+        id: generateId(),
+        title: '新对话',
+        messages: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        projectId: trimmedProjectId || undefined,
+      };
+
+      setSessions((prev) => {
+        const prevSessions = Array.isArray(prev) ? prev : [];
+        const updated = [newSession, ...prevSessions];
+        debouncedSave(updated, newSession.id);
+        return updated;
+      });
+
+      setCurrentSessionId(newSession.id);
+      return newSession;
+    },
+    [debouncedSave],
+  );
+
+  /** 删除某项目下全部会话 */
+  const deleteSessionsByProjectId = useCallback(
+    (projectId: string) => {
+      const targetId = projectId.trim();
+      if (!targetId) {
+        return;
+      }
+
+      const prevSessions = Array.isArray(sessions) ? sessions : [];
+      const removedIds = prevSessions
+        .filter((session) => session.projectId === targetId)
+        .map((session) => session.id);
+      for (const sessionId of removedIds) {
+        if (isSessionGenerating(sessionId)) {
+          stopGeneration(sessionId);
+        }
+      }
+
+      setSessions((prev) => {
+        const list = Array.isArray(prev) ? prev : [];
+        const updated = list.filter((session) => session.projectId !== targetId);
+        const currentRemoved = currentSessionId
+          ? removedIds.includes(currentSessionId)
+          : false;
+        const newCurrentId = currentRemoved
+          ? updated.length > 0
+            ? updated[0].id
+            : null
+          : currentSessionId;
+        if (currentRemoved) {
+          setCurrentSessionId(newCurrentId);
+        }
+        debouncedSave(updated, newCurrentId);
+        return updated;
+      });
+
+      if (isAuthenticated) {
+        for (const sessionId of removedIds) {
+          void chatSync.deleteSession(sessionId);
+        }
+      }
+    },
+    [
+      chatSync,
+      currentSessionId,
+      debouncedSave,
+      isAuthenticated,
+      isSessionGenerating,
+      sessions,
+      stopGeneration,
+    ],
+  );
+
+  /** 将缺少 projectId 的会话归入默认项目 */
+  const assignMissingProjectIds = useCallback(
+    (defaultProjectId: string) => {
+      const fallbackId = defaultProjectId.trim();
+      if (!fallbackId) {
+        return;
+      }
+      setSessions((prev) => {
+        const prevSessions = Array.isArray(prev) ? prev : [];
+        let changed = false;
+        const updated = prevSessions.map((session) => {
+          if (session.projectId) {
+            return session;
+          }
+          changed = true;
+          return { ...session, projectId: fallbackId };
+        });
+        if (!changed) {
+          return prevSessions;
+        }
+        debouncedSave(updated, currentSessionId);
+        return updated;
+      });
+    },
+    [currentSessionId, debouncedSave],
+  );
+
   // 切换到指定会话
   const switchToSession = useCallback(
     (sessionId: string) => {
+      pendingProjectIdRef.current = null;
       const targetSession = sessions.find((s) => s.id === sessionId);
       if (targetSession) {
         setCurrentSessionId(sessionId);
         debouncedSave(sessions, sessionId);
+        return;
+      }
+
+      // bootstrap 会话可能尚未落库，仅在内存中创建并选中
+      const pinnedId = bootstrapSessionIdRef.current;
+      if (pinnedId && sessionId === pinnedId) {
+        const bootstrapSession = createBootstrapSession(
+          pinnedId,
+          bootstrapSessionTitleRef.current,
+        );
+        setSessions((prev) => {
+          const prevSessions = Array.isArray(prev) ? prev : [];
+          if (prevSessions.some((session) => session.id === pinnedId)) {
+            return prevSessions;
+          }
+          return [bootstrapSession, ...prevSessions];
+        });
+        setCurrentSessionId(sessionId);
         return;
       }
 
@@ -647,12 +845,15 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
 
       let activeSessionId = currentSessionId;
       if (!activeSessionId) {
+        const draftProjectId = pendingProjectIdRef.current?.trim() || undefined;
+        pendingProjectIdRef.current = null;
         const draftSession: IChatSession = {
           id: generateId(),
           title: '新对话',
           messages: [],
           createdAt: Date.now(),
           updatedAt: Date.now(),
+          projectId: draftProjectId,
         };
         setSessions((prev) => {
           const prevSessions = Array.isArray(prev) ? prev : [];
@@ -665,6 +866,26 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       }
 
       const displayContent = (options?.displayContent ?? content).trim();
+
+      // 确保 bootstrap 会话已在内存中（延后落库场景）
+      const pinnedId = bootstrapSessionIdRef.current;
+      if (
+        pinnedId &&
+        activeSessionId === pinnedId &&
+        !sessions.some((session) => session.id === pinnedId)
+      ) {
+        const bootstrapSession = createBootstrapSession(
+          pinnedId,
+          bootstrapSessionTitleRef.current,
+        );
+        setSessions((prev) => {
+          const prevSessions = Array.isArray(prev) ? prev : [];
+          if (prevSessions.some((session) => session.id === pinnedId)) {
+            return prevSessions;
+          }
+          return [bootstrapSession, ...prevSessions];
+        });
+      }
 
       let sessionForSnapshots = sessions.find((s) => s.id === activeSessionId);
       let activeSnapshots: Record<string, INoteSnapshot> =
@@ -719,7 +940,11 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       };
 
       if (isFirstUserMessage) {
-        const newTitle = generateSessionTitle(displayContent);
+        const bootstrapTitle = bootstrapSessionTitleRef.current?.trim();
+        const newTitle =
+          activeSessionId === bootstrapSessionIdRef.current && bootstrapTitle
+            ? bootstrapTitle
+            : generateSessionTitle(displayContent);
         updateSessionTitle(activeSessionId, newTitle);
 
         // 如果用户已登录，同时保存标题到云端
@@ -831,8 +1056,9 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
               cwd,
             });
 
+            const cliContent = stripEchoedNoteBlocks(result.content);
             updateMessage(activeSessionId, loadingMessage.id, {
-              content: result.content,
+              content: cliContent,
               isLoading: false,
               stats: {
                 model: result.model,
@@ -848,9 +1074,9 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
               cliAgentType: agent,
             });
 
-            if (isAuthenticated && result.content.trim()) {
+            if (isAuthenticated && cliContent.trim()) {
               try {
-                await chatSync.saveMessage(activeSessionId, 'assistant', result.content);
+                await chatSync.saveMessage(activeSessionId, 'assistant', cliContent);
               } catch (error) {
                 console.error('保存 CLI 回复到云端失败:', error);
               }
@@ -900,6 +1126,18 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
             role: 'user',
             content: toApiUserContent(content.trim(), activeSnapshots),
           });
+        }
+
+        const hasNoteContext =
+          Object.keys(activeSnapshots).length > 0 ||
+          chatMessages.some(
+            (message) => message.role === 'user' && message.content.includes('--- 笔记:'),
+          );
+        if (hasNoteContext) {
+          chatMessages = [
+            { role: 'system', content: NOTE_REFERENCE_SYSTEM_HINT },
+            ...chatMessages,
+          ];
         }
 
         // 用于累积流式响应内容
@@ -1066,6 +1304,8 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
             thinkingChunkBuffer = '';
           }
 
+          accumulatedContent = stripEchoedNoteBlocks(accumulatedContent);
+
           updateMessage(activeSessionId, loadingMessage.id, {
             content: accumulatedContent,
             thinkingContent: accumulatedThinking || undefined,
@@ -1206,11 +1446,30 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
   // 新建对话：仅进入草稿态，待用户首次发送后再落库
   const handleNewChat = useCallback(() => {
     window.dispatchEvent(new CustomEvent('kb:close-manager'));
+    pendingProjectIdRef.current = null;
     setCurrentSessionId(null);
     if (!isAuthenticated) {
       debouncedSave(sessions, null);
     }
   }, [sessions, debouncedSave, isAuthenticated]);
+
+  /** 在指定项目下进入草稿对话（侧栏不展示，首次问答后落库） */
+  const handleNewChatInProject = useCallback(
+    (projectId: string) => {
+      const trimmed = projectId.trim();
+      if (!trimmed) {
+        handleNewChat();
+        return;
+      }
+      window.dispatchEvent(new CustomEvent('kb:close-manager'));
+      pendingProjectIdRef.current = trimmed;
+      setCurrentSessionId(null);
+      if (!isAuthenticated) {
+        debouncedSave(sessions, null);
+      }
+    },
+    [debouncedSave, handleNewChat, isAuthenticated, sessions],
+  );
 
   // 处理用户登录后的数据同步
   useEffect(() => {
@@ -1389,8 +1648,11 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     currentModel,
     isSessionGenerating,
     createNewSession,
+    createSessionInProject,
     switchToSession,
     deleteSession,
+    deleteSessionsByProjectId,
+    assignMissingProjectIds,
     updateSessionTitle,
     addMessage,
     updateMessage,
@@ -1400,6 +1662,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     stopGeneration,
     setCurrentModel: handleSetCurrentModel,
     handleNewChat,
+    handleNewChatInProject,
     // 高级设置导出
     temperature,
     topP,

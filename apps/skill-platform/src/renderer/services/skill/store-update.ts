@@ -122,10 +122,9 @@ export function computeSkillIdsWithStoreUpdates(
   skills: ISkill[],
   remoteStoreEntries: Record<string, { skills?: IRegistrySkill[] } | undefined>,
 ): Set<string> {
-  const registrySkillBySlug = new Map(
-    Object.values(remoteStoreEntries)
-      .flatMap((entry) => entry?.skills ?? [])
-      .map((registrySkill) => [registrySkill.slug, registrySkill]),
+  // 与 updateRegistrySkill 一致：同一 slug 取首个候选，避免 Map 后写覆盖导致版本不一致
+  const registrySkills = Object.values(remoteStoreEntries).flatMap(
+    (entry) => entry?.skills ?? [],
   );
 
   return new Set(
@@ -135,17 +134,18 @@ export function computeSkillIdsWithStoreUpdates(
           return false;
         }
 
-        const registrySkill = registrySkillBySlug.get(skill.registry_slug);
-        if (!registrySkill) {
+        const registrySkill = registrySkills.find(
+          (item) => item.slug === skill.registry_slug,
+        );
+        if (!registrySkill?.version) {
           return false;
         }
 
-        if (skill.installed_content_hash) {
-          return skill.installed_version !== registrySkill.version;
-        }
-
         const installedVersion = skill.installed_version ?? skill.version;
-        return Boolean(installedVersion && installedVersion !== registrySkill.version);
+        if (!installedVersion) {
+          return true;
+        }
+        return installedVersion !== registrySkill.version;
       })
       .map((skill) => skill.id),
   );

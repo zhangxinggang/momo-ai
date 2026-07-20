@@ -1,13 +1,6 @@
 import type { ISkill } from '@/types/modules';
 import { Button } from 'antd';
-import {
-  BellDotIcon,
-  CheckSquareIcon,
-  DownloadIcon,
-  MessagesSquare,
-  SquareIcon,
-  TrashIcon,
-} from 'lucide-react';
+import { BellDotIcon, CheckSquareIcon, DownloadIcon, SquareIcon, TrashIcon } from 'lucide-react';
 import React from 'react';
 import { SkillIcon } from '../SkillIcon';
 
@@ -16,10 +9,11 @@ interface IProps {
   hasStoreUpdate?: boolean;
   isSelected: boolean;
   isSelectionMode: boolean;
+  isUpdating?: boolean;
   onDelete: (skill: ISkill) => void;
   onOpen: (skillId: string) => void;
-  onOpenSkillAiChat: (skill: ISkill) => void;
   onQuickInstall: (skill: ISkill) => void;
+  onUpdateFromStore?: (skill: ISkill) => void;
   onToggleSelection: (skillId: string) => void;
   skill: ISkill;
 }
@@ -29,10 +23,11 @@ function SkillGalleryCardComponent({
   hasStoreUpdate = false,
   isSelected,
   isSelectionMode,
+  isUpdating = false,
   onDelete,
   onOpen,
-  onOpenSkillAiChat,
   onQuickInstall,
+  onUpdateFromStore,
   onToggleSelection,
   skill,
 }: IProps) {
@@ -58,12 +53,18 @@ function SkillGalleryCardComponent({
           : 'border-border hover:border-primary/50 hover:-translate-y-1 hover:shadow-xl'
       }`}>
       {hasStoreUpdate ? (
-        <div
-          className='absolute left-4 top-4 z-10 inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-1 text-[10px] font-medium text-amber-600 dark:text-amber-300'
-          title={'有可用更新'}>
+        <button
+          type='button'
+          disabled={isUpdating}
+          className='absolute left-4 top-4 z-10 inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-1 text-[10px] font-medium text-amber-600 transition-colors hover:bg-amber-500/20 disabled:cursor-wait disabled:opacity-70 dark:text-amber-300'
+          title={'点击从商店更新此技能'}
+          onClick={(event) => {
+            event.stopPropagation();
+            onUpdateFromStore?.(skill);
+          }}>
           <BellDotIcon className='h-3.5 w-3.5 animate-pulse' />
-          {'有可用更新'}
-        </div>
+          {isUpdating ? '更新中…' : '有可用更新 · 点击更新'}
+        </button>
       ) : null}
       {isSelectionMode && (
         <Button
@@ -99,16 +100,6 @@ function SkillGalleryCardComponent({
         />
         {!isSelectionMode && (
           <div className='flex gap-1'>
-            <Button
-              type='text'
-              onClick={(event) => {
-                event.stopPropagation();
-                onOpenSkillAiChat(skill);
-              }}
-              className='text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg p-2 opacity-0 active:scale-90 group-hover:opacity-100'
-              title={'AI 对话'}
-              icon={<MessagesSquare className='h-4 w-4' />}
-            />
             <Button
               type='text'
               onClick={(event) => {

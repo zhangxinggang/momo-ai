@@ -5,6 +5,11 @@ import type { ICliAgentCallInput, ICliAgentCallResult } from '@momo/aichat';
 import { resolveSkillShell } from '../skill/runtime/shell';
 import { buildCliPathEnv, resolveCliSpawnTarget } from './cli-path';
 import {
+  resolveClaudeConfiguredModel,
+  resolveClaudeSettingsEnv,
+  resolveCodexConfiguredModel,
+} from './cli-model';
+import {
   buildCliAgentSpawnSpec,
   getCliNotFoundMessage,
   parseCliJsonOutput,
@@ -24,6 +29,36 @@ interface ISpawnCliResult {
   spawnError?: string;
 }
 
+function buildCliSpawnEnv(agent: TCliAgentType, pathEnv: string): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    PATH: pathEnv,
+    PYTHONIOENCODING: 'utf-8',
+    PYTHONUTF8: '1',
+    CI: process.env.CI || '1',
+  };
+
+  if (agent === 'claude') {
+    Object.assign(env, resolveClaudeSettingsEnv());
+  }
+
+  return env;
+}
+
+function resolveDisplayModel(agent: TCliAgentType, parsedModel?: string): string {
+  const fromOutput = parsedModel?.trim();
+  if (fromOutput) {
+    return fromOutput;
+  }
+  if (agent === 'codex') {
+    return resolveCodexConfiguredModel() || `cli:${agent}`;
+  }
+  if (agent === 'claude') {
+    return resolveClaudeConfiguredModel() || `cli:${agent}`;
+  }
+  return `cli:${agent}`;
+}
+
 /** 使用 spawn 执行 CLI；Windows 默认走 cmd 以解析 .cmd/.ps1，或直调 claude.exe */
 async function spawnCliAgent(
   spec: ReturnType<typeof buildCliAgentSpawnSpec>,
@@ -40,12 +75,8 @@ async function spawnCliAgent(
       cwd,
       shell: shellOption,
       windowsHide: true,
-      env: {
-        ...process.env,
-        PATH: pathEnv,
-        PYTHONIOENCODING: 'utf-8',
-        PYTHONUTF8: '1',
-      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: buildCliSpawnEnv(agent, pathEnv),
     });
 
     let stdout = '';
@@ -65,7 +96,7 @@ async function spawnCliAgent(
       child.kill('SIGTERM');
       finish({
         stdout,
-        stderr: `${stderr}\nCLI 执行超时`.trim(),
+        stderr: `${stderr}\nCLI 执行超时（可能卡在权限确认或上游 API，请检查 Claude/Codex CLI 与网络）`.trim(),
         exitCode: null,
       });
     }, timeoutMs);
@@ -123,7 +154,7 @@ export async function callCliAgent(input: ICliAgentCallInput): Promise<ICliAgent
   return {
     content: parsed.content || result.stdout.trim(),
     sessionId,
-    model: `cli:${input.agent}`,
+    model: resolveDisplayModel(input.agent, parsed.model),
     responseTimeSec: ((Date.now() - start) / 1000).toFixed(2),
   };
 }

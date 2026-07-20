@@ -230,6 +230,13 @@ export function MomoTree({
           onClick: () => void adapter.onCopy?.(node.id),
         });
       }
+      if (adapter.onExport && labels.export) {
+        items.push({
+          key: 'export',
+          label: labels.export,
+          onClick: () => void adapter.onExport?.(node.id),
+        });
+      }
       items.push(
         {
           key: 'move',

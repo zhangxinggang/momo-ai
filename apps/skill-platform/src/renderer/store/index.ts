@@ -1,4 +1,4 @@
-export { useChatWorkspaceStore } from './chat';
+export { useChatProjectStore } from './chat';
 export { useFolderStore } from './folder';
 export { useKbStore } from './kb';
 export { useNoteStore } from './note';

@@ -17,7 +17,6 @@ import { ChatAttachmentIcon } from '../../utils/attachment-icon';
 import { ChatAgentModeControl } from '../ChatAgentModeControl';
 import { ChatFeatureDropdown } from '../ChatFeatureDropdown';
 import { ChatMentionTextarea, type IChatMentionTextareaRef } from '../ChatMentionTextarea';
-import { ChatWorkspaceToolbar } from '../ChatWorkspaceToolbar';
 import { NoteReferencePopover } from '../NoteReferencePopover';
 import { SlashCommandPopover } from '../SlashCommandPopover';
 
@@ -80,6 +79,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       workspace,
       slashCommands,
       noteReferences,
+      renderInputToolbarLeftExtra,
     } = useAiChatConfig();
     const [collections, setCollections] = useState<{ id: number; name: string }[]>([]);
     const [loadingKb, setLoadingKb] = useState(false);
@@ -463,13 +463,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
                 {ragExtra}
               </ChatFeatureDropdown>
             ) : null}
-            {workspace ? (
-              <ChatFeatureDropdown
-                customPanel={<ChatWorkspaceToolbar workspace={workspace} />}
-                enabled={workspace.enabled}
-                label='工作区'
-              />
-            ) : null}
+            {renderInputToolbarLeftExtra?.()}
           </div>
 
           <div className='chat-input-toolbar-right flex shrink-0 items-center gap-1.5'>

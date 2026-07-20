@@ -1,11 +1,16 @@
 /**
- * Markdown 渲染：基于 @momo/markdown MdPreview，并支持本地路径点击
+ * Markdown 渲染：基于 @momo/markdown MdPreview，并支持本地路径与 http(s) 链接点击
  */
 import { MdPreview, type IMdPreviewProps } from '@momo/markdown';
 import { App } from 'antd';
 import classNames from 'classnames';
-import { memo, useCallback, useEffect, useId, useMemo, useRef, type ComponentType } from 'react';
+import { memo, useCallback, useEffect, useId, useMemo, useRef, type ComponentType, type MouseEvent } from 'react';
 import { useAiChatConfig } from '../../contexts/AiChatConfigContext';
+import {
+  enhanceExternalUrlElements,
+  isHttpUrl,
+  splitPlainTextByHttpUrls,
+} from '../../utils/external-url';
 import {
   enhanceLocalPathElements,
   isAbsoluteLocalPath,
@@ -57,7 +62,7 @@ function MarkdownRenderer({
   instanceKey,
 }: IProps) {
   const { message } = App.useApp();
-  const { localPath, workspace } = useAiChatConfig();
+  const { localPath, workspace, onOpenExternalUrl } = useAiChatConfig();
   const reactId = useId();
   const wrapRef = useRef<HTMLDivElement>(null);
   // useId 含冒号；MdPreview 内部用 querySelector，须去掉冒号
@@ -114,68 +119,133 @@ function MarkdownRenderer({
     [localPath, message, resolvePath],
   );
 
-  const handleContainerClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      const target = event.target as HTMLElement | null;
-      const pathElement = target?.closest('[data-local-path]');
-      if (!pathElement) {
+  const handleOpenExternalUrl = useCallback(
+    async (rawUrl: string) => {
+      if (!onOpenExternalUrl || !isHttpUrl(rawUrl)) {
         return;
       }
-      const rawPath = pathElement.getAttribute('data-local-path');
-      if (!rawPath) {
-        return;
-      }
-      event.preventDefault();
-      void handleOpenPath(rawPath);
+      await onOpenExternalUrl(rawUrl.trim());
     },
-    [handleOpenPath],
+    [onOpenExternalUrl],
   );
 
-  const enhancePathsInView = useCallback(() => {
+  const canHandleClick = Boolean(localPath?.onOpenLocalPath || onOpenExternalUrl);
+
+  const handleContainerClick = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) {
+        return;
+      }
+
+      const pathElement = target.closest('[data-local-path]');
+      if (pathElement) {
+        const rawPath = pathElement.getAttribute('data-local-path');
+        if (rawPath) {
+          event.preventDefault();
+          void handleOpenPath(rawPath);
+        }
+        return;
+      }
+
+      const externalUrlElement = target.closest('[data-external-url]');
+      if (externalUrlElement && onOpenExternalUrl) {
+        const rawUrl = externalUrlElement.getAttribute('data-external-url');
+        if (rawUrl) {
+          event.preventDefault();
+          void handleOpenExternalUrl(rawUrl);
+        }
+        return;
+      }
+
+      const anchor = target.closest('a');
+      if (anchor && onOpenExternalUrl) {
+        const href = anchor.getAttribute('href')?.trim() ?? '';
+        if (isHttpUrl(href)) {
+          event.preventDefault();
+          void handleOpenExternalUrl(href);
+        }
+      }
+    },
+    [handleOpenExternalUrl, handleOpenPath, onOpenExternalUrl],
+  );
+
+  const enhanceInteractiveElements = useCallback(() => {
     const root = wrapRef.current;
-    if (!root || !localPath?.onOpenLocalPath) {
+    if (!root) {
       return;
     }
-    enhanceLocalPathElements(root, styles['local-path']);
-  }, [localPath?.onOpenLocalPath]);
+    if (onOpenExternalUrl) {
+      enhanceExternalUrlElements(root, styles['external-url']);
+    }
+    if (localPath?.onOpenLocalPath) {
+      enhanceLocalPathElements(root, styles['local-path']);
+    }
+  }, [localPath?.onOpenLocalPath, onOpenExternalUrl]);
 
   useEffect(() => {
-    enhancePathsInView();
-  }, [content, isStreaming, enhancePathsInView]);
+    enhanceInteractiveElements();
+  }, [content, isStreaming, enhanceInteractiveElements]);
 
   const handlePreviewHtmlChanged = useCallback(() => {
-    enhancePathsInView();
-  }, [enhancePathsInView]);
+    enhanceInteractiveElements();
+  }, [enhanceInteractiveElements]);
 
   const handlePreviewRemount = useCallback(() => {
-    enhancePathsInView();
-  }, [enhancePathsInView]);
+    enhanceInteractiveElements();
+  }, [enhanceInteractiveElements]);
+
+  const renderPlainParts = useCallback(
+    (text: string, keyPrefix: string) => {
+      const urlParts = splitPlainTextByHttpUrls(text);
+      return urlParts.map((urlPart, urlIndex) => {
+        if (urlPart.kind === 'url' && onOpenExternalUrl) {
+          return (
+            <span
+              className={styles['external-url']}
+              data-external-url={urlPart.value}
+              key={`${keyPrefix}-url-${urlIndex}`}
+              role='link'
+              tabIndex={0}>
+              {urlPart.value}
+            </span>
+          );
+        }
+
+        const pathParts = splitPlainTextByLocalPaths(urlPart.value);
+        return pathParts.map((pathPart, pathIndex) => {
+          if (pathPart.kind === 'path' && localPath?.onOpenLocalPath) {
+            return (
+              <span
+                className={styles['local-path']}
+                data-local-path={normalizeLocalPathValue(pathPart.value)}
+                key={`${keyPrefix}-path-${urlIndex}-${pathIndex}`}
+                role='link'
+                tabIndex={0}>
+                {pathPart.value}
+              </span>
+            );
+          }
+          return (
+            <span key={`${keyPrefix}-text-${urlIndex}-${pathIndex}`}>{pathPart.value}</span>
+          );
+        });
+      });
+    },
+    [localPath?.onOpenLocalPath, onOpenExternalUrl],
+  );
 
   if (!content || typeof content !== 'string') {
     return null;
   }
 
   if (!hasMarkdownSyntax(content)) {
-    const plainParts = splitPlainTextByLocalPaths(content);
     return (
       <div
         ref={wrapRef}
         className={classNames(styles.plain, className)}
-        onClick={localPath?.onOpenLocalPath ? handleContainerClick : undefined}>
-        {plainParts.map((part, index) =>
-          part.kind === 'path' ? (
-            <span
-              className={styles['local-path']}
-              data-local-path={normalizeLocalPathValue(part.value)}
-              key={`${part.value}-${index}`}
-              role='link'
-              tabIndex={0}>
-              {part.value}
-            </span>
-          ) : (
-            <span key={`text-${index}`}>{part.value}</span>
-          ),
-        )}
+        onClick={canHandleClick ? handleContainerClick : undefined}>
+        {renderPlainParts(content, 'plain')}
       </div>
     );
   }
@@ -187,7 +257,7 @@ function MarkdownRenderer({
     <div
       ref={wrapRef}
       className={classNames(styles.wrap, className)}
-      onClick={localPath?.onOpenLocalPath ? handleContainerClick : undefined}>
+      onClick={canHandleClick ? handleContainerClick : undefined}>
       <MdPreviewView
         id={editorId}
         value={mdValue}

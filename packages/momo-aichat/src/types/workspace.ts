@@ -13,12 +13,12 @@ export interface IChatWorkspaceConfig {
   paths: string[];
   /** 兼容旧版：首个目录，无目录时为 null */
   path: string | null;
-  /** 启用状态变更 */
-  onEnabledChange: (enabled: boolean) => void;
-  /** 添加工作区目录 */
-  onAddFolder: () => void;
-  /** 移除指定工作区目录 */
-  onRemoveFolder: (folderPath: string) => void;
+  /** 启用状态变更（只读模式可不传） */
+  onEnabledChange?: (enabled: boolean) => void;
+  /** 添加工作区目录（只读模式可不传） */
+  onAddFolder?: () => void;
+  /** 移除指定工作区目录（只读模式可不传） */
+  onRemoveFolder?: (folderPath: string) => void;
   /** 已保存的常用工作区（可选） */
   presets?: IChatWorkspacePreset[];
   /** 当前选中的常用 id，用于展示对应目录列表 */

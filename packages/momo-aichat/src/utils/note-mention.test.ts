@@ -9,6 +9,7 @@ import {
   ensureNoteSnapshots,
   expandNoteMentionsWithSnapshots,
   truncateNoteContent,
+  stripEchoedNoteBlocks,
 } from './note-mention';
 
 describe('truncateNoteContent', () => {
@@ -67,6 +68,25 @@ describe('expandNoteMentionsWithSnapshots', () => {
     const result = expandNoteMentionsWithSnapshots(content, {});
 
     expect(result).toBe(`引用 [笔记 ${path} 未找到快照]`);
+  });
+});
+
+describe('stripEchoedNoteBlocks', () => {
+  it('剥离回答中复述的笔记全文块', () => {
+    const content = [
+      '根据笔记，结论如下：',
+      '--- 笔记: notes/a.md START ---',
+      '很长的正文',
+      '--- 笔记: notes/a.md END ---',
+      '建议继续优化。',
+    ].join('\n');
+
+    expect(stripEchoedNoteBlocks(content)).toBe('根据笔记，结论如下：\n\n建议继续优化。');
+  });
+
+  it('无笔记块时保持原文', () => {
+    const content = '普通回答';
+    expect(stripEchoedNoteBlocks(content)).toBe(content);
   });
 });
 

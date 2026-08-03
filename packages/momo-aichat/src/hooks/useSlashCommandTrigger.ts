@@ -114,7 +114,7 @@ export function useSlashCommandTrigger(options: IUseSlashCommandTriggerOptions) 
   );
 
   const handleKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    (event: KeyboardEvent<HTMLElement>) => {
       if (!open || items.length === 0) {
         return false;
       }

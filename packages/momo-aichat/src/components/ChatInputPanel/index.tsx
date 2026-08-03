@@ -32,7 +32,7 @@ interface IProps {
   onChange: (value: string) => void;
   onSend: () => void;
   onStop?: () => void;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
   placeholder?: string;
   disabled?: boolean;
   loading?: boolean;
@@ -66,7 +66,6 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
     },
     ref,
   ) => {
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const mentionTextareaRef = useRef<IChatMentionTextareaRef>(null);
     const notePopoverAnchorRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -166,59 +165,48 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       ref,
       () => ({
         focus: () => {
-          if (noteReferences) {
-            mentionTextareaRef.current?.focus();
-            return;
-          }
-          textareaRef.current?.focus();
+          mentionTextareaRef.current?.focus();
         },
       }),
-      [noteReferences],
+      [],
     );
 
-    const getActiveTextarea = () =>
-      noteReferences
-        ? (mentionTextareaRef.current?.getTextareaElement() ?? null)
-        : textareaRef.current;
+    const getActiveEditable = () => mentionTextareaRef.current?.getEditableElement() ?? null;
 
-    const adjustTextareaHeight = () => {
-      const textarea = getActiveTextarea();
-      if (!textarea) {
+    const adjustEditableHeight = () => {
+      const editable = getActiveEditable();
+      if (!editable) {
         return;
       }
-      const currentHeight = textarea.style.height;
-      textarea.style.transition = 'none';
-      textarea.style.height = 'auto';
-      const scrollHeight = textarea.scrollHeight;
       const maxHeight = 192;
-      const newHeight = Math.min(scrollHeight, maxHeight);
-      if (currentHeight) {
-        textarea.style.height = currentHeight;
+      // 中文 IME 上屏后 value 变化会重算高度；height:auto 会把 scrollTop 置 0，需保留滚动位置
+      const prevScrollTop = editable.scrollTop;
+      const wasNearBottom =
+        editable.scrollHeight - editable.scrollTop - editable.clientHeight <= 4;
+
+      editable.style.transition = 'none';
+      editable.style.height = 'auto';
+      const newHeight = Math.min(editable.scrollHeight, maxHeight);
+      editable.style.height = `${newHeight}px`;
+
+      if (wasNearBottom) {
+        editable.scrollTop = editable.scrollHeight;
+      } else {
+        editable.scrollTop = prevScrollTop;
       }
-      setTimeout(() => {
-        textarea.style.transition = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-        textarea.style.height = `${newHeight}px`;
-      }, 0);
+
+      requestAnimationFrame(() => {
+        editable.style.transition = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+      });
     };
 
     useEffect(() => {
-      const textarea = getActiveTextarea();
-      if (!textarea) {
-        return;
-      }
-      textarea.style.transition = 'none';
-      textarea.style.height = 'auto';
-      const scrollHeight = textarea.scrollHeight;
-      const maxHeight = 192;
-      textarea.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
-      requestAnimationFrame(() => {
-        textarea.style.transition = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-      });
-    }, [noteReferences]);
+      adjustEditableHeight();
+    }, []);
 
     useEffect(() => {
-      adjustTextareaHeight();
-    }, [value, noteReferences]);
+      adjustEditableHeight();
+    }, [value]);
 
     const slash = useSlashCommandTrigger({
       value,
@@ -240,7 +228,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       },
     });
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
       if (loading && e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         return;
@@ -383,40 +371,23 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
             onToggleFolder={noteRef.toggleFolder}
             onSelectFile={noteRef.handleSelectFile}
           />
-          {noteReferences ? (
-            <ChatMentionTextarea
-              ref={mentionTextareaRef}
-              value={value}
-              onChange={onChange}
-              onKeyDown={handleKeyDown}
-              onSelectionChange={setSelectionStart}
-              onMentionClick={noteRef.openReplaceMenu}
-              placeholder={inputPlaceholder}
-              disabled={disabled}
-              className='chat-input-textarea min-h-[24px] w-full resize-none border-none bg-transparent text-base placeholder-gray-400 outline-none focus-visible:ring-0 dark:placeholder-gray-500'
-              style={{
-                fontSize: '16px',
-                lineHeight: '24px',
-                fontFamily: 'inherit',
-                transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              }}
-            />
-          ) : (
-            <textarea
-              ref={textareaRef}
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              className='chat-input-textarea min-h-[24px] w-full resize-none border-none bg-transparent text-base placeholder-gray-400 outline-none focus-visible:ring-0 dark:placeholder-gray-500'
-              style={{
-                fontSize: '16px',
-                lineHeight: '24px',
-                fontFamily: 'inherit',
-                transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              }}
-            />
-          )}
+          <ChatMentionTextarea
+            ref={mentionTextareaRef}
+            value={value}
+            onChange={onChange}
+            onKeyDown={handleKeyDown}
+            onSelectionChange={setSelectionStart}
+            onMentionClick={noteReferences ? noteRef.openReplaceMenu : undefined}
+            placeholder={inputPlaceholder}
+            disabled={disabled}
+            className='chat-input-textarea min-h-[24px] w-full resize-none border-none bg-transparent text-base placeholder-gray-400 outline-none focus-visible:ring-0 dark:placeholder-gray-500'
+            style={{
+              fontSize: '16px',
+              lineHeight: '24px',
+              fontFamily: 'inherit',
+              transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          />
           <input
             ref={fileInputRef}
             type='file'

@@ -249,7 +249,7 @@ export function useNoteReferenceTrigger(options: IUseNoteReferenceTriggerOptions
   );
 
   const handleKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    (event: KeyboardEvent<HTMLElement>) => {
       if (!open || selectableIds.length === 0) {
         return false;
       }

@@ -3,8 +3,7 @@
   width: 100%;
 }
 
-.mention-input-mirror,
-.mention-input-textarea {
+.mention-input-editable {
   min-height: 24px;
   width: 100%;
   padding: 0;
@@ -19,66 +18,34 @@
   overflow-wrap: anywhere;
   word-break: break-word;
   word-wrap: break-word;
-  scrollbar-gutter: stable;
   box-sizing: border-box;
   letter-spacing: normal;
-  tab-size: 8;
-}
-
-.mention-input-mirror {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  color: inherit;
-  overflow: hidden;
-}
-
-.mention-input-mirror-content {
-  width: 100%;
-  min-height: 24px;
-  will-change: transform;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  word-wrap: break-word;
-}
-
-.mention-input-textarea {
-  position: relative;
-  z-index: 1;
   overflow-y: auto;
-}
-
-/* 有笔记引用：透明字 + 镜像层展示 */
-.mention-input-textarea-overlay {
-  background: transparent;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-  caret-color: var(--text-primary, #111827);
-}
-
-.mention-input-textarea-overlay::selection {
-  background: rgba(59, 130, 246, 0.35);
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-}
-
-.mention-input-textarea-overlay::-moz-selection {
-  background: rgba(59, 130, 246, 0.35);
-  color: transparent;
-}
-
-/* 无笔记引用：直接显示文本，避免镜像换行与光标错位 */
-.mention-input-textarea-plain {
   background: transparent;
   color: inherit;
-  -webkit-text-fill-color: currentColor;
   caret-color: currentColor;
 }
 
-.mention-plain {
-  color: inherit;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+.mention-input-editable:focus {
+  outline: none;
+}
+
+.mention-input-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  color: #9ca3af;
+  font-size: 16px;
+  line-height: 24px;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:global(html.dark) .mention-input-placeholder,
+:global(.dark) .mention-input-placeholder {
+  color: #6b7280;
 }

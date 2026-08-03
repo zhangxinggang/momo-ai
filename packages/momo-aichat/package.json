@@ -23,9 +23,13 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.2",
+    "@lexical/plain-text": "0.49.0",
+    "@lexical/react": "0.49.0",
+    "@lexical/utils": "0.49.0",
     "@momo/markdown": "workspace:*",
     "axios": "^1.12.2",
     "classnames": "^2.5.1",
+    "lexical": "0.49.0",
     "lucide-react": "^0.460.0"
   },
   "devDependencies": {

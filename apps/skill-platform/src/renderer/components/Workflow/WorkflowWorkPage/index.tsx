@@ -285,8 +285,7 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
   );
 
   const isWebpageStep =
-    !!activeStep &&
-    (activeStep.resourceKind === 'webpage' || isWebpageNode(activeStep.node));
+    !!activeStep && (activeStep.resourceKind === 'webpage' || isWebpageNode(activeStep.node));
 
   // 网页节点不创建对话 session，避免无意义 bootstrap
   const chatBootstrap = useMemo(() => {
@@ -302,9 +301,7 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
   }, [activeStep, businessId, isWebpageStep, workflowId]);
 
   const activeResourceData =
-    activeStep && !isWebpageStep
-      ? (activeStep.node.data as IWorkflowResourceNodeData)
-      : undefined;
+    activeStep && !isWebpageStep ? (activeStep.node.data as IWorkflowResourceNodeData) : undefined;
   const linkedPrompt =
     activeResourceData?.resourceKind === 'prompt'
       ? prompts.find((p) => p.id === activeResourceData.resourceId)
@@ -314,8 +311,7 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
       ? skills.find((s) => s.id === activeResourceData.resourceId)
       : undefined;
 
-  const systemPrompt =
-    activeResourceData?.systemPrompt?.trim() || linkedPrompt?.systemPrompt || '';
+  const systemPrompt = activeResourceData?.systemPrompt?.trim() || linkedPrompt?.systemPrompt || '';
   const userPrompt = activeResourceData?.userPrompt?.trim() || linkedPrompt?.userPrompt || '';
 
   const prefillUserPrompt =
@@ -485,10 +481,7 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
                 className={styles['workflow-work-chat']}
                 style={{ flex: 'none', width: chatPanelWidth }}>
                 {activeStep && isWebpageStep ? (
-                  <WorkflowNodeWebview
-                    title={activeStep.nodeName}
-                    url={webpageUrl}
-                  />
+                  <WorkflowNodeWebview title={activeStep.nodeName} url={webpageUrl} />
                 ) : activeStep && chatBootstrap ? (
                   <WorkflowNodeChat
                     activeSkillId={

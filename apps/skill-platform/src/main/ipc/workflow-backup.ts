@@ -14,9 +14,8 @@ import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
 
-import type { PromptDB, SkillDB, WorkflowDB } from '../database';
+import type { FolderDB, PromptDB, SkillDB, WorkflowDB } from '../database';
 import { syncPromptWorkspaceFromDatabase } from '../services/prompt';
-import type { FolderDB } from '../database';
 import {
   SkillInstaller,
   isInternalSkillRepoEntry,
@@ -50,7 +49,8 @@ async function readSkillFilesForExport(skill: ISkill): Promise<Record<string, Ui
     const absolute =
       typeof repoPath === 'string'
         ? repoPath
-        : skill.local_repo_path && (await fsp.stat(skill.local_repo_path).then(
+        : skill.local_repo_path &&
+          (await fsp.stat(skill.local_repo_path).then(
             (s) => (s.isDirectory() ? skill.local_repo_path! : null),
             () => null,
           ));

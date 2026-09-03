@@ -8,8 +8,8 @@ import {
   buildNoteMentionToken,
   ensureNoteSnapshots,
   expandNoteMentionsWithSnapshots,
-  truncateNoteContent,
   stripEchoedNoteBlocks,
+  truncateNoteContent,
 } from './note-mention';
 
 describe('truncateNoteContent', () => {
@@ -30,7 +30,9 @@ describe('truncateNoteContent', () => {
 
     expect(result.isTruncated).toBe(true);
     expect(result.originalLength).toBe(raw.length);
-    expect(result.content).toBe('x'.repeat(NOTE_SNAPSHOT_MAX_CHARS) + NOTE_SNAPSHOT_TRUNCATED_SUFFIX);
+    expect(result.content).toBe(
+      'x'.repeat(NOTE_SNAPSHOT_MAX_CHARS) + NOTE_SNAPSHOT_TRUNCATED_SUFFIX,
+    );
     expect(result.content).toContain('已截断');
   });
 });
@@ -52,11 +54,9 @@ describe('expandNoteMentionsWithSnapshots', () => {
 
     const result = expandNoteMentionsWithSnapshots(content, snapshots);
 
-    const block = [
-      `--- 笔记: ${path} START ---`,
-      '笔记正文',
-      `--- 笔记: ${path} END ---`,
-    ].join('\n');
+    const block = [`--- 笔记: ${path} START ---`, '笔记正文', `--- 笔记: ${path} END ---`].join(
+      '\n',
+    );
     expect(result).toBe(`请查看 ${block} 内容`);
   });
 

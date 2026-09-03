@@ -1,3 +1,4 @@
+import { aggregateToolCallDeltas } from '../tools/openai-tools';
 import type {
   IChatCompletionResult,
   IChatMessageContentPart,
@@ -6,7 +7,6 @@ import type {
 } from '../types';
 import type { IResponseLike, IStreamState } from './types';
 import { normalizeTokenUsage } from './usage';
-import { aggregateToolCallDeltas } from '../tools/openai-tools';
 
 export function createStreamState(): IStreamState {
   return {

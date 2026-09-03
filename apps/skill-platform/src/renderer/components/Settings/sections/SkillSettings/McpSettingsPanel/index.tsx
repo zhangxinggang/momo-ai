@@ -51,7 +51,10 @@ function parseArgsText(text?: string): string[] | undefined {
     .filter(Boolean);
 }
 
-function parseRecordText(text: string | undefined, fieldLabel: string): Record<string, string> | undefined {
+function parseRecordText(
+  text: string | undefined,
+  fieldLabel: string,
+): Record<string, string> | undefined {
   if (!text?.trim()) {
     return undefined;
   }
@@ -244,10 +247,7 @@ export function McpSettingsPanel() {
       <SettingSection title={'MCP Servers'}>
         <div className={styles['mcp-settings-toolbar']}>
           <Space>
-            <Button
-              type='primary'
-              icon={<PlusIcon className='h-3.5 w-3.5' />}
-              onClick={openCreate}>
+            <Button type='primary' icon={<PlusIcon className='h-3.5 w-3.5' />} onClick={openCreate}>
               {'新增'}
             </Button>
             <Button
@@ -324,7 +324,9 @@ export function McpSettingsPanel() {
                     danger
                     icon={<TrashIcon className='h-3.5 w-3.5' />}
                     onClick={() => {
-                      void handleDelete(row.name).catch((error) => showToast(String(error), 'error'));
+                      void handleDelete(row.name).catch((error) =>
+                        showToast(String(error), 'error'),
+                      );
                     }}>
                     {'删除'}
                   </Button>
@@ -362,10 +364,7 @@ export function McpSettingsPanel() {
           form={form}
           layout='vertical'
           initialValues={{ type: EMcpTransportType.EStdio, disabled: false }}>
-          <Form.Item
-            label={'名称'}
-            name='name'
-            rules={[{ required: true, message: '请输入名称' }]}>
+          <Form.Item label={'名称'} name='name' rules={[{ required: true, message: '请输入名称' }]}>
             <Input placeholder={'例如 filesystem'} disabled={Boolean(editingName)} />
           </Form.Item>
           <Form.Item label={'类型'} name='type' rules={[{ required: true }]}>

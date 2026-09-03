@@ -5,17 +5,16 @@ import {
   MdEditor,
 } from '@momo/markdown';
 import '@momo/markdown-styles';
-import { NoteAiWritingModal } from '@renderer/components/Note/NoteAiWritingModal';
+import { NoteAiComposer } from '@renderer/components/Note/NoteAiComposer';
 import { ModuleEmptyState } from '@renderer/components/ui/ModuleEmptyState';
-import { useToast } from '@renderer/components/ui/Toast';
 import { useNoteStore, useSettingsStore } from '@renderer/store';
 import {
   useMdEditorImageUpload,
   useMdPreviewTheme,
   useSkillMdEditorToolbars,
 } from '@renderer/utils/markdown/editor-config';
-import { Button } from 'antd';
-import { FileTextIcon, SparklesIcon } from 'lucide-react';
+import { clsx } from 'clsx';
+import { FileTextIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styles from './index.module.less';
 
@@ -36,7 +35,6 @@ const NOTE_MD_TOOLBARS = buildNoteMarkdownToolbars() as typeof allToolbar;
 export function NoteManager() {
   const isDarkMode = useSettingsStore((state) => state.isDarkMode);
   const selectedId = useNoteStore((state) => state.selectedId);
-  const selectedNoteId = useNoteStore((state) => state.selectedNoteId);
   const editorContent = useNoteStore((state) => state.editorContent);
   const savedContent = useNoteStore((state) => state.savedContent);
   const isLoadingFile = useNoteStore((state) => state.isLoadingFile);
@@ -44,8 +42,7 @@ export function NoteManager() {
   const setEditorContent = useNoteStore((state) => state.setEditorContent);
   const saveCurrentFile = useNoteStore((state) => state.saveCurrentFile);
   const loadTree = useNoteStore((state) => state.loadTree);
-  const ensureSelectedNoteId = useNoteStore((state) => state.ensureSelectedNoteId);
-  const { showToast } = useToast();
+  const [isAiRewriting, setIsAiRewriting] = useState(false);
 
   const saveRef = useRef(saveCurrentFile);
   saveRef.current = saveCurrentFile;
@@ -72,7 +69,7 @@ export function NoteManager() {
   }, [loadTree]);
 
   useEffect(() => {
-    if (!selectedId || isLoadingFile) {
+    if (!selectedId || isLoadingFile || isAiRewriting) {
       return;
     }
     if (editorContent === savedContent) {
@@ -86,27 +83,17 @@ export function NoteManager() {
     return () => {
       window.clearTimeout(timer);
     };
-  }, [editorContent, isLoadingFile, savedContent, selectedId]);
+  }, [editorContent, isAiRewriting, isLoadingFile, savedContent, selectedId]);
 
-  const [aiWritingOpen, setAiWritingOpen] = useState(false);
-  const [aiWritingNoteId, setAiWritingNoteId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setAiWritingOpen(false);
-    setAiWritingNoteId(null);
-  }, [selectedId]);
-
-  const handleOpenAiWriting = useCallback(() => {
-    void (async () => {
-      const noteId = await ensureSelectedNoteId();
-      if (!noteId) {
-        showToast('无法打开 AI 写作，请重新选择笔记', 'error');
+  const handleEditorChange = useCallback(
+    (value: string) => {
+      if (isAiRewriting) {
         return;
       }
-      setAiWritingNoteId(noteId);
-      setAiWritingOpen(true);
-    })();
-  }, [ensureSelectedNoteId, showToast]);
+      setEditorContent(value);
+    },
+    [isAiRewriting, setEditorContent],
+  );
 
   return (
     <div className={styles.note}>
@@ -123,26 +110,23 @@ export function NoteManager() {
                 ) : editorContent !== savedContent ? (
                   <span className={styles['note-editor-save-hint']}>{'未保存'}</span>
                 ) : null}
-                <Button
-                  type='primary'
-                  size='small'
-                  icon={<SparklesIcon className='h-3.5 w-3.5' />}
-                  onClick={handleOpenAiWriting}>
-                  {'AI 写作'}
-                </Button>
               </div>
             </div>
             <div className={styles['note-editor-body']}>
               {isLoadingFile ? (
                 <div className={styles['note-editor-loading']}>{'加载中…'}</div>
               ) : (
-                <div className={styles['note-editor-md']}>
+                <div
+                  className={clsx(
+                    styles['note-editor-md'],
+                    isAiRewriting && styles['note-editor-md--locked'],
+                  )}>
                   <NoteMdEditor
                     key={selectedId}
                     ref={noteMdEditorRef}
                     id={markdownEditorDomId}
                     value={editorContent}
-                    onChange={(value) => setEditorContent(value)}
+                    onChange={handleEditorChange}
                     theme={mdTheme}
                     preview
                     previewTheme={mdPreviewTheme}
@@ -155,11 +139,17 @@ export function NoteManager() {
                     defToolbars={defToolbars}
                     onDrop={handleDrop}
                     onUploadImg={handleUploadImg}
+                    readOnly={isAiRewriting}
                     style={{ height: '100%' }}
                   />
                 </div>
               )}
             </div>
+            <NoteAiComposer
+              key={selectedId}
+              noteKey={selectedId}
+              onRewritingChange={setIsAiRewriting}
+            />
           </div>
         ) : (
           <ModuleEmptyState
@@ -170,14 +160,6 @@ export function NoteManager() {
           />
         )}
       </div>
-      {selectedId && aiWritingNoteId ? (
-        <NoteAiWritingModal
-          open={aiWritingOpen}
-          filePath={selectedId}
-          noteId={aiWritingNoteId}
-          onClose={() => setAiWritingOpen(false)}
-        />
-      ) : null}
     </div>
   );
 }

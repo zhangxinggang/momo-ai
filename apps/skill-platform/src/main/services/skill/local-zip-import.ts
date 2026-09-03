@@ -102,10 +102,7 @@ async function parseLocalSkillMd(fileName: string, base64: string): Promise<IPar
   return buildParsedSkillMeta(fileName, instructions, extractDir, fallbackName);
 }
 
-async function parseLocalZip(
-  fileName: string,
-  base64: string,
-): Promise<IParsedLocalZip> {
+async function parseLocalZip(fileName: string, base64: string): Promise<IParsedLocalZip> {
   const extractDir = getLocalZipCacheDir(fileName);
   await extractZipToDir(decodeBase64ToUint8Array(base64), extractDir);
 
@@ -119,10 +116,7 @@ async function parseLocalZip(
   return buildParsedSkillMeta(fileName, instructions, extractDir, fallbackName);
 }
 
-async function parseLocalSkillPackage(
-  fileName: string,
-  base64: string,
-): Promise<IParsedLocalZip> {
+async function parseLocalSkillPackage(fileName: string, base64: string): Promise<IParsedLocalZip> {
   if (isSkillMdFileName(fileName)) {
     return parseLocalSkillMd(fileName, base64);
   }

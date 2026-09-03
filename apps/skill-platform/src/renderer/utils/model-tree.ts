@@ -22,7 +22,6 @@ export const VENDOR_ORDER = [
   'ERNIE',
   'Spark',
   'Hunyuan',
-  'CLI Agent',
   'Embedding',
   'Audio',
   'Image',
@@ -195,7 +194,7 @@ export function findModelTreeLabel(items: IModelTreeItem[], modelId: string): st
   return items.find((item) => item.id === modelId)?.label ?? modelId;
 }
 
-/** 两级分组：分组名 -> 模型列表（如 CLI Agent） */
+/** 两级分组：分组名 -> 模型列表 */
 export interface IModelTreeSimpleGroup {
   id: string;
   label: string;

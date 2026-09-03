@@ -1,10 +1,11 @@
 import { ModuleEmptyState } from '@renderer/components/ui/ModuleEmptyState';
-import { useUIStore } from '@renderer/store';
+import { useCustomToolStore, useUIStore } from '@renderer/store';
 import { Tabs } from 'antd';
 import { clsx } from 'clsx';
 import { WrenchIcon } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 
+import { CustomToolWorkspace } from '../CustomToolWorkspace';
 import { ToolboxCardGrid } from '../ToolboxCardGrid';
 import { ToolboxDetailHeader } from '../ToolboxDetailHeader';
 import { ToolWebview } from '../ToolWebview';
@@ -19,8 +20,9 @@ import {
 } from '../utils';
 import styles from './index.module.less';
 
-/** 工具箱主内容区：iframe / Tab / 卡片列表 */
+/** 工具箱主内容区：自定义工具 / iframe / Tab / 卡片列表 */
 export function ToolboxManager() {
+  const customSelectedId = useCustomToolStore((state) => state.selectedId);
   const tools = useToolboxTools();
   const toolNodes = useMemo(() => mapToolsWithKeys(tools), [tools]);
 
@@ -116,13 +118,17 @@ export function ToolboxManager() {
     clearActiveToolboxBranch();
   };
 
+  if (customSelectedId) {
+    return <CustomToolWorkspace />;
+  }
+
   if (toolNodes.length === 0) {
     return (
       <ModuleEmptyState
         centered
         icon={WrenchIcon}
         title='暂无工具'
-        description='在线配置中尚未提供可用工具，请稍后再试'
+        description='可在左侧新建自定义工具，或等待在线配置中的系统工具'
       />
     );
   }
@@ -133,7 +139,7 @@ export function ToolboxManager() {
         centered
         icon={WrenchIcon}
         title='选择工具'
-        description='从左侧菜单选择要使用的工具'
+        description='从左侧选择自定义工具或系统工具'
       />
     );
   }

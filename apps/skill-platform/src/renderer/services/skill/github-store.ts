@@ -241,11 +241,7 @@ export async function loadGitHubSkillRepo(
           repoMeta?.owner?.login ||
           (parsedRepo.owner === 'anthropics' ? 'Anthropic' : parsedRepo.owner),
         source_url: sourceRepoUrl,
-        tags: builtin?.tags?.length
-          ? builtin.tags
-          : parsed.tags.length
-            ? parsed.tags
-            : [],
+        tags: builtin?.tags?.length ? builtin.tags : parsed.tags.length ? parsed.tags : [],
         version: builtin?.version || '1.0.0',
         content,
         content_url: rawUrl,
@@ -297,11 +293,7 @@ export async function loadGitHubSkillRepo(
         repoMeta?.owner?.login ||
         (parsedRepo.owner === 'anthropics' ? 'Anthropic' : parsedRepo.owner),
       source_url: `${parsedRepo.repositoryUrl}/tree/${defaultBranch}`,
-      tags: builtin?.tags?.length
-        ? builtin.tags
-        : parsed.tags.length
-          ? parsed.tags
-          : [],
+      tags: builtin?.tags?.length ? builtin.tags : parsed.tags.length ? parsed.tags : [],
       version: builtin?.version || '1.0.0',
       content,
       content_url: rawUrl,

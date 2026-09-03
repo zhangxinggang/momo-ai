@@ -1,5 +1,4 @@
 import type { IAIConfig, IChatMessage } from '@renderer/services/ai';
-import { isProductDesignOrConsultIntent } from '@renderer/services/aichat/intent/product-design';
 import { runMcpToolLoop } from '@renderer/services/aichat/mcp/tool-loop';
 import {
   canExecuteSkillWorkspace,
@@ -32,22 +31,17 @@ function skillRequiresScriptExecution(instructions: string): boolean {
   if (!body) {
     return false;
   }
-  return /skill-run|scripts\/|执行脚本|运行脚本|生成.*\.(pptx?|docx?|pdf|xlsx?|svg)/i.test(
-    body,
-  );
+  return /skill-run|scripts\/|执行脚本|运行脚本|生成.*\.(pptx?|docx?|pdf|xlsx?|svg)/i.test(body);
 }
 
-/** 技能指令要求脚本时，仍可被用户咨询/设计意图覆盖为问答模式 */
-function shouldRunAsScriptSkill(instructions: string, userInput: string): boolean {
-  if (isProductDesignOrConsultIntent(userInput)) {
-    return false;
-  }
-  return skillRequiresScriptExecution(instructions);
+/** 脚本执行能力必须由结构化授权开启，不能从用户文字或模型回复推断。 */
+function shouldRunAsScriptSkill(instructions: string, executionAuthorized = false): boolean {
+  return executionAuthorized && skillRequiresScriptExecution(instructions);
 }
 
 function buildPlanMessages(state: ISkillChatState): IChatMessage[] {
   const skillBody = state.activeSkillInstructions.trim();
-  const requiresScript = shouldRunAsScriptSkill(skillBody, state.userInput);
+  const requiresScript = shouldRunAsScriptSkill(skillBody);
   const system = skillBody
     ? requiresScript
       ? `你是 SKILL 执行规划助手。你的任务是分析用户选中的 SKILL 完整指令，结合用户目标，输出一份**可直接执行**的实施计划。
@@ -95,7 +89,7 @@ function buildPlanMessages(state: ISkillChatState): IChatMessage[] {
 
 function buildAnswerMessages(state: ISkillChatState): IChatMessage[] {
   const skillBody = state.activeSkillInstructions.trim();
-  const requiresScript = shouldRunAsScriptSkill(skillBody, state.userInput);
+  const requiresScript = shouldRunAsScriptSkill(skillBody);
   const system = skillBody
     ? requiresScript
       ? `你是 SKILL 执行引擎。你必须严格按照用户选中的 SKILL 指令完成用户的任务，并产出实际可交付的文件。
@@ -226,11 +220,6 @@ async function appendSkillExecutionResults(
 ): Promise<string> {
   const skillId = input.activeSkillId?.trim();
   if (!skillId) {
-    return reply;
-  }
-
-  // 产品设计/咨询意图：即使模型误输出 skill-run，也不执行
-  if (isProductDesignOrConsultIntent(input.userInput)) {
     return reply;
   }
 
@@ -415,5 +404,6 @@ export async function runSkillLangGraphChat(
       reply += chunk;
     },
   });
-  return appendSkillExecutionResults(reply, input);
+  // 模型正文中的 fenced code 只作为文本展示；执行需走独立的结构化授权入口。
+  return reply;
 }

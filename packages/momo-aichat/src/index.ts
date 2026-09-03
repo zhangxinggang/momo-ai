@@ -7,7 +7,6 @@ export {
   AI_CHAT_SESSIONS_UPDATED_EVENT,
   DEFAULT_SYSTEM_PROMPT_PLACEHOLDER,
   DEFAULT_WELCOME_MESSAGE,
-  ECliAgent,
   STORAGE_KEYS,
   buildStorageKeys,
   generateId,
@@ -24,22 +23,17 @@ export type {
   INoteSnapshot,
 } from './types/chat';
 
-export { createDefaultAiChatServices } from './adapters/create-services';
 export type {
   IAiChatServices,
   IChatStreamMessage,
   IChatStreamStats,
   IChatSyncAdapter,
-  ICliAgentCallInput,
-  ICliAgentCallResult,
   IKbChunk,
   IKbCollection,
   TCallAiChatStream,
-  TCallCliAgent,
 } from './adapters/types';
 export type { ILocalPathConfig } from './types/local-path';
-
-export { CLI_AGENT_OPTIONS, CLI_MODEL_PREFIX, isCliModelId, parseCliAgent } from './utils/model-id';
+export type { IChatSourceInput, IChatSourceRef, IResolvedChatSource } from './types/source';
 
 export { buildChatStorageKeys, createMemoryChatStorage } from './storage/chat-storage';
 export type {
@@ -51,9 +45,9 @@ export type {
 /** 宿主构建需引入：import '@momo/aichat/markdown-styles' 或 alias @momo/markdown-styles */
 
 // UI 子组件（按需组合）
+export { ChatFeatureDropdown } from './components/ChatFeatureDropdown';
 export { default as ChatInputPanel } from './components/ChatInputPanel';
 export type { IChatInputPanelRef } from './components/ChatInputPanel';
-export { ChatFeatureDropdown } from './components/ChatFeatureDropdown';
 export { ChatMentionTextarea } from './components/ChatMentionTextarea';
 export type { IChatMentionTextareaRef } from './components/ChatMentionTextarea';
 export { ChatWorkspaceControl } from './components/ChatWorkspaceControl';
@@ -67,25 +61,36 @@ export { NoteReferencePopover } from './components/NoteReferencePopover';
 export { NoteReferenceText } from './components/NoteReferenceText';
 export { SlashCommandPopover } from './components/SlashCommandPopover';
 export { default as StopGenerationButton } from './components/StopGenerationButton';
-export { buildChatWorkspaceConfig, buildReadonlyChatWorkspaceConfig, useChatWorkspaceConfig } from './hooks/useChatWorkspaceConfig';
+export {
+  buildChatWorkspaceConfig,
+  buildReadonlyChatWorkspaceConfig,
+  useChatWorkspaceConfig,
+} from './hooks/useChatWorkspaceConfig';
 export type { IUseChatWorkspaceConfigOptions } from './hooks/useChatWorkspaceConfig';
 export { useNoteReferenceTrigger } from './hooks/useNoteReferenceTrigger';
 export { useSlashCommandTrigger } from './hooks/useSlashCommandTrigger';
 export type { INoteReferenceNode, INoteReferencesConfig } from './types/note-reference';
+export type { IChatProject } from './types/project';
 export type {
+  IBeforeSubmitPromptInput,
+  IBeforeSubmitPromptResult,
   ISlashCommandItem,
   ISlashCommandsConfig,
   ISlashCommandsListContext,
   ISlashCommandsListResult,
 } from './types/slash-command';
 export type { IChatWorkspaceConfig, IChatWorkspacePreset } from './types/workspace';
-export type { IChatProject } from './types/project';
 export {
   buildChatProjectUniqueKey,
   getChatProjectDisplayName,
   normalizeFolderPaths,
 } from './utils/chat-project';
-export { formatRelativeCompact } from './utils/relative-compact-time';
+export {
+  enhanceExternalUrlElements,
+  isHttpUrl,
+  splitPlainTextByHttpUrls,
+  trimUrlTrailingPunctuation,
+} from './utils/external-url';
 export {
   enhanceLocalPathElements,
   isAbsoluteLocalPath,
@@ -97,23 +102,18 @@ export {
   stripTrailingPathPunctuation,
 } from './utils/local-path';
 export {
-  enhanceExternalUrlElements,
-  isHttpUrl,
-  splitPlainTextByHttpUrls,
-  trimUrlTrailingPunctuation,
-} from './utils/external-url';
-export {
   NOTE_SNAPSHOT_MAX_CHARS,
   NOTE_SNAPSHOT_TRUNCATED_SUFFIX,
   buildNoteMentionToken,
   ensureNoteSnapshots,
   expandNoteMentionsWithSnapshots,
-  stripEchoedNoteBlocks,
   getNoteMentionDisplayPath,
   normalizeNotePath,
   parseNoteReferenceContent,
   resolveNoteMentionsInContent,
+  stripEchoedNoteBlocks,
   truncateNoteContent,
   valueToSurface,
 } from './utils/note-mention';
+export { formatRelativeCompact } from './utils/relative-compact-time';
 export { formatWorkspaceDisplayPath } from './utils/workspace-display';

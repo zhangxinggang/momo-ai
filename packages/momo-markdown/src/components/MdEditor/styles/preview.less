@@ -215,6 +215,9 @@
   inset-block-start: 12px;
   inset-inline-end: 12px;
   z-index: 3;
+  // 全屏 overlay 挂载在 body 下，不在 .diagram-preview 容器内，
+  // 需显式覆盖 .mermaid-action 的 opacity:0，否则按钮不可见
+  opacity: 1;
   display: flex;
   gap: 4px;
   padding-block: 2px;

@@ -2,13 +2,7 @@ import type { IWorkflowResourceNodeData, IWorkflowWebpageNodeData } from '@momo/
 import { isParallelGroupOutputReady } from '@momo/workflow';
 import { Popover, Tooltip } from 'antd';
 import { clsx } from 'clsx';
-import {
-  ChevronRightIcon,
-  CommandIcon,
-  CuboidIcon,
-  GitBranchIcon,
-  GlobeIcon,
-} from 'lucide-react';
+import { ChevronRightIcon, CommandIcon, CuboidIcon, GitBranchIcon, GlobeIcon } from 'lucide-react';
 import { Fragment, useCallback } from 'react';
 
 import { SkillIcon } from '@renderer/components/Skill/SkillIcon';
@@ -167,20 +161,14 @@ export function WorkflowStepsBar({
   const renderResourceStepCard = (step: IResourceStepViewModel, index: number) => {
     const isWebpage = step.resourceKind === 'webpage';
     const isPrompt = step.resourceKind === 'prompt';
-    const resourceData = !isWebpage
-      ? (step.node.data as IWorkflowResourceNodeData)
-      : undefined;
-    const webpageData = isWebpage
-      ? (step.node.data as IWorkflowWebpageNodeData)
-      : undefined;
+    const resourceData = !isWebpage ? (step.node.data as IWorkflowResourceNodeData) : undefined;
+    const webpageData = isWebpage ? (step.node.data as IWorkflowWebpageNodeData) : undefined;
     const skill =
       step.resourceKind === 'skill' && resourceData
         ? skills.find((s) => s.id === resourceData.resourceId)
         : undefined;
     const prompt =
-      isPrompt && resourceData
-        ? prompts.find((p) => p.id === resourceData.resourceId)
-        : undefined;
+      isPrompt && resourceData ? prompts.find((p) => p.id === resourceData.resourceId) : undefined;
     const tagColor = WORKFLOW_RESOURCE_TAG_COLORS[step.resourceKind];
     const displayTitle = isWebpage
       ? webpageData?.nodeName?.trim() || webpageData?.label?.trim() || step.nodeName || '网页'

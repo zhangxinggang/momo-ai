@@ -73,9 +73,7 @@ export function SkillChatSelector({ skills, selectedSkillId, onSelect }: IProps)
       onEnabledChange={handleEnabledChange}
       enableTitle='是否启用'
       enableHint={
-        selectedSkill
-          ? `当前：${selectedSkill.name}`
-          : '启用后选择技能，将按该技能指令执行对话'
+        selectedSkill ? `当前：${selectedSkill.name}` : '启用后选择技能，将按该技能指令执行对话'
       }>
       <div className={styles['skill-picker']}>
         <input

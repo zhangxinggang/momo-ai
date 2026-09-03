@@ -1,5 +1,6 @@
 import type { IScannedSkill } from '@/types/modules';
-import { normalizeSkillTag } from '@renderer/services/skill/modal-utils';
+import { collectAllSkillTags, normalizeSkillTagList } from '@renderer/services/skill/modal-utils';
+import { useSkillStore } from '@renderer/store';
 import { Button, Checkbox, Input, Modal } from 'antd';
 import {
   CheckCircle2Icon,
@@ -59,11 +60,12 @@ export function SkillScanPreview({
   onClose,
 }: IProps) {
   const isDefaultImport = variant === 'default-import';
+  const existingSkills = useSkillStore((state) => state.skills);
+  const existingTags = useMemo(() => collectAllSkillTags(existingSkills), [existingSkills]);
   const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [showOptionalTags, setShowOptionalTags] = useState(false);
   const [tagDrafts, setTagDrafts] = useState<Record<string, string[]>>({});
-  const [tagInputs, setTagInputs] = useState<Record<string, string>>({});
   const [isImporting, setIsImporting] = useState(false);
 
   // Custom path state
@@ -194,22 +196,10 @@ export function SkillScanPreview({
     setCustomPaths((prev) => prev.filter((x) => x !== p));
   };
 
-  const handleAddTag = (localPath: string) => {
-    const nextTag = normalizeSkillTag(tagInputs[localPath] || '');
-    if (!nextTag) return;
-
-    setTagDrafts((prev) => {
-      const existing = prev[localPath] || [];
-      if (existing.includes(nextTag)) return prev;
-      return { ...prev, [localPath]: [...existing, nextTag] };
-    });
-    setTagInputs((prev) => ({ ...prev, [localPath]: '' }));
-  };
-
-  const handleRemoveTag = (localPath: string, tag: string) => {
+  const handleTagDraftChange = (localPath: string, tags: string[]) => {
     setTagDrafts((prev) => ({
       ...prev,
-      [localPath]: (prev[localPath] || []).filter((item) => item !== tag),
+      [localPath]: normalizeSkillTagList(tags),
     }));
   };
 
@@ -520,23 +510,14 @@ export function SkillScanPreview({
                               isSelected &&
                               showOptionalTags && (
                                 <SkillTagEditor
-                                  variant='compact'
                                   bordered
-                                  label='导入标签（可选）'
-                                  tags={tagDrafts[skill.localPath] || []}
-                                  tagInput={tagInputs[skill.localPath] || ''}
-                                  onTagInputChange={(value) =>
-                                    setTagInputs((prev) => ({
-                                      ...prev,
-                                      [skill.localPath]: value,
-                                    }))
-                                  }
-                                  onAddTag={() => handleAddTag(skill.localPath)}
-                                  onRemoveTag={(tag) => handleRemoveTag(skill.localPath, tag)}
-                                  onInputClick={(event) => event.stopPropagation()}
-                                  onAddButtonClick={(event) => event.stopPropagation()}
-                                  onRemoveTagButtonClick={(event) => event.stopPropagation()}
                                   className='mt-4'
+                                  compact
+                                  label='导入标签（可选）'
+                                  onChange={(tags) => handleTagDraftChange(skill.localPath, tags)}
+                                  onClick={(event) => event.stopPropagation()}
+                                  options={existingTags}
+                                  value={tagDrafts[skill.localPath] || []}
                                 />
                               )}
 

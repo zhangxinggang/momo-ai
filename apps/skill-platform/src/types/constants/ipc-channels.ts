@@ -86,6 +86,17 @@ export const IPC_CHANNELS = {
   NOTE_COPY_FILE: 'note:copyFile',
   NOTE_BOOTSTRAP_CURSOR_RULES: 'note:bootstrapCursorRules',
 
+  // Custom tools（自定义工具）
+  TOOL_LIST_TREE: 'tool:listTree',
+  TOOL_CREATE_FOLDER: 'tool:createFolder',
+  TOOL_CREATE_FILE: 'tool:createFile',
+  TOOL_READ_FILE: 'tool:readFile',
+  TOOL_WRITE_FILE: 'tool:writeFile',
+  TOOL_RENAME: 'tool:rename',
+  TOOL_DELETE: 'tool:delete',
+  TOOL_MOVE: 'tool:move',
+  TOOL_READ_SNAPEDIT_HTML: 'tool:readSnapEditHtml',
+
   // Knowledge base（知识库）
   KB_LIST_COLLECTIONS: 'kb:listCollections',
   KB_CREATE_COLLECTION: 'kb:createCollection',
@@ -246,13 +257,8 @@ export const IPC_CHANNELS = {
   // 爬虫（模型排行）
   SCRAPE_MODEL_RANKING: 'scrape:modelRanking',
 
-  // AI 对话 CLI Agent
-  AICHAT_CLI_AGENT_CALL: 'aichat:cliAgentCall',
-  AICHAT_CLI_AGENT_DETECT: 'aichat:cliAgentDetect',
+  // AI 对话附件解析
   AICHAT_PARSE_ATTACHMENT: 'aichat:parseAttachment',
-
-  // Claude Code 斜杠命令（见 src/claude-code/）
-  CLAUDE_CODE_LIST_SLASH: 'claudeCode:listSlashCommands',
 
   // Skill 远程 POST 请求
   SKILL_FETCH_REMOTE_POST: 'skill:fetchRemotePost',
@@ -269,6 +275,12 @@ export const IPC_CHANNELS = {
   RULES_ADD_PROJECT: 'rules:addProject',
   RULES_REMOVE_PROJECT: 'rules:removeProject',
   RULES_IMPORT_RECORDS: 'rules:importRecords',
+
+  // Chat 项目 Agent 应用
+  AGENT_APP_DETECT: 'agentApp:detect',
+  AGENT_APP_RESOLVE_CONTEXT: 'agentApp:resolveContext',
+  AGENT_APP_LIST_SLASH: 'agentApp:listSlash',
+  AGENT_APP_PREPARE_SUBMIT: 'agentApp:prepareSubmit',
 } as const;
 
 export type IPCChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

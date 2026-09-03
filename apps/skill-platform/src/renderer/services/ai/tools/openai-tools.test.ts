@@ -4,14 +4,17 @@ import { aggregateToolCallDeltas, mcpToolsToOpenAITools } from './openai-tools';
 
 describe('aggregateToolCallDeltas', () => {
   it('两段 delta 拼出完整 arguments', () => {
-    const first = aggregateToolCallDeltas([], [
-      {
-        index: 0,
-        id: 'call_1',
-        type: 'function',
-        function: { name: 'fs__read', arguments: '{"path":' },
-      },
-    ]);
+    const first = aggregateToolCallDeltas(
+      [],
+      [
+        {
+          index: 0,
+          id: 'call_1',
+          type: 'function',
+          function: { name: 'fs__read', arguments: '{"path":' },
+        },
+      ],
+    );
     const second = aggregateToolCallDeltas(first, [
       {
         index: 0,

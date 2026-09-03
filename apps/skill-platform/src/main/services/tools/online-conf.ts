@@ -26,10 +26,7 @@ function getDefaultOnlineConf(): DOnlineConf {
 }
 
 /** 拉取失败时回退到本地默认配置 */
-function buildFallbackResult(
-  localVersion: string,
-  onlineConfUrl: string,
-): DOnlineConfFetchResult {
+function buildFallbackResult(localVersion: string, onlineConfUrl: string): DOnlineConfFetchResult {
   return {
     config: getDefaultOnlineConf(),
     localVersion,

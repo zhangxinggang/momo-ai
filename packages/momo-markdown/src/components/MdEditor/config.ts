@@ -246,6 +246,7 @@ export const allToolbar: Array<TToolbarNames> = [
   'fullscreen',
   'previewStyle',
   'preview',
+  'richtext',
   'previewOnly',
   'htmlPreview',
   'catalog',
@@ -286,6 +287,7 @@ export const staticTextDefault: IStaticTextDefault = {
       htmlPreview: 'html代码预览',
       catalog: '目录',
       github: '源码地址',
+      richtext: '富文本',
     },
     titleItem: {
       h1: '一级标题',
@@ -374,6 +376,7 @@ export const staticTextDefault: IStaticTextDefault = {
       htmlPreview: 'html preview',
       catalog: 'catalog',
       github: 'source code',
+      richtext: 'rich text',
     },
     titleItem: {
       h1: 'Lv1 Heading',
@@ -483,6 +486,7 @@ export const defaultProps = {
   catalogLayout: 'fixed',
   floatingToolbars: [],
   customIcon: {},
+  editorMode: 'richtext',
 };
 
 export const globalConfig: IGlobalConfig = {

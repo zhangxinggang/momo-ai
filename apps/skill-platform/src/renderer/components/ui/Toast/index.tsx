@@ -7,8 +7,8 @@ import { useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ToastContext, type IToastItem, type TToastType } from './context';
 
-export type { TToastType } from './context';
 export { useToast } from './context';
+export type { TToastType } from './context';
 
 // Toast Provider
 export function ToastProvider({ children }: { children: React.ReactNode }) {

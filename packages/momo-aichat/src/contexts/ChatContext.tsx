@@ -9,8 +9,8 @@ const ChatContext = createContext<IChatContext | undefined>(undefined);
 
 export interface IProps {
   children: ReactNode;
-  /** 可选：注入 API 与同步能力 */
-  services?: Partial<IAiChatServices>;
+  /** 宿主必须显式注入模型、上传、存储等能力。 */
+  services: IAiChatServices;
   /** 弹窗/子模块打开时固定选中的会话 id（不恢复侧栏 CURRENT_SESSION_ID） */
   bootstrapSessionId?: string | null;
   /** bootstrap 会话标题；空会话不落库，首条消息时使用 */

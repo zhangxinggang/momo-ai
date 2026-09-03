@@ -1,0 +1,52 @@
+.tag-select {
+  width: 100%;
+}
+
+.tag-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tag-select-option-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+}
+
+.tag-select-option-delete {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  color: hsl(var(--muted-foreground) / 0.72);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    color: hsl(var(--destructive));
+    background: hsl(var(--destructive) / 0.12);
+  }
+
+  &:focus-visible {
+    outline: 2px solid hsl(var(--destructive) / 0.35);
+    outline-offset: 1px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tag-select-option-delete {
+    transition: none;
+  }
+}

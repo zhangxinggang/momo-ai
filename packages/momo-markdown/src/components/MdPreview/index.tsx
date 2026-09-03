@@ -87,6 +87,8 @@ const MdPreview = forwardRef((props: IMdPreviewProps, ref: ForwardedRef<unknown>
       codeTheme,
       defToolbars: [],
       floatingToolbars: [],
+      editorMode: 'markdown',
+      updateEditorMode: () => {},
     };
   }, [
     codeTheme,

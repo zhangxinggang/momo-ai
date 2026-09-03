@@ -4,7 +4,16 @@
 import { MdPreview, type IMdPreviewProps } from '@momo/markdown';
 import { App } from 'antd';
 import classNames from 'classnames';
-import { memo, useCallback, useEffect, useId, useMemo, useRef, type ComponentType, type MouseEvent } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  type ComponentType,
+  type MouseEvent,
+} from 'react';
 import { useAiChatConfig } from '../../contexts/AiChatConfigContext';
 import {
   enhanceExternalUrlElements,
@@ -226,9 +235,7 @@ function MarkdownRenderer({
               </span>
             );
           }
-          return (
-            <span key={`${keyPrefix}-text-${urlIndex}-${pathIndex}`}>{pathPart.value}</span>
-          );
+          return <span key={`${keyPrefix}-text-${urlIndex}-${pathIndex}`}>{pathPart.value}</span>;
         });
       });
     },

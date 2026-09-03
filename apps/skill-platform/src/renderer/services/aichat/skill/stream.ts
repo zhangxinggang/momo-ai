@@ -67,7 +67,9 @@ export function createSkillLangGraphStream(
 
     try {
       const { ragSystemPrompt, citations } = await buildRagContext(messages, streamOptions);
-      const workspaceContext = await getEnabledWorkspaceContext(userInput);
+      const workspaceContext = await getEnabledWorkspaceContext(
+        streamOptions?.raw_user_query?.trim() || userInput,
+      );
       const knowledgeContext = [ragSystemPrompt, workspaceContext]
         .filter((block) => block.trim())
         .join('\n\n');

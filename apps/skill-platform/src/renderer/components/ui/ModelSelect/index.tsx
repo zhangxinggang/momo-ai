@@ -26,7 +26,7 @@ interface IProps {
   modelType?: 'chat' | 'image' | 'both';
   /** 额外树形条目 */
   extraTreeItems?: IModelTreeItem[];
-  /** 两级分组（如 CLI Agent -> Claude/Codex） */
+  /** 两级分组（分组名 -> 模型列表） */
   simpleGroups?: IModelTreeSimpleGroup[];
   placeholder?: string;
   disabled?: boolean;

@@ -1,12 +1,13 @@
 ﻿import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
 import type { Database } from 'better-sqlite3';
 import { ipcMain } from 'electron';
-import { registerClaudeCodeIPC } from '../../claude-code/main/register';
 import { FolderDB, PromptDB, SkillDB, WorkflowDB } from '../database';
 import { WorkflowBusinessController } from '../database/controller/workflow-business';
 import { WorkflowFolderController } from '../database/controller/workflow-folder';
 import { registerAIIPC } from './ai';
+import { registerAgentAppIPC } from './agent-app';
 import { registerAichatIPC } from './aichat-handlers';
+import { registerCustomToolIPC } from './custom-tool';
 import { registerDataIPC } from './data';
 import { registerDialogIPC } from './dialog';
 import { registerFolderIPC } from './folder';
@@ -143,6 +144,8 @@ export function registerBootstrapIPC(): void {
   registerWindowChromeIPC();
   // 工作区检索不依赖数据库，提前注册避免窗口加载后调用 listTree/grep 无 handler
   registerWorkspaceIPC();
+  // Agent 应用探测不依赖数据库
+  registerAgentAppIPC();
   // MCP 不依赖数据库
   registerMcpIPC();
   void startMcpHub().catch((error) => {
@@ -176,11 +179,11 @@ export function registerAllIPC(db: Database): void {
   registerImageIPC();
   registerAIIPC();
   registerAichatIPC();
-  registerClaudeCodeIPC();
   registerKbIPC(db);
   registerScraperIPC();
   registerOnlineConfIPC();
   registerSystemIPC();
   registerRulesIPC();
   registerNoteIPC();
+  registerCustomToolIPC();
 }

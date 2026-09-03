@@ -2,10 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { IPrompt, ISkill, IWorkflowTemplatePackagePayload } from '@/types/modules';
 
-import {
-  buildImportPreviewFromPayload,
-  commitWorkflowTemplateImport,
-} from './import-template';
+import { buildImportPreviewFromPayload, commitWorkflowTemplateImport } from './import-template';
 
 function makePrompt(id: string, title: string): IPrompt {
   return {

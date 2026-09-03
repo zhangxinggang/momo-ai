@@ -19,12 +19,12 @@ import { ChatFeatureDropdown } from '../ChatFeatureDropdown';
 import { ChatMentionTextarea, type IChatMentionTextareaRef } from '../ChatMentionTextarea';
 import { NoteReferencePopover } from '../NoteReferencePopover';
 import { SlashCommandPopover } from '../SlashCommandPopover';
-
 export interface IChatInputPanelRef {
   focus: () => void;
 }
 
 import type { IChatAttachmentMeta } from '../../types/chat';
+import type { ISlashInvocation } from '../../types/slash-command';
 
 interface IProps {
   value: string;
@@ -42,6 +42,7 @@ interface IProps {
   progressMap?: Record<string, number>;
   onAttachFiles?: (files: File[]) => void;
   onRemoveAttachment?: (id: string) => void;
+  onSlashInvocationChange?: (invocation: ISlashInvocation | undefined) => void;
 }
 
 const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
@@ -62,10 +63,10 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       progressMap = {},
       onAttachFiles,
       onRemoveAttachment,
+      onSlashInvocationChange,
     },
     ref,
   ) => {
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const mentionTextareaRef = useRef<IChatMentionTextareaRef>(null);
     const notePopoverAnchorRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -80,6 +81,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       slashCommands,
       noteReferences,
       renderInputToolbarLeftExtra,
+      agentAppBanner,
     } = useAiChatConfig();
     const [collections, setCollections] = useState<{ id: number; name: string }[]>([]);
     const [loadingKb, setLoadingKb] = useState(false);
@@ -94,7 +96,12 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       setAgentMode,
     } = chatCtx;
 
-    const inputPlaceholder = noteReferences ? '输入消息，@ 引用笔记' : placeholder;
+    const inputPlaceholder = (() => {
+      if (slashCommands?.isActive(currentModel)) {
+        return noteReferences ? '输入消息，/ 命令，@ 引用笔记' : '输入消息，或 / 查看命令...';
+      }
+      return noteReferences ? '输入消息，@ 引用笔记' : placeholder;
+    })();
 
     const flatModelIds = useMemo(() => {
       if (chatModelOptionGroups.length > 0) {
@@ -148,84 +155,36 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       return () => window.removeEventListener('kb:collections-updated', onReload);
     }, [listKbCollections]);
 
-    useEffect(() => {
-      if (kbEnabled && kbCollectionId === undefined && collections.length > 0) {
-        setKbCollectionId(collections[0].id);
-      }
-    }, [kbEnabled, kbCollectionId, collections, setKbCollectionId]);
-
     const handleKbEnabledChange = (enabled: boolean) => {
-      setKbEnabled(enabled);
-      if (enabled && kbCollectionId === undefined && collections.length > 0) {
-        setKbCollectionId(collections[0].id);
+      if (enabled && collections.length === 0) {
+        return;
       }
+      setKbEnabled(enabled);
     };
 
     useImperativeHandle(
       ref,
       () => ({
         focus: () => {
-          if (noteReferences) {
-            mentionTextareaRef.current?.focus();
-            return;
-          }
-          textareaRef.current?.focus();
+          mentionTextareaRef.current?.focus();
         },
       }),
-      [noteReferences],
+      [],
     );
-
-    const getActiveTextarea = () =>
-      noteReferences
-        ? (mentionTextareaRef.current?.getTextareaElement() ?? null)
-        : textareaRef.current;
-
-    const adjustTextareaHeight = () => {
-      const textarea = getActiveTextarea();
-      if (!textarea) {
-        return;
-      }
-      const currentHeight = textarea.style.height;
-      textarea.style.transition = 'none';
-      textarea.style.height = 'auto';
-      const scrollHeight = textarea.scrollHeight;
-      const maxHeight = 192;
-      const newHeight = Math.min(scrollHeight, maxHeight);
-      if (currentHeight) {
-        textarea.style.height = currentHeight;
-      }
-      setTimeout(() => {
-        textarea.style.transition = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-        textarea.style.height = `${newHeight}px`;
-      }, 0);
-    };
-
-    useEffect(() => {
-      const textarea = getActiveTextarea();
-      if (!textarea) {
-        return;
-      }
-      textarea.style.transition = 'none';
-      textarea.style.height = 'auto';
-      const scrollHeight = textarea.scrollHeight;
-      const maxHeight = 192;
-      textarea.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
-      requestAnimationFrame(() => {
-        textarea.style.transition = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-      });
-    }, [noteReferences]);
-
-    useEffect(() => {
-      adjustTextareaHeight();
-    }, [value, noteReferences]);
 
     const slash = useSlashCommandTrigger({
       value,
+      selectionStart,
       onChange,
+      onSelectionChange: (next) => {
+        setSelectionStart(next);
+        mentionTextareaRef.current?.setSelectionStart(next);
+      },
+      onInvocationChange: onSlashInvocationChange,
       slashCommands,
       currentModel,
       workspacePaths: workspace?.paths ?? [],
-      workspaceEnabled: workspace?.enabled ?? false,
+      workspaceEnabled: Boolean(workspace?.enabled),
     });
 
     const noteRef = useNoteReferenceTrigger({
@@ -240,14 +199,17 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
     });
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) {
+        return;
+      }
       if (loading && e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         return;
       }
-      if (noteRef.handleKeyDown(e)) {
+      if (slash.handleKeyDown(e)) {
         return;
       }
-      if (slash.handleKeyDown(e)) {
+      if (noteRef.handleKeyDown(e)) {
         return;
       }
       onKeyDown?.(e);
@@ -284,8 +246,13 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
         ) : (
           <Radio.Group
             className='flex w-full flex-col gap-1'
-            value={kbCollectionId}
-            onChange={(e) => setKbCollectionId(e.target.value as number)}>
+            value={kbCollectionId ?? 'auto'}
+            onChange={(e) =>
+              setKbCollectionId(e.target.value === 'auto' ? undefined : (e.target.value as number))
+            }>
+            <Radio value='auto' className='text-sm'>
+              自动选择
+            </Radio>
             {collections.map((c) => (
               <Radio key={c.id} value={c.id} className='text-sm'>
                 {c.name}
@@ -368,6 +335,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
             selectedIndex={slash.selectedIndex}
             loading={slash.loading}
             warning={slash.warning}
+            title={agentAppBanner?.name ? `${agentAppBanner.name} 命令` : '斜杠命令'}
             onSelect={slash.handleSelect}
             onHover={slash.setSelectedIndex}
           />
@@ -382,40 +350,22 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
             onToggleFolder={noteRef.toggleFolder}
             onSelectFile={noteRef.handleSelectFile}
           />
-          {noteReferences ? (
-            <ChatMentionTextarea
-              ref={mentionTextareaRef}
-              value={value}
-              onChange={onChange}
-              onKeyDown={handleKeyDown}
-              onSelectionChange={setSelectionStart}
-              onMentionClick={noteRef.openReplaceMenu}
-              placeholder={inputPlaceholder}
-              disabled={disabled}
-              className='chat-input-textarea min-h-[24px] w-full resize-none border-none bg-transparent text-base placeholder-gray-400 outline-none focus-visible:ring-0 dark:placeholder-gray-500'
-              style={{
-                fontSize: '16px',
-                lineHeight: '24px',
-                fontFamily: 'inherit',
-                transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              }}
-            />
-          ) : (
-            <textarea
-              ref={textareaRef}
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              className='chat-input-textarea min-h-[24px] w-full resize-none border-none bg-transparent text-base placeholder-gray-400 outline-none focus-visible:ring-0 dark:placeholder-gray-500'
-              style={{
-                fontSize: '16px',
-                lineHeight: '24px',
-                fontFamily: 'inherit',
-                transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              }}
-            />
-          )}
+          <ChatMentionTextarea
+            ref={mentionTextareaRef}
+            value={value}
+            onChange={onChange}
+            onKeyDown={handleKeyDown}
+            onSelectionChange={setSelectionStart}
+            onMentionClick={noteReferences ? noteRef.openReplaceMenu : undefined}
+            placeholder={inputPlaceholder}
+            disabled={disabled}
+            className='chat-input-textarea max-h-48 min-h-[24px] w-full resize-none overflow-y-auto border-none bg-transparent text-base placeholder-gray-400 outline-none focus-visible:ring-0 dark:placeholder-gray-500'
+            style={{
+              fontSize: '16px',
+              lineHeight: '24px',
+              fontFamily: 'inherit',
+            }}
+          />
           <input
             ref={fileInputRef}
             type='file'
@@ -455,7 +405,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
             ) : null}
             {listKbCollections ? (
               <ChatFeatureDropdown
-                label='RAG'
+                label='知识库'
                 enabled={kbEnabled}
                 onEnabledChange={handleKbEnabledChange}
                 enableTitle='是否启用'

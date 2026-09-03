@@ -44,3 +44,10 @@ export declare const zoomMermaid: (
     customIcon: ICustomIcon;
   },
 ) => () => void;
+/** 切换图表全屏预览 */
+export declare const toggleDiagramFullscreen: (
+  container: HTMLElement,
+  options: { customIcon: ICustomIcon },
+) => void;
+/** 将图表导出为 PNG 并下载 */
+export declare const downloadDiagramAsPng: (container: HTMLElement) => Promise<void>;

@@ -92,10 +92,7 @@ export function collectWorkflowResourceIds(graphJson: string): {
 }
 
 /** 按 idMap 重写节点 resourceId */
-export function remapWorkflowResourceIds(
-  graphJson: string,
-  idMap: Map<string, string>,
-): string {
+export function remapWorkflowResourceIds(graphJson: string, idMap: Map<string, string>): string {
   const graph = parseGraphJson(graphJson);
   const nodes = Array.isArray(graph.nodes) ? graph.nodes : [];
 

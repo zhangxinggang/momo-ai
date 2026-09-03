@@ -11,6 +11,8 @@ const ToolbarHtmlPreview = () => {
     updateSetting,
     showToolbarName,
     disabled,
+    editorMode,
+    updateEditorMode,
   } = useContext(EditorContext);
 
   return (
@@ -24,7 +26,11 @@ const ToolbarHtmlPreview = () => {
       aria-label={ult.toolbarTips?.htmlPreview}
       disabled={disabled}
       onClick={() => {
-        updateSetting('htmlPreview');
+        // 富文本模式下点击 html 预览：先切回 Markdown 模式再开启 html 预览
+        if (editorMode === 'richtext') {
+          updateEditorMode('markdown');
+        }
+        updateSetting('htmlPreview', true);
       }}
       type='button'>
       <Icon name='preview-html' />

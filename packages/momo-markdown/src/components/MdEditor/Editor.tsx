@@ -145,10 +145,11 @@ const Editor = forwardRef((props: IEditorProps, ref: ForwardedRef<unknown>) => {
   // 目录状态
   const catalogVisible = useCatalog(props, staticProps);
   // 部分配置重构
-  const [highlight, usedLanguageText, setting, updateSetting] = useConfig({
-    ...props,
-    previewTheme: state.previewTheme,
-  });
+  const [highlight, usedLanguageText, setting, updateSetting, editorMode, updateEditorMode] =
+    useConfig({
+      ...props,
+      previewTheme: state.previewTheme,
+    });
 
   useExpose(ref, staticProps, catalogVisible, setting, updateSetting, codeRef);
 
@@ -176,6 +177,8 @@ const Editor = forwardRef((props: IEditorProps, ref: ForwardedRef<unknown>) => {
       codeTheme,
       defToolbars,
       floatingToolbars,
+      editorMode,
+      updateEditorMode,
     };
   }, [
     catalogVisible,
@@ -183,6 +186,7 @@ const Editor = forwardRef((props: IEditorProps, ref: ForwardedRef<unknown>) => {
     customIcon,
     defToolbars,
     disabled,
+    editorMode,
     floatingToolbars,
     highlight,
     language,
@@ -197,6 +201,7 @@ const Editor = forwardRef((props: IEditorProps, ref: ForwardedRef<unknown>) => {
     tabWidth,
     tableShape,
     theme,
+    updateEditorMode,
     updatePreviewTheme,
     updateSetting,
     usedLanguageText,

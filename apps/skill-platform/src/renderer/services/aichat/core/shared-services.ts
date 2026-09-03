@@ -1,7 +1,5 @@
 import type { IAiChatServices, ILocalPathConfig, TCallAiChatStream } from '@momo/aichat';
-import { CLI_AGENT_OPTIONS, createDefaultAiChatServices } from '@momo/aichat';
 
-import { createClaudeSlashCommandsConfig } from '@/claude-code/renderer/claude-slash-provider';
 import {
   getImageScenarioModels,
   getModelsByType,
@@ -14,62 +12,19 @@ import type { IAIModelConfig } from '@renderer/types/settings';
 import { uploadChatAttachmentFiles, validateChatAttachmentFiles } from '../chat-attachment-upload';
 import { MAIN_AI_CHAT_STORAGE_PREFIX } from '../chat-history-bridge';
 import { renderChatModelSelect } from '../chat-model-select';
-import { createCliAgentCaller } from '../cli-agent-caller';
 import { createNoteReferencesConfig } from '../note-reference-config';
 import { SUPERPOWER_PROMPTS } from '../superpower-prompts';
-import { kbChunkCache } from './rag-context';
+import { createWebChatSourceStore } from './web-chat-source-store';
 import { createLocalChatStorage } from './web-chat-storage';
 
-const CLI_AGENT_GROUP_LABEL = 'CLI Agent';
-
-/** 在模型分组最前方追加 CLI Agent（已存在则跳过） */
-export function mergeChatModelOptionGroupsWithCli(
-  groups: IAiChatServices['chatModelOptionGroups'],
-  chatModels: Array<{ id: string; label: string }>,
-): NonNullable<IAiChatServices['chatModelOptionGroups']> {
-  const cliOptions = CLI_AGENT_OPTIONS.map((item) => ({ id: item.id, label: item.label }));
-
-  const baseGroups: NonNullable<IAiChatServices['chatModelOptionGroups']> =
-    groups && groups.length > 0
-      ? [...groups]
-      : chatModels.length > 0
-        ? [
-            {
-              label: '对话模型',
-              options: chatModels.map((model) => ({ id: model.id, label: model.label })),
-            },
-          ]
-        : [];
-
-  const hasCliGroup = baseGroups.some(
-    (group) =>
-      group.label === CLI_AGENT_GROUP_LABEL ||
-      group.options.some((option) => option.id.startsWith('cli:')),
-  );
-
-  if (hasCliGroup) {
-    return baseGroups;
-  }
-
-  return [{ label: CLI_AGENT_GROUP_LABEL, options: cliOptions }, ...baseGroups];
-}
-
-/** CLI Agent 与 Superpowers 默认注入（桌面端含 callCliAgent） */
-export function buildCliSuperpowerDefaults(options: {
+/** Superpowers 默认注入 */
+export function buildSuperpowerDefaults(options: {
   enableSuperpower?: boolean;
-  enableCliAgent?: boolean;
   overrides?: Partial<IAiChatServices>;
 }): Partial<IAiChatServices> {
   const defaults: Partial<IAiChatServices> = {};
   if (options.enableSuperpower !== false) {
     defaults.superpowerPrompts = SUPERPOWER_PROMPTS;
-  }
-  if (options.enableCliAgent !== false) {
-    defaults.callCliAgent = createCliAgentCaller();
-    const slashCommands = createClaudeSlashCommandsConfig();
-    if (slashCommands) {
-      defaults.slashCommands = slashCommands;
-    }
   }
   return { ...defaults, ...options.overrides };
 }
@@ -94,8 +49,6 @@ export interface IBuildSharedAiChatServicesOptions {
   onOpenExternalUrl?: IAiChatServices['onOpenExternalUrl'];
   /** 是否启用 Superpowers 两阶段（默认 true；提示词测试等固定模板场景设为 false） */
   enableSuperpower?: boolean;
-  /** 是否注入 CLI Agent（默认 true） */
-  enableCliAgent?: boolean;
   /** 额外覆盖项（如 getIsAuthenticated、chatSync） */
   overrides?: Partial<IAiChatServices>;
   /** 覆盖默认模型（如工作流节点执行模型） */
@@ -111,21 +64,29 @@ export function buildSharedAiChatServices(
     label: model.name?.trim() || model.model,
   }));
 
-  const defaultModelId = CLI_AGENT_OPTIONS[0]?.id ?? chatModels[0]?.id;
+  const defaultModelId = chatModels[0]?.id;
 
   const enableAttachments = options.enableAttachments !== false;
   const noAttachmentsMessage = options.noAttachmentsMessage ?? '当前对话暂不支持附件上传';
-  const chatModelOptionGroups = mergeChatModelOptionGroupsWithCli(
-    options.chatModelOptionGroups,
-    chatModels,
-  );
-  const cliSuperpowerOverrides = buildCliSuperpowerDefaults({
+  const chatModelOptionGroups =
+    options.chatModelOptionGroups && options.chatModelOptionGroups.length > 0
+      ? options.chatModelOptionGroups
+      : chatModels.length > 0
+        ? [
+            {
+              label: '对话模型',
+              options: chatModels.map((model) => ({ id: model.id, label: model.label })),
+            },
+          ]
+        : undefined;
+  const superpowerOverrides = buildSuperpowerDefaults({
     enableSuperpower: options.enableSuperpower,
-    enableCliAgent: options.enableCliAgent,
     overrides: options.overrides,
   });
+  const storageKeyPrefix = options.storageKeyPrefix ?? MAIN_AI_CHAT_STORAGE_PREFIX;
+  const sourceStore = createWebChatSourceStore(storageKeyPrefix);
 
-  return createDefaultAiChatServices({
+  return {
     callAIChatStream: options.callAIChatStream,
     uploadFiles: enableAttachments
       ? uploadChatAttachmentFiles
@@ -143,18 +104,27 @@ export function buildSharedAiChatServices(
       const { kbListCollections } = await import('@renderer/services/kb/api');
       return kbListCollections();
     },
-    getKbChunk: async (chunkId) => {
-      const cached = kbChunkCache.get(chunkId);
-      if (cached) {
-        return cached;
+    getKbChunk: async (locator) => {
+      const { kbListChunks } = await import('@renderer/services/kb/api');
+      const page = await kbListChunks(locator.docId, 1, 10_000);
+      const chunk = page.items.find((item) => item.chunkId === locator.chunkId);
+      if (!chunk) {
+        throw new Error('引用内容已不存在');
       }
-      throw new Error('未找到引用内容');
+      return {
+        docName: locator.title || 'doc-' + String(locator.docId),
+        idx: chunk.idx,
+        tokens: Math.ceil(chunk.content.length / 4),
+        content: chunk.content,
+      };
     },
     chatSync: null,
     getIsAuthenticated: () => false,
     defaultModel: options.defaultModel ?? (defaultModelId || undefined),
-    storageKeyPrefix: options.storageKeyPrefix ?? MAIN_AI_CHAT_STORAGE_PREFIX,
+    storageKeyPrefix,
     chatStorage: createLocalChatStorage(),
+    saveChatSources: sourceStore.save,
+    loadChatSources: sourceStore.load,
     chatModels,
     chatModelOptionGroups,
     renderModelSelect: (props) => renderChatModelSelect(options.aiModels, props),
@@ -177,8 +147,8 @@ export function buildSharedAiChatServices(
       return '描述你想生成的图片内容';
     },
     noteReferences: createNoteReferencesConfig(),
-    ...cliSuperpowerOverrides,
-  });
+    ...superpowerOverrides,
+  };
 }
 
 /** 根据模型 id 解析 IAIConfig，供各场景 stream 复用 */

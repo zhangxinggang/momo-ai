@@ -18,11 +18,23 @@ interface IChatProjectState {
   recentFolderPaths: string[];
   /** 当前会话所属项目的文件夹，供上下文注入（不持久化） */
   activeFolderPaths: string[];
+  /** 当前会话所属项目的 Agent 应用（不持久化） */
+  activeAgentAppId: string | null;
   ensureUncategorizedProject: () => string;
-  createProject: (name: string, folderPaths: string[]) => TProjectSaveResult;
-  updateProject: (id: string, name: string, folderPaths: string[]) => TProjectUpdateResult;
+  createProject: (
+    name: string,
+    folderPaths: string[],
+    agentAppId?: string | null,
+  ) => TProjectSaveResult;
+  updateProject: (
+    id: string,
+    name: string,
+    folderPaths: string[],
+    agentAppId?: string | null,
+  ) => TProjectUpdateResult;
   removeProject: (id: string) => void;
   setActiveFolderPaths: (paths: string[]) => void;
+  setActiveAgentAppId: (agentAppId: string | null) => void;
   pushRecentFolders: (paths: string[]) => void;
   removeRecentFolder: (path: string) => void;
   getVisibleRecentFolders: () => string[];
@@ -30,6 +42,14 @@ interface IChatProjectState {
 
 function createProjectId(): string {
   return `chat-project-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function normalizeAgentAppId(agentAppId?: string | null): string | null {
+  if (typeof agentAppId !== 'string') {
+    return null;
+  }
+  const trimmed = agentAppId.trim();
+  return trimmed || null;
 }
 
 function findConflict(
@@ -45,12 +65,33 @@ function findConflict(
   );
 }
 
+function migrateProject(raw: unknown): IChatProject | null {
+  if (!raw || typeof raw !== 'object') {
+    return null;
+  }
+  const item = raw as Partial<IChatProject>;
+  if (typeof item.id !== 'string' || typeof item.name !== 'string') {
+    return null;
+  }
+  return {
+    id: item.id,
+    name: item.name,
+    folderPaths: Array.isArray(item.folderPaths)
+      ? item.folderPaths.filter((path): path is string => typeof path === 'string')
+      : [],
+    agentAppId: normalizeAgentAppId(item.agentAppId),
+    createdAt: typeof item.createdAt === 'number' ? item.createdAt : Date.now(),
+    updatedAt: typeof item.updatedAt === 'number' ? item.updatedAt : Date.now(),
+  };
+}
+
 export const useChatProjectStore = create<IChatProjectState>()(
   persist(
     (set, get) => ({
       projects: [],
       recentFolderPaths: [],
       activeFolderPaths: [],
+      activeAgentAppId: null,
       ensureUncategorizedProject: () => {
         const key = buildChatProjectUniqueKey(UNCATEGORIZED_NAME, []);
         const existing = get().projects.find(
@@ -64,6 +105,7 @@ export const useChatProjectStore = create<IChatProjectState>()(
           id: createProjectId(),
           name: UNCATEGORIZED_NAME,
           folderPaths: [],
+          agentAppId: null,
           createdAt: now,
           updatedAt: now,
         };
@@ -72,7 +114,7 @@ export const useChatProjectStore = create<IChatProjectState>()(
         }));
         return project.id;
       },
-      createProject: (name, folderPaths) => {
+      createProject: (name, folderPaths, agentAppId) => {
         const trimmedName = name.trim();
         if (!trimmedName) {
           return { ok: false, reason: 'empty-name' };
@@ -86,6 +128,7 @@ export const useChatProjectStore = create<IChatProjectState>()(
           id: createProjectId(),
           name: trimmedName,
           folderPaths: paths,
+          agentAppId: normalizeAgentAppId(agentAppId),
           createdAt: now,
           updatedAt: now,
         };
@@ -94,7 +137,7 @@ export const useChatProjectStore = create<IChatProjectState>()(
         }));
         return { ok: true, project };
       },
-      updateProject: (id, name, folderPaths) => {
+      updateProject: (id, name, folderPaths, agentAppId) => {
         const trimmedName = name.trim();
         if (!trimmedName) {
           return { ok: false, reason: 'empty-name' };
@@ -114,6 +157,7 @@ export const useChatProjectStore = create<IChatProjectState>()(
                   ...item,
                   name: trimmedName,
                   folderPaths: paths,
+                  agentAppId: normalizeAgentAppId(agentAppId),
                   updatedAt: Date.now(),
                 }
               : item,
@@ -128,6 +172,10 @@ export const useChatProjectStore = create<IChatProjectState>()(
       setActiveFolderPaths: (paths) =>
         set({
           activeFolderPaths: normalizeFolderPaths(paths),
+        }),
+      setActiveAgentAppId: (agentAppId) =>
+        set({
+          activeAgentAppId: normalizeAgentAppId(agentAppId),
         }),
       pushRecentFolders: (paths) =>
         set((state) => {
@@ -149,11 +197,29 @@ export const useChatProjectStore = create<IChatProjectState>()(
     }),
     {
       name: 'chat-project-storage',
-      version: 1,
+      version: 2,
       partialize: (state) => ({
         projects: state.projects,
         recentFolderPaths: state.recentFolderPaths,
       }),
+      migrate: (persisted, version) => {
+        const state = (persisted ?? {}) as {
+          projects?: unknown[];
+          recentFolderPaths?: string[];
+        };
+        const projects = Array.isArray(state.projects)
+          ? state.projects.map(migrateProject).filter((item): item is IChatProject => Boolean(item))
+          : [];
+        if (version < 2) {
+          // v1 → v2：补齐 agentAppId
+        }
+        return {
+          projects,
+          recentFolderPaths: Array.isArray(state.recentFolderPaths)
+            ? state.recentFolderPaths.filter((item): item is string => typeof item === 'string')
+            : [],
+        };
+      },
     },
   ),
 );

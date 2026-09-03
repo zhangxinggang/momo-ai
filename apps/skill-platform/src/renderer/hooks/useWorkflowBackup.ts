@@ -1,7 +1,4 @@
-import type {
-  IWorkflowBackupConflictItem,
-  IWorkflowBackupResourceDecision,
-} from '@/types/modules';
+import type { IWorkflowBackupConflictItem, IWorkflowBackupResourceDecision } from '@/types/modules';
 import { useToast } from '@renderer/components/ui/Toast';
 import {
   cancelWorkflowImport,

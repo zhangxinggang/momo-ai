@@ -81,9 +81,7 @@ export async function runMcpToolLoop(
   }
   const openAITools = mcpTools.length > 0 ? mcpToolsToOpenAITools(mcpTools) : undefined;
   // 有 tools 时强制非流式：多数网关在「stream + tool_calls + thinking」下会挂起不结束 SSE
-  const useStream = openAITools
-    ? false
-    : (input.stream ?? !!config.chatParams?.stream);
+  const useStream = openAITools ? false : (input.stream ?? !!config.chatParams?.stream);
 
   for (let round = 1; round <= maxRounds; round += 1) {
     let roundContent = '';

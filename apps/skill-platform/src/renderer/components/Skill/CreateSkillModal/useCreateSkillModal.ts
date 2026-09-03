@@ -12,7 +12,7 @@ import {
   scanLocalSkillsPreview,
 } from '@renderer/services/skill/api';
 import { loadGitHubSkillRepo } from '@renderer/services/skill/github-store';
-import { getExistingSkillTags } from '@renderer/services/skill/modal-utils';
+import { collectAllSkillTags } from '@renderer/services/skill/modal-utils';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
 import type { IAIModelConfig } from '@renderer/types/settings';
 import { useMdEditorImageUpload } from '@renderer/utils/markdown/editor-config';
@@ -72,7 +72,6 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
   const [iconEmoji, setIconEmoji] = useState<string | undefined>(undefined);
   const [iconBackground, setIconBackground] = useState<string | undefined>(undefined);
   const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
 
   const skillMdEditorRef = useRef<IExposeParam>(null);
   const { handleDrop, handleUploadImg } = useMdEditorImageUpload(skillMdEditorRef);
@@ -100,7 +99,7 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
     );
   }, [existingSkills]);
 
-  const existingTags = useMemo(() => getExistingSkillTags(existingSkills), [existingSkills]);
+  const existingTags = useMemo(() => collectAllSkillTags(existingSkills), [existingSkills]);
   const installedGitHubSources = useMemo(() => {
     return new Set(
       existingSkills
@@ -206,7 +205,6 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
     setIconEmoji(undefined);
     setIconBackground(undefined);
     setTags([]);
-    setTagInput('');
   }, []);
 
   const manualCreateRef = useRef<() => Promise<boolean>>(async () => false);
@@ -234,7 +232,6 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
     setIconEmoji(undefined);
     setIconBackground(undefined);
     setTags([]);
-    setTagInput('');
     setIsGenerating(false);
     setScanResults([]);
     setIsScanning(false);
@@ -422,20 +419,8 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
       iconEmoji,
       iconBackground,
       tags,
-      tagInput,
     }),
-    [
-      name,
-      description,
-      instructions,
-      version,
-      author,
-      iconUrl,
-      iconEmoji,
-      iconBackground,
-      tags,
-      tagInput,
-    ],
+    [name, description, instructions, version, author, iconUrl, iconEmoji, iconBackground, tags],
   );
 
   const handleImportSelectedGitHubSkills = async () => {
@@ -563,9 +548,6 @@ export function useCreateSkillModal({ isOpen, onClose }: IUseCreateSkillModalOpt
         break;
       case 'tags':
         setTags(value as string[]);
-        break;
-      case 'tagInput':
-        setTagInput(value as string);
         break;
       default:
         break;

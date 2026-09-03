@@ -57,8 +57,8 @@
   &-project-row {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 4px 6px 8px;
+    gap: 2px;
+    padding: 6px 4px 6px 0;
     border-radius: 8px;
     cursor: pointer;
 
@@ -69,6 +69,29 @@
         opacity: 1;
       }
     }
+  }
+
+  // 与 Ant Design Tree switcher（提示词/工作流/笔记）保持一致：CaretDown + 收缩时旋转 -90deg
+  &-project-switcher {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    color: hsl(var(--sidebar-foreground) / 0.45);
+    user-select: none;
+  }
+
+  &-project-switcher-icon {
+    font-size: 10px;
+    transition: transform 0.2s ease;
+  }
+
+  &-project-switcher--collapsed &-project-switcher-icon {
+    transform: rotate(-90deg);
   }
 
   &-project-name {
@@ -98,8 +121,9 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-left: 12px;
-    padding: 6px 4px 6px 10px;
+    // 与 ant-tree 子节点缩进一致（对齐根节点标题，避开 24px switcher）
+    margin-left: 24px;
+    padding: 6px 4px 6px 8px;
     border-radius: 8px;
     cursor: pointer;
     border: 1px solid transparent;

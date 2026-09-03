@@ -5,6 +5,7 @@ import {
   AI_CHAT_SESSIONS_UPDATED_EVENT,
   type IChatAttachmentMeta,
   type IChatMessage,
+  type IChatRequestSnapshot,
   type IChatSession,
   type INoteSnapshot,
   buildStorageKeys,
@@ -12,14 +13,13 @@ import {
   generateMessageId,
   generateSessionTitle,
 } from '../types/chat';
+import type { ISlashInvocation } from '../types/slash-command';
 import {
   ensureNoteSnapshots,
   expandNoteMentionsWithSnapshots,
   findNoteMentions,
   normalizeNotePath,
-  stripEchoedNoteBlocks,
 } from '../utils/note-mention';
-import { isCliModelId, parseCliAgent } from '../utils/model-id';
 import { useChatSync } from './useChatSync';
 
 export interface IUseChatSessionsOptions {
@@ -105,7 +105,6 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
   bootstrapSessionTitleRef.current = bootstrapSessionTitle;
   const {
     callAIChatStream,
-    callCliAgent,
     superpowerPrompts,
     workspace,
     getIsAuthenticated,
@@ -114,6 +113,8 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     chatStorage,
     isImageModel,
     noteReferences,
+    beforeSubmitPrompt,
+    loadChatSources,
   } = useAiChatConfig();
   const storageKeys = useMemo(() => buildStorageKeys(storageKeyPrefix), [storageKeyPrefix]);
   const isAuthenticated = getIsAuthenticated?.() ?? false;
@@ -179,8 +180,6 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
   // 获取当前活跃会话
   const currentSession = sessions.find((session) => session.id === currentSessionId) || null;
 
-  const isCliModel = isCliModelId(currentModel);
-
   // 获取指定会话的生成状态
   const isSessionGenerating = useCallback(
     (sessionId: string) => {
@@ -214,8 +213,9 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           }
 
           const loadingMessage = s.messages.find((m) => m.isLoading);
+          // 清除生成态不更新 updatedAt，避免切换历史时侧栏误重排
           if (!loadingMessage) {
-            return { ...s, isLoading: false, updatedAt: Date.now() };
+            return { ...s, isLoading: false };
           }
 
           const hasContent = Boolean(loadingMessage.content?.trim());
@@ -229,14 +229,12 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
                   msg.id === loadingMessage.id ? { ...msg, isLoading: false } : msg,
                 ),
                 isLoading: false,
-                updatedAt: Date.now(),
               };
             }
             return {
               ...s,
               messages: s.messages.filter((m) => m.id !== loadingMessage.id),
               isLoading: false,
-              updatedAt: Date.now(),
             };
           }
 
@@ -257,7 +255,6 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
                 : msg,
             ),
             isLoading: false,
-            updatedAt: Date.now(),
           };
         }),
       );
@@ -322,8 +319,9 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     (sessionId: string, updates: Partial<IChatSession>) => {
       setSessions((prev) => {
         const prevSessions = Array.isArray(prev) ? prev : [];
+        // 元数据变更不 bump updatedAt，避免纯切换导致侧栏重排
         const updated = prevSessions.map((session) =>
-          session.id === sessionId ? { ...session, ...updates, updatedAt: Date.now() } : session,
+          session.id === sessionId ? { ...session, ...updates } : session,
         );
         debouncedSave(updated, currentSessionId);
         return updated;
@@ -335,25 +333,13 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
   // 设置当前模型并持久化
   const handleSetCurrentModel = useCallback(
     (modelId: string) => {
-      const prevIsCli = isCliModelId(currentModel);
-      const nextIsCli = isCliModelId(modelId);
       setCurrentModel(modelId);
-
-      if (
-        currentSessionId &&
-        (prevIsCli !== nextIsCli || (nextIsCli && currentModel !== modelId))
-      ) {
-        updateSessionMeta(currentSessionId, {
-          cliAgentSessionId: undefined,
-          cliAgentType: undefined,
-        });
-      }
 
       if (!isAuthenticated) {
         debouncedSave(sessions, currentSessionId, modelId);
       }
     },
-    [currentModel, currentSessionId, isAuthenticated, sessions, debouncedSave, updateSessionMeta],
+    [currentSessionId, isAuthenticated, sessions, debouncedSave],
   );
 
   // 设置指定会话的加载状态
@@ -361,10 +347,9 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     (sessionId: string, loading: boolean) => {
       setSessions((prev) => {
         const prevSessions = Array.isArray(prev) ? prev : [];
+        // 加载态不 bump updatedAt
         const updated = prevSessions.map((session) =>
-          session.id === sessionId
-            ? { ...session, isLoading: loading, updatedAt: Date.now() }
-            : session,
+          session.id === sessionId ? { ...session, isLoading: loading } : session,
         );
         debouncedSave(updated, currentSessionId);
         return updated;
@@ -389,8 +374,8 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       const savedModel = activeChatStorage.getItem(activeStorageKeys.CURRENT_MODEL);
       const savedAdvanced = activeChatStorage.getItem(activeStorageKeys.ADVANCED_SETTINGS);
 
-      // 恢复模型选择
-      if (savedModel) {
+      // 恢复模型选择（忽略已下线的 CLI Agent 模型 id）
+      if (savedModel && !savedModel.startsWith('cli:')) {
         setCurrentModel((prev) => (prev === savedModel ? prev : savedModel));
       }
 
@@ -416,8 +401,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
             setTopP((prev) => (prev === nextTopP ? prev : nextTopP));
           }
           if (typeof parsed.systemPrompt === 'string') {
-            const nextSystemPrompt =
-              parsed.systemPrompt.trim() === '' ? '' : parsed.systemPrompt;
+            const nextSystemPrompt = parsed.systemPrompt.trim() === '' ? '' : parsed.systemPrompt;
             setSystemPrompt((prev) => (prev === nextSystemPrompt ? prev : nextSystemPrompt));
           }
           if (typeof parsed.kbEnabled === 'boolean') {
@@ -436,13 +420,22 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
 
       if (savedSessions) {
         const parsedSessions: IChatSession[] = JSON.parse(savedSessions).map(
-          (session: IChatSession) => ({
-            ...session,
-            isLoading: false,
-            messages: (session.messages ?? [])
-              .filter((m) => !(m.isLoading && !m.content?.trim() && !m.thinkingContent?.trim()))
-              .map((m) => (m.isLoading ? { ...m, isLoading: false } : m)),
-          }),
+          (
+            session: IChatSession & {
+              cliAgentSessionId?: string;
+              cliAgentType?: string;
+            },
+          ) => {
+            // 清除历史 CLI Agent 残留字段
+            const { cliAgentSessionId: _cliSid, cliAgentType: _cliType, ...rest } = session;
+            return {
+              ...rest,
+              isLoading: false,
+              messages: (rest.messages ?? [])
+                .filter((m) => !(m.isLoading && !m.content?.trim() && !m.thinkingContent?.trim()))
+                .map((m) => (m.isLoading ? { ...m, isLoading: false } : m)),
+            };
+          },
         );
         const pinnedSessionId = bootstrapSessionIdRef.current;
         const withBootstrap = mergeBootstrapSession(
@@ -594,9 +587,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       setSessions((prev) => {
         const list = Array.isArray(prev) ? prev : [];
         const updated = list.filter((session) => session.projectId !== targetId);
-        const currentRemoved = currentSessionId
-          ? removedIds.includes(currentSessionId)
-          : false;
+        const currentRemoved = currentSessionId ? removedIds.includes(currentSessionId) : false;
         const newCurrentId = currentRemoved
           ? updated.length > 0
             ? updated[0].id
@@ -667,10 +658,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       // bootstrap 会话可能尚未落库，仅在内存中创建并选中
       const pinnedId = bootstrapSessionIdRef.current;
       if (pinnedId && sessionId === pinnedId) {
-        const bootstrapSession = createBootstrapSession(
-          pinnedId,
-          bootstrapSessionTitleRef.current,
-        );
+        const bootstrapSession = createBootstrapSession(pinnedId, bootstrapSessionTitleRef.current);
         setSessions((prev) => {
           const prevSessions = Array.isArray(prev) ? prev : [];
           if (prevSessions.some((session) => session.id === pinnedId)) {
@@ -741,14 +729,14 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     [currentSessionId, debouncedSave, isAuthenticated, chatSync],
   );
 
-  // 更新会话标题
+  // 更新会话标题（自动标题不 bump updatedAt，避免切换历史时误重排）
   const updateSessionTitle = useCallback(
     (sessionId: string, title: string) => {
       setSessions((prev) => {
         // 确保 prev 是一个数组，防止 "prev is not iterable" 错误
         const prevSessions = Array.isArray(prev) ? prev : [];
         const updated = prevSessions.map((session) =>
-          session.id === sessionId ? { ...session, title, updatedAt: Date.now() } : session,
+          session.id === sessionId ? { ...session, title } : session,
         );
         debouncedSave(updated, currentSessionId);
         return updated;
@@ -795,7 +783,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     [currentSessionId, debouncedSave, isAuthenticated, chatSync],
   );
 
-  // 更新消息
+  // 更新消息（流式 token 不 bump updatedAt，避免切走后侧栏持续重排）
   const updateMessage = useCallback(
     (sessionId: string, messageId: string, updates: Partial<IChatMessage>) => {
       setSessions((prev) => {
@@ -809,7 +797,6 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
             return {
               ...session,
               messages: updatedMessages,
-              updatedAt: Date.now(),
             };
           }
           return session;
@@ -828,20 +815,77 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       attachmentsMeta?: IChatAttachmentMeta[],
       options?: {
         displayContent?: string;
-        referenceImages?: Array<{
-          name?: string;
-          mimeType: string;
-          base64: string;
-        }>;
+        sourceRefs?: import('../types/source').IChatSourceRef[];
         retry?: {
           userMessageId: string;
           assistantMessageId: string;
         };
+        invocation?: ISlashInvocation;
+        requestSnapshot?: IChatRequestSnapshot;
       },
     ) => {
       const isRetry = Boolean(options?.retry);
-      const hasReferenceImages = (options?.referenceImages?.length ?? 0) > 0;
-      if ((!content.trim() && !hasReferenceImages) || isAILoading) return;
+      const replaySnapshot = options?.requestSnapshot;
+      const sourceRefs = replaySnapshot?.sourceRefs ?? options?.sourceRefs ?? [];
+      if ((!content.trim() && sourceRefs.length === 0) || isAILoading) {
+        return false;
+      }
+
+      let apiContent = replaySnapshot?.apiContent ?? content;
+      let displayContent = (options?.displayContent ?? content).trim();
+      let resolvedInvocation = options?.invocation;
+
+      if (beforeSubmitPrompt && !replaySnapshot) {
+        try {
+          const gate = await beforeSubmitPrompt({
+            content: apiContent,
+            displayContent,
+            modelId: currentModel || defaultModel || '',
+            workspacePaths: workspace?.paths ?? [],
+            invocation: resolvedInvocation,
+          });
+          if (gate.action === 'deny') {
+            return false;
+          }
+          if (typeof gate.content === 'string') {
+            apiContent = gate.content;
+          }
+          if (typeof gate.displayContent === 'string') {
+            displayContent = gate.displayContent.trim();
+          }
+          resolvedInvocation = gate.invocation ?? resolvedInvocation;
+        } catch (error) {
+          console.error('beforeSubmitPrompt failed:', error);
+          return false;
+        }
+      }
+
+      if (!apiContent.trim() && !displayContent.trim() && sourceRefs.length === 0) {
+        return false;
+      }
+
+      const requestSnapshot: IChatRequestSnapshot = replaySnapshot ?? {
+        apiContent,
+        modelId: currentModel || defaultModel || '',
+        temperature: temperatureRef.current,
+        topP: topPRef.current,
+        systemPrompt: systemPromptRef.current,
+        kbEnabled: kbEnabledRef.current,
+        kbCollectionId: kbCollectionIdRef.current,
+        agentMode: agentModeRef.current,
+        sourceRefs,
+        createdAt: Date.now(),
+      };
+
+      let resolvedSources: Awaited<ReturnType<typeof loadChatSources>> = [];
+      if (requestSnapshot.sourceRefs?.length) {
+        try {
+          resolvedSources = await loadChatSources(requestSnapshot.sourceRefs);
+        } catch (error) {
+          console.error('loadChatSources failed:', error);
+          return false;
+        }
+      }
 
       let activeSessionId = currentSessionId;
       if (!activeSessionId) {
@@ -865,8 +909,6 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         activeSessionId = draftSession.id;
       }
 
-      const displayContent = (options?.displayContent ?? content).trim();
-
       // 确保 bootstrap 会话已在内存中（延后落库场景）
       const pinnedId = bootstrapSessionIdRef.current;
       if (
@@ -874,10 +916,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         activeSessionId === pinnedId &&
         !sessions.some((session) => session.id === pinnedId)
       ) {
-        const bootstrapSession = createBootstrapSession(
-          pinnedId,
-          bootstrapSessionTitleRef.current,
-        );
+        const bootstrapSession = createBootstrapSession(pinnedId, bootstrapSessionTitleRef.current);
         setSessions((prev) => {
           const prevSessions = Array.isArray(prev) ? prev : [];
           if (prevSessions.some((session) => session.id === pinnedId)) {
@@ -888,8 +927,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       }
 
       let sessionForSnapshots = sessions.find((s) => s.id === activeSessionId);
-      let activeSnapshots: Record<string, INoteSnapshot> =
-        sessionForSnapshots?.noteSnapshots ?? {};
+      let activeSnapshots: Record<string, INoteSnapshot> = sessionForSnapshots?.noteSnapshots ?? {};
 
       if (noteReferences?.readContent) {
         const historyUserMessages = (sessionForSnapshots?.messages ?? []).filter(
@@ -911,6 +949,8 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           role: 'user',
           content: displayContent,
           attachments: attachmentsMeta,
+          invocation: resolvedInvocation,
+          requestSnapshot,
         });
       }
 
@@ -1015,88 +1055,6 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       const isStreamActive = () => streamTokensRef.current.get(activeSessionId) === streamToken;
 
       try {
-        // CLI Agent 路径：直接 spawn 系统命令，不复用 Superpowers 阶段
-        if (isCliModelId(currentModel)) {
-          if (!callCliAgent) {
-            updateMessage(activeSessionId, loadingMessage.id, {
-              content: '当前环境不支持 CLI Agent，请在桌面端使用。',
-              isLoading: false,
-              isError: true,
-            });
-            setSessionLoading(activeSessionId, false);
-            streamTokensRef.current.delete(activeSessionId);
-            abortControllersRef.current.delete(activeSessionId);
-            return;
-          }
-
-          const agent = parseCliAgent(currentModel);
-          if (!agent) {
-            updateMessage(activeSessionId, loadingMessage.id, {
-              content: '未知的 CLI Agent 模型。',
-              isLoading: false,
-              isError: true,
-            });
-            setSessionLoading(activeSessionId, false);
-            streamTokensRef.current.delete(activeSessionId);
-            abortControllersRef.current.delete(activeSessionId);
-            return;
-          }
-
-          const activeSession = sessions.find((s) => s.id === activeSessionId);
-          const cwd =
-            workspace?.enabled && workspace.paths[0]?.trim()
-              ? workspace.paths[0].trim()
-              : undefined;
-
-          try {
-            const result = await callCliAgent({
-              agent,
-              prompt: toApiUserContent(content.trim(), activeSnapshots),
-              sessionId: activeSession?.cliAgentSessionId,
-              cwd,
-            });
-
-            const cliContent = stripEchoedNoteBlocks(result.content);
-            updateMessage(activeSessionId, loadingMessage.id, {
-              content: cliContent,
-              isLoading: false,
-              stats: {
-                model: result.model,
-                responseTime: `${result.responseTimeSec}s`,
-                totalTokens: 0,
-                promptTokens: 0,
-                completionTokens: 0,
-              },
-            });
-
-            updateSessionMeta(activeSessionId, {
-              cliAgentSessionId: result.sessionId,
-              cliAgentType: agent,
-            });
-
-            if (isAuthenticated && cliContent.trim()) {
-              try {
-                await chatSync.saveMessage(activeSessionId, 'assistant', cliContent);
-              } catch (error) {
-                console.error('保存 CLI 回复到云端失败:', error);
-              }
-            }
-          } catch (cliError) {
-            const msg =
-              cliError instanceof Error ? cliError.message : 'CLI Agent 调用失败，请稍后重试。';
-            updateMessage(activeSessionId, loadingMessage.id, {
-              content: msg,
-              isLoading: false,
-              isError: true,
-            });
-          } finally {
-            setSessionLoading(activeSessionId, false);
-            streamTokensRef.current.delete(activeSessionId);
-            abortControllersRef.current.delete(activeSessionId);
-          }
-          return;
-        }
-
         // 准备发送给AI的消息历史
         let chatMessages: IChatStreamMessage[] = [];
         if (isRetry && options?.retry && session) {
@@ -1108,7 +1066,9 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
               .map((m) => ({
                 role: m.role,
                 content:
-                  m.role === 'user' ? toApiUserContent(m.content, activeSnapshots) : m.content,
+                  m.role === 'user' && m.id === options.retry!.userMessageId
+                    ? toApiUserContent(m.content, activeSnapshots)
+                    : m.content,
               }));
           }
         } else {
@@ -1117,14 +1077,13 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
               .filter((m) => !m.isLoading && m.content && m.content.trim() && m.role !== 'system')
               .map((m) => ({
                 role: m.role,
-                content:
-                  m.role === 'user' ? toApiUserContent(m.content, activeSnapshots) : m.content,
+                content: m.content,
               })) || [];
 
           // 添加当前用户消息
           chatMessages.push({
             role: 'user',
-            content: toApiUserContent(content.trim(), activeSnapshots),
+            content: toApiUserContent(apiContent.trim() || displayContent, activeSnapshots),
           });
         }
 
@@ -1134,10 +1093,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
             (message) => message.role === 'user' && message.content.includes('--- 笔记:'),
           );
         if (hasNoteContext) {
-          chatMessages = [
-            { role: 'system', content: NOTE_REFERENCE_SYSTEM_HINT },
-            ...chatMessages,
-          ];
+          chatMessages = [{ role: 'system', content: NOTE_REFERENCE_SYSTEM_HINT }, ...chatMessages];
         }
 
         // 用于累积流式响应内容
@@ -1188,11 +1144,11 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
 
         // Superpowers 工作流提示（plan 模式下注入）
         const superpowerParts: string[] = [];
-        if (agentModeRef.current === 'plan' && superpowerPrompts?.workflow?.trim()) {
+        if (requestSnapshot.agentMode === 'plan' && superpowerPrompts?.workflow?.trim()) {
           superpowerParts.push(superpowerPrompts.workflow.trim());
         }
-        if (systemPromptRef.current.trim()) {
-          superpowerParts.push(systemPromptRef.current.trim());
+        if (requestSnapshot.systemPrompt.trim()) {
+          superpowerParts.push(requestSnapshot.systemPrompt.trim());
         }
         const superpowerSystemPrompt = superpowerParts.join('\n\n');
 
@@ -1201,14 +1157,20 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           chatMessages,
           // onChunk: 接收到数据块时的回调
           (chunk: string) => {
+            if (!isStreamActive()) {
+              return;
+            }
             chunkBuffer += chunk;
             // 每15ms合并一次更新（兼顾实时性和性能）
             if (!chunkTimer) {
-              chunkTimer = setTimeout(flushChunkBuffer, 15); // 15ms约为60fps的单帧时间，减少DOM更新频率
+              chunkTimer = setTimeout(flushChunkBuffer, 33);
             }
           },
           // onError: 错误处理回调
           (error: string) => {
+            if (!isStreamActive()) {
+              return;
+            }
             streamTokensRef.current.delete(activeSessionId);
             // 清除pending的chunk更新
             if (chunkTimer) {
@@ -1243,6 +1205,9 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           },
           // onStats: 接收到统计信息时的回调
           (stats) => {
+            if (!isStreamActive()) {
+              return;
+            }
             if (chunkTimer) {
               clearTimeout(chunkTimer);
               chunkTimer = null;
@@ -1265,27 +1230,40 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
               stats: stats,
             });
           },
-          currentModel, // 使用当前选中的模型
+          requestSnapshot.modelId,
           {
-            temperature: temperatureRef.current,
-            top_p: topPRef.current,
+            temperature: requestSnapshot.temperature,
+            top_p: requestSnapshot.topP,
             abortController,
             user_system_prompt: superpowerSystemPrompt,
-            kb_enabled: isImageModel?.(currentModel) ? false : kbEnabledRef.current,
-            kb_collection_id: kbCollectionIdRef.current,
+            kb_enabled: isImageModel?.(requestSnapshot.modelId) ? false : requestSnapshot.kbEnabled,
+            kb_collection_id: requestSnapshot.kbCollectionId,
             kb_top_k: 6,
-            referenceImages: options?.referenceImages,
+            raw_user_query: displayContent,
+            referenceImages: resolvedSources
+              .filter(
+                (source) => source.encoding === 'base64' && source.mimeType.startsWith('image/'),
+              )
+              .map((source) => ({
+                name: source.name,
+                mimeType: source.mimeType,
+                base64: source.content,
+              })),
+            attachment_sources: resolvedSources.filter((source) => source.encoding === 'utf8'),
             onThinking: (chunk: string) => {
+              if (!isStreamActive()) {
+                return;
+              }
               thinkingChunkBuffer += chunk;
               if (!thinkingTimer) {
-                thinkingTimer = setTimeout(flushThinkingBuffer, 15);
+                thinkingTimer = setTimeout(flushThinkingBuffer, 33);
               }
             },
           },
         );
 
         // 流式传输完成，清除加载状态（仅在未发生错误时更新最终内容）
-        if (!errorOccurred) {
+        if (!errorOccurred && isStreamActive()) {
           // 清除pending的chunk更新并确保最后一批chunk被更新
           if (chunkTimer) {
             clearTimeout(chunkTimer);
@@ -1303,8 +1281,6 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
             accumulatedThinking += thinkingChunkBuffer;
             thinkingChunkBuffer = '';
           }
-
-          accumulatedContent = stripEchoedNoteBlocks(accumulatedContent);
 
           updateMessage(activeSessionId, loadingMessage.id, {
             content: accumulatedContent,
@@ -1324,8 +1300,10 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           }
         }
       } catch (error) {
+        if (!isStreamActive()) {
+          return false;
+        }
         console.error('AI回复失败:', error);
-        streamTokensRef.current.delete(activeSessionId);
 
         // 更新错误消息（统一为友好提示）
         updateMessage(activeSessionId, loadingMessage.id, {
@@ -1335,10 +1313,13 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         });
       } finally {
         // 清除当前会话的加载状态和AbortController
-        streamTokensRef.current.delete(activeSessionId);
-        setSessionLoading(activeSessionId, false);
-        abortControllersRef.current.delete(activeSessionId);
+        if (isStreamActive()) {
+          streamTokensRef.current.delete(activeSessionId);
+          setSessionLoading(activeSessionId, false);
+          abortControllersRef.current.delete(activeSessionId);
+        }
       }
+      return true;
     },
     [
       currentSessionId,
@@ -1350,12 +1331,17 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       updateSessionMeta,
       setSessionLoading,
       currentModel,
+      defaultModel,
       isAuthenticated,
       chatSync,
-      callCliAgent,
       superpowerPrompts,
       workspace,
       noteReferences,
+      beforeSubmitPrompt,
+      callAIChatStream,
+      debouncedSave,
+      isImageModel,
+      loadChatSources,
     ],
   );
 
@@ -1425,20 +1411,20 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         return;
       }
 
-      await sendMessage(userMessage.content, userMessage.attachments, {
-        displayContent: userMessage.content,
-        referenceImages: (userMessage.attachments ?? [])
-          .filter((attachment) => attachment.imageBase64 && attachment.mime?.startsWith('image/'))
-          .map((attachment) => ({
-            name: attachment.name,
-            mimeType: attachment.mime || 'image/png',
-            base64: attachment.imageBase64!,
-          })),
-        retry: {
-          userMessageId,
-          assistantMessageId: assistantMessage.id,
+      await sendMessage(
+        userMessage.requestSnapshot?.apiContent ?? userMessage.content,
+        userMessage.attachments,
+        {
+          displayContent: userMessage.content,
+          sourceRefs: userMessage.requestSnapshot?.sourceRefs,
+          retry: {
+            userMessageId,
+            assistantMessageId: assistantMessage.id,
+          },
+          invocation: userMessage.invocation,
+          requestSnapshot: userMessage.requestSnapshot,
         },
-      });
+      );
     },
     [currentSessionId, isAILoading, sendMessage, sessions],
   );
@@ -1677,7 +1663,6 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     setKbCollectionId,
     agentMode,
     setAgentMode,
-    isCliModel,
     refreshSessionsFromStorage: loadFromStorage,
   };
 };

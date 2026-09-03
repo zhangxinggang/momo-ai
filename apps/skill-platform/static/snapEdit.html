@@ -1,0 +1,5047 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>随手改 SnapEdit · HTML 可视化编辑器</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+          "Microsoft YaHei", sans-serif;
+        background: #fafaf9;
+        color: #292524;
+        overflow: hidden;
+      }
+
+      /* ===== 顶栏 ===== */
+      #shell {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        width: 100vw;
+      }
+      #workspace {
+        flex: 1;
+        display: flex;
+        min-height: 0;
+        overflow: hidden;
+      }
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+        flex-shrink: 0;
+        z-index: 100;
+        box-shadow: 0 2px 12px rgba(30, 27, 75, 0.35);
+      }
+      .brand {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-right: 8px;
+        user-select: none;
+      }
+      .brand b {
+        color: #fff;
+        font-size: 16px;
+        letter-spacing: 1px;
+      }
+      .brand i {
+        color: #a5b4fc;
+        font-size: 11px;
+        font-style: normal;
+        letter-spacing: 0.5px;
+      }
+      .brand .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ea580c;
+        align-self: center;
+        box-shadow: 0 0 8px rgba(234, 88, 12, 0.8);
+      }
+      .bar button {
+        min-height: 32px;
+        padding: 6px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        color: #e0e7ff;
+        transition: all 0.15s;
+        white-space: nowrap;
+      }
+      .bar button:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.14);
+        border-color: rgba(255, 255, 255, 0.4);
+      }
+      .bar button:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+      .bar button.primary {
+        background: #ea580c;
+        border-color: #ea580c;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(234, 88, 12, 0.4);
+      }
+      .bar button.primary:hover:not(:disabled) {
+        background: #c2410c;
+        border-color: #c2410c;
+      }
+      .bar .spacer {
+        flex: 1;
+      }
+      .pill {
+        color: #c7d2fe;
+        font-size: 12px;
+        max-width: 260px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 6px 12px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+      }
+      #badge {
+        display: none;
+        align-items: center;
+        gap: 6px;
+        color: #c7d2fe;
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        white-space: nowrap;
+      }
+      #badge::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #6ee7b7;
+      }
+      #badge.dirty::before {
+        background: #fbbf24;
+      }
+      .switch {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        cursor: pointer;
+        user-select: none;
+        font-size: 13px;
+        color: #c7d2fe;
+        padding: 5px 12px 5px 6px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.05);
+        transition: all 0.15s;
+      }
+      .switch:has(input:checked) {
+        color: #fff;
+        border-color: #ea580c;
+        background: rgba(234, 88, 12, 0.25);
+      }
+      .switch:has(input:disabled) {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+      .switch input {
+        width: 34px;
+        height: 18px;
+        cursor: pointer;
+        margin: 0;
+        accent-color: #ea580c;
+      }
+
+      /* ===== 画布 ===== */
+      #stage {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background-color: #fafaf9;
+        background-image: radial-gradient(#e0e0ec 1px, transparent 1px);
+        background-size: 22px 22px;
+        min-width: 0;
+      }
+      #stage.dragover::after {
+        content: "松手载入文件";
+        position: absolute;
+        inset: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        color: #4338ca;
+        border: 2px dashed #4338ca;
+        border-radius: 16px;
+        background: rgba(67, 56, 202, 0.06);
+        pointer-events: none;
+        z-index: 9996;
+      }
+      #placeholder {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #6b6b80;
+        font-size: 15px;
+        pointer-events: none;
+        gap: 14px;
+        text-align: center;
+        padding: 24px;
+      }
+      #placeholder .icon {
+        display: grid;
+        place-items: center;
+        width: 76px;
+        height: 76px;
+        border-radius: 20px;
+        background: #fff;
+        border: 1px solid #e0e0ec;
+        box-shadow: 0 10px 30px rgba(30, 27, 75, 0.1);
+        font-size: 38px;
+      }
+      #placeholder .hint {
+        font-size: 12.5px;
+        color: #9c9cb0;
+      }
+      iframe#view {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: #fff;
+        display: none;
+      }
+      #tip {
+        position: absolute;
+        bottom: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(30, 27, 75, 0.92);
+        color: #e0e7ff;
+        padding: 8px 18px;
+        border-radius: 999px;
+        font-size: 12px;
+        z-index: 9997;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+        white-space: nowrap;
+      }
+      #banner {
+        position: absolute;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+        align-items: center;
+        gap: 10px;
+        background: #fff7ed;
+        border: 1px solid #fdba74;
+        color: #9a3412;
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        box-shadow: 0 8px 24px rgba(154, 52, 18, 0.15);
+        z-index: 9997;
+        max-width: calc(100vw - 24px);
+      }
+      #banner button {
+        border: none;
+        background: #ea580c;
+        color: #fff;
+        padding: 5px 12px;
+        border-radius: 7px;
+        font-size: 12.5px;
+        cursor: pointer;
+      }
+      #banner button:hover {
+        background: #c2410c;
+      }
+      #banner .x {
+        cursor: pointer;
+        color: #c2410c;
+        padding: 2px 6px;
+        border-radius: 6px;
+      }
+      #banner .x:hover {
+        background: rgba(194, 65, 12, 0.12);
+      }
+
+      /* ===== 覆盖层 ===== */
+      .ovl {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9998;
+        border-radius: 3px;
+        display: none;
+      }
+      #hoverBox {
+        border: 2px solid #6366f1;
+        background: rgba(99, 102, 241, 0.06);
+      }
+      #pickBox {
+        border: 2px solid #ea580c;
+        background: rgba(234, 88, 12, 0.06);
+      }
+      #handleLayer {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        display: none;
+      }
+      #handleLayer .drag-area {
+        position: absolute;
+        inset: 0;
+        pointer-events: auto;
+        cursor: move;
+      }
+      #handleLayer .rh {
+        position: absolute;
+        width: 9px;
+        height: 9px;
+        background: #fff;
+        border: 2px solid #ea580c;
+        border-radius: 2px;
+        pointer-events: auto;
+        z-index: 1;
+      }
+      #handleLayer .rh-n {
+        top: -5px;
+        left: 50%;
+        margin-left: -5px;
+        cursor: n-resize;
+      }
+      #handleLayer .rh-s {
+        bottom: -5px;
+        left: 50%;
+        margin-left: -5px;
+        cursor: s-resize;
+      }
+      #handleLayer .rh-e {
+        right: -5px;
+        top: 50%;
+        margin-top: -5px;
+        cursor: e-resize;
+      }
+      #handleLayer .rh-w {
+        left: -5px;
+        top: 50%;
+        margin-top: -5px;
+        cursor: w-resize;
+      }
+      #handleLayer .rh-ne {
+        right: -5px;
+        top: -5px;
+        cursor: ne-resize;
+      }
+      #handleLayer .rh-nw {
+        left: -5px;
+        top: -5px;
+        cursor: nw-resize;
+      }
+      #handleLayer .rh-se {
+        right: -5px;
+        bottom: -5px;
+        cursor: se-resize;
+      }
+      #handleLayer .rh-sw {
+        left: -5px;
+        bottom: -5px;
+        cursor: sw-resize;
+      }
+      #insertLine {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        display: none;
+        background: #4338ca;
+        border-radius: 2px;
+        box-shadow: 0 0 8px rgba(67, 56, 202, 0.6);
+      }
+      #insertLine.h {
+        height: 3px;
+      }
+      #insertLine.v {
+        width: 3px;
+      }
+      #dragGhost {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9998;
+        display: none;
+        border: 2px dashed #4338ca;
+        background: rgba(99, 102, 241, 0.12);
+        border-radius: 4px;
+      }
+      #multiPickLayer .multi-pick {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9997;
+        border: 2px dashed #6366f1;
+        background: rgba(99, 102, 241, 0.06);
+        border-radius: 3px;
+      }
+      #guideLayer .guide-line {
+        position: fixed;
+        pointer-events: none;
+        z-index: 10001;
+        background: #ec4899;
+        box-shadow: 0 0 6px rgba(236, 72, 153, 0.55);
+      }
+      #guideLayer .guide-line.h {
+        height: 1px;
+      }
+      #guideLayer .guide-line.v {
+        width: 1px;
+      }
+      #marqueeBox {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9996;
+        display: none;
+        border: 1px solid #4338ca;
+        background: rgba(99, 102, 241, 0.12);
+        border-radius: 2px;
+      }
+      #gridOverlayLayer {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9997;
+        display: none;
+        overflow: hidden;
+        border-radius: 2px;
+      }
+      #gridOverlayLayer .grid-line {
+        position: absolute;
+        background: rgba(67, 56, 202, 0.35);
+      }
+      #gridOverlayLayer .grid-line.v {
+        width: 1px;
+        top: 0;
+        bottom: 0;
+      }
+      #gridOverlayLayer .grid-line.h {
+        height: 1px;
+        left: 0;
+        right: 0;
+      }
+      #gridOverlayLayer .grid-gap {
+        position: absolute;
+        background: rgba(234, 88, 12, 0.12);
+        pointer-events: none;
+      }
+
+      /* ===== 块操作条 ===== */
+      #blockBar {
+        position: fixed;
+        display: none;
+        gap: 4px;
+        background: #1e1b4b;
+        border-radius: 10px;
+        padding: 5px;
+        z-index: 10000;
+        box-shadow: 0 10px 30px rgba(30, 27, 75, 0.35);
+      }
+      #blockBar button {
+        border: none;
+        background: transparent;
+        color: #e0e7ff;
+        font-size: 12.5px;
+        padding: 5px 10px;
+        border-radius: 7px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      #blockBar button:hover {
+        background: rgba(255, 255, 255, 0.14);
+      }
+      #blockBar button.warn:hover {
+        background: #be123c;
+      }
+
+      /* ===== 选中文字工具条 ===== */
+      #textBar {
+        position: fixed;
+        display: none;
+        align-items: center;
+        gap: 2px;
+        background: #1e1b4b;
+        border-radius: 10px;
+        padding: 5px;
+        z-index: 10001;
+        box-shadow: 0 10px 30px rgba(30, 27, 75, 0.35);
+      }
+      #textBar button {
+        border: none;
+        background: transparent;
+        color: #e0e7ff;
+        font-size: 13px;
+        min-width: 30px;
+        padding: 5px 7px;
+        border-radius: 7px;
+        cursor: pointer;
+      }
+      #textBar button:hover {
+        background: rgba(255, 255, 255, 0.14);
+      }
+      #textBar label {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 28px;
+        border-radius: 7px;
+        cursor: pointer;
+        font-size: 13px;
+        color: #e0e7ff;
+        position: relative;
+      }
+      #textBar label:hover {
+        background: rgba(255, 255, 255, 0.14);
+      }
+      #textBar label input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+      }
+      #textBar .sep {
+        width: 1px;
+        height: 18px;
+        background: rgba(255, 255, 255, 0.2);
+        margin: 0 3px;
+      }
+
+      /* ===== 颜色面板 ===== */
+      #palette {
+        position: fixed;
+        display: none;
+        background: #fff;
+        border: 1px solid #e0e0ec;
+        border-radius: 14px;
+        box-shadow: 0 20px 50px rgba(30, 27, 75, 0.22);
+        padding: 16px;
+        width: 280px;
+        z-index: 10002;
+        font-size: 13px;
+      }
+      #palette h4 {
+        margin: 0 0 12px;
+        font-size: 13px;
+        color: #1e1b4b;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      #palette h4 span {
+        cursor: pointer;
+        color: #9c9cb0;
+        font-size: 15px;
+        padding: 2px 7px;
+        border-radius: 6px;
+      }
+      #palette h4 span:hover {
+        background: #f0f0f5;
+        color: #1e1b4b;
+      }
+      .crow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 9px;
+      }
+      .crow em {
+        font-style: normal;
+        width: 48px;
+        color: #48485c;
+        flex-shrink: 0;
+        font-size: 12.5px;
+      }
+      .crow input[type="color"] {
+        width: 34px;
+        height: 28px;
+        border: 1px solid #e0e0ec;
+        border-radius: 7px;
+        padding: 1px;
+        cursor: pointer;
+        background: #fff;
+      }
+      .crow input[type="text"] {
+        flex: 1;
+        min-width: 0;
+        border: 1px solid #e0e0ec;
+        border-radius: 7px;
+        padding: 5px 8px;
+        font-size: 12px;
+        font-family: ui-monospace, monospace;
+        color: #292524;
+      }
+      .crow input[type="text"]:focus {
+        outline: none;
+        border-color: #4338ca;
+      }
+      .crow .clr {
+        border: none;
+        background: transparent;
+        color: #9c9cb0;
+        cursor: pointer;
+        font-size: 13px;
+        padding: 3px 6px;
+        border-radius: 6px;
+      }
+      .crow .clr:hover {
+        background: #f0f0f5;
+        color: #292524;
+      }
+      .pbtn {
+        border: 1px solid #e0e0ec;
+        background: #fff;
+        border-radius: 7px;
+        padding: 5px 10px;
+        font-size: 12.5px;
+        cursor: pointer;
+        color: #292524;
+      }
+      .pbtn:hover {
+        border-color: #4338ca;
+        color: #4338ca;
+      }
+      #swatches {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #ececf2;
+      }
+      .sw {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        cursor: pointer;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        transition: transform 0.1s;
+      }
+      .sw:hover {
+        transform: scale(1.2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      }
+
+      /* ===== Toast ===== */
+      #toast {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        background: #1e1b4b;
+        color: #e0e7ff;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-size: 13px;
+        z-index: 10005;
+        opacity: 0;
+        transform: translateY(8px);
+        transition: all 0.25s;
+        pointer-events: none;
+        box-shadow: 0 10px 30px rgba(30, 27, 75, 0.35);
+      }
+      #toast.on {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* ===== 属性面板 ===== */
+      #inspector {
+        width: 300px;
+        flex-shrink: 0;
+        background: #fff;
+        border-left: 1px solid #e0e0ec;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 50;
+      }
+      #inspectorHead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        border-bottom: 1px solid #ececf2;
+        background: #fafaf9;
+        flex-shrink: 0;
+      }
+      #inspectorHead h3 {
+        margin: 0;
+        font-size: 13px;
+        color: #1e1b4b;
+        font-weight: 600;
+      }
+      #inspectorHead span {
+        font-size: 11px;
+        color: #9c9cb0;
+      }
+      #inspectorBody {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px 12px 20px;
+      }
+      #inspector.empty .ins-need-pick {
+        opacity: 0.45;
+        pointer-events: none;
+      }
+      .ins-sec {
+        margin-bottom: 14px;
+        border: 1px solid #ececf2;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      #treeSec {
+        max-height: 220px;
+        display: flex;
+        flex-direction: column;
+      }
+      #treeSec > h4 {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      #treeSec > h4 button {
+        border: 1px solid #c7d2fe;
+        background: #fff;
+        color: #4338ca;
+        border-radius: 6px;
+        font-size: 10.5px;
+        padding: 2px 7px;
+        cursor: pointer;
+      }
+      #treeList {
+        overflow-y: auto;
+        max-height: 180px;
+        padding: 4px 0 6px;
+        font-family: ui-monospace, Consolas, monospace;
+        font-size: 11px;
+      }
+      .tree-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px 3px 4px;
+        cursor: pointer;
+        color: #48485c;
+        white-space: nowrap;
+        user-select: none;
+      }
+      .tree-row:hover {
+        background: #f0f0ff;
+      }
+      .tree-row.on {
+        background: #fff7ed;
+        color: #c2410c;
+        font-weight: 600;
+      }
+      .tree-row .tw {
+        width: 14px;
+        flex-shrink: 0;
+        text-align: center;
+        color: #9c9cb0;
+        font-size: 10px;
+      }
+      .tree-row .tn {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .tree-row .tm {
+        margin-left: auto;
+        color: #a8a29e;
+        font-size: 10px;
+        flex-shrink: 0;
+      }
+      #elBreadcrumb {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 0 10px 8px;
+        font-size: 11px;
+      }
+      #elBreadcrumb button {
+        border: none;
+        background: #f0f0f5;
+        color: #48485c;
+        border-radius: 999px;
+        padding: 2px 8px;
+        cursor: pointer;
+        font-size: 11px;
+        font-family: ui-monospace, monospace;
+      }
+      #elBreadcrumb button:hover {
+        background: #e0e7ff;
+        color: #4338ca;
+      }
+      #gridOverlayLayer .flex-item {
+        position: absolute;
+        border: 1px dashed rgba(14, 165, 233, 0.85);
+        background: rgba(14, 165, 233, 0.08);
+        border-radius: 2px;
+        box-sizing: border-box;
+      }
+      #gridOverlayLayer .flex-axis {
+        position: absolute;
+        pointer-events: none;
+        color: #0284c7;
+        font-size: 10px;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.85);
+        padding: 1px 5px;
+        border-radius: 4px;
+        border: 1px solid rgba(14, 165, 233, 0.45);
+      }
+      #gridOverlayLayer .flex-gap {
+        position: absolute;
+        background: rgba(14, 165, 233, 0.18);
+        pointer-events: none;
+      }
+      .tree-row.locked {
+        opacity: 0.55;
+      }
+      .tree-row.locked .tn::after {
+        content: " 🔒";
+      }
+      #layerList {
+        max-height: 180px;
+        overflow-y: auto;
+        padding: 4px 0 6px;
+      }
+      .layer-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        cursor: pointer;
+        font-size: 11.5px;
+        color: #48485c;
+      }
+      .layer-row:hover {
+        background: #f0f0ff;
+      }
+      .layer-row.on {
+        background: #fff7ed;
+        color: #c2410c;
+        font-weight: 600;
+      }
+      .layer-row .ln {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-family: ui-monospace, Consolas, monospace;
+      }
+      .layer-row.locked .ln::after {
+        content: " 🔒";
+      }
+      #recentSwatches {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #ececf2;
+      }
+      #recentSwatches em {
+        flex: 1 1 100%;
+        font-style: normal;
+        font-size: 11px;
+        color: #78788c;
+      }
+      #pickBox.locked {
+        border-style: dashed;
+        border-color: #78716c;
+        background: rgba(120, 113, 108, 0.08);
+      }
+      #pickBox.hidden-el {
+        border-style: dashed;
+        border-color: #64748b;
+        background: rgba(100, 116, 139, 0.1);
+      }
+      .tree-row.hidden-el {
+        opacity: 0.5;
+      }
+      .tree-row.hidden-el .tn::after {
+        content: " 👁";
+      }
+      .layer-row.hidden-el .ln::after {
+        content: " 👁";
+      }
+      #stageGrid {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 5;
+        display: none;
+        background-image:
+          linear-gradient(to right, rgba(67, 56, 202, 0.12) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(67, 56, 202, 0.12) 1px, transparent 1px);
+        background-size: 20px 20px;
+      }
+      #stage.show-grid #stageGrid {
+        display: block;
+      }
+      #rulerCorner {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 20px;
+        height: 20px;
+        background: #eef2ff;
+        border-right: 1px solid #c7d2fe;
+        border-bottom: 1px solid #c7d2fe;
+        z-index: 8;
+        display: none;
+      }
+      #rulerTop {
+        position: absolute;
+        left: 20px;
+        right: 0;
+        top: 0;
+        height: 20px;
+        background: #f8fafc;
+        border-bottom: 1px solid #c7d2fe;
+        z-index: 8;
+        display: none;
+        cursor: ns-resize;
+        overflow: hidden;
+      }
+      #rulerLeft {
+        position: absolute;
+        left: 0;
+        top: 20px;
+        bottom: 0;
+        width: 20px;
+        background: #f8fafc;
+        border-right: 1px solid #c7d2fe;
+        z-index: 8;
+        display: none;
+        cursor: ew-resize;
+        overflow: hidden;
+      }
+      #stage.show-ruler #rulerCorner,
+      #stage.show-ruler #rulerTop,
+      #stage.show-ruler #rulerLeft {
+        display: block;
+      }
+      .ruler-tick {
+        position: absolute;
+        font-size: 9px;
+        color: #94a3b8;
+        pointer-events: none;
+        user-select: none;
+      }
+      #rulerTop .ruler-tick {
+        top: 2px;
+        border-left: 1px solid #cbd5e1;
+        padding-left: 2px;
+        height: 18px;
+      }
+      #rulerLeft .ruler-tick {
+        left: 2px;
+        border-top: 1px solid #cbd5e1;
+        padding-top: 1px;
+        width: 18px;
+      }
+      #userGuideLayer .user-guide {
+        position: fixed;
+        pointer-events: auto;
+        z-index: 10000;
+        background: #22d3ee;
+        box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.35);
+        cursor: move;
+      }
+      #userGuideLayer .user-guide.h {
+        height: 1px;
+      }
+      #userGuideLayer .user-guide.v {
+        width: 1px;
+      }
+      #userGuideLayer .user-guide:hover {
+        background: #06b6d4;
+        box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.45);
+      }
+      #historyList {
+        max-height: 160px;
+        overflow-y: auto;
+        padding: 4px 0 6px;
+      }
+      .hist-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px;
+        font-size: 11.5px;
+        color: #48485c;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        width: 100%;
+        text-align: left;
+      }
+      .hist-row:hover {
+        background: #f0f0ff;
+      }
+      .hist-row.cur {
+        background: #fff7ed;
+        color: #c2410c;
+        font-weight: 600;
+      }
+      .hist-row .hi {
+        color: #a8a29e;
+        font-size: 10px;
+        flex-shrink: 0;
+        width: 18px;
+      }
+      .hist-row .hl {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      #helpModal {
+        position: fixed;
+        inset: 0;
+        background: rgba(30, 27, 75, 0.45);
+        z-index: 10020;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      #helpModal.on {
+        display: flex;
+      }
+      #helpCard {
+        background: #fff;
+        border-radius: 14px;
+        width: min(560px, 100%);
+        max-height: min(80vh, 640px);
+        overflow: auto;
+        box-shadow: 0 24px 60px rgba(30, 27, 75, 0.35);
+        padding: 18px 20px 22px;
+      }
+      #helpCard h3 {
+        margin: 0 0 12px;
+        font-size: 16px;
+        color: #1e1b4b;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      #helpCard h3 button {
+        border: none;
+        background: #f0f0f5;
+        border-radius: 8px;
+        padding: 4px 10px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      #helpCard table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      #helpCard td {
+        padding: 6px 4px;
+        border-bottom: 1px solid #f0f0f5;
+        color: #48485c;
+      }
+      #helpCard td:first-child {
+        font-family: ui-monospace, Consolas, monospace;
+        color: #4338ca;
+        white-space: nowrap;
+        width: 42%;
+      }
+      #snapshotList {
+        max-height: 160px;
+        overflow-y: auto;
+        padding: 4px 8px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .snap-item {
+        border: 1px solid #ececf2;
+        border-radius: 8px;
+        padding: 6px 8px;
+        background: #fafaf9;
+      }
+      .snap-item .snap-name {
+        font-size: 12px;
+        color: #292524;
+        font-weight: 600;
+        margin-bottom: 2px;
+        word-break: break-all;
+      }
+      .snap-item .snap-meta {
+        font-size: 10.5px;
+        color: #9c9cb0;
+        margin-bottom: 6px;
+      }
+      .snap-item .snap-acts {
+        display: flex;
+        gap: 4px;
+      }
+      .snap-item .snap-acts button {
+        border: 1px solid #e0e0ec;
+        background: #fff;
+        border-radius: 6px;
+        padding: 3px 8px;
+        font-size: 11px;
+        cursor: pointer;
+        color: #292524;
+      }
+      .snap-item .snap-acts button:hover {
+        border-color: #4338ca;
+        color: #4338ca;
+      }
+      .snap-item .snap-acts button.warn:hover {
+        border-color: #be123c;
+        color: #be123c;
+      }
+      .ins-sec > h4 {
+        margin: 0;
+        padding: 8px 10px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #4338ca;
+        background: #f5f5ff;
+        border-bottom: 1px solid #ececf2;
+        letter-spacing: 0.3px;
+      }
+      .ins-sec .ins-grid {
+        padding: 8px 10px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px 8px;
+      }
+      .ins-sec .ins-grid.full {
+        grid-template-columns: 1fr;
+      }
+      .ins-field {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        min-width: 0;
+      }
+      .ins-field.span2 {
+        grid-column: span 2;
+      }
+      .ins-field label {
+        font-size: 10.5px;
+        color: #78788c;
+        font-weight: 500;
+      }
+      .ins-field input,
+      .ins-field select,
+      .ins-field textarea {
+        border: 1px solid #e0e0ec;
+        border-radius: 6px;
+        padding: 5px 7px;
+        font-size: 12px;
+        color: #292524;
+        background: #fff;
+        min-width: 0;
+      }
+      .ins-field input:focus,
+      .ins-field select:focus,
+      .ins-field textarea:focus {
+        outline: none;
+        border-color: #4338ca;
+      }
+      .ins-field textarea {
+        min-height: 52px;
+        resize: vertical;
+        font-family: inherit;
+      }
+      #elSummary {
+        padding: 8px 10px;
+        font-size: 12px;
+        color: #48485c;
+        font-family: ui-monospace, monospace;
+        word-break: break-all;
+      }
+      #textTargetList {
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .text-target-item label {
+        display: block;
+        font-size: 10.5px;
+        color: #78788c;
+        margin-bottom: 3px;
+      }
+      .text-target-item input,
+      .text-target-item textarea {
+        width: 100%;
+        border: 1px solid #e0e0ec;
+        border-radius: 6px;
+        padding: 5px 7px;
+        font-size: 12px;
+      }
+      .ins-btns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        padding: 8px 10px;
+      }
+      .ins-btns button {
+        border: 1px solid #e0e0ec;
+        background: #fff;
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 11.5px;
+        cursor: pointer;
+        color: #292524;
+      }
+      .ins-btns button:hover {
+        border-color: #4338ca;
+        color: #4338ca;
+      }
+      #btnToggleInspector {
+        display: none;
+        position: fixed;
+        right: 14px;
+        bottom: 56px;
+        z-index: 10003;
+        border: none;
+        background: #1e1b4b;
+        color: #e0e7ff;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-size: 12px;
+        cursor: pointer;
+        box-shadow: 0 8px 24px rgba(30, 27, 75, 0.35);
+      }
+      #svgTextPop {
+        position: fixed;
+        display: none;
+        z-index: 10004;
+        background: #fff;
+        border: 1px solid #e0e0ec;
+        border-radius: 10px;
+        box-shadow: 0 12px 36px rgba(30, 27, 75, 0.22);
+        padding: 10px;
+        width: 240px;
+      }
+      #svgTextPop input {
+        width: 100%;
+        border: 1px solid #e0e0ec;
+        border-radius: 7px;
+        padding: 6px 8px;
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+      #svgTextPop .svg-pop-btns {
+        display: flex;
+        gap: 6px;
+        justify-content: flex-end;
+      }
+      #svgTextPop button {
+        border: 1px solid #e0e0ec;
+        background: #fff;
+        border-radius: 7px;
+        padding: 5px 12px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      #svgTextPop button.primary {
+        background: #ea580c;
+        border-color: #ea580c;
+        color: #fff;
+      }
+      html.embed #inspector {
+        width: 260px;
+      }
+
+      @media (max-width: 900px) {
+        #inspector {
+          position: fixed;
+          right: 0;
+          top: auto;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          max-height: 52vh;
+          border-left: none;
+          border-top: 1px solid #e0e0ec;
+          transform: translateY(100%);
+          transition: transform 0.25s;
+          z-index: 10002;
+        }
+        #inspector.open {
+          transform: translateY(0);
+        }
+        #btnToggleInspector {
+          display: block;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .bar {
+          flex-wrap: wrap;
+          gap: 8px;
+          padding: 8px 10px;
+        }
+        .bar .spacer {
+          display: none;
+        }
+        .pill {
+          order: 10;
+          max-width: none;
+          flex: 1 1 100%;
+        }
+        #badge {
+          order: 11;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="shell">
+      <header class="bar">
+        <span class="brand"
+          ><span class="dot"></span><b>随手改</b
+          ><i>SnapEdit · HTML 可视化编辑器</i></span
+        >
+        <button id="btnOpen" class="primary">📂 打开文件</button>
+        <input type="file" id="fileInput" accept=".html,.htm" hidden />
+        <span class="pill" id="fileName" style="display: none"></span>
+        <span id="badge">未修改</span>
+        <span class="spacer"></span>
+        <label class="switch"
+          ><input type="checkbox" id="tglEdit" disabled checked /><span
+            >编辑模式</span
+          ></label
+        >
+        <label
+          class="switch"
+          title="让页面里的 JS 跑起来，用于翻页 / 动画类文件。仅对可信文件开启。"
+          ><input type="checkbox" id="tglScript" disabled /><span
+            >动态预览</span
+          ></label
+        >
+        <label class="switch" title="自由拖移时吸附到边缘/中心"
+          ><input type="checkbox" id="tglSnap" checked /><span>吸附</span></label
+        >
+        <label class="switch" title="画布显示 20px 参考网格"
+          ><input type="checkbox" id="tglGrid" /><span>网格</span></label
+        >
+        <label class="switch" title="显示标尺，可从标尺拖出参考线"
+          ><input type="checkbox" id="tglRuler" /><span>标尺</span></label
+        >
+        <button id="btnHelp" title="快捷键帮助（?）">?</button>
+        <button id="btnUndo" disabled title="撤销 Ctrl+Z（最多 50 步）">
+          ⌫ 撤销
+        </button>
+        <button id="btnRedo" disabled title="重做 Ctrl+Y">↪ 重做</button>
+        <button id="btnReset" disabled>⟲ 还原</button>
+        <button id="btnSave" disabled>⬇ 导出</button>
+      </header>
+      <div id="workspace">
+        <main id="stage">
+          <div id="placeholder">
+            <div class="icon">🪄</div>
+            <div>点「打开文件」或把 HTML 拖进来，立刻开改</div>
+            <div class="hint">全程本机运行 · 文件不出电脑 · 不花一分钱</div>
+          </div>
+          <iframe id="view" sandbox="allow-same-origin"></iframe>
+          <div id="stageGrid"></div>
+          <div id="rulerCorner" title="双击清除全部参考线"></div>
+          <div id="rulerTop" title="向下拖出水平参考线"></div>
+          <div id="rulerLeft" title="向右拖出垂直参考线"></div>
+          <div id="tip">
+            标尺拖参考线 · ? 看快捷键 · 快照/历史在右侧
+          </div>
+          <div id="banner">
+            ⚡ 内容似乎没有完整显示，页面可能依赖脚本渲染<button id="bannerBtn">
+              开启动态预览</button
+            ><span class="x" id="bannerClose">✕</span>
+          </div>
+        </main>
+        <aside id="inspector" class="empty">
+          <div id="inspectorHead">
+            <h3>属性</h3>
+            <span>选中元素后可编辑</span>
+          </div>
+          <div id="inspectorBody">
+            <div class="ins-sec" id="treeSec">
+              <h4>
+                元素树
+                <button type="button" id="btnRefreshTree" title="刷新树">刷新</button>
+              </h4>
+              <div id="treeList"></div>
+            </div>
+            <div class="ins-sec" id="layerSec">
+              <h4>图层顺序</h4>
+              <div class="ins-btns">
+                <button type="button" data-layer="front">置顶</button>
+                <button type="button" data-layer="up">上移</button>
+                <button type="button" data-layer="down">下移</button>
+                <button type="button" data-layer="back">置底</button>
+              </div>
+              <div id="layerList"></div>
+            </div>
+            <div class="ins-sec" id="snapshotSec">
+              <h4>快照版本</h4>
+              <div class="ins-btns">
+                <button type="button" id="btnSaveSnapshot">＋ 保存快照</button>
+              </div>
+              <div id="snapshotList"></div>
+            </div>
+            <div class="ins-sec" id="historySec">
+              <h4>编辑历史</h4>
+              <div class="ins-btns">
+                <button type="button" id="btnClearGuides">清除参考线</button>
+              </div>
+              <div id="historyList"></div>
+            </div>
+            <div class="ins-sec ins-need-pick">
+              <h4>元素</h4>
+              <div id="elSummary">未选中</div>
+              <div id="elBreadcrumb"></div>
+              <div class="ins-btns">
+                <button type="button" id="btnSelectParent">选中父级</button>
+                <button type="button" id="btnToggleLock" title="Ctrl+L">
+                  锁定
+                </button>
+                <button type="button" id="btnToggleHide" title="Ctrl+H">
+                  隐藏
+                </button>
+                <button type="button" id="btnCopyStyle" title="Ctrl+Alt+C">
+                  复制样式
+                </button>
+                <button type="button" id="btnPasteStyle" title="Ctrl+Alt+V">
+                  粘贴样式
+                </button>
+              </div>
+            </div>
+            <div class="ins-sec ins-need-pick">
+              <h4>文案</h4>
+              <div id="textTargetList"></div>
+            </div>
+            <div class="ins-sec ins-need-pick">
+              <h4>尺寸</h4>
+              <div class="ins-grid">
+                <div class="ins-field">
+                  <label>宽</label><input id="insW" placeholder="auto" />
+                </div>
+                <div class="ins-field">
+                  <label>高</label><input id="insH" placeholder="auto" />
+                </div>
+                <div class="ins-field">
+                  <label>最小宽</label><input id="insMinW" placeholder="auto" />
+                </div>
+                <div class="ins-field">
+                  <label>最小高</label><input id="insMinH" placeholder="auto" />
+                </div>
+                <div class="ins-field">
+                  <label>box-sizing</label>
+                  <select id="insBoxSizing">
+                    <option value="">默认</option>
+                    <option value="content-box">content-box</option>
+                    <option value="border-box">border-box</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="ins-sec ins-need-pick">
+              <h4>间距</h4>
+              <div class="ins-grid">
+                <div class="ins-field">
+                  <label>margin 上</label><input id="insMt" placeholder="0" />
+                </div>
+                <div class="ins-field">
+                  <label>margin 右</label><input id="insMr" placeholder="0" />
+                </div>
+                <div class="ins-field">
+                  <label>margin 下</label><input id="insMb" placeholder="0" />
+                </div>
+                <div class="ins-field">
+                  <label>margin 左</label><input id="insMl" placeholder="0" />
+                </div>
+                <div class="ins-field">
+                  <label>padding 上</label><input id="insPt" placeholder="0" />
+                </div>
+                <div class="ins-field">
+                  <label>padding 右</label><input id="insPr" placeholder="0" />
+                </div>
+                <div class="ins-field">
+                  <label>padding 下</label><input id="insPb" placeholder="0" />
+                </div>
+                <div class="ins-field">
+                  <label>padding 左</label><input id="insPl" placeholder="0" />
+                </div>
+              </div>
+            </div>
+            <div class="ins-sec ins-need-pick">
+              <h4>布局</h4>
+              <div class="ins-grid">
+                <div class="ins-field span2">
+                  <label>display</label>
+                  <select id="insDisplay">
+                    <option value="">默认</option>
+                    <option value="block">block</option>
+                    <option value="inline">inline</option>
+                    <option value="inline-block">inline-block</option>
+                    <option value="flex">flex</option>
+                    <option value="grid">grid</option>
+                    <option value="none">none</option>
+                  </select>
+                </div>
+                <div class="ins-field">
+                  <label>flex 方向</label>
+                  <select id="insFlexDir">
+                    <option value="">默认</option>
+                    <option value="row">row</option>
+                    <option value="column">column</option>
+                    <option value="row-reverse">row-reverse</option>
+                    <option value="column-reverse">column-reverse</option>
+                  </select>
+                </div>
+                <div class="ins-field">
+                  <label>flex 换行</label>
+                  <select id="insFlexWrap">
+                    <option value="">默认</option>
+                    <option value="nowrap">nowrap</option>
+                    <option value="wrap">wrap</option>
+                    <option value="wrap-reverse">wrap-reverse</option>
+                  </select>
+                </div>
+                <div class="ins-field">
+                  <label>主轴对齐</label>
+                  <select id="insJustify">
+                    <option value="">默认</option>
+                    <option value="flex-start">flex-start</option>
+                    <option value="center">center</option>
+                    <option value="flex-end">flex-end</option>
+                    <option value="space-between">space-between</option>
+                    <option value="space-around">space-around</option>
+                    <option value="space-evenly">space-evenly</option>
+                  </select>
+                </div>
+                <div class="ins-field">
+                  <label>交叉轴对齐</label>
+                  <select id="insAlignItems">
+                    <option value="">默认</option>
+                    <option value="flex-start">flex-start</option>
+                    <option value="center">center</option>
+                    <option value="flex-end">flex-end</option>
+                    <option value="stretch">stretch</option>
+                    <option value="baseline">baseline</option>
+                  </select>
+                </div>
+                <div class="ins-field">
+                  <label>gap</label><input id="insGap" placeholder="0" />
+                </div>
+                <div class="ins-field span2">
+                  <label>grid 列</label
+                  ><input id="insGridCols" placeholder="如 1fr 1fr 或 repeat(3,1fr)" />
+                </div>
+                <div class="ins-field span2">
+                  <label>grid 行</label
+                  ><input id="insGridRows" placeholder="如 auto 1fr auto" />
+                </div>
+                <div class="ins-field">
+                  <label>align-self</label>
+                  <select id="insAlignSelf">
+                    <option value="">默认</option>
+                    <option value="auto">auto</option>
+                    <option value="flex-start">flex-start</option>
+                    <option value="center">center</option>
+                    <option value="flex-end">flex-end</option>
+                    <option value="stretch">stretch</option>
+                  </select>
+                </div>
+                <div class="ins-field">
+                  <label>flex-grow</label><input id="insFlexGrow" placeholder="0" />
+                </div>
+                <div class="ins-field">
+                  <label>flex-shrink</label><input id="insFlexShrink" placeholder="1" />
+                </div>
+                <div class="ins-field">
+                  <label>flex-basis</label><input id="insFlexBasis" placeholder="auto" />
+                </div>
+                <div class="ins-field">
+                  <label>order</label><input id="insOrder" placeholder="0" />
+                </div>
+              </div>
+            </div>
+            <div class="ins-sec ins-need-pick">
+              <h4>定位</h4>
+              <div class="ins-grid">
+                <div class="ins-field span2">
+                  <label>position</label>
+                  <select id="insPosition">
+                    <option value="">默认</option>
+                    <option value="static">static</option>
+                    <option value="relative">relative</option>
+                    <option value="absolute">absolute</option>
+                    <option value="fixed">fixed</option>
+                    <option value="sticky">sticky</option>
+                  </select>
+                </div>
+                <div class="ins-field">
+                  <label>top</label><input id="insTop" placeholder="auto" />
+                </div>
+                <div class="ins-field">
+                  <label>right</label><input id="insRight" placeholder="auto" />
+                </div>
+                <div class="ins-field">
+                  <label>bottom</label><input id="insBottom" placeholder="auto" />
+                </div>
+                <div class="ins-field">
+                  <label>left</label><input id="insLeft" placeholder="auto" />
+                </div>
+                <div class="ins-field">
+                  <label>z-index</label><input id="insZ" placeholder="auto" />
+                </div>
+              </div>
+              <div class="ins-btns">
+                <button type="button" data-z="up">层级 +1</button>
+                <button type="button" data-z="down">层级 -1</button>
+                <button type="button" data-z="front">置顶</button>
+                <button type="button" data-z="back">置底</button>
+              </div>
+            </div>
+            <div class="ins-sec ins-need-pick">
+              <h4>外观</h4>
+              <div class="ins-grid">
+                <div class="ins-field">
+                  <label>字号</label><input id="insFontSize" placeholder="14px" />
+                </div>
+                <div class="ins-field">
+                  <label>字重</label>
+                  <select id="insFontWeight">
+                    <option value="">默认</option>
+                    <option value="normal">normal</option>
+                    <option value="bold">bold</option>
+                    <option value="600">600</option>
+                    <option value="700">700</option>
+                  </select>
+                </div>
+                <div class="ins-field">
+                  <label>圆角</label><input id="insRadius" placeholder="0" />
+                </div>
+                <div class="ins-field">
+                  <label>透明度</label><input id="insOpacity" placeholder="1" />
+                </div>
+              </div>
+            </div>
+            <div class="ins-sec" id="alignSec" style="display: none">
+              <h4>对齐 · 多选</h4>
+              <div class="ins-btns">
+                <button type="button" data-align="left">左</button>
+                <button type="button" data-align="centerX">中</button>
+                <button type="button" data-align="right">右</button>
+                <button type="button" data-align="top">上</button>
+                <button type="button" data-align="centerY">中</button>
+                <button type="button" data-align="bottom">下</button>
+                <button type="button" data-align="distH">横分布</button>
+                <button type="button" data-align="distV">纵分布</button>
+                <button type="button" data-group="group">⧉ 组合</button>
+                <button type="button" data-group="ungroup">⤢ 解组</button>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+    <button type="button" id="btnToggleInspector">⚙ 属性</button>
+
+    <div id="hoverBox" class="ovl"></div>
+    <div id="pickBox" class="ovl"></div>
+    <div id="handleLayer">
+      <div class="drag-area" title="拖拽移动（Alt 自由定位）"></div>
+      <span class="rh rh-nw" data-r="nw"></span>
+      <span class="rh rh-n" data-r="n"></span>
+      <span class="rh rh-ne" data-r="ne"></span>
+      <span class="rh rh-w" data-r="w"></span>
+      <span class="rh rh-e" data-r="e"></span>
+      <span class="rh rh-sw" data-r="sw"></span>
+      <span class="rh rh-s" data-r="s"></span>
+      <span class="rh rh-se" data-r="se"></span>
+    </div>
+    <div id="insertLine" class="h"></div>
+    <div id="dragGhost"></div>
+    <div id="multiPickLayer"></div>
+    <div id="guideLayer"></div>
+    <div id="userGuideLayer"></div>
+    <div id="marqueeBox"></div>
+    <div id="gridOverlayLayer"></div>
+
+    <div id="blockBar">
+      <button data-act="color">🎨 颜色</button>
+      <button data-act="dup">⧉ 复制</button>
+      <button data-act="copyStyle" title="Ctrl+Alt+C">🖌 样式</button>
+      <button data-act="pasteStyle" title="Ctrl+Alt+V">🧴 贴样式</button>
+      <button data-act="lock" title="Ctrl+L">🔒 锁定</button>
+      <button data-act="hide" title="Ctrl+H">👁 隐藏</button>
+      <button data-act="group" title="Ctrl+G">⊞ 组合</button>
+      <button data-act="ungroup" title="Ctrl+Shift+G">⤢ 解组</button>
+      <button data-act="up">↑ 上移</button>
+      <button data-act="down">↓ 下移</button>
+      <button data-act="del" class="warn">🗑 删除</button>
+    </div>
+
+    <div id="textBar">
+      <button data-cmd="bold"><b>B</b></button>
+      <button data-cmd="italic"><i>I</i></button>
+      <button data-cmd="underline"><u>U</u></button>
+      <button data-cmd="strikeThrough"><s>S</s></button>
+      <span class="sep"></span>
+      <label title="文字颜色"
+        >🅰<input type="color" id="selFore" value="#EA580C"
+      /></label>
+      <label title="背景高亮"
+        >🖍<input type="color" id="selBack" value="#FDE68A"
+      /></label>
+      <span class="sep"></span>
+      <button data-fs="-1" title="缩小字号">A−</button>
+      <button data-fs="1" title="放大字号">A＋</button>
+    </div>
+
+    <div id="palette">
+      <h4>调整颜色 <span id="palClose">✕</span></h4>
+      <div class="crow">
+        <em>文字</em><input type="color" id="pText" /><input
+          type="text"
+          id="pTextHex"
+          placeholder="#333333"
+        /><button class="clr" data-p="color" title="清除">✕</button>
+      </div>
+      <div class="crow">
+        <em>背景</em><input type="color" id="pBg" /><input
+          type="text"
+          id="pBgHex"
+          placeholder="#FFFFFF"
+        /><button class="clr" data-p="backgroundColor" title="清除">✕</button>
+      </div>
+      <div class="crow">
+        <em>边框</em><input type="color" id="pBd" /><input
+          type="text"
+          id="pBdHex"
+          placeholder="#DDDDDD"
+        /><button class="clr" data-p="borderColor" title="清除">✕</button>
+      </div>
+      <div class="crow">
+        <em>样式</em><button class="pbtn" id="pBold"><b>B</b> 加粗</button
+        ><button class="pbtn" data-efs="-1">A−</button
+        ><button class="pbtn" data-efs="1">A＋</button>
+      </div>
+      <div id="swatches"></div>
+      <div id="recentSwatches">
+        <em>最近使用</em>
+      </div>
+    </div>
+
+    <div id="svgTextPop">
+      <input id="svgTextInput" type="text" placeholder="SVG 文字" />
+      <div class="svg-pop-btns">
+        <button type="button" id="svgTextCancel">取消</button>
+        <button type="button" id="svgTextOk" class="primary">确定</button>
+      </div>
+    </div>
+
+    <div id="helpModal">
+      <div id="helpCard">
+        <h3>
+          随手改 · 快捷键
+          <button type="button" id="helpClose">✕</button>
+        </h3>
+        <table>
+          <tr>
+            <td>Ctrl + Z / Y</td>
+            <td>撤销 / 重做</td>
+          </tr>
+          <tr>
+            <td>Ctrl + S</td>
+            <td>导出（独立打开时）</td>
+          </tr>
+          <tr>
+            <td>Ctrl + D</td>
+            <td>复制选中元素</td>
+          </tr>
+          <tr>
+            <td>Ctrl + G / Shift + G</td>
+            <td>组合 / 解组</td>
+          </tr>
+          <tr>
+            <td>Ctrl + L / H</td>
+            <td>锁定 / 隐藏</td>
+          </tr>
+          <tr>
+            <td>Ctrl + Alt + C / V</td>
+            <td>复制 / 粘贴样式</td>
+          </tr>
+          <tr>
+            <td>Ctrl + ] / [</td>
+            <td>图层上移 / 下移（Shift 置顶/底）</td>
+          </tr>
+          <tr>
+            <td>方向键 / Shift</td>
+            <td>微调 1px / 10px</td>
+          </tr>
+          <tr>
+            <td>Alt + 拖拽</td>
+            <td>自由定位移动</td>
+          </tr>
+          <tr>
+            <td>Alt + 单击</td>
+            <td>选中锁定元素 / 整块容器</td>
+          </tr>
+          <tr>
+            <td>Ctrl + 单击</td>
+            <td>多选</td>
+          </tr>
+          <tr>
+            <td>空白拖拽</td>
+            <td>框选</td>
+          </tr>
+          <tr>
+            <td>Delete</td>
+            <td>删除选中</td>
+          </tr>
+          <tr>
+            <td>Esc</td>
+            <td>取消选中</td>
+          </tr>
+          <tr>
+            <td>?</td>
+            <td>打开本帮助</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+      (function () {
+        "use strict";
+        /* ---------- 状态 ---------- */
+        const $ = (id) => document.getElementById(id);
+        const view = $("view"),
+          stage = $("stage"),
+          tip = $("tip");
+        const hoverBox = $("hoverBox"),
+          pickBox = $("pickBox");
+        const blockBar = $("blockBar"),
+          textBar = $("textBar"),
+          palette = $("palette");
+        const handleLayer = $("handleLayer"),
+          insertLine = $("insertLine"),
+          dragGhost = $("dragGhost"),
+          multiPickLayer = $("multiPickLayer"),
+          guideLayer = $("guideLayer"),
+          userGuideLayer = $("userGuideLayer"),
+          marqueeBox = $("marqueeBox"),
+          gridOverlayLayer = $("gridOverlayLayer"),
+          inspector = $("inspector"),
+          svgTextPop = $("svgTextPop");
+
+        let rawOriginal = ""; // 打开时的原始 HTML
+        let docHTML = ""; // 当前权威版本
+        let doctype = "<!DOCTYPE html>";
+        let fileName = "";
+        let undoStack = []; // {html,label,ts}
+        let redoStack = [];
+        const UNDO_MAX = 50;
+        const SNAP_THRESHOLD = 6;
+        const SNAPSHOT_MAX = 12;
+        const PREF_SNAP = "snapedit-pref-snap";
+        const PREF_GRID = "snapedit-pref-grid";
+        const PREF_RULER = "snapedit-pref-ruler";
+        let snapEnabled = true;
+        let gridEnabled = false;
+        let rulerEnabled = false;
+        let userGuides = []; // {type:'h'|'v', pos: number relative to iframe}
+        let draggingUserGuide = null;
+        let creatingGuide = null;
+        let vdoc = null; // iframe document
+        let picked = null; // 主选中元素
+        let pickedList = []; // 多选列表
+        let editingEl = null; // 正在编辑文字的元素
+        let editSnapshotPending = false;
+        let dirty = false;
+        let syncingInspector = false;
+        let svgEditTarget = null;
+
+        /* 拖拽 / 缩放状态 */
+        let dragEl = null;
+        let dragNodes = [];
+        let dragMode = "flow";
+        let dragStart = null;
+        let dropHint = null;
+        let resizeDir = "";
+        let resizeStart = null;
+        let insUndoProps = {};
+        let marqueeActive = false;
+        let marqueeStart = null;
+        let suppressNextClick = false;
+        let styleClipboard = "";
+        let treeCollapsed = new Set();
+        let treeNodes = [];
+        let treeRefreshTimer = null;
+
+        const SWATCH = [
+          "#1E1B4B",
+          "#4338CA",
+          "#6366F1",
+          "#EA580C",
+          "#C2410C",
+          "#0D9488",
+          "#14B8A6",
+          "#9D174D",
+          "#D97706",
+          "#FDE68A",
+          "#292524",
+          "#57534E",
+          "#A8A29E",
+          "#FFFFFF",
+          "#F5F5F4",
+          "#FAFAF5",
+        ];
+
+        /* ---------- 工具 ---------- */
+        function toast(msg) {
+          const t = $("toast");
+          t.textContent = msg;
+          t.classList.add("on");
+          clearTimeout(t._h);
+          t._h = setTimeout(() => t.classList.remove("on"), 2200);
+        }
+        function setDirty(d) {
+          dirty = d;
+          const b = $("badge");
+          b.style.display = "flex";
+          b.textContent = d ? "已修改" : "未修改";
+          b.classList.toggle("dirty", d);
+          if (typeof refreshHistoryList === "function") refreshHistoryList();
+        }
+        function serialize() {
+          if (!vdoc) return docHTML;
+          vdoc.querySelectorAll("[data-snap-hide]").forEach((el) => {
+            el.style.outline = "";
+            el.style.outlineOffset = "";
+            el.style.display = "none";
+          });
+          let html = vdoc.documentElement.outerHTML
+            .replace(/ contenteditable="(true|plaintext-only)"/g, "")
+            .replace(/ spellcheck="false"/g, "")
+            .replace(/ data-snap-(?!lock\b|group\b|hide\b|prev-display\b)[^=]*="[^"]*"/g, "");
+          if (picked && isHidden(picked)) revealHiddenForEdit(picked);
+          return doctype + "\n" + html;
+        }
+        function pushUndo(label) {
+          undoStack.push({
+            html: docHTML,
+            label: label || "编辑",
+            ts: Date.now(),
+          });
+          if (undoStack.length > UNDO_MAX) undoStack.shift();
+          redoStack = [];
+          $("btnUndo").disabled = false;
+          $("btnRedo").disabled = true;
+          refreshHistoryList();
+        }
+        function stackHtml(item) {
+          return typeof item === "string" ? item : item.html;
+        }
+        function applyDocSnapshot(html) {
+          docHTML = html;
+          setDirty(docHTML !== rawOriginal);
+          render();
+        }
+        function doUndo() {
+          if (!undoStack.length) return;
+          redoStack.push({
+            html: docHTML,
+            label: "当前",
+            ts: Date.now(),
+          });
+          const item = undoStack.pop();
+          docHTML = stackHtml(item);
+          $("btnUndo").disabled = !undoStack.length;
+          $("btnRedo").disabled = !redoStack.length;
+          applyDocSnapshot(docHTML);
+          refreshHistoryList();
+          toast("已撤销" + (item && item.label ? "：" + item.label : ""));
+        }
+        function doRedo() {
+          if (!redoStack.length) return;
+          undoStack.push({
+            html: docHTML,
+            label: "当前",
+            ts: Date.now(),
+          });
+          const item = redoStack.pop();
+          docHTML = stackHtml(item);
+          $("btnUndo").disabled = !undoStack.length;
+          $("btnRedo").disabled = !redoStack.length;
+          applyDocSnapshot(docHTML);
+          refreshHistoryList();
+          toast("已重做");
+        }
+        function refreshHistoryList() {
+          const box = $("historyList");
+          if (!box) return;
+          box.innerHTML = "";
+          const rows = [];
+          rows.push({
+            kind: "cur",
+            label: dirty ? "当前（已修改）" : "当前",
+            idx: -1,
+          });
+          for (let i = undoStack.length - 1; i >= 0; i--) {
+            const it = undoStack[i];
+            rows.push({
+              kind: "undo",
+              label: (typeof it === "string" ? "编辑" : it.label) || "编辑",
+              idx: i,
+            });
+          }
+          if (!undoStack.length && !dirty) {
+            box.innerHTML =
+              '<div style="padding:8px;color:#9c9cb0;font-size:12px">暂无历史</div>';
+            return;
+          }
+          rows.forEach((r, n) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "hist-row" + (r.kind === "cur" ? " cur" : "");
+            btn.innerHTML =
+              '<span class="hi">' +
+              (r.kind === "cur" ? "●" : String(undoStack.length - r.idx)) +
+              '</span><span class="hl">' +
+              r.label +
+              "</span>";
+            if (r.kind === "undo") {
+              btn.onclick = () => jumpToUndoIndex(r.idx);
+            }
+            box.appendChild(btn);
+            if (n > 24) return;
+          });
+        }
+        function jumpToUndoIndex(idx) {
+          if (idx < 0 || idx >= undoStack.length) return;
+          const newer = undoStack.splice(idx + 1);
+          redoStack.push({ html: docHTML, label: "当前", ts: Date.now() });
+          for (let i = newer.length - 1; i >= 0; i--) redoStack.push(newer[i]);
+          const target = undoStack.pop();
+          if (!target) return;
+          docHTML = stackHtml(target);
+          $("btnUndo").disabled = !undoStack.length;
+          $("btnRedo").disabled = !redoStack.length;
+          applyDocSnapshot(docHTML);
+          refreshHistoryList();
+          toast(
+            "已回到：" +
+              (typeof target === "string" ? "历史" : target.label || "历史"),
+          );
+        }
+        function getSelectionEls() {
+          return pickedList.filter((el) => el && el.isConnected);
+        }
+        function styleVal(el, prop) {
+          const inline = el.style[prop];
+          if (inline) return inline;
+          try {
+            return view.contentWindow.getComputedStyle(el)[prop] || "";
+          } catch (e) {
+            return "";
+          }
+        }
+        function pxNum(v) {
+          const n = parseFloat(v);
+          return Number.isFinite(n) ? n : 0;
+        }
+        function commit() {
+          docHTML = serialize();
+          setDirty(docHTML !== rawOriginal);
+          scheduleTreeRefresh();
+        }
+        let _cmH = null;
+        function commitSoon() {
+          clearTimeout(_cmH);
+          _cmH = setTimeout(commit, 300);
+        }
+
+        /* ---------- 载入 ---------- */
+        function loadFile(file) {
+          if (
+            !file ||
+            (!/\.(html?|htm)$/i.test(file.name) && file.type !== "text/html")
+          ) {
+            toast("请选择 HTML 文件");
+            return;
+          }
+          const r = new FileReader();
+          r.onload = () => {
+            fileName = file.name;
+            rawOriginal = String(r.result);
+            const m = rawOriginal.match(/^\s*<!doctype[^>]*>/i);
+            doctype = m ? m[0].trim() : "<!DOCTYPE html>";
+            docHTML = rawOriginal;
+            undoStack = [];
+            redoStack = [];
+            $("btnUndo").disabled = true;
+            $("btnRedo").disabled = true;
+            $("fileName").style.display = "";
+            $("fileName").textContent = fileName;
+            ["tglEdit", "tglScript", "btnReset", "btnSave"].forEach(
+              (id) => ($(id).disabled = false),
+            );
+            $("tglScript").checked = false;
+            $("tglEdit").checked = true;
+            setDirty(false);
+            render();
+            toast("已载入：" + fileName);
+            refreshSnapshotList();
+          };
+          r.readAsText(file);
+        }
+        $("btnOpen").onclick = () => $("fileInput").click();
+        $("fileInput").onchange = (e) => {
+          loadFile(e.target.files[0]);
+          e.target.value = "";
+        };
+        stage.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          stage.classList.add("dragover");
+        });
+        stage.addEventListener("dragleave", () =>
+          stage.classList.remove("dragover"),
+        );
+        stage.addEventListener("drop", (e) => {
+          e.preventDefault();
+          stage.classList.remove("dragover");
+          loadFile(e.dataTransfer.files[0]);
+        });
+
+        /* ---------- 渲染 ---------- */
+        function render() {
+          clearUI();
+          const scripts = $("tglScript").checked;
+          view.setAttribute(
+            "sandbox",
+            scripts ? "allow-scripts allow-same-origin" : "allow-same-origin",
+          );
+          view.style.display = "block";
+          $("placeholder").style.display = "none";
+          view.srcdoc = docHTML;
+        }
+        view.addEventListener("load", () => {
+          try {
+            vdoc = view.contentDocument;
+          } catch (e) {
+            vdoc = null;
+            return;
+          }
+          if (!vdoc) return;
+          try {
+            vdoc.execCommand("styleWithCSS", false, true);
+          } catch (e) {}
+          bindViewer();
+          updateTip();
+          refreshTree();
+          paintRulers();
+          renderUserGuides();
+          refreshHistoryList();
+        });
+
+        function editableOn() {
+          return $("tglEdit").checked && !$("tglScript").checked && vdoc;
+        }
+        function updateTip() {
+          if (editableOn()) {
+            tip.style.opacity = "1";
+            clearTimeout(tip._h);
+            tip._h = setTimeout(() => (tip.style.opacity = "0"), 5000);
+          } else tip.style.opacity = "0";
+        }
+
+        /* ---------- 视图内交互 ---------- */
+        function bindViewer() {
+          const win = view.contentWindow;
+          vdoc.addEventListener(
+            "mouseover",
+            (e) => {
+              if (!editableOn()) return;
+              const el = resolve(e.target);
+              if (el && isLocked(el) && lockRoot(el) !== picked) {
+                hoverBox.style.borderStyle = "dashed";
+              } else {
+                hoverBox.style.borderStyle = "solid";
+              }
+              if (el && el !== picked && el !== editingEl)
+                showBox(hoverBox, el);
+              else hideEl(hoverBox);
+            },
+            true,
+          );
+          vdoc.addEventListener("mouseout", () => hideEl(hoverBox), true);
+          vdoc.addEventListener(
+            "mousedown",
+            (e) => {
+              if (!editableOn() || e.button !== 0) return;
+              if (dragEl || resizeDir || editingEl) return;
+              const el = resolve(e.target);
+              if (el) return;
+              e.preventDefault();
+              marqueeActive = true;
+              marqueeStart = { x: e.clientX, y: e.clientY };
+              suppressNextClick = false;
+              marqueeBox.style.display = "block";
+              updateMarqueeBox(e.clientX, e.clientY);
+            },
+            true,
+          );
+          vdoc.addEventListener(
+            "click",
+            (e) => {
+              if (!editableOn()) return;
+              if (dragEl || resizeDir) return;
+              if (suppressNextClick) {
+                suppressNextClick = false;
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+              }
+              e.preventDefault();
+              e.stopPropagation();
+              const el = resolve(e.target);
+              if (!el) {
+                deselect();
+                return;
+              }
+              const locked = lockRoot(el);
+              if (locked) {
+                if (e.altKey || e.ctrlKey || e.metaKey) {
+                  if (e.ctrlKey || e.metaKey) togglePick(locked);
+                  else pickBlock(locked);
+                  return;
+                }
+                toast("已锁定，Alt+单击或从元素树选中后解锁");
+                return;
+              }
+              if (e.ctrlKey || e.metaKey) {
+                togglePick(el);
+                return;
+              }
+              if (isSvgText(el)) {
+                pickBlock(el);
+                return;
+              }
+              if (e.altKey) {
+                const container = el.closest("button,a,label,summary") || el;
+                pickBlock(container);
+                return;
+              }
+              const textTarget = findEditableTextElement(el);
+              if (textTarget) beginEdit(textTarget);
+              else pickBlock(el);
+            },
+            true,
+          );
+          vdoc.addEventListener(
+            "dblclick",
+            (e) => {
+              if (!editableOn()) return;
+              e.preventDefault();
+              e.stopPropagation();
+              const el = resolve(e.target);
+              if (el && isSvgText(el)) editSvgText(el);
+            },
+            true,
+          );
+          vdoc.addEventListener(
+            "paste",
+            (e) => {
+              // 粘贴只留纯文本
+              if (!editingEl) return;
+              e.preventDefault();
+              const t = (e.clipboardData || {}).getData
+                ? e.clipboardData.getData("text/plain")
+                : "";
+              if (t) vdoc.execCommand("insertText", false, t);
+            },
+            true,
+          );
+          vdoc.addEventListener(
+            "input",
+            (e) => {
+              if (editingEl && editSnapshotPending) {
+                pushUndo();
+                editSnapshotPending = false;
+              }
+              if (editingEl) commitSoon();
+            },
+            true,
+          );
+          vdoc.addEventListener("selectionchange", onSelChange);
+          win.addEventListener("scroll", reposition, true);
+          win.addEventListener("resize", reposition);
+          vdoc.addEventListener(
+            "keydown",
+            (e) => {
+              if (e.key === "Escape") deselect();
+              if ((e.metaKey || e.ctrlKey) && e.key === "z" && !e.shiftKey) {
+                e.preventDefault();
+                doUndo();
+              }
+              if ((e.metaKey || e.ctrlKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
+                e.preventDefault();
+                doRedo();
+              }
+            },
+            true,
+          );
+          checkBlank();
+        }
+
+        /* 脚本渲染页检测：静态预览下几乎没内容 → 提示开动态预览 */
+        function checkBlank() {
+          if ($("tglScript").checked) {
+            $("banner").style.display = "none";
+            return;
+          }
+          setTimeout(() => {
+            if (!vdoc || !vdoc.body) return;
+            const textLen = (vdoc.body.innerText || "").trim().length;
+            const hasScript = /<script[\s>]/i.test(docHTML);
+            $("banner").style.display =
+              hasScript && textLen < 40 ? "flex" : "none";
+          }, 300);
+        }
+        $("bannerBtn").onclick = () => {
+          $("banner").style.display = "none";
+          $("tglScript").checked = true;
+          $("tglScript").dispatchEvent(new Event("change"));
+        };
+        $("bannerClose").onclick = () => ($("banner").style.display = "none");
+
+        /* ---------- 目标解析 ---------- */
+        const SKIP = new Set(["HTML", "BODY", "HEAD"]);
+        const NO_PICK = new Set([
+          "SCRIPT",
+          "STYLE",
+          "META",
+          "LINK",
+          "TITLE",
+          "NOSCRIPT",
+        ]);
+        const ATTR_TEXT = [
+          ["placeholder", "placeholder"],
+          ["alt", "alt"],
+          ["title", "title"],
+          ["aria-label", "aria-label"],
+          ["value", "value"],
+        ];
+        function resolve(t) {
+          if (!t || SKIP.has(t.tagName) || NO_PICK.has(t.tagName)) return null;
+          return t;
+        }
+        function lockRoot(el) {
+          let n = el;
+          while (n && n.nodeType === 1 && !SKIP.has(n.tagName)) {
+            if (n.hasAttribute("data-snap-lock")) return n;
+            n = n.parentElement;
+          }
+          return null;
+        }
+        function isLocked(el) {
+          return !!lockRoot(el);
+        }
+        function isHidden(el) {
+          return !!(el && el.hasAttribute("data-snap-hide"));
+        }
+        function applyHideStyle(el, hide) {
+          if (!el) return;
+          if (hide) {
+            if (!el.hasAttribute("data-snap-prev-display")) {
+              el.setAttribute(
+                "data-snap-prev-display",
+                el.style.display || "",
+              );
+            }
+            el.setAttribute("data-snap-hide", "1");
+            el.style.display = "none";
+          } else {
+            const prev = el.getAttribute("data-snap-prev-display");
+            el.removeAttribute("data-snap-hide");
+            el.removeAttribute("data-snap-prev-display");
+            el.style.display = prev != null ? prev : "";
+          }
+        }
+        function revealHiddenForEdit(el) {
+          if (!isHidden(el)) return;
+          const prev = el.getAttribute("data-snap-prev-display");
+          el.style.display = prev || "";
+          el.style.outline = "2px dashed #64748b";
+          el.style.outlineOffset = "2px";
+        }
+        function rehideIfNeeded(el) {
+          if (!el || !isHidden(el)) return;
+          el.style.outline = "";
+          el.style.outlineOffset = "";
+          el.style.display = "none";
+        }
+        function isTextEl(el) {
+          if (!el || el.nodeType !== 1) return false;
+          if (
+            [
+              "IMG",
+              "VIDEO",
+              "HR",
+              "SVG",
+              "CANVAS",
+              "IFRAME",
+              "INPUT",
+              "SELECT",
+              "TEXTAREA",
+            ].includes(el.tagName)
+          )
+            return false;
+          if (el.namespaceURI === "http://www.w3.org/2000/svg") return false;
+          for (const n of el.childNodes) {
+            if (n.nodeType === 3 && n.textContent.trim()) return true;
+          }
+          return false;
+        }
+        function isSvgText(el) {
+          return (
+            el &&
+            el.namespaceURI === "http://www.w3.org/2000/svg" &&
+            ["text", "tspan"].includes(el.tagName.toLowerCase())
+          );
+        }
+        function isInteractiveContainer(el) {
+          return ["BUTTON", "A", "LABEL", "SUMMARY"].includes(el.tagName);
+        }
+        function findEditableTextElement(el) {
+          if (!el) return null;
+          if (isSvgText(el)) return el;
+          if (isTextEl(el)) return el;
+          const textNodes = [];
+          const walk = (n) => {
+            if (n.nodeType === 3 && n.textContent.trim()) textNodes.push(n);
+            else if (n.nodeType === 1) {
+              if (
+                ["SVG", "IMG", "VIDEO", "BR", "HR", "SCRIPT", "STYLE"].includes(
+                  n.tagName,
+                )
+              )
+                return;
+              for (const c of n.childNodes) walk(c);
+            }
+          };
+          walk(el);
+          if (!textNodes.length) return null;
+          if (textNodes.length === 1) {
+            const p = textNodes[0].parentElement;
+            return p && el.contains(p) ? p : el;
+          }
+          const direct = textNodes.find((n) => n.parentElement === el);
+          if (direct) return el;
+          return null;
+        }
+        function collectTextTargets(root) {
+          const list = [];
+          if (!root) return list;
+          if (isSvgText(root)) {
+            list.push({
+              kind: "svg",
+              el: root,
+              label: "SVG 文字",
+              get: () => root.textContent || "",
+              set: (v) => {
+                root.textContent = v;
+              },
+            });
+          }
+          const seen = new Set();
+          const walk = (node) => {
+            if (node.nodeType === 3) {
+              const t = node.textContent.trim();
+              if (!t || seen.has(node)) return;
+              seen.add(node);
+              const parent = node.parentElement;
+              if (!parent || !root.contains(parent)) return;
+              list.push({
+                kind: "text",
+                el: parent,
+                node,
+                label: "文本 · " + (parent.tagName || "").toLowerCase(),
+                get: () => node.textContent || "",
+                set: (v) => {
+                  node.textContent = v;
+                },
+              });
+              return;
+            }
+            if (node.nodeType !== 1) return;
+            if (isSvgText(node)) {
+              if (!seen.has(node)) {
+                seen.add(node);
+                list.push({
+                  kind: "svg",
+                  el: node,
+                  label: "SVG · " + node.tagName.toLowerCase(),
+                  get: () => node.textContent || "",
+                  set: (v) => {
+                    node.textContent = v;
+                  },
+                });
+              }
+              return;
+            }
+            if (["SCRIPT", "STYLE"].includes(node.tagName)) return;
+            for (const c of node.childNodes) walk(c);
+          };
+          if (!isSvgText(root)) walk(root);
+          ATTR_TEXT.forEach(([attr, label]) => {
+            if (!root.hasAttribute(attr)) return;
+            list.push({
+              kind: "attr",
+              el: root,
+              attr,
+              label: "属性 · " + label,
+              get: () => root.getAttribute(attr) || "",
+              set: (v) => {
+                if (v) root.setAttribute(attr, v);
+                else root.removeAttribute(attr);
+              },
+            });
+          });
+          return list;
+        }
+        function renderTextTargets(el) {
+          const box = $("textTargetList");
+          box.innerHTML = "";
+          const targets = collectTextTargets(el);
+          if (!targets.length) {
+            box.innerHTML =
+              '<div style="font-size:12px;color:#9c9cb0;padding:4px 0">无可编辑文案</div>';
+            return;
+          }
+          targets.forEach((t, i) => {
+            const row = document.createElement("div");
+            row.className = "text-target-item";
+            const lab = document.createElement("label");
+            lab.textContent = t.label + " #" + (i + 1);
+            const input =
+              t.get().length > 48 || t.kind === "attr"
+                ? document.createElement("textarea")
+                : document.createElement("input");
+            input.value = t.get();
+            input.dataset.idx = String(i);
+            let undone = false;
+            const apply = () => {
+              if (!picked && !editingEl) return;
+              const host = picked || editingEl;
+              if (!host || !host.isConnected) return;
+              const cur = collectTextTargets(host)[i];
+              if (!cur) return;
+              if (!undone) {
+                pushUndo();
+                undone = true;
+              }
+              cur.set(input.value);
+              commitSoon();
+            };
+            input.addEventListener("input", apply);
+            input.addEventListener("change", () => {
+              apply();
+              commit();
+              undone = false;
+            });
+            row.appendChild(lab);
+            row.appendChild(input);
+            box.appendChild(row);
+          });
+        }
+
+        /* ---------- SVG 内联文字编辑 ---------- */
+        function editSvgText(el) {
+          svgEditTarget = el;
+          $("svgTextInput").value = el.textContent || "";
+          const r = el.getBoundingClientRect();
+          const f = view.getBoundingClientRect();
+          svgTextPop.style.display = "block";
+          let x = f.left + r.left;
+          let y = f.top + r.bottom + 8;
+          if (y + 90 > window.innerHeight) y = f.top + r.top - 90;
+          x = Math.max(8, Math.min(x, window.innerWidth - 256));
+          svgTextPop.style.left = x + "px";
+          svgTextPop.style.top = y + "px";
+          $("svgTextInput").focus();
+          $("svgTextInput").select();
+        }
+        function closeSvgTextPop(save) {
+          if (save && svgEditTarget) {
+            const v = $("svgTextInput").value;
+            if (v !== svgEditTarget.textContent) {
+              pushUndo();
+              svgEditTarget.textContent = v;
+              commit();
+              renderTextTargets(picked || editingEl);
+              toast("SVG 文字已修改");
+            }
+          }
+          svgEditTarget = null;
+          svgTextPop.style.display = "none";
+        }
+        $("svgTextOk").onclick = () => closeSvgTextPop(true);
+        $("svgTextCancel").onclick = () => closeSvgTextPop(false);
+        $("svgTextInput").addEventListener("keydown", (e) => {
+          if (e.key === "Enter") closeSvgTextPop(true);
+          if (e.key === "Escape") closeSvgTextPop(false);
+        });
+
+        /* ---------- 文字编辑 ---------- */
+        function beginEdit(el) {
+          if (editingEl === el) return;
+          if (isLocked(el)) {
+            toast("已锁定，无法改字");
+            pickBlock(lockRoot(el) || el);
+            return;
+          }
+          endEdit();
+          unpick();
+          editingEl = el;
+          editSnapshotPending = true;
+          if (!isSvgText(el)) {
+            el.setAttribute("contenteditable", "true");
+            el.setAttribute("spellcheck", "false");
+            el.focus();
+          }
+          showBox(pickBox, el);
+          showBlockBar(el);
+          syncInspector(el);
+          hideHandles();
+        }
+        function endEdit() {
+          if (!editingEl) return;
+          clearTimeout(_cmH);
+          if (!isSvgText(editingEl)) {
+            editingEl.removeAttribute("contenteditable");
+            editingEl.removeAttribute("spellcheck");
+          }
+          commit();
+          editingEl = null;
+          hideEl(textBar);
+        }
+
+        /* ---------- 块选中 / 多选 ---------- */
+        function normalizePickList(list) {
+          return list.filter(
+            (el, i, arr) =>
+              el &&
+              el.isConnected &&
+              !SKIP.has(el.tagName) &&
+              !NO_PICK.has(el.tagName) &&
+              arr.indexOf(el) === i,
+          );
+        }
+        function setSelection(list, primary) {
+          const prevPicked = picked;
+          pickedList = normalizePickList(list);
+          picked = primary && pickedList.includes(primary) ? primary : pickedList[0] || null;
+          if (prevPicked && prevPicked !== picked && !pickedList.includes(prevPicked)) {
+            rehideIfNeeded(prevPicked);
+          }
+          if (!picked) {
+            unpick();
+            return;
+          }
+          if (isHidden(picked)) revealHiddenForEdit(picked);
+          showBox(pickBox, picked);
+          showBlockBar(picked);
+          syncInspector(picked);
+          updateHandles();
+          updateMultiBoxes();
+          updateAlignSection();
+          updateLayoutOverlay();
+          highlightTreeSelection();
+          renderBreadcrumb(picked);
+          refreshLayerPanel();
+          pickBox.classList.toggle("locked", !!(picked && isLocked(picked)));
+          pickBox.classList.toggle("hidden-el", !!(picked && isHidden(picked)));
+          syncLockButton();
+          syncHideButton();
+          if (window.innerWidth <= 900) inspector.classList.add("open");
+        }
+        function pickBlock(el) {
+          endEdit();
+          setSelection([el], el);
+        }
+        function togglePick(el) {
+          endEdit();
+          const target = resolve(el);
+          if (!target) return;
+          const idx = pickedList.indexOf(target);
+          if (idx >= 0) {
+            const next = pickedList.filter((_, i) => i !== idx);
+            if (!next.length) {
+              unpick();
+              return;
+            }
+            setSelection(next, next[next.length - 1]);
+            return;
+          }
+          setSelection([...pickedList, target], target);
+        }
+        function updateMultiBoxes() {
+          multiPickLayer.innerHTML = "";
+          pickedList.forEach((el) => {
+            if (el === picked || !el.isConnected) return;
+            const box = document.createElement("div");
+            box.className = "multi-pick";
+            multiPickLayer.appendChild(box);
+            showBox(box, el);
+          });
+        }
+        function updateAlignSection() {
+          const multi = pickedList.length >= 2;
+          $("alignSec").style.display = multi ? "block" : "none";
+          $("alignSec").querySelectorAll("[data-align]").forEach((btn) => {
+            btn.disabled = !multi;
+          });
+        }
+        function unpick() {
+          if (picked) rehideIfNeeded(picked);
+          pickedList.forEach(rehideIfNeeded);
+          picked = null;
+          pickedList = [];
+          hideEl(pickBox);
+          hideEl(blockBar);
+          hideHandles();
+          multiPickLayer.innerHTML = "";
+          clearInspector();
+          updateAlignSection();
+        }
+        function deselect() {
+          endEdit();
+          unpick();
+          hidePalette();
+          hideEl(textBar);
+          hideInsertLine();
+          hideEl(dragGhost);
+          clearGuides();
+          hideLayoutOverlay();
+          inspector.classList.remove("open");
+          highlightTreeSelection();
+          renderBreadcrumb(null);
+        }
+
+        /* ---------- 框选 ---------- */
+        function updateMarqueeBox(cx, cy) {
+          if (!marqueeStart) return;
+          const x1 = marqueeStart.x;
+          const y1 = marqueeStart.y;
+          const left = Math.min(x1, cx);
+          const top = Math.min(y1, cy);
+          marqueeBox.style.left = left + "px";
+          marqueeBox.style.top = top + "px";
+          marqueeBox.style.width = Math.abs(cx - x1) + "px";
+          marqueeBox.style.height = Math.abs(cy - y1) + "px";
+        }
+        function hideMarqueeBox() {
+          marqueeBox.style.display = "none";
+          marqueeStart = null;
+          marqueeActive = false;
+        }
+        function rectsIntersect(a, b) {
+          return !(
+            a.right < b.left ||
+            a.left > b.right ||
+            a.bottom < b.top ||
+            a.top > b.bottom
+          );
+        }
+        function findElementsInMarquee(x1, y1, x2, y2) {
+          const sel = {
+            left: Math.min(x1, x2),
+            top: Math.min(y1, y2),
+            right: Math.max(x1, x2),
+            bottom: Math.max(y1, y2),
+          };
+          if (sel.right - sel.left < 4 && sel.bottom - sel.top < 4) return [];
+          const hits = [];
+          vdoc.body.querySelectorAll("*").forEach((el) => {
+            if (SKIP.has(el.tagName) || NO_PICK.has(el.tagName)) return;
+            const r = el.getBoundingClientRect();
+            if (r.width < 2 && r.height < 2) return;
+            if (!rectsIntersect(sel, r)) return;
+            hits.push(el);
+          });
+          return hits.filter(
+            (el) => !hits.some((o) => o !== el && el.contains(o)),
+          );
+        }
+        function finishMarquee(cx, cy) {
+          if (!marqueeStart) return;
+          const sx = marqueeStart.x;
+          const sy = marqueeStart.y;
+          const hits = findElementsInMarquee(sx, sy, cx, cy).filter(
+            (el) => !isLocked(el) && !isHidden(el),
+          );
+          const moved = Math.abs(cx - sx) > 4 || Math.abs(cy - sy) > 4;
+          hideMarqueeBox();
+          if (hits.length) {
+            suppressNextClick = true;
+            setSelection(hits, hits[hits.length - 1]);
+            toast("已框选 " + hits.length + " 个元素");
+          } else if (moved) {
+            suppressNextClick = true;
+            deselect();
+          }
+        }
+
+        /* ---------- 组合 / 解组 ---------- */
+        function groupSelection() {
+          const els = getSelectionEls();
+          if (els.length < 2) {
+            toast("请至少选中 2 个同级元素");
+            return;
+          }
+          const parent = els[0].parentElement;
+          if (!parent || !els.every((e) => e.parentElement === parent)) {
+            toast("只能组合同一父级下的元素");
+            return;
+          }
+          pushUndo();
+          const ordered = [...parent.children].filter((c) => els.includes(c));
+          const wrapper = vdoc.createElement("div");
+          wrapper.setAttribute("data-snap-group", "1");
+          const cs = view.contentWindow.getComputedStyle(parent);
+          if (cs.display.includes("flex") || cs.display.includes("grid")) {
+            wrapper.style.display = "contents";
+          } else {
+            wrapper.style.position = "relative";
+          }
+          parent.insertBefore(wrapper, ordered[0]);
+          ordered.forEach((el) => wrapper.appendChild(el));
+          commit();
+          setSelection([wrapper], wrapper);
+          toast("已组合");
+        }
+        function ungroupSelection() {
+          const el = picked;
+          if (!el || !el.hasAttribute("data-snap-group") || !el.parentElement) {
+            toast("请选中组合容器");
+            return;
+          }
+          pushUndo();
+          const parent = el.parentElement;
+          const kids = [...el.children].filter((c) => c.nodeType === 1);
+          kids.forEach((k) => parent.insertBefore(k, el));
+          el.remove();
+          commit();
+          if (kids.length) setSelection(kids, kids[kids.length - 1]);
+          else deselect();
+          toast("已解组");
+        }
+
+        /* ---------- Grid / Flex 可视化 ---------- */
+        function hideLayoutOverlay() {
+          gridOverlayLayer.style.display = "none";
+          gridOverlayLayer.innerHTML = "";
+        }
+        function countGridTracks(str) {
+          if (!str || str === "none") return 0;
+          return str.split(/\s+/).filter(Boolean).length;
+        }
+        function updateLayoutOverlay() {
+          hideLayoutOverlay();
+          if (!picked || editingEl || !picked.isConnected) return;
+          const win = view.contentWindow;
+          const cs = win.getComputedStyle(picked);
+          const r = picked.getBoundingClientRect();
+          const f = view.getBoundingClientRect();
+          if (r.bottom <= f.top || r.top >= f.bottom) return;
+          const top = Math.max(f.top, f.top + r.top);
+          const left = f.left + r.left;
+          const bottom = Math.min(f.bottom, f.top + r.bottom);
+          const w = r.width;
+          const h = Math.max(0, bottom - top);
+          const isGrid = cs.display === "grid" || cs.display === "inline-grid";
+          const isFlex = cs.display === "flex" || cs.display === "inline-flex";
+          if (!isGrid && !isFlex) return;
+          gridOverlayLayer.style.display = "block";
+          gridOverlayLayer.style.left = left + "px";
+          gridOverlayLayer.style.top = top + "px";
+          gridOverlayLayer.style.width = w + "px";
+          gridOverlayLayer.style.height = h + "px";
+          if (isGrid) {
+            let cols = countGridTracks(cs.gridTemplateColumns);
+            let rows = countGridTracks(cs.gridTemplateRows);
+            if (!cols) cols = Math.max(1, picked.children.length || 1);
+            if (!rows) rows = 1;
+            const gapX = parseFloat(cs.columnGap) || parseFloat(cs.gap) || 0;
+            const gapY = parseFloat(cs.rowGap) || parseFloat(cs.gap) || 0;
+            const innerW = Math.max(0, w - gapX * Math.max(0, cols - 1));
+            const innerH = Math.max(0, h - gapY * Math.max(0, rows - 1));
+            const colW = cols > 0 ? innerW / cols : innerW;
+            const rowH = rows > 0 ? innerH / rows : innerH;
+            for (let c = 1; c < cols; c++) {
+              const line = document.createElement("div");
+              line.className = "grid-line v";
+              line.style.left = colW * c + gapX * (c - 0.5) + "px";
+              gridOverlayLayer.appendChild(line);
+              if (gapX > 0) {
+                const gap = document.createElement("div");
+                gap.className = "grid-gap";
+                gap.style.left = colW * c + gapX * (c - 1) + "px";
+                gap.style.top = "0";
+                gap.style.width = gapX + "px";
+                gap.style.height = h + "px";
+                gridOverlayLayer.appendChild(gap);
+              }
+            }
+            for (let row = 1; row < rows; row++) {
+              const line = document.createElement("div");
+              line.className = "grid-line h";
+              line.style.top = rowH * row + gapY * (row - 0.5) + "px";
+              gridOverlayLayer.appendChild(line);
+            }
+            return;
+          }
+          /* Flex：标出子项框 + 主轴方向 + gap */
+          const axis = document.createElement("div");
+          axis.className = "flex-axis";
+          const dir = cs.flexDirection || "row";
+          const isCol = dir.indexOf("column") === 0;
+          axis.textContent =
+            "FLEX " +
+            dir +
+            (cs.flexWrap && cs.flexWrap !== "nowrap" ? " · " + cs.flexWrap : "");
+          axis.style.left = "4px";
+          axis.style.top = "4px";
+          gridOverlayLayer.appendChild(axis);
+          const kids = [...picked.children].filter(
+            (c) =>
+              c.nodeType === 1 &&
+              !NO_PICK.has(c.tagName) &&
+              win.getComputedStyle(c).display !== "none",
+          );
+          kids.forEach((kid, i) => {
+            const kr = kid.getBoundingClientRect();
+            const box = document.createElement("div");
+            box.className = "flex-item";
+            box.style.left = kr.left - r.left + "px";
+            box.style.top = kr.top - r.top + "px";
+            box.style.width = Math.max(0, kr.width) + "px";
+            box.style.height = Math.max(0, kr.height) + "px";
+            gridOverlayLayer.appendChild(box);
+            if (i > 0) {
+              const prev = kids[i - 1].getBoundingClientRect();
+              const gapEl = document.createElement("div");
+              gapEl.className = "flex-gap";
+              if (isCol) {
+                const gy = prev.bottom - r.top;
+                const gh = Math.max(0, kr.top - prev.bottom);
+                if (gh < 1) return;
+                gapEl.style.left = Math.min(prev.left, kr.left) - r.left + "px";
+                gapEl.style.top = gy + "px";
+                gapEl.style.width =
+                  Math.max(prev.width, kr.width, Math.abs(kr.right - prev.left)) +
+                  "px";
+                gapEl.style.height = gh + "px";
+              } else {
+                const gx = prev.right - r.left;
+                const gw = Math.max(0, kr.left - prev.right);
+                if (gw < 1) return;
+                gapEl.style.left = gx + "px";
+                gapEl.style.top = Math.min(prev.top, kr.top) - r.top + "px";
+                gapEl.style.width = gw + "px";
+                gapEl.style.height =
+                  Math.max(prev.height, kr.height, Math.abs(kr.bottom - prev.top)) +
+                  "px";
+              }
+              gridOverlayLayer.appendChild(gapEl);
+            }
+          });
+        }
+
+        /* ---------- 元素树 ---------- */
+        function elPathKey(el) {
+          const parts = [];
+          let n = el;
+          while (n && n.nodeType === 1 && n !== vdoc.documentElement) {
+            const parent = n.parentElement;
+            let idx = 0;
+            if (parent) {
+              idx = [...parent.children].indexOf(n);
+            }
+            parts.push(n.tagName + ":" + idx);
+            n = parent;
+          }
+          return parts.reverse().join("/");
+        }
+        function treeLabel(el) {
+          const tag = el.tagName.toLowerCase();
+          const id = el.id ? "#" + el.id : "";
+          let cls = "";
+          if (typeof el.className === "string" && el.className.trim()) {
+            cls =
+              "." +
+              el.className
+                .trim()
+                .split(/\s+/)
+                .slice(0, 2)
+                .join(".");
+          }
+              const group = el.hasAttribute("data-snap-group") ? " [组]" : "";
+          const lock = el.hasAttribute("data-snap-lock") ? " [锁]" : "";
+          const hide = el.hasAttribute("data-snap-hide") ? " [隐]" : "";
+          return tag + id + cls + group + lock + hide;
+        }
+        function scheduleTreeRefresh() {
+          clearTimeout(treeRefreshTimer);
+          treeRefreshTimer = setTimeout(refreshTree, 120);
+        }
+        function refreshTree() {
+          const list = $("treeList");
+          if (!list) return;
+          list.innerHTML = "";
+          treeNodes = [];
+          if (!vdoc || !vdoc.body) {
+            list.innerHTML =
+              '<div style="padding:8px;color:#9c9cb0;font-size:12px">暂无文档</div>';
+            return;
+          }
+          const walk = (el, depth, parentCollapsed) => {
+            if (!el || el.nodeType !== 1) return;
+            if (NO_PICK.has(el.tagName) || SKIP.has(el.tagName)) return;
+            const key = elPathKey(el);
+            const kids = [...el.children].filter(
+              (c) =>
+                c.nodeType === 1 &&
+                !NO_PICK.has(c.tagName) &&
+                !SKIP.has(c.tagName),
+            );
+            const collapsed = treeCollapsed.has(key);
+            const idx = treeNodes.length;
+            treeNodes.push(el);
+            if (!parentCollapsed) {
+              const row = document.createElement("div");
+              row.className = "tree-row";
+              if (el.hasAttribute("data-snap-lock")) row.classList.add("locked");
+              if (el.hasAttribute("data-snap-hide")) row.classList.add("hidden-el");
+              row.dataset.idx = String(idx);
+              row.style.paddingLeft = 4 + depth * 12 + "px";
+              const tw = document.createElement("span");
+              tw.className = "tw";
+              if (kids.length) {
+                tw.textContent = collapsed ? "▶" : "▼";
+                tw.title = "展开/折叠";
+                tw.onclick = (e) => {
+                  e.stopPropagation();
+                  if (treeCollapsed.has(key)) treeCollapsed.delete(key);
+                  else treeCollapsed.add(key);
+                  refreshTree();
+                };
+              } else tw.textContent = "·";
+              const tn = document.createElement("span");
+              tn.className = "tn";
+              tn.textContent = treeLabel(el);
+              const tm = document.createElement("span");
+              tm.className = "tm";
+              if (kids.length) tm.textContent = String(kids.length);
+              row.appendChild(tw);
+              row.appendChild(tn);
+              row.appendChild(tm);
+              row.onclick = (e) => {
+                if (!editableOn()) return;
+                if (e.ctrlKey || e.metaKey) togglePick(el);
+                else pickBlock(el);
+              };
+              list.appendChild(row);
+            }
+            kids.forEach((k) =>
+              walk(k, depth + 1, parentCollapsed || collapsed),
+            );
+          };
+          [...vdoc.body.children].forEach((c) => walk(c, 0, false));
+          if (!treeNodes.length) {
+            list.innerHTML =
+              '<div style="padding:8px;color:#9c9cb0;font-size:12px">无可选元素</div>';
+          }
+          highlightTreeSelection();
+        }
+        function highlightTreeSelection() {
+          const list = $("treeList");
+          if (!list) return;
+          list.querySelectorAll(".tree-row").forEach((row) => {
+            const el = treeNodes[+row.dataset.idx];
+            row.classList.toggle("on", !!el && pickedList.includes(el));
+          });
+        }
+        function renderBreadcrumb(el) {
+          const box = $("elBreadcrumb");
+          if (!box) return;
+          box.innerHTML = "";
+          if (!el) return;
+          const chain = [];
+          let n = el;
+          while (n && n.nodeType === 1 && !SKIP.has(n.tagName)) {
+            chain.unshift(n);
+            n = n.parentElement;
+            if (chain.length > 8) break;
+          }
+          chain.forEach((node, i) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.textContent = treeLabel(node);
+            btn.onclick = () => pickBlock(node);
+            box.appendChild(btn);
+            if (i < chain.length - 1) {
+              const sep = document.createElement("span");
+              sep.textContent = "›";
+              sep.style.color = "#a8a29e";
+              box.appendChild(sep);
+            }
+          });
+        }
+        $("btnRefreshTree").onclick = () => refreshTree();
+
+        /* ---------- 复制 / 粘贴样式 ---------- */
+        const STYLE_COPY_PROPS = [
+          "width",
+          "height",
+          "minWidth",
+          "minHeight",
+          "maxWidth",
+          "maxHeight",
+          "margin",
+          "marginTop",
+          "marginRight",
+          "marginBottom",
+          "marginLeft",
+          "padding",
+          "paddingTop",
+          "paddingRight",
+          "paddingBottom",
+          "paddingLeft",
+          "display",
+          "flexDirection",
+          "flexWrap",
+          "justifyContent",
+          "alignItems",
+          "alignSelf",
+          "gap",
+          "rowGap",
+          "columnGap",
+          "gridTemplateColumns",
+          "gridTemplateRows",
+          "flexGrow",
+          "flexShrink",
+          "flexBasis",
+          "order",
+          "position",
+          "top",
+          "right",
+          "bottom",
+          "left",
+          "zIndex",
+          "color",
+          "background",
+          "backgroundColor",
+          "border",
+          "borderColor",
+          "borderRadius",
+          "opacity",
+          "fontSize",
+          "fontWeight",
+          "fontFamily",
+          "lineHeight",
+          "textAlign",
+          "boxShadow",
+          "boxSizing",
+          "overflow",
+          "objectFit",
+        ];
+        function collectStyleCss(el) {
+          const inline = (el.getAttribute("style") || "").trim();
+          if (inline) return inline;
+          const cs = view.contentWindow.getComputedStyle(el);
+          const parts = [];
+          STYLE_COPY_PROPS.forEach((p) => {
+            const v = cs[p];
+            if (!v || v === "auto" || v === "normal" || v === "none") return;
+            if (p === "backgroundColor" && (v === "rgba(0, 0, 0, 0)" || v === "transparent"))
+              return;
+            const cssKey = p.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase());
+            parts.push(cssKey + ":" + v);
+          });
+          return parts.join(";");
+        }
+        function copyStyleFromSelection() {
+          const el = picked || editingEl;
+          if (!el) {
+            toast("请先选中元素");
+            return;
+          }
+          styleClipboard = collectStyleCss(el);
+          if (!styleClipboard) {
+            toast("没有可复制的样式");
+            return;
+          }
+          toast("已复制样式");
+        }
+        function pasteStyleToSelection() {
+          if (!styleClipboard) {
+            toast("剪贴板没有样式");
+            return;
+          }
+          let targets = getSelectionEls();
+          if (!targets.length && (picked || editingEl))
+            targets = [picked || editingEl];
+          if (!targets.length) {
+            toast("请先选中目标元素");
+            return;
+          }
+          pushUndo();
+          targets.forEach((el) => {
+            styleClipboard.split(";").forEach((part) => {
+              const s = part.trim();
+              if (!s) return;
+              const i = s.indexOf(":");
+              if (i < 0) return;
+              const key = s.slice(0, i).trim();
+              const val = s.slice(i + 1).trim();
+              if (key) el.style.setProperty(key, val);
+            });
+          });
+          commit();
+          if (picked) syncInspector(picked);
+          reposition();
+          toast("已粘贴样式到 " + targets.length + " 个元素");
+        }
+        function selectParent() {
+          const el = picked || editingEl;
+          if (!el || !el.parentElement || SKIP.has(el.parentElement.tagName)) {
+            toast("没有可选项父级");
+            return;
+          }
+          pickBlock(el.parentElement);
+        }
+        $("btnCopyStyle").onclick = copyStyleFromSelection;
+        $("btnPasteStyle").onclick = pasteStyleToSelection;
+        $("btnSelectParent").onclick = selectParent;
+
+        function syncLockButton() {
+          const btn = $("btnToggleLock");
+          if (!btn) return;
+          const locked = !!(picked && picked.hasAttribute("data-snap-lock"));
+          btn.textContent = locked ? "解锁" : "锁定";
+          const barBtn = blockBar.querySelector('[data-act="lock"]');
+          if (barBtn) barBtn.textContent = locked ? "🔓 解锁" : "🔒 锁定";
+        }
+        function toggleLock() {
+          const els = getSelectionEls();
+          if (!els.length && picked) els.push(picked);
+          if (!els.length) {
+            toast("请先选中元素");
+            return;
+          }
+          const unlock = els.every((el) => el.hasAttribute("data-snap-lock"));
+          pushUndo();
+          els.forEach((el) => {
+            if (SKIP.has(el.tagName)) return;
+            if (unlock) el.removeAttribute("data-snap-lock");
+            else el.setAttribute("data-snap-lock", "1");
+          });
+          commit();
+          if (picked) {
+            pickBox.classList.toggle("locked", isLocked(picked));
+            syncLockButton();
+            refreshTree();
+            refreshLayerPanel();
+          }
+          toast(unlock ? "已解锁" : "已锁定（画布上需 Alt+单击才能再选中）");
+        }
+        $("btnToggleLock").onclick = toggleLock;
+
+        function syncHideButton() {
+          const btn = $("btnToggleHide");
+          if (!btn) return;
+          const hidden = !!(picked && isHidden(picked));
+          btn.textContent = hidden ? "显示" : "隐藏";
+          const barBtn = blockBar.querySelector('[data-act="hide"]');
+          if (barBtn) barBtn.textContent = hidden ? "👁 显示" : "👁 隐藏";
+        }
+        function toggleHide() {
+          const els = getSelectionEls();
+          if (!els.length && picked) els.push(picked);
+          if (!els.length) {
+            toast("请先选中元素");
+            return;
+          }
+          const showAll = els.every((el) => isHidden(el));
+          pushUndo();
+          els.forEach((el) => {
+            if (SKIP.has(el.tagName)) return;
+            applyHideStyle(el, !showAll);
+          });
+          commit();
+          if (picked) {
+            if (isHidden(picked)) revealHiddenForEdit(picked);
+            pickBox.classList.toggle("hidden-el", isHidden(picked));
+            syncHideButton();
+            refreshTree();
+            refreshLayerPanel();
+            reposition();
+          }
+          toast(showAll ? "已显示" : "已隐藏（可从元素树/图层重新选中）");
+        }
+        $("btnToggleHide").onclick = toggleHide;
+
+        function siblingList(el) {
+          if (!el || !el.parentElement) return [];
+          return [...el.parentElement.children].filter(
+            (c) =>
+              c.nodeType === 1 &&
+              !NO_PICK.has(c.tagName) &&
+              !SKIP.has(c.tagName),
+          );
+        }
+        function moveLayer(el, dir) {
+          if (!el || !el.parentElement) return;
+          if (isLocked(el) && dir) {
+            /* 锁定仍允许改图层顺序 */
+          }
+          const parent = el.parentElement;
+          const sibs = siblingList(el);
+          const i = sibs.indexOf(el);
+          if (i < 0) return;
+          if (dir === "front") parent.appendChild(el);
+          else if (dir === "back") parent.insertBefore(el, parent.firstElementChild);
+          else if (dir === "up" && sibs[i + 1]) sibs[i + 1].after(el);
+          else if (dir === "down" && sibs[i - 1]) sibs[i - 1].before(el);
+          else return false;
+          return true;
+        }
+        function refreshLayerPanel() {
+          const list = $("layerList");
+          if (!list) return;
+          list.innerHTML = "";
+          const el = picked;
+          if (!el || !el.parentElement) {
+            list.innerHTML =
+              '<div style="padding:8px;color:#9c9cb0;font-size:12px">选中元素后显示同级图层</div>';
+            return;
+          }
+          const sibs = siblingList(el).slice().reverse();
+          sibs.forEach((node) => {
+            const row = document.createElement("div");
+            row.className = "layer-row" + (node === el ? " on" : "");
+            if (node.hasAttribute("data-snap-lock")) row.classList.add("locked");
+            if (node.hasAttribute("data-snap-hide")) row.classList.add("hidden-el");
+            const ln = document.createElement("span");
+            ln.className = "ln";
+            ln.textContent = treeLabel(node);
+            row.appendChild(ln);
+            row.onclick = () => pickBlock(node);
+            list.appendChild(row);
+          });
+        }
+        $("layerSec").addEventListener("click", (e) => {
+          const dir = e.target.closest("button")?.dataset.layer;
+          if (!dir || !picked) return;
+          pushUndo();
+          const ok = moveLayer(picked, dir);
+          if (ok === false) {
+            toast("已到边界");
+            return;
+          }
+          commit();
+          reposition();
+          refreshLayerPanel();
+          refreshTree();
+          toast("已调整图层");
+        });
+
+        /* ---------- 快照版本 ---------- */
+        function snapshotStorageKey() {
+          const name = fileName || "untitled.html";
+          return "snapedit-snapshots:" + name;
+        }
+        function loadSnapshots() {
+          try {
+            const raw = localStorage.getItem(snapshotStorageKey());
+            const arr = raw ? JSON.parse(raw) : [];
+            return Array.isArray(arr) ? arr : [];
+          } catch (e) {
+            return [];
+          }
+        }
+        function saveSnapshots(list) {
+          try {
+            localStorage.setItem(snapshotStorageKey(), JSON.stringify(list));
+          } catch (e) {
+            toast("快照存储失败（可能超出容量）");
+          }
+        }
+        function formatSnapTime(ts) {
+          const d = new Date(ts);
+          const p = (n) => String(n).padStart(2, "0");
+          return (
+            d.getFullYear() +
+            "-" +
+            p(d.getMonth() + 1) +
+            "-" +
+            p(d.getDate()) +
+            " " +
+            p(d.getHours()) +
+            ":" +
+            p(d.getMinutes())
+          );
+        }
+        function refreshSnapshotList() {
+          const box = $("snapshotList");
+          if (!box) return;
+          box.innerHTML = "";
+          const list = loadSnapshots();
+          if (!list.length) {
+            box.innerHTML =
+              '<div style="font-size:12px;color:#9c9cb0;padding:4px 0">暂无快照，点上方保存</div>';
+            return;
+          }
+          list.forEach((item, idx) => {
+            const row = document.createElement("div");
+            row.className = "snap-item";
+            const name = document.createElement("div");
+            name.className = "snap-name";
+            name.textContent = item.name || "未命名快照";
+            const meta = document.createElement("div");
+            meta.className = "snap-meta";
+            meta.textContent = formatSnapTime(item.ts || Date.now());
+            const acts = document.createElement("div");
+            acts.className = "snap-acts";
+            const btnRestore = document.createElement("button");
+            btnRestore.type = "button";
+            btnRestore.textContent = "恢复";
+            btnRestore.onclick = () => restoreSnapshot(idx);
+            const btnDel = document.createElement("button");
+            btnDel.type = "button";
+            btnDel.className = "warn";
+            btnDel.textContent = "删除";
+            btnDel.onclick = () => deleteSnapshot(idx);
+            acts.appendChild(btnRestore);
+            acts.appendChild(btnDel);
+            row.appendChild(name);
+            row.appendChild(meta);
+            row.appendChild(acts);
+            box.appendChild(row);
+          });
+        }
+        function saveCurrentSnapshot() {
+          if (!docHTML && !vdoc) {
+            toast("请先打开文件");
+            return;
+          }
+          endEdit();
+          const html = $("tglScript").checked ? docHTML : serialize();
+          const defaultName =
+            "快照 " + formatSnapTime(Date.now()).replace(/:/g, "-");
+          const name = prompt("快照名称：", defaultName);
+          if (name === null) return;
+          const list = loadSnapshots();
+          list.unshift({
+            id: "s" + Date.now(),
+            name: (name || defaultName).trim(),
+            ts: Date.now(),
+            html,
+          });
+          while (list.length > SNAPSHOT_MAX) list.pop();
+          saveSnapshots(list);
+          refreshSnapshotList();
+          toast("已保存快照");
+        }
+        function restoreSnapshot(idx) {
+          const list = loadSnapshots();
+          const item = list[idx];
+          if (!item || !item.html) return;
+          if (!confirm("恢复到快照「" + item.name + "」？当前未保存修改可先撤销。"))
+            return;
+          pushUndo();
+          docHTML = item.html;
+          setDirty(docHTML !== rawOriginal);
+          render();
+          toast("已恢复快照：" + item.name);
+        }
+        function deleteSnapshot(idx) {
+          const list = loadSnapshots();
+          const item = list[idx];
+          if (!item) return;
+          if (!confirm("删除快照「" + item.name + "」？")) return;
+          list.splice(idx, 1);
+          saveSnapshots(list);
+          refreshSnapshotList();
+          toast("已删除快照");
+        }
+        $("btnSaveSnapshot").onclick = saveCurrentSnapshot;
+
+        /* ---------- 属性面板 ---------- */
+        const INS_MAP = [
+          ["insW", "width"],
+          ["insH", "height"],
+          ["insMinW", "minWidth"],
+          ["insMinH", "minHeight"],
+          ["insMt", "marginTop"],
+          ["insMr", "marginRight"],
+          ["insMb", "marginBottom"],
+          ["insMl", "marginLeft"],
+          ["insPt", "paddingTop"],
+          ["insPr", "paddingRight"],
+          ["insPb", "paddingBottom"],
+          ["insPl", "paddingLeft"],
+          ["insGap", "gap"],
+          ["insGridCols", "gridTemplateColumns"],
+          ["insGridRows", "gridTemplateRows"],
+          ["insFlexGrow", "flexGrow"],
+          ["insFlexShrink", "flexShrink"],
+          ["insFlexBasis", "flexBasis"],
+          ["insOrder", "order"],
+          ["insTop", "top"],
+          ["insRight", "right"],
+          ["insBottom", "bottom"],
+          ["insLeft", "left"],
+          ["insZ", "zIndex"],
+          ["insFontSize", "fontSize"],
+          ["insRadius", "borderRadius"],
+          ["insOpacity", "opacity"],
+        ];
+        const INS_SELECT = [
+          ["insBoxSizing", "boxSizing"],
+          ["insDisplay", "display"],
+          ["insFlexDir", "flexDirection"],
+          ["insFlexWrap", "flexWrap"],
+          ["insJustify", "justifyContent"],
+          ["insAlignItems", "alignItems"],
+          ["insAlignSelf", "alignSelf"],
+          ["insPosition", "position"],
+          ["insFontWeight", "fontWeight"],
+        ];
+        function clearInspector() {
+          inspector.classList.add("empty");
+          $("elSummary").textContent = "未选中";
+          $("textTargetList").innerHTML = "";
+          renderBreadcrumb(null);
+          highlightTreeSelection();
+          refreshLayerPanel();
+          pickBox.classList.remove("locked");
+          pickBox.classList.remove("hidden-el");
+          syncLockButton();
+          syncHideButton();
+          syncingInspector = true;
+          INS_MAP.forEach(([id]) => {
+            const n = $(id);
+            if (n) n.value = "";
+          });
+          INS_SELECT.forEach(([id]) => {
+            const n = $(id);
+            if (n) n.value = "";
+          });
+          syncingInspector = false;
+        }
+        function syncInspector(el) {
+          if (!el) {
+            clearInspector();
+            return;
+          }
+          inspector.classList.remove("empty");
+          const tag = el.tagName.toLowerCase();
+          const cls = el.className
+            ? "." + String(el.className).trim().split(/\s+/).slice(0, 2).join(".")
+            : "";
+          const summary =
+            tag + (el.id ? "#" + el.id : "") + cls + (isSvgText(el) ? " · svg" : "");
+          $("elSummary").textContent =
+            pickedList.length > 1
+              ? "已选 " + pickedList.length + " 个 · 主元素 " + summary
+              : summary;
+          syncingInspector = true;
+          INS_MAP.forEach(([id, prop]) => {
+            const n = $(id);
+            if (n) n.value = el.style[prop] || "";
+          });
+          INS_SELECT.forEach(([id, prop]) => {
+            const n = $(id);
+            if (!n) return;
+            const v = el.style[prop] || "";
+            n.value = v;
+            if (!v && n.querySelector('option[value=""]')) n.value = "";
+          });
+          syncingInspector = false;
+          renderTextTargets(el);
+          renderBreadcrumb(el);
+          highlightTreeSelection();
+        }
+        function applyInsStyle(prop, val) {
+          const el = picked || editingEl;
+          if (!el || syncingInspector) return;
+          if (!insUndoProps[prop]) {
+            pushUndo();
+            insUndoProps[prop] = true;
+          }
+          if (val === "" || val == null) el.style[prop] = "";
+          else el.style[prop] = val;
+          commitSoon();
+        }
+        INS_MAP.forEach(([id, prop]) => {
+          $(id).addEventListener("input", (e) => applyInsStyle(prop, e.target.value));
+          $(id).addEventListener("change", () => {
+            insUndoProps = {};
+            commit();
+            reposition();
+          });
+        });
+          INS_SELECT.forEach(([id, prop]) => {
+          $(id).addEventListener("change", (e) => {
+            if (syncingInspector) return;
+            pushUndo();
+            elStyle(picked || editingEl, prop, e.target.value);
+            insUndoProps = {};
+            commit();
+            reposition();
+          });
+        });
+        function elStyle(el, prop, val) {
+          if (!el) return;
+          if (!val) el.style[prop] = "";
+          else el.style[prop] = val;
+        }
+        inspector.querySelector(".ins-btns").addEventListener("click", (e) => {
+          const act = e.target.closest("button")?.dataset.z;
+          if (!act || !picked) return;
+          pushUndo();
+          const cs = view.contentWindow.getComputedStyle(picked);
+          let z = parseInt(cs.zIndex, 10);
+          if (!Number.isFinite(z)) z = 0;
+          if (act === "up") picked.style.zIndex = String(z + 1);
+          if (act === "down") picked.style.zIndex = String(Math.max(0, z - 1));
+          if (act === "front") picked.style.zIndex = "9999";
+          if (act === "back") picked.style.zIndex = "0";
+          syncInspector(picked);
+          commit();
+          toast("层级已调整");
+        });
+        $("btnToggleInspector").onclick = () => {
+          inspector.classList.toggle("open");
+        };
+
+        /* ---------- 对齐 / 分布 ---------- */
+        function boxInParent(el) {
+          const parent = el.offsetParent || el.parentElement || vdoc.body;
+          const pRect = parent.getBoundingClientRect();
+          const r = el.getBoundingClientRect();
+          return {
+            el,
+            left: r.left - pRect.left,
+            top: r.top - pRect.top,
+            width: r.width,
+            height: r.height,
+          };
+        }
+        function alignSelection(mode) {
+          const els = getSelectionEls();
+          if (els.length < 2) return;
+          pushUndo();
+          els.forEach((el) => {
+            if (!isPositioned(el)) promoteToAbsolute(el);
+          });
+          const boxes = els.map(boxInParent);
+          const minL = Math.min(...boxes.map((b) => b.left));
+          const maxR = Math.max(...boxes.map((b) => b.left + b.width));
+          const minT = Math.min(...boxes.map((b) => b.top));
+          const maxB = Math.max(...boxes.map((b) => b.top + b.height));
+          const cx = (minL + maxR) / 2;
+          const cy = (minT + maxB) / 2;
+          boxes.forEach((b) => {
+            if (mode === "left") b.el.style.left = minL + "px";
+            if (mode === "right") b.el.style.left = maxR - b.width + "px";
+            if (mode === "centerX") b.el.style.left = cx - b.width / 2 + "px";
+            if (mode === "top") b.el.style.top = minT + "px";
+            if (mode === "bottom") b.el.style.top = maxB - b.height + "px";
+            if (mode === "centerY") b.el.style.top = cy - b.height / 2 + "px";
+          });
+          if (mode === "distH" && boxes.length >= 3) {
+            boxes.sort((a, b) => a.left - b.left);
+            const first = boxes[0];
+            const last = boxes[boxes.length - 1];
+            const span = last.left - first.left;
+            const step = span / (boxes.length - 1);
+            boxes.forEach((b, i) => {
+              b.el.style.left = first.left + step * i + "px";
+            });
+          }
+          if (mode === "distV" && boxes.length >= 3) {
+            boxes.sort((a, b) => a.top - b.top);
+            const first = boxes[0];
+            const last = boxes[boxes.length - 1];
+            const span = last.top - first.top;
+            const step = span / (boxes.length - 1);
+            boxes.forEach((b, i) => {
+              b.el.style.top = first.top + step * i + "px";
+            });
+          }
+          commit();
+          reposition();
+          toast("已对齐");
+        }
+        $("alignSec").addEventListener("click", (e) => {
+          const btn = e.target.closest("button");
+          if (!btn) return;
+          const mode = btn.dataset.align;
+          const grp = btn.dataset.group;
+          if (mode) alignSelection(mode);
+          if (grp === "group") groupSelection();
+          if (grp === "ungroup") ungroupSelection();
+        });
+
+        /* ---------- 拖拽 / 缩放 ---------- */
+        function clearGuides() {
+          guideLayer.innerHTML = "";
+        }
+        function renderGuides(guides) {
+          clearGuides();
+          guides.forEach((g) => {
+            const div = document.createElement("div");
+            div.className = "guide-line " + g.type;
+            if (g.type === "h") {
+              div.style.left = g.x1 + "px";
+              div.style.top = g.y + "px";
+              div.style.width = g.x2 - g.x1 + "px";
+            } else {
+              div.style.left = g.x + "px";
+              div.style.top = g.y1 + "px";
+              div.style.height = g.y2 - g.y1 + "px";
+            }
+            guideLayer.appendChild(div);
+          });
+        }
+        function renderUserGuides() {
+          userGuideLayer.innerHTML = "";
+          if (!view.getBoundingClientRect) return;
+          const f = view.getBoundingClientRect();
+          const list = userGuides.slice();
+          if (creatingGuide)
+            list.push({ type: creatingGuide.type, pos: creatingGuide.pos });
+          list.forEach((g, idx) => {
+            const isPreview = !!creatingGuide && idx >= userGuides.length;
+            const div = document.createElement("div");
+            div.className = "user-guide " + g.type;
+            div.title = isPreview ? "松手放置" : "拖动移动 · 双击删除";
+            if (g.type === "h") {
+              div.style.left = f.left + "px";
+              div.style.top = f.top + g.pos + "px";
+              div.style.width = f.width + "px";
+            } else {
+              div.style.left = f.left + g.pos + "px";
+              div.style.top = f.top + "px";
+              div.style.height = f.height + "px";
+            }
+            if (!isPreview && idx < userGuides.length) {
+              const realIdx = idx;
+              div.addEventListener("mousedown", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                draggingUserGuide = { idx: realIdx, type: g.type };
+              });
+              div.addEventListener("dblclick", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                userGuides.splice(realIdx, 1);
+                renderUserGuides();
+                toast("已删除参考线");
+              });
+            }
+            userGuideLayer.appendChild(div);
+          });
+        }
+        function clearUserGuides() {
+          userGuides = [];
+          renderUserGuides();
+          toast("已清除参考线");
+        }
+        function paintRulers() {
+          const top = $("rulerTop");
+          const left = $("rulerLeft");
+          if (!top || !left) return;
+          top.innerHTML = "";
+          left.innerHTML = "";
+          if (!rulerEnabled || !view.getBoundingClientRect) return;
+          const f = view.getBoundingClientRect();
+          const step = 50;
+          for (let x = 0; x < f.width; x += step) {
+            const t = document.createElement("span");
+            t.className = "ruler-tick";
+            t.style.left = x + "px";
+            t.textContent = String(x);
+            top.appendChild(t);
+          }
+          for (let y = 0; y < f.height; y += step) {
+            const t = document.createElement("span");
+            t.className = "ruler-tick";
+            t.style.top = y + "px";
+            t.textContent = String(y);
+            left.appendChild(t);
+          }
+        }
+        function collectSnapLines(excludeEls) {
+          const f = view.getBoundingClientRect();
+          const xs = [f.left, f.left + f.width / 2, f.right];
+          const ys = [f.top, f.top + f.height / 2, f.bottom];
+          userGuides.forEach((g) => {
+            if (g.type === "v") xs.push(f.left + g.pos);
+            else ys.push(f.top + g.pos);
+          });
+          if (vdoc && vdoc.body) {
+            vdoc.body.querySelectorAll("*").forEach((o) => {
+              if (
+                excludeEls.some(
+                  (e) => e === o || e.contains(o) || o.contains(e),
+                )
+              )
+                return;
+              const or = o.getBoundingClientRect();
+              if (or.width < 2 && or.height < 2) return;
+              xs.push(or.left, or.left + or.width / 2, or.right);
+              ys.push(or.top, or.top + or.height / 2, or.bottom);
+            });
+          }
+          return { xs, ys, frame: f };
+        }
+        function snapDragDelta(dx, dy, el, excludeEls) {
+          if (!snapEnabled) return { dx, dy, guides: [] };
+          const r = el.getBoundingClientRect();
+          const base = {
+            l: r.left,
+            r: r.right,
+            cx: r.left + r.width / 2,
+            t: r.top,
+            b: r.bottom,
+            cy: r.top + r.height / 2,
+          };
+          const { xs, ys, frame } = collectSnapLines(excludeEls);
+          if (gridEnabled) {
+            const step = 20;
+            for (let x = frame.left; x <= frame.right; x += step) xs.push(x);
+            for (let y = frame.top; y <= frame.bottom; y += step) ys.push(y);
+          }
+          let bestDx = dx;
+          let bestDy = dy;
+          let bestX = SNAP_THRESHOLD + 1;
+          let bestY = SNAP_THRESHOLD + 1;
+          let guideX = null;
+          let guideY = null;
+          xs.forEach((line) => {
+            ["l", "r", "cx"].forEach((k) => {
+              const dist = Math.abs(base[k] + dx - line);
+              if (dist <= SNAP_THRESHOLD && dist < bestX) {
+                bestX = dist;
+                bestDx = line - base[k];
+                guideX = line;
+              }
+            });
+          });
+          ys.forEach((line) => {
+            ["t", "b", "cy"].forEach((k) => {
+              const dist = Math.abs(base[k] + dy - line);
+              if (dist <= SNAP_THRESHOLD && dist < bestY) {
+                bestY = dist;
+                bestDy = line - base[k];
+                guideY = line;
+              }
+            });
+          });
+          const guides = [];
+          if (guideX != null)
+            guides.push({ type: "v", x: guideX, y1: frame.top, y2: frame.bottom });
+          if (guideY != null)
+            guides.push({ type: "h", y: guideY, x1: frame.left, x2: frame.right });
+          return { dx: bestDx, dy: bestDy, guides };
+        }
+        function hideHandles() {
+          handleLayer.style.display = "none";
+        }
+        function updateHandles() {
+          if (!picked || editingEl || !picked.isConnected) {
+            hideHandles();
+            return;
+          }
+          const r = picked.getBoundingClientRect();
+          const f = view.getBoundingClientRect();
+          if (r.bottom <= f.top || r.top >= f.bottom) {
+            hideHandles();
+            return;
+          }
+          handleLayer.style.display = "block";
+          const top = Math.max(f.top, f.top + r.top);
+          const left = f.left + r.left;
+          const bottom = Math.min(f.bottom, f.top + r.bottom);
+          handleLayer.style.left = left + "px";
+          handleLayer.style.top = top + "px";
+          handleLayer.style.width = r.width + "px";
+          handleLayer.style.height = Math.max(0, bottom - top) + "px";
+        }
+        function hideInsertLine() {
+          insertLine.style.display = "none";
+        }
+        function showInsertLine(rect, mode) {
+          insertLine.style.display = "block";
+          insertLine.className = mode === "v" ? "v" : "h";
+          if (mode === "h") {
+            insertLine.style.left = rect.left + "px";
+            insertLine.style.top = rect.top + "px";
+            insertLine.style.width = rect.width + "px";
+            insertLine.style.height = "3px";
+          } else {
+            insertLine.style.left = rect.left + "px";
+            insertLine.style.top = rect.top + "px";
+            insertLine.style.width = "3px";
+            insertLine.style.height = rect.height + "px";
+          }
+        }
+        function isPositioned(el) {
+          const p = styleVal(el, "position");
+          return p === "absolute" || p === "fixed";
+        }
+        function shouldFreeDrag(el, altKey) {
+          if (altKey) return true;
+          if (isPositioned(el)) return true;
+          const parent = el.parentElement;
+          if (parent && isPositioned(parent)) return true;
+          return false;
+        }
+        function promoteToAbsolute(el) {
+          const win = view.contentWindow;
+          const rect = el.getBoundingClientRect();
+          let parent = el.offsetParent || el.parentElement;
+          if (!parent || parent === vdoc.body) parent = el.parentElement;
+          const pCs = win.getComputedStyle(parent);
+          if (pCs.position === "static") parent.style.position = "relative";
+          const pRect = parent.getBoundingClientRect();
+          el.style.position = "absolute";
+          el.style.left = rect.left - pRect.left + "px";
+          el.style.top = rect.top - pRect.top + "px";
+          if (!el.style.width) el.style.width = rect.width + "px";
+        }
+        function isForbiddenDrop(el, dragNode) {
+          if (!el || !dragNode) return true;
+          if (SKIP.has(el.tagName) || NO_PICK.has(el.tagName)) return true;
+          if (el === dragNode || dragNode.contains(el)) return true;
+          return false;
+        }
+        function hitIframeEl(clientX, clientY, ignore) {
+          const f = view.getBoundingClientRect();
+          const ix = clientX - f.left;
+          const iy = clientY - f.top;
+          if (ix < 0 || iy < 0 || ix > f.width || iy > f.height) return null;
+          const prev = ignore ? ignore.style.pointerEvents : "";
+          if (ignore) ignore.style.pointerEvents = "none";
+          const el = vdoc.elementFromPoint(ix, iy);
+          if (ignore) ignore.style.pointerEvents = prev;
+          return resolve(el);
+        }
+        function calcDropHint(clientX, clientY, dragNode) {
+          const target = hitIframeEl(clientX, clientY, dragNode);
+          if (!target || isForbiddenDrop(target, dragNode)) return null;
+          const f = view.getBoundingClientRect();
+          const r = target.getBoundingClientRect();
+          const relY = clientY - (f.top + r.top);
+          const ratio = r.height > 0 ? relY / r.height : 0.5;
+          let mode = "after";
+          if (ratio < 0.25) mode = "before";
+          else if (ratio > 0.75) mode = "after";
+          else {
+            const kids = [...target.children].filter(
+              (c) => c.nodeType === 1 && c !== dragNode,
+            );
+            if (kids.length && !["INPUT", "IMG", "BR", "HR"].includes(target.tagName))
+              mode = "inside";
+          }
+          return { target, mode };
+        }
+        function applyDropHint(hint, dragNode) {
+          if (!hint || !dragNode) return;
+          const { target, mode } = hint;
+          if (mode === "before") target.before(dragNode);
+          else if (mode === "after") target.after(dragNode);
+          else target.appendChild(dragNode);
+        }
+        function showDragGhost(el) {
+          const r = el.getBoundingClientRect();
+          const f = view.getBoundingClientRect();
+          dragGhost.style.display = "block";
+          dragGhost.style.left = f.left + r.left + "px";
+          dragGhost.style.top = f.top + r.top + "px";
+          dragGhost.style.width = r.width + "px";
+          dragGhost.style.height = r.height + "px";
+        }
+        function moveDragGhost(clientX, clientY, startRect) {
+          dragGhost.style.left = startRect.left + (clientX - dragStart.x) + "px";
+          dragGhost.style.top = startRect.top + (clientY - dragStart.y) + "px";
+        }
+        function startDrag(el, e, mode) {
+          dragEl = el;
+          dragNodes = getSelectionEls();
+          if (!dragNodes.includes(el)) dragNodes = [el];
+          dragMode = mode;
+          if (dragMode === "flow" && dragNodes.length > 1) {
+            toast("流式换位仅移动主选中元素");
+            dragNodes = [el];
+          }
+          dragStart = {
+            x: e.clientX,
+            y: e.clientY,
+            html: docHTML,
+          };
+          dropHint = null;
+          const r = el.getBoundingClientRect();
+          const f = view.getBoundingClientRect();
+          dragStart.rect = {
+            left: f.left + r.left,
+            top: f.top + r.top,
+            w: r.width,
+            h: r.height,
+          };
+          if (mode === "free") {
+            dragStart.nodes = dragNodes.map((n) => {
+              if (!isPositioned(n)) promoteToAbsolute(n);
+              return { el: n, offL: pxNum(n.style.left), offT: pxNum(n.style.top) };
+            });
+          }
+          showDragGhost(el);
+          document.body.style.cursor = "grabbing";
+        }
+        function onDragMove(e) {
+          if (!dragEl) return;
+          if (dragMode === "free") {
+            let dx = e.clientX - dragStart.x;
+            let dy = e.clientY - dragStart.y;
+            if (e.shiftKey) {
+              if (Math.abs(dx) > Math.abs(dy)) dy = 0;
+              else dx = 0;
+            }
+            const snapped = snapDragDelta(dx, dy, dragEl, dragNodes);
+            dx = snapped.dx;
+            dy = snapped.dy;
+            renderGuides(snapped.guides);
+            dragStart.nodes.forEach(({ el, offL, offT }) => {
+              el.style.left = offL + dx + "px";
+              el.style.top = offT + dy + "px";
+            });
+            moveDragGhost(e.clientX, e.clientY, dragStart.rect);
+            hideInsertLine();
+          } else {
+            dropHint = calcDropHint(e.clientX, e.clientY, dragEl);
+            if (dropHint) {
+              const f = view.getBoundingClientRect();
+              const r = dropHint.target.getBoundingClientRect();
+              if (dropHint.mode === "before") {
+                showInsertLine(
+                  {
+                    left: f.left + r.left,
+                    top: f.top + r.top - 2,
+                    width: r.width,
+                  },
+                  "h",
+                );
+              } else if (dropHint.mode === "after") {
+                showInsertLine(
+                  {
+                    left: f.left + r.left,
+                    top: f.top + r.bottom - 1,
+                    width: r.width,
+                  },
+                  "h",
+                );
+              } else {
+                showInsertLine(
+                  {
+                    left: f.left + r.left + 6,
+                    top: f.top + r.top + 6,
+                    height: Math.max(20, r.height - 12),
+                  },
+                  "v",
+                );
+              }
+            } else hideInsertLine();
+            moveDragGhost(e.clientX, e.clientY, dragStart.rect);
+          }
+          reposition();
+        }
+        function endDrag() {
+          if (!dragEl) return;
+          if (dragMode === "flow" && dropHint) {
+            pushUndo();
+            applyDropHint(dropHint, dragEl);
+            commit();
+            toast("已移动元素");
+          } else if (dragMode === "free") {
+            pushUndo();
+            commit();
+            toast("已调整位置");
+          }
+          dragEl = null;
+          dragNodes = [];
+          dropHint = null;
+          dragStart = null;
+          hideInsertLine();
+          hideEl(dragGhost);
+          clearGuides();
+          document.body.style.cursor = "";
+          reposition();
+          syncInspector(picked);
+        }
+        function startResize(el, dir, e) {
+          resizeDir = dir;
+          const r = el.getBoundingClientRect();
+          resizeStart = {
+            x: e.clientX,
+            y: e.clientY,
+            w: r.width,
+            h: r.height,
+            l: pxNum(el.style.left),
+            t: pxNum(el.style.top),
+          };
+        }
+        function onResizeMove(e) {
+          if (!resizeDir || !picked) return;
+          const dx = e.clientX - resizeStart.x;
+          const dy = e.clientY - resizeStart.y;
+          let w = resizeStart.w;
+          let h = resizeStart.h;
+          const ratio = resizeStart.w / resizeStart.h || 1;
+          let ndx = dx;
+          let ndy = dy;
+          if (e.shiftKey) {
+            if (Math.abs(ndx) > Math.abs(ndy * ratio)) ndy = ndx / ratio;
+            else ndx = ndy * ratio;
+          }
+          if (resizeDir.includes("e")) w = Math.max(20, resizeStart.w + ndx);
+          if (resizeDir.includes("s")) h = Math.max(16, resizeStart.h + ndy);
+          if (resizeDir.includes("w")) w = Math.max(20, resizeStart.w - ndx);
+          if (resizeDir.includes("n")) h = Math.max(16, resizeStart.h - ndy);
+          picked.style.width = Math.round(w) + "px";
+          picked.style.height = Math.round(h) + "px";
+          if (isPositioned(picked)) {
+            if (resizeDir.includes("w"))
+              picked.style.left = resizeStart.l + (resizeStart.w - w) + "px";
+            if (resizeDir.includes("n"))
+              picked.style.top = resizeStart.t + (resizeStart.h - h) + "px";
+          }
+          updateHandles();
+          showBox(pickBox, picked);
+        }
+        function endResize() {
+          if (!resizeDir) return;
+          pushUndo();
+          commit();
+          resizeDir = "";
+          resizeStart = null;
+          syncInspector(picked);
+          toast("已调整尺寸");
+        }
+        handleLayer.querySelector(".drag-area").addEventListener("mousedown", (e) => {
+          if (!editableOn() || !picked || editingEl) return;
+          if (isLocked(picked)) {
+            toast("已锁定，请先解锁再移动");
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          const mode = shouldFreeDrag(picked, e.altKey) ? "free" : "flow";
+          startDrag(picked, e, mode);
+        });
+        handleLayer.querySelectorAll(".rh").forEach((h) => {
+          h.addEventListener("mousedown", (e) => {
+            if (!editableOn() || !picked) return;
+            if (isLocked(picked)) {
+              toast("已锁定，请先解锁再缩放");
+              return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            startResize(picked, h.dataset.r, e);
+          });
+        });
+        document.addEventListener("mousemove", (e) => {
+          if (creatingGuide) {
+            const f = view.getBoundingClientRect();
+            if (creatingGuide.type === "h") {
+              creatingGuide.pos = Math.max(
+                0,
+                Math.min(f.height, e.clientY - f.top),
+              );
+            } else {
+              creatingGuide.pos = Math.max(
+                0,
+                Math.min(f.width, e.clientX - f.left),
+              );
+            }
+            renderUserGuides();
+          }
+          if (draggingUserGuide) {
+            const f = view.getBoundingClientRect();
+            const g = userGuides[draggingUserGuide.idx];
+            if (g) {
+              if (g.type === "h")
+                g.pos = Math.max(0, Math.min(f.height, e.clientY - f.top));
+              else g.pos = Math.max(0, Math.min(f.width, e.clientX - f.left));
+              renderUserGuides();
+            }
+          }
+          if (marqueeActive) updateMarqueeBox(e.clientX, e.clientY);
+          if (dragEl) onDragMove(e);
+          if (resizeDir) onResizeMove(e);
+        });
+        document.addEventListener("mouseup", (e) => {
+          if (creatingGuide) {
+            const f = view.getBoundingClientRect();
+            let pos =
+              creatingGuide.type === "h"
+                ? e.clientY - f.top
+                : e.clientX - f.left;
+            pos = Math.max(0, Math.min(creatingGuide.type === "h" ? f.height : f.width, pos));
+            if (
+              (creatingGuide.type === "h" && e.clientY > f.top + 8) ||
+              (creatingGuide.type === "v" && e.clientX > f.left + 8)
+            ) {
+              userGuides.push({ type: creatingGuide.type, pos });
+              toast("已添加参考线");
+            }
+            creatingGuide = null;
+            renderUserGuides();
+          }
+          if (draggingUserGuide) draggingUserGuide = null;
+          if (marqueeActive) finishMarquee(e.clientX, e.clientY);
+          if (dragEl) endDrag();
+          if (resizeDir) endResize();
+        });
+
+        $("rulerTop").addEventListener("mousedown", (e) => {
+          if (!rulerEnabled) return;
+          e.preventDefault();
+          creatingGuide = { type: "h", pos: 0 };
+        });
+        $("rulerLeft").addEventListener("mousedown", (e) => {
+          if (!rulerEnabled) return;
+          e.preventDefault();
+          creatingGuide = { type: "v", pos: 0 };
+        });
+        $("rulerCorner").addEventListener("dblclick", () => clearUserGuides());
+        $("btnClearGuides").onclick = clearUserGuides;
+
+        function duplicateElements(els) {
+          const created = [];
+          els.forEach((el) => {
+            const c = el.cloneNode(true);
+            c.removeAttribute("contenteditable");
+            el.after(c);
+            created.push(c);
+          });
+          return created;
+        }
+        function deleteElements(els) {
+          els.forEach((el) => el.remove());
+        }
+        blockBar.addEventListener("click", (e) => {
+          const act = e.target.closest("button")?.dataset.act;
+          const el = picked || editingEl;
+          if (!act || !el) return;
+          if (act === "color") {
+            openPalette(el);
+            return;
+          }
+          if (act === "group") {
+            groupSelection();
+            return;
+          }
+          if (act === "ungroup") {
+            ungroupSelection();
+            return;
+          }
+          if (act === "copyStyle") {
+            copyStyleFromSelection();
+            return;
+          }
+          if (act === "pasteStyle") {
+            pasteStyleToSelection();
+            return;
+          }
+          if (act === "lock") {
+            toggleLock();
+            return;
+          }
+          if (act === "hide") {
+            toggleHide();
+            return;
+          }
+          if (isLocked(el) && (act === "del" || act === "dup" || act === "up" || act === "down")) {
+            toast("已锁定，请先解锁");
+            return;
+          }
+          pushUndo();
+          const targets = act === "del" || act === "dup" ? getSelectionEls() : [el];
+          if (act === "dup") {
+            const created = duplicateElements(targets.length ? targets : [el]);
+            if (created.length) setSelection(created, created[created.length - 1]);
+            toast("已复制 " + (created.length || 1) + " 个元素");
+          }
+          if (act === "del") {
+            deleteElements(targets.length ? targets : [el]);
+            deselect();
+            toast("已删除");
+          }
+          if (act === "up" && el.previousElementSibling)
+            el.previousElementSibling.before(el);
+          if (act === "down" && el.nextElementSibling)
+            el.nextElementSibling.after(el);
+          commit();
+          reposition();
+        });
+
+        /* ---------- 选中文字样式 ---------- */
+        function onSelChange() {
+          if (!editingEl) {
+            hideEl(textBar);
+            return;
+          }
+          const sel = vdoc.getSelection();
+          if (!sel || sel.isCollapsed || !sel.rangeCount) {
+            hideEl(textBar);
+            return;
+          }
+          const r = sel.getRangeAt(0).getBoundingClientRect();
+          if (!r.width && !r.height) {
+            hideEl(textBar);
+            return;
+          }
+          const f = view.getBoundingClientRect();
+          textBar.style.display = "flex";
+          const w = textBar.offsetWidth || 240;
+          let x = f.left + r.left + r.width / 2 - w / 2;
+          x = Math.max(8, Math.min(x, window.innerWidth - w - 8));
+          let y = f.top + r.top - 42;
+          if (y < 52) y = f.top + r.bottom + 8;
+          textBar.style.left = x + "px";
+          textBar.style.top = y + "px";
+        }
+        textBar.addEventListener("mousedown", (e) => e.preventDefault()); // 保住选区
+        textBar.addEventListener("click", (e) => {
+          const btn = e.target.closest("button");
+          if (!btn || !vdoc) return;
+          if (btn.dataset.cmd) {
+            pushUndo();
+            vdoc.execCommand(btn.dataset.cmd);
+            commit();
+            return;
+          }
+          if (btn.dataset.fs) {
+            stepSelFontSize(+btn.dataset.fs);
+          }
+        });
+        /* 选区字号微调：包一层 span 改 font-size */
+        function stepSelFontSize(dir) {
+          const sel = vdoc.getSelection();
+          if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+          const anchor =
+            sel.anchorNode.nodeType === 3
+              ? sel.anchorNode.parentElement
+              : sel.anchorNode;
+          const cur =
+            parseFloat(view.contentWindow.getComputedStyle(anchor).fontSize) ||
+            14;
+          const next = Math.max(9, Math.min(72, cur + dir * 1));
+          pushUndo();
+          vdoc.execCommand("fontSize", false, 7); // 占位
+          vdoc.querySelectorAll('font[size="7"]').forEach((f) => {
+            const s = vdoc.createElement("span");
+            s.style.fontSize = next + "px";
+            while (f.firstChild) s.appendChild(f.firstChild);
+            f.replaceWith(s);
+          });
+          commit();
+        }
+        let selUndoDone = false;
+        function selCmd(cmd, val) {
+          if (!vdoc) return;
+          if (!selUndoDone) {
+            pushUndo();
+            selUndoDone = true;
+          }
+          vdoc.execCommand(cmd, false, val);
+          commitSoon();
+        }
+        $("selFore").addEventListener(
+          "pointerdown",
+          () => (selUndoDone = false),
+        );
+        $("selBack").addEventListener(
+          "pointerdown",
+          () => (selUndoDone = false),
+        );
+        $("selFore").addEventListener("input", (e) =>
+          selCmd("foreColor", e.target.value),
+        );
+        $("selBack").addEventListener("input", (e) =>
+          selCmd("hiliteColor", e.target.value),
+        );
+
+        /* ---------- 颜色面板 ---------- */
+        let palTarget = null;
+        let lastProp = "backgroundColor"; // 色板快选默认作用于该属性
+        let palUndone = {}; // 每个属性本轮只压一次撤销栈
+        const PROPS = [
+          ["pText", "pTextHex", "color"],
+          ["pBg", "pBgHex", "backgroundColor"],
+          ["pBd", "pBdHex", "borderColor"],
+        ];
+        function toHex(c) {
+          const m = c && c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+          if (!m) return "";
+          return (
+            "#" +
+            [m[1], m[2], m[3]]
+              .map((n) => (+n).toString(16).padStart(2, "0"))
+              .join("")
+              .toUpperCase()
+          );
+        }
+        function openPalette(el) {
+          palTarget = el;
+          palUndone = {};
+          lastProp = "backgroundColor";
+          const cs = view.contentWindow.getComputedStyle(el);
+          PROPS.forEach(([pid, hid, prop]) => {
+            const hex = toHex(cs[prop]) || "#000000";
+            $(pid).value = hex;
+            $(hid).value = hex;
+          });
+          palette.style.display = "block";
+          const bar = blockBar.getBoundingClientRect();
+          let x = Math.min(bar.left, window.innerWidth - 296);
+          let y = bar.bottom + 8;
+          if (y + 240 > window.innerHeight) y = Math.max(8, bar.top - 248);
+          palette.style.left = Math.max(8, x) + "px";
+          palette.style.top = y + "px";
+        }
+        function hidePalette() {
+          palette.style.display = "none";
+          palTarget = null;
+        }
+        $("palClose").onclick = hidePalette;
+        PROPS.forEach(([pid, hid, prop]) => {
+          $(pid).addEventListener("pointerdown", () => (lastProp = prop));
+          $(hid).addEventListener("focus", () => (lastProp = prop));
+          $(pid).addEventListener("input", (e) => {
+            applyColor(prop, e.target.value);
+            $(hid).value = e.target.value;
+          });
+          $(hid).addEventListener("change", (e) => {
+            let v = e.target.value.trim();
+            if (!/^#?[0-9a-fA-F]{6}$/.test(v)) {
+              toast("请输入 6 位色值，如 #EA580C");
+              return;
+            }
+            if (v[0] !== "#") v = "#" + v;
+            $(pid).value = v;
+            applyColor(prop, v);
+          });
+        });
+        palette.addEventListener("click", (e) => {
+          const p = e.target.closest(".clr")?.dataset.p;
+          if (p && palTarget) {
+            pushUndo();
+            palTarget.style[p] = "";
+            commit();
+            toast("已清除该项颜色");
+            return;
+          }
+          const efs = e.target.closest("[data-efs]")?.dataset.efs;
+          if (efs && palTarget) {
+            const cur =
+              parseFloat(
+                view.contentWindow.getComputedStyle(palTarget).fontSize,
+              ) || 14;
+            pushUndo();
+            palTarget.style.fontSize =
+              Math.max(9, Math.min(72, cur + +efs)) + "px";
+            commit();
+          }
+        });
+        $("pBold").onclick = () => {
+          if (!palTarget) return;
+          const cs = view.contentWindow.getComputedStyle(palTarget);
+          const bold = parseInt(cs.fontWeight, 10) >= 600;
+          pushUndo();
+          palTarget.style.fontWeight = bold ? "normal" : "bold";
+          commit();
+        };
+        function applyColor(prop, val) {
+          if (!palTarget) return;
+          if (!palUndone[prop]) {
+            pushUndo();
+            palUndone[prop] = true;
+          }
+          palTarget.style[prop] = val;
+          rememberRecentColor(val);
+          commitSoon();
+        }
+        const RECENT_COLOR_KEY = "snapedit-recent-colors";
+        function loadRecentColors() {
+          try {
+            const raw = localStorage.getItem(RECENT_COLOR_KEY);
+            const arr = raw ? JSON.parse(raw) : [];
+            return Array.isArray(arr) ? arr.filter((c) => /^#[0-9a-fA-F]{6}$/.test(c)) : [];
+          } catch (e) {
+            return [];
+          }
+        }
+        function rememberRecentColor(val) {
+          let hex = String(val || "").trim();
+          if (/^#[0-9a-fA-F]{3}$/.test(hex)) {
+            hex =
+              "#" +
+              hex[1] +
+              hex[1] +
+              hex[2] +
+              hex[2] +
+              hex[3] +
+              hex[3];
+          }
+          if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+          hex = hex.toUpperCase();
+          const next = [hex, ...loadRecentColors().filter((c) => c !== hex)].slice(
+            0,
+            12,
+          );
+          try {
+            localStorage.setItem(RECENT_COLOR_KEY, JSON.stringify(next));
+          } catch (e) {}
+          renderRecentSwatches();
+        }
+        function renderRecentSwatches() {
+          const box = $("recentSwatches");
+          if (!box) return;
+          box.innerHTML = "<em>最近使用</em>";
+          const list = loadRecentColors();
+          if (!list.length) {
+            const empty = document.createElement("span");
+            empty.style.fontSize = "11px";
+            empty.style.color = "#a8a29e";
+            empty.textContent = "调色后会出现在这里";
+            box.appendChild(empty);
+            return;
+          }
+          list.forEach((c) => {
+            const s = document.createElement("span");
+            s.className = "sw";
+            s.style.background = c;
+            s.title = c;
+            s.onclick = () => {
+              applyColor(lastProp, c);
+              const [pid, hid] = PROP2ID[lastProp];
+              $(pid).value = c;
+              $(hid).value = c;
+            };
+            box.appendChild(s);
+          });
+        }
+        const PROP2ID = {
+          color: ["pText", "pTextHex"],
+          backgroundColor: ["pBg", "pBgHex"],
+          borderColor: ["pBd", "pBdHex"],
+        };
+        const swBox = $("swatches");
+        SWATCH.forEach((c) => {
+          const s = document.createElement("span");
+          s.className = "sw";
+          s.style.background = c;
+          s.title = c + "（点色值输入框可切换作用对象）";
+          s.onclick = () => {
+            applyColor(lastProp, c);
+            const [pid, hid] = PROP2ID[lastProp];
+            $(pid).value = c;
+            $(hid).value = c;
+          };
+          swBox.appendChild(s);
+        });
+        renderRecentSwatches();
+
+        /* ---------- 覆盖层定位 ---------- */
+        function showBox(box, el) {
+          const r = el.getBoundingClientRect(),
+            f = view.getBoundingClientRect();
+          const top = Math.max(f.top, f.top + r.top),
+            left = f.left + r.left;
+          const bottom = Math.min(f.bottom, f.top + r.bottom);
+          if (bottom <= f.top || f.top + r.top >= f.bottom) {
+            box.style.display = "none";
+            return;
+          }
+          box.style.display = "block";
+          box.style.left = left + "px";
+          box.style.top = top + "px";
+          box.style.width = r.width + "px";
+          box.style.height = bottom - top + "px";
+        }
+        function hideEl(el) {
+          el.style.display = "none";
+        }
+        function showBlockBar(el) {
+          const r = el.getBoundingClientRect(),
+            f = view.getBoundingClientRect();
+          blockBar.style.display = "flex";
+          const ungBtn = blockBar.querySelector('[data-act="ungroup"]');
+          const grpBtn = blockBar.querySelector('[data-act="group"]');
+          if (ungBtn)
+            ungBtn.style.display = el.hasAttribute("data-snap-group")
+              ? ""
+              : "none";
+          if (grpBtn)
+            grpBtn.style.display = pickedList.length >= 2 ? "" : "none";
+          const pasteBtn = blockBar.querySelector('[data-act="pasteStyle"]');
+          if (pasteBtn) pasteBtn.style.display = styleClipboard ? "" : "none";
+          const w = blockBar.offsetWidth || 300;
+          let x = f.left + r.left;
+          x = Math.max(8, Math.min(x, window.innerWidth - w - 8));
+          let y = f.top + r.top - 42;
+          if (y < 52)
+            y = Math.min(window.innerHeight - 48, f.top + r.bottom + 8);
+          blockBar.style.left = x + "px";
+          blockBar.style.top = y + "px";
+        }
+        function reposition() {
+          hideEl(hoverBox);
+          const el = picked || editingEl;
+          if (el && el.isConnected) {
+            showBox(pickBox, el);
+            showBlockBar(el);
+            updateHandles();
+            updateMultiBoxes();
+            updateLayoutOverlay();
+          } else {
+            hideEl(pickBox);
+            hideEl(blockBar);
+            hideHandles();
+            multiPickLayer.innerHTML = "";
+            hideLayoutOverlay();
+          }
+          hidePalette();
+          hideEl(textBar);
+          paintRulers();
+          renderUserGuides();
+        }
+
+        function clearUI() {
+          picked = null;
+          pickedList = [];
+          editingEl = null;
+          dragEl = null;
+          dragNodes = [];
+          resizeDir = "";
+          [hoverBox, pickBox, blockBar, textBar, dragGhost, marqueeBox].forEach(
+            hideEl,
+          );
+          hideHandles();
+          hideInsertLine();
+          hidePalette();
+          clearGuides();
+          hideLayoutOverlay();
+          multiPickLayer.innerHTML = "";
+          clearInspector();
+          paintRulers();
+          renderUserGuides();
+        }
+        function nudgeSelection(dx, dy) {
+          const els = getSelectionEls();
+          if (!els.length) return;
+          pushUndo("微调位置");
+          els.forEach((el) => {
+            if (!isPositioned(el)) promoteToAbsolute(el);
+            el.style.left = pxNum(el.style.left) + dx + "px";
+            el.style.top = pxNum(el.style.top) + dy + "px";
+          });
+          commit();
+          reposition();
+        }
+
+        /* ---------- 顶栏动作 ---------- */
+        $("tglEdit").addEventListener("change", () => {
+          deselect();
+          updateTip();
+        });
+        function applySnapPref() {
+          snapEnabled = !!$("tglSnap").checked;
+          try {
+            localStorage.setItem(PREF_SNAP, snapEnabled ? "1" : "0");
+          } catch (e) {}
+        }
+        function applyGridPref() {
+          gridEnabled = !!$("tglGrid").checked;
+          stage.classList.toggle("show-grid", gridEnabled);
+          try {
+            localStorage.setItem(PREF_GRID, gridEnabled ? "1" : "0");
+          } catch (e) {}
+        }
+        function applyRulerPref() {
+          rulerEnabled = !!$("tglRuler").checked;
+          stage.classList.toggle("show-ruler", rulerEnabled);
+          paintRulers();
+          renderUserGuides();
+          try {
+            localStorage.setItem(PREF_RULER, rulerEnabled ? "1" : "0");
+          } catch (e) {}
+        }
+        try {
+          const s = localStorage.getItem(PREF_SNAP);
+          if (s === "0") $("tglSnap").checked = false;
+          if (s === "1") $("tglSnap").checked = true;
+          const g = localStorage.getItem(PREF_GRID);
+          if (g === "1") $("tglGrid").checked = true;
+          if (g === "0") $("tglGrid").checked = false;
+          const r = localStorage.getItem(PREF_RULER);
+          if (r === "1") $("tglRuler").checked = true;
+          if (r === "0") $("tglRuler").checked = false;
+        } catch (e) {}
+        applySnapPref();
+        applyGridPref();
+        applyRulerPref();
+        $("tglSnap").addEventListener("change", applySnapPref);
+        $("tglGrid").addEventListener("change", applyGridPref);
+        $("tglRuler").addEventListener("change", applyRulerPref);
+        refreshSnapshotList();
+        refreshHistoryList();
+
+        function openHelp() {
+          $("helpModal").classList.add("on");
+        }
+        function closeHelp() {
+          $("helpModal").classList.remove("on");
+        }
+        $("btnHelp").onclick = openHelp;
+        $("helpClose").onclick = closeHelp;
+        $("helpModal").addEventListener("click", (e) => {
+          if (e.target === $("helpModal")) closeHelp();
+        });
+
+        $("tglScript").addEventListener("change", (e) => {
+          if (e.target.checked && !e.target._warned) {
+            e.target._warned = true;
+            if (
+              !confirm(
+                "动态预览会执行文件里的 JavaScript，只建议对自己生成或可信的文件开启。继续？",
+              )
+            ) {
+              e.target.checked = false;
+              return;
+            }
+          }
+          $("tglEdit").disabled = e.target.checked;
+          deselect();
+          render();
+        });
+        $("btnUndo").onclick = () => doUndo();
+        $("btnRedo").onclick = () => doRedo();
+        $("btnReset").onclick = () => {
+          if (!confirm("放弃所有修改，回到刚打开时的样子？")) return;
+          docHTML = rawOriginal;
+          undoStack = [];
+          redoStack = [];
+          $("btnUndo").disabled = true;
+          $("btnRedo").disabled = true;
+          setDirty(false);
+          render();
+          refreshHistoryList();
+          toast("已还原");
+        };
+        /* 导出前尽量把图片转成内嵌 data URL，换电脑打开不掉图 */
+        async function inlineImages() {
+          if (!vdoc) return;
+          const imgs = [...vdoc.querySelectorAll("img")].filter(
+            (i) =>
+              i.src &&
+              !i.src.startsWith("data:") &&
+              i.complete &&
+              i.naturalWidth > 0,
+          );
+          let done = 0;
+          for (const img of imgs) {
+            try {
+              const c = document.createElement("canvas");
+              c.width = img.naturalWidth;
+              c.height = img.naturalHeight;
+              c.getContext("2d").drawImage(img, 0, 0);
+              img.src = c.toDataURL("image/png");
+              done++;
+            } catch (e) {
+              /* 跨域受限的图保留原路径 */
+            }
+          }
+          if (done) toast(`已内嵌 ${done} 张图片`);
+        }
+        $("btnSave").onclick = async () => {
+          endEdit();
+          if (!$("tglScript").checked) await inlineImages();
+          const out = $("tglScript").checked ? docHTML : serialize();
+          const blob = new Blob([out], { type: "text/html;charset=utf-8" });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = fileName.replace(/\.(html?|htm)$/i, "") + "-改.html";
+          a.click();
+          URL.revokeObjectURL(a.href);
+          toast("已导出：" + a.download);
+        };
+        document.addEventListener("keydown", (e) => {
+          const inInput =
+            e.target instanceof HTMLInputElement ||
+            e.target instanceof HTMLTextAreaElement ||
+            e.target instanceof HTMLSelectElement;
+          if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+            e.preventDefault();
+            if (!$("btnSave").disabled) $("btnSave").click();
+          }
+          if ((e.metaKey || e.ctrlKey) && e.key === "z" && !e.shiftKey) {
+            e.preventDefault();
+            doUndo();
+          }
+          if ((e.metaKey || e.ctrlKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
+            e.preventDefault();
+            doRedo();
+          }
+          if ((e.metaKey || e.ctrlKey) && e.key === "d" && !inInput) {
+            e.preventDefault();
+            if (picked || editingEl) {
+              if ((picked && isLocked(picked)) || getSelectionEls().some(isLocked)) {
+                toast("已锁定，无法复制");
+                return;
+              }
+              pushUndo();
+              const targets = getSelectionEls();
+              const created = duplicateElements(
+                targets.length ? targets : [picked || editingEl],
+              );
+              if (created.length)
+                setSelection(created, created[created.length - 1]);
+              commit();
+              reposition();
+              toast("已复制");
+            }
+          }
+          if ((e.metaKey || e.ctrlKey) && e.key === "g" && !inInput) {
+            e.preventDefault();
+            if (e.shiftKey) ungroupSelection();
+            else groupSelection();
+          }
+          if ((e.metaKey || e.ctrlKey) && e.altKey && !inInput) {
+            const k = e.key.toLowerCase();
+            if (k === "c") {
+              e.preventDefault();
+              copyStyleFromSelection();
+            }
+            if (k === "v") {
+              e.preventDefault();
+              pasteStyleToSelection();
+            }
+          }
+          if (
+            !inInput &&
+            !editingEl &&
+            e.altKey &&
+            e.key === "ArrowUp" &&
+            (picked || editingEl)
+          ) {
+            e.preventDefault();
+            selectParent();
+          }
+          if ((e.metaKey || e.ctrlKey) && e.key === "l" && !inInput) {
+            e.preventDefault();
+            toggleLock();
+          }
+          if ((e.metaKey || e.ctrlKey) && e.key === "h" && !inInput) {
+            e.preventDefault();
+            toggleHide();
+          }
+          if ((e.metaKey || e.ctrlKey) && !inInput && !editingEl && picked) {
+            if (e.key === "]" || e.key === "】") {
+              e.preventDefault();
+              pushUndo();
+              if (moveLayer(picked, e.shiftKey ? "front" : "up") === false)
+                toast("已到边界");
+              else {
+                commit();
+                reposition();
+                refreshLayerPanel();
+                refreshTree();
+              }
+            }
+            if (e.key === "[" || e.key === "【") {
+              e.preventDefault();
+              pushUndo();
+              if (moveLayer(picked, e.shiftKey ? "back" : "down") === false)
+                toast("已到边界");
+              else {
+                commit();
+                reposition();
+                refreshLayerPanel();
+                refreshTree();
+              }
+            }
+          }
+          if (
+            !inInput &&
+            !editingEl &&
+            (e.key === "Delete" || e.key === "Backspace") &&
+            pickedList.length
+          ) {
+            if (getSelectionEls().some(isLocked)) {
+              e.preventDefault();
+              toast("包含锁定元素，请先解锁");
+              return;
+            }
+            e.preventDefault();
+            pushUndo("删除");
+            deleteElements(getSelectionEls());
+            deselect();
+            commit();
+            toast("已删除");
+          }
+          if (!inInput && !editingEl && pickedList.length && e.key.startsWith("Arrow") && !e.altKey) {
+            if (getSelectionEls().some(isLocked)) {
+              e.preventDefault();
+              toast("已锁定，无法移动");
+              return;
+            }
+            e.preventDefault();
+            const step = e.shiftKey ? 10 : 1;
+            if (e.key === "ArrowLeft") nudgeSelection(-step, 0);
+            if (e.key === "ArrowRight") nudgeSelection(step, 0);
+            if (e.key === "ArrowUp") nudgeSelection(0, -step);
+            if (e.key === "ArrowDown") nudgeSelection(0, step);
+          }
+          if (e.key === "Escape") {
+            if ($("helpModal").classList.contains("on")) {
+              closeHelp();
+              return;
+            }
+            deselect();
+          }
+          if (
+            !inInput &&
+            !editingEl &&
+            (e.key === "?" || (e.shiftKey && e.key === "/"))
+          ) {
+            e.preventDefault();
+            openHelp();
+          }
+        });
+        document.addEventListener("mousedown", (e) => {
+          if ($("helpModal").classList.contains("on")) return;
+          if (
+            !palette.contains(e.target) &&
+            !blockBar.contains(e.target) &&
+            !textBar.contains(e.target) &&
+            !inspector.contains(e.target) &&
+            !handleLayer.contains(e.target) &&
+            !svgTextPop.contains(e.target) &&
+            !userGuideLayer.contains(e.target) &&
+            !e.target.closest("#rulerTop, #rulerLeft, #rulerCorner") &&
+            e.target !== view &&
+            e.target !== $("btnToggleInspector") &&
+            e.target !== $("btnHelp")
+          ) {
+            if (!e.target.closest(".bar")) deselect();
+          }
+        });
+        window.addEventListener("beforeunload", (e) => {
+          if (dirty) {
+            e.preventDefault();
+            e.returnValue = "";
+          }
+        });
+
+        /* ---------- 嵌入宿主桥接（工具箱编辑态） ---------- */
+        const isEmbed =
+          document.documentElement.getAttribute("data-embed") === "1" ||
+          new URLSearchParams(location.search).get("embed") === "1";
+        if (isEmbed) {
+          document.documentElement.classList.add("embed");
+          const hideIds = ["btnOpen", "btnSave"];
+          hideIds.forEach((id) => {
+            const el = $(id);
+            if (el) el.style.display = "none";
+          });
+          window.addEventListener("message", (event) => {
+            const data = event.data;
+            if (!data || typeof data !== "object") return;
+            if (data.type === "snapedit:setHtml") {
+              const html = typeof data.html === "string" ? data.html : "";
+              rawOriginal = html;
+              const m = rawOriginal.match(/^\s*<!doctype[^>]*>/i);
+              doctype = m ? m[0] : "<!DOCTYPE html>";
+              docHTML = rawOriginal;
+              fileName = data.fileName || "tool.html";
+              undoStack = [];
+              redoStack = [];
+              $("btnUndo").disabled = true;
+              $("btnRedo").disabled = true;
+              setDirty(false);
+              const drop = $("drop");
+              if (drop) drop.classList.add("hide");
+              render();
+              refreshSnapshotList();
+              return;
+            }
+            if (data.type === "snapedit:getHtml") {
+              endEdit();
+              const out = $("tglScript").checked ? docHTML : serialize();
+              window.parent.postMessage(
+                {
+                  type: "snapedit:html",
+                  requestId: data.requestId,
+                  html: out,
+                },
+                "*",
+              );
+            }
+          });
+          window.parent.postMessage({ type: "snapedit:ready" }, "*");
+        }
+      })();
+    </script>
+  </body>
+</html>

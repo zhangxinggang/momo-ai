@@ -1,18 +1,15 @@
 export {
-  buildCliSuperpowerDefaults,
   buildRagContext,
   buildSharedAiChatServices,
+  buildSuperpowerDefaults,
   createModelConfigResolver,
   generateChatTitle,
-  kbChunkCache,
-  mergeChatModelOptionGroupsWithCli,
 } from './core';
 export type { IBuildSharedAiChatServicesOptions } from './core';
 export { createSkillLangGraphStream } from './skill';
 export type { ISkillLangGraphStreamOptions } from './skill';
 export {
   createGeneralChatStream,
-  createSkillAwareChatStream,
   createPromptTestStream,
   mergePromptTestApiMessages,
   resolveStreamModelConfig,
@@ -22,7 +19,6 @@ export {
 export type {
   IChatStreamCallbacks,
   IGeneralChatStreamOptions,
-  ISkillAwareChatStreamOptions,
   IModelConfigAccessors,
   IPromptTestStreamOptions,
   IResponseFormatOption,

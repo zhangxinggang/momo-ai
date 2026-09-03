@@ -12,6 +12,7 @@ interface IProps {
     title?: string;
     preview?: string;
     score?: number;
+    collectionId?: number;
   };
   index: number;
 }
@@ -30,7 +31,7 @@ const CitationCard: React.FC<IProps> = ({ citation, index }) => {
     if (!chunkData && getKbChunk) {
       try {
         setLoading(true);
-        const data = await getKbChunk(citation.chunkId);
+        const data = await getKbChunk(citation);
         setChunkData(data);
       } catch (e) {
         console.error('加载chunk失败', e);

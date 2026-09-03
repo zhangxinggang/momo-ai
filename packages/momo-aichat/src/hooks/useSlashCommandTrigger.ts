@@ -1,178 +1,203 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 
-import type { ISlashCommandItem, ISlashCommandsConfig } from '../types/slash-command';
+import type {
+  ISlashCommandItem,
+  ISlashCommandsConfig,
+  ISlashInvocation,
+} from '../types/slash-command';
+
+export interface ISlashTriggerMatch {
+  query: string;
+  start: number;
+  end: number;
+}
 
 interface IUseSlashCommandTriggerOptions {
   value: string;
+  selectionStart: number;
   onChange: (value: string) => void;
+  onSelectionChange: (next: number) => void;
+  onInvocationChange?: (invocation: ISlashInvocation | undefined) => void;
   slashCommands?: ISlashCommandsConfig;
   currentModel: string;
   workspacePaths: string[];
   workspaceEnabled: boolean;
 }
 
-function buildInsertText(command: string, hasArgs?: boolean): string {
-  const normalized = command.startsWith('/') ? command : `/${command}`;
-  if (hasArgs === false) {
-    return `${normalized} `;
+/** 在当前光标所在文本边界识别 /query，不要求整段输入以 / 开头。 */
+export function extractSlashTrigger(value: string, cursor: number): ISlashTriggerMatch | null {
+  const safeCursor = Math.max(0, Math.min(cursor, value.length));
+  const beforeCursor = value.slice(0, safeCursor);
+  const match = beforeCursor.match(/(?:^|[\s([{，、])\/([a-z0-9_:-]*)$/i);
+  if (!match) {
+    return null;
   }
-  return `${normalized} `;
-}
-
-/** 仅在输入「命令名」阶段显示面板（选中后会有空格，与终端一致） */
-function shouldShowSlashMenu(value: string): boolean {
-  if (!value.startsWith('/')) {
-    return false;
-  }
-  const afterSlash = value.slice(1);
-  if (afterSlash.includes(' ')) {
-    return false;
-  }
-  return true;
-}
-
-function extractSlashQuery(value: string): string {
-  if (!shouldShowSlashMenu(value)) {
-    return '';
-  }
-  return value.slice(1);
+  const token = '/' + (match[1] || '');
+  const start = safeCursor - token.length;
+  return { query: match[1] || '', start, end: safeCursor };
 }
 
 export function useSlashCommandTrigger(options: IUseSlashCommandTriggerOptions) {
-  const { value, onChange, slashCommands, currentModel, workspacePaths, workspaceEnabled } =
-    options;
+  const {
+    value,
+    selectionStart,
+    onChange,
+    onSelectionChange,
+    onInvocationChange,
+    slashCommands,
+    currentModel,
+    workspacePaths,
+    workspaceEnabled,
+  } = options;
 
-  const [open, setOpen] = useState(false);
   const [items, setItems] = useState<ISlashCommandItem[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [warning, setWarning] = useState<string | undefined>();
+  const [warning, setWarning] = useState<string>();
   const [loading, setLoading] = useState(false);
+  const [dismissedKey, setDismissedKey] = useState('');
   const requestIdRef = useRef(0);
+  const selectedCommandRef = useRef<{ start: number; command: string } | null>(null);
 
-  const isEnabled = useMemo(
-    () => Boolean(slashCommands?.isActive(currentModel)),
-    [slashCommands, currentModel],
+  const enabled = Boolean(slashCommands?.isActive(currentModel));
+  const match = useMemo(
+    () => (enabled ? extractSlashTrigger(value, selectionStart) : null),
+    [enabled, selectionStart, value],
   );
-
-  const query = useMemo(() => extractSlashQuery(value), [value]);
-
-  const menuVisible = useMemo(() => isEnabled && shouldShowSlashMenu(value), [isEnabled, value]);
-
-  const loadItems = useCallback(async () => {
-    if (!slashCommands || !isEnabled) {
-      setItems([]);
-      setWarning(undefined);
-      return;
-    }
-    const requestId = requestIdRef.current + 1;
-    requestIdRef.current = requestId;
-    setLoading(true);
-    try {
-      const result = await slashCommands.list(query, {
-        workspacePaths,
-        workspaceEnabled,
-      });
-      if (requestIdRef.current !== requestId) {
-        return;
-      }
-      setItems(result.items);
-      setWarning(result.warning);
-      setSelectedIndex(0);
-    } catch {
-      if (requestIdRef.current !== requestId) {
-        return;
-      }
-      setItems([]);
-      setWarning('加载斜杠命令失败');
-    } finally {
-      if (requestIdRef.current === requestId) {
-        setLoading(false);
-      }
-    }
-  }, [slashCommands, isEnabled, query, workspacePaths, workspaceEnabled]);
+  const matchKey = match ? String(match.start) + ':' + match.query : '';
+  const visible = Boolean(match && matchKey !== dismissedKey);
 
   useEffect(() => {
-    if (!menuVisible) {
-      setOpen(false);
-      setItems([]);
-      setWarning(undefined);
+    const selected = selectedCommandRef.current;
+    if (!selected) {
       return;
     }
-    setOpen(true);
+    if (
+      value.slice(selected.start, selected.start + selected.command.length) !== selected.command
+    ) {
+      selectedCommandRef.current = null;
+      onInvocationChange?.(undefined);
+    }
+  }, [onInvocationChange, value]);
+
+  useEffect(() => {
+    if (!visible || !match || !slashCommands) {
+      requestIdRef.current += 1;
+      setItems([]);
+      setWarning(undefined);
+      setLoading(false);
+      return;
+    }
+
+    const requestId = ++requestIdRef.current;
+    setLoading(true);
     const timer = window.setTimeout(() => {
-      void loadItems();
-    }, 120);
-    return () => window.clearTimeout(timer);
-  }, [menuVisible, value, loadItems]);
+      void slashCommands
+        .list(match.query, { workspacePaths, workspaceEnabled })
+        .then((result) => {
+          if (requestId !== requestIdRef.current) {
+            return;
+          }
+          setItems(result.items);
+          setWarning(result.warning);
+          setSelectedIndex(0);
+        })
+        .catch(() => {
+          if (requestId === requestIdRef.current) {
+            setItems([]);
+            setWarning('加载 Agent 资源失败');
+          }
+        })
+        .finally(() => {
+          if (requestId === requestIdRef.current) {
+            setLoading(false);
+          }
+        });
+    }, 100);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [matchKey, slashCommands, visible, workspaceEnabled, workspacePaths]);
 
   const applySelection = useCallback(
     (item: ISlashCommandItem) => {
-      onChange(buildInsertText(item.command, item.hasArgs));
-      setOpen(false);
+      if (!match) {
+        return;
+      }
+      const command = item.command.startsWith('/') ? item.command : '/' + item.command;
+      const inserted = command + ' ';
+      const nextValue = value.slice(0, match.start) + inserted + value.slice(match.end);
+      onChange(nextValue);
+      onSelectionChange(match.start + inserted.length);
+      selectedCommandRef.current = { start: match.start, command };
+      onInvocationChange?.({
+        resourceId: item.resourceId,
+        resourceRevision: item.resourceRevision,
+        command,
+        kind: item.kind,
+        scope: item.scope,
+      });
+      setDismissedKey(matchKey);
     },
-    [onChange],
+    [match, matchKey, onChange, onInvocationChange, onSelectionChange, value],
   );
+
+  const close = useCallback(() => {
+    if (matchKey) {
+      setDismissedKey(matchKey);
+    }
+  }, [matchKey]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLTextAreaElement>) => {
-      if (!open || items.length === 0) {
+      if (!visible) {
+        return false;
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close();
+        return true;
+      }
+      if (items.length === 0) {
         return false;
       }
       if (event.key === 'ArrowDown') {
         event.preventDefault();
-        setSelectedIndex((prev) => (prev + 1) % items.length);
+        setSelectedIndex((previous) => (previous + 1) % items.length);
         return true;
       }
       if (event.key === 'ArrowUp') {
         event.preventDefault();
-        setSelectedIndex((prev) => (prev - 1 + items.length) % items.length);
+        setSelectedIndex((previous) => (previous - 1 + items.length) % items.length);
         return true;
       }
-      if (event.key === 'Enter' && !event.shiftKey) {
+      if ((event.key === 'Enter' && !event.shiftKey) || event.key === 'Tab') {
         event.preventDefault();
-        const item = items[selectedIndex];
-        if (item) {
-          applySelection(item);
+        const selected = items[selectedIndex];
+        if (selected) {
+          applySelection(selected);
         }
-        return true;
-      }
-      if (event.key === 'Tab') {
-        event.preventDefault();
-        const item = items[selectedIndex];
-        if (item) {
-          applySelection(item);
-        }
-        return true;
-      }
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        setOpen(false);
         return true;
       }
       return false;
     },
-    [open, items, selectedIndex, applySelection],
-  );
-
-  const handleSelect = useCallback(
-    (index: number) => {
-      const item = items[index];
-      if (item) {
-        applySelection(item);
-      }
-    },
-    [items, applySelection],
+    [applySelection, close, items, selectedIndex, visible],
   );
 
   return {
-    open: open && menuVisible,
+    open: visible && (loading || Boolean(warning) || items.length > 0),
     items,
     selectedIndex,
     setSelectedIndex,
     warning,
     loading,
     handleKeyDown,
-    handleSelect,
-    close: () => setOpen(false),
+    handleSelect: (index: number) => {
+      const selected = items[index];
+      if (selected) {
+        applySelection(selected);
+      }
+    },
+    close,
   };
 }

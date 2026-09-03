@@ -1,6 +1,7 @@
 import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
 import { getMainWindow } from '@momo/electron';
 import { dialog, ipcMain } from 'electron';
+import { grantWorkspaceRoots } from '../services/workspace/root-permissions';
 
 /** 注册文件夹选择对话框 IPC */
 export function registerDialogIPC(): void {
@@ -10,7 +11,7 @@ export function registerDialogIPC(): void {
       title: '选择数据目录',
     });
     if (!result.canceled && result.filePaths.length > 0) {
-      return result.filePaths[0];
+      return grantWorkspaceRoots([result.filePaths[0]])[0] ?? null;
     }
     return null;
   });
@@ -21,7 +22,7 @@ export function registerDialogIPC(): void {
       title: '选择工作区目录',
     });
     if (!result.canceled && result.filePaths.length > 0) {
-      return result.filePaths;
+      return grantWorkspaceRoots(result.filePaths);
     }
     return [];
   });

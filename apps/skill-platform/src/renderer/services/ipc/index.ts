@@ -10,10 +10,6 @@ export function getAichatIpc(): TApi['aichat'] | undefined {
   return getAppApi()?.aichat;
 }
 
-export function getClaudeCodeIpc(): TApi['claudeCode'] | undefined {
-  return getAppApi()?.claudeCode;
-}
-
 export function getFolderIpc(): TApi['folder'] | undefined {
   return getAppApi()?.folder;
 }
@@ -32,6 +28,10 @@ export function getMcpIpc(): TApi['mcp'] | undefined {
 
 export function getNoteIpc(): TApi['note'] | undefined {
   return getAppApi()?.note;
+}
+
+export function getCustomToolIpc(): TApi['customTool'] | undefined {
+  return getAppApi()?.customTool;
 }
 
 export function getOnlineConfIpc(): TApi['onlineConf'] | undefined {

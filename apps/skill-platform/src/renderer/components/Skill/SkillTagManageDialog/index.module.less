@@ -1,0 +1,32 @@
+.tag-manage {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tag-manage-select {
+  width: 100%;
+}
+
+.tag-manage-hint {
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.tag-manage-transfer {
+  width: 100%;
+
+  :global(.ant-transfer) {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+  }
+
+  :global(.ant-transfer-list) {
+    flex: 1 1 0;
+    width: auto;
+    height: 360px;
+    background: hsl(var(--background) / 0.72);
+  }
+}

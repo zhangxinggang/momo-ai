@@ -3,7 +3,12 @@ import type { IChatStorageAdapter } from '../storage/chat-storage';
 import type { IChatAttachment, IChatAttachmentMeta, IChatSession } from '../types/chat';
 import type { ILocalPathConfig } from '../types/local-path';
 import type { INoteReferencesConfig } from '../types/note-reference';
-import type { ISlashCommandsConfig } from '../types/slash-command';
+import type {
+  IBeforeSubmitPromptInput,
+  IBeforeSubmitPromptResult,
+  ISlashCommandsConfig,
+} from '../types/slash-command';
+import type { IChatSourceInput, IChatSourceRef, IResolvedChatSource } from '../types/source';
 import type { IChatWorkspaceConfig } from '../types/workspace';
 
 export interface IChatStreamMessage {
@@ -24,6 +29,7 @@ export interface IChatStreamStats {
     chunkId: number;
     score?: number;
     idx?: number;
+    collectionId?: number;
   }>;
 }
 
@@ -42,25 +48,13 @@ export interface IChatStreamOptions {
     mimeType: string;
     base64: string;
   }>;
+  /** 未展开的当前用户问题，供检索使用，避免附件/Skill 正文污染查询。 */
+  raw_user_query?: string;
+  /** 独立 Source Store 解析出的本轮附件证据。 */
+  attachment_sources?: IResolvedChatSource[];
   /** 思考内容流式回调（增量 chunk） */
   onThinking?: (chunk: string) => void;
 }
-
-export interface ICliAgentCallInput {
-  agent: 'claude' | 'codex';
-  prompt: string;
-  sessionId?: string;
-  cwd?: string;
-}
-
-export interface ICliAgentCallResult {
-  content: string;
-  sessionId: string;
-  model: string;
-  responseTimeSec: string;
-}
-
-export type TCallCliAgent = (input: ICliAgentCallInput) => Promise<ICliAgentCallResult>;
 
 export type TCallAiChatStream = (
   messages: IChatStreamMessage[],
@@ -105,14 +99,19 @@ export interface IChatSyncAdapter {
 /** 宿主可注入的 AI 对话服务能力 */
 
 export interface IAiChatServices {
-  apiBaseUrl: string;
   callAIChatStream: TCallAiChatStream;
   uploadFiles: TUploadFilesFn;
   validateLocalFiles: TValidateLocalFilesFn;
   getIsAuthenticated?: () => boolean;
   chatSync?: IChatSyncAdapter | null;
   listKbCollections?: () => Promise<IKbCollection[]>;
-  getKbChunk?: (chunkId: number) => Promise<IKbChunk>;
+  getKbChunk?: (locator: {
+    collectionId?: number;
+    docId: number;
+    chunkId: number;
+    idx?: number;
+    title?: string;
+  }) => Promise<IKbChunk>;
   /** 附件图标基础路径，默认 /icons/ */
   attachmentIconBasePath?: string;
   defaultModel?: string;
@@ -136,14 +135,12 @@ export interface IAiChatServices {
   workspace?: IChatWorkspaceConfig;
   /** 游客模式会话持久化（由宿主注入，包内不直接访问 Web Storage） */
   chatStorage: IChatStorageAdapter;
-  /** CLI Agent 调用（Electron 主进程 spawn） */
-  callCliAgent?: TCallCliAgent;
-  /** Superpowers 系统提示词（仅 API 模型，每次发送前注入） */
+  saveChatSources: (sources: IChatSourceInput[]) => Promise<IChatSourceRef[]>;
+  loadChatSources: (sources: IChatSourceRef[]) => Promise<IResolvedChatSource[]>;
+  /** Superpowers 系统提示词（每次发送前注入） */
   superpowerPrompts?: {
     workflow: string;
   };
-  /** 输入框斜杠命令补全（由宿主注入，如 Claude Code） */
-  slashCommands?: ISlashCommandsConfig;
   /** 输入框 @ 笔记引用（由宿主注入） */
   noteReferences?: INoteReferencesConfig;
   /** 消息内本地路径点击（由宿主注入） */
@@ -154,6 +151,17 @@ export interface IAiChatServices {
   renderInputToolbarLeftExtra?: () => ReactNode;
   /** 顶部上下文条中的技能摘要（宿主注入） */
   skillBanner?: { name: string } | null;
+  /** 顶部上下文条中的 Agent 应用摘要（宿主注入） */
+  agentAppBanner?: { id: string; name: string } | null;
+  /** 斜杠命令（宿主注入，按当前 Agent 应用启用） */
+  slashCommands?: ISlashCommandsConfig;
+  /**
+   * 发送前钩子：可 deny 或改写 content/displayContent。
+   * 仅声明式改写，禁止在此执行 shell。
+   */
+  beforeSubmitPrompt?: (
+    input: IBeforeSubmitPromptInput,
+  ) => Promise<IBeforeSubmitPromptResult> | IBeforeSubmitPromptResult;
   /** 判断模型 id 是否为生图模型 */
   isImageModel?: (modelId: string) => boolean;
   /** 生图模型输入框占位提示 */

@@ -1,8 +1,4 @@
-import {
-  EMcpTransportType,
-  type IMcpServerEntry,
-  type IMcpServersFile,
-} from '@/types/modules/mcp';
+import { EMcpTransportType, type IMcpServerEntry, type IMcpServersFile } from '@/types/modules/mcp';
 
 /** 推断 MCP 传输类型 */
 export function inferMcpTransport(entry: IMcpServerEntry): EMcpTransportType {

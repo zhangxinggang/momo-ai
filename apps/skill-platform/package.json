@@ -13,7 +13,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "before:build": "pnpm --filter @momo/file-editor run build && vite build",
+    "before:build": "pnpm --filter @momo/file-editor run build && node --max-old-space-size=8192 ./node_modules/vite/bin/vite.js build",
     "build:default-skills": "node scripts/build-default-skills.mjs",
     "dev": "pnpm --filter @momo/server run build && pnpm --filter @momo/file-editor run build && vite",
     "dev:web": "vite --config vite.web.config.ts",

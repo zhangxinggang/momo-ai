@@ -9,6 +9,7 @@ import {
   type IChatAttachmentMeta,
   type IChatMessage,
 } from '../../types/chat';
+import type { ISlashInvocation } from '../../types/slash-command';
 import { ChatAttachmentIcon } from '../../utils/attachment-icon';
 import { ChatContextBanner } from '../ChatContextBanner';
 import type { IChatInputPanelRef } from '../ChatInputPanel';
@@ -50,10 +51,11 @@ export const AiChatView: React.FC<IProps> = ({
   renderAssistantMessageActions,
 }) => {
   const { message, modal } = App.useApp();
-  const { uploadFiles, validateLocalFiles, isImageModel, getImageModelInputHint } =
+  const { uploadFiles, validateLocalFiles, saveChatSources, isImageModel, getImageModelInputHint } =
     useAiChatConfig();
   // 用户输入内容
   const [inputValue, setInputValue] = useState(externalInputValue ?? '');
+  const [slashInvocation, setSlashInvocation] = useState<ISlashInvocation>();
 
   useEffect(() => {
     if (externalInputValue !== undefined) {
@@ -71,22 +73,27 @@ export const AiChatView: React.FC<IProps> = ({
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   // 聊天输入框引用，用于自动聚焦
   const chatInputRef = useRef<IChatInputPanelRef>(null);
-  // 用户是否手动滚动的状态
-  const [userHasScrolled, setUserHasScrolled] = useState(false);
+  // 用户是否手动滚动（ref 供异步回调读取最新值）
+  const userHasScrolledRef = useRef(false);
   // 上次消息数量，用于检测新消息
-  const [lastMessageCount, setLastMessageCount] = useState(0);
+  const lastMessageCountRef = useRef(0);
+  // 上次内容签名，仅在真实内容变化时触发自动滚动
+  const lastContentSigRef = useRef('');
   // 是否应该自动滚动（仅在用户发送消息时为true）
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(false);
+  const shouldAutoScrollRef = useRef(false);
   // 智能吸附状态：用户是否希望跟随最新消息
-  const [isStickToBottom, setIsStickToBottom] = useState(true);
+  const isStickToBottomRef = useRef(true);
   // 滚动锁：防抖延迟滚动的 timeout ID
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // 流式输出状态：标记是否正在接收流式数据
-  const [isStreaming, setIsStreaming] = useState(false);
+  const isStreamingRef = useRef(false);
   // 保底滚动定时器：极端情况下的兜底机制
   const fallbackScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // 滚动状态标记：避免同一帧内多次触发滚动
-  const isScrollingRef = useRef<boolean>(false);
+  // 消息列表内容区引用（用于 ResizeObserver 监听图表异步撑高）
+  const messagesContentRef = useRef<HTMLDivElement>(null);
+  // 程序滚动标记：区分 scrollToBottom 触发的滚动与用户主动滚动，
+  // 避免程序滚动回弹覆盖用户向上滚动的意图
+  const isProgrammaticScrollRef = useRef<boolean>(false);
 
   // 附件上传与拖拽状态
   const [attachments, setAttachments] = useState<IChatAttachment[]>([]);
@@ -138,11 +145,9 @@ export const AiChatView: React.FC<IProps> = ({
         </div>
         {Array.isArray(message.stats?.citations) && message.stats.citations.length > 0 && (
           <div className='mt-1 flex flex-wrap gap-2'>
-            {message.stats.citations
-              .filter((c: any) => typeof c.score === 'number' && c.score > 0.8)
-              .map((c: any, i: number) => (
-                <CitationCard key={i} citation={c} index={i} />
-              ))}
+            {message.stats.citations.map((c: any, i: number) => (
+              <CitationCard key={i} citation={c} index={i} />
+            ))}
           </div>
         )}
       </div>
@@ -175,55 +180,49 @@ export const AiChatView: React.FC<IProps> = ({
     return distanceFromBottom;
   };
 
-  // 检查是否接近底部（≤80px为吸附区域，缩小缓冲区间提高灵敏度）
-  const isNearBottom = () => {
-    return getDistanceFromBottom() <= 80;
+  // 用户主动离开底部：立即取消吸附，避免后续内容更新/effect 把视图拉回底部
+  const detachFromBottom = () => {
+    clearFallbackScrollTimer();
+    isStickToBottomRef.current = false;
+    userHasScrolledRef.current = true;
   };
 
-  // 滚动到底部的函数 - 使用帧率节流 + scrollIntoView 确保准确滚动
+  // 滚回底部并恢复吸附
+  const attachToBottom = () => {
+    isStickToBottomRef.current = true;
+    userHasScrolledRef.current = false;
+  };
+
+  // 滚动到底部：直接设置 scrollTop，避免 scrollIntoView 与用户滚动竞态
   const scrollToBottom = () => {
-    // 避免同一帧内多次触发滚动
-    if (isScrollingRef.current) return;
-    isScrollingRef.current = true;
+    if (!isStickToBottomRef.current && !shouldAutoScrollRef.current) return;
 
-    // 使用微任务确保 React 状态已提交，在当前宏任务结束后、浏览器渲染前执行
-    queueMicrotask(() => {
-      // 单次 rAF：确保 DOM 更新和布局计算完成
-      requestAnimationFrame(() => {
-        if (messagesContainerRef.current && messagesEndRef.current) {
-          const container = messagesContainerRef.current;
-          // 强制触发浏览器重排，确保获取最新布局（关键！）
-          void container.offsetHeight; // 强制更新布局计算
+    const container = messagesContainerRef.current;
+    if (!container) return;
 
-          // 改用消息末尾的空div定位，比scrollHeight更可靠
-          messagesEndRef.current.scrollIntoView({
-            block: 'end', // 精确对齐底部
-            behavior: 'auto', // 所有情况下都直接跳转，无动画
-          });
-        }
-        isScrollingRef.current = false;
-      });
+    // 吸附态下允许连续贴底（图表异步撑高时需多次校正）
+    isProgrammaticScrollRef.current = true;
+    container.scrollTop = container.scrollHeight;
+
+    // 下一帧再清标记，吞掉本次程序滚动触发的 scroll 事件
+    requestAnimationFrame(() => {
+      isProgrammaticScrollRef.current = false;
     });
   };
 
-  // 移除原有的防抖滚动函数，直接使用scrollToBottom
-  // const debouncedScrollToBottom = () => { ... } // 已删除
-
-  // 启动保底滚动定时器 - 极端情况兜底机制
-  // 保底滚动机制 - 确保在极端情况下也能滚动到底部
+  // 启动保底滚动定时器 - 仅在吸附态下兜底
   const startFallbackScrollTimer = () => {
-    // 清除旧定时器
     if (fallbackScrollTimeoutRef.current) {
       clearTimeout(fallbackScrollTimeoutRef.current);
     }
 
-    // 流式输出时缩短保底时间（300ms→100ms），并连续检查3次
     let checkCount = 0;
     const checkScroll = () => {
-      scrollToBottom(); // 强制滚动
+      if (isStickToBottomRef.current && !userHasScrolledRef.current) {
+        scrollToBottom();
+      }
       checkCount++;
-      if (isStreaming && checkCount < 3) {
-        // 连续检查3次
+      if (isStreamingRef.current && checkCount < 3) {
         fallbackScrollTimeoutRef.current = setTimeout(checkScroll, 100);
       } else {
         fallbackScrollTimeoutRef.current = null;
@@ -241,100 +240,123 @@ export const AiChatView: React.FC<IProps> = ({
     }
   };
 
-  // 处理用户滚动事件 - 智能吸附逻辑
+  // 滚轮向上时立即取消吸附（不等 scroll 事件），解决「在底部上滚一点又弹回」
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY < 0) {
+      detachFromBottom();
+    }
+  };
+
+  // 处理用户滚动事件 - 智能吸附逻辑（带滞后，避免底部上滚一点又重新吸附）
   const handleScroll = () => {
     if (!messagesContainerRef.current) return;
 
-    const distanceFromBottom = getDistanceFromBottom();
+    // 忽略程序滚动，避免自动滚动重置用户向上滚动的意图
+    if (isProgrammaticScrollRef.current) {
+      return;
+    }
 
-    // 用户主动滚动时，清除保底定时器（用户已经看到内容）
+    const distanceFromBottom = getDistanceFromBottom();
     clearFallbackScrollTimer();
 
-    // 智能吸附逻辑 - 缩小缓冲区间（80-120px），减少状态频繁切换的同时提高灵敏度
-    if (distanceFromBottom <= 80) {
-      // 用户滚动到接近底部（≤80px），启用吸附模式
-      setIsStickToBottom(true);
-      setUserHasScrolled(false);
-    } else if (distanceFromBottom > 120) {
-      // 用户向上滚动超过120px，取消吸附模式
-      setIsStickToBottom(false);
-      setUserHasScrolled(true);
+    // 真正贴底才恢复吸附；离开超过阈值才取消。中间区间保持当前状态，
+    // 避免「在底部上滚一点 → 仍 ≤30px → 又被重新吸附 → 弹回底部」
+    if (distanceFromBottom <= 5) {
+      attachToBottom();
+    } else if (distanceFromBottom > 30) {
+      detachFromBottom();
     }
-    // 在80px-120px之间保持当前状态，避免频繁切换
   };
 
-  // 智能滚动逻辑 - 支持吸附模式、流式输出跟随，使用滚动锁防抖机制 + 保底兜底
+  // 内容区高度变化时（如 Mermaid 异步渲染完成）在吸附态下重新贴底，
+  // 避免「先滚到底 → 图表撑高 → 滚动条往上跳一点」
   useEffect(() => {
-    const currentMessageCount = currentSession?.messages?.length || 0;
+    const contentEl = messagesContentRef.current;
+    if (!contentEl || typeof ResizeObserver === 'undefined') {
+      return;
+    }
 
-    // 最新一条消息（用于检测错误消息）
-    const latestMessage = currentSession?.messages?.[currentMessageCount - 1];
+    const resizeObserver = new ResizeObserver(() => {
+      if (!isStickToBottomRef.current || userHasScrolledRef.current) {
+        return;
+      }
+      scrollToBottom();
+    });
 
-    // 检测是否有新消息（消息数量增加）
-    const hasNewMessage = currentMessageCount > lastMessageCount;
+    resizeObserver.observe(contentEl);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [currentSessionId]);
 
-    // 检测是否有消息内容更新（AI流式输出）
-    const hasContentUpdate = currentSession?.messages?.some(
-      (msg) => msg.role === 'assistant' && msg.isLoading,
-    );
+  // 仅在消息内容真实变化时决定是否滚底；吸附状态用 ref，不进入依赖，避免上滚触发 effect 再拉回底部
+  useEffect(() => {
+    const messages = currentSession?.messages || [];
+    const currentMessageCount = messages.length;
+    const contentSig = messages
+      .map(
+        (msg) =>
+          `${msg.id}:${msg.content?.length ?? 0}:${msg.thinkingContent?.length ?? 0}:${msg.isLoading ? 1 : 0}:${msg.isError ? 1 : 0}`,
+      )
+      .join('|');
 
-    // 更新流式输出状态
-    const wasStreaming = isStreaming;
-    setIsStreaming(!!hasContentUpdate);
+    const hasContentChanged = contentSig !== lastContentSigRef.current;
+    const hasNewMessage = currentMessageCount > lastMessageCountRef.current;
+    const hasContentUpdate = messages.some((msg) => msg.role === 'assistant' && msg.isLoading);
 
-    // 流式输出状态变化处理
+    const wasStreaming = isStreamingRef.current;
+    isStreamingRef.current = !!hasContentUpdate;
+
     if (!wasStreaming && hasContentUpdate) {
-      // 开始流式输出：启动保底定时器
       startFallbackScrollTimer();
     } else if (wasStreaming && !hasContentUpdate) {
-      // 流式输出结束：清除保底定时器
       clearFallbackScrollTimer();
     }
 
-    // 当最新消息是错误消息时，强制滚动到底部
-    const hasErrorUpdate =
-      !!latestMessage && latestMessage.role === 'assistant' && latestMessage.isError === true;
+    lastContentSigRef.current = contentSig;
+    lastMessageCountRef.current = currentMessageCount;
 
-    if (hasNewMessage || hasContentUpdate || hasErrorUpdate) {
-      // 决定是否自动滚动的条件：
-      // 1. 用户刚发送消息 (shouldAutoScroll)
-      // 2. 用户处于吸附模式 (isStickToBottom)
-      // 3. 用户未手动滚动且接近底部 (!userHasScrolled && isNearBottom())
-      // 4. 最新消息为错误消息 (hasErrorUpdate) → 强制滚动
-      const shouldScroll =
-        hasErrorUpdate ||
-        shouldAutoScroll ||
-        isStickToBottom ||
-        (!userHasScrolled && isNearBottom());
-
-      if (shouldScroll) {
-        // 对于流式输出，直接使用scrollToBottom（已优化为帧率节流）
-        if (hasContentUpdate && !hasNewMessage) {
-          // 流式输出中：使用优化后的滚动
-          scrollToBottom();
-        } else {
-          // 新消息或错误消息：立即滚动
-          scrollToBottom();
-        }
-
-        // 仅在用户发送消息后重置标志
-        if (shouldAutoScroll) {
-          setShouldAutoScroll(false);
-        }
-      }
+    // 无内容变化且非发送触发时，不滚动（用户仅改变吸附状态时也不应滚）
+    if (!hasContentChanged && !shouldAutoScrollRef.current) {
+      return;
     }
 
-    // 更新消息数量记录
-    setLastMessageCount(currentMessageCount);
-  }, [
-    currentSession?.messages?.length,
-    currentSession?.messages, // 监听消息内容变化（流式输出/错误消息）
-    shouldAutoScroll,
-    userHasScrolled,
-    isStickToBottom,
-    lastMessageCount,
-    isStreaming, // 添加 isStreaming 依赖以监听流式状态变化
-  ]);
+    const shouldScroll =
+      shouldAutoScrollRef.current ||
+      (isStickToBottomRef.current &&
+        !userHasScrolledRef.current &&
+        (hasNewMessage || hasContentUpdate || hasContentChanged));
+
+    if (shouldScroll) {
+      scrollToBottom();
+      if (shouldAutoScrollRef.current) {
+        shouldAutoScrollRef.current = false;
+      }
+    }
+  }, [currentSession?.messages, currentSessionId]);
+
+  // 会话切换：恢复吸附并滚到底部；延迟再贴几次，覆盖图表首屏渲染
+  useEffect(() => {
+    attachToBottom();
+    shouldAutoScrollRef.current = true;
+    lastContentSigRef.current = '';
+    lastMessageCountRef.current = 0;
+
+    scrollToBottom();
+    shouldAutoScrollRef.current = false;
+
+    const retryTimers = [50, 150, 400, 800].map((delayMs) =>
+      window.setTimeout(() => {
+        if (isStickToBottomRef.current && !userHasScrolledRef.current) {
+          scrollToBottom();
+        }
+      }, delayMs),
+    );
+
+    return () => {
+      retryTimers.forEach((id) => window.clearTimeout(id));
+    };
+  }, [currentSessionId]);
 
   // 组件清理：清除滚动锁的 timeout 和保底定时器
   useEffect(() => {
@@ -378,81 +400,77 @@ export const AiChatView: React.FC<IProps> = ({
     }
 
     const userContent = inputValue.trim();
+    const pendingAttachments = [...attachments];
+    const pendingProgressMap = { ...progressMap };
+    const pendingInvocation = slashInvocation;
 
     // 清空输入框
-    setInputValue('');
+    handleInputChange('');
+    setSlashInvocation(undefined);
 
     // 标记应该自动滚动（用户发送消息时）
-    setShouldAutoScroll(true);
+    shouldAutoScrollRef.current = true;
     // 重置用户滚动状态，启用吸附模式
-    setUserHasScrolled(false);
-    setIsStickToBottom(true);
+    attachToBottom();
 
-    // 构造附件上下文提示
-    const buildAttachmentsPrompt = (files: IChatAttachment[]): string => {
-      if (!files || files.length === 0) return '';
-      const MAX_TOTAL = 50000; // 50k 字符
-      const per = Math.max(1, Math.floor(MAX_TOTAL / files.length));
-      const blocks = files.map((f) => {
-        const text = f.text || '';
-        const content = text.length > per ? text.slice(0, per) : text;
-        return [
-          `--- 文件: ${f.name} (type=${f.ext}, chars=${content.length}) START ---`,
-          content,
-          `--- 文件: ${f.name} END ---`,
-        ].join('\n');
-      });
-      return ['以下为用户上传的文件内容（可能已截断），回答可引用并标注文件名：', ...blocks].join(
-        '\n\n',
-      );
-    };
+    const finalUserContent =
+      userContent ||
+      (isCurrentImageModel && hasImageAttachments
+        ? '请根据参考图生成或编辑图片'
+        : '请基于已上传的附件给出总结或见解');
 
-    const attachmentsPrompt = buildAttachmentsPrompt(attachments);
-    const referenceImages = attachments
-      .filter((file) => file.imageBase64 && file.mime.startsWith('image/'))
-      .map((file) => ({
-        name: file.name,
-        mimeType: file.mime || 'image/png',
-        base64: file.imageBase64!,
-      }));
-
-    let finalUserContent = userContent;
-    if (!isCurrentImageModel && attachments.length > 0) {
-      finalUserContent = `${attachmentsPrompt}\n\n我的问题：\n${userContent || '(基于以上文件，请给出总结/见解)'}`;
-    } else if (isCurrentImageModel && !userContent && referenceImages.length > 0) {
-      finalUserContent = '请根据参考图生成或编辑图片';
-    }
-
-    const displayContent = userContent || (attachments.length > 0 ? '（已发送附件）' : '');
+    const displayContent = userContent || (pendingAttachments.length > 0 ? '（已发送附件）' : '');
 
     try {
-      const attachmentsMeta: IChatAttachmentMeta[] = attachments.map((a) => ({
+      const sourceRefs = await saveChatSources(
+        pendingAttachments.map((attachment) => ({
+          name: attachment.name,
+          mimeType: attachment.mime || 'text/plain',
+          encoding: attachment.imageBase64 ? ('base64' as const) : ('utf8' as const),
+          content: attachment.imageBase64 || attachment.text || '',
+        })),
+      );
+      const attachmentsMeta: IChatAttachmentMeta[] = pendingAttachments.map((a, index) => ({
         id: a.id,
         name: a.name,
         size: a.size,
         mime: a.mime,
         ext: a.ext,
         snippet: a.snippet,
-        imageBase64: a.imageBase64,
+        sourceRef: sourceRefs[index],
       }));
       // 用户点击发送后，立即清空输入面板中的待发送附件区
       setAttachments([]);
       setProgressMap({});
 
-      await sendMessage(finalUserContent, attachmentsMeta, {
+      const sent = await sendMessage(finalUserContent, attachmentsMeta, {
         displayContent,
-        referenceImages:
-          isCurrentImageModel && referenceImages.length > 0 ? referenceImages : undefined,
+        sourceRefs,
+        invocation: pendingInvocation,
       });
+      if (!sent) {
+        handleInputChange(userContent);
+        setAttachments(pendingAttachments);
+        setProgressMap(pendingProgressMap);
+        setSlashInvocation(pendingInvocation);
+        return;
+      }
       onAfterSend?.();
     } catch (error) {
       console.error('发送消息失败:', error);
+      handleInputChange(userContent);
+      setAttachments(pendingAttachments);
+      setProgressMap(pendingProgressMap);
+      setSlashInvocation(pendingInvocation);
       message.error('发送消息失败，请稍后重试');
     }
   };
 
   // 处理Enter键发送
   const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) {
+      return;
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -478,6 +496,7 @@ export const AiChatView: React.FC<IProps> = ({
 
   const handleEditUserMessage = (msg: IChatMessage) => {
     handleInputChange(msg.content);
+    setSlashInvocation(msg.invocation);
     chatInputRef.current?.focus();
   };
 
@@ -580,6 +599,7 @@ export const AiChatView: React.FC<IProps> = ({
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
+        onWheel={handleWheel}
         onDragEnter={(e) => {
           e.preventDefault();
           // 仅处理文件拖拽
@@ -610,11 +630,12 @@ export const AiChatView: React.FC<IProps> = ({
           setIsDragging(false);
           if (files.length) handleAttachFiles(files as File[]);
         }}
-        className='relative flex-1 overflow-y-auto p-4'>
+        className='relative flex-1 overflow-y-auto p-4'
+        style={{ overflowAnchor: 'none' }}>
         {/* 拖拽覆盖层（作用于聊天滚动容器区域） */}
         <DropOverlay visible={isDragging} />
         {/* 视觉内容区：80% 宽度、居中 */}
-        <div className='mx-auto w-[80%] space-y-4'>
+        <div ref={messagesContentRef} className='mx-auto w-[80%] space-y-4'>
           {/* 欢迎消息 - 用户发送消息后仍保持显示 */}
           {showWelcome && (
             <div className='w-full'>
@@ -690,6 +711,12 @@ export const AiChatView: React.FC<IProps> = ({
                 <div className='group flex justify-end'>
                   <div className='max-w-[70%]'>
                     <div className='whitespace-pre-wrap break-words rounded-l-2xl rounded-br-sm rounded-tr-2xl bg-[var(--user-bubble-bg)] px-4 py-2 text-[var(--user-bubble-text)] transition-colors'>
+                      {message.invocation ? (
+                        <div className='mb-1 text-xs opacity-70'>
+                          {message.invocation.kind === 'skill' ? 'Skill' : 'Command'} ·{' '}
+                          {message.invocation.command}
+                        </div>
+                      ) : null}
                       <NoteReferenceText content={message.content} />
                     </div>
                     {message.attachments && message.attachments.length > 0 && (
@@ -758,6 +785,7 @@ export const AiChatView: React.FC<IProps> = ({
             progressMap={progressMap}
             onAttachFiles={handleAttachFiles}
             onRemoveAttachment={handleRemoveAttachment}
+            onSlashInvocationChange={setSlashInvocation}
           />
         </div>
       </div>

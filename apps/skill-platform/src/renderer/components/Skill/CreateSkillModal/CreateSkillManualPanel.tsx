@@ -1,15 +1,10 @@
-import {
-  MdEditor,
-  type IExposeParam,
-  type TToolbarNames,
-  type TUploadImgEvent,
-} from '@momo/markdown';
+import type { IExposeParam, TToolbarNames, TUploadImgEvent } from '@momo/markdown';
+import { MdEditor } from '@momo/markdown';
 import type { UploadProps } from 'antd';
 import { Button, Input, Upload } from 'antd';
 import { AlertCircleIcon, SparklesIcon, UploadIcon } from 'lucide-react';
 import type { RefObject } from 'react';
 
-import { buildSkillTagActions } from '@renderer/services/skill/modal-utils';
 import { SkillIconPicker } from '../SkillIconPicker';
 import { SkillTagEditor } from '../SkillTagEditor';
 import { sanitizeSkillName } from './types';
@@ -24,7 +19,6 @@ export interface IManualSkillFormState {
   iconEmoji?: string;
   iconBackground?: string;
   tags: string[];
-  tagInput: string;
 }
 
 interface IProps {
@@ -59,13 +53,6 @@ export function CreateSkillManualPanel({
   onDrop,
   onUploadImg,
 }: IProps) {
-  const tagActions = buildSkillTagActions({
-    tags: form.tags,
-    tagInput: form.tagInput,
-    setTags: (tags) => onFieldChange('tags', tags),
-    setTagInput: (tagInput) => onFieldChange('tagInput', tagInput),
-  });
-
   return (
     <div className='space-y-5'>
       <div>
@@ -123,13 +110,9 @@ export function CreateSkillManualPanel({
       </div>
 
       <SkillTagEditor
-        tags={form.tags}
-        tagInput={form.tagInput}
-        existingTags={existingTags}
-        onTagInputChange={(tagInput) => onFieldChange('tagInput', tagInput)}
-        onAddTag={tagActions.handleAddTag}
-        onRemoveTag={tagActions.handleRemoveTag}
-        onExistingTagClick={tagActions.handleAddExistingTag}
+        onChange={(tags) => onFieldChange('tags', tags)}
+        options={existingTags}
+        value={form.tags}
       />
 
       <div>

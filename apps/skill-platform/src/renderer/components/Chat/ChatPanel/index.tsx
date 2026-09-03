@@ -1,4 +1,5 @@
 import {
+  CaretDownOutlined,
   DeleteOutlined,
   EditOutlined,
   EllipsisOutlined,
@@ -86,9 +87,7 @@ function ChatPanelContent({ collapsed = false }: IProps) {
               (message) => message.role === 'user' || message.role === 'assistant',
             ),
           )
-          .filter((session) =>
-            keyword ? session.title.toLowerCase().includes(keyword) : true,
-          )
+          .filter((session) => (keyword ? session.title.toLowerCase().includes(keyword) : true))
           .sort((a, b) => b.updatedAt - a.updatedAt);
         return { project, sessions: projectSessions };
       })
@@ -225,7 +224,9 @@ function ChatPanelContent({ collapsed = false }: IProps) {
 
       <div className={styles['chat-panel-list']}>
         {treeNodes.length === 0 ? (
-          <SidebarEmptyState description={searchQuery.trim() ? '无匹配对话' : '暂无项目，点击上方添加'} />
+          <SidebarEmptyState
+            description={searchQuery.trim() ? '无匹配对话' : '暂无项目，点击上方添加'}
+          />
         ) : (
           treeNodes.map(({ project, sessions: projectSessions }) => {
             const isExpanded = expandedIds.has(project.id);
@@ -235,6 +236,14 @@ function ChatPanelContent({ collapsed = false }: IProps) {
                 <div
                   className={styles['chat-panel-project-row']}
                   onClick={() => handleToggleExpand(project.id)}>
+                  <span
+                    className={clsx(
+                      styles['chat-panel-project-switcher'],
+                      !isExpanded && styles['chat-panel-project-switcher--collapsed'],
+                    )}
+                    aria-hidden='true'>
+                    <CaretDownOutlined className={styles['chat-panel-project-switcher-icon']} />
+                  </span>
                   <span className={styles['chat-panel-project-name']} title={displayName}>
                     {displayName}
                   </span>

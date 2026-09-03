@@ -2,8 +2,7 @@ import type { ISkill } from '@/types/modules';
 import { useUnsavedLeaveGuard } from '@renderer/hooks/useUnsavedLeaveGuard';
 import { SKILL_NAME_REGEX } from '@renderer/services/skill/detail-utils';
 import {
-  buildSkillTagActions,
-  getExistingSkillTags,
+  collectAllSkillTags,
   getUserSkillTags,
   mergeSkillTagsForSave,
   resolveOriginalSkillTagsForSave,
@@ -41,7 +40,6 @@ export function EditSkillModal({ isOpen, onClose, skill }: IProps) {
   const [iconEmoji, setIconEmoji] = useState<string | undefined>(undefined);
   const [iconBackground, setIconBackground] = useState<string | undefined>(undefined);
   const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
 
   // Name validation state
   const [nameError, setNameError] = useState<string | null>(null);
@@ -50,7 +48,7 @@ export function EditSkillModal({ isOpen, onClose, skill }: IProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isFileEditorOpen, setIsFileEditorOpen] = useState(false);
 
-  const existingTags = useMemo(() => getExistingSkillTags(existingSkills), [existingSkills]);
+  const existingTags = useMemo(() => collectAllSkillTags(existingSkills), [existingSkills]);
 
   const resetFormFromSkill = useCallback(() => {
     if (!skill) {
@@ -199,13 +197,6 @@ export function EditSkillModal({ isOpen, onClose, skill }: IProps) {
     return null;
   }
 
-  const tagActions = buildSkillTagActions({
-    tags,
-    tagInput,
-    setTags,
-    setTagInput,
-  });
-
   return (
     <>
       <Modal
@@ -320,15 +311,7 @@ export function EditSkillModal({ isOpen, onClose, skill }: IProps) {
             />
           </div>
 
-          <SkillTagEditor
-            tags={tags}
-            tagInput={tagInput}
-            existingTags={existingTags}
-            onTagInputChange={setTagInput}
-            onAddTag={tagActions.handleAddTag}
-            onRemoveTag={tagActions.handleRemoveTag}
-            onExistingTagClick={tagActions.handleAddExistingTag}
-          />
+          <SkillTagEditor onChange={setTags} options={existingTags} value={tags} />
 
           <div className='border-border bg-accent/20 space-y-3 rounded-xl border p-4'>
             <div className='flex items-start justify-between gap-4'>

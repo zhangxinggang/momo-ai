@@ -155,235 +155,235 @@ export function SkillSettings() {
         <McpSettingsPanel />
       ) : (
         <>
-      <SettingSection title={'ISkill 安装方式'}>
-        <div className='space-y-3 p-4'>
-          <p className='text-muted-foreground text-xs'>
-            {`选择从 ${appName} 库向 AI 工具平台安装 ISkill 的方式。`}
-          </p>
-          <Segmented
-            block
-            value={settings.skillInstallMethod}
-            onChange={(v) => settings.setSkillInstallMethod(v as 'symlink' | 'copy')}
-            options={[
-              {
-                value: 'symlink',
-                label: (
-                  <div className='px-1 py-1 text-left'>
-                    <div className='text-sm font-semibold'>{'软链接'}</div>
-                    <p className='text-muted-foreground mt-1 text-[11px] font-normal leading-snug'>
-                      {`在平台目录创建软链接指向 ${appName} 的 Skills 目录，同步更新更高效`}
-                    </p>
-                  </div>
-                ),
-              },
-              {
-                value: 'copy',
-                label: (
-                  <div className='px-1 py-1 text-left'>
-                    <div className='text-sm font-semibold'>{'复制文件'}</div>
-                    <p className='text-muted-foreground mt-1 text-[11px] font-normal leading-snug'>
-                      {'直接将 SKILL.md 复制到平台目录，与平台目录独立'}
-                    </p>
-                  </div>
-                ),
-              },
-            ]}
-          />
-        </div>
-      </SettingSection>
-
-      <SettingSection title={'平台显示顺序'}>
-        <div className='space-y-3 p-4'>
-          <div className='flex items-center justify-between gap-3'>
-            <p className='text-muted-foreground text-xs'>
-              {'控制 ISkill 详情页和批量部署面板中的平台展示顺序。'}
-            </p>
-            <Button
-              size='small'
-              icon={<RotateCcwIcon className='h-3.5 w-3.5' />}
-              onClick={() => settings.resetSkillPlatformOrder()}>
-              {'重置顺序'}
-            </Button>
-          </div>
-          <div
-            role='list'
-            aria-label={'平台显示顺序'}
-            className='border-border/70 app-wallpaper-surface space-y-2 rounded-xl border p-3'>
-            {orderedPlatforms.map((platform, index) => (
-              <div
-                key={platform.id}
-                role='listitem'
-                data-platform-id={platform.id}
-                draggable
-                onDragStart={handleDragStart(platform.id)}
-                onDragOver={handleDragOver(platform.id)}
-                onDrop={handleDrop(platform.id)}
-                onDragEnd={handleDragEnd}
-                className={`app-wallpaper-surface-strong flex cursor-grab items-center justify-between gap-3 rounded-xl border px-3 py-2 transition-colors active:cursor-grabbing ${
-                  draggingPlatformId === platform.id
-                    ? 'border-primary/40 opacity-60'
-                    : dropTargetPlatformId === platform.id
-                      ? 'border-primary/60 ring-primary/30 ring-1'
-                      : 'border-border/60'
-                }`}>
-                <div className='flex min-w-0 items-center gap-3'>
-                  <GripVerticalIcon className='text-muted-foreground h-4 w-4 shrink-0' />
-                  <PlatformIcon platformId={platform.id} size={20} />
-                  <div className='min-w-0'>
-                    <div className='text-foreground text-sm font-medium'>{platform.name}</div>
-                    <div className='text-muted-foreground text-[11px]'>
-                      {settings.customPlatformRootPaths[platform.id] ||
-                        getPlatformRootTemplate(platform, currentPlatformKey)}
-                    </div>
-                  </div>
-                </div>
-                <div className='flex items-center gap-1'>
-                  <Button
-                    size='small'
-                    type='default'
-                    icon={<ArrowUpIcon className='h-3.5 w-3.5' />}
-                    onClick={() => movePlatformOrder(platform.id, 'up')}
-                    disabled={index === 0}
-                    title={'上移'}
-                  />
-                  <Button
-                    size='small'
-                    type='default'
-                    icon={<ArrowDownIcon className='h-3.5 w-3.5' />}
-                    onClick={() => movePlatformOrder(platform.id, 'down')}
-                    disabled={index === orderedPlatforms.length - 1}
-                    title={'下移'}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </SettingSection>
-
-      <SettingSection title={'平台根目录'}>
-        <div className='space-y-3 p-4'>
-          <p className='text-muted-foreground text-xs'>
-            {`为每个 AI 工具覆写平台根目录。${appName} 会从这里派生 skills、全局规则等内部路径。`}
-          </p>
-          <div className='border-border overflow-hidden rounded-lg border'>
-            {orderedPlatforms.map((platform) => {
-              const overridePath = settings.customPlatformRootPaths[platform.id] || '';
-              const defaultRootPath = getPlatformRootTemplate(platform, currentPlatformKey);
-              const effectiveRootPath = overridePath || defaultRootPath;
-              const derivedSkillsPath = joinResolvedPlatformPath(
-                effectiveRootPath,
-                platform.skillsRelativePath,
-              );
-              return (
-                <div
-                  key={platform.id}
-                  className='border-border/70 space-y-3 border-b px-3 py-3 last:border-0'>
-                  <div className='flex items-center gap-2'>
-                    <PlatformIcon platformId={platform.id} size={16} />
-                    <span className='text-foreground text-sm font-medium'>{platform.name}</span>
-                  </div>
-                  <div className='text-muted-foreground text-[11px]'>
-                    {'默认路径'}:<span className='ml-1 font-mono'>{defaultRootPath}</span>
-                  </div>
-                  <div className='bg-muted/30 text-muted-foreground grid gap-2 rounded-lg p-3 text-[11px]'>
-                    <div>
-                      {'派生 ISkill 路径'}:
-                      <span className='ml-1 font-mono'>{derivedSkillsPath}</span>
-                    </div>
-                    {platform.configFiles?.length ? (
-                      <div>
-                        {'派生配置文件'}:
-                        <span className='ml-1 font-mono'>
-                          {platform.configFiles
-                            .map((configFile) =>
-                              joinResolvedPlatformPath(effectiveRootPath, configFile),
-                            )
-                            .join(', ')}
-                        </span>
+          <SettingSection title={'ISkill 安装方式'}>
+            <div className='space-y-3 p-4'>
+              <p className='text-muted-foreground text-xs'>
+                {`选择从 ${appName} 库向 AI 工具平台安装 ISkill 的方式。`}
+              </p>
+              <Segmented
+                block
+                value={settings.skillInstallMethod}
+                onChange={(v) => settings.setSkillInstallMethod(v as 'symlink' | 'copy')}
+                options={[
+                  {
+                    value: 'symlink',
+                    label: (
+                      <div className='px-1 py-1 text-left'>
+                        <div className='text-sm font-semibold'>{'软链接'}</div>
+                        <p className='text-muted-foreground mt-1 text-[11px] font-normal leading-snug'>
+                          {`在平台目录创建软链接指向 ${appName} 的 Skills 目录，同步更新更高效`}
+                        </p>
                       </div>
-                    ) : null}
-                    <div className='text-muted-foreground/80 text-[10px]'>
-                      {'Skills、Rules 以及相关配置文件都由平台根目录派生。'}
+                    ),
+                  },
+                  {
+                    value: 'copy',
+                    label: (
+                      <div className='px-1 py-1 text-left'>
+                        <div className='text-sm font-semibold'>{'复制文件'}</div>
+                        <p className='text-muted-foreground mt-1 text-[11px] font-normal leading-snug'>
+                          {'直接将 SKILL.md 复制到平台目录，与平台目录独立'}
+                        </p>
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            </div>
+          </SettingSection>
+
+          <SettingSection title={'平台显示顺序'}>
+            <div className='space-y-3 p-4'>
+              <div className='flex items-center justify-between gap-3'>
+                <p className='text-muted-foreground text-xs'>
+                  {'控制 ISkill 详情页和批量部署面板中的平台展示顺序。'}
+                </p>
+                <Button
+                  size='small'
+                  icon={<RotateCcwIcon className='h-3.5 w-3.5' />}
+                  onClick={() => settings.resetSkillPlatformOrder()}>
+                  {'重置顺序'}
+                </Button>
+              </div>
+              <div
+                role='list'
+                aria-label={'平台显示顺序'}
+                className='border-border/70 app-wallpaper-surface space-y-2 rounded-xl border p-3'>
+                {orderedPlatforms.map((platform, index) => (
+                  <div
+                    key={platform.id}
+                    role='listitem'
+                    data-platform-id={platform.id}
+                    draggable
+                    onDragStart={handleDragStart(platform.id)}
+                    onDragOver={handleDragOver(platform.id)}
+                    onDrop={handleDrop(platform.id)}
+                    onDragEnd={handleDragEnd}
+                    className={`app-wallpaper-surface-strong flex cursor-grab items-center justify-between gap-3 rounded-xl border px-3 py-2 transition-colors active:cursor-grabbing ${
+                      draggingPlatformId === platform.id
+                        ? 'border-primary/40 opacity-60'
+                        : dropTargetPlatformId === platform.id
+                          ? 'border-primary/60 ring-primary/30 ring-1'
+                          : 'border-border/60'
+                    }`}>
+                    <div className='flex min-w-0 items-center gap-3'>
+                      <GripVerticalIcon className='text-muted-foreground h-4 w-4 shrink-0' />
+                      <PlatformIcon platformId={platform.id} size={20} />
+                      <div className='min-w-0'>
+                        <div className='text-foreground text-sm font-medium'>{platform.name}</div>
+                        <div className='text-muted-foreground text-[11px]'>
+                          {settings.customPlatformRootPaths[platform.id] ||
+                            getPlatformRootTemplate(platform, currentPlatformKey)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className='flex items-center gap-1'>
+                      <Button
+                        size='small'
+                        type='default'
+                        icon={<ArrowUpIcon className='h-3.5 w-3.5' />}
+                        onClick={() => movePlatformOrder(platform.id, 'up')}
+                        disabled={index === 0}
+                        title={'上移'}
+                      />
+                      <Button
+                        size='small'
+                        type='default'
+                        icon={<ArrowDownIcon className='h-3.5 w-3.5' />}
+                        onClick={() => movePlatformOrder(platform.id, 'down')}
+                        disabled={index === orderedPlatforms.length - 1}
+                        title={'下移'}
+                      />
                     </div>
                   </div>
-                  <div className='flex items-center gap-2'>
-                    <Input
-                      value={overridePath}
-                      onChange={(e) =>
-                        settings.setCustomPlatformRootPath(platform.id, e.target.value)
-                      }
-                      placeholder={'留空则使用默认根目录，例如 ~/.trae-cn'}
-                      className='flex-1'
-                    />
-                    <Button
-                      onClick={() => settings.resetCustomPlatformRootPath(platform.id)}
-                      disabled={!overridePath}>
-                      {'恢复默认'}
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </SettingSection>
-
-      <SettingSection title={'额外扫描目录'}>
-        <div className='space-y-3 p-4'>
-          <p className='text-muted-foreground text-xs'>
-            {'添加额外的 ISkill 目录用于导入和发现。这里不会覆盖平台默认目录。'}
-          </p>
-          <div className='flex items-center gap-2'>
-            <Input
-              value={newScanPath}
-              onChange={(e) => setNewScanPath(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && newScanPath.trim()) {
-                  settings.addCustomSkillScanPath(newScanPath.trim());
-                  setNewScanPath('');
-                }
-              }}
-              placeholder={'输入路径，如 ~/myskills'}
-              className='flex-1'
-            />
-            <Button
-              type='primary'
-              icon={<PlusIcon className='h-4 w-4' />}
-              onClick={() => {
-                if (newScanPath.trim()) {
-                  settings.addCustomSkillScanPath(newScanPath.trim());
-                  setNewScanPath('');
-                }
-              }}>
-              {'添加'}
-            </Button>
-          </div>
-          {settings.customSkillScanPaths.length > 0 ? (
-            <div className='border-border overflow-hidden rounded-lg border'>
-              {settings.customSkillScanPaths.map((path, idx) => (
-                <div
-                  key={`${path}-${idx}`}
-                  className='border-border/70 hover:bg-muted/20 flex items-center justify-between border-b px-3 py-2.5 transition-colors last:border-0'>
-                  <span className='text-foreground mr-3 flex-1 truncate font-mono text-sm'>
-                    {path}
-                  </span>
-                  <Button
-                    type='text'
-                    danger
-                    size='small'
-                    icon={<TrashIcon className='h-3.5 w-3.5' />}
-                    onClick={() => settings.removeCustomSkillScanPath(path)}
-                    title={'删除'}
-                  />
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          ) : (
-            <p className='text-muted-foreground/60 text-xs italic'>{'暂未添加自定义路径'}</p>
-          )}
-        </div>
-      </SettingSection>
+          </SettingSection>
+
+          <SettingSection title={'平台根目录'}>
+            <div className='space-y-3 p-4'>
+              <p className='text-muted-foreground text-xs'>
+                {`为每个 AI 工具覆写平台根目录。${appName} 会从这里派生 skills、全局规则等内部路径。`}
+              </p>
+              <div className='border-border overflow-hidden rounded-lg border'>
+                {orderedPlatforms.map((platform) => {
+                  const overridePath = settings.customPlatformRootPaths[platform.id] || '';
+                  const defaultRootPath = getPlatformRootTemplate(platform, currentPlatformKey);
+                  const effectiveRootPath = overridePath || defaultRootPath;
+                  const derivedSkillsPath = joinResolvedPlatformPath(
+                    effectiveRootPath,
+                    platform.skillsRelativePath,
+                  );
+                  return (
+                    <div
+                      key={platform.id}
+                      className='border-border/70 space-y-3 border-b px-3 py-3 last:border-0'>
+                      <div className='flex items-center gap-2'>
+                        <PlatformIcon platformId={platform.id} size={16} />
+                        <span className='text-foreground text-sm font-medium'>{platform.name}</span>
+                      </div>
+                      <div className='text-muted-foreground text-[11px]'>
+                        {'默认路径'}:<span className='ml-1 font-mono'>{defaultRootPath}</span>
+                      </div>
+                      <div className='bg-muted/30 text-muted-foreground grid gap-2 rounded-lg p-3 text-[11px]'>
+                        <div>
+                          {'派生 ISkill 路径'}:
+                          <span className='ml-1 font-mono'>{derivedSkillsPath}</span>
+                        </div>
+                        {platform.configFiles?.length ? (
+                          <div>
+                            {'派生配置文件'}:
+                            <span className='ml-1 font-mono'>
+                              {platform.configFiles
+                                .map((configFile) =>
+                                  joinResolvedPlatformPath(effectiveRootPath, configFile),
+                                )
+                                .join(', ')}
+                            </span>
+                          </div>
+                        ) : null}
+                        <div className='text-muted-foreground/80 text-[10px]'>
+                          {'Skills、Rules 以及相关配置文件都由平台根目录派生。'}
+                        </div>
+                      </div>
+                      <div className='flex items-center gap-2'>
+                        <Input
+                          value={overridePath}
+                          onChange={(e) =>
+                            settings.setCustomPlatformRootPath(platform.id, e.target.value)
+                          }
+                          placeholder={'留空则使用默认根目录，例如 ~/.trae-cn'}
+                          className='flex-1'
+                        />
+                        <Button
+                          onClick={() => settings.resetCustomPlatformRootPath(platform.id)}
+                          disabled={!overridePath}>
+                          {'恢复默认'}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </SettingSection>
+
+          <SettingSection title={'额外扫描目录'}>
+            <div className='space-y-3 p-4'>
+              <p className='text-muted-foreground text-xs'>
+                {'添加额外的 ISkill 目录用于导入和发现。这里不会覆盖平台默认目录。'}
+              </p>
+              <div className='flex items-center gap-2'>
+                <Input
+                  value={newScanPath}
+                  onChange={(e) => setNewScanPath(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newScanPath.trim()) {
+                      settings.addCustomSkillScanPath(newScanPath.trim());
+                      setNewScanPath('');
+                    }
+                  }}
+                  placeholder={'输入路径，如 ~/myskills'}
+                  className='flex-1'
+                />
+                <Button
+                  type='primary'
+                  icon={<PlusIcon className='h-4 w-4' />}
+                  onClick={() => {
+                    if (newScanPath.trim()) {
+                      settings.addCustomSkillScanPath(newScanPath.trim());
+                      setNewScanPath('');
+                    }
+                  }}>
+                  {'添加'}
+                </Button>
+              </div>
+              {settings.customSkillScanPaths.length > 0 ? (
+                <div className='border-border overflow-hidden rounded-lg border'>
+                  {settings.customSkillScanPaths.map((path, idx) => (
+                    <div
+                      key={`${path}-${idx}`}
+                      className='border-border/70 hover:bg-muted/20 flex items-center justify-between border-b px-3 py-2.5 transition-colors last:border-0'>
+                      <span className='text-foreground mr-3 flex-1 truncate font-mono text-sm'>
+                        {path}
+                      </span>
+                      <Button
+                        type='text'
+                        danger
+                        size='small'
+                        icon={<TrashIcon className='h-3.5 w-3.5' />}
+                        onClick={() => settings.removeCustomSkillScanPath(path)}
+                        title={'删除'}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className='text-muted-foreground/60 text-xs italic'>{'暂未添加自定义路径'}</p>
+              )}
+            </div>
+          </SettingSection>
         </>
       )}
     </>

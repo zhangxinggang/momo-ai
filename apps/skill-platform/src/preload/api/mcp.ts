@@ -13,5 +13,6 @@ export const mcpApi = {
   listServers: () => ipcRenderer.invoke(IPC_CHANNELS.MCP_LIST_SERVERS),
   listTools: () => ipcRenderer.invoke(IPC_CHANNELS.MCP_LIST_TOOLS),
   callTool: (req: DMcpCallToolRequest) => ipcRenderer.invoke(IPC_CHANNELS.MCP_CALL_TOOL, req),
-  reconnect: (name?: string) => ipcRenderer.invoke(IPC_CHANNELS.MCP_RECONNECT, name) as Promise<void>,
+  reconnect: (name?: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.MCP_RECONNECT, name) as Promise<void>,
 };

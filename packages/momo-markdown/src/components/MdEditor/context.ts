@@ -33,6 +33,8 @@ export const defaultContextValue: IContextType = {
   codeTheme: 'default',
   defToolbars: [],
   floatingToolbars: [],
+  editorMode: 'richtext',
+  updateEditorMode: () => {},
 };
 
 export const EditorContext = createContext<IContextType>(defaultContextValue);

@@ -9,6 +9,7 @@ import { PromptTreePanel } from '@renderer/components/Prompt/PromptTreePanel';
 import badgeStyles from '@renderer/components/Settings/SettingBadge/index.module.less';
 import { ToolboxPanel, useHasToolboxModule } from '@renderer/components/Toolbox';
 import { useToast } from '@renderer/components/ui/Toast';
+import WorkflowImportConflictModal from '@renderer/components/Workflow/WorkflowImportConflictModal';
 import { WorkflowTreePanel } from '@renderer/components/Workflow/WorkflowTreePanel';
 import { useConfirmLeaveEditors } from '@renderer/hooks/useConfirmLeaveEditors';
 import {
@@ -18,7 +19,6 @@ import {
 import { usePromptBackup } from '@renderer/hooks/usePromptBackup';
 import { useTreeRootCreate } from '@renderer/hooks/useTreeRootCreate';
 import { useWorkflowBackup } from '@renderer/hooks/useWorkflowBackup';
-import WorkflowImportConflictModal from '@renderer/components/Workflow/WorkflowImportConflictModal';
 import { isWindowFullscreen } from '@renderer/services/desktop';
 import { buildPromptStats } from '@renderer/services/prompt/filter';
 import { buildSkillStats } from '@renderer/services/skill/stats';

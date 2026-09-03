@@ -9,6 +9,7 @@ export function buildNoteAiWorkspaceStorageKey(noteId: string): string {
   return `note-ai-workspace-${noteId}`;
 }
 
+/** 删除笔记时清理旧 AI 写作弹窗遗留的 localStorage，避免脏数据 */
 export function clearNoteAiWritingStorage(noteId: string): void {
   const keys = buildStorageKeys(buildNoteAiStoragePrefix(noteId));
   localStorage.removeItem(keys.CHAT_SESSIONS);

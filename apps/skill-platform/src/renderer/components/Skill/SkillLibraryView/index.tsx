@@ -7,9 +7,9 @@ import {
   useIncrementalSkillRender,
 } from '@renderer/hooks/useIncrementalSkillRender';
 import { useSkillStoreRemoteSync } from '@renderer/hooks/useSkillStoreRemoteSync';
-import { updateSkillTags, type ESkillBatchTagMode } from '@renderer/services/skill/batch-utils';
 import { filterVisibleSkills } from '@renderer/services/skill/filter';
 import { importSkillZipFiles } from '@renderer/services/skill/import-zip';
+import { collectAllSkillTags } from '@renderer/services/skill/modal-utils';
 import { computeSkillIdsWithStoreUpdates } from '@renderer/services/skill/store-update';
 import { useSettingsStore, useSkillStore } from '@renderer/store';
 import { Button, Modal } from 'antd';
@@ -22,7 +22,6 @@ import {
   ListIcon,
   SendIcon,
   SquareIcon,
-  TagsIcon,
   TrashIcon,
   XIcon,
 } from 'lucide-react';
@@ -44,9 +43,9 @@ const SkillBatchDeployDialog = lazy(() =>
     default: m.SkillBatchDeployDialog,
   })),
 );
-const SkillBatchTagDialog = lazy(() =>
-  import('@renderer/components/Skill/SkillBatchTagDialog').then((m) => ({
-    default: m.SkillBatchTagDialog,
+const SkillTagManageDialog = lazy(() =>
+  import('@renderer/components/Skill/SkillTagManageDialog').then((m) => ({
+    default: m.SkillTagManageDialog,
   })),
 );
 
@@ -55,7 +54,6 @@ export function SkillLibraryView() {
   const { showToast } = useToast();
   const skills = useSkillStore((state) => state.skills);
   const deleteSkill = useSkillStore((state) => state.deleteSkill);
-  const updateSkill = useSkillStore((state) => state.updateSkill);
   const loadSkills = useSkillStore((state) => state.loadSkills);
   const isLoading = useSkillStore((state) => state.isLoading);
   const selectSkill = useSkillStore((state) => state.selectSkill);
@@ -88,21 +86,12 @@ export function SkillLibraryView() {
     return skills;
   }, [deployedSkillNames, effectiveFilterType, isDistributionView, skills]);
 
-  const availableTags = useMemo(() => {
-    const tagSet = new Set<string>();
-    for (const skill of tagFilterBaseSkills) {
-      for (const tag of skill.tags ?? []) {
-        const trimmed = tag.trim();
-        if (trimmed) {
-          tagSet.add(trimmed);
-        }
-      }
-    }
-    return [...tagSet].sort((a, b) => a.localeCompare(b, 'zh-CN'));
-  }, [tagFilterBaseSkills]);
+  const availableTags = useMemo(
+    () => collectAllSkillTags(tagFilterBaseSkills),
+    [tagFilterBaseSkills],
+  );
 
-  const showTagFilter =
-    availableTags.length >= 1 && (effectiveStoreView === 'my-skills' || isDistributionView);
+  const showTagFilter = effectiveStoreView === 'my-skills' || isDistributionView;
 
   const filteredSkills = useMemo(() => {
     return filterVisibleSkills({
@@ -137,7 +126,7 @@ export function SkillLibraryView() {
   const [updatingSkillId, setUpdatingSkillId] = useState<string | null>(null);
   const [showScanPreview, setShowScanPreview] = useState(false);
   const [showBatchDeployDialog, setShowBatchDeployDialog] = useState(false);
-  const [showBatchTagDialog, setShowBatchTagDialog] = useState(false);
+  const [showTagManageDialog, setShowTagManageDialog] = useState(false);
   const [scannedSkills, setScannedSkills] = useState<IScannedSkill[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -340,42 +329,6 @@ export function SkillLibraryView() {
   const handleBatchDeploy = () => {
     if (selectedSkills.length === 0) return;
     setShowBatchDeployDialog(true);
-  };
-
-  const handleBatchTags = () => {
-    if (selectedSkills.length === 0) return;
-    setShowBatchTagDialog(true);
-  };
-
-  const handleBatchTagSubmit = async (tag: string, mode: ESkillBatchTagMode) => {
-    const results = await Promise.allSettled(
-      selectedSkills.map(async (skill) => {
-        const nextTags = updateSkillTags(skill.tags, tag, mode);
-        const previousTags = skill.tags || [];
-
-        if (JSON.stringify(nextTags) === JSON.stringify(previousTags)) {
-          return { updated: false, name: skill.name };
-        }
-
-        await updateSkill(skill.id, { tags: nextTags });
-        return { updated: true, name: skill.name };
-      }),
-    );
-
-    const updatedCount = results.filter(
-      (result) => result.status === 'fulfilled' && result.value.updated,
-    ).length;
-    const failedCount = results.filter((result) => result.status === 'rejected').length;
-
-    showToast(
-      failedCount > 0
-        ? `标签批量更新完成，成功 ${updatedCount} 个，失败 ${failedCount} 个`
-        : mode === 'add'
-          ? `已为 ${updatedCount} 个 skill 添加标签`
-          : `已从 ${updatedCount} 个 skill 移除标签`,
-      failedCount > 0 ? 'error' : 'success',
-    );
-    setSelectedSkillIds(new Set());
   };
 
   const confirmDelete = async () => {
@@ -611,14 +564,6 @@ export function SkillLibraryView() {
                   {allVisibleSelected ? '清空' : '全选'}
                 </Button>
                 <Button
-                  onClick={handleBatchTags}
-                  disabled={selectedSkillIds.size === 0}
-                  icon={<TagsIcon className='text-primary h-4 w-4' />}
-                  className='border-border app-wallpaper-surface text-foreground hover:border-primary/25 hover:bg-accent inline-flex h-auto items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium'
-                  title={'批量管理标签'}>
-                  {'批量管理标签'}
-                </Button>
-                <Button
                   type='primary'
                   onClick={handleBatchDeploy}
                   disabled={selectedSkillIds.size === 0}
@@ -651,6 +596,7 @@ export function SkillLibraryView() {
         {showTagFilter ? (
           <SkillTagFilter
             activeTag={skillFilterTags[0] ?? null}
+            onManageTags={() => setShowTagManageDialog(true)}
             onSelectAll={() => clearSkillFilterTags()}
             onSelectTag={toggleSkillFilterTag}
             tags={availableTags}
@@ -774,13 +720,9 @@ export function SkillLibraryView() {
         </Suspense>
       )}
 
-      {showBatchTagDialog && (
+      {showTagManageDialog && (
         <Suspense fallback={null}>
-          <SkillBatchTagDialog
-            skills={selectedSkills}
-            onClose={() => setShowBatchTagDialog(false)}
-            onSubmit={handleBatchTagSubmit}
-          />
+          <SkillTagManageDialog open onClose={() => setShowTagManageDialog(false)} />
         </Suspense>
       )}
 

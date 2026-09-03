@@ -123,9 +123,7 @@ export function computeSkillIdsWithStoreUpdates(
   remoteStoreEntries: Record<string, { skills?: IRegistrySkill[] } | undefined>,
 ): Set<string> {
   // 与 updateRegistrySkill 一致：同一 slug 取首个候选，避免 Map 后写覆盖导致版本不一致
-  const registrySkills = Object.values(remoteStoreEntries).flatMap(
-    (entry) => entry?.skills ?? [],
-  );
+  const registrySkills = Object.values(remoteStoreEntries).flatMap((entry) => entry?.skills ?? []);
 
   return new Set(
     skills
@@ -134,9 +132,7 @@ export function computeSkillIdsWithStoreUpdates(
           return false;
         }
 
-        const registrySkill = registrySkills.find(
-          (item) => item.slug === skill.registry_slug,
-        );
+        const registrySkill = registrySkills.find((item) => item.slug === skill.registry_slug);
         if (!registrySkill?.version) {
           return false;
         }

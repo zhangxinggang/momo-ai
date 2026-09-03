@@ -20,9 +20,7 @@ function conflictKey(item: IWorkflowBackupConflictItem): string {
 
 function WorkflowImportConflictModal(props: IProps) {
   const { open, workflowName, conflicts, onCancel, onConfirm } = props;
-  const [actionByKey, setActionByKey] = useState<Record<string, EWorkflowBackupConflictAction>>(
-    {},
-  );
+  const [actionByKey, setActionByKey] = useState<Record<string, EWorkflowBackupConflictAction>>({});
 
   useEffect(() => {
     if (!open) {

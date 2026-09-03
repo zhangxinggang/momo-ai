@@ -1,4 +1,6 @@
+import { Tooltip } from 'antd';
 import { clsx } from 'clsx';
+import { SettingsIcon } from 'lucide-react';
 
 import styles from './index.module.less';
 
@@ -7,12 +9,19 @@ interface IProps {
   activeTag: string | null;
   onSelectAll: () => void;
   onSelectTag: (tag: string) => void;
+  onManageTags: () => void;
 }
 
 /**
- * 技能列表标签过滤：平铺 Chip，左侧「全部」默认选中，单选
+ * 技能列表标签过滤：平铺 Chip，左侧「全部」默认选中，单选，右侧进入标签管理
  */
-export function SkillTagFilter({ tags, activeTag, onSelectAll, onSelectTag }: IProps) {
+export function SkillTagFilter({
+  tags,
+  activeTag,
+  onSelectAll,
+  onSelectTag,
+  onManageTags,
+}: IProps) {
   const isAllSelected = activeTag === null;
 
   return (
@@ -46,6 +55,15 @@ export function SkillTagFilter({ tags, activeTag, onSelectAll, onSelectTag }: IP
             </button>
           );
         })}
+        <Tooltip title='标签管理'>
+          <button
+            aria-label='标签管理'
+            className={styles['skill-tag-filter-manage']}
+            onClick={onManageTags}
+            type='button'>
+            <SettingsIcon className='h-4 w-4' />
+          </button>
+        </Tooltip>
       </div>
     </section>
   );

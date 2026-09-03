@@ -33,12 +33,7 @@ function makeSkill(id: string, name: string): ISkill {
 describe('detectAllConflicts', () => {
   it('无冲突返回空', () => {
     expect(
-      detectAllConflicts(
-        [makePrompt('p1', 'A')],
-        [{ skill: makeSkill('s1', 'S') }],
-        [],
-        [],
-      ),
+      detectAllConflicts([makePrompt('p1', 'A')], [{ skill: makeSkill('s1', 'S') }], [], []),
     ).toEqual([]);
   });
 

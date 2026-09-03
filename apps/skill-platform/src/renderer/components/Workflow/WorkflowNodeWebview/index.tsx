@@ -24,9 +24,7 @@ export function WorkflowNodeWebview(props: IProps) {
   }
 
   return (
-    <div
-      aria-label={title}
-      className={styles['workflow-node-webview']}>
+    <div aria-label={title} className={styles['workflow-node-webview']}>
       <div
         className={clsx(
           styles['workflow-node-webview-loading'],

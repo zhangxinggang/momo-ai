@@ -1,15 +1,24 @@
 /**
  * 聊天相关的数据类型定义
  */
-
-/** CLI Agent 类型 */
-export enum ECliAgent {
-  EClaude = 'claude',
-  ECodex = 'codex',
-}
+import type { ISlashInvocation } from './slash-command';
+import type { IChatSourceRef } from './source';
 
 /** 智能体交互模式 */
 export type EAgentMode = 'ask' | 'plan';
+
+export interface IChatRequestSnapshot {
+  apiContent: string;
+  modelId: string;
+  temperature: number;
+  topP: number;
+  systemPrompt: string;
+  kbEnabled: boolean;
+  kbCollectionId?: number;
+  agentMode: EAgentMode;
+  sourceRefs?: IChatSourceRef[];
+  createdAt: number;
+}
 
 // 消息类型定义 - 触发重新编译
 export interface IChatMessage {
@@ -37,10 +46,15 @@ export interface IChatMessage {
       chunkId: number;
       score?: number;
       idx?: number;
+      collectionId?: number;
     }>;
   };
   // 附件（仅用于展示的元信息）
   attachments?: IChatAttachmentMeta[];
+  /** 本轮显式选择的 Agent Skill/Command；用于稳定重试。 */
+  invocation?: ISlashInvocation;
+  /** 首次发送冻结的请求配置；默认重试不读取当前全局设置。 */
+  requestSnapshot?: IChatRequestSnapshot;
 }
 
 /** 笔记引用快照（会话级） */
@@ -60,10 +74,6 @@ export interface IChatSession {
   createdAt: number;
   updatedAt: number;
   isLoading?: boolean; // 每个会话独立的加载状态
-  /** CLI Agent 会话 ID（--resume 复用） */
-  cliAgentSessionId?: string;
-  /** 创建 CLI 会话时的 agent 类型 */
-  cliAgentType?: ECliAgent;
   /** 笔记引用快照，key 为规范化路径 */
   noteSnapshots?: Record<string, INoteSnapshot>;
   /** 所属对话项目 id */
@@ -111,26 +121,20 @@ export interface IChatContext {
     attachmentsMeta?: IChatAttachmentMeta[],
     options?: {
       displayContent?: string;
-      /** 生图模型：参考图 base64 */
-      referenceImages?: Array<{
-        name?: string;
-        mimeType: string;
-        base64: string;
-      }>;
+      sourceRefs?: IChatSourceRef[];
       /** 重试模式：复用已有用户/助手消息，不新增记录 */
       retry?: {
         userMessageId: string;
         assistantMessageId: string;
       };
+      invocation?: ISlashInvocation;
+      requestSnapshot?: IChatRequestSnapshot;
     },
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   // 停止生成方法
   stopGeneration: (sessionId: string) => void;
   // 设置当前模型
   setCurrentModel: (modelId: string) => void;
-
-  /** 当前选中的是否为 CLI Agent 模型 */
-  isCliModel: boolean;
 
   // 智能新对话逻辑
   handleNewChat: () => void;
@@ -242,6 +246,5 @@ export type IChatAttachmentMeta = Pick<
   'id' | 'name' | 'size' | 'mime' | 'ext' | 'snippet'
 > & {
   charCount?: number;
-  /** 图片附件 base64，用于生图重试 */
-  imageBase64?: string;
+  sourceRef?: IChatSourceRef;
 };

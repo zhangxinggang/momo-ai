@@ -13,12 +13,7 @@ import {
   createResourceNode,
   validateWorkflowGraph,
 } from './graph';
-import {
-  createWebpageNode,
-  isLeafNode,
-  isResourceNode,
-  isWebpageNode,
-} from './parallel-graph';
+import { createWebpageNode, isLeafNode, isResourceNode, isWebpageNode } from './parallel-graph';
 
 function makeParallel(id: string, childIds: string[]): Node<IWorkflowParallelNodeData> {
   return {

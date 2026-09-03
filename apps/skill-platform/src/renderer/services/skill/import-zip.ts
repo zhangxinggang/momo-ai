@@ -49,7 +49,9 @@ function confirmOverwrite(skillName: string, fileName: string): Promise<boolean>
 }
 
 /** 将选中/拖入的 zip 或 SKILL.md 导入为我的 Skills；同名逐个确认是否覆盖 */
-export async function importSkillZipFiles(fileList: FileList | File[]): Promise<ILocalZipImportResult> {
+export async function importSkillZipFiles(
+  fileList: FileList | File[],
+): Promise<ILocalZipImportResult> {
   const importFiles = collectImportFiles(fileList);
   if (importFiles.length === 0) {
     return { imported: 0, overwritten: 0, skipped: 0, failed: [] };

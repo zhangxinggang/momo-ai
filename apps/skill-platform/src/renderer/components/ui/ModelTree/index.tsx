@@ -24,7 +24,7 @@ export interface IProps {
   className?: string;
   /** 顶部附加内容（如统计信息） */
   headerExtra?: ReactNode;
-  /** 两级分组（如 CLI Agent -> Claude/Codex） */
+  /** 两级分组（分组名 -> 模型列表） */
   simpleGroups?: IModelTreeSimpleGroup[];
 }
 

@@ -16,6 +16,8 @@ interface IDiagramMetrics {
 export interface IDiagramPanZoomHandle {
   cleanup: () => void;
   centerFit: () => void;
+  /** 标记用户已交互，后续自动居中适配将被忽略 */
+  markUserInteracted: () => void;
 }
 
 const diagramFullscreenCloseMap = new WeakMap<HTMLElement, () => void>();
@@ -284,15 +286,24 @@ const readSvgContentBBox = (svg: SVGSVGElement): ISvgContentBBox | null => {
   return tryReadSvgGraphicsBBox(svg);
 };
 
-/** 按实际内容收紧 viewBox，便于全屏居中与缩放 */
+/** 全屏时准备 SVG：保留原始 viewBox，避免 getBBox 裁切导致饼图等只显示局部 */
 const prepareSvgForFullscreen = (svg: SVGSVGElement, sourceSvg?: SVGSVGElement): void => {
   svg.style.display = 'block';
   svg.style.maxWidth = 'none';
   svg.style.width = '';
   svg.style.height = '';
-  svg.removeAttribute('preserveAspectRatio');
 
   const measureSource = sourceSvg ?? svg;
+  const viewBox = measureSource.viewBox?.baseVal;
+  if (viewBox && viewBox.width > 0 && viewBox.height > 0) {
+    svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+    svg.setAttribute('width', String(viewBox.width));
+    svg.setAttribute('height', String(viewBox.height));
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    return;
+  }
+
+  // 无 viewBox 时再回退到内容包围盒，保证仍可测量尺寸
   const bbox = readSvgContentBBox(measureSource);
   if (bbox) {
     const pad = FULLSCREEN_SVG_PADDING;
@@ -300,18 +311,10 @@ const prepareSvgForFullscreen = (svg: SVGSVGElement, sourceSvg?: SVGSVGElement):
     const y = bbox.y - pad;
     const width = bbox.width + pad * 2;
     const height = bbox.height + pad * 2;
-
     svg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
     svg.setAttribute('width', String(width));
     svg.setAttribute('height', String(height));
-    return;
-  }
-
-  const viewBox = measureSource.viewBox?.baseVal;
-  if (viewBox && viewBox.width > 0 && viewBox.height > 0) {
-    svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
-    svg.setAttribute('width', String(viewBox.width));
-    svg.setAttribute('height', String(viewBox.height));
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
   }
 };
 
@@ -414,17 +417,33 @@ const measureDiagramContent = (content: HTMLElement): IDiagramMetrics | null => 
 };
 
 const scheduleDiagramCenterFit = (panZoom: IDiagramPanZoomHandle, prepare?: () => void) => {
+  const timers: number[] = [];
+
   const runCenterFit = () => {
     prepare?.();
     panZoom.centerFit();
   };
 
+  const cancel = () => {
+    timers.splice(0).forEach((id) => window.clearTimeout(id));
+  };
+
+  // 用户滚轮/拖拽时一并取消延迟适配，避免「先放大再还原」
+  const previousMarkUserInteracted = panZoom.markUserInteracted;
+  panZoom.markUserInteracted = () => {
+    cancel();
+    previousMarkUserInteracted();
+  };
+
   requestAnimationFrame(() => {
     runCenterFit();
-    [50, 200, 500, 1000].forEach((delayMs) => {
-      window.setTimeout(runCenterFit, delayMs);
+    // 仅短时重试，等待 SVG 布局稳定
+    [50, 200].forEach((delayMs) => {
+      timers.push(window.setTimeout(runCenterFit, delayMs));
     });
   });
+
+  return cancel;
 };
 
 const openDiagramFullscreen = (container: HTMLElement, options: { customIcon: ICustomIcon }) => {
@@ -470,6 +489,7 @@ const openDiagramFullscreen = (container: HTMLElement, options: { customIcon: IC
   document.body.appendChild(overlay);
 
   const panZoom = bindDiagramPanZoom(viewport, transformLayer);
+  let cancelScheduledFit: (() => void) | undefined;
 
   const previousOverflow = document.body.style.overflow;
   document.body.style.overflow = 'hidden';
@@ -477,6 +497,7 @@ const openDiagramFullscreen = (container: HTMLElement, options: { customIcon: IC
   setDiagramFullscreenIcon(previewFullscreenSpan, 'fullscreen-exit', options.customIcon);
 
   const closeOverlay = () => {
+    cancelScheduledFit?.();
     panZoom.cleanup();
     overlay.remove();
     document.body.style.overflow = previousOverflow;
@@ -505,12 +526,12 @@ const openDiagramFullscreen = (container: HTMLElement, options: { customIcon: IC
         const clonedNode = visualNode.cloneNode(true) as SVGSVGElement;
         transformLayer.appendChild(clonedNode);
         const sourceSvg = visualNode as SVGSVGElement;
-        scheduleDiagramCenterFit(panZoom, () => {
+        cancelScheduledFit = scheduleDiagramCenterFit(panZoom, () => {
           prepareSvgForFullscreen(clonedNode, sourceSvg);
         });
         return;
       }
-      scheduleDiagramCenterFit(panZoom);
+      cancelScheduledFit = scheduleDiagramCenterFit(panZoom);
     } catch {
       closeOverlay();
     }
@@ -554,6 +575,8 @@ const toggleDiagramFullscreen = (container: HTMLElement, options: { customIcon: 
   openDiagramFullscreen(container, options);
 };
 
+export { toggleDiagramFullscreen };
+
 /**
  * 为图表容器绑定拖拽移动与滚轮缩放
  */
@@ -569,12 +592,23 @@ export const bindDiagramPanZoom = (
   let startY = 0;
   let initialDistance = 0;
   let initialScale = 1;
+  // 用户滚轮/拖拽后不再被延迟 centerFit 重置（修复首次放大再还原）
+  let hasUserInteracted = false;
+
+  const markUserInteracted = () => {
+    hasUserInteracted = true;
+  };
 
   const updateTransform = () => {
     content.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
   };
 
   const centerFit = () => {
+    // 用户已手动缩放/拖拽时，忽略后续自动适配
+    if (hasUserInteracted) {
+      return;
+    }
+
     const metrics = measureDiagramContent(content);
     if (!metrics) {
       return;
@@ -583,7 +617,7 @@ export const bindDiagramPanZoom = (
     const { width, height } = metrics;
     const viewportWidth = viewport.clientWidth;
     const viewportHeight = viewport.clientHeight;
-    if (viewportWidth <= 0 || viewportHeight <= 0) {
+    if (viewportWidth <= 0 || viewportHeight <= 0 || width <= 0 || height <= 0) {
       return;
     }
 
@@ -596,6 +630,7 @@ export const bindDiagramPanZoom = (
   };
 
   const onTouchStart = (event: TouchEvent) => {
+    markUserInteracted();
     if (event.touches.length === 1) {
       isDragging = true;
       startX = event.touches[0].clientX - posX;
@@ -643,6 +678,7 @@ export const bindDiagramPanZoom = (
 
   const onWheel = (event: WheelEvent) => {
     event.preventDefault();
+    markUserInteracted();
     const scaleAmount = 0.08;
     const previousScale = scale;
 
@@ -665,6 +701,7 @@ export const bindDiagramPanZoom = (
     if (event.button !== 0) {
       return;
     }
+    markUserInteracted();
     isDragging = true;
     viewport.style.cursor = 'grabbing';
     startX = event.clientX - posX;
@@ -710,6 +747,7 @@ export const bindDiagramPanZoom = (
       content.style.transform = '';
     },
     centerFit,
+    markUserInteracted,
   };
 };
 
@@ -788,6 +826,8 @@ const downloadDiagramAsPng = async (container: HTMLElement) => {
     }
   }
 };
+
+export { downloadDiagramAsPng };
 
 /** 为图表容器挂载操作栏（复制 / 全屏 / 下载） */
 export const prepareDiagramActionBars = (

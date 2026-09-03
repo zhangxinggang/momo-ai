@@ -176,7 +176,10 @@ export class McpHub {
           arguments: request.arguments ?? {},
         }),
         new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error(`MCP 工具调用超时（${CALL_TOOL_TIMEOUT_MS}ms）`)), CALL_TOOL_TIMEOUT_MS);
+          setTimeout(
+            () => reject(new Error(`MCP 工具调用超时（${CALL_TOOL_TIMEOUT_MS}ms）`)),
+            CALL_TOOL_TIMEOUT_MS,
+          );
         }),
       ]);
 

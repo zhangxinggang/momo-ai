@@ -1,12 +1,13 @@
+export { agentAppApi } from './agent-app';
 export { aiApi } from './ai';
 export { aichatApi } from './aichat';
-export { claudeCodeApi } from './claude-code';
+export { customToolApi } from './custom-tool';
 export { desktopApi } from './desktop';
 export { folderApi } from './folder';
 export { ioApi } from './io';
 export { kbApi } from './kb';
-export { mediaApi } from './media';
 export { mcpApi } from './mcp';
+export { mediaApi } from './media';
 export { noteApi } from './note';
 export { onlineConfApi } from './online-conf';
 export { promptApi } from './prompt';

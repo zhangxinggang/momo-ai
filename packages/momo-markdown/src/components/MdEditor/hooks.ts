@@ -37,8 +37,10 @@ import {
   ISettingType,
   IStaticProps,
   IStaticTextDefaultValue,
+  TEditorMode,
   TFocusOption,
   TThemes,
+  TUpdateEditorMode,
   TUpdateSetting,
   TUploadImgCallBack,
 } from './type';
@@ -355,8 +357,11 @@ export const useMdPreviewConfig = (props: IMdPreviewProps) => {
  * @param props
  * @returns
  */
-export const useConfig = (props: IEditorProps): [any, any, ISettingType, TUpdateSetting] => {
+export const useConfig = (
+  props: IEditorProps,
+): [any, any, ISettingType, TUpdateSetting, TEditorMode, TUpdateEditorMode] => {
   const { preview = defaultProps.preview, htmlPreview = defaultProps.htmlPreview } = props;
+  const editorModeProp = (props.editorMode ?? defaultProps.editorMode) as TEditorMode;
 
   const [highlight, usedLanguageText] = useMdPreviewConfig(props);
 
@@ -366,6 +371,8 @@ export const useConfig = (props: IEditorProps): [any, any, ISettingType, TUpdate
     htmlPreview: preview ? false : htmlPreview,
     previewOnly: false,
   });
+
+  const [editorMode, setEditorMode] = useState<TEditorMode>(editorModeProp);
 
   const cacheSetting = useRef(setting);
 
@@ -419,6 +426,38 @@ export const useConfig = (props: IEditorProps): [any, any, ISettingType, TUpdate
     });
   }, []);
 
+  // 切换编辑模式：富文本模式下关闭分屏预览；切回 markdown 时恢复缓存的预览状态
+  const updateEditorMode = useCallback<TUpdateEditorMode>(
+    (v) => {
+      setEditorMode((_mode) => {
+        const nextMode = v === undefined ? (_mode === 'richtext' ? 'markdown' : 'richtext') : v;
+
+        if (nextMode === 'richtext') {
+          // 进入富文本模式：关闭分屏预览
+          setSetting((_setting) => ({
+            ..._setting,
+            preview: false,
+            htmlPreview: false,
+            previewOnly: false,
+          }));
+        } else {
+          // 切回 markdown 模式：恢复默认预览
+          setSetting((_setting) => ({
+            ..._setting,
+            preview: cacheSetting.current.preview || preview,
+            htmlPreview: cacheSetting.current.htmlPreview,
+            previewOnly: false,
+          }));
+        }
+
+        props.onEditorModeChange?.(nextMode);
+        return nextMode;
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [preview],
+  );
+
   useEffect(() => {
     bodyOverflowHistory = document.body.style.overflow;
   }, []);
@@ -431,7 +470,7 @@ export const useConfig = (props: IEditorProps): [any, any, ISettingType, TUpdate
     }
   }, [setting.fullscreen]);
 
-  return [highlight, usedLanguageText, setting, updateSetting];
+  return [highlight, usedLanguageText, setting, updateSetting, editorMode, updateEditorMode];
 };
 
 /**

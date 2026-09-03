@@ -8,6 +8,11 @@ import { createIgnoreFilter } from '../services/workspace/gitignore-filter';
 import { grepWorkspace } from '../services/workspace/grep';
 import { formatTreeSummary, listWorkspaceTree } from '../services/workspace/list-tree';
 import { readFileSnippet } from '../services/workspace/read-snippet';
+import {
+  assertFileWithinWorkspaceRoot,
+  assertGrantedWorkspaceDirectory,
+  assertGrantedWorkspaceFile,
+} from '../services/workspace/root-permissions';
 
 const MAX_FILE_SIZE = 1024 * 50;
 
@@ -52,25 +57,15 @@ function listDirectory(
   }
 }
 
-function assertWorkspaceDirectory(dirPath: string): void {
-  if (!dirPath || typeof dirPath !== 'string') {
-    throw new Error('路径不能为空');
-  }
-  const stat = fs.statSync(dirPath);
-  if (!stat.isDirectory()) {
-    throw new Error('指定路径不是目录');
-  }
-}
-
 export function registerWorkspaceIPC(): void {
   ipcMain.handle(IPC_CHANNELS.WORKSPACE_LIST_DIR, async (_event, dirPath: string) => {
     if (!dirPath || typeof dirPath !== 'string') {
       return { success: false, error: '路径不能为空', entries: [] };
     }
     try {
-      assertWorkspaceDirectory(dirPath);
-      const entries = listDirectory(dirPath);
-      return { success: true, entries, dirPath };
+      const grantedPath = assertGrantedWorkspaceDirectory(dirPath);
+      const entries = listDirectory(grantedPath);
+      return { success: true, entries, dirPath: grantedPath };
     } catch (error) {
       return {
         success: false,
@@ -85,14 +80,14 @@ export function registerWorkspaceIPC(): void {
       return { success: false, error: '路径不能为空', entries: [], treeText: '' };
     }
     try {
-      assertWorkspaceDirectory(dirPath);
-      const filter = createIgnoreFilter(dirPath);
-      const { entries, truncated } = listWorkspaceTree(dirPath, filter);
+      const grantedPath = assertGrantedWorkspaceDirectory(dirPath);
+      const filter = createIgnoreFilter(grantedPath);
+      const { entries, truncated } = listWorkspaceTree(grantedPath, filter);
       let treeText = formatTreeSummary(entries);
       if (truncated) {
         treeText = `${treeText}\n...(已截断)`;
       }
-      return { success: true, entries, truncated, treeText, dirPath };
+      return { success: true, entries, truncated, treeText, dirPath: grantedPath };
     } catch (error) {
       return {
         success: false,
@@ -112,9 +107,9 @@ export function registerWorkspaceIPC(): void {
         return { success: false, error: '路径不能为空', hits: [] };
       }
       try {
-        assertWorkspaceDirectory(dirPath);
-        const filter = createIgnoreFilter(dirPath);
-        const hits = grepWorkspace(dirPath, keywords, filter);
+        const grantedPath = assertGrantedWorkspaceDirectory(dirPath);
+        const filter = createIgnoreFilter(grantedPath);
+        const hits = grepWorkspace(grantedPath, keywords, filter);
         return { success: true, hits };
       } catch (error) {
         return {
@@ -139,9 +134,14 @@ export function registerWorkspaceIPC(): void {
         return { success: false, error: '文件路径不能为空', content: '' };
       }
       try {
-        assertWorkspaceDirectory(dirPath);
-        const filter = createIgnoreFilter(dirPath);
-        const content = readFileSnippet(dirPath, relativePath, line ?? 1, filter);
+        const grantedPath = assertGrantedWorkspaceDirectory(dirPath);
+        const filePath = assertFileWithinWorkspaceRoot(
+          grantedPath,
+          path.resolve(grantedPath, relativePath),
+        );
+        const safeRelativePath = path.relative(grantedPath, filePath);
+        const filter = createIgnoreFilter(grantedPath);
+        const content = readFileSnippet(grantedPath, safeRelativePath, line ?? 1, filter);
         return { success: Boolean(content), content: content ?? '' };
       } catch (error) {
         return {
@@ -158,16 +158,29 @@ export function registerWorkspaceIPC(): void {
       return { success: false, error: '文件路径不能为空', content: '' };
     }
     try {
-      if (!isCodeEditorPath(filePath)) {
+      const grantedFilePath = assertGrantedWorkspaceFile(filePath);
+      if (!isCodeEditorPath(grantedFilePath)) {
         return { success: false, error: '非文本文件，跳过', content: '', skipped: true };
       }
-      const stat = fs.statSync(filePath);
+      const stat = fs.statSync(grantedFilePath);
       if (stat.size > MAX_FILE_SIZE) {
-        const content = fs.readFileSync(filePath, 'utf-8').slice(0, MAX_FILE_SIZE);
-        return { success: true, content, truncated: true, size: stat.size, filePath };
+        const content = fs.readFileSync(grantedFilePath, 'utf-8').slice(0, MAX_FILE_SIZE);
+        return {
+          success: true,
+          content,
+          truncated: true,
+          size: stat.size,
+          filePath: grantedFilePath,
+        };
       }
-      const content = fs.readFileSync(filePath, 'utf-8');
-      return { success: true, content, truncated: false, size: stat.size, filePath };
+      const content = fs.readFileSync(grantedFilePath, 'utf-8');
+      return {
+        success: true,
+        content,
+        truncated: false,
+        size: stat.size,
+        filePath: grantedFilePath,
+      };
     } catch (error) {
       return {
         success: false,

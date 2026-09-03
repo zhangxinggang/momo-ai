@@ -1,4 +1,4 @@
-import type { ISkill } from '@/types/modules';
+import type { DUpdateSkill, ISkill } from '@/types/modules';
 
 function isRemoteSourceUrl(sourceUrl?: string): boolean {
   return /^https?:\/\//i.test(sourceUrl || '');
@@ -103,50 +103,144 @@ export function mergeSkillTagsForSave(originalTags: string[], userTags: string[]
   return merged;
 }
 
-interface ISkillTagActionsParams {
-  tags: string[];
-  tagInput: string;
-  setTags: (tags: string[]) => void;
-  setTagInput: (value: string) => void;
+/** 按 A-Za-z 字母序排序标签（大小写不敏感，相同字母大写在前） */
+export function sortSkillTagsAz(tags: string[]): string[] {
+  return [...tags].sort((left, right) =>
+    left.localeCompare(right, 'en', { sensitivity: 'accent', caseFirst: 'upper' }),
+  );
 }
 
-/** 技能表单标签增删与回车添加 */
-export function buildSkillTagActions({
-  tags,
-  tagInput,
-  setTags,
-  setTagInput,
-}: ISkillTagActionsParams) {
-  const handleAddTag = () => {
-    const normalized = normalizeSkillTag(tagInput);
-    if (normalized && !tags.includes(normalized)) {
-      setTags([...tags, normalized]);
+export function normalizeSkillTagList(tags: string[]): string[] {
+  const normalizedList: string[] = [];
+  const seen = new Set<string>();
+  for (const tag of tags) {
+    const normalized = normalizeSkillTag(String(tag));
+    if (!normalized || seen.has(normalized)) {
+      continue;
     }
-    setTagInput('');
-  };
+    seen.add(normalized);
+    normalizedList.push(normalized);
+  }
+  return normalizedList;
+}
 
-  const handleRemoveTag = (tag: string) => {
-    setTags(tags.filter((item) => item !== tag));
-  };
-
-  const handleTagKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      handleAddTag();
+/** 收集技能上的全部标签并按 A-Za-z 排序 */
+export function collectAllSkillTags(skills: Array<Pick<ISkill, 'tags'>>): string[] {
+  const tagSet = new Set<string>();
+  for (const skill of skills) {
+    for (const tag of skill.tags || []) {
+      const normalized = normalizeSkillTag(tag);
+      if (normalized) {
+        tagSet.add(normalized);
+      }
     }
-  };
+  }
+  return sortSkillTagsAz([...tagSet]);
+}
 
-  const handleAddExistingTag = (tag: string) => {
-    const normalized = normalizeSkillTag(tag);
-    if (normalized && !tags.includes(normalized)) {
-      setTags([...tags, normalized]);
-    }
-  };
+function hasSameTagList(left: string[] | undefined, right: string[]): boolean {
+  const current = left || [];
+  if (current.length !== right.length) {
+    return false;
+  }
+  return current.every((item, index) => item === right[index]);
+}
 
+/** 从技能的 tags / original_tags 中删除指定标签 */
+export function removeTagFromSkillFields(
+  skill: Pick<ISkill, 'tags' | 'original_tags'>,
+  tag: string,
+): DUpdateSkill | null {
+  const normalized = normalizeSkillTag(tag);
+  if (!normalized) {
+    return null;
+  }
+  const nextTags = (skill.tags || []).filter((item) => normalizeSkillTag(item) !== normalized);
+  const nextOriginalTags = (skill.original_tags || []).filter(
+    (item) => normalizeSkillTag(item) !== normalized,
+  );
+  if (
+    hasSameTagList(skill.tags, nextTags) &&
+    hasSameTagList(skill.original_tags, nextOriginalTags)
+  ) {
+    return null;
+  }
   return {
-    handleAddTag,
-    handleRemoveTag,
-    handleTagKeyDown,
-    handleAddExistingTag,
+    tags: nextTags,
+    original_tags: nextOriginalTags,
   };
+}
+
+/** 将选中标签同步到技能：关联则写入，未关联则移除 */
+export function syncSkillTagsAssociation(
+  skill: Pick<ISkill, 'tags' | 'original_tags'>,
+  selectedTags: string[],
+  isAssociated: boolean,
+): DUpdateSkill | null {
+  const tagsToSync = normalizeSkillTagList(selectedTags);
+  if (tagsToSync.length === 0) {
+    return null;
+  }
+
+  if (isAssociated) {
+    const nextTags = mergeSkillTagsForSave(skill.tags || [], tagsToSync);
+    if (hasSameTagList(skill.tags, nextTags)) {
+      return null;
+    }
+    return { tags: nextTags };
+  }
+
+  const tagSet = new Set(tagsToSync);
+  const nextTags = (skill.tags || []).filter((item) => !tagSet.has(normalizeSkillTag(item)));
+  const nextOriginalTags = (skill.original_tags || []).filter(
+    (item) => !tagSet.has(normalizeSkillTag(item)),
+  );
+  if (
+    hasSameTagList(skill.tags, nextTags) &&
+    hasSameTagList(skill.original_tags, nextOriginalTags)
+  ) {
+    return null;
+  }
+  return {
+    tags: nextTags,
+    original_tags: nextOriginalTags,
+  };
+}
+
+export async function persistRemoveSkillTag(
+  tag: string,
+  skills: ISkill[],
+  updateSkill: (id: string, data: DUpdateSkill) => Promise<unknown>,
+): Promise<number> {
+  const results = await Promise.allSettled(
+    skills.map(async (skill) => {
+      const patch = removeTagFromSkillFields(skill, tag);
+      if (!patch) {
+        return false;
+      }
+      await updateSkill(skill.id, patch);
+      return true;
+    }),
+  );
+  return results.filter((result) => result.status === 'fulfilled' && result.value).length;
+}
+
+export async function persistAssociateSkillTags(
+  selectedTags: string[],
+  associatedSkillIds: string[],
+  skills: ISkill[],
+  updateSkill: (id: string, data: DUpdateSkill) => Promise<unknown>,
+): Promise<number> {
+  const associatedIdSet = new Set(associatedSkillIds);
+  const results = await Promise.allSettled(
+    skills.map(async (skill) => {
+      const patch = syncSkillTagsAssociation(skill, selectedTags, associatedIdSet.has(skill.id));
+      if (!patch) {
+        return false;
+      }
+      await updateSkill(skill.id, patch);
+      return true;
+    }),
+  );
+  return results.filter((result) => result.status === 'fulfilled' && result.value).length;
 }

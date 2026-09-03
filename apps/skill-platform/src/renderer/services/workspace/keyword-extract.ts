@@ -1,60 +1,71 @@
-const MAX_KEYWORDS = 8;
-
 const STOP_WORDS = new Set([
-  'the',
-  'and',
-  'for',
-  'this',
-  'that',
-  'with',
+  'about',
+  'after',
+  'before',
+  'could',
   'from',
+  'have',
+  'into',
   'please',
-  'help',
-  'me',
+  'should',
+  'that',
+  'these',
+  'this',
+  'what',
+  'when',
+  'where',
+  'which',
+  'with',
+  '帮我',
+  '一下',
+  '这个',
+  '那个',
+  '如何',
+  '什么',
+  '是否',
 ]);
 
-/** 中文领域词 → 仓库内常见英文检索词 */
-const CN_DOMAIN_GREP_TERMS: Array<{ pattern: RegExp; terms: string[] }> = [
-  { pattern: /标签/, terms: ['tag', 'tags', 'SkillTag', 'SkillTagEditor', 'SkillTagFilter'] },
-  { pattern: /技能/, terms: ['skill', 'Skill'] },
-  { pattern: /批量/, terms: ['batch', 'bulk'] },
-  { pattern: /列表/, terms: ['list', 'SkillList'] },
-  { pattern: /工作区/, terms: ['workspace'] },
-  { pattern: /知识库/, terms: ['kb', 'RAG'] },
-  { pattern: /对话/, terms: ['chat', 'Chat'] },
-];
+const MAX_KEYWORDS = 8;
 
-/** 从用户消息提取 Grep 关键词 */
+function pushKeyword(result: string[], seen: Set<string>, value: string): void {
+  const normalized = value.trim().replace(/^[./\\]+|[.,:;!?，。；：！？]+$/g, '');
+  const key = normalized.toLowerCase();
+  if (normalized.length < 2 || STOP_WORDS.has(key) || seen.has(key)) {
+    return;
+  }
+  seen.add(key);
+  result.push(normalized);
+}
+
+/**
+ * 从原始用户问题中提取可解释的文本检索词。
+ * 不包含产品领域词表，避免通过关键词猜测用户意图。
+ */
 export function extractGrepKeywords(message: string): string[] {
-  const keywords = new Set<string>();
+  const result: string[] = [];
+  const seen = new Set<string>();
+  const patterns = [
+    /`([^`\r\n]{2,80})`/g,
+    /["“”']([^"“”'\r\n]{2,80})["“”']/g,
+    /(?:^|\s)((?:[\w.-]+[\\/])+[\w./-]+)/g,
+    /\b[A-Za-z_$][A-Za-z0-9_$]{2,}\b/g,
+    /[\u4e00-\u9fff]{2,12}/g,
+  ];
 
-  for (const item of CN_DOMAIN_GREP_TERMS) {
-    if (item.pattern.test(message)) {
-      for (const term of item.terms) {
-        keywords.add(term);
+  for (const pattern of patterns) {
+    for (const match of message.matchAll(pattern)) {
+      pushKeyword(result, seen, match[1] || match[0]);
+      if (result.length >= MAX_KEYWORDS) {
+        return result;
       }
     }
   }
+  return result;
+}
 
-  const pathMatches = message.match(/[\w.-]+\/[\w./-]+|[\w.-]+\.(ts|tsx|js|jsx|md|json)/gi) ?? [];
-  for (const match of pathMatches.slice(0, 2)) {
-    const segment = match.split('/').pop();
-    if (segment) {
-      keywords.add(segment.replace(/\.\w+$/i, ''));
-    }
-  }
-
-  const pascalMatches = message.match(/\b[A-Z][a-zA-Z0-9]{2,}\b/g) ?? [];
-  for (const match of pascalMatches.slice(0, 3)) {
-    keywords.add(match);
-  }
-
-  const camelMatches = message.match(/\b[a-z][a-zA-Z0-9]{2,}\b/g) ?? [];
-  for (const match of camelMatches.slice(0, 2)) {
-    if (!STOP_WORDS.has(match.toLowerCase())) {
-      keywords.add(match);
-    }
-  }
-
-  return [...keywords].slice(0, MAX_KEYWORDS);
+/** 仅在用户明确询问目录、文件结构时读取目录树。 */
+export function asksForWorkspaceTree(message: string): boolean {
+  return /目录树|目录结构|文件结构|项目结构|仓库结构|有哪些文件|list files|folder structure|directory tree/i.test(
+    message,
+  );
 }

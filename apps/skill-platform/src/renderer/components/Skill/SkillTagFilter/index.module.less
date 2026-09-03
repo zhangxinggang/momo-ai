@@ -71,8 +71,39 @@
   white-space: nowrap;
 }
 
+.skill-tag-filter-manage {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-left: 2px;
+  border: 1px solid hsl(var(--border) / 0.75);
+  border-radius: 999px;
+  background: hsl(var(--background) / 0.72);
+  color: hsl(var(--foreground) / 0.72);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: hsl(var(--primary) / 0.35);
+    background: hsl(var(--accent) / 0.55);
+    color: hsl(var(--foreground));
+  }
+
+  &:focus-visible {
+    outline: 2px solid hsl(var(--primary) / 0.45);
+    outline-offset: 2px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .skill-tag-filter-chip {
+  .skill-tag-filter-chip,
+  .skill-tag-filter-manage {
     transition: none;
   }
 }

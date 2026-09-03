@@ -116,6 +116,21 @@ export function getNotesDir(): string {
   return path.join(getDataDir(), 'notes');
 }
 
+/** 自定义工具目录：与笔记同级，位于 data/tools */
+export function getToolsDir(): string {
+  return path.join(getDataDir(), 'tools');
+}
+
+/** 静态资源目录（snapEdit.html 等） */
+export function getStaticDir(): string {
+  const projectRoot = getProjectRoot();
+  const distStatic = path.join(projectRoot, 'dist', 'static');
+  if (fs.existsSync(distStatic)) {
+    return distStatic;
+  }
+  return path.join(projectRoot, 'static');
+}
+
 /** 技能商店下载缓存：<userData>/data/skills/source */
 export function getSkillsSourceDir(): string {
   return path.join(getDataDir(), 'skills', 'source');

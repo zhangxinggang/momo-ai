@@ -53,6 +53,7 @@ export interface IToolbarTips {
   htmlPreview?: string;
   github?: string;
   previewStyle?: string;
+  richtext?: string;
   '-'?: string;
   '='?: string;
 }
@@ -142,6 +143,16 @@ export interface ISettingType {
   htmlPreview: boolean;
   previewOnly: boolean;
 }
+
+/**
+ * 编辑器内容模式
+ *
+ * 'markdown': 纯文本 Markdown 编辑（CodeMirror + markdown-it 预览）
+ * 'richtext': 富文本所见即所得编辑（TipTap）
+ *
+ * @default 'richtext'
+ */
+export type TEditorMode = 'markdown' | 'richtext';
 
 export interface IHeadList {
   text: string;
@@ -543,6 +554,21 @@ export interface IEditorProps extends IMdPreviewProps {
    * @default []
    */
   floatingToolbars?: Array<TToolbarNames>;
+
+  /**
+   * 编辑器内容模式
+   *
+   * 'markdown': 纯文本 Markdown 编辑（CodeMirror + markdown-it 预览）
+   * 'richtext': 富文本所见即所得编辑（TipTap）
+   *
+   * @default 'richtext'
+   */
+  editorMode?: TEditorMode;
+
+  /**
+   * 编辑器内容模式变化事件
+   */
+  onEditorModeChange?: (mode: TEditorMode) => void;
 }
 
 export interface IContextType {
@@ -571,6 +597,8 @@ export interface IContextType {
   codeTheme: string;
   defToolbars: Array<ReactElement>;
   floatingToolbars: Array<TToolbarNames>;
+  editorMode: TEditorMode;
+  updateEditorMode: TUpdateEditorMode;
 }
 
 export interface IMermaidTemplate {
@@ -857,6 +885,8 @@ export interface IStaticProps extends IMdPreviewStaticProps {
 }
 
 export type TUpdateSetting = (k: keyof ISettingType, v?: boolean) => void;
+
+export type TUpdateEditorMode = (v?: TEditorMode) => void;
 
 export type TChangeEvent = (v: string) => void;
 export type TSaveEvent = (v: string, h: Promise<string>) => void;

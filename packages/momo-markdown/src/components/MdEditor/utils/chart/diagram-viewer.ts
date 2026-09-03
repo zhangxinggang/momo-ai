@@ -554,6 +554,8 @@ const toggleDiagramFullscreen = (container: HTMLElement, options: { customIcon: 
   openDiagramFullscreen(container, options);
 };
 
+export { toggleDiagramFullscreen };
+
 /**
  * 为图表容器绑定拖拽移动与滚轮缩放
  */
@@ -788,6 +790,8 @@ const downloadDiagramAsPng = async (container: HTMLElement) => {
     }
   }
 };
+
+export { downloadDiagramAsPng };
 
 /** 为图表容器挂载操作栏（复制 / 全屏 / 下载） */
 export const prepareDiagramActionBars = (

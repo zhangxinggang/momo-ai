@@ -4,41 +4,43 @@ import { prefix } from '~/config';
 import { EditorContext } from '~/context';
 import { classnames } from '~/utils';
 
-const ToolbarPreview = () => {
+/**
+ * 富文本 / Markdown 模式切换按钮
+ *
+ * 点击在 'richtext' 与 'markdown' 之间切换。
+ * 富文本模式下该按钮处于激活态。
+ */
+const ToolbarRichtext = () => {
   const {
     usedLanguageText: ult,
     showToolbarName,
     disabled,
-    setting,
-    updateSetting,
     editorMode,
     updateEditorMode,
   } = useContext(EditorContext);
+
+  const isActive = editorMode === 'richtext';
 
   return (
     <button
       className={classnames([
         `${prefix}-toolbar-item`,
-        setting.preview && `${prefix}-toolbar-active`,
+        isActive && `${prefix}-toolbar-active`,
         disabled && `${prefix}-disabled`,
       ])}
-      title={ult.toolbarTips?.preview}
-      aria-label={ult.toolbarTips?.preview}
+      title={ult.toolbarTips?.richtext}
+      aria-label={ult.toolbarTips?.richtext}
       disabled={disabled}
       onClick={() => {
-        // 富文本模式下点击预览：先切回 Markdown 模式再开启分屏预览
-        if (editorMode === 'richtext') {
-          updateEditorMode('markdown');
-        }
-        updateSetting('preview', true);
+        updateEditorMode();
       }}
       type='button'>
-      <Icon name='preview' />
+      <Icon name='richtext' />
       {showToolbarName && (
-        <div className={`${prefix}-toolbar-item-name`}>{ult.toolbarTips?.preview}</div>
+        <div className={`${prefix}-toolbar-item-name`}>{ult.toolbarTips?.richtext}</div>
       )}
     </button>
   );
 };
 
-export default memo(ToolbarPreview);
+export default memo(ToolbarRichtext);

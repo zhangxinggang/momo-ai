@@ -28,6 +28,7 @@ import {
   Superscript,
   Table,
   Trash2,
+  Type,
   Underline,
   Upload,
   View,
@@ -70,6 +71,7 @@ export type IconName =
   | 'github'
   | 'mermaid'
   | 'formula'
+  | 'richtext'
   | 'close'
   | 'delete'
   | 'upload';
@@ -110,6 +112,7 @@ const iconMaps: {
   github: Github as any,
   mermaid: ChartArea,
   formula: SquareSigma,
+  richtext: Type,
   close: X,
   delete: Trash2,
   upload: Upload,

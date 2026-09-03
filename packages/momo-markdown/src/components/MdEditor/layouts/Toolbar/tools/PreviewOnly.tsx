@@ -11,6 +11,8 @@ const ToolbarPreviewOnly = () => {
     disabled,
     setting,
     updateSetting,
+    editorMode,
+    updateEditorMode,
   } = useContext(EditorContext);
 
   return (
@@ -24,7 +26,11 @@ const ToolbarPreviewOnly = () => {
       aria-label={ult.toolbarTips?.previewOnly}
       disabled={disabled}
       onClick={() => {
-        updateSetting('previewOnly');
+        // 富文本模式下点击仅预览：先切回 Markdown 模式再开启仅预览
+        if (editorMode === 'richtext') {
+          updateEditorMode('markdown');
+        }
+        updateSetting('previewOnly', true);
       }}
       type='button'>
       <Icon name='preview-only' />

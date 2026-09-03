@@ -1,0 +1,1406 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>随手改 SnapEdit · HTML 可视化编辑器</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+          "Microsoft YaHei", sans-serif;
+        background: #fafaf9;
+        color: #292524;
+        overflow: hidden;
+      }
+
+      /* ===== 顶栏 ===== */
+      #shell {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        width: 100vw;
+      }
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+        flex-shrink: 0;
+        z-index: 100;
+        box-shadow: 0 2px 12px rgba(30, 27, 75, 0.35);
+      }
+      .brand {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-right: 8px;
+        user-select: none;
+      }
+      .brand b {
+        color: #fff;
+        font-size: 16px;
+        letter-spacing: 1px;
+      }
+      .brand i {
+        color: #a5b4fc;
+        font-size: 11px;
+        font-style: normal;
+        letter-spacing: 0.5px;
+      }
+      .brand .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ea580c;
+        align-self: center;
+        box-shadow: 0 0 8px rgba(234, 88, 12, 0.8);
+      }
+      .bar button {
+        min-height: 32px;
+        padding: 6px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        color: #e0e7ff;
+        transition: all 0.15s;
+        white-space: nowrap;
+      }
+      .bar button:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.14);
+        border-color: rgba(255, 255, 255, 0.4);
+      }
+      .bar button:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+      .bar button.primary {
+        background: #ea580c;
+        border-color: #ea580c;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(234, 88, 12, 0.4);
+      }
+      .bar button.primary:hover:not(:disabled) {
+        background: #c2410c;
+        border-color: #c2410c;
+      }
+      .bar .spacer {
+        flex: 1;
+      }
+      .pill {
+        color: #c7d2fe;
+        font-size: 12px;
+        max-width: 260px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 6px 12px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+      }
+      #badge {
+        display: none;
+        align-items: center;
+        gap: 6px;
+        color: #c7d2fe;
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        white-space: nowrap;
+      }
+      #badge::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #6ee7b7;
+      }
+      #badge.dirty::before {
+        background: #fbbf24;
+      }
+      .switch {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        cursor: pointer;
+        user-select: none;
+        font-size: 13px;
+        color: #c7d2fe;
+        padding: 5px 12px 5px 6px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.05);
+        transition: all 0.15s;
+      }
+      .switch:has(input:checked) {
+        color: #fff;
+        border-color: #ea580c;
+        background: rgba(234, 88, 12, 0.25);
+      }
+      .switch:has(input:disabled) {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+      .switch input {
+        width: 34px;
+        height: 18px;
+        cursor: pointer;
+        margin: 0;
+        accent-color: #ea580c;
+      }
+
+      /* ===== 画布 ===== */
+      #stage {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background-color: #fafaf9;
+        background-image: radial-gradient(#e0e0ec 1px, transparent 1px);
+        background-size: 22px 22px;
+      }
+      #stage.dragover::after {
+        content: "松手载入文件";
+        position: absolute;
+        inset: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        color: #4338ca;
+        border: 2px dashed #4338ca;
+        border-radius: 16px;
+        background: rgba(67, 56, 202, 0.06);
+        pointer-events: none;
+        z-index: 9996;
+      }
+      #placeholder {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #6b6b80;
+        font-size: 15px;
+        pointer-events: none;
+        gap: 14px;
+        text-align: center;
+        padding: 24px;
+      }
+      #placeholder .icon {
+        display: grid;
+        place-items: center;
+        width: 76px;
+        height: 76px;
+        border-radius: 20px;
+        background: #fff;
+        border: 1px solid #e0e0ec;
+        box-shadow: 0 10px 30px rgba(30, 27, 75, 0.1);
+        font-size: 38px;
+      }
+      #placeholder .hint {
+        font-size: 12.5px;
+        color: #9c9cb0;
+      }
+      iframe#view {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: #fff;
+        display: none;
+      }
+      #tip {
+        position: absolute;
+        bottom: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(30, 27, 75, 0.92);
+        color: #e0e7ff;
+        padding: 8px 18px;
+        border-radius: 999px;
+        font-size: 12px;
+        z-index: 9997;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+        white-space: nowrap;
+      }
+      #banner {
+        position: absolute;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+        align-items: center;
+        gap: 10px;
+        background: #fff7ed;
+        border: 1px solid #fdba74;
+        color: #9a3412;
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        box-shadow: 0 8px 24px rgba(154, 52, 18, 0.15);
+        z-index: 9997;
+        max-width: calc(100vw - 24px);
+      }
+      #banner button {
+        border: none;
+        background: #ea580c;
+        color: #fff;
+        padding: 5px 12px;
+        border-radius: 7px;
+        font-size: 12.5px;
+        cursor: pointer;
+      }
+      #banner button:hover {
+        background: #c2410c;
+      }
+      #banner .x {
+        cursor: pointer;
+        color: #c2410c;
+        padding: 2px 6px;
+        border-radius: 6px;
+      }
+      #banner .x:hover {
+        background: rgba(194, 65, 12, 0.12);
+      }
+
+      /* ===== 覆盖层 ===== */
+      .ovl {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9998;
+        border-radius: 3px;
+        display: none;
+      }
+      #hoverBox {
+        border: 2px solid #6366f1;
+        background: rgba(99, 102, 241, 0.06);
+      }
+      #pickBox {
+        border: 2px solid #ea580c;
+        background: rgba(234, 88, 12, 0.06);
+      }
+
+      /* ===== 块操作条 ===== */
+      #blockBar {
+        position: fixed;
+        display: none;
+        gap: 4px;
+        background: #1e1b4b;
+        border-radius: 10px;
+        padding: 5px;
+        z-index: 10000;
+        box-shadow: 0 10px 30px rgba(30, 27, 75, 0.35);
+      }
+      #blockBar button {
+        border: none;
+        background: transparent;
+        color: #e0e7ff;
+        font-size: 12.5px;
+        padding: 5px 10px;
+        border-radius: 7px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      #blockBar button:hover {
+        background: rgba(255, 255, 255, 0.14);
+      }
+      #blockBar button.warn:hover {
+        background: #be123c;
+      }
+
+      /* ===== 选中文字工具条 ===== */
+      #textBar {
+        position: fixed;
+        display: none;
+        align-items: center;
+        gap: 2px;
+        background: #1e1b4b;
+        border-radius: 10px;
+        padding: 5px;
+        z-index: 10001;
+        box-shadow: 0 10px 30px rgba(30, 27, 75, 0.35);
+      }
+      #textBar button {
+        border: none;
+        background: transparent;
+        color: #e0e7ff;
+        font-size: 13px;
+        min-width: 30px;
+        padding: 5px 7px;
+        border-radius: 7px;
+        cursor: pointer;
+      }
+      #textBar button:hover {
+        background: rgba(255, 255, 255, 0.14);
+      }
+      #textBar label {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 28px;
+        border-radius: 7px;
+        cursor: pointer;
+        font-size: 13px;
+        color: #e0e7ff;
+        position: relative;
+      }
+      #textBar label:hover {
+        background: rgba(255, 255, 255, 0.14);
+      }
+      #textBar label input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+      }
+      #textBar .sep {
+        width: 1px;
+        height: 18px;
+        background: rgba(255, 255, 255, 0.2);
+        margin: 0 3px;
+      }
+
+      /* ===== 颜色面板 ===== */
+      #palette {
+        position: fixed;
+        display: none;
+        background: #fff;
+        border: 1px solid #e0e0ec;
+        border-radius: 14px;
+        box-shadow: 0 20px 50px rgba(30, 27, 75, 0.22);
+        padding: 16px;
+        width: 280px;
+        z-index: 10002;
+        font-size: 13px;
+      }
+      #palette h4 {
+        margin: 0 0 12px;
+        font-size: 13px;
+        color: #1e1b4b;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      #palette h4 span {
+        cursor: pointer;
+        color: #9c9cb0;
+        font-size: 15px;
+        padding: 2px 7px;
+        border-radius: 6px;
+      }
+      #palette h4 span:hover {
+        background: #f0f0f5;
+        color: #1e1b4b;
+      }
+      .crow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 9px;
+      }
+      .crow em {
+        font-style: normal;
+        width: 48px;
+        color: #48485c;
+        flex-shrink: 0;
+        font-size: 12.5px;
+      }
+      .crow input[type="color"] {
+        width: 34px;
+        height: 28px;
+        border: 1px solid #e0e0ec;
+        border-radius: 7px;
+        padding: 1px;
+        cursor: pointer;
+        background: #fff;
+      }
+      .crow input[type="text"] {
+        flex: 1;
+        min-width: 0;
+        border: 1px solid #e0e0ec;
+        border-radius: 7px;
+        padding: 5px 8px;
+        font-size: 12px;
+        font-family: ui-monospace, monospace;
+        color: #292524;
+      }
+      .crow input[type="text"]:focus {
+        outline: none;
+        border-color: #4338ca;
+      }
+      .crow .clr {
+        border: none;
+        background: transparent;
+        color: #9c9cb0;
+        cursor: pointer;
+        font-size: 13px;
+        padding: 3px 6px;
+        border-radius: 6px;
+      }
+      .crow .clr:hover {
+        background: #f0f0f5;
+        color: #292524;
+      }
+      .pbtn {
+        border: 1px solid #e0e0ec;
+        background: #fff;
+        border-radius: 7px;
+        padding: 5px 10px;
+        font-size: 12.5px;
+        cursor: pointer;
+        color: #292524;
+      }
+      .pbtn:hover {
+        border-color: #4338ca;
+        color: #4338ca;
+      }
+      #swatches {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #ececf2;
+      }
+      .sw {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        cursor: pointer;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        transition: transform 0.1s;
+      }
+      .sw:hover {
+        transform: scale(1.2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      }
+
+      /* ===== Toast ===== */
+      #toast {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        background: #1e1b4b;
+        color: #e0e7ff;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-size: 13px;
+        z-index: 10005;
+        opacity: 0;
+        transform: translateY(8px);
+        transition: all 0.25s;
+        pointer-events: none;
+        box-shadow: 0 10px 30px rgba(30, 27, 75, 0.35);
+      }
+      #toast.on {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      @media (max-width: 760px) {
+        .bar {
+          flex-wrap: wrap;
+          gap: 8px;
+          padding: 8px 10px;
+        }
+        .bar .spacer {
+          display: none;
+        }
+        .pill {
+          order: 10;
+          max-width: none;
+          flex: 1 1 100%;
+        }
+        #badge {
+          order: 11;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="shell">
+      <header class="bar">
+        <span class="brand"
+          ><span class="dot"></span><b>随手改</b
+          ><i>SnapEdit · HTML 可视化编辑器</i></span
+        >
+        <button id="btnOpen" class="primary">📂 打开文件</button>
+        <input type="file" id="fileInput" accept=".html,.htm" hidden />
+        <span class="pill" id="fileName" style="display: none"></span>
+        <span id="badge">未修改</span>
+        <span class="spacer"></span>
+        <label class="switch"
+          ><input type="checkbox" id="tglEdit" disabled checked /><span
+            >编辑模式</span
+          ></label
+        >
+        <label
+          class="switch"
+          title="让页面里的 JS 跑起来，用于翻页 / 动画类文件。仅对可信文件开启。"
+          ><input type="checkbox" id="tglScript" disabled /><span
+            >动态预览</span
+          ></label
+        >
+        <button id="btnUndo" disabled title="撤销上一步（最多 10 步）">
+          ⌫ 撤销
+        </button>
+        <button id="btnReset" disabled>⟲ 还原</button>
+        <button id="btnSave" disabled>⬇ 导出</button>
+      </header>
+      <main id="stage">
+        <div id="placeholder">
+          <div class="icon">🪄</div>
+          <div>点「打开文件」或把 HTML 拖进来，立刻开改</div>
+          <div class="hint">全程本机运行 · 文件不出电脑 · 不花一分钱</div>
+        </div>
+        <iframe id="view" sandbox="allow-same-origin"></iframe>
+        <div id="tip">
+          单击文字直接改 · 拖选文字调样式 · 双击 SVG 图文字可改 · 点色块可复制 /
+          删除 / 换色
+        </div>
+        <div id="banner">
+          ⚡ 内容似乎没有完整显示，页面可能依赖脚本渲染<button id="bannerBtn">
+            开启动态预览</button
+          ><span class="x" id="bannerClose">✕</span>
+        </div>
+      </main>
+    </div>
+
+    <div id="hoverBox" class="ovl"></div>
+    <div id="pickBox" class="ovl"></div>
+
+    <div id="blockBar">
+      <button data-act="color">🎨 颜色</button>
+      <button data-act="dup">⧉ 复制</button>
+      <button data-act="up">↑ 上移</button>
+      <button data-act="down">↓ 下移</button>
+      <button data-act="del" class="warn">🗑 删除</button>
+    </div>
+
+    <div id="textBar">
+      <button data-cmd="bold"><b>B</b></button>
+      <button data-cmd="italic"><i>I</i></button>
+      <button data-cmd="underline"><u>U</u></button>
+      <button data-cmd="strikeThrough"><s>S</s></button>
+      <span class="sep"></span>
+      <label title="文字颜色"
+        >🅰<input type="color" id="selFore" value="#EA580C"
+      /></label>
+      <label title="背景高亮"
+        >🖍<input type="color" id="selBack" value="#FDE68A"
+      /></label>
+      <span class="sep"></span>
+      <button data-fs="-1" title="缩小字号">A−</button>
+      <button data-fs="1" title="放大字号">A＋</button>
+    </div>
+
+    <div id="palette">
+      <h4>调整颜色 <span id="palClose">✕</span></h4>
+      <div class="crow">
+        <em>文字</em><input type="color" id="pText" /><input
+          type="text"
+          id="pTextHex"
+          placeholder="#333333"
+        /><button class="clr" data-p="color" title="清除">✕</button>
+      </div>
+      <div class="crow">
+        <em>背景</em><input type="color" id="pBg" /><input
+          type="text"
+          id="pBgHex"
+          placeholder="#FFFFFF"
+        /><button class="clr" data-p="backgroundColor" title="清除">✕</button>
+      </div>
+      <div class="crow">
+        <em>边框</em><input type="color" id="pBd" /><input
+          type="text"
+          id="pBdHex"
+          placeholder="#DDDDDD"
+        /><button class="clr" data-p="borderColor" title="清除">✕</button>
+      </div>
+      <div class="crow">
+        <em>样式</em><button class="pbtn" id="pBold"><b>B</b> 加粗</button
+        ><button class="pbtn" data-efs="-1">A−</button
+        ><button class="pbtn" data-efs="1">A＋</button>
+      </div>
+      <div id="swatches"></div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+      (function () {
+        "use strict";
+        /* ---------- 状态 ---------- */
+        const $ = (id) => document.getElementById(id);
+        const view = $("view"),
+          stage = $("stage"),
+          tip = $("tip");
+        const hoverBox = $("hoverBox"),
+          pickBox = $("pickBox");
+        const blockBar = $("blockBar"),
+          textBar = $("textBar"),
+          palette = $("palette");
+
+        let rawOriginal = ""; // 打开时的原始 HTML
+        let docHTML = ""; // 当前权威版本
+        let doctype = "<!DOCTYPE html>";
+        let fileName = "";
+        let undoStack = []; // 最多 10 步
+        let vdoc = null; // iframe document
+        let picked = null; // 当前选中的块
+        let editingEl = null; // 正在编辑文字的元素
+        let editSnapshotPending = false;
+        let dirty = false;
+
+        const SWATCH = [
+          "#1E1B4B",
+          "#4338CA",
+          "#6366F1",
+          "#EA580C",
+          "#C2410C",
+          "#0D9488",
+          "#14B8A6",
+          "#9D174D",
+          "#D97706",
+          "#FDE68A",
+          "#292524",
+          "#57534E",
+          "#A8A29E",
+          "#FFFFFF",
+          "#F5F5F4",
+          "#FAFAF5",
+        ];
+
+        /* ---------- 工具 ---------- */
+        function toast(msg) {
+          const t = $("toast");
+          t.textContent = msg;
+          t.classList.add("on");
+          clearTimeout(t._h);
+          t._h = setTimeout(() => t.classList.remove("on"), 2200);
+        }
+        function setDirty(d) {
+          dirty = d;
+          const b = $("badge");
+          b.style.display = "flex";
+          b.textContent = d ? "已修改" : "未修改";
+          b.classList.toggle("dirty", d);
+        }
+        function serialize() {
+          if (!vdoc) return docHTML;
+          let html = vdoc.documentElement.outerHTML
+            .replace(/ contenteditable="(true|plaintext-only)"/g, "")
+            .replace(/ spellcheck="false"/g, "");
+          return doctype + "\n" + html;
+        }
+        function pushUndo() {
+          undoStack.push(docHTML);
+          if (undoStack.length > 10) undoStack.shift();
+          $("btnUndo").disabled = false;
+        }
+        function commit() {
+          docHTML = serialize();
+          setDirty(docHTML !== rawOriginal);
+        }
+        let _cmH = null;
+        function commitSoon() {
+          clearTimeout(_cmH);
+          _cmH = setTimeout(commit, 300);
+        }
+
+        /* ---------- 载入 ---------- */
+        function loadFile(file) {
+          if (
+            !file ||
+            (!/\.(html?|htm)$/i.test(file.name) && file.type !== "text/html")
+          ) {
+            toast("请选择 HTML 文件");
+            return;
+          }
+          const r = new FileReader();
+          r.onload = () => {
+            fileName = file.name;
+            rawOriginal = String(r.result);
+            const m = rawOriginal.match(/^\s*<!doctype[^>]*>/i);
+            doctype = m ? m[0].trim() : "<!DOCTYPE html>";
+            docHTML = rawOriginal;
+            undoStack = [];
+            $("btnUndo").disabled = true;
+            $("fileName").style.display = "";
+            $("fileName").textContent = fileName;
+            ["tglEdit", "tglScript", "btnReset", "btnSave"].forEach(
+              (id) => ($(id).disabled = false),
+            );
+            $("tglScript").checked = false;
+            $("tglEdit").checked = true;
+            setDirty(false);
+            render();
+            toast("已载入：" + fileName);
+          };
+          r.readAsText(file);
+        }
+        $("btnOpen").onclick = () => $("fileInput").click();
+        $("fileInput").onchange = (e) => {
+          loadFile(e.target.files[0]);
+          e.target.value = "";
+        };
+        stage.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          stage.classList.add("dragover");
+        });
+        stage.addEventListener("dragleave", () =>
+          stage.classList.remove("dragover"),
+        );
+        stage.addEventListener("drop", (e) => {
+          e.preventDefault();
+          stage.classList.remove("dragover");
+          loadFile(e.dataTransfer.files[0]);
+        });
+
+        /* ---------- 渲染 ---------- */
+        function render() {
+          clearUI();
+          const scripts = $("tglScript").checked;
+          view.setAttribute(
+            "sandbox",
+            scripts ? "allow-scripts allow-same-origin" : "allow-same-origin",
+          );
+          view.style.display = "block";
+          $("placeholder").style.display = "none";
+          view.srcdoc = docHTML;
+        }
+        view.addEventListener("load", () => {
+          try {
+            vdoc = view.contentDocument;
+          } catch (e) {
+            vdoc = null;
+            return;
+          }
+          if (!vdoc) return;
+          try {
+            vdoc.execCommand("styleWithCSS", false, true);
+          } catch (e) {}
+          bindViewer();
+          updateTip();
+        });
+
+        function editableOn() {
+          return $("tglEdit").checked && !$("tglScript").checked && vdoc;
+        }
+        function updateTip() {
+          if (editableOn()) {
+            tip.style.opacity = "1";
+            clearTimeout(tip._h);
+            tip._h = setTimeout(() => (tip.style.opacity = "0"), 5000);
+          } else tip.style.opacity = "0";
+        }
+
+        /* ---------- 视图内交互 ---------- */
+        function bindViewer() {
+          const win = view.contentWindow;
+          vdoc.addEventListener(
+            "mouseover",
+            (e) => {
+              if (!editableOn()) return;
+              const el = resolve(e.target);
+              if (el && el !== picked && el !== editingEl)
+                showBox(hoverBox, el);
+              else hideEl(hoverBox);
+            },
+            true,
+          );
+          vdoc.addEventListener("mouseout", () => hideEl(hoverBox), true);
+          vdoc.addEventListener(
+            "click",
+            (e) => {
+              if (!editableOn()) return;
+              e.preventDefault();
+              e.stopPropagation();
+              const el = resolve(e.target);
+              if (!el) {
+                deselect();
+                return;
+              }
+              if (isSvgText(el)) {
+                pickBlock(el);
+                return;
+              } // SVG 文字单击先选中，双击改
+              if (isTextEl(el)) beginEdit(el);
+              else pickBlock(el);
+            },
+            true,
+          );
+          vdoc.addEventListener(
+            "dblclick",
+            (e) => {
+              if (!editableOn()) return;
+              e.preventDefault();
+              e.stopPropagation();
+              const el = resolve(e.target);
+              if (el && isSvgText(el)) editSvgText(el);
+            },
+            true,
+          );
+          vdoc.addEventListener(
+            "paste",
+            (e) => {
+              // 粘贴只留纯文本
+              if (!editingEl) return;
+              e.preventDefault();
+              const t = (e.clipboardData || {}).getData
+                ? e.clipboardData.getData("text/plain")
+                : "";
+              if (t) vdoc.execCommand("insertText", false, t);
+            },
+            true,
+          );
+          vdoc.addEventListener(
+            "input",
+            (e) => {
+              if (editingEl && editSnapshotPending) {
+                pushUndo();
+                editSnapshotPending = false;
+              }
+              if (editingEl) commitSoon();
+            },
+            true,
+          );
+          vdoc.addEventListener("selectionchange", onSelChange);
+          win.addEventListener("scroll", reposition, true);
+          win.addEventListener("resize", reposition);
+          vdoc.addEventListener(
+            "keydown",
+            (e) => {
+              if (e.key === "Escape") deselect();
+              if ((e.metaKey || e.ctrlKey) && e.key === "z") {
+                e.preventDefault();
+                $("btnUndo").click();
+              }
+            },
+            true,
+          );
+          checkBlank();
+        }
+
+        /* 脚本渲染页检测：静态预览下几乎没内容 → 提示开动态预览 */
+        function checkBlank() {
+          if ($("tglScript").checked) {
+            $("banner").style.display = "none";
+            return;
+          }
+          setTimeout(() => {
+            if (!vdoc || !vdoc.body) return;
+            const textLen = (vdoc.body.innerText || "").trim().length;
+            const hasScript = /<script[\s>]/i.test(docHTML);
+            $("banner").style.display =
+              hasScript && textLen < 40 ? "flex" : "none";
+          }, 300);
+        }
+        $("bannerBtn").onclick = () => {
+          $("banner").style.display = "none";
+          $("tglScript").checked = true;
+          $("tglScript").dispatchEvent(new Event("change"));
+        };
+        $("bannerClose").onclick = () => ($("banner").style.display = "none");
+
+        /* 目标解析：文字元素直接编辑，其余找最近的块 */
+        const SKIP = new Set(["HTML", "BODY", "HEAD"]);
+        function resolve(t) {
+          if (!t || SKIP.has(t.tagName)) return null;
+          return t;
+        }
+        function isTextEl(el) {
+          if (
+            [
+              "IMG",
+              "VIDEO",
+              "HR",
+              "SVG",
+              "CANVAS",
+              "IFRAME",
+              "INPUT",
+              "BUTTON",
+              "SELECT",
+              "TEXTAREA",
+            ].includes(el.tagName)
+          )
+            return false;
+          if (el.namespaceURI === "http://www.w3.org/2000/svg") return false;
+          for (const n of el.childNodes) {
+            if (n.nodeType === 3 && n.textContent.trim()) return true;
+          }
+          return false;
+        }
+        function isSvgText(el) {
+          return (
+            el.namespaceURI === "http://www.w3.org/2000/svg" &&
+            ["text", "tspan"].includes(el.tagName.toLowerCase())
+          );
+        }
+
+        /* ---------- SVG 文字编辑（弹窗改） ---------- */
+        function editSvgText(el) {
+          const old = el.textContent;
+          const v = prompt("修改 SVG 图中文字：", old);
+          if (v === null || v === old) return;
+          pushUndo();
+          el.textContent = v;
+          commit();
+          reposition();
+          toast("SVG 文字已修改");
+        }
+
+        /* ---------- 文字编辑 ---------- */
+        function beginEdit(el) {
+          if (editingEl === el) return;
+          endEdit();
+          unpick();
+          editingEl = el;
+          editSnapshotPending = true;
+          el.setAttribute("contenteditable", "true");
+          el.setAttribute("spellcheck", "false");
+          el.focus();
+          showBox(pickBox, el);
+          showBlockBar(el);
+        }
+        function endEdit() {
+          if (!editingEl) return;
+          clearTimeout(_cmH);
+          editingEl.removeAttribute("contenteditable");
+          editingEl.removeAttribute("spellcheck");
+          commit();
+          editingEl = null;
+          hideEl(textBar);
+        }
+
+        /* ---------- 块选中 ---------- */
+        function pickBlock(el) {
+          endEdit();
+          picked = el;
+          showBox(pickBox, el);
+          showBlockBar(el);
+        }
+        function unpick() {
+          picked = null;
+          hideEl(pickBox);
+          hideEl(blockBar);
+        }
+        function deselect() {
+          endEdit();
+          unpick();
+          hidePalette();
+          hideEl(textBar);
+        }
+
+        blockBar.addEventListener("click", (e) => {
+          const act = e.target.closest("button")?.dataset.act;
+          const el = picked || editingEl;
+          if (!act || !el) return;
+          if (act === "color") {
+            openPalette(el);
+            return;
+          }
+          pushUndo();
+          if (act === "dup") {
+            const c = el.cloneNode(true);
+            c.removeAttribute("contenteditable");
+            el.after(c);
+            toast("已复制一份到下方");
+          }
+          if (act === "del") {
+            el.remove();
+            deselect();
+            toast("已删除");
+          }
+          if (act === "up" && el.previousElementSibling)
+            el.previousElementSibling.before(el);
+          if (act === "down" && el.nextElementSibling)
+            el.nextElementSibling.after(el);
+          commit();
+          reposition();
+        });
+
+        /* ---------- 选中文字样式 ---------- */
+        function onSelChange() {
+          if (!editingEl) {
+            hideEl(textBar);
+            return;
+          }
+          const sel = vdoc.getSelection();
+          if (!sel || sel.isCollapsed || !sel.rangeCount) {
+            hideEl(textBar);
+            return;
+          }
+          const r = sel.getRangeAt(0).getBoundingClientRect();
+          if (!r.width && !r.height) {
+            hideEl(textBar);
+            return;
+          }
+          const f = view.getBoundingClientRect();
+          textBar.style.display = "flex";
+          const w = textBar.offsetWidth || 240;
+          let x = f.left + r.left + r.width / 2 - w / 2;
+          x = Math.max(8, Math.min(x, window.innerWidth - w - 8));
+          let y = f.top + r.top - 42;
+          if (y < 52) y = f.top + r.bottom + 8;
+          textBar.style.left = x + "px";
+          textBar.style.top = y + "px";
+        }
+        textBar.addEventListener("mousedown", (e) => e.preventDefault()); // 保住选区
+        textBar.addEventListener("click", (e) => {
+          const btn = e.target.closest("button");
+          if (!btn || !vdoc) return;
+          if (btn.dataset.cmd) {
+            pushUndo();
+            vdoc.execCommand(btn.dataset.cmd);
+            commit();
+            return;
+          }
+          if (btn.dataset.fs) {
+            stepSelFontSize(+btn.dataset.fs);
+          }
+        });
+        /* 选区字号微调：包一层 span 改 font-size */
+        function stepSelFontSize(dir) {
+          const sel = vdoc.getSelection();
+          if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+          const anchor =
+            sel.anchorNode.nodeType === 3
+              ? sel.anchorNode.parentElement
+              : sel.anchorNode;
+          const cur =
+            parseFloat(view.contentWindow.getComputedStyle(anchor).fontSize) ||
+            14;
+          const next = Math.max(9, Math.min(72, cur + dir * 1));
+          pushUndo();
+          vdoc.execCommand("fontSize", false, 7); // 占位
+          vdoc.querySelectorAll('font[size="7"]').forEach((f) => {
+            const s = vdoc.createElement("span");
+            s.style.fontSize = next + "px";
+            while (f.firstChild) s.appendChild(f.firstChild);
+            f.replaceWith(s);
+          });
+          commit();
+        }
+        let selUndoDone = false;
+        function selCmd(cmd, val) {
+          if (!vdoc) return;
+          if (!selUndoDone) {
+            pushUndo();
+            selUndoDone = true;
+          }
+          vdoc.execCommand(cmd, false, val);
+          commitSoon();
+        }
+        $("selFore").addEventListener(
+          "pointerdown",
+          () => (selUndoDone = false),
+        );
+        $("selBack").addEventListener(
+          "pointerdown",
+          () => (selUndoDone = false),
+        );
+        $("selFore").addEventListener("input", (e) =>
+          selCmd("foreColor", e.target.value),
+        );
+        $("selBack").addEventListener("input", (e) =>
+          selCmd("hiliteColor", e.target.value),
+        );
+
+        /* ---------- 颜色面板 ---------- */
+        let palTarget = null;
+        let lastProp = "backgroundColor"; // 色板快选默认作用于该属性
+        let palUndone = {}; // 每个属性本轮只压一次撤销栈
+        const PROPS = [
+          ["pText", "pTextHex", "color"],
+          ["pBg", "pBgHex", "backgroundColor"],
+          ["pBd", "pBdHex", "borderColor"],
+        ];
+        function toHex(c) {
+          const m = c && c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+          if (!m) return "";
+          return (
+            "#" +
+            [m[1], m[2], m[3]]
+              .map((n) => (+n).toString(16).padStart(2, "0"))
+              .join("")
+              .toUpperCase()
+          );
+        }
+        function openPalette(el) {
+          palTarget = el;
+          palUndone = {};
+          lastProp = "backgroundColor";
+          const cs = view.contentWindow.getComputedStyle(el);
+          PROPS.forEach(([pid, hid, prop]) => {
+            const hex = toHex(cs[prop]) || "#000000";
+            $(pid).value = hex;
+            $(hid).value = hex;
+          });
+          palette.style.display = "block";
+          const bar = blockBar.getBoundingClientRect();
+          let x = Math.min(bar.left, window.innerWidth - 296);
+          let y = bar.bottom + 8;
+          if (y + 240 > window.innerHeight) y = Math.max(8, bar.top - 248);
+          palette.style.left = Math.max(8, x) + "px";
+          palette.style.top = y + "px";
+        }
+        function hidePalette() {
+          palette.style.display = "none";
+          palTarget = null;
+        }
+        $("palClose").onclick = hidePalette;
+        PROPS.forEach(([pid, hid, prop]) => {
+          $(pid).addEventListener("pointerdown", () => (lastProp = prop));
+          $(hid).addEventListener("focus", () => (lastProp = prop));
+          $(pid).addEventListener("input", (e) => {
+            applyColor(prop, e.target.value);
+            $(hid).value = e.target.value;
+          });
+          $(hid).addEventListener("change", (e) => {
+            let v = e.target.value.trim();
+            if (!/^#?[0-9a-fA-F]{6}$/.test(v)) {
+              toast("请输入 6 位色值，如 #EA580C");
+              return;
+            }
+            if (v[0] !== "#") v = "#" + v;
+            $(pid).value = v;
+            applyColor(prop, v);
+          });
+        });
+        palette.addEventListener("click", (e) => {
+          const p = e.target.closest(".clr")?.dataset.p;
+          if (p && palTarget) {
+            pushUndo();
+            palTarget.style[p] = "";
+            commit();
+            toast("已清除该项颜色");
+            return;
+          }
+          const efs = e.target.closest("[data-efs]")?.dataset.efs;
+          if (efs && palTarget) {
+            const cur =
+              parseFloat(
+                view.contentWindow.getComputedStyle(palTarget).fontSize,
+              ) || 14;
+            pushUndo();
+            palTarget.style.fontSize =
+              Math.max(9, Math.min(72, cur + +efs)) + "px";
+            commit();
+          }
+        });
+        $("pBold").onclick = () => {
+          if (!palTarget) return;
+          const cs = view.contentWindow.getComputedStyle(palTarget);
+          const bold = parseInt(cs.fontWeight, 10) >= 600;
+          pushUndo();
+          palTarget.style.fontWeight = bold ? "normal" : "bold";
+          commit();
+        };
+        function applyColor(prop, val) {
+          if (!palTarget) return;
+          if (!palUndone[prop]) {
+            pushUndo();
+            palUndone[prop] = true;
+          }
+          palTarget.style[prop] = val;
+          commitSoon();
+        }
+        const PROP2ID = {
+          color: ["pText", "pTextHex"],
+          backgroundColor: ["pBg", "pBgHex"],
+          borderColor: ["pBd", "pBdHex"],
+        };
+        const swBox = $("swatches");
+        SWATCH.forEach((c) => {
+          const s = document.createElement("span");
+          s.className = "sw";
+          s.style.background = c;
+          s.title = c + "（点色值输入框可切换作用对象）";
+          s.onclick = () => {
+            applyColor(lastProp, c);
+            const [pid, hid] = PROP2ID[lastProp];
+            $(pid).value = c;
+            $(hid).value = c;
+          };
+          swBox.appendChild(s);
+        });
+
+        /* ---------- 覆盖层定位 ---------- */
+        function showBox(box, el) {
+          const r = el.getBoundingClientRect(),
+            f = view.getBoundingClientRect();
+          const top = Math.max(f.top, f.top + r.top),
+            left = f.left + r.left;
+          const bottom = Math.min(f.bottom, f.top + r.bottom);
+          if (bottom <= f.top || f.top + r.top >= f.bottom) {
+            box.style.display = "none";
+            return;
+          }
+          box.style.display = "block";
+          box.style.left = left + "px";
+          box.style.top = top + "px";
+          box.style.width = r.width + "px";
+          box.style.height = bottom - top + "px";
+        }
+        function hideEl(el) {
+          el.style.display = "none";
+        }
+        function showBlockBar(el) {
+          const r = el.getBoundingClientRect(),
+            f = view.getBoundingClientRect();
+          blockBar.style.display = "flex";
+          const w = blockBar.offsetWidth || 300;
+          let x = f.left + r.left;
+          x = Math.max(8, Math.min(x, window.innerWidth - w - 8));
+          let y = f.top + r.top - 42;
+          if (y < 52)
+            y = Math.min(window.innerHeight - 48, f.top + r.bottom + 8);
+          blockBar.style.left = x + "px";
+          blockBar.style.top = y + "px";
+        }
+        function reposition() {
+          hideEl(hoverBox);
+          const el = picked || editingEl;
+          if (el && el.isConnected) {
+            showBox(pickBox, el);
+            showBlockBar(el);
+          } else {
+            hideEl(pickBox);
+            hideEl(blockBar);
+          }
+          hidePalette();
+          hideEl(textBar);
+        }
+
+        function clearUI() {
+          picked = null;
+          editingEl = null;
+          [hoverBox, pickBox, blockBar, textBar].forEach(hideEl);
+          hidePalette();
+        }
+
+        /* ---------- 顶栏动作 ---------- */
+        $("tglEdit").addEventListener("change", () => {
+          deselect();
+          updateTip();
+        });
+        $("tglScript").addEventListener("change", (e) => {
+          if (e.target.checked && !e.target._warned) {
+            e.target._warned = true;
+            if (
+              !confirm(
+                "动态预览会执行文件里的 JavaScript，只建议对自己生成或可信的文件开启。继续？",
+              )
+            ) {
+              e.target.checked = false;
+              return;
+            }
+          }
+          $("tglEdit").disabled = e.target.checked;
+          deselect();
+          render();
+        });
+        $("btnUndo").onclick = () => {
+          if (!undoStack.length) return;
+          docHTML = undoStack.pop();
+          $("btnUndo").disabled = !undoStack.length;
+          setDirty(docHTML !== rawOriginal);
+          render();
+          toast("已撤销");
+        };
+        $("btnReset").onclick = () => {
+          if (!confirm("放弃所有修改，回到刚打开时的样子？")) return;
+          docHTML = rawOriginal;
+          undoStack = [];
+          $("btnUndo").disabled = true;
+          setDirty(false);
+          render();
+          toast("已还原");
+        };
+        /* 导出前尽量把图片转成内嵌 data URL，换电脑打开不掉图 */
+        async function inlineImages() {
+          if (!vdoc) return;
+          const imgs = [...vdoc.querySelectorAll("img")].filter(
+            (i) =>
+              i.src &&
+              !i.src.startsWith("data:") &&
+              i.complete &&
+              i.naturalWidth > 0,
+          );
+          let done = 0;
+          for (const img of imgs) {
+            try {
+              const c = document.createElement("canvas");
+              c.width = img.naturalWidth;
+              c.height = img.naturalHeight;
+              c.getContext("2d").drawImage(img, 0, 0);
+              img.src = c.toDataURL("image/png");
+              done++;
+            } catch (e) {
+              /* 跨域受限的图保留原路径 */
+            }
+          }
+          if (done) toast(`已内嵌 ${done} 张图片`);
+        }
+        $("btnSave").onclick = async () => {
+          endEdit();
+          if (!$("tglScript").checked) await inlineImages();
+          const out = $("tglScript").checked ? docHTML : serialize();
+          const blob = new Blob([out], { type: "text/html;charset=utf-8" });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = fileName.replace(/\.(html?|htm)$/i, "") + "-改.html";
+          a.click();
+          URL.revokeObjectURL(a.href);
+          toast("已导出：" + a.download);
+        };
+        document.addEventListener("keydown", (e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+            e.preventDefault();
+            if (!$("btnSave").disabled) $("btnSave").click();
+          }
+          if ((e.metaKey || e.ctrlKey) && e.key === "z") {
+            e.preventDefault();
+            if (!$("btnUndo").disabled) $("btnUndo").click();
+          }
+          if (e.key === "Escape") deselect();
+        });
+        document.addEventListener("mousedown", (e) => {
+          if (
+            !palette.contains(e.target) &&
+            !blockBar.contains(e.target) &&
+            !textBar.contains(e.target) &&
+            e.target !== view
+          ) {
+            if (!e.target.closest(".bar")) deselect();
+          }
+        });
+        window.addEventListener("beforeunload", (e) => {
+          if (dirty) {
+            e.preventDefault();
+            e.returnValue = "";
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

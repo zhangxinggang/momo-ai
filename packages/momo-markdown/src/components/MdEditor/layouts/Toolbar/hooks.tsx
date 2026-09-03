@@ -29,6 +29,7 @@ import ToolbarPreview from './tools/Preview';
 import ToolbarPreviewOnly from './tools/PreviewOnly';
 import ToolbarPreviewStyle from './tools/PreviewStyle';
 import ToolbarQuote from './tools/Quote';
+import ToolbarRichtext from './tools/Richtext';
 import ToolbarRevoke from './tools/Revoke';
 import ToolbarSave from './tools/Save';
 import ToolbarStrikeThrough from './tools/StrikeThrough';
@@ -236,6 +237,9 @@ export const useBarRender = () => {
           }
           case 'preview': {
             return <ToolbarPreview key='bar-preview' />;
+          }
+          case 'richtext': {
+            return <ToolbarRichtext key='bar-richtext' />;
           }
           case 'previewStyle': {
             return <ToolbarPreviewStyle key='bar-previewStyle' />;

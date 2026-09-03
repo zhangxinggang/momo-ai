@@ -1,0 +1,509 @@
+// 富文本（TipTap）内容区样式
+//
+// 复用 md-editor-preview 的预览主题样式（@vavt/markdown-theme），
+// 仅对 TipTap 的 ProseMirror 容器、占位符、表格选区等做最小补充。
+
+.@{prefix}-richtext-wrapper {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+// 富文本滚动容器：CustomScrollbar 期望其第一个子元素为实际滚动元素
+.@{prefix}-richtext-scroll {
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+
+  // Firefox
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    // Chrome/Safari（CustomScrollbar 会绘制自定义滑块）
+    display: none;
+  }
+}
+
+.@{prefix}-richtext {
+  // ProseMirror 编辑区基础样式
+  min-height: 100%;
+  box-sizing: border-box;
+  padding: 20px 24px;
+  outline: none;
+
+  .ProseMirror {
+    min-height: 100%;
+    box-sizing: border-box;
+    outline: none;
+  }
+
+  // 占位符
+  .ProseMirror.md-editor-richtext-placeholder.is-empty::before {
+    content: attr(data-placeholder);
+    color: var(--md-color);
+    opacity: 0.5;
+    pointer-events: none;
+    float: inline-start;
+    height: 0;
+  }
+
+  // 任务列表复选框
+  ul[data-type='taskList'] {
+    list-style: none;
+    padding: 0;
+
+    li {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+
+      > div {
+        flex: 1;
+      }
+    }
+
+    input[type='checkbox'] {
+      margin-block-start: 6px;
+    }
+  }
+
+  // 表格
+  table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+    margin: 0;
+    overflow: hidden;
+
+    td,
+    th {
+      border: 1px solid var(--md-border-color);
+      padding: 6px 10px;
+      vertical-align: top;
+      box-sizing: border-box;
+      position: relative;
+
+      > * {
+        margin-block: 0;
+      }
+    }
+
+    th {
+      font-weight: bold;
+      text-align: start;
+      background-color: var(--md-bk-color-outstand);
+    }
+
+    .selectedCell::after {
+      z-index: 2;
+      position: absolute;
+      content: '';
+      inset: 0;
+      background: rgba(68, 131, 247, 0.18);
+      pointer-events: none;
+    }
+
+    .column-resize-handle {
+      position: absolute;
+      inset-inline-end: -2px;
+      inset-block: 0;
+      width: 4px;
+      background-color: var(--md-border-active-color);
+      pointer-events: none;
+    }
+  }
+
+  &.ProseMirror-focused {
+    // 焦点态可在此补充
+  }
+}
+
+// ============ 图表 CodeBlock ============
+.@{prefix}-diagram {
+  border: 1px solid var(--md-border-color);
+  border-radius: 6px;
+  margin: 12px 0;
+  overflow: hidden;
+
+  // TipTap 会为含内容的节点自动创建 contentDOM 并渲染原始文本，
+  // 图表节点只需展示渲染结果，故隐藏该自动内容容器，避免源码与图表同时显示。
+  [data-node-view-content-react] {
+    display: none;
+  }
+
+  // 显式隐藏的 NodeViewContent（承接原始源码），不参与展示
+  .@{prefix}-diagram-source {
+    display: none;
+  }
+
+  &-selected {
+    border-color: var(--md-border-active-color);
+    box-shadow: 0 0 0 2px rgba(68, 131, 247, 0.18);
+  }
+}
+
+.@{prefix}-diagram-editor {
+  border-bottom: 1px solid var(--md-border-color);
+  // 源码编辑区复用代码块主题变量（暗色底 + 浅色字），与渲染态代码块视觉一致，明暗主题下均可读
+  background-color: var(--md-theme-code-block-bg-color, #282c34);
+
+  textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--md-theme-code-block-color, #a9b7c6);
+    caret-color: var(--md-theme-code-block-color, #a9b7c6);
+    font-family: 'Source Code Pro', monospace;
+    font-size: 13px;
+    resize: vertical;
+  }
+}
+
+.@{prefix}-diagram-preview {
+  position: relative;
+  min-height: 60px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+
+  &[data-grab] {
+    touch-action: none;
+  }
+
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+// 图表右上角操作栏（与 markdown 预览模式保持一致的视觉）
+.@{prefix}-mermaid-action {
+  position: absolute;
+  inset-block-start: 10px;
+  inset-inline-end: 10px;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.3s;
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+
+  .@{prefix}-diagram-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: inherit;
+
+    svg {
+      width: 24px;
+      height: 24px;
+      padding: 6px;
+      border-radius: 4px;
+      background-color: var(--md-bk-color-outstand);
+      pointer-events: none;
+    }
+
+    &:hover svg {
+      background-color: var(--md-bk-hover-color);
+    }
+  }
+}
+
+// 悬停图表或节点被选中时显示操作栏（markdown 预览仅 hover 显示，richtext 额外在选中态常驻）
+.@{prefix}-diagram-preview:hover .@{prefix}-mermaid-action,
+.@{prefix}-diagram-selected .@{prefix}-mermaid-action {
+  opacity: 1;
+}
+
+.@{prefix}-diagram-editor-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--md-border-color);
+  font-size: 13px;
+}
+
+.@{prefix}-diagram-editor-lang {
+  color: var(--md-theme-code-block-color, #a9b7c6);
+  font-family: 'Source Code Pro', monospace;
+}
+
+.@{prefix}-diagram-editor .@{prefix}-diagram-action-btn {
+  border: 1px solid var(--md-border-color);
+  border-radius: 4px;
+  padding: 2px 10px;
+  background: transparent;
+  // 复用代码块文字色，自动与代码块底色形成对比（暗主题浅字 / 明主题深字）
+  color: var(--md-theme-code-block-color, #a9b7c6);
+  font-size: 13px;
+  cursor: pointer;
+
+  &:hover {
+    // 链接色在明暗代码底色上均可见，避免白色在明色底上不可见
+    color: var(--md-theme-link-color, #2d8cf0);
+    border-color: var(--md-theme-link-color, #2d8cf0);
+  }
+}
+
+.@{prefix}-diagram-error {
+  color: #d4380d;
+  font-size: 13px;
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+.@{prefix}-diagram-loading {
+  color: var(--md-text-color, #999);
+  font-size: 13px;
+}
+
+.@{prefix}-diagram-echarts {
+  width: 100%;
+  min-height: 300px;
+}
+
+// ============ 普通代码块（与 markdown 预览样式保持一致） ============
+// 代码主题变量（markdown 预览主题定义在 .md-editor-preview 下，富文本需自行声明）
+.@{prefix}-richtext {
+  --md-theme-code-block-color: #a9b7c6;
+  --md-theme-code-block-bg-color: #282c34;
+  --md-theme-code-before-bg-color: var(--md-theme-code-block-bg-color);
+  --md-theme-code-block-radius: 5px;
+  --md-theme-code-active-color: #61aeee;
+}
+
+.@{prefix}-dark .@{prefix}-richtext {
+  --md-theme-code-block-bg-color: #1a1a1a;
+}
+
+.@{prefix}-code {
+  color: var(--md-theme-code-block-color);
+  font-size: 12px;
+  line-height: 1;
+  margin: 20px 0;
+  position: relative;
+  border-radius: var(--md-theme-code-block-radius);
+
+  .@{prefix}-code-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 32px;
+    width: 100%;
+    font-size: 12px;
+    background-color: var(--md-theme-code-before-bg-color);
+    border-start-start-radius: var(--md-theme-code-block-radius);
+    border-start-end-radius: var(--md-theme-code-block-radius);
+  }
+
+  .@{prefix}-code-flag {
+    margin-inline-start: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    span {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    span:nth-of-type(1) {
+      background-color: #ec6a5e;
+    }
+    span:nth-of-type(2) {
+      background-color: #f4bf4f;
+    }
+    span:nth-of-type(3) {
+      background-color: #61c554;
+    }
+  }
+
+  .@{prefix}-code-action {
+    display: flex;
+    align-items: center;
+
+    > * {
+      margin-inline-end: 10px;
+    }
+  }
+
+  .@{prefix}-code-lang {
+    line-height: 32px;
+    color: #a9b7c6;
+  }
+
+  .@{prefix}-copy-button {
+    cursor: pointer;
+    line-height: 1;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: #a9b7c6;
+    display: inline-flex;
+    align-items: center;
+
+    &:hover {
+      color: #fff;
+    }
+  }
+
+  pre {
+    position: relative;
+    margin: 0;
+
+    code {
+      font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+      font-size: 14px;
+      color: var(--md-theme-code-block-color);
+      background-color: var(--md-theme-code-before-bg-color);
+      display: block;
+      line-height: 1.6;
+      overflow: auto;
+      padding: 1em;
+      border-end-start-radius: var(--md-theme-code-block-radius);
+      border-end-end-radius: var(--md-theme-code-block-radius);
+      white-space: pre;
+      word-break: normal;
+    }
+  }
+
+  // 折叠态：与 markdown 预览 details.md-editor-code:not([open]) 行为一致，隐藏代码区
+  &.@{prefix}-code-foldable.@{prefix}-code-folded {
+    pre {
+      display: none;
+    }
+  }
+
+  // 折叠提示图标（与 markdown 预览 collapse-tips 一致：展开时旋转 -90deg）
+  .@{prefix}-collapse-tips {
+    display: inline-flex;
+    align-items: center;
+    margin-inline-end: 12px;
+    color: #a9b7c6;
+    cursor: pointer;
+    line-height: 1;
+
+    svg {
+      transition: transform 0.1s;
+      transform: rotate(-90deg);
+    }
+  }
+
+  &.@{prefix}-code-folded .@{prefix}-collapse-tips svg {
+    transform: rotate(0);
+  }
+
+  // 可折叠时头部可点击切换
+  &.@{prefix}-code-foldable .@{prefix}-code-head {
+    cursor: pointer;
+  }
+}
+
+// ============ KaTeX ============
+.@{prefix}-katex {
+  display: inline-block;
+  vertical-align: middle;
+  cursor: text;
+
+  &-selected {
+    outline: 1px dashed var(--md-border-active-color);
+    outline-offset: 2px;
+  }
+}
+
+.@{prefix}-katex-block-view {
+  display: block;
+  text-align: center;
+  margin: 12px 0;
+}
+
+.@{prefix}-katex-input {
+  min-width: 200px;
+  padding: 2px 6px;
+  border: 1px solid var(--md-border-color);
+  border-radius: 4px;
+  font-family: 'Source Code Pro', monospace;
+  font-size: 13px;
+}
+
+.@{prefix}-katex-error {
+  display: block;
+  color: #d4380d;
+  font-size: 12px;
+}
+
+// ============ Admonition ============
+.@{prefix}-admonition {
+  border: 1px solid var(--md-border-color);
+  border-left-width: 4px;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin: 12px 0;
+  background: var(--md-background, #fafafa);
+
+  &-selected {
+    box-shadow: 0 0 0 2px rgba(68, 131, 247, 0.18);
+  }
+
+  // 常见类型配色
+  &-note {
+    border-left-color: #4483f7;
+  background: #f0f6ff;
+  }
+  &-tip {
+    border-left-color: #00b42c;
+    background: #f0fff4;
+  }
+  &-warning {
+    border-left-color: #ff7d00;
+    background: #fff7e8;
+  }
+  &-danger,
+  &-error {
+    border-left-color: #f53f3f;
+    background: #fff2f0;
+  }
+  &-info {
+    border-left-color: #165dff;
+    background: #e8f3ff;
+  }
+}
+
+.@{prefix}-admonition-header {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+
+  input {
+    flex: 1;
+    padding: 2px 6px;
+    border: 1px solid var(--md-border-color);
+    border-radius: 4px;
+    font-size: 13px;
+    background: #fff;
+  }
+}
+
+.@{prefix}-admonition-title-input {
+  flex: 2 !important;
+}
+
+.@{prefix}-admonition-content {
+  // 内容区由 ProseMirror 渲染
+}
+

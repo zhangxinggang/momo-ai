@@ -1,188 +1,26 @@
-import { createSmoothScroll } from '@vavt/util';
-import {
-  ForwardedRef,
-  forwardRef,
-  memo,
-  MouseEvent,
-  useCallback,
-  useContext,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import CustomScrollbar from '~/components/CustomScrollbar';
-import { prefix } from '~/config';
+import { ForwardedRef, forwardRef, memo, useContext } from 'react';
 import { EditorContext } from '~/context';
-import { TFocusOption } from '~/type';
-import MdCatalog, { ITocItem } from '~~/components/MdCatalog';
-import ContentPreview from './ContentPreview';
-import { useAutoScroll, useCodeMirror, useFollowCatalog, useResize } from './hooks';
 import { IContentProps } from './props';
-import { IContentExposeParam } from './type';
+import MarkdownContent from './MarkdownContent';
+import RichTextContent from './richtext/RichTextContent';
 
-const smoothScroll = createSmoothScroll();
-const PREVIEW_SCROLLBAR_STYLE = { flex: 1 };
-
+/**
+ * 内容区根组件
+ *
+ * 根据当前编辑模式（editorMode）渲染对应的内容区：
+ * - 'markdown'：CodeMirror 编辑 + markdown-it 分屏预览
+ * - 'richtext'：TipTap 富文本所见即所得编辑
+ *
+ * 两种模式各自注册对应的 REPLACE 事件处理器，互不干扰。
+ */
 const Content = forwardRef((props: IContentProps, ref: ForwardedRef<unknown>) => {
-  const { onHtmlChanged } = props;
-  const { editorId, theme, catalogVisible, setting } = useContext(EditorContext);
-  const [html, setHtml] = useState<string>('');
+  const { editorMode } = useContext(EditorContext);
 
-  const contentRef = useRef<HTMLDivElement>(null);
-  const resizeRef = useRef<HTMLDivElement>(null);
+  if (editorMode === 'richtext') {
+    return <RichTextContent ref={ref} {...props} />;
+  }
 
-  const onHtmlChangedCopy = useCallback(
-    (_html: string) => {
-      setHtml(_html);
-      onHtmlChanged?.(_html);
-    },
-    [onHtmlChanged],
-  );
-
-  const { inputWrapperRef, codeMirrorUt, resetHistory } = useCodeMirror(props);
-  const { inputWrapperStyle, resizeOperateStyle } = useResize(props, contentRef, resizeRef);
-  // 自动滚动
-  useAutoScroll(props, html, codeMirrorUt);
-
-  // 跟随目录
-  const { onCatalogActive, onMouseEnter, onMouseLeave } = useFollowCatalog();
-
-  useImperativeHandle(ref, (): IContentExposeParam => {
-    return {
-      getSelectedText() {
-        return codeMirrorUt.current?.getSelectedText();
-      },
-      focus(options: TFocusOption) {
-        codeMirrorUt.current?.focus(options);
-      },
-      resetHistory,
-      getEditorView() {
-        return codeMirrorUt.current?.view;
-      },
-    };
-  }, [codeMirrorUt, resetHistory]);
-
-  const onCatalogClick = useCallback(
-    (e: MouseEvent, toc: ITocItem) => {
-      // 如果没有预览区域，就将目录与编辑器同步滚动
-      if (!setting.preview && toc.line !== undefined) {
-        e.preventDefault();
-        const view = codeMirrorUt.current?.view;
-
-        if (view) {
-          const line = view.state.doc.line(toc.line + 1);
-
-          const top = view.lineBlockAt(line.from)?.top;
-
-          const scroller = view.scrollDOM;
-          smoothScroll(scroller, top); // 滚动到目标行
-        }
-      }
-    },
-    [codeMirrorUt, setting.preview],
-  );
-
-  const inputWrapper = useMemo(() => {
-    return <div className={`${prefix}-input-wrapper`} ref={inputWrapperRef} />;
-  }, [inputWrapperRef]);
-
-  const contentPreview = useMemo(() => {
-    return (
-      <ContentPreview
-        modelValue={props.modelValue}
-        onChange={props.onChange}
-        setting={setting}
-        onHtmlChanged={onHtmlChangedCopy}
-        onGetCatalog={props.onGetCatalog}
-        mdHeadingId={props.mdHeadingId}
-        noMermaid={props.noMermaid}
-        noPlantuml={props.noPlantuml}
-        sanitize={props.sanitize}
-        noKatex={props.noKatex}
-        formatCopiedText={props.formatCopiedText}
-        noHighlight={props.noHighlight}
-        noImgZoomIn={props.noImgZoomIn}
-        sanitizeMermaid={props.sanitizeMermaid}
-        codeFoldable={props.codeFoldable}
-        autoFoldThreshold={props.autoFoldThreshold}
-        onRemount={props.onRemount}
-        previewComponent={props.previewComponent}
-        noEcharts={props.noEcharts}
-      />
-    );
-  }, [
-    onHtmlChangedCopy,
-    props.autoFoldThreshold,
-    props.codeFoldable,
-    props.formatCopiedText,
-    props.mdHeadingId,
-    props.modelValue,
-    props.noEcharts,
-    props.noHighlight,
-    props.noImgZoomIn,
-    props.noKatex,
-    props.noMermaid,
-    props.noPlantuml,
-    props.onChange,
-    props.onGetCatalog,
-    props.onRemount,
-    props.previewComponent,
-    props.sanitize,
-    props.sanitizeMermaid,
-    setting,
-  ]);
-
-  const catalog = useMemo(() => {
-    return (
-      <MdCatalog
-        theme={theme}
-        className={`${prefix}-catalog-editor`}
-        editorId={editorId}
-        mdHeadingId={props.mdHeadingId}
-        key='internal-catalog'
-        scrollElementOffsetTop={2}
-        syncWith={!setting.preview ? 'editor' : 'preview'}
-        onClick={onCatalogClick}
-        catalogMaxDepth={props.catalogMaxDepth}
-        onActive={onCatalogActive}
-      />
-    );
-  }, [
-    editorId,
-    onCatalogActive,
-    onCatalogClick,
-    props.catalogMaxDepth,
-    props.mdHeadingId,
-    setting.preview,
-    theme,
-  ]);
-
-  return (
-    <div className={`${prefix}-content`}>
-      <div className={`${prefix}-content-wrapper`} ref={contentRef}>
-        <CustomScrollbar
-          alwaysShowTrack
-          scrollTarget={`#${editorId} .cm-scroller`}
-          style={inputWrapperStyle}>
-          {inputWrapper}
-        </CustomScrollbar>
-        {/* 拖拽入口需要保持setting变化时就挂载 */}
-        {(setting.htmlPreview || setting.preview) && (
-          <div className={`${prefix}-resize-operate`} style={resizeOperateStyle} ref={resizeRef} />
-        )}
-        <CustomScrollbar style={PREVIEW_SCROLLBAR_STYLE}>{contentPreview}</CustomScrollbar>
-      </div>
-      {catalogVisible && (
-        <CustomScrollbar
-          className={`${prefix}-catalog-${props.catalogLayout}`}
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}>
-          {catalog}
-        </CustomScrollbar>
-      )}
-    </div>
-  );
+  return <MarkdownContent ref={ref} {...props} />;
 });
 
 export default memo(Content);

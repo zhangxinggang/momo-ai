@@ -36,12 +36,12 @@ export function WorkflowNodeEditPanel({
   const [nodeName, setNodeName] = useState(data.nodeName || '');
   const [remark, setRemark] = useState(data.remark || '');
   const [executionModel, setExecutionModel] = useState(data.executionModel || '');
-  const [kbCollectionId, setKbCollectionId] = useState<number | undefined>(data.kbCollectionId);
+  const [kbCollectionId, setKbCollectionId] = useState<string | undefined>(data.kbCollectionId);
   const [workspacePaths, setWorkspacePaths] = useState<string[]>(data.workspacePaths ?? []);
   const [systemPrompt, setSystemPrompt] = useState(data.systemPrompt || '');
   const [userPrompt, setUserPrompt] = useState(data.userPrompt || '');
   const [showErrors, setShowErrors] = useState(false);
-  const [kbOptions, setKbOptions] = useState<{ value: number; label: string }[]>([]);
+  const [kbOptions, setKbOptions] = useState<{ value: string; label: string }[]>([]);
 
   const linkedPrompt =
     data.resourceKind === 'prompt' ? prompts.find((p) => p.id === data.resourceId) : undefined;
@@ -114,7 +114,7 @@ export function WorkflowNodeEditPanel({
     commitUpdate({ executionModel: value.trim() || undefined });
   };
 
-  const handleKbChange = (value: number | undefined) => {
+  const handleKbChange = (value: string | undefined) => {
     setKbCollectionId(value);
     commitUpdate({ kbCollectionId: value });
   };

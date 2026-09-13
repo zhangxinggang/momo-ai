@@ -91,9 +91,16 @@ export const SCENARIO_DEFINITIONS: IScenarioDefinition[] = [
   {
     key: 'textSegment',
     label: '文本切分',
-    desc: '用于知识库。',
+    desc: '可选：用于知识库的 AI 语义切分，不负责生成检索向量。',
     type: 'chat',
     badge: '默认文本切分',
+  },
+  {
+    key: 'knowledgeEmbedding',
+    label: '知识库嵌入',
+    desc: '必需：将知识内容转换为检索向量，模型需支持 OpenAI 兼容的 /embeddings 接口。',
+    type: 'embedding',
+    badge: '默认知识库嵌入',
   },
 ];
 

@@ -135,6 +135,18 @@ export function buildModelsEndpointFromBase(resolved: TResolvedProtocol): string
   return `${baseUrl}/v1/models`;
 }
 
+/** OpenAI-compatible embeddings endpoint used by the knowledge base. */
+export function buildEmbeddingEndpointFromBase(resolved: TResolvedProtocol): string {
+  const baseUrl = resolved.baseUrl.replace(/\/$/, '');
+  if (!baseUrl) {
+    return '';
+  }
+  if (resolved.explicit || baseUrl.endsWith('/embeddings')) {
+    return baseUrl;
+  }
+  return baseUrl.match(/\/v\d+$/) ? `${baseUrl}/embeddings` : `${baseUrl}/v1/embeddings`;
+}
+
 export function buildHeadersForProtocol(
   protocol: EAIProtocol,
   apiKey: string,
@@ -171,6 +183,11 @@ export function buildHeadersForProtocol(
 export function getApiEndpointPreview(apiUrl: string, protocol: EAIProtocol = 'openai'): string {
   if (!apiUrl) return '';
   return buildChatEndpointFromBase(resolveProtocolBase(apiUrl, protocol));
+}
+
+export function getEmbeddingApiEndpointPreview(apiUrl: string): string {
+  if (!apiUrl) return '';
+  return buildEmbeddingEndpointFromBase(resolveProtocolBase(apiUrl, 'openai'));
 }
 
 /**

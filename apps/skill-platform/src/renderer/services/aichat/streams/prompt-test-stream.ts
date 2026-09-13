@@ -2,7 +2,7 @@ import type { IChatStreamMessage, TCallAiChatStream } from '@momo/aichat';
 
 import type { IAIConfig, IChatMessage } from '@renderer/services/ai';
 import { buildContextPlan } from '../core/context-plan';
-import { buildRagContext } from '../core/rag-context';
+import { retrieveKnowledgeContext } from '../core/knowledge-context';
 import { resolveStreamModelConfig, runChatCompletionStream } from './chat-completion-stream';
 
 function normalizeContent(content: string): string {
@@ -79,14 +79,16 @@ export function createPromptTestStream(options: IPromptTestStreamOptions): TCall
       return;
     }
 
-    const baseMessages = mergePromptTestApiMessages(options.getBaseMessages(), messages);
-    const { ragSystemPrompt, citations } = await buildRagContext(messages, streamOptions);
-    const apiMessages = buildContextPlan({
-      messages: baseMessages,
-      evidence: [ragSystemPrompt],
-    });
-
     try {
+      const baseMessages = mergePromptTestApiMessages(options.getBaseMessages(), messages);
+      const { knowledgeSystemPrompt, citations } = await retrieveKnowledgeContext(
+        messages,
+        streamOptions,
+      );
+      const apiMessages = buildContextPlan({
+        messages: baseMessages,
+        evidence: [knowledgeSystemPrompt],
+      });
       const { elapsedSec, usage } = await runChatCompletionStream({
         config,
         apiMessages,

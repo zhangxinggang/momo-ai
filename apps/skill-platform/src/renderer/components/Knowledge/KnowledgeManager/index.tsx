@@ -6,18 +6,22 @@ import {
   type ISegmentSettings,
 } from '@momo/knowledge';
 import { KnowledgeChunkPanel } from '@renderer/components/Knowledge/KnowledgeChunkPanel';
-import { KnowledgeSegmentSettingsModal } from '@renderer/components/Knowledge/KnowledgeSegmentSettingsModal';
 import { ModuleEmptyState } from '@renderer/components/ui/ModuleEmptyState';
 import {
   kbDeleteDocument,
-  kbGetDocumentProgress,
-  kbIngestDocument,
+  kbGetDocument,
+  kbImportDirectory,
+  kbImportFiles,
   kbListCollections,
   kbListDocuments,
+  kbListJobs,
   kbPasteText,
-  kbPreviewFileSegments,
-  kbSearch,
-  kbUploadFiles,
+  kbPickDirectory,
+  kbPreviewFile,
+  kbRetrieve,
+  kbRetryJob,
+  resolveKbEmbeddingConfig,
+  resolveKbEmbeddingModel,
   type IKbEmbeddingOptions,
 } from '@renderer/services/kb';
 import { useKbStore, useSettingsStore } from '@renderer/store';
@@ -27,20 +31,11 @@ import {
   DatabaseIcon,
   FilePlusIcon,
   FileTextIcon,
+  FolderOpenIcon,
   SearchIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styles from './index.module.less';
-
-function formatScoreClass(score: number): string {
-  if (score >= 0.75) {
-    return styles['kb-main-score--high'];
-  }
-  if (score >= 0.5) {
-    return styles['kb-main-score--mid'];
-  }
-  return styles['kb-main-score--low'];
-}
 
 const KB_UPDATED_EVENT = 'kb:collections-updated';
 
@@ -55,6 +50,14 @@ export function KnowledgeManager() {
   const scenarioModelDefaults = useSettingsStore((s) => s.scenarioModelDefaults);
   const kbEmbeddingOptions = useMemo<IKbEmbeddingOptions>(
     () => ({ aiModels, scenarioModelDefaults }),
+    [aiModels, scenarioModelDefaults],
+  );
+  const embeddingModel = useMemo(
+    () => resolveKbEmbeddingModel(aiModels, scenarioModelDefaults),
+    [aiModels, scenarioModelDefaults],
+  );
+  const embeddingReady = useMemo(
+    () => Boolean(resolveKbEmbeddingConfig(aiModels, scenarioModelDefaults)),
     [aiModels, scenarioModelDefaults],
   );
 
@@ -73,11 +76,9 @@ export function KnowledgeManager() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [chunkDoc, setChunkDoc] = useState<IKbDocument | null>(null);
-  const [segmentDoc, setSegmentDoc] = useState<IKbDocument | null>(null);
+  const progressTimersRef = useRef<Record<string, ReturnType<typeof setInterval>>>({});
 
-  const progressTimersRef = useRef<Record<number, ReturnType<typeof setInterval>>>({});
-
-  const stopProgressPolling = (docId: number) => {
+  const stopProgressPolling = (docId: string) => {
     if (progressTimersRef.current[docId]) {
       clearInterval(progressTimersRef.current[docId]);
       delete progressTimersRef.current[docId];
@@ -85,7 +86,7 @@ export function KnowledgeManager() {
   };
 
   const refreshDocs = useCallback(
-    async (collectionId: number) => {
+    async (collectionId: string) => {
       setDocsLoading(true);
       try {
         const items = await kbListDocuments(collectionId);
@@ -145,11 +146,11 @@ export function KnowledgeManager() {
     window.dispatchEvent(new CustomEvent(KB_UPDATED_EVENT));
   };
 
-  const startProgressPolling = (docId: number, collectionId: number) => {
+  const startProgressPolling = (docId: string, collectionId: string) => {
     stopProgressPolling(docId);
     const poll = async () => {
       try {
-        const doc = await kbGetDocumentProgress(docId);
+        const doc = await kbGetDocument(docId);
         if (!doc) {
           return;
         }
@@ -160,40 +161,17 @@ export function KnowledgeManager() {
               : d,
           ),
         );
-        if (doc.status === 'ready' || doc.status === 'error') {
+        if (['ready', 'failed', 'interrupted', 'manual_conflict'].includes(doc.status)) {
           stopProgressPolling(docId);
           await refreshDocs(collectionId);
         }
-      } catch {
-        // 轮询失败静默
+      } catch (error) {
+        stopProgressPolling(docId);
+        message.error(error instanceof Error ? error.message : String(error));
       }
     };
     void poll();
     progressTimersRef.current[docId] = setInterval(() => void poll(), 1500);
-  };
-
-  const ingestUploaded = (
-    docId: number,
-    collectionId: number,
-    fileLabel?: string,
-    ingestOptions?: Parameters<typeof kbIngestDocument>[1],
-  ) => {
-    startProgressPolling(docId, collectionId);
-    kbIngestDocument(docId, ingestOptions ?? kbEmbeddingOptions)
-      .then(async () => {
-        stopProgressPolling(docId);
-        if (fileLabel) {
-          message.success(`${fileLabel} 入库完成`);
-        }
-        await refreshDocs(collectionId);
-        notifyUpdated();
-      })
-      .catch(async (err: Error) => {
-        stopProgressPolling(docId);
-        message.error(err?.message || '入库失败');
-        await refreshDocs(collectionId);
-        notifyUpdated();
-      });
   };
 
   const uploadFilesToCollection = async (files: File[]) => {
@@ -209,17 +187,9 @@ export function KnowledgeManager() {
     }
     try {
       setUploading(true);
-      const items = await kbUploadFiles(activeCollectionId, valid);
+      const items = await kbImportFiles(activeCollectionId, valid, kbEmbeddingOptions);
       await refreshDocs(activeCollectionId);
-      if (items.length === 1) {
-        ingestUploaded(items[0].docId, activeCollectionId, valid[0].name);
-        return;
-      }
-      if (items.length > 1) {
-        items.forEach((it, idx) => {
-          ingestUploaded(it.docId, activeCollectionId, valid[idx]?.name);
-        });
-      }
+      items.forEach((item) => startProgressPolling(item.docId, activeCollectionId));
     } catch (e: unknown) {
       message.error((e as Error)?.message || '上传失败');
     } finally {
@@ -237,23 +207,42 @@ export function KnowledgeManager() {
     }
     setUploading(true);
     try {
-      const items = await kbUploadFiles(activeCollectionId, files);
+      const items = await kbImportFiles(activeCollectionId, files, {
+        ...kbEmbeddingOptions,
+        segmentSettings: {
+          separator: settings.separator,
+          maxChunkLength: settings.maxChunkLength,
+          chunkOverlap: settings.chunkOverlap,
+          preprocess: settings.preprocess,
+          splitMode: settings.splitMode,
+        },
+        segmentMode,
+      });
       await refreshDocs(activeCollectionId);
-      for (const item of items) {
-        ingestUploaded(item.docId, activeCollectionId, undefined, {
-          segmentSettings: {
-            separator: settings.separator,
-            maxChunkLength: settings.maxChunkLength,
-            chunkOverlap: settings.chunkOverlap,
-            preprocess: settings.preprocess,
-            splitMode: settings.splitMode,
-          },
-          segmentMode,
-        });
-      }
+      items.forEach((item) => startProgressPolling(item.docId, activeCollectionId));
       notifyUpdated();
     } catch (e: unknown) {
       message.error((e as Error)?.message || '上传失败');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDirectoryImport = async () => {
+    if (!activeCollectionId) return;
+    try {
+      const directoryPath = await kbPickDirectory();
+      if (!directoryPath) return;
+      setUploading(true);
+      const items = await kbImportDirectory(activeCollectionId, directoryPath, {
+        ...kbEmbeddingOptions,
+        recursive: true,
+      });
+      await refreshDocs(activeCollectionId);
+      items.forEach((item) => startProgressPolling(item.docId, activeCollectionId));
+      notifyUpdated();
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : String(error));
     } finally {
       setUploading(false);
     }
@@ -264,13 +253,17 @@ export function KnowledgeManager() {
       docs.map((doc) => ({
         id: doc.docId,
         name: doc.filename,
-        segmentMode: (doc.segment_mode === 'fixed' ? 'fixed' : 'general') as EDocumentSegmentMode,
-        uploadedAt: doc.created_at ? new Date(doc.created_at).getTime() : Date.now(),
+        segmentMode: doc.segmentMode as EDocumentSegmentMode,
+        uploadedAt: doc.createdAt,
+        status: doc.status,
+        progress: doc.progress,
+        chunkCount: doc.chunkCount,
+        error: doc.error,
       })),
     [docs],
   );
 
-  const handleDeleteDoc = async (docId: number) => {
+  const handleDeleteDoc = async (docId: string) => {
     if (!activeCollectionId) {
       return;
     }
@@ -284,14 +277,18 @@ export function KnowledgeManager() {
     }
   };
 
-  const handleRetryIngest = async (docId: number) => {
+  const handleRetryIngest = async (docId: string) => {
     if (!activeCollectionId) {
       return;
     }
     try {
+      const job = (await kbListJobs(200)).find(
+        (item) =>
+          item.documentId === docId && ['failed', 'interrupted', 'cancelled'].includes(item.status),
+      );
+      if (!job) throw new Error('没有可手动重试的失败任务');
+      await kbRetryJob(job.id, kbEmbeddingOptions);
       startProgressPolling(docId, activeCollectionId);
-      await kbIngestDocument(docId, kbEmbeddingOptions);
-      stopProgressPolling(docId);
       await refreshDocs(activeCollectionId);
       notifyUpdated();
     } catch (e: unknown) {
@@ -315,15 +312,13 @@ export function KnowledgeManager() {
         activeCollectionId,
         txt,
         pasteFilename.trim() || undefined,
+        kbEmbeddingOptions,
       );
       setPasteOpen(false);
       setPasteText('');
       setPasteFilename('');
       await refreshDocs(activeCollectionId);
       startProgressPolling(docId, activeCollectionId);
-      await kbIngestDocument(docId, kbEmbeddingOptions);
-      stopProgressPolling(docId);
-      await refreshDocs(activeCollectionId);
       notifyUpdated();
       message.success('文本已入库');
     } catch (e: unknown) {
@@ -340,13 +335,20 @@ export function KnowledgeManager() {
     }
     try {
       setSearchLoading(true);
-      const results = await kbSearch(
-        activeCollectionId,
-        searchQuery.trim(),
-        10,
+      const result = await kbRetrieve(
+        {
+          query: searchQuery.trim(),
+          collectionIds: [activeCollectionId],
+          topK: 10,
+          contextTokenBudget: 6_000,
+          mode: 'balanced',
+          rerank: 'off',
+          trace: true,
+        },
         kbEmbeddingOptions,
       );
-      setSearchResults(results);
+      setSearchResults(result.evidence);
+      if (result.status === 'no_match') message.info('知识库中没有达到相关性要求的内容');
     } catch (e: unknown) {
       message.error((e as Error)?.message || '搜索失败');
     } finally {
@@ -381,6 +383,26 @@ export function KnowledgeManager() {
               {collectionName || '知识库'}
             </h2>
             <p className={styles['kb-main-meta']}>{docCountLabel}</p>
+            <div
+              className={`${styles['kb-main-embedding-status']} ${
+                embeddingReady
+                  ? styles['kb-main-embedding-status--ready']
+                  : styles['kb-main-embedding-status--missing']
+              }`}
+              title={
+                embeddingReady
+                  ? `知识库嵌入模型：${embeddingModel?.model}`
+                  : embeddingModel
+                    ? '当前嵌入模型缺少 API Key、API 地址或模型名称'
+                    : '文本切分模型只负责切段，入库还需要单独配置嵌入模型'
+              }>
+              <span className={styles['kb-main-embedding-dot']} aria-hidden />
+              {embeddingReady
+                ? `嵌入模型：${embeddingModel?.name?.trim() || embeddingModel?.model}`
+                : embeddingModel
+                  ? `嵌入模型配置不完整：${embeddingModel.name?.trim() || embeddingModel.model}`
+                  : '未配置嵌入模型（文本切分模型不能代替）'}
+            </div>
           </div>
         </div>
         <div className={styles['kb-main-toolbar']}>
@@ -390,6 +412,24 @@ export function KnowledgeManager() {
             onClick={() => setWizardOpen(true)}>
             {uploading ? <Spin size='small' /> : <FilePlusIcon size={16} aria-hidden />}
             {'添加文档'}
+          </Button>
+          {!embeddingReady ? (
+            <Button
+              className={styles['kb-main-toolbar-btn']}
+              onClick={() =>
+                window.dispatchEvent(
+                  new CustomEvent('app:open-settings', { detail: { section: 'ai' } }),
+                )
+              }>
+              {'配置嵌入模型'}
+            </Button>
+          ) : null}
+          <Button
+            className={styles['kb-main-toolbar-btn']}
+            disabled={!activeCollectionId || uploading}
+            onClick={() => void handleDirectoryImport()}>
+            <FolderOpenIcon size={16} aria-hidden />
+            {'导入目录'}
           </Button>
           <Button
             className={styles['kb-main-toolbar-btn']}
@@ -443,12 +483,6 @@ export function KnowledgeManager() {
                     setChunkDoc(doc);
                   }
                 }}
-                onSegmentSettings={(record) => {
-                  const doc = docs.find((d) => d.docId === record.id);
-                  if (doc) {
-                    setSegmentDoc(doc);
-                  }
-                }}
                 onDelete={(record) => void handleDeleteDoc(record.id)}
               />
             </div>
@@ -460,20 +494,19 @@ export function KnowledgeManager() {
         open={wizardOpen}
         onClose={() => setWizardOpen(false)}
         onUploadAndIngest={handleWizardUpload}
-        onPreviewSegments={async (file, settings) =>
-          kbPreviewFileSegments(
-            file,
-            {
+        onPreviewSegments={async (file, settings) => {
+          const preview = await kbPreviewFile(file, {
+            ...kbEmbeddingOptions,
+            segmentSettings: {
               separator: settings.separator,
               maxChunkLength: settings.maxChunkLength,
               chunkOverlap: settings.chunkOverlap,
               preprocess: settings.preprocess,
               splitMode: settings.splitMode,
             },
-            12,
-            kbEmbeddingOptions,
-          )
-        }
+          });
+          return preview.chunks.slice(0, 12).map(({ idx, content }) => ({ idx, content }));
+        }}
       />
 
       <KnowledgeChunkPanel
@@ -482,19 +515,6 @@ export function KnowledgeManager() {
         onClose={() => setChunkDoc(null)}
         kbEmbeddingOptions={kbEmbeddingOptions}
         onRetryIngest={(docId) => void handleRetryIngest(docId)}
-      />
-
-      <KnowledgeSegmentSettingsModal
-        open={!!segmentDoc}
-        document={segmentDoc}
-        kbEmbeddingOptions={kbEmbeddingOptions}
-        onClose={() => setSegmentDoc(null)}
-        onDone={() => {
-          if (activeCollectionId) {
-            void refreshDocs(activeCollectionId);
-          }
-          notifyUpdated();
-        }}
       />
 
       <Modal
@@ -577,12 +597,10 @@ export function KnowledgeManager() {
                   },
                   {
                     title: '分数',
-                    dataIndex: 'score',
+                    dataIndex: 'finalScore',
                     width: 88,
                     render: (v: number) => (
-                      <span className={`${styles['kb-main-score']} ${formatScoreClass(v)}`}>
-                        {v.toFixed(4)}
-                      </span>
+                      <span className={styles['kb-main-score']}>{v.toFixed(4)}</span>
                     ),
                   },
                 ]}

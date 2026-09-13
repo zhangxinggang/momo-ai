@@ -3,7 +3,7 @@
   "copyright": "Copyright 2026 zhangxg Ltd",
   "asar": true,
   "extraMetadata": {
-    "main": "src/main/index.cjs"
+    "main": "src/main/production.cjs"
   },
   "files": [
     {

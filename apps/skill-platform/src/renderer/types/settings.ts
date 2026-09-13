@@ -4,7 +4,7 @@ import type { EAIProtocol } from '@/types/modules';
 export type EThemeMode = 'light' | 'dark' | 'system';
 
 /** AI 模型类型 */
-export type EAIModelType = 'chat' | 'image';
+export type EAIModelType = 'chat' | 'image' | 'embedding';
 
 /** 对话模型参数配置 */
 export interface IChatModelParams {
@@ -49,6 +49,7 @@ export type EAIUsageScenario =
   | 'promptTest'
   | 'imageTest'
   | 'translation'
-  | 'textSegment';
+  | 'textSegment'
+  | 'knowledgeEmbedding';
 
 export type IScenarioModelDefaults = Partial<Record<EAIUsageScenario, string>>;

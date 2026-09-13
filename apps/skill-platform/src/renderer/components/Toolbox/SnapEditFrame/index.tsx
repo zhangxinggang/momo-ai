@@ -7,6 +7,7 @@ import styles from './index.module.less';
 interface IProps {
   html: string;
   fileName?: string;
+  onChange?: (html: string) => void;
 }
 
 export interface ISnapEditFrameHandle {
@@ -16,13 +17,14 @@ export interface ISnapEditFrameHandle {
 /** 嵌入 snapEdit.html，通过 postMessage 同步 HTML */
 export const SnapEditFrame = forwardRef<ISnapEditFrameHandle, IProps>(
   function SnapEditFrame(props, ref) {
-    const { html, fileName = 'tool.html' } = props;
+    const { html, fileName = 'tool.html', onChange } = props;
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const [frameUrl, setFrameUrl] = useState<string | null>(null);
     const [isReady, setIsReady] = useState(false);
     const requestIdRef = useRef(0);
     const pendingRef = useRef<Map<string, (value: string) => void>>(new Map());
     const htmlRef = useRef(html);
+    const lastFrameHtmlRef = useRef<string | null>(null);
     htmlRef.current = html;
 
     useEffect(() => {
@@ -76,14 +78,23 @@ export const SnapEditFrame = forwardRef<ISnapEditFrameHandle, IProps>(
             resolve(typeof data.html === 'string' ? data.html : '');
           }
         }
+        if (data.type === 'snapedit:change' && typeof data.html === 'string') {
+          lastFrameHtmlRef.current = data.html;
+          htmlRef.current = data.html;
+          onChange?.(data.html);
+        }
       };
 
       window.addEventListener('message', handleMessage);
       return () => window.removeEventListener('message', handleMessage);
-    }, [fileName]);
+    }, [fileName, onChange]);
 
     useEffect(() => {
       if (!isReady) {
+        return;
+      }
+      if (lastFrameHtmlRef.current === html) {
+        lastFrameHtmlRef.current = null;
         return;
       }
       iframeRef.current?.contentWindow?.postMessage(

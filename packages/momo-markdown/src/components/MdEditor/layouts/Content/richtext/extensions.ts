@@ -11,6 +11,29 @@ import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from 'tiptap-markdown';
 import { Admonition, CodeBlock, KatexBlock, KatexInline } from './nodes';
 
+/** 与 markdown-it-image-figures 使用相同 DOM，确保图片与图注主题规则一致。 */
+const PreviewImage = Image.extend({
+  parseHTML() {
+    return [{ tag: 'img[src]' }, { tag: 'figure img[src]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    const imageAttributes = {
+      ...this.options.HTMLAttributes,
+      ...HTMLAttributes,
+      class: [this.options.HTMLAttributes.class, HTMLAttributes.class, 'md-zoom']
+        .filter(Boolean)
+        .join(' '),
+    };
+    const caption = String(HTMLAttributes.alt || '').trim();
+    return [
+      'figure',
+      {},
+      ['img', imageAttributes],
+      ...(caption ? [['figcaption', {}, caption]] : []),
+    ];
+  },
+});
+
 const PreviewTaskList = TaskList.extend({
   addAttributes() {
     return {
@@ -68,7 +91,7 @@ export const buildRichTextExtensions = (
     Link.configure({
       openOnClick: false,
     }),
-    Image,
+    PreviewImage,
     Table,
     TableRow,
     TableCell,
@@ -98,10 +121,11 @@ export const buildRichTextExtensions = (
     KatexInline,
     KatexBlock,
     Admonition,
-    // 启用 Markdown 解析与序列化，breaks: false 保留标准 Markdown 段落语义
+    // 预览器使用 markdown-it breaks:true；富文本必须采用同一软换行语义，
+    // 否则同一段 Markdown 在两种模式下会出现肉眼可见的断行差异。
     Markdown.configure({
       html: true,
-      breaks: false,
+      breaks: true,
       // 保留浏览器/ProseMirror 的富文本剪贴板：text/html 携带所见样式，
       // text/plain 只包含可见文字，不再把选择内容重新序列化成 Markdown。
       transformCopiedText: false,

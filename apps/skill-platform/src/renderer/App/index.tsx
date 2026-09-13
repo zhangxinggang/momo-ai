@@ -45,7 +45,10 @@ const EditPromptModal = lazy(() =>
 // 页面类型
 type PageType = 'home' | 'settings';
 
-configureKbService(() => useSettingsStore.getState().aiModels);
+configureKbService(
+  () => useSettingsStore.getState().aiModels,
+  () => useSettingsStore.getState().scenarioModelDefaults,
+);
 
 function App() {
   const appName = useAppName();
@@ -57,18 +60,32 @@ function App() {
   const backgroundImageBlur = useSettingsStore((state) => state.backgroundImageBlur);
   const debugMode = useSettingsStore((state) => state.debugMode);
   const [currentPage, setCurrentPage] = useState<PageType>('home');
+  const [settingsInitialSection, setSettingsInitialSection] = useState('general');
   const [isLoading, setIsLoading] = useState(true);
   const { confirmLeaveAllEditors } = useConfirmLeaveEditors();
 
   /** 打开设置页；若技能/工作流编辑器有未保存更改则先确认 */
-  const openSettingsPage = useCallback(() => {
-    void (async () => {
-      const canLeave = await confirmLeaveAllEditors();
-      if (canLeave) {
-        setCurrentPage('settings');
-      }
-    })();
-  }, [confirmLeaveAllEditors]);
+  const openSettingsPage = useCallback(
+    (section = 'general') => {
+      void (async () => {
+        const canLeave = await confirmLeaveAllEditors();
+        if (canLeave) {
+          setSettingsInitialSection(section);
+          setCurrentPage('settings');
+        }
+      })();
+    },
+    [confirmLeaveAllEditors],
+  );
+
+  useEffect(() => {
+    const handleOpenSettings = (event: Event) => {
+      const section = (event as CustomEvent<{ section?: string }>).detail?.section;
+      openSettingsPage(section || 'general');
+    };
+    window.addEventListener('app:open-settings', handleOpenSettings);
+    return () => window.removeEventListener('app:open-settings', handleOpenSettings);
+  }, [openSettingsPage]);
 
   // OS-level fullscreen state (synced from main process events)
   // OS 级全屏状态（通过主进程事件同步）
@@ -304,7 +321,10 @@ function App() {
                             <Spin />
                           </Flex>
                         }>
-                        <SettingsPage onBack={() => setCurrentPage('home')} />
+                        <SettingsPage
+                          initialSection={settingsInitialSection}
+                          onBack={() => setCurrentPage('home')}
+                        />
                       </Suspense>
                     ) : null}
                   </div>

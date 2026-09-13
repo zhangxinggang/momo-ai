@@ -419,7 +419,7 @@ export function createResourceNode(params: {
   systemPrompt?: string;
   userPrompt?: string;
   executionModel?: string;
-  kbCollectionId?: number;
+  kbCollectionId?: string;
   workspacePaths?: string[];
   position?: { x: number; y: number };
   nodeId?: string;

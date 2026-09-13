@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import '@momo/markdown-styles';
 import { describe, expect, it } from 'vitest';
 import { buildRichTextExtensions } from '../../../../../../packages/momo-markdown/src/components/MdEditor/layouts/Content/richtext/extensions';
 
@@ -14,6 +13,7 @@ function getExtension(name: string) {
 describe('rich-text editor parity', () => {
   it('copies rendered content instead of Markdown source', () => {
     expect(getExtension('markdown').options.transformCopiedText).toBe(false);
+    expect(getExtension('markdown').options.breaks).toBe(true);
   });
 
   it('uses the preview task-list hooks', () => {
@@ -39,5 +39,21 @@ describe('rich-text editor parity', () => {
   it('does not apply preview-container styles to inline links or images', () => {
     expect(getExtension('link').options.HTMLAttributes?.class).toBeFalsy();
     expect(getExtension('image').options.HTMLAttributes?.class).toBeFalsy();
+  });
+
+  it('renders the same image and caption structure as markdown-it-image-figures', () => {
+    const image = getExtension('image');
+    const renderHTML = image.config.renderHTML as any;
+    expect(
+      renderHTML.call(
+        { options: image.options },
+        { HTMLAttributes: { src: 'figure.png', alt: '图注' } },
+      ),
+    ).toEqual([
+      'figure',
+      {},
+      ['img', { src: 'figure.png', alt: '图注', class: 'md-zoom' }],
+      ['figcaption', {}, '图注'],
+    ]);
   });
 });

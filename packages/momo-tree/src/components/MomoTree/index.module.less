@@ -5,6 +5,11 @@
     background: transparent;
   }
 
+  // 作为侧栏树的折叠图标颜色基准，供系统工具和 AI 对话列表复用。
+  :global(.ant-tree-switcher) {
+    color: var(--app-sidebar-collapse-icon-color);
+  }
+
   :global(.ant-tree-treenode) {
     width: 100%;
     padding: 2px 0;
@@ -39,6 +44,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.momo-tree-row-extra {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--primary));
 }
 
 .momo-tree-highlight {

@@ -4,8 +4,8 @@ import { ipcMain } from 'electron';
 import { FolderDB, PromptDB, SkillDB, WorkflowDB } from '../database';
 import { WorkflowBusinessController } from '../database/controller/workflow-business';
 import { WorkflowFolderController } from '../database/controller/workflow-folder';
-import { registerAIIPC } from './ai';
 import { registerAgentAppIPC } from './agent-app';
+import { registerAIIPC } from './ai';
 import { registerAichatIPC } from './aichat-handlers';
 import { registerCustomToolIPC } from './custom-tool';
 import { registerDataIPC } from './data';
@@ -14,7 +14,7 @@ import { registerFolderIPC } from './folder';
 import { registerFsIPC } from './fs';
 import { registerImageIPC } from './image';
 import { registerIoIPC } from './io';
-import { registerKbIPC } from './kb';
+import { KNOWLEDGE_CHANNELS, registerKbIPC } from './kb';
 import { registerMcpIPC, startMcpHub } from './mcp';
 import { registerNoteIPC } from './note';
 import { registerNotificationIPC } from './notification';
@@ -112,18 +112,7 @@ const REBINDABLE_DB_CHANNELS = [
   IPC_CHANNELS.WORKFLOW_BUSINESS_DELETE,
   IPC_CHANNELS.WORKFLOW_BUSINESS_DELETE_BY_WORKFLOW,
   IPC_CHANNELS.WORKFLOW_BUSINESS_HAS_ANY,
-  IPC_CHANNELS.KB_LIST_COLLECTIONS,
-  IPC_CHANNELS.KB_CREATE_COLLECTION,
-  IPC_CHANNELS.KB_UPDATE_COLLECTION,
-  IPC_CHANNELS.KB_DELETE_COLLECTION,
-  IPC_CHANNELS.KB_LIST_DOCUMENTS,
-  IPC_CHANNELS.KB_UPLOAD_FILES,
-  IPC_CHANNELS.KB_PASTE_TEXT,
-  IPC_CHANNELS.KB_INGEST_DOCUMENT,
-  IPC_CHANNELS.KB_GET_DOCUMENT,
-  IPC_CHANNELS.KB_DELETE_DOCUMENT,
-  IPC_CHANNELS.KB_SEARCH,
-  IPC_CHANNELS.KB_PREVIEW_FILE_SEGMENTS,
+  ...KNOWLEDGE_CHANNELS,
 ] as const;
 
 function resetAllRegisteredIpcHandlers(): void {
@@ -179,7 +168,7 @@ export function registerAllIPC(db: Database): void {
   registerImageIPC();
   registerAIIPC();
   registerAichatIPC();
-  registerKbIPC(db);
+  registerKbIPC();
   registerScraperIPC();
   registerOnlineConfIPC();
   registerSystemIPC();

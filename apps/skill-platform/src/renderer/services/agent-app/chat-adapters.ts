@@ -18,12 +18,10 @@ export function createAgentAppChatAdapters(options: ICreateAgentAppChatAdaptersO
   beforeSubmitPrompt: (input: IBeforeSubmitPromptInput) => Promise<IBeforeSubmitPromptResult>;
 } {
   const slashCommands: ISlashCommandsConfig = {
-    isActive: () => Boolean(options.getAgentAppId()?.trim()),
+    // momo-ai 应用技能不依赖当前项目是否选择了 Agent。
+    isActive: () => true,
     list: async (query, ctx) => {
       const agentAppId = options.getAgentAppId()?.trim();
-      if (!agentAppId) {
-        return { items: [] };
-      }
       const folderPaths =
         ctx.workspacePaths?.length > 0 ? ctx.workspacePaths : options.getFolderPaths();
       const result = await listAgentAppSlashCommands({
@@ -40,6 +38,8 @@ export function createAgentAppChatAdapters(options: ICreateAgentAppChatAdaptersO
           description: item.description,
           kind: item.kind,
           scope: item.scope,
+          category: item.category,
+          tags: item.tags,
           hasArgs: item.hasArgs,
         })),
         warning: result.warning,
@@ -51,14 +51,6 @@ export function createAgentAppChatAdapters(options: ICreateAgentAppChatAdaptersO
     input: IBeforeSubmitPromptInput,
   ): Promise<IBeforeSubmitPromptResult> => {
     const agentAppId = options.getAgentAppId()?.trim();
-    if (!agentAppId) {
-      return {
-        action: 'allow',
-        content: input.content,
-        displayContent: input.displayContent,
-      };
-    }
-
     const folderPaths =
       input.workspacePaths?.length > 0 ? input.workspacePaths : options.getFolderPaths();
 
@@ -68,6 +60,7 @@ export function createAgentAppChatAdapters(options: ICreateAgentAppChatAdaptersO
       content: input.content,
       displayContent: input.displayContent,
       invocation: input.invocation,
+      invocations: input.invocations,
     });
 
     if (result.action === 'deny') {
@@ -83,6 +76,7 @@ export function createAgentAppChatAdapters(options: ICreateAgentAppChatAdaptersO
       content: result.content ?? input.content,
       displayContent: result.displayContent ?? input.displayContent,
       invocation: result.invocation,
+      invocations: result.invocations,
     };
   };
 

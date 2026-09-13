@@ -1,8 +1,14 @@
-import type { ICustomToolTreeNode } from '@/types/modules';
+import type {
+  ICustomToolGeneratedFile,
+  ICustomToolRuntimeInfo,
+  ICustomToolTreeNode,
+} from '@/types/modules';
 import { collectFirstLevelFolderIds, type IMomoTreeNode } from '@momo/tree';
 import {
+  activateCustomTool,
   createCustomToolFile,
   createCustomToolFolder,
+  deactivateCustomTool,
   deleteCustomTool,
   listCustomToolTree,
   moveCustomTool,
@@ -10,6 +16,7 @@ import {
   renameCustomTool,
   writeCustomToolFile,
 } from '@renderer/services/custom-tool/api';
+import { stripToolHtmlCodeFence } from '@renderer/services/custom-tool/generate-html';
 import { collectNoteFolderIds, filterNoteTreeByQuery } from '@renderer/services/note/tree-filter';
 import { create } from 'zustand';
 
@@ -32,6 +39,10 @@ function buildVisibleTree(rawTree: IMomoTreeNode[], searchQuery: string): IMomoT
   return filterNoteTreeByQuery(rawTree, searchQuery);
 }
 
+function isPathInsideNode(selectedId: string | null, nodeId: string): selectedId is string {
+  return selectedId === nodeId || Boolean(selectedId?.startsWith(`${nodeId}/`));
+}
+
 function resolveExpandedKeys(
   treeData: IMomoTreeNode[],
   searchQuery: string,
@@ -51,7 +62,18 @@ export function hasToolHtmlContent(content: string): boolean {
   return Boolean(content.trim());
 }
 
-interface ICustomToolState {
+export type ECustomToolGenerationStatus = 'generating' | 'done' | 'stopped' | 'error';
+
+/** 独立于编辑页组件的生成快照；切换模块后仍保留并持续更新。 */
+export interface ICustomToolGenerationTask {
+  id: number;
+  status: ECustomToolGenerationStatus;
+  streamHtml: string;
+  previousFiles: ICustomToolGeneratedFile[];
+  errorMessage: string;
+}
+
+export interface ICustomToolState {
   rawTree: IMomoTreeNode[];
   treeData: IMomoTreeNode[];
   treeSearchQuery: string;
@@ -63,6 +85,11 @@ interface ICustomToolState {
   isLoadingTree: boolean;
   isLoadingFile: boolean;
   isSaving: boolean;
+  isLoadingRuntime: boolean;
+  runtimeInfo: ICustomToolRuntimeInfo | null;
+  runtimeError: string;
+  previewRevision: number;
+  generationTasks: Record<string, ICustomToolGenerationTask>;
   setTreeSearchQuery: (query: string) => void;
   loadTree: () => Promise<void>;
   setExpandedKeys: (keys: string[]) => void;
@@ -73,6 +100,8 @@ interface ICustomToolState {
   exitEditMode: () => void;
   setEditorContent: (content: string) => void;
   saveCurrentFile: () => Promise<void>;
+  setRuntimeInfo: (runtimeInfo: ICustomToolRuntimeInfo | null) => void;
+  bumpPreviewRevision: () => void;
   createRootFolder: (name: string) => Promise<void>;
   createFolder: (parentId: string | null, name: string) => Promise<void>;
   createTool: (parentId: string | null, name: string) => Promise<void>;
@@ -93,6 +122,11 @@ export const useCustomToolStore = create<ICustomToolState>((set, get) => ({
   isLoadingTree: false,
   isLoadingFile: false,
   isSaving: false,
+  isLoadingRuntime: false,
+  runtimeInfo: null,
+  runtimeError: '',
+  previewRevision: 0,
+  generationTasks: {},
 
   setTreeSearchQuery: (query) => {
     const { rawTree } = get();
@@ -125,11 +159,20 @@ export const useCustomToolStore = create<ICustomToolState>((set, get) => ({
   },
 
   clearSelection: () => {
+    const selectedId = get().selectedId;
+    if (selectedId) {
+      void deactivateCustomTool(selectedId).catch((error) => {
+        console.error('[custom-tool] deactivate failed:', error);
+      });
+    }
     set({
       selectedId: null,
       editorContent: '',
       savedContent: '',
       isEditing: false,
+      isLoadingRuntime: false,
+      runtimeInfo: null,
+      runtimeError: '',
     });
   },
 
@@ -138,11 +181,25 @@ export const useCustomToolStore = create<ICustomToolState>((set, get) => ({
   exitEditMode: () => set({ isEditing: false }),
 
   selectFile: async (fileId) => {
-    const { selectedId, editorContent, savedContent, isEditing } = get();
+    const { selectedId, editorContent, savedContent, isEditing, generationTasks } = get();
     // 先占住选中态，避免清空系统选中后自动回选系统工具
-    set({ selectedId: fileId, isLoadingFile: true, isEditing: false });
+    set({
+      selectedId: fileId,
+      isLoadingFile: true,
+      isLoadingRuntime: true,
+      isEditing: false,
+      runtimeInfo: null,
+      runtimeError: '',
+    });
 
-    if (selectedId && selectedId !== fileId && isEditing && editorContent !== savedContent) {
+    const previousTask = selectedId ? generationTasks[selectedId] : undefined;
+    if (
+      selectedId &&
+      selectedId !== fileId &&
+      isEditing &&
+      editorContent !== savedContent &&
+      previousTask?.status !== 'generating'
+    ) {
       try {
         await writeCustomToolFile(selectedId, editorContent);
         // 仅当仍停留在目标文件时更新 saved 快照
@@ -159,10 +216,18 @@ export const useCustomToolStore = create<ICustomToolState>((set, get) => ({
       if (get().selectedId !== fileId) {
         return;
       }
-      const content = result.content ?? '';
+      const rawContent = result.content ?? '';
+      const content = stripToolHtmlCodeFence(rawContent);
+      if (content !== rawContent) {
+        await writeCustomToolFile(fileId, content);
+      }
+      const generationTask = get().generationTasks[fileId];
+      const isGenerating = generationTask?.status === 'generating';
       set({
-        editorContent: content,
+        editorContent:
+          isGenerating && generationTask.streamHtml ? generationTask.streamHtml : content,
         savedContent: content,
+        isEditing: isGenerating,
       });
     } catch (err) {
       console.error('[custom-tool] readFile failed:', err);
@@ -174,9 +239,39 @@ export const useCustomToolStore = create<ICustomToolState>((set, get) => ({
         set({ isLoadingFile: false });
       }
     }
+
+    if (get().selectedId !== fileId) {
+      return;
+    }
+    try {
+      const runtimeInfo = await activateCustomTool(fileId);
+      if (get().selectedId === fileId) {
+        set({ runtimeInfo, runtimeError: runtimeInfo.errorMessage ?? '' });
+      }
+    } catch (error) {
+      if (get().selectedId === fileId) {
+        set({
+          runtimeInfo: null,
+          runtimeError: error instanceof Error ? error.message : String(error),
+        });
+      }
+    } finally {
+      if (get().selectedId === fileId) {
+        set({ isLoadingRuntime: false });
+      }
+    }
   },
 
   setEditorContent: (content) => set({ editorContent: content }),
+
+  setRuntimeInfo: (runtimeInfo) =>
+    set({
+      runtimeInfo,
+      runtimeError: runtimeInfo?.errorMessage ?? '',
+      isLoadingRuntime: false,
+    }),
+
+  bumpPreviewRevision: () => set((state) => ({ previewRevision: state.previewRevision + 1 })),
 
   saveCurrentFile: async () => {
     const { selectedId, editorContent, savedContent } = get();
@@ -186,7 +281,7 @@ export const useCustomToolStore = create<ICustomToolState>((set, get) => ({
     set({ isSaving: true });
     try {
       await writeCustomToolFile(selectedId, editorContent);
-      set({ savedContent: editorContent });
+      set((state) => ({ savedContent: editorContent, previewRevision: state.previewRevision + 1 }));
     } finally {
       set({ isSaving: false });
     }
@@ -221,10 +316,19 @@ export const useCustomToolStore = create<ICustomToolState>((set, get) => ({
   },
 
   renameNode: async (nodeId, newName) => {
+    const beforeRename = get();
+    if (
+      isPathInsideNode(beforeRename.selectedId, nodeId) &&
+      beforeRename.editorContent !== beforeRename.savedContent
+    ) {
+      await writeCustomToolFile(beforeRename.selectedId, beforeRename.editorContent);
+    }
     const renamed = await renameCustomTool(nodeId, newName);
     const { selectedId } = get();
-    if (selectedId === nodeId && renamed.kind === 'tool') {
-      set({ selectedId: renamed.id });
+    if (isPathInsideNode(selectedId, nodeId)) {
+      const nextSelectedId = `${renamed.id}${selectedId.slice(nodeId.length)}`;
+      set({ selectedId: null });
+      await get().selectFile(nextSelectedId);
     }
     await get().loadTree();
   },
@@ -239,10 +343,19 @@ export const useCustomToolStore = create<ICustomToolState>((set, get) => ({
   },
 
   moveNode: async (nodeId, targetParentId) => {
+    const beforeMove = get();
+    if (
+      isPathInsideNode(beforeMove.selectedId, nodeId) &&
+      beforeMove.editorContent !== beforeMove.savedContent
+    ) {
+      await writeCustomToolFile(beforeMove.selectedId, beforeMove.editorContent);
+    }
     const moved = await moveCustomTool(nodeId, targetParentId);
     const { selectedId } = get();
-    if (selectedId === nodeId) {
-      set({ selectedId: moved.id });
+    if (isPathInsideNode(selectedId, nodeId)) {
+      const nextSelectedId = `${moved.id}${selectedId.slice(nodeId.length)}`;
+      set({ selectedId: null });
+      await get().selectFile(nextSelectedId);
     }
     if (targetParentId) {
       const { expandedKeys } = get();

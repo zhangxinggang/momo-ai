@@ -4,6 +4,7 @@ import { useAiChatConfig } from '../../contexts/AiChatConfigContext';
 import { isHttpUrl, splitPlainTextByHttpUrls } from '../../utils/external-url';
 import { parseNoteReferenceContent } from '../../utils/note-mention';
 import { NoteReferenceChip } from '../NoteReferenceChip';
+import { SlashInvocationChip } from '../SlashInvocationChip';
 import styles from './index.module.less';
 
 interface IProps {
@@ -11,7 +12,7 @@ interface IProps {
   plainClassName?: string;
 }
 
-/** 将含 @[note:path] 的文本渲染为普通文字 + 笔记引用 chip，并支持 http(s) 链接点击 */
+/** 将文本中的笔记引用与 Skill/Command 渲染为行内 chip，并支持 http(s) 链接点击。 */
 export function NoteReferenceText(props: IProps) {
   const { content, plainClassName } = props;
   const { onOpenExternalUrl } = useAiChatConfig();
@@ -59,6 +60,9 @@ export function NoteReferenceText(props: IProps) {
       {segments.map((segment, index) => {
         if (segment.type === 'mention') {
           return <NoteReferenceChip key={`mention-${index}`} path={segment.path} />;
+        }
+        if (segment.type === 'slash') {
+          return <SlashInvocationChip key={`slash-${index}`} invocation={segment.invocation} />;
         }
 
         if (!onOpenExternalUrl) {

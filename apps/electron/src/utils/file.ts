@@ -33,10 +33,14 @@ function getSystemLogo(): string | undefined {
       systemLogo = logoPng;
     }
   } else {
-    const momoServerPath = require.resolve('@momo/server');
-    const momoServerIcon = path.join(momoServerPath, '../assets/favicon.png');
-    if (fs.existsSync(momoServerIcon)) {
-      systemLogo = momoServerIcon;
+    try {
+      const momoServerPath = require.resolve('@momo/server');
+      const momoServerIcon = path.join(momoServerPath, '../assets/favicon.png');
+      if (fs.existsSync(momoServerIcon)) {
+        systemLogo = momoServerIcon;
+      }
+    } catch {
+      // Consumer apps bundle @momo/server and provide their own static icon.
     }
   }
   return systemLogo;

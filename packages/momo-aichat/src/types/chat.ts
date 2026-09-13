@@ -14,7 +14,7 @@ export interface IChatRequestSnapshot {
   topP: number;
   systemPrompt: string;
   kbEnabled: boolean;
-  kbCollectionId?: number;
+  kbCollectionId?: string;
   agentMode: EAgentMode;
   sourceRefs?: IChatSourceRef[];
   createdAt: number;
@@ -42,17 +42,19 @@ export interface IChatMessage {
     citations?: Array<{
       title?: string;
       preview?: string;
-      docId: number;
-      chunkId: number;
+      docId: string;
+      chunkId: string;
       score?: number;
       idx?: number;
-      collectionId?: number;
+      collectionId?: string;
     }>;
   };
   // 附件（仅用于展示的元信息）
   attachments?: IChatAttachmentMeta[];
   /** 本轮显式选择的 Agent Skill/Command；用于稳定重试。 */
   invocation?: ISlashInvocation;
+  /** 本轮按正文顺序选择的全部 Skill/Command。 */
+  invocations?: ISlashInvocation[];
   /** 首次发送冻结的请求配置；默认重试不读取当前全局设置。 */
   requestSnapshot?: IChatRequestSnapshot;
 }
@@ -128,6 +130,7 @@ export interface IChatContext {
         assistantMessageId: string;
       };
       invocation?: ISlashInvocation;
+      invocations?: ISlashInvocation[];
       requestSnapshot?: IChatRequestSnapshot;
     },
   ) => Promise<boolean>;
@@ -151,8 +154,8 @@ export interface IChatContext {
   // RAG 设置
   kbEnabled: boolean;
   setKbEnabled: (v: boolean) => void;
-  kbCollectionId?: number;
-  setKbCollectionId: (id?: number) => void;
+  kbCollectionId?: string;
+  setKbCollectionId: (id?: string) => void;
   /** 智能体模式：ask 直接问答，plan 计划梳理 */
   agentMode: EAgentMode;
   setAgentMode: (mode: EAgentMode) => void;

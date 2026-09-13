@@ -5,7 +5,7 @@
   bottom: 100%;
   z-index: 30;
   margin-bottom: 6px;
-  max-height: 240px;
+  max-height: min(440px, 58vh);
   overflow: hidden;
   border-radius: 10px;
   border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
@@ -14,20 +14,39 @@
 }
 
 .slash-popover-header {
-  padding: 6px 10px;
-  font-size: 11px;
-  color: var(--text-muted, #6b7280);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
   border-bottom: 1px solid var(--border-color, rgba(0, 0, 0, 0.06));
 }
 
+.slash-popover-header-meta {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted, #6b7280);
+  font-size: 11px;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .slash-popover-list {
-  max-height: 200px;
+  max-height: min(390px, 52vh);
   overflow-y: auto;
   padding: 4px;
 }
 
 .slash-popover-group-title {
-  padding: 6px 8px 3px;
+  position: sticky;
+  top: -4px;
+  z-index: 1;
+  padding: 8px 8px 4px;
+  background: var(--panel-bg, #fff);
   color: var(--text-muted, #6b7280);
   font-size: 11px;
   font-weight: 600;
@@ -36,11 +55,11 @@
 .slash-popover-item {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   width: 100%;
   border: none;
   border-radius: 6px;
-  padding: 6px 8px;
+  padding: 7px 8px;
   text-align: left;
   background: transparent;
   cursor: pointer;
@@ -57,13 +76,39 @@
   gap: 8px;
 }
 
+.slash-popover-item-icon {
+  display: inline-flex;
+  width: 18px;
+  flex: 0 0 18px;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  font-size: 12px;
+}
+
 .slash-popover-item-command {
+  min-width: 0;
+  overflow: hidden;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary, #111827);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slash-popover-item-slash {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted, #6b7280);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .slash-popover-item-group {
+  margin-inline-start: auto;
+  flex: 0 0 auto;
   font-size: 10px;
   padding: 1px 6px;
   border-radius: 4px;
@@ -72,9 +117,18 @@
 }
 
 .slash-popover-item-desc {
+  padding-inline-start: 26px;
   font-size: 11px;
   color: var(--text-muted, #6b7280);
   line-height: 1.35;
+}
+
+.slash-popover-item-tags {
+  display: flex;
+  gap: 6px;
+  padding-inline-start: 26px;
+  color: var(--text-muted, #6b7280);
+  font-size: 10px;
 }
 
 .slash-popover-empty {

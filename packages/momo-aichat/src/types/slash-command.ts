@@ -5,7 +5,11 @@ export interface ISlashCommandItem {
   label: string;
   description?: string;
   kind: 'skill' | 'command';
-  scope: 'project' | 'global';
+  /** 应用技能、项目 Agent 资源或 Agent 全局资源。 */
+  scope: 'application' | 'project' | 'global';
+  /** 技能分类与标签仅用于选择器检索和辨识。 */
+  category?: string;
+  tags?: string[];
   hasArgs?: boolean;
 }
 
@@ -13,8 +17,13 @@ export interface ISlashInvocation {
   resourceId: string;
   resourceRevision: string;
   command: string;
+  label?: string;
   kind: 'skill' | 'command';
-  scope: 'project' | 'global';
+  scope: 'application' | 'project' | 'global';
+  category?: string;
+  tags?: string[];
+  /** 行内序列化 token；同一资源可在一条消息中出现多次。 */
+  token?: string;
 }
 
 export interface ISlashCommandsListContext {
@@ -39,6 +48,7 @@ export interface IBeforeSubmitPromptInput {
   modelId: string;
   workspacePaths: string[];
   invocation?: ISlashInvocation;
+  invocations?: ISlashInvocation[];
 }
 
 /** 发送前钩子结果：仅 allow/deny 与文本改写，不执行 shell */
@@ -48,4 +58,5 @@ export interface IBeforeSubmitPromptResult {
   displayContent?: string;
   reason?: string;
   invocation?: ISlashInvocation;
+  invocations?: ISlashInvocation[];
 }

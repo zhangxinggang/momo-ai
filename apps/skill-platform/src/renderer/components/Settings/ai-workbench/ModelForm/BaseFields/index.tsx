@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react';
 
+import { ApiUrlHintPanel } from '@renderer/components/Settings/ai-workbench/ApiUrlHintPanel';
 import { PROVIDER_OPTIONS } from '@renderer/components/Settings/ai-workbench/constants';
 import {
   getProtocolLabel,
@@ -38,10 +39,12 @@ export function BaseFields({
               setModelForm((prev) => ({
                 ...prev,
                 type: value as EModelType,
+                apiProtocol: value === 'embedding' ? 'openai' : prev.apiProtocol,
               }))
             }
             options={[
               { value: 'chat', label: '对话模型' },
+              { value: 'embedding', label: '嵌入模型（知识库）' },
               { value: 'image', label: '图像模型' },
             ]}
           />
@@ -76,7 +79,10 @@ export function BaseFields({
                   setModelForm((prev) => ({
                     ...prev,
                     provider: value,
-                    apiProtocol: provider?.recommendedProtocol || prev.apiProtocol,
+                    apiProtocol:
+                      prev.type === 'embedding'
+                        ? 'openai'
+                        : provider?.recommendedProtocol || prev.apiProtocol,
                     apiUrl: provider?.defaultUrl || prev.apiUrl,
                   }));
                 }}
@@ -94,6 +100,7 @@ export function BaseFields({
               <Select
                 className='w-full'
                 value={modelForm.apiProtocol}
+                disabled={modelForm.type === 'embedding'}
                 onChange={(value) =>
                   setModelForm((prev) => ({
                     ...prev,
@@ -134,6 +141,15 @@ export function BaseFields({
               placeholder={'https://api.example.com/v1'}
               className='bg-muted h-10 w-full rounded-lg px-3 text-sm'
             />
+            {modelForm.type === 'embedding' ? (
+              <ApiUrlHintPanel
+                apiUrl={modelForm.apiUrl}
+                apiProtocol='openai'
+                provider={modelForm.provider}
+                model={modelForm.model}
+                modelType='embedding'
+              />
+            ) : null}
           </div>
 
           <div>
@@ -157,9 +173,18 @@ export function BaseFields({
               value={modelForm.model}
               onChange={(event) => setModelForm((prev) => ({ ...prev, model: event.target.value }))}
               aria-label={'模型名称'}
-              placeholder={'例如：gpt-4o、deepseek-chat'}
+              placeholder={
+                modelForm.type === 'embedding'
+                  ? '例如：text-embedding-3-small、bge-m3'
+                  : '例如：gpt-4o、deepseek-chat'
+              }
               className='bg-muted h-10 w-full rounded-lg px-3 text-sm'
             />
+            {modelForm.type === 'embedding' ? (
+              <div className='mt-1.5 text-xs text-amber-600 dark:text-amber-400'>
+                {'嵌入模型与“文本切分”对话模型用途不同；知识库入库必须配置此类型。'}
+              </div>
+            ) : null}
           </div>
         </>
       )}

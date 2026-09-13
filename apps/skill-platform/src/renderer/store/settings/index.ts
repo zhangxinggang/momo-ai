@@ -603,13 +603,13 @@ export const useSettingsStore = create<ISettingsState>()(
         addAiModel: (config) => {
           const id = `model_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
           const models = get().aiModels;
-          const isFirst = models.length === 0;
+          const targetType = config.type || 'chat';
+          const isFirstOfType = !models.some((model) => (model.type || 'chat') === targetType);
           setTouched({
-            aiModels: [...models, { ...config, id, isDefault: isFirst }],
+            aiModels: [...models, { ...config, id, isDefault: config.isDefault ?? isFirstOfType }],
           });
-          // If it's the first model, sync to legacy configuration
-          // 如果是第一个模型，同步到旧版配置
-          if (isFirst) {
+          // Only a default chat model can back the legacy chat configuration.
+          if (targetType === 'chat' && isFirstOfType) {
             setTouched({
               aiProvider: config.provider,
               aiApiProtocol: config.apiProtocol,
@@ -623,10 +623,9 @@ export const useSettingsStore = create<ISettingsState>()(
         updateAiModel: (id, config) => {
           const models = get().aiModels.map((m) => (m.id === id ? { ...m, ...config } : m));
           setTouched({ aiModels: models });
-          // If updating the default model, sync to legacy configuration
-          // 如果更新的是默认模型，同步到旧版配置
+          // Only a default chat model can back the legacy chat configuration.
           const updated = models.find((m) => m.id === id);
-          if (updated?.isDefault) {
+          if (updated?.isDefault && (updated.type || 'chat') === 'chat') {
             setTouched({
               aiProvider: updated.provider,
               aiApiProtocol: updated.apiProtocol,
@@ -647,17 +646,28 @@ export const useSettingsStore = create<ISettingsState>()(
               delete scenarioModelDefaults[scenario as EAIUsageScenario];
             }
           }
-          // If deleting the default model, set the first one as default
-          // 如果删除的是默认模型，设置第一个为默认
-          if (toDelete?.isDefault && remaining.length > 0) {
-            remaining[0] = { ...remaining[0], isDefault: true };
-            setTouched({
-              aiProvider: remaining[0].provider,
-              aiApiProtocol: remaining[0].apiProtocol,
-              aiApiKey: remaining[0].apiKey,
-              aiApiUrl: remaining[0].apiUrl,
-              aiModel: remaining[0].model,
-            });
+          // If deleting a default, promote another model of the same type.
+          if (toDelete?.isDefault) {
+            const deletedType = toDelete.type || 'chat';
+            const replacementIndex = remaining.findIndex(
+              (model) => (model.type || 'chat') === deletedType,
+            );
+            if (replacementIndex >= 0) {
+              remaining[replacementIndex] = {
+                ...remaining[replacementIndex],
+                isDefault: true,
+              };
+              const replacement = remaining[replacementIndex];
+              if (deletedType === 'chat') {
+                setTouched({
+                  aiProvider: replacement.provider,
+                  aiApiProtocol: replacement.apiProtocol,
+                  aiApiKey: replacement.apiKey,
+                  aiApiUrl: replacement.apiUrl,
+                  aiModel: replacement.model,
+                });
+              }
+            }
           }
           setTouched({ aiModels: remaining, scenarioModelDefaults });
         },

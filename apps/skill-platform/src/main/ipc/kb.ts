@@ -1,211 +1,87 @@
-﻿import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
-import type {
-  DKbSegmentSettings,
-  DKbUploadFile,
-  EKbSegmentMode,
-  IKbChunkItem,
-  IKbCollection,
-  IKbDocument,
-  IKbEmbeddingConfig,
-  IKbIngestOptions,
-  IKbLlmConfig,
-  IKbSearchItem,
-  IKbUploadResultItem,
-} from '@/types/modules/kb';
-import type { Database } from 'better-sqlite3';
-import { ipcMain } from 'electron';
+import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
+import type { IKnowledgeErrorShape } from '@/types/modules/kb';
+import { BrowserWindow, dialog, ipcMain } from 'electron';
 
-import { getKbService } from '../services/kb';
+import { serializeKnowledgeError } from '../services/knowledge-v2/error';
+import { knowledgeWorkerClient } from '../services/knowledge-v2/worker-client';
 
-function normalizeUploadFiles(raw: DKbUploadFile[]): DKbUploadFile[] {
-  return raw.map((f) => ({
-    ...f,
-    data: f.data instanceof Uint8Array ? f.data : new Uint8Array(f.data as ArrayBuffer),
-  }));
-}
+export type IKnowledgeIpcResponse<T = unknown> =
+  | { ok: true; value: T }
+  | { ok: false; error: IKnowledgeErrorShape };
 
-/**
- * 注册知识库 IPC（无用户鉴权）
- */
-export function registerKbIPC(db: Database): void {
-  const service = () => getKbService(db);
+export const KNOWLEDGE_CHANNELS = [
+  IPC_CHANNELS.KNOWLEDGE_LIST_COLLECTIONS,
+  IPC_CHANNELS.KNOWLEDGE_CREATE_COLLECTION,
+  IPC_CHANNELS.KNOWLEDGE_UPDATE_COLLECTION,
+  IPC_CHANNELS.KNOWLEDGE_DELETE_COLLECTION,
+  IPC_CHANNELS.KNOWLEDGE_LIST_DOCUMENTS,
+  IPC_CHANNELS.KNOWLEDGE_IMPORT_FILES,
+  IPC_CHANNELS.KNOWLEDGE_IMPORT_DIRECTORY,
+  IPC_CHANNELS.KNOWLEDGE_PICK_DIRECTORY,
+  IPC_CHANNELS.KNOWLEDGE_PASTE_TEXT,
+  IPC_CHANNELS.KNOWLEDGE_GET_DOCUMENT,
+  IPC_CHANNELS.KNOWLEDGE_DELETE_DOCUMENT,
+  IPC_CHANNELS.KNOWLEDGE_LIST_CHUNKS,
+  IPC_CHANNELS.KNOWLEDGE_GET_CHUNK,
+  IPC_CHANNELS.KNOWLEDGE_EDIT_CHUNK,
+  IPC_CHANNELS.KNOWLEDGE_DELETE_CHUNKS,
+  IPC_CHANNELS.KNOWLEDGE_PREVIEW_FILE,
+  IPC_CHANNELS.KNOWLEDGE_RETRIEVE,
+  IPC_CHANNELS.KNOWLEDGE_RETRIEVE_FOR_CHAT,
+  IPC_CHANNELS.KNOWLEDGE_LIST_JOBS,
+  IPC_CHANNELS.KNOWLEDGE_RETRY_JOB,
+  IPC_CHANNELS.KNOWLEDGE_CANCEL_JOB,
+] as const;
 
+const KNOWLEDGE_METHODS = [
+  [IPC_CHANNELS.KNOWLEDGE_LIST_COLLECTIONS, 'listCollections'],
+  [IPC_CHANNELS.KNOWLEDGE_CREATE_COLLECTION, 'createCollection'],
+  [IPC_CHANNELS.KNOWLEDGE_UPDATE_COLLECTION, 'updateCollection'],
+  [IPC_CHANNELS.KNOWLEDGE_DELETE_COLLECTION, 'deleteCollection'],
+  [IPC_CHANNELS.KNOWLEDGE_LIST_DOCUMENTS, 'listDocuments'],
+  [IPC_CHANNELS.KNOWLEDGE_IMPORT_FILES, 'importFiles'],
+  [IPC_CHANNELS.KNOWLEDGE_IMPORT_DIRECTORY, 'importDirectory'],
+  [IPC_CHANNELS.KNOWLEDGE_PASTE_TEXT, 'pasteText'],
+  [IPC_CHANNELS.KNOWLEDGE_GET_DOCUMENT, 'getDocument'],
+  [IPC_CHANNELS.KNOWLEDGE_DELETE_DOCUMENT, 'deleteDocument'],
+  [IPC_CHANNELS.KNOWLEDGE_LIST_CHUNKS, 'listChunks'],
+  [IPC_CHANNELS.KNOWLEDGE_GET_CHUNK, 'getChunk'],
+  [IPC_CHANNELS.KNOWLEDGE_EDIT_CHUNK, 'editChunk'],
+  [IPC_CHANNELS.KNOWLEDGE_DELETE_CHUNKS, 'deleteChunks'],
+  [IPC_CHANNELS.KNOWLEDGE_PREVIEW_FILE, 'previewFile'],
+  [IPC_CHANNELS.KNOWLEDGE_RETRIEVE, 'retrieve'],
+  [IPC_CHANNELS.KNOWLEDGE_RETRIEVE_FOR_CHAT, 'retrieveForChat'],
+  [IPC_CHANNELS.KNOWLEDGE_LIST_JOBS, 'listJobs'],
+  [IPC_CHANNELS.KNOWLEDGE_RETRY_JOB, 'retryJob'],
+  [IPC_CHANNELS.KNOWLEDGE_CANCEL_JOB, 'cancelJob'],
+] as const;
+
+/** Register the isolated Knowledge V2 worker boundary. */
+export function registerKbIPC(): void {
+  for (const [channel, method] of KNOWLEDGE_METHODS) {
+    ipcMain.handle(channel, async (_event, ...args: unknown[]): Promise<IKnowledgeIpcResponse> => {
+      try {
+        return { ok: true, value: await knowledgeWorkerClient.call(method, ...args) };
+      } catch (error) {
+        return { ok: false, error: serializeKnowledgeError(error) };
+      }
+    });
+  }
   ipcMain.handle(
-    IPC_CHANNELS.KB_LIST_COLLECTIONS,
-    async (_event, groupId?: number): Promise<IKbCollection[]> => {
-      return service().listCollections(groupId);
-    },
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.KB_CREATE_COLLECTION,
-    async (
-      _event,
-      name: string,
-      description?: string,
-      groupId?: number,
-    ): Promise<IKbCollection> => {
-      return service().createCollection(name, description, groupId);
-    },
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.KB_UPDATE_COLLECTION,
-    async (
-      _event,
-      id: number,
-      payload: Partial<{ name: string; description: string; group_id: number | null }>,
-    ): Promise<{ success: boolean }> => {
-      service().updateCollection(id, payload);
-      return { success: true };
-    },
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.KB_DELETE_COLLECTION,
-    async (_event, id: number): Promise<{ success: boolean }> => {
-      service().deleteCollection(id);
-      return { success: true };
-    },
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.KB_LIST_DOCUMENTS,
-    async (_event, collectionId: number): Promise<IKbDocument[]> => {
-      return service().listDocuments(collectionId);
-    },
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.KB_UPLOAD_FILES,
-    async (
-      _event,
-      collectionId: number,
-      files: DKbUploadFile[],
-    ): Promise<{
-      items: IKbUploadResultItem[];
-      skipped: { filename: string; size: number; reason: string }[];
-    }> => {
-      return service().uploadFiles(collectionId, normalizeUploadFiles(files));
-    },
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.KB_PASTE_TEXT,
-    async (
-      _event,
-      collectionId: number,
-      text: string,
-      filename?: string,
-    ): Promise<{ docId: number }> => {
-      return service().pasteText(collectionId, text, filename);
-    },
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.KB_INGEST_DOCUMENT,
-    async (
-      _event,
-      docId: number,
-      embeddingConfig: IKbEmbeddingConfig,
-      options?: IKbIngestOptions,
-    ): Promise<{ success: boolean; chunks: number; dim: number }> => {
-      const result = await service().ingestDocument(docId, embeddingConfig, options);
-      return { success: true, ...result };
-    },
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.KB_GET_DOCUMENT,
-    async (_event, docId: number): Promise<{ item: IKbDocument | null }> => {
-      const item = service().getDocumentProgress(docId);
-      return { item };
-    },
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.KB_DELETE_DOCUMENT,
-    async (_event, docId: number): Promise<{ success: boolean }> => {
-      service().deleteDocument(docId);
-      return { success: true };
-    },
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.KB_LIST_CHUNKS,
-    async (
-      _event,
-      docId: number,
-      page?: number,
-      pageSize?: number,
-      keyword?: string,
-    ): Promise<{ items: IKbChunkItem[]; total: number }> => {
-      return service().listChunks(docId, page, pageSize, keyword);
-    },
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.KB_UPDATE_CHUNK,
-    async (_event, chunkId: number, content: string): Promise<{ success: boolean }> => {
-      service().updateChunk(chunkId, content);
-      return { success: true };
-    },
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.KB_DELETE_CHUNKS,
-    async (_event, chunkIds: number[]): Promise<{ success: boolean }> => {
-      service().deleteChunks(chunkIds);
-      return { success: true };
-    },
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.KB_RESEGMENT_DOCUMENT,
-    async (
-      _event,
-      docId: number,
-      embeddingConfig: IKbEmbeddingConfig,
-      segmentSettings: DKbSegmentSettings,
-      segmentMode: EKbSegmentMode,
-      llmConfig?: IKbLlmConfig,
-    ): Promise<{ success: boolean; chunks: number; dim: number }> => {
-      const result = await service().resegmentDocument(
-        docId,
-        embeddingConfig,
-        segmentSettings,
-        segmentMode,
-        llmConfig,
-      );
-      return { success: true, ...result };
-    },
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.KB_PREVIEW_FILE_SEGMENTS,
-    async (
-      _event,
-      file: DKbUploadFile,
-      segmentSettings?: DKbSegmentSettings,
-      limit?: number,
-      llmConfig?: IKbLlmConfig,
-    ): Promise<{ idx: number; content: string }[]> => {
-      const [normalized] = normalizeUploadFiles([file]);
-      return service().previewFileSegments(normalized, segmentSettings, limit, llmConfig);
-    },
-  );
-
-  ipcMain.handle(
-    IPC_CHANNELS.KB_SEARCH,
-    async (
-      _event,
-      collectionId: number,
-      query: string,
-      embeddingConfig: IKbEmbeddingConfig,
-      topK?: number,
-    ): Promise<{ items: IKbSearchItem[] }> => {
-      const items = await service().search(collectionId, query, embeddingConfig, topK ?? 10);
-      return { items };
+    IPC_CHANNELS.KNOWLEDGE_PICK_DIRECTORY,
+    async (event): Promise<IKnowledgeIpcResponse<string | undefined>> => {
+      try {
+        const owner = BrowserWindow.fromWebContents(event.sender);
+        const result = owner
+          ? await dialog.showOpenDialog(owner, { properties: ['openDirectory'] })
+          : await dialog.showOpenDialog({ properties: ['openDirectory'] });
+        return {
+          ok: true,
+          value: result.canceled ? undefined : result.filePaths[0],
+        };
+      } catch (error) {
+        return { ok: false, error: serializeKnowledgeError(error) };
+      }
     },
   );
 }

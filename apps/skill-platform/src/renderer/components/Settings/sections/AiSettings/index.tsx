@@ -1,7 +1,7 @@
 import { App } from 'antd';
 import { useMemo, useState } from 'react';
 
-import { BrainIcon, ImageIcon } from 'lucide-react';
+import { BrainIcon, DatabaseIcon, ImageIcon } from 'lucide-react';
 
 import {
   EMPTY_FORM,
@@ -33,12 +33,14 @@ import {
   fetchAvailableModels,
   normalizeApiUrlInput,
   testAIConnection,
+  testEmbeddingConnection,
   testImageGeneration,
   type IModelInfo,
 } from '@renderer/services/ai';
 import {
   getModelsByType,
   isConfiguredModel,
+  isEmbeddingCapableModel,
   isImageCapableModel,
   resolveScenarioModel,
 } from '@renderer/services/ai/defaults';
@@ -72,6 +74,7 @@ export function AiSettings() {
 
   const aiModels = settings.aiModels;
   const chatModels = useMemo(() => getModelsByType(aiModels, 'chat'), [aiModels]);
+  const embeddingModels = useMemo(() => getModelsByType(aiModels, 'embedding'), [aiModels]);
   const imageModels = useMemo(() => getModelsByType(aiModels, 'image'), [aiModels]);
   const defaultChatModel = useMemo(
     () => chatModels.find((model) => model.isDefault) ?? chatModels[0] ?? null,
@@ -104,6 +107,12 @@ export function AiSettings() {
         settings.scenarioModelDefaults,
         'textSegment',
         'chat',
+      ),
+      knowledgeEmbedding: resolveScenarioModel(
+        aiModels,
+        settings.scenarioModelDefaults,
+        'knowledgeEmbedding',
+        'embedding',
       ),
     }),
     [aiModels, settings.scenarioModelDefaults],
@@ -152,6 +161,16 @@ export function AiSettings() {
         icon: BrainIcon,
       },
       {
+        title: '嵌入模型',
+        value: String(embeddingModels.length),
+        detail: `${'知识库'}: ${getModelDisplayName(
+          resolvedScenarioModels.knowledgeEmbedding,
+          '未配置',
+        )}`,
+        tone: embeddingModels.length > 0 ? 'ready' : 'warning',
+        icon: DatabaseIcon,
+      },
+      {
         title: '生图模型',
         value: String(imageModels.length),
         detail: `${'默认'}: ${getModelDisplayName(resolvedScenarioModels.imageTest, '未配置')}`,
@@ -159,7 +178,13 @@ export function AiSettings() {
         icon: ImageIcon,
       },
     ],
-    [chatModels.length, defaultChatModel, imageModels.length, resolvedScenarioModels],
+    [
+      chatModels.length,
+      defaultChatModel,
+      embeddingModels.length,
+      imageModels.length,
+      resolvedScenarioModels,
+    ],
   );
 
   const defaultModelDisplayName = useMemo(
@@ -266,7 +291,20 @@ export function AiSettings() {
     setTestingModelId(editingModelId || '__draft__');
     const modelName = modelForm.name.trim() || modelForm.model.trim() || 'AI';
     try {
-      if (
+      if (modelForm.type === 'embedding') {
+        const result = await testEmbeddingConnection({
+          provider: modelForm.provider,
+          apiProtocol: 'openai',
+          apiKey: modelForm.apiKey,
+          apiUrl: modelForm.apiUrl,
+          model: modelForm.model,
+          type: 'embedding',
+        });
+        if (!result.success) {
+          throw new Error(result.error || '嵌入接口连接失败');
+        }
+        showToast(formatModelTestSuccessToast(modelName, result.latency), 'success');
+      } else if (
         isImageCapableModel({
           type: modelForm.type,
           model: modelForm.model,
@@ -410,7 +448,20 @@ export function AiSettings() {
     setTestingModelId(model.id);
     const modelName = getModelDisplayName(model, 'AI');
     try {
-      if (isImageCapableModel(model)) {
+      if (isEmbeddingCapableModel(model)) {
+        const result = await testEmbeddingConnection({
+          provider: model.provider,
+          apiProtocol: 'openai',
+          apiKey: model.apiKey,
+          apiUrl: model.apiUrl,
+          model: model.model,
+          type: 'embedding',
+        });
+        if (!result.success) {
+          throw new Error(result.error || '嵌入接口连接失败');
+        }
+        showToast(formatModelTestSuccessToast(modelName, result.latency), 'success');
+      } else if (isImageCapableModel(model)) {
         const result = await testImageGeneration(
           {
             provider: model.provider,
@@ -456,7 +507,28 @@ export function AiSettings() {
 
     setTestingEndpointKey(group.key);
     try {
-      if (isImageCapableModel(targetModel)) {
+      if (isEmbeddingCapableModel(targetModel)) {
+        const result = await testEmbeddingConnection({
+          provider: targetModel.provider,
+          apiProtocol: 'openai',
+          apiKey: targetModel.apiKey,
+          apiUrl: targetModel.apiUrl,
+          model: targetModel.model,
+          type: 'embedding',
+        });
+        if (!result.success) {
+          throw new Error(result.error || '嵌入接口连接失败');
+        }
+        setEndpointStatuses((prev) => ({
+          ...prev,
+          [group.key]: {
+            tone: 'ready',
+            label: '已连接',
+            detail: `${targetModel.model} · ${result.latency}ms`,
+          },
+        }));
+        showToast(`嵌入端点连接成功（${result.latency}ms）`, 'success');
+      } else if (isImageCapableModel(targetModel)) {
         const result = await testImageGeneration(
           {
             provider: targetModel.provider,
@@ -590,7 +662,8 @@ export function AiSettings() {
     const model =
       resolvedScenarioModels.promptTest ||
       resolvedScenarioModels.imageTest ||
-      resolvedScenarioModels.translation;
+      resolvedScenarioModels.translation ||
+      resolvedScenarioModels.knowledgeEmbedding;
 
     if (!model || !isConfiguredModel(model)) {
       showToast('还没有可测试的默认模型', 'error');
@@ -630,6 +703,7 @@ export function AiSettings() {
       <ScenarioDefaultsSection
         chatModels={chatModels}
         imageModels={imageModels}
+        embeddingModels={embeddingModels}
         allModels={aiModels}
         scenarioModelDefaults={settings.scenarioModelDefaults}
         onScenarioChange={(scenario, value) => settings.setScenarioModelDefault(scenario, value)}

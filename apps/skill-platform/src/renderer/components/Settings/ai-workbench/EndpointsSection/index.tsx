@@ -8,7 +8,7 @@ import {
   getProviderLabel,
 } from '@renderer/components/Settings/ai-workbench/helpers';
 import { getCategoryIcon } from '@renderer/components/ui/ModelIcons';
-import { isConfiguredModel } from '@renderer/services/ai/defaults';
+import { getModelsByType, isConfiguredModel } from '@renderer/services/ai/defaults';
 import type {
   IEndpointGroup,
   IEndpointStatus,
@@ -164,8 +164,9 @@ function EndpointModelCategories({
   onEditModel: (model: IAIModelConfig) => void;
   onDeleteModel: (model: IAIModelConfig) => void;
 }) {
-  const chatModels = models.filter((model) => (model.type ?? 'chat') === 'chat');
-  const imageModels = models.filter((model) => model.type === 'image');
+  const chatModels = getModelsByType(models, 'chat');
+  const embeddingModels = getModelsByType(models, 'embedding');
+  const imageModels = getModelsByType(models, 'image');
 
   const categoryItems = [
     chatModels.length > 0
@@ -182,6 +183,35 @@ function EndpointModelCategories({
           children: (
             <div className='divide-border/40 divide-y'>
               {chatModels.map((model) => (
+                <ModelRow
+                  key={model.id}
+                  model={model}
+                  badges={buildModelBadges(model, modelScenarioBadges)}
+                  testingModelId={testingModelId}
+                  onTestModel={onTestModel}
+                  onSetDefaultModel={onSetDefaultModel}
+                  onEditModel={onEditModel}
+                  onDeleteModel={onDeleteModel}
+                />
+              ))}
+            </div>
+          ),
+        }
+      : null,
+    embeddingModels.length > 0
+      ? {
+          key: 'embedding',
+          label: (
+            <span className='text-muted-foreground text-xs font-medium'>
+              {'嵌入'}
+              <span className='text-muted-foreground/70 ml-1.5 font-normal'>
+                {embeddingModels.length}
+              </span>
+            </span>
+          ),
+          children: (
+            <div className='divide-border/40 divide-y'>
+              {embeddingModels.map((model) => (
                 <ModelRow
                   key={model.id}
                   model={model}
@@ -307,7 +337,7 @@ export function EndpointsSection({
       </div>
       {endpointGroups.length === 0 ? (
         <div className='border-border bg-card text-muted-foreground rounded-xl border border-dashed p-8 text-center text-sm'>
-          {'还没有添加任何模型。先添加一个对话或生图模型。'}
+          {'还没有添加任何模型。先添加一个对话、嵌入或生图模型。'}
         </div>
       ) : filteredEndpointGroups.length === 0 ? (
         <div className='border-border bg-card text-muted-foreground rounded-xl border border-dashed p-8 text-center text-sm'>

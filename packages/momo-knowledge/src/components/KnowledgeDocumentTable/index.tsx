@@ -1,4 +1,4 @@
-import { Table } from 'antd';
+import { Progress, Table, Tag, Tooltip } from 'antd';
 
 import type { EDocumentSegmentMode, IKnowledgeDocumentRecord } from '../../types';
 
@@ -35,6 +35,24 @@ export function KnowledgeDocumentTable({
       columns={[
         { title: '名称', dataIndex: 'name', ellipsis: true },
         {
+          title: '状态',
+          dataIndex: 'status',
+          width: 150,
+          render: (status: string, record: IKnowledgeDocumentRecord) => (
+            <Tooltip title={record.error}>
+              <span>
+                <Tag color={status === 'ready' ? 'green' : status === 'failed' ? 'red' : 'blue'}>
+                  {status}
+                </Tag>
+                {!['ready', 'failed', 'interrupted', 'manual_conflict'].includes(status) ? (
+                  <Progress percent={record.progress} size='small' showInfo={false} />
+                ) : null}
+              </span>
+            </Tooltip>
+          ),
+        },
+        { title: '分段数', dataIndex: 'chunkCount', width: 88 },
+        {
           title: '分段模式',
           dataIndex: 'segmentMode',
           render: (mode: EDocumentSegmentMode) => segmentModeLabel[mode] ?? mode,
@@ -52,14 +70,16 @@ export function KnowledgeDocumentTable({
           width: 160,
           render: (_: unknown, record: IKnowledgeDocumentRecord) => (
             <span className='flex gap-2' onClick={(e) => e.stopPropagation()}>
-              <button
-                type='button'
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSegmentSettings?.(record);
-                }}>
-                分段设置
-              </button>
+              {onSegmentSettings ? (
+                <button
+                  type='button'
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSegmentSettings(record);
+                  }}>
+                  分段设置
+                </button>
+              ) : null}
               {onDelete ? (
                 <button
                   type='button'

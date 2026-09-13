@@ -17,19 +17,42 @@ export function isImageCapableModel(
   });
 }
 
+const EMBEDDING_MODEL_PATTERN =
+  /(?:embedding|embed(?:ding)?[-_]|[-_]embed|\bbge[-_]|\bgte[-_]|\be5[-_]|\bm3e\b|\bnomic[-_])/i;
+
+/** Explicit embedding models plus legacy configs that were saved as chat models. */
+export function isEmbeddingCapableModel(
+  model: Pick<IAIModelConfig, 'type' | 'model' | 'name'>,
+): boolean {
+  if (model.type === 'embedding') {
+    return true;
+  }
+  return EMBEDDING_MODEL_PATTERN.test(`${model.model || ''} ${model.name || ''}`);
+}
+
+export function getEmbeddingScenarioModels(aiModels: IAIModelConfig[]): IAIModelConfig[] {
+  return aiModels.filter(isEmbeddingCapableModel);
+}
+
 export function getImageScenarioModels(aiModels: IAIModelConfig[]): IAIModelConfig[] {
   return aiModels.filter(isImageCapableModel);
 }
 
 export function getModelsByType(
   aiModels: IAIModelConfig[],
-  type: 'chat' | 'image',
+  type: 'chat' | 'image' | 'embedding',
 ): IAIModelConfig[] {
   if (type === 'image') {
     return getImageScenarioModels(aiModels);
   }
+  if (type === 'embedding') {
+    return getEmbeddingScenarioModels(aiModels);
+  }
   return aiModels.filter(
-    (model) => (model.type ?? 'chat') === 'chat' && !isImageCapableModel(model),
+    (model) =>
+      (model.type ?? 'chat') === 'chat' &&
+      !isImageCapableModel(model) &&
+      !isEmbeddingCapableModel(model),
   );
 }
 
@@ -37,7 +60,7 @@ export function resolveScenarioModel(
   aiModels: IAIModelConfig[],
   scenarioModelDefaults: IScenarioModelDefaults | undefined,
   scenario: EAIUsageScenario,
-  type: 'chat' | 'image',
+  type: 'chat' | 'image' | 'embedding',
 ): IAIModelConfig | null {
   const typedModels = getModelsByType(aiModels, type);
   const scenarioModelId = scenarioModelDefaults?.[scenario];
@@ -82,7 +105,7 @@ interface IResolveScenarioAIConfigOptions {
   aiModels: IAIModelConfig[];
   scenarioModelDefaults: IScenarioModelDefaults | undefined;
   scenario: EAIUsageScenario;
-  type: 'chat' | 'image';
+  type: 'chat' | 'image' | 'embedding';
   aiProvider: string;
   aiApiProtocol?: IAIConfig['apiProtocol'];
   aiApiKey: string;

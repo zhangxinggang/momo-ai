@@ -18,7 +18,7 @@ export interface IWorkflowResourceNodeData extends Record<string, unknown> {
   /** 节点执行对话模型（覆盖全局默认） */
   executionModel?: string;
   /** 节点关联知识库 */
-  kbCollectionId?: number;
+  kbCollectionId?: string;
   /** 节点工作区目录 */
   workspacePaths?: string[];
 }

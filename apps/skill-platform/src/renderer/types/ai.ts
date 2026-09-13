@@ -138,7 +138,7 @@ export interface IAIConfig {
   apiKey: string;
   apiUrl: string;
   model: string;
-  type?: 'chat' | 'image';
+  type?: 'chat' | 'image' | 'embedding';
   chatParams?: IChatParams;
   imageParams?: IImageParams;
 }

@@ -1,4 +1,10 @@
 import type { INoteSnapshot } from '../types/chat';
+import type { ISlashInvocation } from '../types/slash-command';
+import {
+  findSlashInvocationTokens,
+  slashInvocationToSurfaceText,
+  slashTokensToSurface,
+} from './slash-token';
 
 /** 笔记引用 token：@[note:path]（path 为笔记相对路径，如 asdfa/f.md） */
 
@@ -29,19 +35,32 @@ export function getNoteMentionDisplayPath(path: string): string {
 /** 解析文本中的笔记引用片段 */
 export function parseNoteReferenceContent(
   content: string,
-): Array<{ type: 'text'; value: string } | { type: 'mention'; path: string }> {
-  const segments: Array<{ type: 'text'; value: string } | { type: 'mention'; path: string }> = [];
-  const regex = new RegExp(NOTE_MENTION_TOKEN_REGEX.source, 'g');
+): Array<
+  | { type: 'text'; value: string }
+  | { type: 'mention'; path: string }
+  | { type: 'slash'; invocation: ISlashInvocation }
+> {
+  const segments: Array<
+    | { type: 'text'; value: string }
+    | { type: 'mention'; path: string }
+    | { type: 'slash'; invocation: ISlashInvocation }
+  > = [];
+  const references = [
+    ...findNoteMentions(content).map((item) => ({ ...item, type: 'mention' as const })),
+    ...findSlashInvocationTokens(content).map((item) => ({ ...item, type: 'slash' as const })),
+  ].sort((left, right) => left.start - right.start);
   let lastIndex = 0;
-  let match: RegExpExecArray | null;
 
-  while ((match = regex.exec(content))) {
-    const start = match.index;
-    if (start > lastIndex) {
-      segments.push({ type: 'text', value: content.slice(lastIndex, start) });
+  for (const reference of references) {
+    if (reference.start > lastIndex) {
+      segments.push({ type: 'text', value: content.slice(lastIndex, reference.start) });
     }
-    segments.push({ type: 'mention', path: match[1] });
-    lastIndex = start + match[0].length;
+    if (reference.type === 'mention') {
+      segments.push({ type: 'mention', path: reference.path });
+    } else {
+      segments.push({ type: 'slash', invocation: reference.invocation });
+    }
+    lastIndex = reference.end;
   }
 
   if (lastIndex < content.length) {
@@ -62,11 +81,13 @@ export function mentionToSurfaceText(path: string): string {
 
 export function valueToSurface(value: string): string {
   const regex = new RegExp(NOTE_MENTION_TOKEN_REGEX.source, 'g');
-  return value.replace(regex, (_, path: string) => mentionToSurfaceText(path));
+  return slashTokensToSurface(
+    value.replace(regex, (_, path: string) => mentionToSurfaceText(path)),
+  );
 }
 
 interface IValueSurfaceSegment {
-  type: 'text' | 'mention';
+  type: 'text' | 'mention' | 'slash';
   valueStart: number;
   valueEnd: number;
   surfaceStart: number;
@@ -75,16 +96,25 @@ interface IValueSurfaceSegment {
 
 function buildValueSurfaceSegments(value: string): IValueSurfaceSegment[] {
   const segments: IValueSurfaceSegment[] = [];
-  const regex = new RegExp(NOTE_MENTION_TOKEN_REGEX.source, 'g');
+  const references = [
+    ...findNoteMentions(value).map((item) => ({
+      ...item,
+      type: 'mention' as const,
+      surfaceText: mentionToSurfaceText(item.path),
+    })),
+    ...findSlashInvocationTokens(value).map((item) => ({
+      ...item,
+      type: 'slash' as const,
+      surfaceText: slashInvocationToSurfaceText(item.invocation),
+    })),
+  ].sort((left, right) => left.start - right.start);
   let lastIndex = 0;
   let valuePos = 0;
   let surfacePos = 0;
-  let match: RegExpExecArray | null;
 
-  while ((match = regex.exec(value))) {
-    const start = match.index;
-    if (start > lastIndex) {
-      const text = value.slice(lastIndex, start);
+  for (const reference of references) {
+    if (reference.start > lastIndex) {
+      const text = value.slice(lastIndex, reference.start);
       segments.push({
         type: 'text',
         valueStart: valuePos,
@@ -96,18 +126,16 @@ function buildValueSurfaceSegments(value: string): IValueSurfaceSegment[] {
       surfacePos += text.length;
     }
 
-    const path = match[1];
-    const surfaceText = mentionToSurfaceText(path);
     segments.push({
-      type: 'mention',
+      type: reference.type,
       valueStart: valuePos,
-      valueEnd: valuePos + match[0].length,
+      valueEnd: valuePos + (reference.end - reference.start),
       surfaceStart: surfacePos,
-      surfaceEnd: surfacePos + surfaceText.length,
+      surfaceEnd: surfacePos + reference.surfaceText.length,
     });
-    valuePos += match[0].length;
-    surfacePos += surfaceText.length;
-    lastIndex = start + match[0].length;
+    valuePos += reference.end - reference.start;
+    surfacePos += reference.surfaceText.length;
+    lastIndex = reference.end;
   }
 
   if (lastIndex < value.length) {
@@ -163,23 +191,32 @@ export function surfaceIndexToValueIndex(value: string, surfaceIndex: number): n
 }
 
 export function surfaceToValue(surface: string, previousValue: string): string {
-  const mentions = findNoteMentions(previousValue);
-  if (mentions.length === 0) {
+  const references = [
+    ...findNoteMentions(previousValue).map((item) => ({
+      start: item.start,
+      token: buildNoteMentionToken(item.path),
+      surface: mentionToSurfaceText(item.path),
+    })),
+    ...findSlashInvocationTokens(previousValue).map((item) => ({
+      start: item.start,
+      token: item.token,
+      surface: slashInvocationToSurfaceText(item.invocation),
+    })),
+  ].sort((left, right) => left.start - right.start);
+  if (references.length === 0) {
     return surface;
   }
 
   let result = surface;
   let searchFrom = 0;
 
-  for (const mention of mentions) {
-    const surfaceMention = mentionToSurfaceText(mention.path);
-    const idx = result.indexOf(surfaceMention, searchFrom);
+  for (const reference of references) {
+    const idx = result.indexOf(reference.surface, searchFrom);
     if (idx < 0) {
       continue;
     }
-    const token = buildNoteMentionToken(mention.path);
-    result = result.slice(0, idx) + token + result.slice(idx + surfaceMention.length);
-    searchFrom = idx + token.length;
+    result = result.slice(0, idx) + reference.token + result.slice(idx + reference.surface.length);
+    searchFrom = idx + reference.token.length;
   }
 
   return result;
@@ -233,7 +270,10 @@ export function extractAtQuery(value: string, cursorPos: number): IAtQueryContex
     return null;
   }
 
-  if (isIndexInsideMention(value, atIndex)) {
+  if (
+    isIndexInsideMention(value, atIndex) ||
+    findSlashInvocationTokens(value).some((item) => atIndex >= item.start && atIndex < item.end)
+  ) {
     return null;
   }
 

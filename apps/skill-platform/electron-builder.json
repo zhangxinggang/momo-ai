@@ -6,10 +6,15 @@
   "directories": {
     "output": "out"
   },
-  "files": ["dist/main/**/*", "dist/preload/**/*", "package.json"],
+  "files": [
+    "dist/main/**/*",
+    "dist/preload/**/*",
+    "dist/knowledge-worker/**/*",
+    "package.json"
+  ],
   "electronLanguages": ["en-US", "zh-CN"],
   "extraResources": [],
-  "asarUnpack": ["**/*.node"],
+  "asarUnpack": ["**/*.node", "**/*.dll", "**/*.dylib", "**/*.so", "**/*.wasm"],
   "asar": true,
   "npmRebuild": false,
   "nodeGypRebuild": false,

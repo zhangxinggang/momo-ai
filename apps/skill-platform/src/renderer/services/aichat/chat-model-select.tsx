@@ -16,12 +16,5 @@ export function renderChatModelSelect(
   aiModels: IAIModelConfig[],
   props: IModelSelectRenderProps,
 ): ReactNode {
-  return (
-    <ModelSelect
-      {...props}
-      models={aiModels}
-      modelType='both'
-      placeholder='选择模型'
-    />
-  );
+  return <ModelSelect {...props} models={aiModels} modelType='both' placeholder='选择模型' />;
 }

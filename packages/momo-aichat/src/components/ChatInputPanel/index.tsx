@@ -2,6 +2,7 @@ import { CloseOutlined, PaperClipOutlined, SendOutlined, StopOutlined } from '@a
 import { Button, Radio, Select } from 'antd';
 import React, {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -24,7 +25,6 @@ export interface IChatInputPanelRef {
 }
 
 import type { IChatAttachmentMeta } from '../../types/chat';
-import type { ISlashInvocation } from '../../types/slash-command';
 
 interface IProps {
   value: string;
@@ -42,7 +42,6 @@ interface IProps {
   progressMap?: Record<string, number>;
   onAttachFiles?: (files: File[]) => void;
   onRemoveAttachment?: (id: string) => void;
-  onSlashInvocationChange?: (invocation: ISlashInvocation | undefined) => void;
 }
 
 const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
@@ -63,7 +62,6 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       progressMap = {},
       onAttachFiles,
       onRemoveAttachment,
-      onSlashInvocationChange,
     },
     ref,
   ) => {
@@ -83,7 +81,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       renderInputToolbarLeftExtra,
       agentAppBanner,
     } = useAiChatConfig();
-    const [collections, setCollections] = useState<{ id: number; name: string }[]>([]);
+    const [collections, setCollections] = useState<{ id: string; name: string }[]>([]);
     const [loadingKb, setLoadingKb] = useState(false);
     const {
       kbEnabled,
@@ -172,15 +170,17 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       [],
     );
 
+    const moveEditorSelection = useCallback((next: number) => {
+      setSelectionStart(next);
+      // onChange 后等受控 value 完成渲染，再按新 token 长度换算光标位置。
+      window.requestAnimationFrame(() => mentionTextareaRef.current?.setSelectionStart(next));
+    }, []);
+
     const slash = useSlashCommandTrigger({
       value,
       selectionStart,
       onChange,
-      onSelectionChange: (next) => {
-        setSelectionStart(next);
-        mentionTextareaRef.current?.setSelectionStart(next);
-      },
-      onInvocationChange: onSlashInvocationChange,
+      onSelectionChange: moveEditorSelection,
       slashCommands,
       currentModel,
       workspacePaths: workspace?.paths ?? [],
@@ -192,10 +192,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       onChange,
       noteReferences,
       selectionStart,
-      onSelectionChange: (next) => {
-        setSelectionStart(next);
-        mentionTextareaRef.current?.setSelectionStart(next);
-      },
+      onSelectionChange: moveEditorSelection,
     });
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -248,7 +245,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
             className='flex w-full flex-col gap-1'
             value={kbCollectionId ?? 'auto'}
             onChange={(e) =>
-              setKbCollectionId(e.target.value === 'auto' ? undefined : (e.target.value as number))
+              setKbCollectionId(e.target.value === 'auto' ? undefined : String(e.target.value))
             }>
             <Radio value='auto' className='text-sm'>
               自动选择
@@ -335,7 +332,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
             selectedIndex={slash.selectedIndex}
             loading={slash.loading}
             warning={slash.warning}
-            title={agentAppBanner?.name ? `${agentAppBanner.name} 命令` : '斜杠命令'}
+            title={agentAppBanner?.name ? `${agentAppBanner.name} · 技能与命令` : 'momo-ai 技能'}
             onSelect={slash.handleSelect}
             onHover={slash.setSelectedIndex}
           />

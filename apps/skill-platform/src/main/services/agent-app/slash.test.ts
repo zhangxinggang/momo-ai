@@ -55,6 +55,14 @@ describe('Agent slash resources', () => {
     );
     expect(expanded?.content).toContain('Review src/main.ts');
     expect(expanded?.resource.resourceRevision).toBe(command.resourceRevision);
+
+    const inlineExpanded = await expandAgentAppSlashContent(
+      profile!,
+      [root],
+      '请先修改实现，再执行验证',
+      command,
+    );
+    expect(inlineExpanded?.content).toContain('Review 请先修改实现，再执行验证');
   });
 
   it('rejects a stale invocation revision', async () => {

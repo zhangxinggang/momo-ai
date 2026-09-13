@@ -246,46 +246,6 @@
         transition: opacity 0.2s;
         white-space: nowrap;
       }
-      #banner {
-        position: absolute;
-        top: 14px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: none;
-        align-items: center;
-        gap: 10px;
-        background: #fff7ed;
-        border: 1px solid #fdba74;
-        color: #9a3412;
-        padding: 8px 14px;
-        border-radius: 10px;
-        font-size: 13px;
-        box-shadow: 0 8px 24px rgba(154, 52, 18, 0.15);
-        z-index: 9997;
-        max-width: calc(100vw - 24px);
-      }
-      #banner button {
-        border: none;
-        background: #ea580c;
-        color: #fff;
-        padding: 5px 12px;
-        border-radius: 7px;
-        font-size: 12.5px;
-        cursor: pointer;
-      }
-      #banner button:hover {
-        background: #c2410c;
-      }
-      #banner .x {
-        cursor: pointer;
-        color: #c2410c;
-        padding: 2px 6px;
-        border-radius: 6px;
-      }
-      #banner .x:hover {
-        background: rgba(194, 65, 12, 0.12);
-      }
-
       /* ===== 覆盖层 ===== */
       .ovl {
         position: fixed;
@@ -1341,13 +1301,6 @@
             >编辑模式</span
           ></label
         >
-        <label
-          class="switch"
-          title="让页面里的 JS 跑起来，用于翻页 / 动画类文件。仅对可信文件开启。"
-          ><input type="checkbox" id="tglScript" disabled /><span
-            >动态预览</span
-          ></label
-        >
         <label class="switch" title="自由拖移时吸附到边缘/中心"
           ><input type="checkbox" id="tglSnap" checked /><span>吸附</span></label
         >
@@ -1379,11 +1332,6 @@
           <div id="rulerLeft" title="向右拖出垂直参考线"></div>
           <div id="tip">
             标尺拖参考线 · ? 看快捷键 · 快照/历史在右侧
-          </div>
-          <div id="banner">
-            ⚡ 内容似乎没有完整显示，页面可能依赖脚本渲染<button id="bannerBtn">
-              开启动态预览</button
-            ><span class="x" id="bannerClose">✕</span>
           </div>
         </main>
         <aside id="inspector" class="empty">
@@ -1945,6 +1893,22 @@
           b.textContent = d ? "已修改" : "未修改";
           b.classList.toggle("dirty", d);
           if (typeof refreshHistoryList === "function") refreshHistoryList();
+          if (
+            d &&
+            document.documentElement.getAttribute("data-embed") === "1" &&
+            window.parent !== window
+          ) {
+            window.parent.postMessage({ type: "snapedit:change", html: docHTML }, "*");
+          }
+        }
+        const EDITOR_HIT_STYLE_ID = "snapedit-editor-hit-style";
+        function installEditorHitStyle() {
+          if (!vdoc || !vdoc.head || vdoc.getElementById(EDITOR_HIT_STYLE_ID)) return;
+          const style = vdoc.createElement("style");
+          style.id = EDITOR_HIT_STYLE_ID;
+          style.textContent =
+            "body *:not(script):not(style):not(meta):not(link) { pointer-events: auto !important; }";
+          vdoc.head.appendChild(style);
         }
         function serialize() {
           if (!vdoc) return docHTML;
@@ -1953,10 +1917,13 @@
             el.style.outlineOffset = "";
             el.style.display = "none";
           });
+          const editorHitStyle = vdoc.getElementById(EDITOR_HIT_STYLE_ID);
+          editorHitStyle?.remove();
           let html = vdoc.documentElement.outerHTML
             .replace(/ contenteditable="(true|plaintext-only)"/g, "")
             .replace(/ spellcheck="false"/g, "")
             .replace(/ data-snap-(?!lock\b|group\b|hide\b|prev-display\b)[^=]*="[^"]*"/g, "");
+          if (editorHitStyle && vdoc.head) vdoc.head.appendChild(editorHitStyle);
           if (picked && isHidden(picked)) revealHiddenForEdit(picked);
           return doctype + "\n" + html;
         }
@@ -2116,10 +2083,9 @@
             $("btnRedo").disabled = true;
             $("fileName").style.display = "";
             $("fileName").textContent = fileName;
-            ["tglEdit", "tglScript", "btnReset", "btnSave"].forEach(
+            ["tglEdit", "btnReset", "btnSave"].forEach(
               (id) => ($(id).disabled = false),
             );
-            $("tglScript").checked = false;
             $("tglEdit").checked = true;
             setDirty(false);
             render();
@@ -2149,11 +2115,7 @@
         /* ---------- 渲染 ---------- */
         function render() {
           clearUI();
-          const scripts = $("tglScript").checked;
-          view.setAttribute(
-            "sandbox",
-            scripts ? "allow-scripts allow-same-origin" : "allow-same-origin",
-          );
+          view.setAttribute("sandbox", "allow-same-origin");
           view.style.display = "block";
           $("placeholder").style.display = "none";
           view.srcdoc = docHTML;
@@ -2169,6 +2131,7 @@
           try {
             vdoc.execCommand("styleWithCSS", false, true);
           } catch (e) {}
+          installEditorHitStyle();
           bindViewer();
           updateTip();
           refreshTree();
@@ -2178,7 +2141,7 @@
         });
 
         function editableOn() {
-          return $("tglEdit").checked && !$("tglScript").checked && vdoc;
+          return $("tglEdit").checked && vdoc;
         }
         function updateTip() {
           if (editableOn()) {
@@ -2324,29 +2287,7 @@
             },
             true,
           );
-          checkBlank();
         }
-
-        /* 脚本渲染页检测：静态预览下几乎没内容 → 提示开动态预览 */
-        function checkBlank() {
-          if ($("tglScript").checked) {
-            $("banner").style.display = "none";
-            return;
-          }
-          setTimeout(() => {
-            if (!vdoc || !vdoc.body) return;
-            const textLen = (vdoc.body.innerText || "").trim().length;
-            const hasScript = /<script[\s>]/i.test(docHTML);
-            $("banner").style.display =
-              hasScript && textLen < 40 ? "flex" : "none";
-          }, 300);
-        }
-        $("bannerBtn").onclick = () => {
-          $("banner").style.display = "none";
-          $("tglScript").checked = true;
-          $("tglScript").dispatchEvent(new Event("change"));
-        };
-        $("bannerClose").onclick = () => ($("banner").style.display = "none");
 
         /* ---------- 目标解析 ---------- */
         const SKIP = new Set(["HTML", "BODY", "HEAD"]);
@@ -3471,7 +3412,7 @@
             return;
           }
           endEdit();
-          const html = $("tglScript").checked ? docHTML : serialize();
+          const html = serialize();
           const defaultName =
             "快照 " + formatSnapTime(Date.now()).replace(/:/g, "-");
           const name = prompt("快照名称：", defaultName);
@@ -4759,22 +4700,6 @@
           if (e.target === $("helpModal")) closeHelp();
         });
 
-        $("tglScript").addEventListener("change", (e) => {
-          if (e.target.checked && !e.target._warned) {
-            e.target._warned = true;
-            if (
-              !confirm(
-                "动态预览会执行文件里的 JavaScript，只建议对自己生成或可信的文件开启。继续？",
-              )
-            ) {
-              e.target.checked = false;
-              return;
-            }
-          }
-          $("tglEdit").disabled = e.target.checked;
-          deselect();
-          render();
-        });
         $("btnUndo").onclick = () => doUndo();
         $("btnRedo").onclick = () => doRedo();
         $("btnReset").onclick = () => {
@@ -4816,8 +4741,8 @@
         }
         $("btnSave").onclick = async () => {
           endEdit();
-          if (!$("tglScript").checked) await inlineImages();
-          const out = $("tglScript").checked ? docHTML : serialize();
+          await inlineImages();
+          const out = serialize();
           const blob = new Blob([out], { type: "text/html;charset=utf-8" });
           const a = document.createElement("a");
           a.href = URL.createObjectURL(blob);
@@ -5028,7 +4953,7 @@
             }
             if (data.type === "snapedit:getHtml") {
               endEdit();
-              const out = $("tglScript").checked ? docHTML : serialize();
+              const out = serialize();
               window.parent.postMessage(
                 {
                   type: "snapedit:html",

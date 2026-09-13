@@ -10,15 +10,47 @@
   "files": [
     "dist/main/**/*",
     "dist/preload/**/*",
-    "package.json"
+    "dist/knowledge-worker/**/*",
+    "package.json",
+    "!node_modules/**/*.map",
+    "!node_modules/typeorm/browser{,/**/*}",
+    "!node_modules/better-sqlite3/{src,deps}{,/**/*}"
   ],
-  "asarUnpack": ["**/*.node"],
+  "electronLanguages": ["zh-CN"],
+  "extraFiles": [
+    {
+      "from": "dist/renderer",
+      "to": "static"
+    },
+    {
+      "from": "dist/static",
+      "to": "static"
+    },
+    {
+      "from": "appConf.cjs",
+      "to": "appConf.cjs"
+    },
+    {
+      "from": "default",
+      "to": "default"
+    }
+  ],
+  "extraResources": [
+    {
+      "from": "../electron/src/main/database/native",
+      "to": "native",
+      "filter": ["*.node"]
+    }
+  ],
+  "asarUnpack": ["**/*.node", "**/*.dll", "**/*.dylib", "**/*.so", "**/*.wasm"],
   "directories": {
     "output": "out"
   },
   "npmRebuild": false,
   "nodeGypRebuild": false,
   "buildDependenciesFromSource": false,
+  "compression": "normal",
+  "afterPack": "scripts/build/verify-knowledge-native.cjs",
   "win": {
     "target": [
       {
@@ -33,7 +65,7 @@
     "perMachine": true,
     "allowToChangeInstallationDirectory": true,
     "runAfterFinish": false,
-    "createDesktopShortcut": false
-  },
-  "afterPack": "./scripts/build/afterPack.cjs"
+    "createDesktopShortcut": false,
+    "differentialPackage": false
+  }
 }

@@ -1,4 +1,9 @@
-import type { ICustomToolTreeNode, IReadCustomToolFileResult } from '@/types/modules';
+import type {
+  ICustomToolGeneratedFile,
+  ICustomToolRuntimeInfo,
+  ICustomToolTreeNode,
+  IReadCustomToolFileResult,
+} from '@/types/modules';
 
 import { getCustomToolIpc } from '../ipc';
 
@@ -93,4 +98,51 @@ export async function readSnapEditHtml(): Promise<string> {
     throw new Error('无法加载 snapEdit');
   }
   return api.readSnapEditHtml();
+}
+
+export async function writeCustomToolGeneratedFiles(
+  toolPath: string,
+  files: ICustomToolGeneratedFile[],
+  options?: { activate?: boolean },
+): Promise<ICustomToolRuntimeInfo | null> {
+  const api = getCustomToolApi();
+  if (!api?.writeGeneratedFiles) {
+    throw new Error('当前环境不支持写入多文件工具');
+  }
+  return api.writeGeneratedFiles(toolPath, files, options);
+}
+
+export async function activateCustomTool(toolPath: string): Promise<ICustomToolRuntimeInfo> {
+  const api = getCustomToolApi();
+  if (!api?.activate) {
+    throw new Error('当前环境不支持运行自定义工具');
+  }
+  return api.activate(toolPath);
+}
+
+export async function deactivateCustomTool(toolPath?: string): Promise<void> {
+  const api = getCustomToolApi();
+  if (api?.deactivate) {
+    await api.deactivate(toolPath);
+  }
+}
+
+export async function getCustomToolRuntimeStatus(
+  toolPath: string,
+): Promise<ICustomToolRuntimeInfo | null> {
+  const api = getCustomToolApi();
+  if (!api?.runtimeStatus) {
+    return null;
+  }
+  return api.runtimeStatus(toolPath);
+}
+
+export async function readCustomToolContextFiles(
+  toolPath: string,
+): Promise<ICustomToolGeneratedFile[]> {
+  const api = getCustomToolApi();
+  if (!api?.readContextFiles) {
+    return [];
+  }
+  return api.readContextFiles(toolPath);
 }

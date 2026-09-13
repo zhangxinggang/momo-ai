@@ -17,6 +17,8 @@ import { closeDatabase, initDatabase } from './database';
 import { registerBootstrapIPC } from './ipc';
 import { markAppQuitting } from './ipc/window-chrome';
 import { registerLocalMediaPrivilegedSchemes } from './protocol/local-media';
+import { customToolRuntimeService } from './services/custom-tool';
+import { knowledgeWorkerClient } from './services/knowledge-v2/worker-client';
 import {
   attachMainWindowCloseBehavior,
   loadMainWindowContent,
@@ -105,6 +107,8 @@ app.on('before-quit', () => {
   disposeSilentExternalSkillImport?.();
   disposeSilentExternalSkillImport = undefined;
   void closeDatabase();
+  customToolRuntimeService.disposeNow();
+  knowledgeWorkerClient.dispose();
 });
 
 export { getMainWindow, setMainWindow };

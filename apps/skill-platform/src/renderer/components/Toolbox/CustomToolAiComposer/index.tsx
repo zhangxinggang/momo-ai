@@ -5,13 +5,25 @@ import {
   type IChatAttachment,
 } from '@momo/aichat';
 import { useToast } from '@renderer/components/ui/Toast';
+import { readCustomToolContextFiles } from '@renderer/services/custom-tool/api';
 import {
-  buildToolHtmlMessages,
-  extractHtmlFromModelOutput,
+  buildToolBundleMessages,
+  extractStreamingHtml,
+  parseToolBundleOutput,
 } from '@renderer/services/custom-tool/generate-html';
+import {
+  beginCustomToolGeneration,
+  cancelCustomToolGeneration,
+  completeCustomToolGeneration,
+  failCustomToolGeneration,
+  isCustomToolGenerationActive,
+  publishCustomToolGenerationHtml,
+  undoCustomToolGeneration,
+  updateCustomToolGenerationSnapshot,
+} from '@renderer/services/custom-tool/generation-task';
 import { useCustomToolStore } from '@renderer/store';
 import { clsx } from 'clsx';
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useState, type KeyboardEvent } from 'react';
 
 import styles from './index.module.less';
 import { EGenerateStatus, type IProps } from './types';
@@ -40,62 +52,47 @@ function buildAttachmentsPrompt(files: IChatAttachment[]): string {
 
 /** 自定义工具编辑态底部：复用 ChatInputPanel（与笔记 AI 对话框同款） */
 export function CustomToolAiComposer(props: IProps) {
-  const { toolKey, hasHtml, getCurrentHtml, onGeneratingChange } = props;
+  const { toolKey, hasHtml, getCurrentHtml } = props;
   const { showToast } = useToast();
-  const setEditorContent = useCustomToolStore((state) => state.setEditorContent);
+  const generationTask = useCustomToolStore((state) => state.generationTasks[toolKey]);
   const { callAIChatStream, uploadFiles, validateLocalFiles, isImageModel, superpowerPrompts } =
     useAiChatConfig();
   const { currentModel, kbEnabled, kbCollectionId, temperature, topP, systemPrompt, agentMode } =
     useChatContext();
 
   const [prompt, setPrompt] = useState('');
-  const [status, setStatus] = useState<EGenerateStatus>(EGenerateStatus.EIdle);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [undoSnapshot, setUndoSnapshot] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<IChatAttachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
 
-  const stoppedRef = useRef(false);
-  const generationIdRef = useRef(0);
-  const onGeneratingChangeRef = useRef(onGeneratingChange);
-  onGeneratingChangeRef.current = onGeneratingChange;
-
+  const status = (generationTask?.status ?? EGenerateStatus.EIdle) as EGenerateStatus;
+  const errorMessage = generationTask?.errorMessage ?? '';
   const isGenerating = status === EGenerateStatus.EGenerating;
   const isCurrentImageModel = Boolean(currentModel && isImageModel?.(currentModel));
   const canUndo =
-    undoSnapshot !== null &&
+    generationTask !== undefined &&
     (status === EGenerateStatus.EDone ||
       status === EGenerateStatus.EStopped ||
       status === EGenerateStatus.EError);
 
-  useEffect(() => {
-    onGeneratingChangeRef.current?.(isGenerating);
-  }, [isGenerating]);
-
-  useEffect(() => {
-    return () => {
-      stoppedRef.current = true;
-      onGeneratingChangeRef.current?.(false);
-    };
-  }, []);
-
   const handleUndo = useCallback(() => {
-    if (undoSnapshot === null) {
+    if (!generationTask) {
       return;
     }
-    setEditorContent(undoSnapshot);
-    setUndoSnapshot(null);
-    setStatus(EGenerateStatus.EIdle);
-    setErrorMessage('');
-  }, [setEditorContent, undoSnapshot]);
+    void (async () => {
+      try {
+        await undoCustomToolGeneration(toolKey);
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : '撤销生成失败', 'error');
+      }
+    })();
+  }, [generationTask, showToast, toolKey]);
 
   const handleStop = useCallback(() => {
-    if (!stoppedRef.current && status === EGenerateStatus.EGenerating) {
-      stoppedRef.current = true;
-      setStatus(EGenerateStatus.EStopped);
+    if (status === EGenerateStatus.EGenerating) {
+      void cancelCustomToolGeneration(toolKey, { rollback: false });
     }
-  }, [status]);
+  }, [status, toolKey]);
 
   const handleAttachFiles = useCallback(
     async (files: File[]) => {
@@ -188,19 +185,19 @@ export function CustomToolAiComposer(props: IProps) {
     }
 
     const targetPath = toolKey;
-    const generationId = generationIdRef.current + 1;
-    generationIdRef.current = generationId;
-    stoppedRef.current = false;
+    const abortController = new AbortController();
+    const initialHtml = useCustomToolStore.getState().editorContent;
+    const generationId = beginCustomToolGeneration(
+      targetPath,
+      [{ path: 'index.html', content: initialHtml }],
+      abortController,
+    );
 
     setPrompt('');
     setAttachments([]);
     setProgressMap({});
-    setErrorMessage('');
-    setStatus(EGenerateStatus.EGenerating);
 
-    const isCurrentGeneration = () =>
-      generationIdRef.current === generationId &&
-      useCustomToolStore.getState().selectedId === targetPath;
+    const isCurrentGeneration = () => isCustomToolGenerationActive(targetPath, generationId);
 
     const superpowerParts: string[] = [];
     if (agentMode === 'plan' && superpowerPrompts?.workflow?.trim()) {
@@ -213,21 +210,42 @@ export function CustomToolAiComposer(props: IProps) {
     void (async () => {
       let acc = '';
       let streamError = '';
+      let lastPublishedHtml = '';
+      let lastPublishedAt = 0;
       try {
-        const snapshot = await getCurrentHtml();
-        if (!isCurrentGeneration() || stoppedRef.current) {
+        const [snapshot, contextFiles] = await Promise.all([
+          getCurrentHtml(),
+          readCustomToolContextFiles(targetPath),
+        ]);
+        if (!isCurrentGeneration()) {
           return;
         }
-        setUndoSnapshot(snapshot);
+        const currentFiles = contextFiles.filter((file) => file.path !== 'index.html');
+        currentFiles.unshift({ path: 'index.html', content: snapshot });
+        updateCustomToolGenerationSnapshot(targetPath, generationId, currentFiles);
+
+        const publishStreamingHtml = (force = false) => {
+          const now = performance.now();
+          if (!force && now - lastPublishedAt < 80) {
+            return;
+          }
+          const html = extractStreamingHtml(acc);
+          if (!html || html === lastPublishedHtml) {
+            return;
+          }
+          lastPublishedAt = now;
+          lastPublishedHtml = html;
+          publishCustomToolGenerationHtml(targetPath, generationId, html);
+        };
 
         await callAIChatStream(
-          buildToolHtmlMessages(snapshot, instruction),
+          buildToolBundleMessages(currentFiles, instruction),
           (chunk) => {
-            if (stoppedRef.current || !isCurrentGeneration()) {
+            if (!isCurrentGeneration()) {
               return;
             }
-            // HTML 不流式写入编辑器，避免半成品打断 snapEdit
             acc += chunk;
+            publishStreamingHtml();
           },
           (error) => {
             streamError = error;
@@ -237,6 +255,7 @@ export function CustomToolAiComposer(props: IProps) {
           {
             temperature,
             top_p: topP,
+            abortController,
             user_system_prompt: superpowerParts.join('\n\n') || undefined,
             kb_enabled: isCurrentImageModel ? false : kbEnabled,
             kb_collection_id: kbCollectionId,
@@ -246,13 +265,7 @@ export function CustomToolAiComposer(props: IProps) {
           },
         );
 
-        if (!isCurrentGeneration() || stoppedRef.current) {
-          if (stoppedRef.current && isCurrentGeneration() && acc.trim()) {
-            const nextContent = extractHtmlFromModelOutput(acc);
-            if (nextContent.trim()) {
-              setEditorContent(nextContent);
-            }
-          }
+        if (!isCurrentGeneration()) {
           return;
         }
 
@@ -260,20 +273,21 @@ export function CustomToolAiComposer(props: IProps) {
           throw new Error(streamError);
         }
 
-        const nextContent = extractHtmlFromModelOutput(acc);
-        if (!nextContent.trim()) {
+        publishStreamingHtml(true);
+        const files = parseToolBundleOutput(acc);
+        const entryFile = files.find((file) => file.path === 'index.html');
+        if (!entryFile?.content.trim()) {
           throw new Error('未生成有效 HTML');
         }
-        setEditorContent(nextContent);
-        setStatus(EGenerateStatus.EDone);
+        await completeCustomToolGeneration(targetPath, generationId, files);
       } catch (error) {
-        if (!isCurrentGeneration() || stoppedRef.current) {
+        if (!isCurrentGeneration()) {
           return;
         }
         const message = error instanceof Error ? error.message : String(error);
-        setStatus(EGenerateStatus.EError);
-        setErrorMessage(message);
-        showToast(message, 'error');
+        if (failCustomToolGeneration(targetPath, generationId, message)) {
+          showToast(message, 'error');
+        }
       }
     })();
   }, [
@@ -288,7 +302,6 @@ export function CustomToolAiComposer(props: IProps) {
     kbCollectionId,
     kbEnabled,
     prompt,
-    setEditorContent,
     showToast,
     superpowerPrompts,
     systemPrompt,
@@ -312,11 +325,11 @@ export function CustomToolAiComposer(props: IProps) {
 
   let statusText = '';
   if (status === EGenerateStatus.EGenerating) {
-    statusText = hasHtml ? '正在改写工具页…' : '正在生成工具页…';
+    statusText = hasHtml ? '正在流式改写工具…' : '正在流式生成工具…';
   } else if (status === EGenerateStatus.EDone) {
-    statusText = '已更新，记得保存';
+    statusText = '工具文件已生成并保存';
   } else if (status === EGenerateStatus.EStopped) {
-    statusText = '已停止';
+    statusText = '已停止，已保留接收到的页面内容';
   } else if (status === EGenerateStatus.EError) {
     statusText = errorMessage ? `生成失败：${errorMessage}` : '生成失败';
   }
@@ -350,8 +363,8 @@ export function CustomToolAiComposer(props: IProps) {
       <div className={styles['input-wrap']}>
         <p className={styles.hint}>
           {hasHtml
-            ? '基于当前 HTML 提问，发送后只携带最新页面与本次输入'
-            : '描述需求后发送，将生成工具页 HTML'}
+            ? '基于当前工具继续修改，可同时更新页面、后台、脚本、MCP 或 Skill'
+            : '描述需求后发送，将生成完整工具并实时显示页面'}
         </p>
         <ChatInputPanel
           value={prompt}
@@ -360,7 +373,9 @@ export function CustomToolAiComposer(props: IProps) {
           onStop={handleStop}
           onKeyDown={handleKeyDown}
           placeholder={
-            hasHtml ? '描述要如何修改当前页面…' : '例如：做一个番茄钟，支持开始暂停和重置'
+            hasHtml
+              ? '描述要如何修改当前工具…'
+              : '例如：做一个新闻爬虫工具，由 Python 后台抓取并在页面展示'
           }
           loading={isGenerating}
           isGenerating={isGenerating}

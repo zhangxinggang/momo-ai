@@ -77,7 +77,7 @@ export function ScenarioRow({
   desc: string;
   value: string;
   models: IAIModelConfig[];
-  modelType?: 'chat' | 'image';
+  modelType?: 'chat' | 'image' | 'embedding';
   onChange: (value: string) => void;
   disabled: boolean;
   emptyHint?: string;

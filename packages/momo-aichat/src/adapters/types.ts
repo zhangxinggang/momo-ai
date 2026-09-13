@@ -25,11 +25,11 @@ export interface IChatStreamStats {
   citations?: Array<{
     title?: string;
     preview?: string;
-    docId: number;
-    chunkId: number;
+    docId: string;
+    chunkId: string;
     score?: number;
     idx?: number;
-    collectionId?: number;
+    collectionId?: string;
   }>;
 }
 
@@ -40,7 +40,7 @@ export interface IChatStreamOptions {
   abortController?: AbortController;
   user_system_prompt?: string;
   kb_enabled?: boolean;
-  kb_collection_id?: number;
+  kb_collection_id?: string;
   kb_top_k?: number;
   /** 生图模型：当前轮用户上传的参考图 */
   referenceImages?: Array<{
@@ -73,7 +73,7 @@ export type TUploadFilesFn = (
 export type TValidateLocalFilesFn = (files: File[]) => { ok: boolean; message?: string };
 
 export interface IKbCollection {
-  id: number;
+  id: string;
   name: string;
 }
 
@@ -106,9 +106,9 @@ export interface IAiChatServices {
   chatSync?: IChatSyncAdapter | null;
   listKbCollections?: () => Promise<IKbCollection[]>;
   getKbChunk?: (locator: {
-    collectionId?: number;
-    docId: number;
-    chunkId: number;
+    collectionId?: string;
+    docId: string;
+    chunkId: string;
     idx?: number;
     title?: string;
   }) => Promise<IKbChunk>;

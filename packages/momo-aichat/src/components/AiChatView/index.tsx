@@ -9,8 +9,9 @@ import {
   type IChatAttachmentMeta,
   type IChatMessage,
 } from '../../types/chat';
-import type { ISlashInvocation } from '../../types/slash-command';
 import { ChatAttachmentIcon } from '../../utils/attachment-icon';
+import { downloadChatTurnExport } from '../../utils/chat-export';
+import { findSlashInvocationTokens } from '../../utils/slash-token';
 import { ChatContextBanner } from '../ChatContextBanner';
 import type { IChatInputPanelRef } from '../ChatInputPanel';
 import ChatInputPanel from '../ChatInputPanel';
@@ -55,7 +56,6 @@ export const AiChatView: React.FC<IProps> = ({
     useAiChatConfig();
   // 用户输入内容
   const [inputValue, setInputValue] = useState(externalInputValue ?? '');
-  const [slashInvocation, setSlashInvocation] = useState<ISlashInvocation>();
 
   useEffect(() => {
     if (externalInputValue !== undefined) {
@@ -402,11 +402,12 @@ export const AiChatView: React.FC<IProps> = ({
     const userContent = inputValue.trim();
     const pendingAttachments = [...attachments];
     const pendingProgressMap = { ...progressMap };
-    const pendingInvocation = slashInvocation;
+    const pendingInvocations = findSlashInvocationTokens(userContent).map(
+      (match) => match.invocation,
+    );
 
     // 清空输入框
     handleInputChange('');
-    setSlashInvocation(undefined);
 
     // 标记应该自动滚动（用户发送消息时）
     shouldAutoScrollRef.current = true;
@@ -446,13 +447,12 @@ export const AiChatView: React.FC<IProps> = ({
       const sent = await sendMessage(finalUserContent, attachmentsMeta, {
         displayContent,
         sourceRefs,
-        invocation: pendingInvocation,
+        invocations: pendingInvocations,
       });
       if (!sent) {
         handleInputChange(userContent);
         setAttachments(pendingAttachments);
         setProgressMap(pendingProgressMap);
-        setSlashInvocation(pendingInvocation);
         return;
       }
       onAfterSend?.();
@@ -461,7 +461,6 @@ export const AiChatView: React.FC<IProps> = ({
       handleInputChange(userContent);
       setAttachments(pendingAttachments);
       setProgressMap(pendingProgressMap);
-      setSlashInvocation(pendingInvocation);
       message.error('发送消息失败，请稍后重试');
     }
   };
@@ -496,7 +495,6 @@ export const AiChatView: React.FC<IProps> = ({
 
   const handleEditUserMessage = (msg: IChatMessage) => {
     handleInputChange(msg.content);
-    setSlashInvocation(msg.invocation);
     chatInputRef.current?.focus();
   };
 
@@ -523,6 +521,20 @@ export const AiChatView: React.FC<IProps> = ({
 
   const handleRetryUserMessage = (msg: IChatMessage) => {
     void retryAssistantReply(msg.id);
+  };
+
+  const handleExportUserMessage = (msg: IChatMessage) => {
+    try {
+      const fileName = downloadChatTurnExport({
+        sessionTitle: currentSession?.title || 'AI 问答',
+        userMessage: msg,
+        assistantMessage: getAssistantReplyForUser(msg.id),
+      });
+      message.success(`已导出 ${fileName}`);
+    } catch (error) {
+      console.error('导出当前问答失败:', error);
+      message.error('导出失败，请稍后重试');
+    }
   };
 
   // 处理文件选择/上传
@@ -711,10 +723,10 @@ export const AiChatView: React.FC<IProps> = ({
                 <div className='group flex justify-end'>
                   <div className='max-w-[70%]'>
                     <div className='whitespace-pre-wrap break-words rounded-l-2xl rounded-br-sm rounded-tr-2xl bg-[var(--user-bubble-bg)] px-4 py-2 text-[var(--user-bubble-text)] transition-colors'>
-                      {message.invocation ? (
+                      {message.invocation && !findSlashInvocationTokens(message.content).length ? (
                         <div className='mb-1 text-xs opacity-70'>
                           {message.invocation.kind === 'skill' ? 'Skill' : 'Command'} ·{' '}
-                          {message.invocation.command}
+                          {message.invocation.label || message.invocation.command}
                         </div>
                       ) : null}
                       <NoteReferenceText content={message.content} />
@@ -745,6 +757,7 @@ export const AiChatView: React.FC<IProps> = ({
                       disabled={isAILoading}
                       showRetry={getAssistantReplyForUser(message.id)?.isError === true}
                       onEdit={() => handleEditUserMessage(message)}
+                      onExport={() => handleExportUserMessage(message)}
                       onRetry={() => handleRetryUserMessage(message)}
                       onDelete={() => handleDeleteUserMessage(message)}
                     />
@@ -785,7 +798,6 @@ export const AiChatView: React.FC<IProps> = ({
             progressMap={progressMap}
             onAttachFiles={handleAttachFiles}
             onRemoveAttachment={handleRemoveAttachment}
-            onSlashInvocationChange={setSlashInvocation}
           />
         </div>
       </div>

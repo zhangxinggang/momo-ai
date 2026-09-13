@@ -6,7 +6,7 @@ import { buildActiveSkillLine } from '@renderer/services/skill/chat-context';
 import { loadSkillInstructionsForChat } from '@renderer/services/skill/instructions-for-chat';
 import { runSkillLangGraphChat } from '@renderer/services/skill/langgraph';
 import { getEnabledWorkspaceContext } from '@renderer/services/workspace/context';
-import { buildRagContext } from '../core/rag-context';
+import { retrieveKnowledgeContext } from '../core/knowledge-context';
 
 function getSkillBody(skill: ISkill): string {
   return (skill.instructions || skill.content || '').trim();
@@ -66,11 +66,14 @@ export function createSkillLangGraphStream(
     const startTime = Date.now();
 
     try {
-      const { ragSystemPrompt, citations } = await buildRagContext(messages, streamOptions);
+      const { knowledgeSystemPrompt, citations } = await retrieveKnowledgeContext(
+        messages,
+        streamOptions,
+      );
       const workspaceContext = await getEnabledWorkspaceContext(
         streamOptions?.raw_user_query?.trim() || userInput,
       );
-      const knowledgeContext = [ragSystemPrompt, workspaceContext]
+      const knowledgeContext = [knowledgeSystemPrompt, workspaceContext]
         .filter((block) => block.trim())
         .join('\n\n');
       const activeSkill = options.getActiveSkill();

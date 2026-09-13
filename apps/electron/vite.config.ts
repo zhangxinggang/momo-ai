@@ -40,6 +40,9 @@ const mainEntries = {
   index: resolve(__dirname, 'src/index.ts'),
   'main/dev': resolve(__dirname, 'src/main/dev.ts'),
   'main/index': resolve(__dirname, 'src/main/index.ts'),
+  // Electron's `main` field must point to an executable entry, not the module
+  // that merely exports `init` for consumers of this package.
+  'main/production': resolve(__dirname, 'src/main/production.ts'),
   'preload/index': resolve(__dirname, 'src/preload/index.ts'),
 };
 

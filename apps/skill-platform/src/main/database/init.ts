@@ -6,7 +6,6 @@ import path from 'path';
 import { DataSource } from 'typeorm';
 import { destroyDataSource, getBetterSqliteFromDataSource } from './';
 import { ALL_ENTITIES } from './entities';
-import { KB_SCHEMA_INDEXES, KB_SCHEMA_TABLES, KB_SCHEMA_TRIGGERS } from './kb';
 import { SCHEMA_INDEXES, SCHEMA_TABLES } from './schema';
 
 /** Column metadata returned by `PRAGMA table_info(...)`. */
@@ -602,25 +601,6 @@ export async function initDatabase(dbPath: string, hooks?: IInitDatabaseHooks): 
         )
         .run();
       markMigration('fix_prompt_current_version_v1');
-    }
-
-    if (!hasMigration('kb_tables_v1')) {
-      console.log('Migrating: Creating knowledge base tables');
-      db!.exec(KB_SCHEMA_TABLES);
-      db!.exec(KB_SCHEMA_TRIGGERS);
-      db!.exec(KB_SCHEMA_INDEXES);
-      markMigration('kb_tables_v1');
-    }
-    if (!hasMigration('kb_documents_segment_v2')) {
-      const cols = db!.prepare(`PRAGMA table_info(kb_documents)`).all() as { name: string }[];
-      const names = new Set(cols.map((c) => c.name));
-      if (!names.has('segment_mode')) {
-        db!.exec(`ALTER TABLE kb_documents ADD COLUMN segment_mode TEXT DEFAULT 'general'`);
-      }
-      if (!names.has('segment_settings')) {
-        db!.exec(`ALTER TABLE kb_documents ADD COLUMN segment_settings TEXT`);
-      }
-      markMigration('kb_documents_segment_v2');
     }
 
     if (!hasMigration('workflow_businesses_v1')) {

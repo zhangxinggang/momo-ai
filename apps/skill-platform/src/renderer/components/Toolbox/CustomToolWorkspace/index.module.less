@@ -63,6 +63,40 @@
     background: #fff;
   }
 
+  &-stream {
+    position: relative;
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  &-stream-badge {
+    position: absolute;
+    z-index: 2;
+    top: 0.75rem;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.7rem;
+    border: 1px solid rgb(59 130 246 / 0.22);
+    border-radius: 999px;
+    transform: translateX(-50%);
+    color: #1d4ed8;
+    background: rgb(239 246 255 / 0.94);
+    box-shadow: 0 6px 18px rgb(15 23 42 / 0.12);
+    font-size: 0.75rem;
+
+    span {
+      width: 0.45rem;
+      height: 0.45rem;
+      border-radius: 999px;
+      background: #3b82f6;
+      animation: custom-tool-stream-pulse 1.15s ease-in-out infinite;
+    }
+  }
+
   &-editor {
     display: flex;
     min-height: 0;
@@ -96,5 +130,18 @@
       line-height: 1.5;
       color: hsl(var(--muted-foreground));
     }
+  }
+}
+
+@keyframes custom-tool-stream-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.82);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
   }
 }

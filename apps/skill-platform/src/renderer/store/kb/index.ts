@@ -2,8 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 interface IKbState {
-  activeCollectionId?: number;
-  setActiveCollectionId: (id: number | undefined) => void;
+  activeCollectionId?: string;
+  setActiveCollectionId: (id: string | undefined) => void;
   /** 侧栏知识库列表搜索关键词 */
   listSearchQuery: string;
   setListSearchQuery: (query: string) => void;

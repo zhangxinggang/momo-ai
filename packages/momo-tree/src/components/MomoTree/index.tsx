@@ -53,6 +53,8 @@ export interface IProps {
   emptyAction?: ReactNode;
   /** 文件节点菜单隐藏「重命名」 */
   hideFileRename?: boolean;
+  /** 节点标题右侧的常驻状态区（例如后台生成指示器） */
+  renderNodeExtra?: (node: IMomoTreeNode) => ReactNode;
 }
 
 function mapToAntdNodes(nodes: IMomoTreeNode[]): TreeDataNode[] {
@@ -79,6 +81,7 @@ export function MomoTree({
   emptyDescription,
   emptyAction,
   hideFileRename = false,
+  renderNodeExtra,
 }: IProps) {
   const { modal, message } = App.useApp();
   const labels = { ...DEFAULT_LABELS, ...labelOverrides };
@@ -277,6 +280,7 @@ export function MomoTree({
       const menuItems =
         node.kind === 'folder' ? buildFolderMenuItems(node) : buildFileMenuItems(node);
       const isMenuOpen = openMenuNodeId === node.id;
+      const extra = renderNodeExtra?.(node);
 
       return (
         <div className={styles['momo-tree-row']}>
@@ -290,6 +294,7 @@ export function MomoTree({
           <span className={styles['momo-tree-row-title']} title={node.name}>
             {renderHighlightedText(node.name, searchQuery, styles['momo-tree-highlight'])}
           </span>
+          {extra ? <span className={styles['momo-tree-row-extra']}>{extra}</span> : null}
           <span
             className={`${styles['momo-tree-row-actions']} ${isMenuOpen ? styles['momo-tree-row-actions-open'] : ''}`}
             onClick={(e: MouseEvent<HTMLSpanElement>) => e.stopPropagation()}>
@@ -311,7 +316,14 @@ export function MomoTree({
         </div>
       );
     },
-    [buildFileMenuItems, buildFolderMenuItems, nodeById, openMenuNodeId, searchQuery],
+    [
+      buildFileMenuItems,
+      buildFolderMenuItems,
+      nodeById,
+      openMenuNodeId,
+      renderNodeExtra,
+      searchQuery,
+    ],
   );
 
   const handleSelect = useCallback(

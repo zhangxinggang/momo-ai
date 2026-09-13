@@ -20,6 +20,7 @@ import {
   findNoteMentions,
   normalizeNotePath,
 } from '../utils/note-mention';
+import { findSlashInvocationTokens, slashTokensToPlainText } from '../utils/slash-token';
 import { useChatSync } from './useChatSync';
 
 export interface IUseChatSessionsOptions {
@@ -38,6 +39,22 @@ function toApiUserContent(
   snapshots: Record<string, INoteSnapshot>,
 ): string {
   return expandNoteMentionsWithSnapshots(displayContent, snapshots);
+}
+
+/** 历史用户轮次优先复用首次发送时冻结的实际请求，确保 Skill/Command 在后续上下文中持续生效。 */
+function toHistoricalApiUserContent(
+  message: IChatMessage,
+  snapshots: Record<string, INoteSnapshot>,
+): string {
+  const frozenContent = message.requestSnapshot?.apiContent || message.content;
+  return toApiUserContent(slashTokensToPlainText(frozenContent), snapshots);
+}
+
+function hasApiMessageContent(message: IChatMessage): boolean {
+  return Boolean(
+    message.content?.trim() ||
+    (message.role === 'user' && message.requestSnapshot?.apiContent?.trim()),
+  );
 }
 
 function createBootstrapSession(sessionId: string, title?: string | null): IChatSession {
@@ -148,7 +165,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
 
   // RAG：知识库开关与当前集合
   const [kbEnabled, setKbEnabled] = useState<boolean>(false);
-  const [kbCollectionId, setKbCollectionId] = useState<number | undefined>(undefined);
+  const [kbCollectionId, setKbCollectionId] = useState<string | undefined>(undefined);
   const [agentMode, setAgentMode] = useState<'ask' | 'plan'>('ask');
   const kbEnabledRef = useRef(kbEnabled);
   const kbCollectionIdRef = useRef(kbCollectionId);
@@ -387,7 +404,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
             topP?: number;
             systemPrompt?: string;
             kbEnabled?: boolean;
-            kbCollectionId?: number;
+            kbCollectionId?: string;
             agentMode?: 'ask' | 'plan';
           };
           const clamp = (v: number) => Math.min(1.0, Math.max(0.1, v));
@@ -407,7 +424,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           if (typeof parsed.kbEnabled === 'boolean') {
             setKbEnabled((prev) => (prev === parsed.kbEnabled ? prev : parsed.kbEnabled!));
           }
-          if (typeof parsed.kbCollectionId === 'number') {
+          if (typeof parsed.kbCollectionId === 'string') {
             setKbCollectionId((prev) =>
               prev === parsed.kbCollectionId ? prev : parsed.kbCollectionId,
             );
@@ -821,6 +838,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           assistantMessageId: string;
         };
         invocation?: ISlashInvocation;
+        invocations?: ISlashInvocation[];
         requestSnapshot?: IChatRequestSnapshot;
       },
     ) => {
@@ -833,7 +851,11 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
 
       let apiContent = replaySnapshot?.apiContent ?? content;
       let displayContent = (options?.displayContent ?? content).trim();
-      let resolvedInvocation = options?.invocation;
+      let resolvedInvocations =
+        options?.invocations ??
+        (options?.invocation
+          ? [options.invocation]
+          : findSlashInvocationTokens(displayContent).map((match) => match.invocation));
 
       if (beforeSubmitPrompt && !replaySnapshot) {
         try {
@@ -842,7 +864,8 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
             displayContent,
             modelId: currentModel || defaultModel || '',
             workspacePaths: workspace?.paths ?? [],
-            invocation: resolvedInvocation,
+            invocation: resolvedInvocations[0],
+            invocations: resolvedInvocations,
           });
           if (gate.action === 'deny') {
             return false;
@@ -853,12 +876,16 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           if (typeof gate.displayContent === 'string') {
             displayContent = gate.displayContent.trim();
           }
-          resolvedInvocation = gate.invocation ?? resolvedInvocation;
+          resolvedInvocations =
+            gate.invocations ?? (gate.invocation ? [gate.invocation] : resolvedInvocations);
         } catch (error) {
           console.error('beforeSubmitPrompt failed:', error);
           return false;
         }
       }
+
+      // 未配置宿主预处理器时，仍不能把内部序列化 token 暴露给模型。
+      apiContent = slashTokensToPlainText(apiContent);
 
       if (!apiContent.trim() && !displayContent.trim() && sourceRefs.length === 0) {
         return false;
@@ -949,7 +976,8 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           role: 'user',
           content: displayContent,
           attachments: attachmentsMeta,
-          invocation: resolvedInvocation,
+          invocation: resolvedInvocations[0],
+          invocations: resolvedInvocations.length > 0 ? resolvedInvocations : undefined,
           requestSnapshot,
         });
       }
@@ -984,7 +1012,12 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         const newTitle =
           activeSessionId === bootstrapSessionIdRef.current && bootstrapTitle
             ? bootstrapTitle
-            : generateSessionTitle(displayContent);
+            : generateSessionTitle(
+                slashTokensToPlainText(displayContent) ||
+                  resolvedInvocations[0]?.label ||
+                  resolvedInvocations[0]?.command ||
+                  apiContent,
+              );
         updateSessionTitle(activeSessionId, newTitle);
 
         // 如果用户已登录，同时保存标题到云端
@@ -1062,22 +1095,21 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           if (userIdx >= 0) {
             chatMessages = session.messages
               .slice(0, userIdx + 1)
-              .filter((m) => !m.isLoading && m.content && m.content.trim() && m.role !== 'system')
+              .filter((m) => !m.isLoading && hasApiMessageContent(m) && m.role !== 'system')
               .map((m) => ({
                 role: m.role,
                 content:
-                  m.role === 'user' && m.id === options.retry!.userMessageId
-                    ? toApiUserContent(m.content, activeSnapshots)
-                    : m.content,
+                  m.role === 'user' ? toHistoricalApiUserContent(m, activeSnapshots) : m.content,
               }));
           }
         } else {
           chatMessages =
             session?.messages
-              .filter((m) => !m.isLoading && m.content && m.content.trim() && m.role !== 'system')
+              .filter((m) => !m.isLoading && hasApiMessageContent(m) && m.role !== 'system')
               .map((m) => ({
                 role: m.role,
-                content: m.content,
+                content:
+                  m.role === 'user' ? toHistoricalApiUserContent(m, activeSnapshots) : m.content,
               })) || [];
 
           // 添加当前用户消息
@@ -1239,7 +1271,11 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
             kb_enabled: isImageModel?.(requestSnapshot.modelId) ? false : requestSnapshot.kbEnabled,
             kb_collection_id: requestSnapshot.kbCollectionId,
             kb_top_k: 6,
-            raw_user_query: displayContent,
+            raw_user_query:
+              slashTokensToPlainText(displayContent) ||
+              resolvedInvocations[0]?.label ||
+              resolvedInvocations[0]?.command ||
+              '',
             referenceImages: resolvedSources
               .filter(
                 (source) => source.encoding === 'base64' && source.mimeType.startsWith('image/'),
@@ -1402,7 +1438,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       }
 
       const userMessage = session.messages[userIdx];
-      if (userMessage.role !== 'user' || !userMessage.content.trim()) {
+      if (userMessage.role !== 'user' || !hasApiMessageContent(userMessage)) {
         return;
       }
 
@@ -1422,6 +1458,9 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
             assistantMessageId: assistantMessage.id,
           },
           invocation: userMessage.invocation,
+          invocations:
+            userMessage.invocations ??
+            (userMessage.invocation ? [userMessage.invocation] : undefined),
           requestSnapshot: userMessage.requestSnapshot,
         },
       );

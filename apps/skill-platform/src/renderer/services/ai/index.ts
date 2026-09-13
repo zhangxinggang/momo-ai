@@ -26,10 +26,20 @@ export type {
 
 export { buildMessagesFromPrompt } from '../prompt/messages';
 export { generateSkillContent, polishSkillContent } from '../skill/content-generation';
-export { compareAIModels, multiModelCompare, testAIConnection } from './testing';
+export {
+  compareAIModels,
+  multiModelCompare,
+  testAIConnection,
+  testEmbeddingConnection,
+} from './testing';
 
 export { chatCompletion } from './chat';
 export { generateImage, testImageGeneration } from './image';
 export { fetchAvailableModels } from './models';
-export { getApiEndpointPreview, getImageApiEndpointPreview, resolveAIProtocol } from './protocol';
+export {
+  getApiEndpointPreview,
+  getEmbeddingApiEndpointPreview,
+  getImageApiEndpointPreview,
+  resolveAIProtocol,
+} from './protocol';
 export { getBaseUrl, normalizeApiUrlInput } from './url';

@@ -2,7 +2,7 @@ import { ipcMain } from 'electron';
 
 import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
 
-import { extractText } from '../services/kb/file-parser';
+import { knowledgeWorkerClient } from '../services/knowledge-v2/worker-client';
 
 export function registerAichatIPC(): void {
   ipcMain.handle(
@@ -11,11 +11,7 @@ export function registerAichatIPC(): void {
       _,
       input: { base64?: string; ext?: string; mime?: string },
     ): Promise<{ text: string; snippet: string }> => {
-      if (!input?.base64?.trim()) {
-        throw new Error('aichat:parseAttachment 缺少文件内容');
-      }
-      const buffer = Buffer.from(input.base64, 'base64');
-      return extractText({ buffer, ext: input.ext, mime: input.mime });
+      return knowledgeWorkerClient.call('parseAttachment', input);
     },
   );
 }

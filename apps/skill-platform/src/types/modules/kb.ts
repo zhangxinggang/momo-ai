@@ -1,13 +1,38 @@
-/**
- * 知识库类型定义
- */
+/** Knowledge Base V2 shared contracts. V1 numeric ids and byte-upload contracts are absent. */
 
-export interface IKbCollection {
-  id: number;
-  name: string;
-  description?: string;
-  group_id?: number | null;
-  created_at?: string;
+export type KnowledgeId = string;
+
+export type EKnowledgeStage =
+  | 'initialize'
+  | 'source'
+  | 'parse'
+  | 'chunk'
+  | 'embedding'
+  | 'sparse_index'
+  | 'vector_index'
+  | 'query_rewrite'
+  | 'retrieve'
+  | 'rerank';
+
+export type EKnowledgeManualAction =
+  | 'retry'
+  | 'reconfigure'
+  | 'install_component'
+  | 'reimport'
+  | 'rebuild_index'
+  | 'open_logs'
+  | 'delete';
+
+export interface IKnowledgeErrorShape {
+  name: 'KnowledgeError';
+  code: string;
+  stage: EKnowledgeStage;
+  message: string;
+  documentId?: KnowledgeId;
+  jobId?: KnowledgeId;
+  providerRequestId?: string;
+  details?: Record<string, unknown>;
+  allowedManualActions: EKnowledgeManualAction[];
 }
 
 export type EKbSegmentMode = 'fixed' | 'general';
@@ -23,70 +48,220 @@ export interface DKbSegmentSettings {
   splitMode: 'code' | 'llm';
 }
 
-export interface IKbDocument {
-  docId: number;
-  filename: string;
-  ext?: string;
-  mime?: string;
-  size?: number;
-  status?: string;
-  error?: string;
-  progress?: number;
-  created_at?: string;
-  chunk_count?: number;
-  segment_mode?: EKbSegmentMode;
-}
-
-export interface IKbChunkItem {
-  chunkId: number;
-  docId: number;
-  idx: number;
-  content: string;
-}
-
-export interface IKbSearchItem {
-  chunkId: number;
-  docId: number;
-  docName: string;
-  idx: number;
-  content: string;
-  score: number;
-  rerankScore: number | null;
-}
-
-/** 向量嵌入 API 配置（由渲染进程从 AI 工作台传入） */
 export interface IKbEmbeddingConfig {
   apiKey: string;
   baseUrl: string;
-  model?: string;
-  rerankModel?: string;
+  model: string;
+  dimension?: number;
+  maxInputTokens?: number;
+  normalize?: boolean;
+  distance?: 'cosine' | 'dot' | 'l2';
 }
 
-/** 大语言模型切分 API 配置（由渲染进程从对话模型解析） */
-export interface IKbLlmConfig {
-  apiKey: string;
-  apiUrl: string;
-  model: string;
-  provider?: string;
-  apiProtocol?: 'openai' | 'gemini' | 'anthropic';
+export interface IKbRerankConfig {
+  enabled: boolean;
+  apiKey?: string;
+  endpoint?: string;
+  model?: string;
+  timeoutMs?: number;
 }
 
 export interface IKbIngestOptions {
   segmentSettings?: DKbSegmentSettings;
   segmentMode?: EKbSegmentMode;
-  llmConfig?: IKbLlmConfig;
+  forceOcr?: boolean;
 }
 
-export interface DKbUploadFile {
+export interface IKbCollection {
+  id: KnowledgeId;
+  name: string;
+  description?: string;
+  embeddingProfileId: string;
+  retrievalProfileId: string;
+  parserProfileId: string;
+  status: 'ready' | 'error';
+  createdAt: number;
+  updatedAt: number;
+}
+
+export type EKbDocumentStatus =
+  | 'queued'
+  | 'parsing'
+  | 'chunking'
+  | 'embedding'
+  | 'indexing'
+  | 'ready'
+  | 'failed'
+  | 'interrupted'
+  | 'manual_conflict';
+
+export interface IKbDocument {
+  docId: KnowledgeId;
+  collectionId: KnowledgeId;
+  sourceId?: KnowledgeId;
   filename: string;
-  mime?: string;
+  relativePath?: string;
   ext?: string;
+  mime: string;
   size: number;
-  data: Uint8Array;
+  status: EKbDocumentStatus;
+  stage?: EKnowledgeStage;
+  errorCode?: string;
+  error?: string;
+  progress: number;
+  createdAt: number;
+  updatedAt: number;
+  chunkCount: number;
+  segmentMode: EKbSegmentMode;
+  activeRevisionId?: KnowledgeId;
 }
 
-export interface IKbUploadResultItem {
-  docId: number;
+export interface IKbChunkItem {
+  chunkId: KnowledgeId;
+  docId: KnowledgeId;
+  revisionId: KnowledgeId;
+  parentChunkId?: KnowledgeId;
+  idx: number;
+  kind: 'parent' | 'child' | 'manual';
+  content: string;
+  tokenCount: number;
+  headingPath: string[];
+  page?: number;
+  pageEnd?: number;
+  sheet?: string;
+  cellRange?: string;
+  enabled: boolean;
+  origin: 'parsed' | 'manual';
+}
+
+export interface IKbImportResultItem {
+  docId: KnowledgeId;
+  jobId: KnowledgeId;
   filename: string;
   size: number;
+}
+
+export interface IKbDirectoryImportRequest {
+  collectionId: KnowledgeId;
+  directoryPath: string;
+  recursive?: boolean;
+  ignore?: string[];
+  ingest: IKbIngestOptions;
+  embedding: IKbEmbeddingConfig;
+}
+
+export interface IKbFileImportRequest {
+  collectionId: KnowledgeId;
+  filePaths: string[];
+  ingest: IKbIngestOptions;
+  embedding: IKbEmbeddingConfig;
+}
+
+export interface IKbConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface IKbRetrievalRequest {
+  query: string;
+  conversation?: IKbConversationMessage[];
+  collectionIds?: KnowledgeId[];
+  documentIds?: KnowledgeId[];
+  topK: number;
+  contextTokenBudget: number;
+  mode: 'balanced' | 'precise' | 'semantic';
+  rerank: 'on' | 'off';
+  embedding: IKbEmbeddingConfig;
+  rerankConfig?: IKbRerankConfig;
+  trace: boolean;
+}
+
+export interface IKbSearchItem {
+  chunkId: KnowledgeId;
+  parentChunkId?: KnowledgeId;
+  docId: KnowledgeId;
+  collectionId: KnowledgeId;
+  collectionName: string;
+  revisionId: KnowledgeId;
+  docName: string;
+  sourcePath?: string;
+  idx: number;
+  content: string;
+  preview: string;
+  headingPath: string[];
+  page?: number;
+  pageEnd?: number;
+  sheet?: string;
+  cellRange?: string;
+  denseRank?: number;
+  sparseRank?: number;
+  metadataRank?: number;
+  rrfScore: number;
+  rerankScore?: number;
+  finalScore: number;
+  tokenCount: number;
+}
+
+export interface IKbRetrievalTrace {
+  traceId: KnowledgeId;
+  originalQuery: string;
+  rewrittenQuery: string;
+  timings: Record<string, number>;
+  candidateCounts: Record<string, number>;
+  selectedChunkIds: KnowledgeId[];
+}
+
+export interface IKbRetrievalResult {
+  status: 'ready' | 'no_match';
+  query: string;
+  evidence: IKbSearchItem[];
+  citations: Array<{
+    id: string;
+    collectionId: KnowledgeId;
+    collectionName: string;
+    documentId: KnowledgeId;
+    revisionId: KnowledgeId;
+    chunkId: KnowledgeId;
+    title: string;
+    sourcePath?: string;
+    headingPath: string[];
+    page?: number;
+    pageEnd?: number;
+    sheet?: string;
+    cellRange?: string;
+    preview: string;
+    finalScore: number;
+  }>;
+  context: string;
+  trace?: IKbRetrievalTrace;
+}
+
+export type EKbJobStatus =
+  | 'queued'
+  | 'running'
+  | 'succeeded'
+  | 'failed'
+  | 'cancelled'
+  | 'interrupted';
+
+export interface IKbJob {
+  id: KnowledgeId;
+  type: 'ingest' | 'reindex' | 'edit_chunk' | 'delete';
+  collectionId?: KnowledgeId;
+  documentId?: KnowledgeId;
+  revisionId?: KnowledgeId;
+  status: EKbJobStatus;
+  stage?: EKnowledgeStage;
+  progress: number;
+  errorCode?: string;
+  error?: string;
+  createdAt: number;
+  startedAt?: number;
+  finishedAt?: number;
+}
+
+export interface IKbChunkEditRequest {
+  chunkId: KnowledgeId;
+  content: string;
+  embedding: IKbEmbeddingConfig;
 }

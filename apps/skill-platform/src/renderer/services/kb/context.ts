@@ -1,12 +1,21 @@
-import type { IAIModelConfig } from '@renderer/types/settings';
+import type { IAIModelConfig, IScenarioModelDefaults } from '@renderer/types/settings';
 
 type GetAiModels = () => IAIModelConfig[];
 
 let getAiModels: GetAiModels | null = null;
+let getScenarioModelDefaults: (() => IScenarioModelDefaults) | null = null;
 
 /** 注入知识库服务所需的 AI 模型列表读取方式（通常在 App 启动时注册） */
-export function configureKbService(resolveAiModels: GetAiModels): void {
+export function configureKbService(
+  resolveAiModels: GetAiModels,
+  resolveScenarioModelDefaults?: () => IScenarioModelDefaults,
+): void {
   getAiModels = resolveAiModels;
+  getScenarioModelDefaults = resolveScenarioModelDefaults ?? null;
+}
+
+export function getKbScenarioModelDefaults(): IScenarioModelDefaults {
+  return getScenarioModelDefaults?.() ?? {};
 }
 
 /** 获取当前已注册的 AI 模型列表 */

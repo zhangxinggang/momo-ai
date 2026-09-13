@@ -133,7 +133,10 @@ export function getModelCategory(model: {
   model?: string;
   owned_by?: string;
   provider?: string;
+  type?: IAIModelConfig['type'];
 }): string {
+  if (model.type === 'embedding') return 'Embedding';
+
   const provider = model.provider?.toLowerCase() || '';
   if (provider && provider !== 'custom' && PROVIDER_CATEGORY_MAP[provider]) {
     return PROVIDER_CATEGORY_MAP[provider];

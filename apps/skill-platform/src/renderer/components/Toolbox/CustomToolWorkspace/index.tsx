@@ -1,5 +1,6 @@
 import { ModuleEmptyState } from '@renderer/components/ui/ModuleEmptyState';
 import { writeCustomToolFile } from '@renderer/services/custom-tool/api';
+import { cancelCustomToolGeneration } from '@renderer/services/custom-tool/generation-task';
 import {
   getCustomToolDisplayName,
   hasToolHtmlContent,
@@ -7,9 +8,11 @@ import {
 } from '@renderer/store/custom-tool';
 import { App, Button } from 'antd';
 import { WrenchIcon } from 'lucide-react';
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { CustomToolAiComposer } from '../CustomToolAiComposer';
+import { CustomToolPreview } from '../CustomToolPreview';
+import { CustomToolStreamingPreview } from '../CustomToolStreamingPreview';
 import { SnapEditFrame, type ISnapEditFrameHandle } from '../SnapEditFrame';
 import styles from './index.module.less';
 
@@ -22,12 +25,22 @@ export function CustomToolWorkspace() {
   const isEditing = useCustomToolStore((state) => state.isEditing);
   const isLoadingFile = useCustomToolStore((state) => state.isLoadingFile);
   const isSaving = useCustomToolStore((state) => state.isSaving);
+  const isLoadingRuntime = useCustomToolStore((state) => state.isLoadingRuntime);
+  const runtimeInfo = useCustomToolStore((state) => state.runtimeInfo);
+  const runtimeError = useCustomToolStore((state) => state.runtimeError);
+  const previewRevision = useCustomToolStore((state) => state.previewRevision);
+  const generationTask = useCustomToolStore((state) =>
+    selectedId ? state.generationTasks[selectedId] : undefined,
+  );
   const enterEditMode = useCustomToolStore((state) => state.enterEditMode);
   const exitEditMode = useCustomToolStore((state) => state.exitEditMode);
+  const setEditorContent = useCustomToolStore((state) => state.setEditorContent);
 
   const snapEditRef = useRef<ISnapEditFrameHandle>(null);
+  const [isCanceling, setIsCanceling] = useState(false);
 
   const hasHtml = hasToolHtmlContent(editorContent);
+  const isGenerating = generationTask?.status === 'generating';
   const displayName = getCustomToolDisplayName(selectedId);
   const isDirty = editorContent !== savedContent;
 
@@ -49,7 +62,10 @@ export function CustomToolWorkspace() {
     useCustomToolStore.setState({ isSaving: true, editorContent: contentToSave });
     try {
       await writeCustomToolFile(selectedId, contentToSave);
-      useCustomToolStore.setState({ savedContent: contentToSave });
+      useCustomToolStore.setState((state) => ({
+        savedContent: contentToSave,
+        previewRevision: state.previewRevision + 1,
+      }));
       message.success('已保存');
       exitEditMode();
     } catch (err) {
@@ -59,6 +75,24 @@ export function CustomToolWorkspace() {
       useCustomToolStore.setState({ isSaving: false });
     }
   }, [editorContent, exitEditMode, hasHtml, isEditing, message, selectedId]);
+
+  const handleExitEdit = useCallback(() => {
+    if (!selectedId || !isGenerating) {
+      exitEditMode();
+      return;
+    }
+    void (async () => {
+      setIsCanceling(true);
+      try {
+        await cancelCustomToolGeneration(selectedId, { rollback: true, clearTask: true });
+        exitEditMode();
+      } catch (error) {
+        message.error(error instanceof Error ? error.message : '取消生成并回滚失败');
+      } finally {
+        setIsCanceling(false);
+      }
+    })();
+  }, [exitEditMode, isGenerating, message, selectedId]);
 
   if (!selectedId) {
     return null;
@@ -83,11 +117,13 @@ export function CustomToolWorkspace() {
         </div>
         <div className={styles['custom-tool-workspace-body']}>
           {hasHtml ? (
-            <iframe
-              className={styles['custom-tool-workspace-preview']}
+            <CustomToolPreview
               title={displayName}
-              srcDoc={editorContent}
-              sandbox='allow-scripts allow-same-origin allow-forms'
+              fallbackHtml={editorContent}
+              runtimeInfo={runtimeInfo}
+              runtimeError={runtimeError}
+              revision={previewRevision}
+              loading={isLoadingRuntime}
             />
           ) : (
             <ModuleEmptyState
@@ -112,16 +148,39 @@ export function CustomToolWorkspace() {
           ) : null}
         </div>
         <div className={styles['custom-tool-workspace-actions']}>
-          <Button onClick={exitEditMode}>{'退出编辑'}</Button>
-          <Button type='primary' loading={isSaving} onClick={() => void handleSave()}>
+          <Button loading={isCanceling} onClick={handleExitEdit}>
+            {'退出编辑'}
+          </Button>
+          <Button
+            type='primary'
+            loading={isSaving}
+            disabled={isGenerating || isCanceling}
+            onClick={() => void handleSave()}>
             {'保存'}
           </Button>
         </div>
       </div>
 
       <div className={styles['custom-tool-workspace-editor']}>
-        {hasHtml ? (
-          <SnapEditFrame ref={snapEditRef} html={editorContent} fileName={`${displayName}.html`} />
+        {isGenerating ? (
+          <div className={styles['custom-tool-workspace-stream']}>
+            <div className={styles['custom-tool-workspace-stream-badge']}>
+              <span />
+              {'HTML 实时生成中'}
+            </div>
+            <CustomToolStreamingPreview
+              className={styles['custom-tool-workspace-preview']}
+              title={`${displayName} 实时预览`}
+              html={editorContent}
+            />
+          </div>
+        ) : hasHtml ? (
+          <SnapEditFrame
+            ref={snapEditRef}
+            html={editorContent}
+            fileName={`${displayName}.html`}
+            onChange={setEditorContent}
+          />
         ) : (
           <div className={styles['custom-tool-workspace-guide']}>
             <h3>{'描述你想做的工具'}</h3>

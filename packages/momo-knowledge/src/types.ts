@@ -34,8 +34,12 @@ export const DEFAULT_SEGMENT_SETTINGS: ISegmentSettings = {
 export type EKnowledgeIngestStep = 'datasource' | 'segment' | 'ingest';
 
 export interface IKnowledgeDocumentRecord {
-  id: number;
+  id: string;
   name: string;
   segmentMode: EDocumentSegmentMode;
   uploadedAt: number;
+  status: string;
+  progress: number;
+  chunkCount: number;
+  error?: string;
 }

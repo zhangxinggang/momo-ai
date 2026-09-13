@@ -5,7 +5,7 @@ import { useChatProjectStore } from '@renderer/store/chat';
 
 export interface IWorkflowNodeDefaultValues {
   executionModel: string;
-  kbCollectionId?: number;
+  kbCollectionId?: string;
   workspacePaths: string[];
 }
 
@@ -13,7 +13,7 @@ export interface IWorkflowNodeDefaultValues {
 export function readWorkflowNodeDefaultValues(): IWorkflowNodeDefaultValues {
   const keys = buildStorageKeys(MAIN_AI_CHAT_STORAGE_PREFIX);
   let executionModel = '';
-  let kbCollectionId: number | undefined;
+  let kbCollectionId: string | undefined;
   let workspacePaths: string[] = [];
 
   try {
@@ -23,8 +23,8 @@ export function readWorkflowNodeDefaultValues(): IWorkflowNodeDefaultValues {
     }
     const advancedRaw = localStorage.getItem(keys.ADVANCED_SETTINGS);
     if (advancedRaw) {
-      const advanced = JSON.parse(advancedRaw) as { kbCollectionId?: number };
-      if (typeof advanced.kbCollectionId === 'number') {
+      const advanced = JSON.parse(advancedRaw) as { kbCollectionId?: string };
+      if (typeof advanced.kbCollectionId === 'string') {
         kbCollectionId = advanced.kbCollectionId;
       }
     }

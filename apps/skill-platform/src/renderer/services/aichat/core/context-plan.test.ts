@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildContextPlan } from './context-plan';
+import { buildContextPlan, estimateContextTokens } from './context-plan';
 
 describe('buildContextPlan', () => {
   it('uses one system message with deterministic section order', () => {
@@ -32,5 +32,31 @@ describe('buildContextPlan', () => {
     });
 
     expect(result.at(-1)?.content).toBe(latest);
+  });
+
+  it('keeps complete recent turns and summarizes older requirements', () => {
+    const result = buildContextPlan({
+      messages: [
+        { role: 'user', content: '# 设计要求\n- 必须保留登录状态\n' + '旧'.repeat(9_000) },
+        { role: 'assistant', content: '已理解旧需求。' + '答'.repeat(9_000) },
+        { role: 'user', content: '现在开始实现 auth.ts' },
+        { role: 'assistant', content: '正在实现。' },
+        { role: 'user', content: '继续并运行测试' },
+      ],
+      contextTokenBudget: 16_000,
+      hostPolicies: ['遵守工程约束'],
+    });
+
+    expect(result[0].role).toBe('system');
+    expect(String(result[0].content)).toContain('较早对话压缩摘要');
+    expect(String(result[0].content)).toContain('必须保留登录状态');
+    expect(result.slice(1).map((item) => item.role)).toEqual(['user', 'assistant', 'user']);
+    expect(result.at(-1)?.content).toBe('继续并运行测试');
+  });
+
+  it('estimates CJK more conservatively than latin text', () => {
+    expect(estimateContextTokens('需求'.repeat(100))).toBeGreaterThan(
+      estimateContextTokens('ab'.repeat(100)),
+    );
   });
 });

@@ -1,4 +1,11 @@
-import { CheckIcon, CopyIcon, PencilIcon, RotateCwIcon, Trash2Icon } from 'lucide-react';
+import {
+  CheckIcon,
+  CopyIcon,
+  DownloadIcon,
+  PencilIcon,
+  RotateCwIcon,
+  Trash2Icon,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 interface IProps {
@@ -7,6 +14,7 @@ interface IProps {
   showRetry?: boolean;
   disabled?: boolean;
   onEdit?: () => void;
+  onExport?: () => void;
   onRetry?: () => void;
   onDelete?: () => void;
 }
@@ -17,6 +25,7 @@ export const MessageUserActions: React.FC<IProps> = ({
   showRetry = false,
   disabled = false,
   onEdit,
+  onExport,
   onRetry,
   onDelete,
 }) => {
@@ -49,7 +58,7 @@ export const MessageUserActions: React.FC<IProps> = ({
     }
   }, [content]);
 
-  if (!content.trim()) {
+  if (!content.trim() && !onEdit && !onExport && !onDelete) {
     return null;
   }
 
@@ -80,6 +89,17 @@ export const MessageUserActions: React.FC<IProps> = ({
           aria-label='编辑消息'
           title='编辑'>
           <PencilIcon className='h-3.5 w-3.5' aria-hidden />
+        </button>
+      ) : null}
+      {onExport ? (
+        <button
+          type='button'
+          disabled={disabled}
+          onClick={onExport}
+          className={actionClassName}
+          aria-label='导出当前问答'
+          title='导出当前问答'>
+          <DownloadIcon className='h-3.5 w-3.5' aria-hidden />
         </button>
       ) : null}
       {showRetry && onRetry ? (

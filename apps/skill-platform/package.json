@@ -1,6 +1,7 @@
 {
   "name": "AIM",
   "version": "1.0.0",
+  "packageManager": "pnpm@10.33.2",
   "private": true,
   "description": "AIM Desktop - Electron application for AI prompt management",
   "main": "dist/main/index.js",
@@ -13,7 +14,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "before:build": "pnpm --filter @momo/file-editor run build && node --max-old-space-size=8192 ./node_modules/vite/bin/vite.js build",
+    "before:build": "node --max-old-space-size=8192 ./node_modules/vite/bin/vite.js build",
     "build:default-skills": "node scripts/build-default-skills.mjs",
     "dev": "pnpm --filter @momo/server run build && pnpm --filter @momo/file-editor run build && vite",
     "dev:web": "vite --config vite.web.config.ts",
@@ -22,8 +23,22 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ant-design/icons": "^6.2.2",
+    "@lancedb/lancedb": "0.22.3",
+    "@lancedb/lancedb-win32-x64-msvc": "0.22.3",
     "@log4js-node/smtp": "^1.1.0",
+    "@napi-rs/canvas": "^0.1.80",
+    "@napi-rs/canvas-win32-x64-msvc": "0.1.80",
+    "@xberg-io/xberg": "1.0.7",
+    "@xberg-io/xberg-win32-x64-msvc": "1.0.7",
+    "better-sqlite3": "12.9.0",
+    "chokidar": "3.6.0",
+    "html-to-docx": "^1.8.0",
+    "log4js": "^6.3.0",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^1.0.0"
+  },
+  "devDependencies": {
+    "@ant-design/icons": "^6.2.2",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@momo/aichat": "workspace:*",
     "@momo/electron": "workspace:*",
@@ -35,15 +50,6 @@
     "@momo/tree": "workspace:*",
     "@momo/utils": "workspace:*",
     "@momo/workflow": "workspace:*",
-    "@napi-rs/canvas": "^0.1.80",
-    "@napi-rs/canvas-win32-x64-msvc": "0.1.80",
-    "better-sqlite3": "12.9.0",
-    "html-to-docx": "^1.8.0",
-    "log4js": "^6.3.0",
-    "reflect-metadata": "^0.2.2",
-    "typeorm": "^1.0.0"
-  },
-  "devDependencies": {
     "@types/markdown-it": "^14.1.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

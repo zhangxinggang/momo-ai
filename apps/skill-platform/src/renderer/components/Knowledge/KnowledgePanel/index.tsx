@@ -16,9 +16,9 @@ import styles from './index.module.less';
 const KB_UPDATED_EVENT = 'kb:collections-updated';
 
 function isDuplicateName(
-  list: { id: number; name: string }[],
+  list: { id: string; name: string }[],
   name: string,
-  excludeId?: number,
+  excludeId?: string,
 ): boolean {
   const normalized = name.trim().toLowerCase();
   if (!normalized) {
@@ -48,12 +48,12 @@ export function KnowledgePanel({
   const isCreateModalOpen = useKbStore((s) => s.isCreateModalOpen);
   const setCreateModalOpen = useKbStore((s) => s.setCreateModalOpen);
 
-  const [list, setList] = useState<{ id: number; name: string }[]>([]);
+  const [list, setList] = useState<{ id: string; name: string }[]>([]);
 
   const [createName, setCreateName] = useState('');
   const [createSubmitting, setCreateSubmitting] = useState(false);
 
-  const [renameTarget, setRenameTarget] = useState<{ id: number; name: string } | null>(null);
+  const [renameTarget, setRenameTarget] = useState<{ id: string; name: string } | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [renameSubmitting, setRenameSubmitting] = useState(false);
 
@@ -162,7 +162,7 @@ export function KnowledgePanel({
     }
   };
 
-  const deleteCollection = async (cId: number) => {
+  const deleteCollection = async (cId: string) => {
     try {
       await kbDeleteCollection(cId);
       const items = (await load()) || [];

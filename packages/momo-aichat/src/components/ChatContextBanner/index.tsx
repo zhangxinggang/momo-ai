@@ -9,7 +9,7 @@ import styles from './index.module.less';
 export function ChatContextBanner() {
   const { listKbCollections, skillBanner, agentAppBanner } = useAiChatConfig();
   const { kbEnabled, kbCollectionId } = useChatContext();
-  const [collections, setCollections] = useState<{ id: number; name: string }[]>([]);
+  const [collections, setCollections] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     if (!listKbCollections || !kbEnabled) {

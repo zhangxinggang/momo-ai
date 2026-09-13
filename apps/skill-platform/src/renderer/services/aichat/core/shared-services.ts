@@ -105,12 +105,8 @@ export function buildSharedAiChatServices(
       return kbListCollections();
     },
     getKbChunk: async (locator) => {
-      const { kbListChunks } = await import('@renderer/services/kb/api');
-      const page = await kbListChunks(locator.docId, 1, 10_000);
-      const chunk = page.items.find((item) => item.chunkId === locator.chunkId);
-      if (!chunk) {
-        throw new Error('引用内容已不存在');
-      }
+      const { kbGetChunk } = await import('@renderer/services/kb/api');
+      const chunk = await kbGetChunk(locator.chunkId);
       return {
         docName: locator.title || 'doc-' + String(locator.docId),
         idx: chunk.idx,

@@ -48,12 +48,15 @@ export interface DAgentAppSlashItem {
   label: string;
   description?: string;
   kind: 'skill' | 'command';
-  scope: 'project' | 'global';
+  scope: 'application' | 'project' | 'global';
+  category?: string;
+  tags?: string[];
   hasArgs?: boolean;
 }
 
 export interface DAgentAppListSlashInput {
-  agentAppId: string;
+  /** 未选择 Agent 时仍可列出 momo-ai 应用技能。 */
+  agentAppId?: string;
   folderPaths: string[];
   query?: string;
 }
@@ -63,18 +66,26 @@ export interface DAgentAppListSlashResult {
   warning?: string;
 }
 
+export interface DAgentAppSlashInvocation {
+  resourceId: string;
+  resourceRevision: string;
+  command: string;
+  label?: string;
+  kind: 'skill' | 'command';
+  scope: 'application' | 'project' | 'global';
+  category?: string;
+  tags?: string[];
+  /** 对应消息正文中的行内序列化 token。 */
+  token?: string;
+}
+
 export interface DAgentAppPrepareSubmitInput {
-  agentAppId: string;
+  agentAppId?: string;
   folderPaths: string[];
   content: string;
   displayContent: string;
-  invocation?: {
-    resourceId: string;
-    resourceRevision: string;
-    command: string;
-    kind: 'skill' | 'command';
-    scope: 'project' | 'global';
-  };
+  invocation?: DAgentAppSlashInvocation;
+  invocations?: DAgentAppSlashInvocation[];
 }
 
 export interface DAgentAppPrepareSubmitResult {
@@ -83,4 +94,5 @@ export interface DAgentAppPrepareSubmitResult {
   displayContent?: string;
   reason?: string;
   invocation?: DAgentAppPrepareSubmitInput['invocation'];
+  invocations?: DAgentAppSlashInvocation[];
 }

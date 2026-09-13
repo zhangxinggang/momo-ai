@@ -14,6 +14,8 @@ const MAIN_PROCESS_EXTERNALS = [
   'log4js',
   '@log4js-node/smtp',
   '@napi-rs/canvas',
+  '@lancedb/lancedb',
+  '@xberg-io/xberg',
   'html-to-docx',
 ];
 
@@ -101,6 +103,7 @@ const sharedResolveAlias = {
   '@preload': path.resolve(__dirname, 'src/preload/index.ts'),
   '@preload/api': path.resolve(__dirname, 'src/preload/api'),
   '@momo/electron': path.resolve(__dirname, '../electron/src/index.ts'),
+  '@momo/file-editor/node': path.resolve(__dirname, '../../packages/momo-file-editor/src/node.ts'),
 };
 
 export default defineConfig({
@@ -129,6 +132,7 @@ export default defineConfig({
           build: {
             outDir: 'dist/main',
             emptyOutDir: true,
+            reportCompressedSize: false,
             rollupOptions: {
               // log4js 在运行时用动态 require 加载 @log4js-node/smtp 等 appender，
               // @napi-rs/canvas 含 .node 原生模块，须整包外置由 Node 运行时加载。
@@ -154,6 +158,24 @@ export default defineConfig({
           },
           build: {
             outDir: 'dist/preload',
+            emptyOutDir: true,
+            reportCompressedSize: false,
+          },
+        },
+      },
+      {
+        entry: 'src/main/knowledge-worker.ts',
+        vite: {
+          resolve: {
+            alias: sharedResolveAlias,
+          },
+          build: {
+            outDir: 'dist/knowledge-worker',
+            emptyOutDir: true,
+            reportCompressedSize: false,
+            rollupOptions: {
+              external: isMainProcessExternal,
+            },
           },
         },
       },
@@ -199,6 +221,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist/renderer',
+    reportCompressedSize: false,
     // Performance: Disable sourcemap in production to reduce bundle size
     // 性能：生产环境禁用 sourcemap 以减少打包体积
     sourcemap: process.env.NODE_ENV === 'development',

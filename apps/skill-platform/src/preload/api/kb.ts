@@ -1,115 +1,98 @@
-﻿import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
+import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
 import type {
-  DKbSegmentSettings,
-  DKbUploadFile,
-  EKbSegmentMode,
   IKbChunkItem,
   IKbCollection,
+  IKbDirectoryImportRequest,
   IKbDocument,
   IKbEmbeddingConfig,
+  IKbFileImportRequest,
+  IKbImportResultItem,
   IKbIngestOptions,
-  IKbLlmConfig,
-  IKbSearchItem,
-  IKbUploadResultItem,
+  IKbJob,
+  IKbRetrievalRequest,
+  IKbRetrievalResult,
+  IKnowledgeErrorShape,
 } from '@/types/modules/kb';
-import { ipcRenderer } from 'electron';
+import { ipcRenderer, webUtils } from 'electron';
+
+type IKnowledgeIpcResponse<T> = { ok: true; value: T } | { ok: false; error: IKnowledgeErrorShape };
+
+async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
+  const response = (await ipcRenderer.invoke(channel, ...args)) as IKnowledgeIpcResponse<T>;
+  if ('value' in response) return response.value;
+  const error = new Error(response.error.message) as Error & IKnowledgeErrorShape;
+  Object.assign(error, response.error);
+  throw error;
+}
 
 export const kbApi = {
-  listCollections: (groupId?: number): Promise<IKbCollection[]> =>
-    ipcRenderer.invoke(IPC_CHANNELS.KB_LIST_COLLECTIONS, groupId),
-
-  createCollection: (
-    name: string,
-    description?: string,
-    groupId?: number,
-  ): Promise<IKbCollection> =>
-    ipcRenderer.invoke(IPC_CHANNELS.KB_CREATE_COLLECTION, name, description, groupId),
-
+  getPathForFile: (file: File): string => webUtils.getPathForFile(file),
+  listCollections: (): Promise<IKbCollection[]> => invoke(IPC_CHANNELS.KNOWLEDGE_LIST_COLLECTIONS),
+  createCollection: (name: string, description?: string): Promise<IKbCollection> =>
+    invoke(IPC_CHANNELS.KNOWLEDGE_CREATE_COLLECTION, name, description),
   updateCollection: (
-    id: number,
-    payload: Partial<{ name: string; description: string; group_id: number | null }>,
-  ): Promise<{ success: boolean }> =>
-    ipcRenderer.invoke(IPC_CHANNELS.KB_UPDATE_COLLECTION, id, payload),
-
-  deleteCollection: (id: number): Promise<{ success: boolean }> =>
-    ipcRenderer.invoke(IPC_CHANNELS.KB_DELETE_COLLECTION, id),
-
-  listDocuments: (collectionId: number): Promise<IKbDocument[]> =>
-    ipcRenderer.invoke(IPC_CHANNELS.KB_LIST_DOCUMENTS, collectionId),
-
-  uploadFiles: (
-    collectionId: number,
-    files: DKbUploadFile[],
-  ): Promise<{
-    items: IKbUploadResultItem[];
-    skipped: { filename: string; size: number; reason: string }[];
-  }> => ipcRenderer.invoke(IPC_CHANNELS.KB_UPLOAD_FILES, collectionId, files),
-
-  pasteText: (collectionId: number, text: string, filename?: string): Promise<{ docId: number }> =>
-    ipcRenderer.invoke(IPC_CHANNELS.KB_PASTE_TEXT, collectionId, text, filename),
-
-  ingestDocument: (
-    docId: number,
-    embeddingConfig: IKbEmbeddingConfig,
-    options?: IKbIngestOptions,
-  ): Promise<{ success: boolean; chunks: number; dim: number }> =>
-    ipcRenderer.invoke(IPC_CHANNELS.KB_INGEST_DOCUMENT, docId, embeddingConfig, options),
-
-  getDocument: (docId: number): Promise<{ item: IKbDocument | null }> =>
-    ipcRenderer.invoke(IPC_CHANNELS.KB_GET_DOCUMENT, docId),
-
-  deleteDocument: (docId: number): Promise<{ success: boolean }> =>
-    ipcRenderer.invoke(IPC_CHANNELS.KB_DELETE_DOCUMENT, docId),
-
-  search: (
-    collectionId: number,
-    query: string,
-    embeddingConfig: IKbEmbeddingConfig,
-    topK?: number,
-  ): Promise<{ items: IKbSearchItem[] }> =>
-    ipcRenderer.invoke(IPC_CHANNELS.KB_SEARCH, collectionId, query, embeddingConfig, topK),
-
+    id: string,
+    patch: { name?: string; description?: string },
+  ): Promise<IKbCollection> => invoke(IPC_CHANNELS.KNOWLEDGE_UPDATE_COLLECTION, id, patch),
+  deleteCollection: (id: string): Promise<void> =>
+    invoke(IPC_CHANNELS.KNOWLEDGE_DELETE_COLLECTION, id),
+  listDocuments: (collectionId: string): Promise<IKbDocument[]> =>
+    invoke(IPC_CHANNELS.KNOWLEDGE_LIST_DOCUMENTS, collectionId),
+  importFiles: (request: IKbFileImportRequest): Promise<IKbImportResultItem[]> =>
+    invoke(IPC_CHANNELS.KNOWLEDGE_IMPORT_FILES, request),
+  importDirectory: (request: IKbDirectoryImportRequest): Promise<IKbImportResultItem[]> =>
+    invoke(IPC_CHANNELS.KNOWLEDGE_IMPORT_DIRECTORY, request),
+  pickDirectory: (): Promise<string | undefined> => invoke(IPC_CHANNELS.KNOWLEDGE_PICK_DIRECTORY),
+  pasteText: (request: {
+    collectionId: string;
+    text: string;
+    filename?: string;
+    ingest: IKbIngestOptions;
+    embedding: IKbEmbeddingConfig;
+  }): Promise<IKbImportResultItem> => invoke(IPC_CHANNELS.KNOWLEDGE_PASTE_TEXT, request),
+  getDocument: (documentId: string): Promise<IKbDocument | null> =>
+    invoke(IPC_CHANNELS.KNOWLEDGE_GET_DOCUMENT, documentId),
+  deleteDocument: (documentId: string): Promise<void> =>
+    invoke(IPC_CHANNELS.KNOWLEDGE_DELETE_DOCUMENT, documentId),
   listChunks: (
-    docId: number,
+    documentId: string,
     page?: number,
     pageSize?: number,
     keyword?: string,
   ): Promise<{ items: IKbChunkItem[]; total: number }> =>
-    ipcRenderer.invoke(IPC_CHANNELS.KB_LIST_CHUNKS, docId, page, pageSize, keyword),
-
-  updateChunk: (chunkId: number, content: string): Promise<{ success: boolean }> =>
-    ipcRenderer.invoke(IPC_CHANNELS.KB_UPDATE_CHUNK, chunkId, content),
-
-  deleteChunks: (chunkIds: number[]): Promise<{ success: boolean }> =>
-    ipcRenderer.invoke(IPC_CHANNELS.KB_DELETE_CHUNKS, chunkIds),
-
-  resegmentDocument: (
-    docId: number,
-    embeddingConfig: IKbEmbeddingConfig,
-    segmentSettings: DKbSegmentSettings,
-    segmentMode: EKbSegmentMode,
-    llmConfig?: IKbLlmConfig,
-  ): Promise<{ success: boolean; chunks: number; dim: number }> =>
-    ipcRenderer.invoke(
-      IPC_CHANNELS.KB_RESEGMENT_DOCUMENT,
-      docId,
-      embeddingConfig,
-      segmentSettings,
-      segmentMode,
-      llmConfig,
-    ),
-
-  previewFileSegments: (
-    file: DKbUploadFile,
-    segmentSettings?: DKbSegmentSettings,
-    limit?: number,
-    llmConfig?: IKbLlmConfig,
-  ): Promise<{ idx: number; content: string }[]> =>
-    ipcRenderer.invoke(
-      IPC_CHANNELS.KB_PREVIEW_FILE_SEGMENTS,
-      file,
-      segmentSettings,
-      limit,
-      llmConfig,
-    ),
+    invoke(IPC_CHANNELS.KNOWLEDGE_LIST_CHUNKS, documentId, page, pageSize, keyword),
+  getChunk: (chunkId: string): Promise<IKbChunkItem> =>
+    invoke(IPC_CHANNELS.KNOWLEDGE_GET_CHUNK, chunkId),
+  editChunk: (
+    chunkId: string,
+    content: string,
+    embedding: IKbEmbeddingConfig,
+  ): Promise<{ jobId: string }> =>
+    invoke(IPC_CHANNELS.KNOWLEDGE_EDIT_CHUNK, chunkId, content, embedding),
+  deleteChunks: (chunkIds: string[]): Promise<void> =>
+    invoke(IPC_CHANNELS.KNOWLEDGE_DELETE_CHUNKS, chunkIds),
+  previewFile: (filePath: string, ingest: IKbIngestOptions) =>
+    invoke<{
+      parserId: string;
+      mime: string;
+      qualityScore: number;
+      notices: string[];
+      counts?: Record<string, number>;
+      chunks: Array<{
+        idx: number;
+        content: string;
+        headingPath: string[];
+        page?: number;
+        sheet?: string;
+      }>;
+    }>(IPC_CHANNELS.KNOWLEDGE_PREVIEW_FILE, filePath, ingest),
+  retrieve: (request: IKbRetrievalRequest): Promise<IKbRetrievalResult> =>
+    invoke(IPC_CHANNELS.KNOWLEDGE_RETRIEVE, request),
+  retrieveForChat: (request: IKbRetrievalRequest): Promise<IKbRetrievalResult> =>
+    invoke(IPC_CHANNELS.KNOWLEDGE_RETRIEVE_FOR_CHAT, request),
+  listJobs: (limit?: number): Promise<IKbJob[]> => invoke(IPC_CHANNELS.KNOWLEDGE_LIST_JOBS, limit),
+  retryJob: (jobId: string, embedding: IKbEmbeddingConfig): Promise<IKbImportResultItem> =>
+    invoke(IPC_CHANNELS.KNOWLEDGE_RETRY_JOB, jobId, embedding),
+  cancelJob: (jobId: string): Promise<{ cancelled: boolean }> =>
+    invoke(IPC_CHANNELS.KNOWLEDGE_CANCEL_JOB, jobId),
 };

@@ -6,6 +6,7 @@ import { useAppName } from '@renderer/hooks/useAppName';
 import {
   getApiEndpointPreview,
   getBaseUrl,
+  getEmbeddingApiEndpointPreview,
   getImageApiEndpointPreview,
   normalizeApiUrlInput,
 } from '@renderer/services/ai';
@@ -34,7 +35,9 @@ export function ApiUrlHintPanel({
     () =>
       modelType === 'image'
         ? getImageApiEndpointPreview(apiUrl, { provider, model })
-        : getApiEndpointPreview(apiUrl, apiProtocol),
+        : modelType === 'embedding'
+          ? getEmbeddingApiEndpointPreview(apiUrl)
+          : getApiEndpointPreview(apiUrl, apiProtocol),
     [apiProtocol, apiUrl, model, modelType, provider],
   );
   const fullEndpointDetected = Boolean(
@@ -65,7 +68,7 @@ export function ApiUrlHintPanel({
   return (
     <div className='border-border/60 bg-muted/20 mt-2 space-y-2 rounded-lg border p-3 text-xs'>
       <div className='text-muted-foreground'>
-        {`这里只填供应商基础地址或版本根路径即可，不用手动补 /chat/completions 或 /images/generations，${appName} 会自动补全。`}
+        {`这里只填供应商基础地址或版本根路径即可，不用手动补 /chat/completions、/embeddings 或 /images/generations，${appName} 会自动补全。`}
       </div>
       <div className='text-muted-foreground'>
         <span className='text-foreground font-medium'>{'示例'}:</span>{' '}

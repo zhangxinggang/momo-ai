@@ -1,22 +1,28 @@
 export {
+  kbCancelJob,
   kbCreateCollection,
   kbDeleteChunks,
   kbDeleteCollection,
   kbDeleteDocument,
-  kbGetDocumentProgress,
-  kbIngestDocument,
+  kbEditChunk,
+  kbGetChunk,
+  kbGetDocument,
+  kbImportDirectory,
+  kbImportFiles,
   kbListChunks,
   kbListCollections,
   kbListDocuments,
+  kbListJobs,
   kbPasteText,
-  kbPreviewFileSegments,
-  kbResegmentDocument,
-  kbSearch,
-  kbUpdateChunk,
+  kbPickDirectory,
+  kbPreviewFile,
+  kbRetrieve,
+  kbRetrieveForChat,
+  kbRetryJob,
   kbUpdateCollection,
-  kbUploadFiles,
+  requireKbEmbeddingConfig,
+  resolveKbEmbeddingConfig,
+  resolveKbEmbeddingModel,
 } from './api';
-export type { IKbEmbeddingOptions } from './api';
+export type { IKbEmbeddingOptions, IKbImportOptions } from './api';
 export { configureKbService, getKbAiModels, isKbServiceConfigured } from './context';
-export { resolveKbEmbeddingConfig } from './embedding-config';
-export { requireKbLlmConfig, resolveKbLlmConfig } from './llm-config';

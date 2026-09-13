@@ -3,6 +3,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   EllipsisOutlined,
+  LoadingOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
 import {
@@ -279,6 +280,7 @@ function ChatPanelContent({ collapsed = false }: IProps) {
                   ? projectSessions.map((session) => {
                       const isActive = session.id === currentSessionId;
                       const isEditing = editingSessionId === session.id;
+                      const isGenerating = isSessionGenerating(session.id);
                       return (
                         <div
                           key={session.id}
@@ -324,6 +326,14 @@ function ChatPanelContent({ collapsed = false }: IProps) {
                             <div
                               className={styles['chat-panel-session-meta']}
                               onClick={(e) => e.stopPropagation()}>
+                              {isGenerating ? (
+                                <span
+                                  className={styles['chat-panel-session-loading']}
+                                  title='正在对话'
+                                  aria-label='正在对话'>
+                                  <LoadingOutlined spin />
+                                </span>
+                              ) : null}
                               <Dropdown
                                 menu={buildSessionMenu(session)}
                                 trigger={['hover']}

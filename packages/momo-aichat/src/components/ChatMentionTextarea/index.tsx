@@ -13,6 +13,7 @@ import {
 } from 'react';
 
 import {
+  findNoteMentions,
   removeMentionTokenAt,
   SURFACE_MENTION_REGEX,
   SURFACE_MENTION_START,
@@ -21,7 +22,15 @@ import {
   valueIndexToSurfaceIndex,
   valueToSurface,
 } from '../../utils/note-mention';
+import {
+  findSlashInvocationTokens,
+  removeSlashInvocationTokenAt,
+  SURFACE_SLASH_COMMAND,
+  SURFACE_SLASH_REGEX,
+  SURFACE_SLASH_START,
+} from '../../utils/slash-token';
 import { NoteReferenceChip } from '../NoteReferenceChip';
+import { SlashInvocationChip } from '../SlashInvocationChip';
 import styles from './index.module.less';
 
 export interface IChatMentionTextareaRef {
@@ -49,32 +58,77 @@ function renderMirrorContent(surface: string) {
   }
 
   const parts: React.ReactNode[] = [];
+  const matches: Array<{
+    start: number;
+    end: number;
+    type: 'mention' | 'slash';
+    label: string;
+    kind?: 'skill' | 'command';
+    measureText: string;
+  }> = [];
   const mentionSurfaceRegex = new RegExp(SURFACE_MENTION_REGEX.source, 'g');
   let match: RegExpExecArray | null;
+  while ((match = mentionSurfaceRegex.exec(surface))) {
+    matches.push({
+      start: match.index,
+      end: match.index + match[0].length,
+      type: 'mention',
+      label: match[1],
+      measureText: match[0],
+    });
+  }
+  const slashSurfaceRegex = new RegExp(SURFACE_SLASH_REGEX.source, 'g');
+  while ((match = slashSurfaceRegex.exec(surface))) {
+    matches.push({
+      start: match.index,
+      end: match.index + match[0].length,
+      type: 'slash',
+      kind: match[1] === SURFACE_SLASH_COMMAND ? 'command' : 'skill',
+      label: match[2],
+      measureText: match[0],
+    });
+  }
+  matches.sort((left, right) => left.start - right.start);
+
   let lastIndex = 0;
   let index = 0;
 
-  while ((match = mentionSurfaceRegex.exec(surface))) {
-    const start = match.index;
-    if (start > lastIndex) {
+  for (const inlineMatch of matches) {
+    if (inlineMatch.start > lastIndex) {
       parts.push(
         <span key={`text-${index}`} className={styles['mention-plain']}>
-          {surface.slice(lastIndex, start)}
+          {surface.slice(lastIndex, inlineMatch.start)}
         </span>,
       );
       index += 1;
     }
 
     parts.push(
-      <NoteReferenceChip
-        key={`chip-${index}`}
-        path={match[1]}
-        measureText={match[0]}
-        showTooltip={false}
-      />,
+      inlineMatch.type === 'mention' ? (
+        <NoteReferenceChip
+          key={`chip-${index}`}
+          path={inlineMatch.label}
+          measureText={inlineMatch.measureText}
+          showTooltip={false}
+        />
+      ) : (
+        <SlashInvocationChip
+          key={`chip-${index}`}
+          invocation={{
+            resourceId: '',
+            resourceRevision: '',
+            command: `/${inlineMatch.label}`,
+            label: inlineMatch.label,
+            kind: inlineMatch.kind || 'skill',
+            scope: 'application',
+          }}
+          measureText={inlineMatch.measureText}
+          showTooltip={false}
+        />
+      ),
     );
     index += 1;
-    lastIndex = start + match[0].length;
+    lastIndex = inlineMatch.end;
   }
 
   if (lastIndex < surface.length) {
@@ -108,10 +162,12 @@ function ChatMentionTextareaInner(props: IProps, ref: Ref<IChatMentionTextareaRe
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mirrorRef = useRef<HTMLDivElement>(null);
   const mirrorContentRef = useRef<HTMLDivElement>(null);
+  const pendingSelectionRef = useRef<number | null>(null);
 
   const surfaceValue = useMemo(() => valueToSurface(value), [value]);
-  // 无笔记引用时不走镜像层，避免中文多行换行与光标错位
-  const hasMentionSurface = surfaceValue.includes(SURFACE_MENTION_START);
+  // 没有行内引用时不走镜像层，避免中文多行换行与光标错位。
+  const hasMentionSurface =
+    surfaceValue.includes(SURFACE_MENTION_START) || surfaceValue.includes(SURFACE_SLASH_START);
 
   const mirrorTypographyStyle = useMemo<CSSProperties>(() => {
     if (!style) {
@@ -170,21 +226,54 @@ function ChatMentionTextareaInner(props: IProps, ref: Ref<IChatMentionTextareaRe
   );
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Backspace') {
+    if (event.key === 'Backspace' || event.key === 'Delete') {
       const textarea = textareaRef.current;
       if (textarea) {
         const valueCursor = surfaceIndexToValueIndex(value, textarea.selectionStart);
-        const nextValue = removeMentionTokenAt(value, valueCursor);
+        const isBackspace = event.key === 'Backspace';
+        const slashHit = findSlashInvocationTokens(value).find((item) =>
+          isBackspace
+            ? valueCursor > item.start && valueCursor <= item.end
+            : valueCursor >= item.start && valueCursor < item.end,
+        );
+        const mentionHit = findNoteMentions(value).find((item) =>
+          isBackspace
+            ? valueCursor > item.start && valueCursor <= item.end
+            : valueCursor >= item.start && valueCursor < item.end,
+        );
+        const nextValue = slashHit
+          ? removeSlashInvocationTokenAt(
+              value,
+              isBackspace ? valueCursor : Math.min(valueCursor + 1, slashHit.end),
+            )
+          : mentionHit
+            ? removeMentionTokenAt(
+                value,
+                isBackspace ? valueCursor : Math.min(valueCursor + 1, mentionHit.end),
+              )
+            : null;
         if (nextValue !== null) {
           event.preventDefault();
+          pendingSelectionRef.current = (slashHit ?? mentionHit)!.start;
           onChange(nextValue);
-          onSelectionChange?.(valueCursor);
+          onSelectionChange?.((slashHit ?? mentionHit)!.start);
           return;
         }
       }
     }
     onKeyDown?.(event);
   };
+
+  useLayoutEffect(() => {
+    const pendingSelection = pendingSelectionRef.current;
+    const textarea = textareaRef.current;
+    if (pendingSelection === null || !textarea) {
+      return;
+    }
+    pendingSelectionRef.current = null;
+    const surfaceIndex = valueIndexToSurfaceIndex(value, pendingSelection);
+    textarea.setSelectionRange(surfaceIndex, surfaceIndex);
+  }, [value]);
 
   const handleClick = () => {
     const textarea = textareaRef.current;

@@ -14,7 +14,6 @@ export { PromptController as PromptDB } from './controller/prompt';
 export { SkillController as SkillDB } from './controller/skill';
 export { WorkflowController as WorkflowDB } from './controller/workflow';
 export * from './entities';
-export { KB_SCHEMA_INDEXES, KB_SCHEMA_TABLES, KB_SCHEMA_TRIGGERS } from './kb';
 export { SCHEMA_INDEXES, SCHEMA_TABLES } from './schema';
 export { closeDatabase, getDatabase, isDatabaseEmpty };
 export type { Database };

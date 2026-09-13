@@ -1,9 +1,9 @@
 export {
-  buildRagContext,
   buildSharedAiChatServices,
   buildSuperpowerDefaults,
   createModelConfigResolver,
   generateChatTitle,
+  retrieveKnowledgeContext,
 } from './core';
 export type { IBuildSharedAiChatServicesOptions } from './core';
 export { createSkillLangGraphStream } from './skill';

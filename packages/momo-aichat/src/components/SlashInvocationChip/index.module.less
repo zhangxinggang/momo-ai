@@ -1,0 +1,63 @@
+.chip {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 4px;
+  margin: 0 1px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: inherit;
+  line-height: 1.4;
+  vertical-align: baseline;
+  cursor: default;
+}
+
+.chip-mirror {
+  position: relative;
+  display: inline;
+  font: inherit;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+.chip-measure {
+  color: transparent;
+  word-break: break-all;
+  pointer-events: none;
+}
+
+.chip-mirror-overlay {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  display: inline-flex;
+  box-sizing: border-box;
+  max-width: 100%;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  padding: 1px 6px 1px 0;
+  border-radius: 4px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font: inherit;
+  line-height: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.chip-icon {
+  flex-shrink: 0;
+  color: #1d4ed8;
+  font-size: 12px;
+}
+
+.chip-label {
+  overflow: hidden;
+  color: #1d4ed8;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

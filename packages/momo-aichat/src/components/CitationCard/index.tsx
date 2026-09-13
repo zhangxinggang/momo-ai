@@ -6,13 +6,13 @@ import MarkdownRenderer from '../MarkdownRenderer';
 
 interface IProps {
   citation: {
-    chunkId: number;
-    docId: number;
+    chunkId: string;
+    docId: string;
     idx: number;
     title?: string;
     preview?: string;
     score?: number;
-    collectionId?: number;
+    collectionId?: string;
   };
   index: number;
 }

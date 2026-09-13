@@ -1,7 +1,13 @@
 import { chatCompletion } from './chat';
 import { isImageGenerationConfig } from './image/capabilities';
 import { testImageGeneration } from './image/test';
-import { resolveAIProtocol } from './protocol';
+import { createResponseLike, getAITransport } from './internal/transport';
+import {
+  buildEmbeddingEndpointFromBase,
+  buildHeadersForProtocol,
+  resolveAIProtocol,
+  resolveProtocolBase,
+} from './protocol';
 import type {
   IAIConfig,
   IAITestResult,
@@ -9,6 +15,55 @@ import type {
   IMultiModelCompareResult,
   IStreamCallbacks,
 } from './types';
+
+/** Test the OpenAI-compatible embeddings endpoint used by knowledge ingestion. */
+export async function testEmbeddingConnection(config: IAIConfig): Promise<IAITestResult> {
+  const startTime = Date.now();
+  const endpoint = buildEmbeddingEndpointFromBase(resolveProtocolBase(config.apiUrl, 'openai'));
+  try {
+    const headers = buildHeadersForProtocol('openai', config.apiKey);
+    const transport = getAITransport();
+    const response = transport
+      ? createResponseLike(
+          await transport.request({
+            method: 'POST',
+            url: endpoint,
+            headers,
+            body: JSON.stringify({ model: config.model, input: ['AIM embedding connection test'] }),
+          }),
+        )
+      : await fetch(endpoint, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ model: config.model, input: ['AIM embedding connection test'] }),
+        });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${(await response.text()).slice(0, 300)}`);
+    }
+    const body = (await response.json()) as { data?: Array<{ embedding?: number[] }> };
+    const dimension = body.data?.[0]?.embedding?.length ?? 0;
+    if (!dimension) {
+      throw new Error('响应中没有有效的 embedding 向量');
+    }
+    return {
+      id: config.id,
+      success: true,
+      response: `Embedding succeeded (${dimension} dimensions)`,
+      latency: Date.now() - startTime,
+      model: config.model,
+      provider: config.provider,
+    };
+  } catch (error) {
+    return {
+      id: config.id,
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+      latency: Date.now() - startTime,
+      model: config.model,
+      provider: config.provider,
+    };
+  }
+}
 
 /** 测试 AI 配置是否可用 */
 export async function testAIConnection(

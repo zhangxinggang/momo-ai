@@ -1,1 +1,0 @@
-export { KB_SCHEMA_INDEXES, KB_SCHEMA_TABLES, KB_SCHEMA_TRIGGERS } from './schema';

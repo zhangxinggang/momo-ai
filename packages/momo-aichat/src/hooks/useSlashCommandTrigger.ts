@@ -5,6 +5,7 @@ import type {
   ISlashCommandsConfig,
   ISlashInvocation,
 } from '../types/slash-command';
+import { buildSlashInvocationToken } from '../utils/slash-token';
 
 export interface ISlashTriggerMatch {
   query: string;
@@ -17,7 +18,6 @@ interface IUseSlashCommandTriggerOptions {
   selectionStart: number;
   onChange: (value: string) => void;
   onSelectionChange: (next: number) => void;
-  onInvocationChange?: (invocation: ISlashInvocation | undefined) => void;
   slashCommands?: ISlashCommandsConfig;
   currentModel: string;
   workspacePaths: string[];
@@ -28,7 +28,7 @@ interface IUseSlashCommandTriggerOptions {
 export function extractSlashTrigger(value: string, cursor: number): ISlashTriggerMatch | null {
   const safeCursor = Math.max(0, Math.min(cursor, value.length));
   const beforeCursor = value.slice(0, safeCursor);
-  const match = beforeCursor.match(/(?:^|[\s([{，、])\/([a-z0-9_:-]*)$/i);
+  const match = beforeCursor.match(/(?:^|[\s([{，、])\/([\p{L}\p{N}_:-]*)$/iu);
   if (!match) {
     return null;
   }
@@ -37,13 +37,40 @@ export function extractSlashTrigger(value: string, cursor: number): ISlashTrigge
   return { query: match[1] || '', start, end: safeCursor };
 }
 
+/** 把选择结果替换到触发它的 /query 位置，保留前后正文与已有行内资源。 */
+export function insertSlashSelection(
+  value: string,
+  match: ISlashTriggerMatch,
+  item: ISlashCommandItem,
+): { value: string; cursor: number; invocation: ISlashInvocation } {
+  const command = item.command.startsWith('/') ? item.command : '/' + item.command;
+  const invocation: ISlashInvocation = {
+    resourceId: item.resourceId,
+    resourceRevision: item.resourceRevision,
+    command,
+    label: item.label,
+    kind: item.kind,
+    scope: item.scope,
+    category: item.category,
+    tags: item.tags,
+  };
+  const token = buildSlashInvocationToken(invocation);
+  const trailingContent = value.slice(match.end);
+  const separator = trailingContent.length === 0 || !/^\s/.test(trailingContent) ? ' ' : '';
+  const nextValue = value.slice(0, match.start) + token + separator + trailingContent;
+  return {
+    value: nextValue,
+    cursor: match.start + token.length + separator.length,
+    invocation: { ...invocation, token },
+  };
+}
+
 export function useSlashCommandTrigger(options: IUseSlashCommandTriggerOptions) {
   const {
     value,
     selectionStart,
     onChange,
     onSelectionChange,
-    onInvocationChange,
     slashCommands,
     currentModel,
     workspacePaths,
@@ -56,7 +83,6 @@ export function useSlashCommandTrigger(options: IUseSlashCommandTriggerOptions) 
   const [loading, setLoading] = useState(false);
   const [dismissedKey, setDismissedKey] = useState('');
   const requestIdRef = useRef(0);
-  const selectedCommandRef = useRef<{ start: number; command: string } | null>(null);
 
   const enabled = Boolean(slashCommands?.isActive(currentModel));
   const match = useMemo(
@@ -66,18 +92,13 @@ export function useSlashCommandTrigger(options: IUseSlashCommandTriggerOptions) 
   const matchKey = match ? String(match.start) + ':' + match.query : '';
   const visible = Boolean(match && matchKey !== dismissedKey);
 
+  // 选中资源后 match 会消失。此时必须释放上一次的关闭键，否则删除标签后
+  // 再次在同一位置输入 “/” 会被误判为仍处于已关闭状态。
   useEffect(() => {
-    const selected = selectedCommandRef.current;
-    if (!selected) {
-      return;
+    if (!match && dismissedKey) {
+      setDismissedKey('');
     }
-    if (
-      value.slice(selected.start, selected.start + selected.command.length) !== selected.command
-    ) {
-      selectedCommandRef.current = null;
-      onInvocationChange?.(undefined);
-    }
-  }, [onInvocationChange, value]);
+  }, [dismissedKey, match]);
 
   useEffect(() => {
     if (!visible || !match || !slashCommands) {
@@ -104,7 +125,7 @@ export function useSlashCommandTrigger(options: IUseSlashCommandTriggerOptions) 
         .catch(() => {
           if (requestId === requestIdRef.current) {
             setItems([]);
-            setWarning('加载 Agent 资源失败');
+            setWarning('加载技能与命令失败');
           }
         })
         .finally(() => {
@@ -124,22 +145,14 @@ export function useSlashCommandTrigger(options: IUseSlashCommandTriggerOptions) 
       if (!match) {
         return;
       }
-      const command = item.command.startsWith('/') ? item.command : '/' + item.command;
-      const inserted = command + ' ';
-      const nextValue = value.slice(0, match.start) + inserted + value.slice(match.end);
-      onChange(nextValue);
-      onSelectionChange(match.start + inserted.length);
-      selectedCommandRef.current = { start: match.start, command };
-      onInvocationChange?.({
-        resourceId: item.resourceId,
-        resourceRevision: item.resourceRevision,
-        command,
-        kind: item.kind,
-        scope: item.scope,
-      });
+      // token 插入用户当前光标所在位置；它与普通文字和 @ 引用共用同一套
+      // value/surface 映射，因此一条消息可以包含任意多个 Skill/Command。
+      const inserted = insertSlashSelection(value, match, item);
+      onChange(inserted.value);
+      onSelectionChange(inserted.cursor);
       setDismissedKey(matchKey);
     },
-    [match, matchKey, onChange, onInvocationChange, onSelectionChange, value],
+    [match, matchKey, onChange, onSelectionChange, value],
   );
 
   const close = useCallback(() => {
@@ -185,7 +198,8 @@ export function useSlashCommandTrigger(options: IUseSlashCommandTriggerOptions) 
   );
 
   return {
-    open: visible && (loading || Boolean(warning) || items.length > 0),
+    // 保持空结果面板可见，明确告诉用户“没有匹配项”，避免看起来像触发失效。
+    open: visible,
     items,
     selectedIndex,
     setSelectedIndex,

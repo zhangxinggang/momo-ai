@@ -5,8 +5,8 @@ import { isImageGenerationConfig } from '@renderer/services/ai/image/capabilitie
 import { getEnabledWorkspaceContext } from '@renderer/services/workspace/context';
 import { ANSWER_FOCUS_SYSTEM_PROMPT } from '../core/answer-focus-system-prompt';
 import { buildContextPlan } from '../core/context-plan';
+import { retrieveKnowledgeContext } from '../core/knowledge-context';
 import { MERMAID_SYSTEM_PROMPT } from '../core/mermaid-system-prompt';
-import { buildRagContext } from '../core/rag-context';
 import { resolveStreamModelConfig, runChatCompletionStream } from './chat-completion-stream';
 import { runImageGenerationInChat } from './image-chat-stream';
 
@@ -77,7 +77,7 @@ export function createGeneralChatStream(options: IGeneralChatStreamOptions): TCa
 
     try {
       const [rag, workspaceContext, agentRules] = await Promise.all([
-        buildRagContext(messages, streamOptions),
+        retrieveKnowledgeContext(messages, streamOptions),
         options.resolveWorkspaceContext
           ? options.resolveWorkspaceContext(rawQuery)
           : getEnabledWorkspaceContext(rawQuery),
@@ -90,9 +90,9 @@ export function createGeneralChatStream(options: IGeneralChatStreamOptions): TCa
         userPolicy: streamOptions?.user_system_prompt,
         agentRules,
         evidence: [
-          rag.ragSystemPrompt,
-          workspaceContext,
           formatAttachmentEvidence(streamOptions?.attachment_sources),
+          rag.knowledgeSystemPrompt,
+          workspaceContext,
         ],
       });
 

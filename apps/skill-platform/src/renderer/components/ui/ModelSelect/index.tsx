@@ -22,8 +22,8 @@ interface IProps {
   onChange?: (value: string | undefined) => void;
   /** 从模型配置构建选项 */
   models?: IAIModelConfig[];
-  /** chat / image / both */
-  modelType?: 'chat' | 'image' | 'both';
+  /** chat / image / embedding / both */
+  modelType?: 'chat' | 'image' | 'embedding' | 'both';
   /** 额外树形条目 */
   extraTreeItems?: IModelTreeItem[];
   /** 两级分组（分组名 -> 模型列表） */

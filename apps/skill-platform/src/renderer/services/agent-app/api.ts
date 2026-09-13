@@ -60,6 +60,7 @@ export async function prepareAgentAppSubmit(
       content: input.content,
       displayContent: input.displayContent,
       invocation: input.invocation,
+      invocations: input.invocations,
     };
   }
   return api.prepareSubmit(input);

@@ -20,7 +20,12 @@ export function configureElectronBasePaths(options: IConfigureElectronBasePathsO
 }
 
 export const getPackagePath = () => {
-  return path.join(require.resolve('@momo/electron'), '../../');
+  try {
+    return path.join(require.resolve('@momo/electron'), '../../');
+  } catch {
+    // Consumer apps bundle this package, so a runtime node_modules entry is optional.
+    return path.resolve(__dirname, '../..');
+  }
 };
 
 export const getAPPRootPath = () => {

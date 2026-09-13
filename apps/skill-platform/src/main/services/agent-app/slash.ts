@@ -302,12 +302,12 @@ export async function expandAgentAppSlashContent(
   invocation?: { resourceId: string; resourceRevision: string },
 ): Promise<{ content: string; resource: IAgentAppSlashResource } | null> {
   const match = rawContent.trim().match(/^\/([a-z][a-z0-9_:-]*)(?:\s+([\s\S]*))?$/i);
-  if (!match) {
+  if (!match && !invocation?.resourceId) {
     return null;
   }
 
   const resources = await listAgentAppSlashCommands(profile, folderPaths);
-  const command = '/' + match[1].toLowerCase();
+  const command = match ? '/' + match[1].toLowerCase() : '';
   const resource = invocation?.resourceId
     ? resources.find(
         (item) =>
@@ -328,7 +328,10 @@ export async function expandAgentAppSlashContent(
     return null;
   }
 
-  const args = (match[2] || '').trim();
+  // 显式行内选择可位于正文任意位置，此时整段用户要求都作为该资源的参数。
+  const isSelectedCommandAtFront =
+    match && command.toLowerCase() === resource.command.toLowerCase();
+  const args = isSelectedCommandAtFront ? (match?.[2] || '').trim() : rawContent.trim();
   const expandedArgs = body.includes('$ARGUMENTS')
     ? body.replace(/\$ARGUMENTS/g, args)
     : body + (args ? '\n\n用户附加参数：\n' + args : '');

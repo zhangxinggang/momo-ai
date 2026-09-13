@@ -1,10 +1,15 @@
 import { getModelCategory } from '@renderer/components/Settings/ai-workbench/helpers';
 import type { IModelInfo } from '@renderer/services/ai';
-import { getImageScenarioModels, getModelsByType } from '@renderer/services/ai/defaults';
+import {
+  getEmbeddingScenarioModels,
+  getImageScenarioModels,
+  getModelsByType,
+  isEmbeddingCapableModel,
+} from '@renderer/services/ai/defaults';
 import { suggestRemoteModelAsImage } from '@renderer/services/ai/image/backends';
 import type { IAIModelConfig } from '@renderer/types/settings';
 
-export const TYPE_GROUP_ORDER = ['对话', '生图'] as const;
+export const TYPE_GROUP_ORDER = ['对话', '嵌入', '生图'] as const;
 export type EModelTypeGroup = (typeof TYPE_GROUP_ORDER)[number];
 
 export const VENDOR_ORDER = [
@@ -75,17 +80,24 @@ function sortVendors(vendors: string[]): string[] {
 }
 
 function resolveRemoteModelTypeGroup(model: IModelInfo): EModelTypeGroup {
+  if (isEmbeddingCapableModel({ type: 'chat', model: model.id, name: model.name })) {
+    return '嵌入';
+  }
   return suggestRemoteModelAsImage(model.id, model.owned_by) ? '生图' : '对话';
 }
 
 /** 从已配置模型构建树形条目 */
 export function buildModelTreeItemsFromConfigs(
   models: IAIModelConfig[],
-  modelType: 'chat' | 'image' | 'both' = 'both',
+  modelType: 'chat' | 'image' | 'embedding' | 'both' = 'both',
 ): IModelTreeItem[] {
   const items: IModelTreeItem[] = [];
-  const chatModels = modelType === 'image' ? [] : getModelsByType(models, 'chat');
-  const imageModels = modelType === 'chat' ? [] : getImageScenarioModels(models);
+  const chatModels =
+    modelType === 'both' || modelType === 'chat' ? getModelsByType(models, 'chat') : [];
+  const embeddingModels =
+    modelType === 'both' || modelType === 'embedding' ? getEmbeddingScenarioModels(models) : [];
+  const imageModels =
+    modelType === 'both' || modelType === 'image' ? getImageScenarioModels(models) : [];
 
   for (const model of chatModels) {
     items.push({
@@ -102,6 +114,15 @@ export function buildModelTreeItemsFromConfigs(
       label: model.name?.trim() || model.model,
       vendor: getModelCategory(model),
       typeGroup: '生图',
+    });
+  }
+
+  for (const model of embeddingModels) {
+    items.push({
+      id: model.id,
+      label: model.name?.trim() || model.model,
+      vendor: getModelCategory(model),
+      typeGroup: '嵌入',
     });
   }
 

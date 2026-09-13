@@ -690,7 +690,7 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
         <div className='bg-sidebar-background/85 relative flex min-w-0 flex-1 flex-col'>
           {viewMode === 'prompt' ? (
             <>
-              <div className='mt-2 flex min-h-0 flex-1 flex-col overflow-hidden'>
+              <div className='mt-2 flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-4'>
                 <MomoTreeToolbar
                   visible={!isCollapsed}
                   sectionLabel={'目录'}
@@ -706,14 +706,14 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
                 />
                 {promptRootCreate.createModal}
 
-                <div className='scrollbar-hide flex-1 overflow-y-auto overflow-x-hidden px-3 pb-4'>
+                <div className='scrollbar-hide flex-1 overflow-y-auto overflow-x-hidden'>
                   <PromptTreePanel />
                 </div>
               </div>
             </>
           ) : viewMode === 'kb' ? (
             <>
-              <div className='mt-2 flex min-h-0 flex-1 flex-col overflow-hidden'>
+              <div className='mt-2 flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-4'>
                 <MomoTreeToolbar
                   visible={!isCollapsed}
                   sectionLabel={'知识库'}
@@ -724,7 +724,7 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
                   createItemTitle={'新建知识库'}
                   onCreateItem={() => setKbCreateModalOpen(true)}
                 />
-                <div className='scrollbar-hide flex-1 overflow-y-auto overflow-x-hidden px-3 pb-4'>
+                <div className='scrollbar-hide flex-1 overflow-y-auto overflow-x-hidden'>
                   {!isCollapsed && (
                     <KnowledgePanel layout='module' collapsed={isCollapsed} hideHeader />
                   )}
@@ -747,7 +747,7 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
             </>
           ) : viewMode === 'workflow' ? (
             <>
-              <div className='mt-2 flex min-h-0 flex-1 flex-col overflow-hidden'>
+              <div className='mt-2 flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-4'>
                 <MomoTreeToolbar
                   visible={!isCollapsed}
                   sectionLabel={'工作流'}
@@ -764,14 +764,14 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
                 {workflowRootCreate.createModal}
                 <WorkflowImportConflictModal {...workflowConflictModalProps} />
 
-                <div className='scrollbar-hide flex-1 overflow-y-auto overflow-x-hidden px-3 pb-4'>
+                <div className='scrollbar-hide flex-1 overflow-y-auto overflow-x-hidden'>
                   <WorkflowTreePanel />
                 </div>
               </div>
             </>
           ) : viewMode === 'note' ? (
             <>
-              <div className='mt-2 flex min-h-0 flex-1 flex-col overflow-hidden'>
+              <div className='mt-2 flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-4'>
                 <MomoTreeToolbar
                   visible={!isCollapsed}
                   sectionLabel={'目录'}
@@ -786,7 +786,7 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
                 />
                 {noteRootCreate.createModal}
 
-                <div className='scrollbar-hide flex-1 overflow-y-auto overflow-x-hidden px-3 pb-4'>
+                <div className='scrollbar-hide flex-1 overflow-y-auto overflow-x-hidden'>
                   <NoteTreePanel />
                 </div>
               </div>

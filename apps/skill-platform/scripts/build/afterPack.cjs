@@ -58,4 +58,7 @@ module.exports = async function (context) {
     }
     await fs.promises.cp(item.source, item.dest, { recursive: true });
   }
+
+  const verifyKnowledgeNative = require('./verify-knowledge-native.cjs');
+  await verifyKnowledgeNative(context);
 };

@@ -1,8 +1,8 @@
-import type { IKbDocument } from '@/types/modules/kb';
+import type { IKbChunkItem, IKbDocument } from '@/types/modules/kb';
 import {
   kbDeleteChunks,
+  kbEditChunk,
   kbListChunks,
-  kbUpdateChunk,
   type IKbEmbeddingOptions,
 } from '@renderer/services/kb';
 import { App, Button, Input, Modal, Popconfirm, Table } from 'antd';
@@ -14,22 +14,26 @@ interface IProps {
   document: IKbDocument | null;
   onClose: () => void;
   kbEmbeddingOptions: IKbEmbeddingOptions;
-  onRetryIngest?: (docId: number) => void;
+  onRetryIngest?: (docId: string) => void;
 }
 
 /** 文档切块列表：分页、搜索、编辑、删除 */
-export function KnowledgeChunkPanel({ open, document, onClose, onRetryIngest }: IProps) {
+export function KnowledgeChunkPanel({
+  open,
+  document,
+  onClose,
+  kbEmbeddingOptions,
+  onRetryIngest,
+}: IProps) {
   const { message } = App.useApp();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [keyword, setKeyword] = useState('');
-  const [items, setItems] = useState<
-    { chunkId: number; docId: number; idx: number; content: string }[]
-  >([]);
+  const [items, setItems] = useState<IKbChunkItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
 
   const load = useCallback(async () => {
@@ -59,7 +63,7 @@ export function KnowledgeChunkPanel({ open, document, onClose, onRetryIngest }: 
       return;
     }
     try {
-      await kbUpdateChunk(editingId, editingContent);
+      await kbEditChunk(editingId, editingContent, kbEmbeddingOptions);
       message.success('已保存');
       setEditingId(null);
       await load();
@@ -104,7 +108,7 @@ export function KnowledgeChunkPanel({ open, document, onClose, onRetryIngest }: 
             }}
           />
           <Button onClick={() => void load()}>{'搜索'}</Button>
-          {document?.status === 'error' && onRetryIngest ? (
+          {['failed', 'interrupted'].includes(document?.status || '') && onRetryIngest ? (
             <Button type='primary' onClick={() => onRetryIngest(document.docId)}>
               {'重新入库'}
             </Button>
@@ -122,7 +126,7 @@ export function KnowledgeChunkPanel({ open, document, onClose, onRetryIngest }: 
             dataSource={items}
             rowSelection={{
               selectedRowKeys,
-              onChange: (keys) => setSelectedRowKeys(keys as number[]),
+              onChange: (keys) => setSelectedRowKeys(keys.map(String)),
             }}
             pagination={{
               current: page,

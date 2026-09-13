@@ -12,6 +12,8 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
       '@renderer': path.resolve(__dirname, 'src/renderer'),
       '@preload': path.resolve(__dirname, 'src/preload'),
+      '~~': path.resolve(__dirname, '../../packages/momo-markdown/src'),
+      '~': path.resolve(__dirname, '../../packages/momo-markdown/src/components/MdEditor'),
     },
   },
 });

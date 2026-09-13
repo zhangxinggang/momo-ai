@@ -137,6 +137,39 @@
     color: hsl(var(--muted-foreground));
   }
 
+  &-embedding-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    margin-top: 6px;
+    padding: 3px 8px;
+    border: 1px solid;
+    border-radius: 999px;
+    font-size: 12px;
+    line-height: 1.4;
+
+    &--ready {
+      border-color: hsl(145 65% 42% / 0.28);
+      background: hsl(145 65% 42% / 0.08);
+      color: hsl(145 55% 36%);
+    }
+
+    &--missing {
+      border-color: hsl(38 92% 50% / 0.32);
+      background: hsl(38 92% 50% / 0.09);
+      color: hsl(30 80% 38%);
+    }
+  }
+
+  &-embedding-dot {
+    width: 6px;
+    height: 6px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: currentcolor;
+  }
+
   &-toolbar {
     display: flex;
     flex-wrap: wrap;

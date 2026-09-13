@@ -19,7 +19,7 @@ export interface IChatAdvancedSettingsSnapshot {
   topP?: number;
   systemPrompt?: string;
   kbEnabled?: boolean;
-  kbCollectionId?: number;
+  kbCollectionId?: string;
 }
 
 /** 根据前缀生成隔离的持久化键名 */

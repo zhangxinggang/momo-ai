@@ -1,4 +1,10 @@
-import { MomoTree, countNonFolderDescendants, type IMomoTreeAdapter } from '@momo/tree';
+import { LoadingOutlined } from '@ant-design/icons';
+import {
+  MomoTree,
+  countNonFolderDescendants,
+  type IMomoTreeAdapter,
+  type IMomoTreeNode,
+} from '@momo/tree';
 import { useCustomToolStore, useUIStore } from '@renderer/store';
 import { useCallback, useMemo } from 'react';
 
@@ -17,11 +23,20 @@ export function CustomToolTreePanel() {
   const deleteNode = useCustomToolStore((state) => state.deleteNode);
   const moveNode = useCustomToolStore((state) => state.moveNode);
   const enterEditMode = useCustomToolStore((state) => state.enterEditMode);
+  const generationTasks = useCustomToolStore((state) => state.generationTasks);
   const setActiveToolboxToolKey = useUIStore((state) => state.setActiveToolboxToolKey);
 
   const clearSystemSelection = useCallback(() => {
     setActiveToolboxToolKey('');
   }, [setActiveToolboxToolKey]);
+
+  const renderNodeExtra = useCallback(
+    (node: IMomoTreeNode) =>
+      generationTasks[node.id]?.status === 'generating' ? (
+        <LoadingOutlined spin title='正在生成' aria-label='正在生成' />
+      ) : null,
+    [generationTasks],
+  );
 
   const adapter = useMemo<IMomoTreeAdapter>(
     () => ({
@@ -88,6 +103,7 @@ export function CustomToolTreePanel() {
       rootLabel='根目录'
       searchQuery={treeSearchQuery}
       emptyDescription='暂无自定义工具，请新建目录或工具'
+      renderNodeExtra={renderNodeExtra}
     />
   );
 }

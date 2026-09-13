@@ -78,6 +78,7 @@ export type {
   ISlashCommandsConfig,
   ISlashCommandsListContext,
   ISlashCommandsListResult,
+  ISlashInvocation,
 } from './types/slash-command';
 export type { IChatWorkspaceConfig, IChatWorkspacePreset } from './types/workspace';
 export {

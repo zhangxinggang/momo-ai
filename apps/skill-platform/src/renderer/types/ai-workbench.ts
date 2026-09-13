@@ -11,7 +11,7 @@ export type IProviderOption = {
   group: string;
 };
 
-export type EModelType = 'chat' | 'image';
+export type EModelType = 'chat' | 'image' | 'embedding';
 
 export type IModelFormState = {
   type: EModelType;

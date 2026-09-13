@@ -58,6 +58,14 @@
         margin-inline-start: -1.5em;
         margin-inline-end: 0.1em;
         line-height: inherit;
+
+        // Markdown task 插件只移除 `[x]` 三个字符，会在 checkbox 与正文之间
+        // 保留源码中的一个空格；TipTap 会吃掉这个空格。补回同字体的空格，
+        // 再叠加主题原有的 0.1em margin，使两种模式的水平间距完全一致。
+        &::after {
+          content: ' ';
+          white-space: pre;
+        }
       }
 
       > div {
@@ -126,6 +134,19 @@
       width: 4px;
       background-color: var(--md-border-active-color);
       pointer-events: none;
+    }
+  }
+
+  // markdown-it-image-figures 与 PreviewImage 共享 figure DOM。TipTap 选中
+  // 图片时只增加 ProseMirror-selectednode，不改变排版尺寸。
+  figure:has(> img) {
+    &.ProseMirror-selectednode {
+      outline: 2px solid var(--md-border-active-color);
+      outline-offset: 2px;
+    }
+
+    > img.md-zoom {
+      display: block;
     }
   }
 

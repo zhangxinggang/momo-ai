@@ -209,6 +209,13 @@ export function ToolboxPanel() {
                     isToolActive && styles['toolbox-menu-root--active'],
                   )}
                   onClick={() => handleSelectTool(tool.key, tool.mode)}>
+                  <span
+                    className={clsx(
+                      styles['toolbox-menu-root-toggle'],
+                      styles['toolbox-menu-root-toggle--placeholder'],
+                    )}
+                    aria-hidden='true'
+                  />
                   <ToolboxMenuIcon icon={tool.icon} className={styles['toolbox-menu-icon']} />
                   <span className={styles['toolbox-menu-root-label']}>{tool.title}</span>
                 </button>

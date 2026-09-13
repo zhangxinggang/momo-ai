@@ -50,7 +50,7 @@ export interface IProps {
   aiModels: IAIModelConfig[];
   workspaceNodeName: string | null;
   executionModel?: string;
-  kbCollectionId?: number;
+  kbCollectionId?: string;
   nodeWorkspacePaths?: string[];
   previousNodeRunResult: { nodeName: string; content: string } | null;
   previousParallelResults?: IParallelPreviousResultItem[] | null;
@@ -170,7 +170,7 @@ function WorkflowChatBridge({
   );
 }
 
-function WorkflowChatKbBootstrap({ kbCollectionId }: { kbCollectionId?: number }) {
+function WorkflowChatKbBootstrap({ kbCollectionId }: { kbCollectionId?: string }) {
   const { setKbEnabled, setKbCollectionId } = useChatContext();
 
   useEffect(() => {

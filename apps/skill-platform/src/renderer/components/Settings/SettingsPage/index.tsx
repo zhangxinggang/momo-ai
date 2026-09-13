@@ -12,7 +12,7 @@ import {
   SparklesIcon,
 } from 'lucide-react';
 import type { ComponentType, ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import badgeStyles from '../SettingBadge/index.module.less';
 import { AboutSettings } from '../sections/AboutSettings';
@@ -26,6 +26,7 @@ const { Sider, Content } = Layout;
 
 interface IProps {
   onBack: () => void;
+  initialSection?: string;
 }
 
 type SettingsMenuItem = {
@@ -44,9 +45,15 @@ const DESKTOP_SETTINGS_MENU: SettingsMenuItem[] = [
   { id: 'about', label: '关于', icon: InfoIcon },
 ];
 
-export function SettingsPage({ onBack }: IProps) {
+export function SettingsPage({ onBack, initialSection = 'general' }: IProps) {
   const settingsMenu = DESKTOP_SETTINGS_MENU;
-  const [activeSection, setActiveSection] = useState('general');
+  const [activeSection, setActiveSection] = useState(initialSection);
+
+  useEffect(() => {
+    if (DESKTOP_SETTINGS_MENU.some((item) => item.id === initialSection)) {
+      setActiveSection(initialSection);
+    }
+  }, [initialSection]);
   const hasNewVersion = useOnlineConfStore((state) => {
     const remoteVersion = state.config?.update?.version?.trim();
     if (!remoteVersion) {

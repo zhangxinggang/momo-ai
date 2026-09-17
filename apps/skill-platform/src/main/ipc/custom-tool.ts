@@ -42,9 +42,11 @@ export function registerCustomToolIPC(): void {
       _event,
       toolPath: string,
       files: ICustomToolGeneratedFile[],
-      options?: { activate?: boolean },
+      options?: { activate?: boolean; requireCallable?: boolean },
     ) => {
-      customToolWorkspaceService.writeGeneratedFiles(toolPath, files);
+      customToolWorkspaceService.writeGeneratedFiles(toolPath, files, {
+        requireCallable: options?.requireCallable,
+      });
       return options?.activate === false ? null : customToolRuntimeService.activate(toolPath);
     },
   );

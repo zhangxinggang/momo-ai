@@ -103,6 +103,7 @@ export function ModelSelect({
 
   return (
     <Select
+      variant={variant === 'borderless' ? 'borderless' : 'outlined'}
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);

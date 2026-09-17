@@ -241,7 +241,7 @@ export function isParallelGroupOutputReady(
   return children.every((child) => {
     const hasRunResult = !!runResults[child.nodeId]?.trim();
     const hasFiles = nodeHasFiles[child.nodeId] ?? false;
-    return hasRunResult && hasFiles;
+    return hasRunResult || hasFiles;
   });
 }
 
@@ -351,6 +351,33 @@ function validateMacroChain(nodes: Node[], edges: Edge[]): IWorkflowGraphValidat
   return { ok: true };
 }
 
+function validateWebpagePlacement(nodes: Node[], edges: Edge[]): IWorkflowGraphValidation {
+  const webpageNodes = nodes.filter(isWebpageNode);
+  if (webpageNodes.length === 0) {
+    return { ok: true };
+  }
+
+  const macroNodes = getMacroNodes(nodes);
+  const macroNodeIds = new Set(macroNodes.map((node) => node.id));
+  const incomingMacroNodeIds = new Set(
+    edges
+      .filter((edge) => macroNodeIds.has(edge.source) && macroNodeIds.has(edge.target))
+      .map((edge) => edge.target),
+  );
+  const firstMacroNode = macroNodes.find((node) => !incomingMacroNodeIds.has(node.id));
+  if (!firstMacroNode) {
+    return { ok: false, message: '请将节点进行串联' };
+  }
+
+  const webpageOutsideFirstStep = webpageNodes.some((node) => {
+    const macroNodeId = node.parentId ?? node.id;
+    return macroNodeId !== firstMacroNode.id;
+  });
+  return webpageOutsideFirstStep
+    ? { ok: false, message: '网页节点只能作为工作流的第一个节点' }
+    : { ok: true };
+}
+
 /** 校验工作流图（含并行容器） */
 export function validateWorkflowGraph(nodes: Node[], edges: Edge[]): IWorkflowGraphValidation {
   const parallelValidation = validateParallelStructure(nodes);
@@ -363,7 +390,12 @@ export function validateWorkflowGraph(nodes: Node[], edges: Edge[]): IWorkflowGr
     return childEdgeValidation;
   }
 
-  return validateMacroChain(nodes, edges);
+  const chainValidation = validateMacroChain(nodes, edges);
+  if (!chainValidation.ok) {
+    return chainValidation;
+  }
+
+  return validateWebpagePlacement(nodes, edges);
 }
 
 /**

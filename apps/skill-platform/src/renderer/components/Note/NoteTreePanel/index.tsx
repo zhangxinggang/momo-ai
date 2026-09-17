@@ -1,8 +1,10 @@
 import { MomoTree, countNonFolderDescendants, type IMomoTreeAdapter } from '@momo/tree';
+import { useConfirmLeaveAiChat } from '@renderer/hooks/useConfirmLeaveAiChat';
 import { useNoteStore } from '@renderer/store';
 import { useMemo } from 'react';
 
 export function NoteTreePanel() {
+  const confirmLeaveAiChat = useConfirmLeaveAiChat();
   const treeData = useNoteStore((state) => state.treeData);
   const treeSearchQuery = useNoteStore((state) => state.treeSearchQuery);
   const selectedId = useNoteStore((state) => state.selectedId);
@@ -37,7 +39,16 @@ export function NoteTreePanel() {
       expandedKeys={expandedKeys}
       onExpandedChange={setExpandedKeys}
       onSelectFolder={selectFolder}
-      onSelectFile={(fileId) => void selectFile(fileId)}
+      onSelectFile={(fileId) => {
+        if (fileId === selectedId) {
+          return;
+        }
+        void (async () => {
+          if (await confirmLeaveAiChat({ scope: 'note' })) {
+            await selectFile(fileId);
+          }
+        })();
+      }}
       adapter={adapter}
       labels={{
         createFolder: '新增目录',

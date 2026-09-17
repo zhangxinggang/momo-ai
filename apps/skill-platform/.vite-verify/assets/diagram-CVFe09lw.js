@@ -1,5 +1,213 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./mermaid.core-Cs_8gTP_.js","./markdown-vendor-DldLOD9R.js","./ui-vendor-C-FKu2uc.js","./markdown-it-vendor-DL4wSELR.js","./markdown-vendor-CmuYMs8x.css","./browser-index-L7D5YRLI.js"])))=>i.map(i=>d[i]);
-import{_ as p}from"./markdown-vendor-DldLOD9R.js";import{P as v}from"./panzoom.es-DqQtegHv.js";import"./ui-vendor-C-FKu2uc.js";import"./markdown-it-vendor-DL4wSELR.js";const f=t=>t.defaultView||(typeof window<"u"?window:void 0),S=(t,e)=>e==="dark"?!0:e==="light"?!1:!!f(t)?.matchMedia?.("(prefers-color-scheme: dark)").matches,h=(t,e,i)=>{const s=t.createElement(e);return i&&(s.className=i),s},y=(t,e)=>{const i=e,s=i.endsWith("/")?i:`${i}/`;try{return new URL(s,t.baseURI).href}catch{return s}},b=(t,e)=>{const i=new DOMParser().parseFromString(e,"image/svg+xml"),s=i.querySelector("parsererror");if(s)throw new Error(s.textContent||"SVG 解析失败");i.querySelectorAll("script,iframe,object,embed").forEach(n=>n.remove()),i.querySelectorAll("*").forEach(n=>{for(const r of Array.from(n.attributes))/^on/i.test(r.name)&&n.removeAttribute(r.name)});const u=i.documentElement;return t.importNode(u,!0)},E=async(t,e,i)=>{const u=(await p(()=>import("./mermaid.core-Cs_8gTP_.js").then(o=>o.aJ),__vite__mapDeps([0,1,2,3,4]),import.meta.url)).default,n=`file-viewer-mermaid-${Date.now()}-${Math.random().toString(36).slice(2)}`;u.initialize({startOnLoad:!1,securityLevel:"strict",theme:S(t,i)?"dark":"default"});const r=await u.render(n,e);return b(t,r.svg)},m=(t,e,i,s,u,n="500")=>{const r=t.createElementNS("http://www.w3.org/2000/svg","tspan");r.setAttribute("x",String(s)),r.setAttribute("dy",u),r.setAttribute("font-weight",n),r.textContent=i,e.appendChild(r)},g=(t,e,i)=>{const n=t.createElementNS("http://www.w3.org/2000/svg","svg");n.setAttribute("viewBox","0 0 1100 720"),n.setAttribute("width",String(1100)),n.setAttribute("height",String(720));const r=t.createElementNS("http://www.w3.org/2000/svg","rect");r.setAttribute("width","100%"),r.setAttribute("height","100%"),r.setAttribute("rx","28"),r.setAttribute("fill","#f8fbff"),n.appendChild(r);const o=t.createElementNS("http://www.w3.org/2000/svg","rect");o.setAttribute("x","42"),o.setAttribute("y","42"),o.setAttribute("width",String(1016)),o.setAttribute("height",String(636)),o.setAttribute("rx","22"),o.setAttribute("fill","#ffffff"),o.setAttribute("stroke","#cbd5e1"),n.appendChild(o);const a=t.createElementNS("http://www.w3.org/2000/svg","text");a.setAttribute("x","74"),a.setAttribute("y","92"),a.setAttribute("fill","#0f766e"),a.setAttribute("font-family","Inter, Arial, sans-serif"),a.setAttribute("font-size","24"),a.setAttribute("font-weight","800"),a.textContent="PlantUML source preview",n.appendChild(a);const l=t.createElementNS("http://www.w3.org/2000/svg","text");l.setAttribute("x","74"),l.setAttribute("y","128"),l.setAttribute("fill","#64748b"),l.setAttribute("font-family","Inter, Arial, sans-serif"),l.setAttribute("font-size","15"),l.textContent=i,n.appendChild(l);const c=t.createElementNS("http://www.w3.org/2000/svg","text");c.setAttribute("x","74"),c.setAttribute("y","172"),c.setAttribute("fill","#172033"),c.setAttribute("font-family","ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"),c.setAttribute("font-size","16"),c.setAttribute("xml:space","preserve");const w=e.replace(/\r\n?/g,`
-`).split(`
-`).slice(0,26);return w.forEach((d,A)=>{m(t,c,d.slice(0,110),74,A===0?"0":"24",/^\s*@/.test(d)?"800":"500")}),w.length<e.split(`
-`).length&&m(t,c,"... truncated for preview ...",74,"24","700"),n.appendChild(c),n},x=async(t,e,i)=>{if(!i?.plantumlServerUrl)return g(t,e,"Offline mode is active. Configure options.drawing.plantumlServerUrl for server-rendered PlantUML SVG.");const{encode:s}=await p(async()=>{const{encode:a}=await import("./browser-index-L7D5YRLI.js").then(l=>l.b);return{encode:a}},__vite__mapDeps([5,3,2,1,4]),import.meta.url),u=`${y(t,i.plantumlServerUrl)}${s(e)}`,n=f(t),r=new AbortController,o=n?.setTimeout(()=>r.abort(),Math.max(1e3,i?.plantumlTimeoutMs||8e3));try{const a=await fetch(u,{signal:r.signal});if(!a.ok)throw new Error(`PlantUML SVG 渲染失败：${a.status}`);return b(t,await a.text())}catch(a){if(a instanceof DOMException&&a.name==="AbortError")throw a;return g(t,e,"Configure options.drawing.plantumlServerUrl for full PlantUML SVG rendering.")}finally{o!==void 0&&n?.clearTimeout(o)}},M=(t,e)=>{t.classList.add("drawing-svg","drawing-diagram-svg"),t.setAttribute("role","img"),t.setAttribute("aria-label",`${e} diagram preview`),!t.getAttribute("width")&&t.viewBox.baseVal.width&&t.setAttribute("width",String(Math.ceil(t.viewBox.baseVal.width))),!t.getAttribute("height")&&t.viewBox.baseVal.height&&t.setAttribute("height",String(Math.ceil(t.viewBox.baseVal.height)))},z=async({documentRef:t,text:e,target:i,kind:s,options:u,theme:n})=>{const r=h(t,"div","drawing-diagram-shell"),o=h(t,"div","drawing-diagram-pan");r.appendChild(o),i.replaceChildren(r);const a=s==="mermaid"?await E(t,e,n):await x(t,e,u);M(a,s),o.replaceChildren(a);const l=v(o,{minScale:.4,maxScale:4,contain:"outside",canvas:!0}),c=r.parentElement||r,w=d=>{!d.ctrlKey&&!d.metaKey||(d.preventDefault(),l.zoomWithWheel(d))};return c.addEventListener("wheel",w,{passive:!1}),{setZoom(d){l.zoom(d,{animate:!0})},reset(){l.reset({animate:!0})},getScale(){return l.getScale()},destroy(){c.removeEventListener("wheel",w),l.destroy()}}};export{z as renderDiagram};
+const __vite__mapDeps = (
+  i,
+  m = __vite__mapDeps,
+  d = m.f ||
+    (m.f = [
+      './mermaid.core-Cs_8gTP_.js',
+      './markdown-vendor-DldLOD9R.js',
+      './ui-vendor-C-FKu2uc.js',
+      './markdown-it-vendor-DL4wSELR.js',
+      './markdown-vendor-CmuYMs8x.css',
+      './browser-index-L7D5YRLI.js',
+    ]),
+) => i.map((i) => d[i]);
+import './markdown-it-vendor-DL4wSELR.js';
+import { _ as p } from './markdown-vendor-DldLOD9R.js';
+import { P as v } from './panzoom.es-DqQtegHv.js';
+import './ui-vendor-C-FKu2uc.js';
+const f = (t) => t.defaultView || (typeof window < 'u' ? window : void 0),
+  S = (t, e) =>
+    e === 'dark'
+      ? !0
+      : e === 'light'
+        ? !1
+        : !!f(t)?.matchMedia?.('(prefers-color-scheme: dark)').matches,
+  h = (t, e, i) => {
+    const s = t.createElement(e);
+    return (i && (s.className = i), s);
+  },
+  y = (t, e) => {
+    const i = e,
+      s = i.endsWith('/') ? i : `${i}/`;
+    try {
+      return new URL(s, t.baseURI).href;
+    } catch {
+      return s;
+    }
+  },
+  b = (t, e) => {
+    const i = new DOMParser().parseFromString(e, 'image/svg+xml'),
+      s = i.querySelector('parsererror');
+    if (s) throw new Error(s.textContent || 'SVG 解析失败');
+    (i.querySelectorAll('script,iframe,object,embed').forEach((n) => n.remove()),
+      i.querySelectorAll('*').forEach((n) => {
+        for (const r of Array.from(n.attributes)) /^on/i.test(r.name) && n.removeAttribute(r.name);
+      }));
+    const u = i.documentElement;
+    return t.importNode(u, !0);
+  },
+  E = async (t, e, i) => {
+    const u = (
+        await p(
+          () => import('./mermaid.core-Cs_8gTP_.js').then((o) => o.aJ),
+          __vite__mapDeps([0, 1, 2, 3, 4]),
+          import.meta.url,
+        )
+      ).default,
+      n = `file-viewer-mermaid-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    u.initialize({ startOnLoad: !1, securityLevel: 'strict', theme: S(t, i) ? 'dark' : 'default' });
+    const r = await u.render(n, e);
+    return b(t, r.svg);
+  },
+  m = (t, e, i, s, u, n = '500') => {
+    const r = t.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+    (r.setAttribute('x', String(s)),
+      r.setAttribute('dy', u),
+      r.setAttribute('font-weight', n),
+      (r.textContent = i),
+      e.appendChild(r));
+  },
+  g = (t, e, i) => {
+    const n = t.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    (n.setAttribute('viewBox', '0 0 1100 720'),
+      n.setAttribute('width', String(1100)),
+      n.setAttribute('height', String(720)));
+    const r = t.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    (r.setAttribute('width', '100%'),
+      r.setAttribute('height', '100%'),
+      r.setAttribute('rx', '28'),
+      r.setAttribute('fill', '#f8fbff'),
+      n.appendChild(r));
+    const o = t.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    (o.setAttribute('x', '42'),
+      o.setAttribute('y', '42'),
+      o.setAttribute('width', String(1016)),
+      o.setAttribute('height', String(636)),
+      o.setAttribute('rx', '22'),
+      o.setAttribute('fill', '#ffffff'),
+      o.setAttribute('stroke', '#cbd5e1'),
+      n.appendChild(o));
+    const a = t.createElementNS('http://www.w3.org/2000/svg', 'text');
+    (a.setAttribute('x', '74'),
+      a.setAttribute('y', '92'),
+      a.setAttribute('fill', '#0f766e'),
+      a.setAttribute('font-family', 'Inter, Arial, sans-serif'),
+      a.setAttribute('font-size', '24'),
+      a.setAttribute('font-weight', '800'),
+      (a.textContent = 'PlantUML source preview'),
+      n.appendChild(a));
+    const l = t.createElementNS('http://www.w3.org/2000/svg', 'text');
+    (l.setAttribute('x', '74'),
+      l.setAttribute('y', '128'),
+      l.setAttribute('fill', '#64748b'),
+      l.setAttribute('font-family', 'Inter, Arial, sans-serif'),
+      l.setAttribute('font-size', '15'),
+      (l.textContent = i),
+      n.appendChild(l));
+    const c = t.createElementNS('http://www.w3.org/2000/svg', 'text');
+    (c.setAttribute('x', '74'),
+      c.setAttribute('y', '172'),
+      c.setAttribute('fill', '#172033'),
+      c.setAttribute(
+        'font-family',
+        'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+      ),
+      c.setAttribute('font-size', '16'),
+      c.setAttribute('xml:space', 'preserve'));
+    const w = e
+      .replace(
+        /\r\n?/g,
+        `
+`,
+      )
+      .split(
+        `
+`,
+      )
+      .slice(0, 26);
+    return (
+      w.forEach((d, A) => {
+        m(t, c, d.slice(0, 110), 74, A === 0 ? '0' : '24', /^\s*@/.test(d) ? '800' : '500');
+      }),
+      w.length <
+        e.split(`
+`).length && m(t, c, '... truncated for preview ...', 74, '24', '700'),
+      n.appendChild(c),
+      n
+    );
+  },
+  x = async (t, e, i) => {
+    if (!i?.plantumlServerUrl)
+      return g(
+        t,
+        e,
+        'Offline mode is active. Configure options.drawing.plantumlServerUrl for server-rendered PlantUML SVG.',
+      );
+    const { encode: s } = await p(
+        async () => {
+          const { encode: a } = await import('./browser-index-L7D5YRLI.js').then((l) => l.b);
+          return { encode: a };
+        },
+        __vite__mapDeps([5, 3, 2, 1, 4]),
+        import.meta.url,
+      ),
+      u = `${y(t, i.plantumlServerUrl)}${s(e)}`,
+      n = f(t),
+      r = new AbortController(),
+      o = n?.setTimeout(() => r.abort(), Math.max(1e3, i?.plantumlTimeoutMs || 8e3));
+    try {
+      const a = await fetch(u, { signal: r.signal });
+      if (!a.ok) throw new Error(`PlantUML SVG 渲染失败：${a.status}`);
+      return b(t, await a.text());
+    } catch (a) {
+      if (a instanceof DOMException && a.name === 'AbortError') throw a;
+      return g(
+        t,
+        e,
+        'Configure options.drawing.plantumlServerUrl for full PlantUML SVG rendering.',
+      );
+    } finally {
+      o !== void 0 && n?.clearTimeout(o);
+    }
+  },
+  M = (t, e) => {
+    (t.classList.add('drawing-svg', 'drawing-diagram-svg'),
+      t.setAttribute('role', 'img'),
+      t.setAttribute('aria-label', `${e} diagram preview`),
+      !t.getAttribute('width') &&
+        t.viewBox.baseVal.width &&
+        t.setAttribute('width', String(Math.ceil(t.viewBox.baseVal.width))),
+      !t.getAttribute('height') &&
+        t.viewBox.baseVal.height &&
+        t.setAttribute('height', String(Math.ceil(t.viewBox.baseVal.height))));
+  },
+  z = async ({ documentRef: t, text: e, target: i, kind: s, options: u, theme: n }) => {
+    const r = h(t, 'div', 'drawing-diagram-shell'),
+      o = h(t, 'div', 'drawing-diagram-pan');
+    (r.appendChild(o), i.replaceChildren(r));
+    const a = s === 'mermaid' ? await E(t, e, n) : await x(t, e, u);
+    (M(a, s), o.replaceChildren(a));
+    const l = v(o, { minScale: 0.4, maxScale: 4, contain: 'outside', canvas: !0 }),
+      c = r.parentElement || r,
+      w = (d) => {
+        (!d.ctrlKey && !d.metaKey) || (d.preventDefault(), l.zoomWithWheel(d));
+      };
+    return (
+      c.addEventListener('wheel', w, { passive: !1 }),
+      {
+        setZoom(d) {
+          l.zoom(d, { animate: !0 });
+        },
+        reset() {
+          l.reset({ animate: !0 });
+        },
+        getScale() {
+          return l.getScale();
+        },
+        destroy() {
+          (c.removeEventListener('wheel', w), l.destroy());
+        },
+      }
+    );
+  };
+export { z as renderDiagram };

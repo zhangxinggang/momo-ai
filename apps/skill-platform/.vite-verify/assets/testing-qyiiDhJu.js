@@ -1,1 +1,160 @@
-import{bg as p,bh as l,bi as b,bj as w,bk as h,bl as y,bm as v,bn as T,bo as k}from"./index-C2avURFS.js";async function D(e,i){const o=Date.now(),s=i||"A cute cat sitting on a windowsill";try{const a=(await p({...e,imageParams:void 0},s,{n:1})).data[0];return{success:!0,imageUrl:a.url,imageBase64:a.b64_json,revisedPrompt:a.revised_prompt,latency:Date.now()-o,model:e.model,provider:e.provider}}catch(n){return{success:!1,error:n instanceof Error?n.message:"未知错误",latency:Date.now()-o,model:e.model,provider:e.provider}}}async function C(e){const i=Date.now(),o=b(w(e.apiUrl,"openai"));try{const s=h("openai",e.apiKey),n=y(),a=n?v(await n.request({method:"POST",url:o,headers:s,body:JSON.stringify({model:e.model,input:["AIM embedding connection test"]})})):await fetch(o,{method:"POST",headers:s,body:JSON.stringify({model:e.model,input:["AIM embedding connection test"]})});if(!a.ok)throw new Error(`HTTP ${a.status}: ${(await a.text()).slice(0,300)}`);const t=(await a.json()).data?.[0]?.embedding?.length??0;if(!t)throw new Error("响应中没有有效的 embedding 向量");return{id:e.id,success:!0,response:`Embedding succeeded (${t} dimensions)`,latency:Date.now()-i,model:e.model,provider:e.provider}}catch(s){return{id:e.id,success:!1,error:s instanceof Error?s.message:String(s),latency:Date.now()-i,model:e.model,provider:e.provider}}}async function E(e,i,o){if(T(e)){const t=await D(e,i);return{id:e.id,success:t.success,response:t.success?"Image generation succeeded":void 0,error:t.error,latency:t.latency,model:t.model,provider:t.provider}}const s=Date.now(),n="Hello! Please respond with a brief greeting.",a=k(e)==="anthropic"?!1:e.chatParams?.stream??!1,r=e.chatParams?.enableThinking??!1;try{const t=await l(e,[{role:"user",content:n}],{maxTokens:2048,stream:a,enableThinking:r,streamCallbacks:o});return{id:e.id,success:!0,response:t.content,thinkingContent:t.thinkingContent,latency:Date.now()-s,model:e.model,provider:e.provider}}catch(t){return{id:e.id,success:!1,error:t instanceof Error?t.message:"未知错误",latency:Date.now()-s,model:e.model,provider:e.provider}}}async function I(e,i,o){const s=Date.now(),n=e.map(async r=>{const t=Date.now(),c=o?.streamCallbacksMap?.get(r.id||r.model);try{const d=r.chatParams?.stream??!1,u=r.chatParams?.enableThinking??!1,m=await l(r,i,{temperature:o?.temperature,maxTokens:o?.maxTokens,stream:d,enableThinking:u,streamCallbacks:c});return{id:r.id,success:!0,response:m.content,thinkingContent:m.thinkingContent,latency:Date.now()-t,model:r.model,provider:r.provider}}catch(d){return{id:r.id,success:!1,error:d instanceof Error?d.message:"Unknown error",latency:Date.now()-t,model:r.model,provider:r.provider}}}),a=await Promise.all(n);return{messages:i,results:a,totalTime:Date.now()-s}}export{D as a,E as b,I as m,C as t};
+import {
+  bn as T,
+  bi as b,
+  bk as h,
+  bo as k,
+  bh as l,
+  bg as p,
+  bm as v,
+  bj as w,
+  bl as y,
+} from './index-C2avURFS.js';
+async function D(e, i) {
+  const o = Date.now(),
+    s = i || 'A cute cat sitting on a windowsill';
+  try {
+    const a = (await p({ ...e, imageParams: void 0 }, s, { n: 1 })).data[0];
+    return {
+      success: !0,
+      imageUrl: a.url,
+      imageBase64: a.b64_json,
+      revisedPrompt: a.revised_prompt,
+      latency: Date.now() - o,
+      model: e.model,
+      provider: e.provider,
+    };
+  } catch (n) {
+    return {
+      success: !1,
+      error: n instanceof Error ? n.message : '未知错误',
+      latency: Date.now() - o,
+      model: e.model,
+      provider: e.provider,
+    };
+  }
+}
+async function C(e) {
+  const i = Date.now(),
+    o = b(w(e.apiUrl, 'openai'));
+  try {
+    const s = h('openai', e.apiKey),
+      n = y(),
+      a = n
+        ? v(
+            await n.request({
+              method: 'POST',
+              url: o,
+              headers: s,
+              body: JSON.stringify({ model: e.model, input: ['AIM embedding connection test'] }),
+            }),
+          )
+        : await fetch(o, {
+            method: 'POST',
+            headers: s,
+            body: JSON.stringify({ model: e.model, input: ['AIM embedding connection test'] }),
+          });
+    if (!a.ok) throw new Error(`HTTP ${a.status}: ${(await a.text()).slice(0, 300)}`);
+    const t = (await a.json()).data?.[0]?.embedding?.length ?? 0;
+    if (!t) throw new Error('响应中没有有效的 embedding 向量');
+    return {
+      id: e.id,
+      success: !0,
+      response: `Embedding succeeded (${t} dimensions)`,
+      latency: Date.now() - i,
+      model: e.model,
+      provider: e.provider,
+    };
+  } catch (s) {
+    return {
+      id: e.id,
+      success: !1,
+      error: s instanceof Error ? s.message : String(s),
+      latency: Date.now() - i,
+      model: e.model,
+      provider: e.provider,
+    };
+  }
+}
+async function E(e, i, o) {
+  if (T(e)) {
+    const t = await D(e, i);
+    return {
+      id: e.id,
+      success: t.success,
+      response: t.success ? 'Image generation succeeded' : void 0,
+      error: t.error,
+      latency: t.latency,
+      model: t.model,
+      provider: t.provider,
+    };
+  }
+  const s = Date.now(),
+    n = 'Hello! Please respond with a brief greeting.',
+    a = k(e) === 'anthropic' ? !1 : (e.chatParams?.stream ?? !1),
+    r = e.chatParams?.enableThinking ?? !1;
+  try {
+    const t = await l(e, [{ role: 'user', content: n }], {
+      maxTokens: 2048,
+      stream: a,
+      enableThinking: r,
+      streamCallbacks: o,
+    });
+    return {
+      id: e.id,
+      success: !0,
+      response: t.content,
+      thinkingContent: t.thinkingContent,
+      latency: Date.now() - s,
+      model: e.model,
+      provider: e.provider,
+    };
+  } catch (t) {
+    return {
+      id: e.id,
+      success: !1,
+      error: t instanceof Error ? t.message : '未知错误',
+      latency: Date.now() - s,
+      model: e.model,
+      provider: e.provider,
+    };
+  }
+}
+async function I(e, i, o) {
+  const s = Date.now(),
+    n = e.map(async (r) => {
+      const t = Date.now(),
+        c = o?.streamCallbacksMap?.get(r.id || r.model);
+      try {
+        const d = r.chatParams?.stream ?? !1,
+          u = r.chatParams?.enableThinking ?? !1,
+          m = await l(r, i, {
+            temperature: o?.temperature,
+            maxTokens: o?.maxTokens,
+            stream: d,
+            enableThinking: u,
+            streamCallbacks: c,
+          });
+        return {
+          id: r.id,
+          success: !0,
+          response: m.content,
+          thinkingContent: m.thinkingContent,
+          latency: Date.now() - t,
+          model: r.model,
+          provider: r.provider,
+        };
+      } catch (d) {
+        return {
+          id: r.id,
+          success: !1,
+          error: d instanceof Error ? d.message : 'Unknown error',
+          latency: Date.now() - t,
+          model: r.model,
+          provider: r.provider,
+        };
+      }
+    }),
+    a = await Promise.all(n);
+  return { messages: i, results: a, totalTime: Date.now() - s };
+}
+export { D as a, E as b, I as m, C as t };

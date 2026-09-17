@@ -1,0 +1,77 @@
+- insert:
+    - id: timer
+      name: '@deepseek-ai/cordis-plugin-timer'
+    - id: llm
+      name: '@deepseek-ai/dsh-llm'
+    - id: session
+      name: '@deepseek-ai/dsh-session'
+    - id: system-prompt
+      name: '@deepseek-ai/dsh-system-prompt'
+      config:
+        includeHarnessIdentity: false
+        includeRuntimeContext: false
+        personaPrefix: '你是当前系统的 AI 助手。使用已授权的业务工具，尊重资源边界。'
+    - id: tools
+      name: '@deepseek-ai/dsh-tools'
+    - id: agent
+      name: '@deepseek-ai/dsh-agent'
+    - id: agent-loop
+      name: '@deepseek-ai/dsh-agent-loop'
+      config:
+        agents: []
+    - id: sessions
+      name: '@deepseek-ai/dsh-session-persistence-jsonl'
+      config:
+        root: !!js process.env.MOMO_SESSION_ROOT
+        compression: none
+    - id: projection
+      name: '@deepseek-ai/dsh-session-projection'
+    - id: token-meter
+      name: '@deepseek-ai/dsh-token-meter'
+    - id: attachments
+      name: '@deepseek-ai/dsh-attachment-local'
+    - id: fs
+      name: '@deepseek-ai/dsh-fs-local'
+    - id: subprocess
+      name: '@deepseek-ai/dsh-subprocess-local'
+    - id: questions
+      name: '@deepseek-ai/dsh-user-questions'
+    - id: approval
+      name: '@deepseek-ai/dsh-user-approval'
+    - id: commands
+      name: '@deepseek-ai/dsh-commands'
+    - id: goals
+      name: '@deepseek-ai/dsh-goal'
+    - id: goal-driver
+      name: '@deepseek-ai/dsh-goal-round-driver'
+    - id: tool-goal
+      name: '@deepseek-ai/dsh-tool-goal'
+    - id: command-goal
+      name: '@deepseek-ai/dsh-command-goal'
+    - id: compaction
+      name: '@deepseek-ai/dsh-compaction-basic'
+    - id: command-compact
+      name: '@deepseek-ai/dsh-command-compact'
+    - id: skills
+      name: '@deepseek-ai/dsh-skill'
+    - id: tool-skill
+      name: '@deepseek-ai/dsh-tool-skill'
+    - id: ask-user
+      name: '@deepseek-ai/dsh-tool-ask-user'
+    - id: plan
+      name: '@deepseek-ai/dsh-plan-mode'
+      config:
+        section: '先调研并形成完整计划，调用 exit_plan_mode 提交计划供用户审阅。计划期间仅调用读取工具。'
+    - id: presets
+      name: '@deepseek-ai/dsh-agent-presets'
+      config:
+        default: momo-default
+        includeShippedRoot: false
+        includeUserRoot: false
+        roots:
+          - path: !!js process.env.MOMO_PRESET_ROOT
+            trust: system
+    - id: momo-model-credentials
+      name: '__MOMO_CREDENTIAL_PLUGIN__'
+    - id: momo-host-bridge
+      name: '__MOMO_BRIDGE_PLUGIN__'

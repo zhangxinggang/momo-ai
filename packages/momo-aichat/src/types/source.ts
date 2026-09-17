@@ -1,4 +1,5 @@
 export interface IChatSourceInput {
+  sourceRef?: IChatSourceRef;
   name: string;
   mimeType: string;
   encoding: 'utf8' | 'base64';
@@ -6,6 +7,7 @@ export interface IChatSourceInput {
 }
 
 export interface IChatSourceRef {
+  originalAvailable?: boolean;
   sourceId: string;
   revision: string;
   name: string;

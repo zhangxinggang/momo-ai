@@ -1,4 +1,5 @@
 import { ChatProvider, type IAiChatServices } from '@momo/aichat';
+import { useAiChatGenerationReporter } from '@renderer/hooks/useAiChatGenerationActivity';
 import type { ReactNode } from 'react';
 
 import { WorkflowNodeChatBootstrap } from '../WorkflowNodeChatBootstrap';
@@ -19,8 +20,14 @@ export function WorkflowAiChatShell({
   className,
   children,
 }: IProps) {
+  const reportGeneration = useAiChatGenerationReporter('workflow');
+
   return (
-    <ChatProvider key={sessionKey} services={services} bootstrapSessionId={bootstrapSessionId}>
+    <ChatProvider
+      key={sessionKey}
+      services={services}
+      bootstrapSessionId={bootstrapSessionId}
+      onGenerationStateChange={reportGeneration}>
       <WorkflowNodeChatBootstrap sessionId={bootstrapSessionId} />
       <div className={className}>{children}</div>
     </ChatProvider>

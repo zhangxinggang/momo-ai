@@ -1,5 +1,3922 @@
-import{q as e}from"./markdown-vendor-DldLOD9R.js";import{M as W,B as j,r as g,e as I,w as B,S as H,x as Ge,p as X,C as Ue,A as Cs,y as ce,o as me,z as Ke,F as O,i as Is,n as Ms,L as Qe,D as As,E as Ts,h as Es}from"./ui-vendor-C-FKu2uc.js";import{cH as Os,bj as $s,bo as Us,bk as Ks,bl as Ds,bm as Bs,bp as _,bB as te,c4 as _s,cI as oe,cJ as We,cK as Rs,cL as Ls,cM as G,cN as zs,cO as Hs,cP as Js,cQ as Vs,cR as xe,cS as Fs,cT as Ye,cU as J,cV as de,cW as Ze,cX as qs,cY as Gs,cZ as Qs,ca as Q,c_ as Ws,c$ as Ys,d0 as Zs,d1 as Xs,d2 as et,d3 as Xe,c9 as z,br as Ce,d4 as F,d5 as st,d6 as ee,d7 as fe,d8 as be,d9 as tt,da as De,db as je,dc as Be,dd as _e,de as at,df as rt,dg as nt,dh as lt,di as it,dj as ot,dk as dt,dl as ct,dm as mt,dn as ut,dp as xt,dq as pt,dr as ve,ds as ht,dt as gt,du as ft,bc as Re,dv as Le,dw as bt,dx as jt,dy as ze}from"./index-C2avURFS.js";import{O as Se,Q as es,V as ss,S as vt,L as ae,j as yt,p as ts,T as as,c as pe,C as Nt,H as wt,m as Ie,Y as kt,k as rs,z as ns,v as ls,I as ue,N as He,h as he,Z as Pt,F as St,_ as Ct,R as It,$ as Mt,a0 as At,a1 as Tt,a2 as Et,a3 as Ot,a4 as $t,a5 as Ut,a6 as Kt}from"./icons-B5Lu0sqU.js";import{t as ye,a as Ne,b as we}from"./testing-qyiiDhJu.js";import"./markdown-it-vendor-DL4wSELR.js";async function Dt(s,t,n="openai"){if(!t||!s)return{success:!1,models:[],error:"Please fill in API Key and API URL first"};try{const a=Os($s(s,n)),r=Us({apiProtocol:n,provider:"",apiUrl:s}),l=Ks(r,t,{accept:"application/json",useNativeGeminiAuth:r==="gemini",apiUrl:s}),o=Ds(),x=o?Bs(await o.request({method:"GET",url:a,headers:l})):await fetch(a,{method:"GET",headers:l});if(!x.ok){const h=await x.text(),c=x.status===401||x.status===403?"auth":x.status===404||x.status===405||x.status===501?"unsupported":"http";return{success:!1,models:[],error:`获取模型列表失败: ${x.status} - ${h.substring(0,100)}`,reason:c,endpoint:a,status:x.status}}const b=await x.json();return b.data&&Array.isArray(b.data)&&n==="anthropic"?{success:!0,models:b.data.filter(c=>typeof c.id=="string").map(c=>({id:c.id,name:c.display_name||c.id,owned_by:"Anthropic",created:c.created_at?Date.parse(c.created_at):void 0})).sort((c,i)=>c.id.localeCompare(i.id))}:b.data&&Array.isArray(b.data)?{success:!0,models:b.data.filter(c=>c.id).map(c=>({id:c.id,name:c.id,owned_by:c.owned_by,created:c.created})).sort((c,i)=>c.id.localeCompare(i.id))}:b.models&&Array.isArray(b.models)?{success:!0,models:b.models.filter(c=>c.name).map(c=>{const i=c.name.replace(/^models\//,"");return{id:i,name:c.displayName?`${c.displayName} (${i})`:i,owned_by:"Google",description:c.description}}).sort((c,i)=>c.id.localeCompare(i.id))}:Array.isArray(b)?{success:!0,models:b.filter(c=>c.id||c.model).map(c=>({id:c.id||c.model||"",name:c.name||c.id||c.model}))}:{success:!1,models:[],error:"无法解析模型列表响应",reason:"unsupported",endpoint:a}}catch(a){const r=a instanceof Error?a.message:"获取模型列表失败";return{success:!1,models:[],error:r,reason:r.toLowerCase().includes("failed to fetch")||r.toLowerCase().includes("network")?"network":"http"}}}function ka({isOpen:s,onClose:t}){const n=_(l=>l.themeMode),a=_(l=>l.setThemeMode),r=[{value:"light",label:"浅色",icon:Se},{value:"dark",label:"深色",icon:es},{value:"system",label:"跟随系统",icon:ss}];return e.jsx(W,{open:s,onCancel:t,title:"设置",width:500,footer:null,destroyOnHidden:!0,children:e.jsxs("div",{className:"space-y-6",children:[e.jsxs("div",{className:"space-y-3",children:[e.jsxs("h3",{className:"text-foreground flex items-center gap-2 text-sm font-semibold",children:[e.jsx(Se,{className:"text-primary h-4 w-4"}),"显示设置"]}),e.jsx("div",{className:"grid grid-cols-3 gap-2",children:r.map(l=>e.jsxs(j,{type:"text",onClick:()=>a(l.value),className:`flex h-auto flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${n===l.value?"border-primary bg-primary/5":"border-border hover:border-primary/50"} `,children:[e.jsx(l.icon,{className:`h-6 w-6 ${n===l.value?"text-primary":"text-muted-foreground"}`}),e.jsx("span",{className:`text-sm font-medium ${n===l.value?"text-primary":"text-foreground"}`,children:l.label})]},l.value))})]}),e.jsx("div",{className:"flex justify-end pt-2",children:e.jsx(j,{type:"primary",onClick:t,children:"完成"})})]})})}function M({title:s,children:t}){return e.jsxs("div",{className:"relative",children:[e.jsx("h3",{className:"text-muted-foreground mb-2 text-sm font-medium",children:s}),e.jsx("div",{className:"app-settings-card",children:t})]})}function K({label:s,description:t,children:n}){return e.jsxs("div",{className:"border-border/70 hover:bg-muted/20 flex items-center justify-between border-b px-4 py-3 transition-colors last:border-0",children:[e.jsxs("div",{children:[e.jsx("div",{className:"text-sm font-medium",children:s}),t&&e.jsx("div",{className:"text-muted-foreground mt-0.5 text-xs",children:t})]}),n]})}function Pa({checked:s,onChange:t,defaultChecked:n=!1}){return e.jsx(B,{checked:s,defaultChecked:n,onChange:t})}const is=g.memo(function({value:t,onChange:n,placeholder:a,className:r=""}){return e.jsx(I.Password,{value:t,onChange:l=>n(l.target.value),placeholder:a,className:`app-settings-input placeholder:text-muted-foreground/60 h-10 w-full rounded-lg text-sm ${r}`})});function Bt(){const s=te(),t=_s(),n=oe(c=>c.localVersion),a=oe(c=>c.config),r=oe(c=>{const i=c.config?.update?.version?.trim();return i?We(i,c.localVersion)>0:!1}),[l,o]=g.useState(!1),x=a?.update,b=x?.version?.trim(),h=()=>{const c=x?.download?.trim();c&&Ls(c)};return e.jsxs(e.Fragment,{children:[e.jsx("div",{className:"space-y-6",children:e.jsxs(M,{title:"版本信息",children:[e.jsx(K,{label:"当前版本",description:`本机已安装的 ${s} 版本号`,children:e.jsxs("div",{className:"flex items-center gap-2 text-sm",children:[e.jsx("span",{children:n}),r&&b?e.jsx("button",{type:"button",className:"text-primary hover:underline",onClick:()=>o(!0),children:"发现新版本"}):null]})}),b?e.jsx(K,{label:"最新版本",description:"在线配置中的最新发布版本",children:e.jsx("span",{className:"text-sm",children:b})}):null]})}),e.jsx(W,{centered:!0,open:l,title:"版本更新",onCancel:()=>o(!1),footer:[e.jsx(j,{onClick:()=>o(!1),children:"关闭"},"close"),x?.download?e.jsx(j,{type:"primary",onClick:h,children:"下载更新"},"download"):null],children:e.jsxs("div",{className:"space-y-3",children:[e.jsxs("div",{className:"text-sm",children:[e.jsx("span",{className:"text-muted-foreground",children:"新版本："}),e.jsx("span",{className:"font-medium",children:b})]}),x?.description?.trim()?e.jsx("div",{className:"border-border rounded-lg border p-3",children:e.jsx(Rs,{instanceKey:"about-update-description",content:x.description,isStreaming:!1,theme:t.theme,previewTheme:t.previewTheme,codeTheme:t.codeTheme})}):null]})})]})}function os({apiUrl:s,apiProtocol:t,provider:n,model:a,modelType:r="chat"}){const l=te(),o=s.trim(),x=g.useMemo(()=>G(s),[s]),b=g.useMemo(()=>zs(s),[s]),h=g.useMemo(()=>r==="image"?Hs(s,{provider:n,model:a}):r==="embedding"?Js(s):Vs(s,t),[t,s,a,r,n]),c=!!(o&&!o.endsWith("#")&&b&&b!==o.replace(/\/$/,"")),i=g.useMemo(()=>t==="gemini"?["https://generativelanguage.googleapis.com","https://generativelanguage.googleapis.com/v1beta"]:t==="anthropic"?["https://api.anthropic.com","https://api.anthropic.com/v1"]:[xe(n)?.defaultUrl||"https://api.openai.com","https://api.example.com/v1"].filter(Boolean),[t,n]);return e.jsxs("div",{className:"border-border/60 bg-muted/20 mt-2 space-y-2 rounded-lg border p-3 text-xs",children:[e.jsx("div",{className:"text-muted-foreground",children:`这里只填供应商基础地址或版本根路径即可，不用手动补 /chat/completions、/embeddings 或 /images/generations，${l} 会自动补全。`}),e.jsxs("div",{className:"text-muted-foreground",children:[e.jsxs("span",{className:"text-foreground font-medium",children:["示例",":"]})," ",e.jsx("span",{className:"font-mono",children:i.join("  ·  ")})]}),b?e.jsxs("div",{className:"text-muted-foreground flex flex-col gap-1",children:[e.jsxs("span",{className:"text-foreground font-medium",children:["保存后的 Base URL",":"]}),e.jsx("span",{className:"text-primary break-all font-mono",children:b})]}):null,h?e.jsxs("div",{className:"text-muted-foreground flex flex-col gap-1",children:[e.jsxs("span",{className:"text-foreground font-medium",children:["实际请求地址预览",":"]}),e.jsx("span",{className:"text-primary break-all font-mono",children:h})]}):null,o.endsWith("#")?e.jsx("div",{className:"inline-flex w-fit rounded-md border border-amber-500/20 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-600 dark:text-amber-400",children:"已禁用自动填充 (#)"}):null,c||x!==o?e.jsx("div",{className:"text-[11px] text-amber-600 dark:text-amber-400",children:"检测到你粘贴了完整 endpoint，失焦或保存时会自动收敛为基础地址。"}):null]})}function ds(s){const t=new Map;for(const a of s){const r=a.group??"";t.has(r)||t.set(r,[]),t.get(r).push(a)}const n=[...t.keys()];return n.length===1&&n[0]===""?t.get("").map(a=>({value:a.value,label:a.label})):n.map(a=>({label:a,options:t.get(a).map(r=>({value:r.value,label:r.label}))}))}function _t({title:s,value:t,detail:n,tone:a,icon:r}){const l=a==="ready";return e.jsxs("div",{className:"border-border/60 bg-card relative flex flex-col justify-between rounded-xl border p-3.5 shadow-sm transition-shadow hover:shadow-md",children:[e.jsx("div",{className:`absolute right-3 top-3 h-1.5 w-1.5 rounded-full ${l?"bg-emerald-500 ring-[3px] ring-emerald-500/20":"bg-amber-500 ring-[3px] ring-amber-500/20"}`}),e.jsxs("div",{children:[e.jsxs("div",{className:"text-muted-foreground flex items-center gap-2",children:[e.jsx(r,{className:"h-4 w-4"}),e.jsx("span",{className:"text-xs font-medium",children:s})]}),e.jsx("div",{className:"text-foreground mt-1.5 text-xl font-semibold tracking-tight",children:t})]}),e.jsx("div",{className:"text-muted-foreground mt-3 line-clamp-1 text-[11px]",title:n,children:n})]})}function Rt({label:s,desc:t,value:n,models:a,modelType:r="chat",onChange:l,disabled:o,emptyHint:x}){return e.jsxs("div",{className:"hover:bg-muted/30 flex flex-col gap-3 p-4 transition-colors md:flex-row md:items-center md:justify-between",children:[e.jsxs("div",{className:"min-w-0 space-y-1",children:[e.jsx("div",{className:"text-sm font-medium",children:s}),e.jsx("div",{className:"text-muted-foreground text-xs",children:t})]}),e.jsxs("div",{className:"w-full md:w-[280px]",children:[e.jsx(Fs,{className:"w-full",value:n,onChange:l,models:a,modelType:r,disabled:o,placeholder:"选择模型"}),x?e.jsx("div",{className:"text-muted-foreground mt-1.5 text-xs",children:x}):null]})]})}function Lt({endpointDraft:s,setEndpointDraft:t,onClose:n,onSave:a}){return e.jsx(W,{open:!0,onCancel:n,footer:null,width:600,destroyOnHidden:!0,title:e.jsxs("div",{children:[e.jsx("div",{children:"编辑端点"}),e.jsx("div",{className:"text-muted-foreground mt-1 text-xs font-normal",children:"会把该端点下所有模型的 provider / API Key / API 地址一并更新。"})]}),children:e.jsxs("div",{className:"space-y-4",children:[e.jsxs("div",{children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"供应商"}),e.jsx(H,{className:"w-full",value:s.provider,onChange:r=>{const l=xe(r);t(o=>o&&{...o,provider:r,apiProtocol:l?.recommendedProtocol||o.apiProtocol,apiUrl:l?.defaultUrl||o.apiUrl})},options:ds(Ye.map(r=>({value:r.id,label:r.name,group:r.group})))})]}),e.jsxs("div",{children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"协议"}),e.jsx(H,{className:"w-full",value:s.apiProtocol,onChange:r=>t(l=>l&&{...l,apiProtocol:r}),options:[{value:"openai",label:J("openai")},{value:"gemini",label:J("gemini")},{value:"anthropic",label:J("anthropic")}]})]}),e.jsxs("div",{children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"API Key"}),e.jsx(is,{value:s.apiKey,placeholder:"输入 API Key",onChange:r=>t(l=>l&&{...l,apiKey:r})})]}),e.jsxs("div",{children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"API 地址"}),e.jsx(I,{value:s.apiUrl,onChange:r=>t(l=>l&&{...l,apiUrl:r.target.value}),onBlur:()=>t(r=>{if(!r)return r;const l=G(r.apiUrl);return l===r.apiUrl?r:{...r,apiUrl:l}}),"aria-label":"API 地址",placeholder:"https://api.example.com/v1",className:"bg-muted h-10 w-full rounded-lg px-3 text-sm"}),e.jsx(os,{apiUrl:s.apiUrl,apiProtocol:s.apiProtocol,provider:s.provider})]}),e.jsxs("div",{className:"border-border flex justify-end gap-2 border-t pt-4",children:[e.jsx(j,{onClick:n,children:"取消"}),e.jsx(j,{type:"primary",onClick:a,children:"保存修改"})]})]})})}function zt(s,t){return t?`${s.name??""} ${s.model??""}`.toLowerCase().includes(t):!0}function ke({model:s,badges:t,testingModelId:n,onTestModel:a,onSetDefaultModel:r,onEditModel:l,onDeleteModel:o}){return e.jsxs("div",{className:`hover:bg-muted/10 group relative flex flex-col gap-3 px-4 py-2.5 transition-colors md:flex-row md:items-center md:justify-between ${s.isDefault?"bg-primary/[0.06]":""}`,children:[s.isDefault?e.jsx("span",{className:"text-primary/80 absolute left-2 top-1 text-[10px] font-medium",children:"默认"}):null,e.jsxs("div",{className:"flex min-w-0 items-center gap-4",children:[e.jsx("div",{className:"border-border/60 bg-background text-primary rounded-lg border p-2",children:Ze(Ws(s),20)}),e.jsxs("div",{className:"min-w-0",children:[e.jsx("div",{className:"text-sm font-medium",children:s.name||s.model}),s.name?e.jsx("div",{className:"text-muted-foreground text-xs",children:s.model}):null]}),e.jsx("div",{className:"flex flex-wrap gap-1.5",children:t.map(x=>e.jsx("span",{className:`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${x.primary?"bg-primary/10 text-primary":"border-border/60 text-muted-foreground border"}`,children:x.label},`${s.id}-${x.label}`))})]}),e.jsxs("div",{className:"flex items-center gap-1.5",children:[e.jsx(j,{type:"text",size:"small",onClick:()=>a(s),disabled:n===s.id,"aria-label":"测试",title:"测试",className:"text-muted-foreground hover:border-border hover:bg-muted/50 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent transition-all disabled:opacity-50",children:n===s.id?e.jsx(ae,{className:"h-3.5 w-3.5 animate-spin"}):e.jsx(Ie,{className:"h-3.5 w-3.5"})}),s.isDefault?null:e.jsx(j,{type:"text",size:"small",onClick:()=>r(s.id),"aria-label":"设为默认",title:"设为默认",className:"text-muted-foreground hover:border-border hover:bg-muted/50 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent transition-all",children:e.jsx(kt,{className:"h-3.5 w-3.5"})}),e.jsx(j,{type:"text",size:"small",onClick:()=>l(s),"aria-label":"编辑",title:"编辑",className:"text-muted-foreground hover:border-border hover:bg-muted/50 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent transition-all",children:e.jsx(ts,{className:"h-3.5 w-3.5"})}),e.jsx(j,{type:"text",size:"small",onClick:()=>o(s),"aria-label":"删除",title:"删除",className:"inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent text-red-500 transition-all hover:border-red-500/20 hover:bg-red-500/5",children:e.jsx(as,{className:"h-3.5 w-3.5"})})]})]})}function Pe(s,t){return[...(t.get(s.id)??[]).map(n=>({label:n,primary:!0}))]}function Ht({models:s,modelScenarioBadges:t,testingModelId:n,onTestModel:a,onSetDefaultModel:r,onEditModel:l,onDeleteModel:o}){const x=Q(s,"chat"),b=Q(s,"embedding"),h=Q(s,"image"),c=[x.length>0?{key:"chat",label:e.jsxs("span",{className:"text-muted-foreground text-xs font-medium",children:["对话",e.jsx("span",{className:"text-muted-foreground/70 ml-1.5 font-normal",children:x.length})]}),children:e.jsx("div",{className:"divide-border/40 divide-y",children:x.map(i=>e.jsx(ke,{model:i,badges:Pe(i,t),testingModelId:n,onTestModel:a,onSetDefaultModel:r,onEditModel:l,onDeleteModel:o},i.id))})}:null,b.length>0?{key:"embedding",label:e.jsxs("span",{className:"text-muted-foreground text-xs font-medium",children:["嵌入",e.jsx("span",{className:"text-muted-foreground/70 ml-1.5 font-normal",children:b.length})]}),children:e.jsx("div",{className:"divide-border/40 divide-y",children:b.map(i=>e.jsx(ke,{model:i,badges:Pe(i,t),testingModelId:n,onTestModel:a,onSetDefaultModel:r,onEditModel:l,onDeleteModel:o},i.id))})}:null,h.length>0?{key:"image",label:e.jsxs("span",{className:"text-muted-foreground text-xs font-medium",children:["生图",e.jsx("span",{className:"text-muted-foreground/70 ml-1.5 font-normal",children:h.length})]}),children:e.jsx("div",{className:"divide-border/40 divide-y",children:h.map(i=>e.jsx(ke,{model:i,badges:Pe(i,t),testingModelId:n,onTestModel:a,onSetDefaultModel:r,onEditModel:l,onDeleteModel:o},i.id))})}:null].filter(Boolean);return c.length===0?null:e.jsx(Ge,{defaultActiveKey:c.map(i=>i.key),ghost:!0,size:"small",className:"endpoint-model-categories",items:c})}function Jt({endpointGroups:s,endpointStatuses:t,testingEndpointKey:n,testingModelId:a,modelScenarioBadges:r,onTestEndpoint:l,onEditEndpoint:o,onDeleteEndpoint:x,onAddModel:b,onSetDefaultModel:h,onTestModel:c,onEditModel:i,onDeleteModel:y}){const[w,T]=g.useState(""),E=w.trim().toLowerCase(),A=g.useMemo(()=>E?s.map(m=>({...m,models:m.models.filter(v=>zt(v,E))})).filter(m=>m.models.length>0):s,[s,E]),R=g.useMemo(()=>A[0]?.key?[A[0].key]:[],[A]);return e.jsxs("div",{children:[e.jsxs("div",{className:"mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",children:[e.jsx("h3",{className:"text-muted-foreground text-sm font-medium",children:"已配置账户 / 端点"}),e.jsx(I,{allowClear:!0,prefix:e.jsx(vt,{className:"text-muted-foreground h-4 w-4"}),placeholder:"搜索模型名称…",value:w,onChange:m=>T(m.target.value),className:"sm:max-w-xs"})]}),s.length===0?e.jsx("div",{className:"border-border bg-card text-muted-foreground rounded-xl border border-dashed p-8 text-center text-sm",children:"还没有添加任何模型。先添加一个对话、嵌入或生图模型。"}):A.length===0?e.jsx("div",{className:"border-border bg-card text-muted-foreground rounded-xl border border-dashed p-8 text-center text-sm",children:"没有匹配的模型，请调整搜索关键词。"}):e.jsx(Ge,{defaultActiveKey:R,items:A.map(m=>{const v=t[m.key]??(m.models.some(de)?{tone:"warning",label:"未验证",detail:`${m.models.length} 个模型`}:{tone:"warning",label:"未配置",detail:"缺少完整的模型配置"});return{key:m.key,label:e.jsxs("div",{className:"flex min-w-0 items-center gap-3 py-1",children:[e.jsx("div",{className:"border-border/60 bg-background text-primary rounded-lg border p-2 shadow-sm",children:Ze(qs(m.provider,m.models),18)}),e.jsxs("div",{className:"min-w-0",children:[e.jsxs("div",{className:"flex flex-wrap items-center gap-2 text-sm font-semibold",children:[Gs(m.provider),e.jsx("span",{className:"border-border/60 text-muted-foreground inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium",children:J(m.apiProtocol)}),e.jsxs("span",{className:`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${v.tone==="ready"?"bg-emerald-500/10 text-emerald-600 dark:text-emerald-400":v.tone==="error"?"bg-red-500/10 text-red-600 dark:text-red-400":"bg-amber-500/10 text-amber-600 dark:text-amber-400"}`,children:[v.tone==="ready"?e.jsx(Nt,{className:"h-3 w-3"}):e.jsx(wt,{className:"h-3 w-3"}),v.label]})]}),e.jsx("div",{className:"text-muted-foreground mt-0.5 text-xs",children:Qs(m.apiUrl,"未配置地址")}),e.jsx("div",{className:"text-muted-foreground mt-1 text-[11px]",children:v.detail})]})]}),extra:e.jsxs("div",{className:"flex flex-wrap items-center gap-2",onClick:P=>P.stopPropagation(),children:[e.jsxs(j,{type:"text",size:"small",onClick:()=>l(m),disabled:n===m.key,className:"text-muted-foreground hover:border-border hover:bg-background inline-flex h-8 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs transition-all disabled:opacity-50",children:[n===m.key?e.jsx(ae,{className:"h-3.5 w-3.5 animate-spin"}):e.jsx(yt,{className:"h-3.5 w-3.5"}),"测试连接"]}),e.jsxs(j,{type:"text",size:"small",onClick:()=>o(m),className:"text-muted-foreground hover:border-border hover:bg-background inline-flex h-8 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs transition-all",children:[e.jsx(ts,{className:"h-3.5 w-3.5"}),"编辑"]}),e.jsxs(j,{type:"text",size:"small",onClick:()=>x(m),className:"inline-flex h-8 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs text-red-500 transition-all hover:border-red-500/20 hover:bg-red-500/5",children:[e.jsx(as,{className:"h-3.5 w-3.5"}),"删除"]}),e.jsxs(j,{type:"text",size:"small",onClick:()=>b({provider:m.provider,apiProtocol:m.apiProtocol,apiKey:m.models[0]?.apiKey||"",apiUrl:m.apiUrl,type:m.models[0]?.type??"chat"}),className:"bg-primary/10 text-primary hover:bg-primary/20 inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors",children:[e.jsx(pe,{className:"h-3.5 w-3.5"}),"添加模型"]})]}),children:e.jsx("div",{className:"bg-card",children:e.jsx(Ht,{models:m.models,modelScenarioBadges:r,testingModelId:a,onTestModel:c,onSetDefaultModel:h,onEditModel:i,onDeleteModel:y})})}})})]})}function Me(s,t){const n=s.toLowerCase();if(n.includes("failed to fetch")||n.includes("networkerror")){try{const a=typeof window<"u"?window.location.origin:"",r=t?new URL(t).origin:"";if(a&&/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(a)&&r)return`浏览器把这次跨域请求（CORS）拦截了。当前页面 ${a} 不能直接请求 ${r}。请在服务端放开 CORS，或者把这条请求改走 Electron 主进程代理。`;if(r)return`浏览器把这次跨域请求（CORS）拦截了，目标接口是 ${r}。请在服务端放开 CORS，或者改走应用侧代理。`}catch{}return"请求还没到供应商就失败了，请检查 API 地址、网络、代理或 CORS 限制。"}return n.includes("401")||n.includes("403")||n.includes("unauthorized")||n.includes("invalid api key")?"供应商拒绝了这次请求，请检查 API Key、账号权限和 endpoint 路径。":s}function Vt(s,t){if(s.success&&s.models.length===0)return{message:"供应商没有返回任何模型。如果它隐藏了列表接口，可以直接手动填写模型 ID。",type:"warning"};switch(s.reason){case"auth":return{message:"模型列表请求被拒绝，请检查 API Key 和供应商权限设置。",type:"error"};case"unsupported":case"parse":return{message:"这个供应商没有返回兼容的模型列表接口，你仍然可以直接手动填写模型 ID。",type:"info"};case"network":return{message:Me(s.error||"无法连接到模型列表接口，请检查 API 地址、网络、代理或 CORS 限制。",s.endpoint||t),type:"warning"};default:return{message:s.error||"拉取模型列表失败",type:"error"}}}function q(s,t,n){return`${s} 测试成功 (${t}ms)`}function Je(s,t,n){return`${s} 测试失败: ${Me(t,n)}`}function Ft({testingDefault:s,hasLegacyOnlyConfig:t,statusCards:n,defaultModelDisplayName:a,onTestDefault:r,onAddModel:l,onImportLegacy:o}){return e.jsxs(e.Fragment,{children:[e.jsxs("div",{className:"flex flex-col gap-4 pt-2 md:flex-row md:items-start md:justify-between",children:[e.jsx("div",{children:e.jsx("h2",{className:"text-lg font-semibold tracking-tight",children:"AI 模型工作台"})}),e.jsxs("div",{className:"flex flex-wrap items-center justify-end gap-3 md:shrink-0",children:[e.jsxs("div",{className:"flex items-center gap-3",children:[a?e.jsx("span",{className:"text-muted-foreground max-w-[220px] truncate text-xs leading-tight",title:a,children:a}):null,e.jsxs(j,{onClick:r,disabled:s,className:"border-border bg-background hover:bg-accent hover:text-accent-foreground inline-flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border px-4 text-sm font-medium leading-none shadow-sm transition-colors disabled:opacity-50",children:[s?e.jsx(ae,{className:"text-muted-foreground h-4 w-4 animate-spin"}):e.jsx(Ie,{className:"text-muted-foreground h-4 w-4"}),"测试默认模型"]})]}),e.jsxs(j,{type:"primary",onClick:l,className:"bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-4 text-sm font-medium leading-none shadow-sm transition-colors",children:[e.jsx(pe,{className:"h-4 w-4"}),"添加模型"]})]})]}),t?e.jsx("div",{className:"rounded-xl border border-amber-500/30 bg-amber-500/5 p-4",children:e.jsxs("div",{className:"flex items-start justify-between gap-4",children:[e.jsxs("div",{children:[e.jsx("div",{className:"text-sm font-medium",children:"检测到旧版单模型配置"}),e.jsx("div",{className:"text-muted-foreground mt-1 text-xs",children:"当前 AI 功能仍可继续使用旧版默认配置，但新工作台需要把它导入到多模型列表中。"})]}),e.jsx(j,{type:"primary",size:"small",onClick:o,className:"bg-primary text-primary-foreground inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-3 text-xs font-medium leading-none",children:"导入旧版配置"})]})}):null,e.jsxs("div",{children:[e.jsx("h3",{className:"text-muted-foreground mb-3 text-sm font-medium",children:"状态总览"}),e.jsx("div",{className:"grid gap-4 md:grid-cols-2 xl:grid-cols-4",children:n.map(x=>e.jsx(_t,{...x},x.title))})]})]})}function qt({availableModels:s,setModelForm:t,selectedIds:n,onSelectionChange:a}){const[r,l]=g.useState(""),o=g.useMemo(()=>Ys(s),[s]),x=g.useMemo(()=>Zs(o,r),[o,r]),b=g.useMemo(()=>Xs(x),[x]);if(s.length===0)return null;const h=c=>{const i=Array.isArray(c)?c:[c];a(i);const y=i[i.length-1];y&&t(w=>({...w,model:y}))};return e.jsxs("div",{className:"border-border bg-muted/20 rounded-xl border",children:[e.jsx("div",{className:"border-border/60 border-b px-3 py-2.5",children:e.jsxs("div",{className:"mb-2 flex items-center justify-between",children:[e.jsx("span",{className:"text-muted-foreground text-xs font-medium",children:"选择模型"}),e.jsxs("span",{className:"text-muted-foreground text-[11px]",children:[`共 ${s.length} 个模型`,r.trim()&&x.length!==o.length&&` · ${x.length}`,n.length>0&&e.jsx("span",{className:"bg-primary/10 text-primary ml-1.5 rounded px-1.5 py-0.5",children:`${n.length} 已选`})]})]})}),e.jsx("div",{className:"p-1.5",children:e.jsx(et,{tree:b,selectionMode:"multiple",value:n,onChange:h,showSearch:!0,searchQuery:r,onSearchQueryChange:l,maxHeight:240})})]})}function Gt({modelForm:s,setModelForm:t,fetchingModels:n,onFetchModels:a,isEditing:r=!1}){return e.jsxs(e.Fragment,{children:[e.jsxs("div",{className:r?"grid gap-4 md:grid-cols-2":void 0,children:[e.jsxs("div",{children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"模型类型"}),e.jsx(H,{className:"w-full",size:"middle",value:s.type,onChange:l=>t(o=>({...o,type:l,apiProtocol:l==="embedding"?"openai":o.apiProtocol})),options:[{value:"chat",label:"对话模型"},{value:"embedding",label:"嵌入模型（知识库）"},{value:"image",label:"图像模型"}]})]}),r?e.jsxs("div",{children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"自定义名称（可选）"}),e.jsx(I,{size:"middle",value:s.name,onChange:l=>t(o=>({...o,name:l.target.value})),"aria-label":"自定义名称（可选）",placeholder:"例如：我的 GPT-4o、工作用",className:"bg-muted w-full rounded-lg text-sm"})]}):null]}),r?null:e.jsxs(e.Fragment,{children:[e.jsxs("div",{className:"grid gap-4 md:grid-cols-2",children:[e.jsxs("div",{children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"供应商"}),e.jsx(H,{className:"w-full",value:s.provider,onChange:l=>{const o=xe(l);t(x=>({...x,provider:l,apiProtocol:x.type==="embedding"?"openai":o?.recommendedProtocol||x.apiProtocol,apiUrl:o?.defaultUrl||x.apiUrl}))},options:ds(Ye.map(l=>({value:l.id,label:l.name,group:l.group})))})]}),e.jsxs("div",{children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"协议"}),e.jsx(H,{className:"w-full",value:s.apiProtocol,disabled:s.type==="embedding",onChange:l=>t(o=>({...o,apiProtocol:l})),options:[{value:"openai",label:J("openai")},{value:"gemini",label:J("gemini")},{value:"anthropic",label:J("anthropic")}]})]}),e.jsxs("div",{children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"API Key"}),e.jsx(is,{value:s.apiKey,placeholder:"输入 API Key",onChange:l=>t(o=>({...o,apiKey:l}))})]})]}),e.jsxs("div",{children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"API 地址"}),e.jsx(I,{value:s.apiUrl,onChange:l=>t(o=>({...o,apiUrl:l.target.value})),onBlur:()=>t(l=>{const o=G(l.apiUrl);return o===l.apiUrl?l:{...l,apiUrl:o}}),"aria-label":"API 地址",placeholder:"https://api.example.com/v1",className:"bg-muted h-10 w-full rounded-lg px-3 text-sm"}),s.type==="embedding"?e.jsx(os,{apiUrl:s.apiUrl,apiProtocol:"openai",provider:s.provider,model:s.model,modelType:"embedding"}):null]}),e.jsxs("div",{children:[e.jsxs("div",{className:"text-muted-foreground mb-1 flex items-center justify-between text-xs",children:[e.jsx("span",{children:"模型名称"}),e.jsxs(j,{type:"text",size:"small",onClick:a,disabled:n,className:"text-primary hover:bg-primary/10 inline-flex items-center gap-1 rounded-md px-2 py-1 disabled:opacity-50",children:[n?e.jsx(ae,{className:"h-3.5 w-3.5 animate-spin"}):e.jsx(rs,{className:"h-3.5 w-3.5"}),"获取模型"]})]}),e.jsx(I,{value:s.model,onChange:l=>t(o=>({...o,model:l.target.value})),"aria-label":"模型名称",placeholder:s.type==="embedding"?"例如：text-embedding-3-small、bge-m3":"例如：gpt-4o、deepseek-chat",className:"bg-muted h-10 w-full rounded-lg px-3 text-sm"}),s.type==="embedding"?e.jsx("div",{className:"mt-1.5 text-xs text-amber-600 dark:text-amber-400",children:"嵌入模型与“文本切分”对话模型用途不同；知识库入库必须配置此类型。"}):null]})]})]})}const{TextArea:Qt}=I;function Wt({modelForm:s,setModelForm:t}){return e.jsxs("div",{className:"mt-4",children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"自定义参数 (JSON)"}),e.jsx(Qt,{value:s.chatParams.customParamsText,onChange:n=>t(a=>({...a,chatParams:{...a.chatParams,customParamsText:n.target.value}})),placeholder:'{"max_completion_tokens": 4096, "reasoning_effort": "medium"}',rows:4,className:"text-sm"}),e.jsx("div",{className:"text-muted-foreground mt-1 text-[11px]",children:"可选 JSON 对象，会合并进 API 请求体（需符合当前协议）。"})]})}function Yt({modelForm:s,setModelForm:t}){const n=g.useMemo(()=>"border-border bg-background h-10 w-full rounded-lg border px-3 text-sm",[]);return e.jsxs("div",{className:"grid gap-4 md:grid-cols-2",children:[e.jsxs("div",{children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"温度 (Temperature)"}),e.jsx(X,{min:0,max:2,step:.1,className:"w-full",value:s.chatParams.temperature,onChange:a=>t(r=>({...r,chatParams:{...r.chatParams,temperature:Number(a??r.chatParams.temperature)}}))})]}),e.jsxs("div",{children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"最大 Token 数"}),e.jsx(X,{min:1,step:1,className:"w-full",value:s.chatParams.maxTokens,onChange:a=>t(r=>({...r,chatParams:{...r.chatParams,maxTokens:Number(a??r.chatParams.maxTokens)}}))})]}),e.jsxs("div",{children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"Top P"}),e.jsx(X,{min:0,max:1,step:.01,className:"w-full",value:s.chatParams.topP,onChange:a=>t(r=>({...r,chatParams:{...r.chatParams,topP:Number(a??r.chatParams.topP)}}))})]}),e.jsxs("div",{children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"Top K"}),e.jsx("input",{type:"number",min:1,step:1,value:s.chatParams.topK,onChange:a=>t(r=>({...r,chatParams:{...r.chatParams,topK:a.target.value}})),className:n})]}),e.jsxs("div",{children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"频率惩罚"}),e.jsx(X,{min:-2,max:2,step:.1,className:"w-full",value:s.chatParams.frequencyPenalty,onChange:a=>t(r=>({...r,chatParams:{...r.chatParams,frequencyPenalty:Number(a??r.chatParams.frequencyPenalty)}}))})]}),e.jsxs("div",{children:[e.jsx("label",{className:"text-muted-foreground mb-1 block text-xs",children:"存在惩罚"}),e.jsx(X,{min:-2,max:2,step:.1,className:"w-full",value:s.chatParams.presencePenalty,onChange:a=>t(r=>({...r,chatParams:{...r.chatParams,presencePenalty:Number(a??r.chatParams.presencePenalty)}}))})]})]})}function Zt({modelForm:s,setModelForm:t}){const n=s.apiProtocol==="anthropic";return e.jsxs("div",{className:"mt-4 grid gap-4 md:grid-cols-2",children:[e.jsx("div",{className:"border-border bg-background flex items-center gap-3 rounded-lg border px-3 py-2 text-sm",children:e.jsx(Ue,{checked:s.chatParams.stream,disabled:n,onChange:a=>t(r=>({...r,chatParams:{...r.chatParams,stream:a.target.checked}})),children:n?"流式输出（Anthropic 协议暂不支持）":"流式输出"})}),e.jsx("div",{className:"border-border bg-background flex items-center gap-3 rounded-lg border px-3 py-2 text-sm",children:e.jsx(Ue,{checked:s.chatParams.enableThinking,onChange:a=>t(r=>({...r,chatParams:{...r.chatParams,enableThinking:a.target.checked}})),children:"开启思考模式"})})]})}function Xt({modelForm:s,setModelForm:t}){return e.jsxs("div",{className:"border-border mt-4 rounded-xl border p-4",children:[e.jsx("div",{className:"mb-3 text-sm font-medium",children:"对话参数"}),e.jsx(Yt,{modelForm:s,setModelForm:t}),e.jsx(Zt,{modelForm:s,setModelForm:t}),e.jsx(Wt,{modelForm:s,setModelForm:t})]})}function ea({editingModelId:s,modelForm:t,setModelForm:n,availableModels:a,fetchingModels:r,testingModelId:l,savingModel:o,onClose:x,onFetchModels:b,onTestDraft:h,onSave:c,onBatchAdd:i}){const y=s||"__draft__",[w,T]=g.useState([]),E=w.length>1,A=()=>{E&&i?i(w):c()};return e.jsx(W,{open:!0,onCancel:x,footer:null,width:800,destroyOnHidden:!0,title:e.jsxs("div",{children:[e.jsx("div",{children:s?"编辑模型":"添加模型"}),e.jsx("div",{className:"text-muted-foreground mt-1 text-xs font-normal",children:"保存后会立即写入设置，并参与默认模型选择。"})]}),children:e.jsxs("div",{className:"space-y-4",children:[e.jsx(Gt,{modelForm:t,setModelForm:n,fetchingModels:r,onFetchModels:b,isEditing:!!s}),s?null:e.jsx(qt,{availableModels:a,modelForm:t,setModelForm:n,selectedIds:w,onSelectionChange:T}),t.type==="chat"?e.jsx(Xt,{modelForm:t,setModelForm:n}):null,e.jsxs("div",{className:"border-border flex items-center justify-between border-t pt-4",children:[e.jsxs(j,{onClick:h,disabled:l===y,className:"border-border bg-background inline-flex h-9 items-center gap-2 rounded-lg border px-4 text-sm",children:[l===y?e.jsx(ae,{className:"h-4 w-4 animate-spin"}):e.jsx(Ie,{className:"h-4 w-4"}),"测试当前配置"]}),e.jsxs("div",{className:"flex items-center gap-2",children:[e.jsx(j,{onClick:x,className:"border-border inline-flex h-9 items-center rounded-lg border px-4 text-sm",children:"取消"}),e.jsx(j,{type:"primary",onClick:A,disabled:o,className:"bg-primary text-primary-foreground inline-flex h-9 items-center rounded-lg px-4 text-sm font-medium",children:E?`添加 ${w.length} 个模型`:s?"保存修改":"添加模型"})]})]})]})})}function sa({chatModels:s,imageModels:t,embeddingModels:n,allModels:a,scenarioModelDefaults:r,onScenarioChange:l}){return e.jsx(M,{title:"场景默认模型",children:e.jsx("div",{className:"divide-border/50 divide-y",children:Xe.map(o=>{const x=o.type==="chat"?s:o.type==="embedding"?n:t,b=z(a,r,o.key,o.type),h=new Set(x.map(w=>w.id)),c=r[o.key],i=c&&h.has(c)?c:b&&h.has(b.id)?b.id:x[0]?.id??"",y=o.type==="image"?"请先在下方添加「图像模型」，或配置名称含 dall-e / flux 等生图模型 ID 的对话模型":o.type==="embedding"?"请先在下方添加「嵌入模型（知识库）」，文本切分模型不能代替嵌入模型":"请先在下方添加对话模型";return e.jsx(Rt,{label:o.label,desc:o.desc,disabled:x.length===0,emptyHint:x.length===0?y:void 0,value:i,models:x,modelType:o.type,onChange:w=>l(o.key,w||null)},o.key)})})})}function ta(){const s=_(),{showToast:t}=Ce(),{modal:n}=Cs.useApp(),[a,r]=g.useState(F),[l,o]=g.useState(null),[x,b]=g.useState(!1),[h,c]=g.useState(!1),[i,y]=g.useState(null),[w,T]=g.useState(!1),[E,A]=g.useState(null),[R,m]=g.useState(null),[v,P]=g.useState(!1),[p,N]=g.useState([]),[k,Y]=g.useState(!1),[Z,V]=g.useState({}),C=s.aiModels,L=g.useMemo(()=>Q(C,"chat"),[C]),re=g.useMemo(()=>Q(C,"embedding"),[C]),ne=g.useMemo(()=>Q(C,"image"),[C]),le=g.useMemo(()=>L.find(d=>d.isDefault)??L[0]??null,[L]),$=g.useMemo(()=>({quickAdd:z(C,s.scenarioModelDefaults,"quickAdd","chat"),promptTest:z(C,s.scenarioModelDefaults,"promptTest","chat"),imageTest:z(C,s.scenarioModelDefaults,"imageTest","image"),translation:z(C,s.scenarioModelDefaults,"translation","chat"),textSegment:z(C,s.scenarioModelDefaults,"textSegment","chat"),knowledgeEmbedding:z(C,s.scenarioModelDefaults,"knowledgeEmbedding","embedding")}),[C,s.scenarioModelDefaults]),Ae=g.useMemo(()=>{const d=C.reduce((u,f)=>{const S=st(f);return u[S]||(u[S]={key:S,provider:f.provider,apiProtocol:f.apiProtocol,apiUrl:f.apiUrl,models:[]}),u[S].models.push(f),u},{});return Object.values(d).sort((u,f)=>u.provider.localeCompare(f.provider))},[C]),cs=g.useMemo(()=>C.length===0&&!!(s.aiProvider.trim()&&s.aiApiKey.trim()&&s.aiApiUrl.trim()&&s.aiModel.trim()),[C.length,s.aiApiKey,s.aiApiUrl,s.aiModel,s.aiProvider]),ms=g.useMemo(()=>[{title:"对话模型",value:String(L.length),detail:`默认: ${ee(le,"未配置")}`,tone:L.length>0?"ready":"warning",icon:ns},{title:"嵌入模型",value:String(re.length),detail:`知识库: ${ee($.knowledgeEmbedding,"未配置")}`,tone:re.length>0?"ready":"warning",icon:ls},{title:"生图模型",value:String(ne.length),detail:`默认: ${ee($.imageTest,"未配置")}`,tone:ne.length>0?"ready":"warning",icon:ue}],[L.length,le,re.length,ne.length,$]),us=g.useMemo(()=>ee(le,"未配置默认模型"),[le]),xs=g.useMemo(()=>{const d=Object.entries($),u=new Map;for(const[f,S]of d){if(!S)continue;const ie=Xe.find(Ss=>Ss.key===f)?.badge??null;if(!ie)continue;const $e=u.get(S.id)??[];$e.push(ie),u.set(S.id,$e)}return u},[$]),Te=d=>{const u=d?.provider||F.provider,f=xe(u),S=d?.apiProtocol??f?.recommendedProtocol??F.apiProtocol;o(null),N([]),r({...F,...d,provider:u,apiProtocol:S,apiUrl:d?.apiUrl??f?.defaultUrl??F.apiUrl,chatParams:d?.chatParams?{...be(),...d.chatParams}:be(),imageParams:d?.imageParams?{...fe(),...d.imageParams}:fe()}),b(!0)},ps=d=>{o(d.id),N([]),r(tt(d)),b(!0)},ge=()=>{o(null),N([]),b(!1),r({...F,chatParams:be(),imageParams:fe()})},hs=async()=>{if(!a.apiKey.trim()||!a.apiUrl.trim()){t("请先填写 API Key 和 API 地址","error");return}Y(!0);const d=await Dt(a.apiUrl,a.apiKey,a.apiProtocol);if(Y(!1),!d.success||d.models.length===0){const u=Vt(d,a.apiUrl);t(u.message,u.type);return}N(d.models),t(`已加载 ${d.models.length} 个模型`,"success")},gs=async()=>{if(!a.apiKey.trim()||!a.apiUrl.trim()||!a.model.trim()){t("请填写完整的模型配置","error");return}A(l||"__draft__");const d=a.name.trim()||a.model.trim()||"AI";try{if(a.type==="embedding"){const u=await ye({provider:a.provider,apiProtocol:"openai",apiKey:a.apiKey,apiUrl:a.apiUrl,model:a.model,type:"embedding"});if(!u.success)throw new Error(u.error||"嵌入接口连接失败");t(q(d,u.latency),"success")}else if(je({type:a.type,model:a.model,provider:a.provider,apiUrl:a.apiUrl})){const u=await Ne({provider:a.provider,apiProtocol:a.apiProtocol,apiKey:a.apiKey,apiUrl:a.apiUrl,model:a.model,type:a.type},"A minimal product illustration on a clean background");if(!u.success)throw new Error(u.error||"连接失败");t(q(d,u.latency),"success")}else{const u=await we({provider:a.provider,apiProtocol:a.apiProtocol,apiKey:a.apiKey,apiUrl:a.apiUrl,model:a.model});if(!u.success)throw new Error(u.error||"连接失败");t(q(d,u.latency),"success")}}catch(u){const f=u instanceof Error?u.message:String(u);t(Je(d,f,a.apiUrl),"error")}finally{A(null)}},fs=()=>{if(!a.provider.trim()||!a.apiKey.trim()||!a.apiUrl.trim()||!a.model.trim()){t("请填写完整的模型配置","error");return}const d=a.type==="chat"?Be(a):void 0,u=a.type==="image"?_e(a):void 0;if(a.type==="chat"&&!d){t("自定义参数必须是 JSON 对象，且值只能是字符串、数字或布尔值","error");return}P(!0);const f={name:a.name.trim(),provider:a.provider.trim(),apiProtocol:a.apiProtocol,apiKey:a.apiKey.trim(),apiUrl:G(a.apiUrl),model:a.model.trim(),type:a.type,chatParams:a.type==="chat"?d:void 0,imageParams:a.type==="image"?u:void 0};l?(s.updateAiModel(l,f),t("模型已更新","success")):(s.addAiModel(f),t("模型已添加","success")),P(!1),ge()},bs=d=>{if(!a.provider.trim()||!a.apiKey.trim()||!a.apiUrl.trim()){t("请先填写 API Key 和 API 地址","error");return}const u=a.type==="chat"?Be(a):void 0,f=a.type==="image"?_e(a):void 0;if(a.type==="chat"&&!u){t("自定义参数必须是 JSON 对象，且值只能是字符串、数字或布尔值","error");return}P(!0);for(const S of d)s.addAiModel({name:"",provider:a.provider.trim(),apiProtocol:a.apiProtocol,apiKey:a.apiKey.trim(),apiUrl:G(a.apiUrl),model:S,type:a.type,chatParams:a.type==="chat"?u:void 0,imageParams:a.type==="image"?f:void 0});P(!1),t(`模型已添加 (${d.length})`,"success"),ge()},js=d=>{n.confirm({title:"确认删除模型？",content:"确定要删除这个模型配置吗？",okText:"确定",cancelText:"取消",okButtonProps:{danger:!0},onOk:()=>{s.deleteAiModel(d.id),t("模型已删除","success")}})},Ee=async d=>{if(!de(d)){t("该模型配置不完整，无法测试","error");return}A(d.id);const u=ee(d,"AI");try{if(De(d)){const f=await ye({provider:d.provider,apiProtocol:"openai",apiKey:d.apiKey,apiUrl:d.apiUrl,model:d.model,type:"embedding"});if(!f.success)throw new Error(f.error||"嵌入接口连接失败");t(q(u,f.latency),"success")}else if(je(d)){const f=await Ne({provider:d.provider,apiProtocol:d.apiProtocol,apiKey:d.apiKey,apiUrl:d.apiUrl,model:d.model,type:d.type},"A minimal product illustration on a clean background");if(!f.success)throw new Error(f.error||"连接失败");t(q(u,f.latency),"success")}else{const f=await we({provider:d.provider,apiProtocol:d.apiProtocol,apiKey:d.apiKey,apiUrl:d.apiUrl,model:d.model});if(!f.success)throw new Error(f.error||"连接失败");t(q(u,f.latency),"success")}}catch(f){const S=f instanceof Error?f.message:String(f);t(Je(u,S,d.apiUrl),"error")}finally{A(null)}},vs=async d=>{const u=d.models.find(de);if(!u){t("该端点下还没有可测试的完整模型","error");return}m(d.key);try{if(De(u)){const f=await ye({provider:u.provider,apiProtocol:"openai",apiKey:u.apiKey,apiUrl:u.apiUrl,model:u.model,type:"embedding"});if(!f.success)throw new Error(f.error||"嵌入接口连接失败");V(S=>({...S,[d.key]:{tone:"ready",label:"已连接",detail:`${u.model} · ${f.latency}ms`}})),t(`嵌入端点连接成功（${f.latency}ms）`,"success")}else if(je(u)){const f=await Ne({provider:u.provider,apiProtocol:u.apiProtocol,apiKey:u.apiKey,apiUrl:u.apiUrl,model:u.model,type:u.type},"A minimal product illustration on a clean background");if(!f.success)throw new Error(f.error||"连接失败");V(S=>({...S,[d.key]:{tone:"ready",label:"已连接",detail:`${u.model} · ${f.latency}ms`}})),t(`端点连接成功（${f.latency}ms）`,"success")}else{const f=await we({provider:u.provider,apiProtocol:u.apiProtocol,apiKey:u.apiKey,apiUrl:u.apiUrl,model:u.model});if(!f.success)throw new Error(f.error||"连接失败");V(S=>({...S,[d.key]:{tone:"ready",label:"已连接",detail:`${u.model} · ${f.latency}ms`}})),t(`端点连接成功（${f.latency}ms）`,"success")}}catch(f){const S=Me(f instanceof Error?f.message:String(f),u.apiUrl);V(ie=>({...ie,[d.key]:{tone:"error",label:"连接失败",detail:S}})),t(S,"error")}finally{m(null)}},ys=d=>{const u=d.models[0];y({key:d.key,provider:u.provider,apiProtocol:u.apiProtocol,apiKey:u.apiKey,apiUrl:u.apiUrl}),c(!0)},Oe=()=>{c(!1),y(null)},Ns=d=>{n.confirm({title:"确认删除端点？",content:"删除当前端点将清空该端点下所有的模型",okText:"确定",cancelText:"取消",okButtonProps:{danger:!0},onOk:()=>{for(const u of d.models)s.deleteAiModel(u.id);V(u=>{const f={...u};return delete f[d.key],f}),t("端点已删除","success")}})},ws=()=>{if(!i)return;const d=Ae.find(u=>u.key===i.key);if(d){for(const u of d.models)s.updateAiModel(u.id,{provider:i.provider.trim(),apiProtocol:i.apiProtocol,apiKey:i.apiKey.trim(),apiUrl:G(i.apiUrl)});V(u=>{const f={...u};return delete f[i.key],f}),Oe(),t("端点配置已更新","success")}},ks=async()=>{const d=$.promptTest||$.imageTest||$.translation||$.knowledgeEmbedding;if(!d||!de(d)){t("还没有可测试的默认模型","error");return}T(!0),await Ee(d),T(!1)},Ps=()=>{s.addAiModel({name:s.aiModel,provider:s.aiProvider,apiProtocol:s.aiApiProtocol,apiKey:s.aiApiKey,apiUrl:s.aiApiUrl,model:s.aiModel,type:"chat"}),t("已导入旧版默认模型配置","success")};return e.jsxs("div",{className:"mx-auto max-w-5xl space-y-10 pb-10",children:[e.jsx(Ft,{testingDefault:w,hasLegacyOnlyConfig:cs,statusCards:ms,defaultModelDisplayName:us,onTestDefault:()=>{ks()},onAddModel:()=>Te(),onImportLegacy:Ps}),e.jsx(sa,{chatModels:L,imageModels:ne,embeddingModels:re,allModels:C,scenarioModelDefaults:s.scenarioModelDefaults,onScenarioChange:(d,u)=>s.setScenarioModelDefault(d,u)}),e.jsx(Jt,{endpointGroups:Ae,endpointStatuses:Z,testingEndpointKey:R,testingModelId:E,modelScenarioBadges:xs,onTestEndpoint:d=>{vs(d)},onEditEndpoint:ys,onDeleteEndpoint:Ns,onAddModel:Te,onSetDefaultModel:d=>s.setDefaultAiModel(d),onTestModel:d=>{Ee(d)},onEditModel:ps,onDeleteModel:js}),x?e.jsx(ea,{editingModelId:l,modelForm:a,setModelForm:r,availableModels:p,fetchingModels:k,testingModelId:E,savingModel:v,onClose:ge,onFetchModels:()=>{hs()},onTestDraft:()=>{gs()},onSave:fs,onBatchAdd:bs}):null,h&&i?e.jsx(Lt,{endpointDraft:i,setEndpointDraft:y,onClose:Oe,onSave:ws}):null]})}function aa({backgroundImageFileName:s,renderedBackgroundOpacity:t,renderedBackgroundBlur:n,imageAlt:a,emptyLabel:r}){return s?e.jsxs("div",{className:"background-preview-stage bg-background text-foreground app-background-mode-image pointer-events-none relative h-full w-full select-none overflow-hidden rounded-xl",children:[e.jsx(dt,{src:s,alt:a,opacity:t,blur:n}),e.jsxs("div",{className:"background-preview-shell app-wallpaper-shell relative z-10 flex h-full w-full flex-col overflow-hidden",children:[e.jsxs("div",{className:"border-border app-wallpaper-toolbar flex h-9 shrink-0 items-center gap-2 border-b px-2.5",children:[e.jsx("div",{className:"app-wallpaper-surface h-5 w-5 shrink-0 rounded-md"}),e.jsx("div",{className:"flex-1",children:e.jsx("div",{className:"border-border app-wallpaper-search h-5 rounded-md border"})}),e.jsx("div",{className:"app-wallpaper-surface h-5 w-5 shrink-0 rounded-md"})]}),e.jsxs("div",{className:"flex flex-1 overflow-hidden",children:[e.jsxs("div",{className:"app-left-rail-glass border-border app-wallpaper-panel-strong flex w-20 shrink-0 flex-col gap-2 border-r p-2",children:[e.jsx("div",{className:"app-wallpaper-surface-strong h-5 rounded-md"}),e.jsx("div",{className:"app-wallpaper-surface h-4 rounded-md"}),e.jsx("div",{className:"app-wallpaper-surface h-4 rounded-md"}),e.jsx("div",{className:"sidebar-tag-section app-wallpaper-panel mt-auto h-8 rounded-lg"})]}),e.jsxs("div",{className:"app-wallpaper-section flex flex-1 overflow-hidden",children:[e.jsxs("div",{className:"prompt-list-pane border-border flex w-28 shrink-0 flex-col border-r",children:[e.jsxs("div",{className:"prompt-list-header border-border app-wallpaper-toolbar flex h-8 shrink-0 items-center justify-between gap-2 border-b px-2",children:[e.jsx("div",{className:"bg-foreground/15 h-2 w-8 rounded"}),e.jsx("div",{className:"prompt-list-view-toggle border-border app-wallpaper-surface h-5 w-10 rounded-md border"})]}),e.jsxs("div",{className:"flex flex-1 flex-col gap-2 p-2",children:[e.jsx("div",{className:"prompt-list-card border-border app-wallpaper-surface-strong h-10 rounded-lg border"}),e.jsx("div",{className:"prompt-list-card border-border app-wallpaper-surface h-10 rounded-lg border"}),e.jsx("div",{className:"prompt-list-card border-border app-wallpaper-surface h-10 rounded-lg border"})]})]}),e.jsxs("div",{className:"flex flex-1 flex-col gap-2 p-2",children:[e.jsx("div",{className:"app-wallpaper-surface h-8 w-24 rounded-lg"}),e.jsx("div",{className:"border-border app-wallpaper-panel h-12 rounded-xl border"}),e.jsx("div",{className:"border-border app-wallpaper-panel flex-1 rounded-xl border"})]})]})]})]})]}):e.jsxs("div",{className:"text-muted-foreground flex h-full w-full flex-col items-center justify-center gap-2",children:[e.jsx(ue,{className:"h-8 w-8 opacity-50"}),e.jsx("span",{className:"text-sm",children:r})]})}function ra(){const s=te(),t=_(),[n,a]=g.useState(!1),r=!!t.backgroundImageFileName,l=g.useMemo(()=>Math.round(t.backgroundImageOpacity*100),[t.backgroundImageOpacity]),o=g.useMemo(()=>at(t.backgroundImageOpacity),[t.backgroundImageOpacity]),x=g.useMemo(()=>rt(t.backgroundImageBlur),[t.backgroundImageBlur]);g.useMemo(()=>Math.round(o*100),[o]);const b=async()=>{if(!n){a(!0);try{const i=await it(),y=Array.isArray(i)?i[0]:void 0;if(!y)return;const w=await ot([y]),T=Array.isArray(w)?w[0]:void 0;if(!T)return;t.applyBackgroundImageSelection(T)}finally{a(!1)}}},h=()=>{t.setBackgroundImageFileName(void 0)},c=[{id:"light",label:"浅色",icon:e.jsx(Se,{className:"h-4 w-4"})},{id:"dark",label:"深色",icon:e.jsx(es,{className:"h-4 w-4"})},{id:"system",label:"跟随系统",icon:e.jsx(ss,{className:"h-4 w-4"})}];return e.jsxs("div",{className:"space-y-6",children:[e.jsx(M,{title:"主题模式",children:e.jsx("div",{className:"p-4",children:e.jsx(ce,{block:!0,value:t.themeMode,onChange:i=>t.setThemeMode(i),options:c.map(i=>({value:i.id,label:e.jsxs("span",{className:"inline-flex items-center justify-center gap-2",children:[i.icon,i.label]})}))})})}),e.jsx(M,{title:"主题颜色",children:e.jsxs("div",{className:"p-4",children:[e.jsx("div",{className:"mb-3 flex items-center justify-end",children:e.jsx("div",{className:"text-muted-foreground text-xs tabular-nums",children:t.themeColor==="custom"?`自定义 ${t.customThemeHex}`:t.themeColor==="royal-blue"?"宝蓝":t.themeColor==="blue"?"雾蓝":t.themeColor==="purple"?"烟紫":t.themeColor==="green"?"豆绿":t.themeColor==="orange"?"杏橘":t.themeColor==="teal"?"青黛":t.themeColor})}),e.jsxs("div",{className:"flex w-full items-center overflow-y-visible px-2 py-2",children:[nt.map(i=>{const y=i.id==="royal-blue"?"宝蓝":i.id==="blue"?"雾蓝":i.id==="purple"?"烟紫":i.id==="green"?"豆绿":i.id==="orange"?"杏橘":i.id==="teal"?"青黛":i.id,w=t.themeColor===i.id;return e.jsx("div",{className:"flex min-w-0 flex-1 justify-center",children:e.jsx(j,{type:"text",onClick:()=>t.setThemeColor(i.id),className:`relative h-10 w-10 flex-shrink-0 rounded-full transition-all duration-200 ${w?"ring-primary ring-offset-background ring-2 ring-offset-2":"hover:opacity-90"}`,title:y,"aria-label":y,style:{backgroundColor:`hsl(${i.hue}, ${i.saturation}%, 55%)`},children:w&&e.jsx("span",{className:"absolute inset-0 grid place-items-center",children:e.jsx(He,{className:"h-4 w-4 text-white drop-shadow"})})})},i.id)}),e.jsx("div",{className:"flex min-w-0 flex-1 justify-center",children:e.jsx(j,{type:"text",onClick:()=>t.setThemeColor("custom"),className:`relative h-10 w-10 flex-shrink-0 rounded-full transition-all duration-200 ${t.themeColor==="custom"?"ring-primary ring-offset-background ring-2 ring-offset-2":"hover:opacity-95"}`,title:"自定义","aria-label":"自定义",style:{backgroundColor:t.customThemeHex},children:t.themeColor==="custom"&&e.jsx("span",{className:"absolute inset-0 grid place-items-center",children:e.jsx(He,{className:"h-4 w-4 text-white drop-shadow"})})})})]}),t.themeColor==="custom"&&e.jsxs("div",{className:"app-settings-subtle animate-in fade-in slide-in-from-bottom-2 mt-4 rounded-xl p-4 duration-200",children:[e.jsxs("div",{className:"flex items-center justify-between gap-3",children:[e.jsxs("div",{children:[e.jsx("div",{className:"text-sm font-medium",children:"自定义"}),e.jsx("div",{className:"text-muted-foreground mt-0.5 text-xs",children:"选择任意颜色，立即应用到全局主题"})]}),e.jsxs(me,{align:"center",wrap:!0,children:[e.jsx("input",{type:"color",value:t.customThemeHex,onChange:i=>t.setCustomThemeHex(i.target.value),className:"border-border h-9 w-10 cursor-pointer rounded-lg border bg-transparent p-1","aria-label":"自定义"}),e.jsx(I,{value:t.customThemeHex,onChange:i=>t.setCustomThemeHex(i.target.value),className:"w-28 font-mono",placeholder:"#3b82f6"})]})]}),e.jsxs("div",{className:"mt-4 flex items-center gap-2",children:[e.jsx("div",{className:"bg-primary text-primary-foreground flex h-9 flex-1 items-center justify-center rounded-lg text-sm font-medium",children:"主按钮"}),e.jsx("div",{className:"bg-accent text-accent-foreground flex h-9 flex-1 items-center justify-center rounded-lg text-sm font-medium",children:"强调"}),e.jsx("div",{className:"app-settings-input flex h-9 flex-1 items-center justify-center rounded-lg text-sm font-medium",children:"中性"})]})]})]})}),e.jsx(M,{title:"字体大小",children:e.jsx("div",{className:"p-4",children:e.jsx(ce,{block:!0,value:t.fontSize,onChange:i=>t.setFontSize(String(i)),options:lt.map(i=>({value:i.id,label:e.jsxs("span",{className:"flex flex-col items-center gap-0.5 py-0.5 text-[13px]",children:[e.jsx("span",{children:i.id==="small"?"小":i.id==="medium"?"中":i.id==="large"?"大":i.id}),e.jsxs("span",{className:"text-[11px] opacity-70",children:[i.value,"px"]})]})}))})})}),e.jsx(M,{title:"背景图",children:e.jsxs("div",{className:"space-y-4 p-4",children:[e.jsxs("div",{className:"flex items-start justify-between gap-3",children:[e.jsxs("div",{className:"min-w-0",children:[e.jsxs("div",{className:"text-foreground flex items-center gap-2 text-sm font-medium",children:[e.jsx(ue,{className:"text-muted-foreground h-4 w-4"}),"桌面背景"]}),e.jsx("p",{className:"text-muted-foreground mt-1 text-xs leading-6",children:`选一张喜欢的本地图片，就能把它设成桌面端背景，让 ${s} 更贴近你的工作氛围，图片会统一保存在 ${s} 图片目录里，设置中只保留引用。`})]}),e.jsxs(me,{className:"shrink-0",wrap:!0,children:[e.jsx(j,{type:"primary",loading:n,onClick:()=>{b()},children:r?"更换图片":"选择图片"}),e.jsx(j,{icon:e.jsx(he,{className:"h-4 w-4"}),disabled:!r,onClick:h,children:"清除"})]})]}),e.jsxs("div",{className:"app-settings-subtle space-y-3 rounded-2xl p-3",children:[e.jsx("div",{className:"app-settings-input relative aspect-[16/9] w-full overflow-hidden rounded-xl",children:e.jsx(aa,{backgroundImageFileName:t.backgroundImageFileName,renderedBackgroundOpacity:o,renderedBackgroundBlur:x,imageAlt:"背景图预览",emptyLabel:"暂未选择背景图"})}),e.jsxs("div",{className:"grid grid-cols-1 gap-4 md:grid-cols-2",children:[e.jsxs("div",{className:"space-y-2",children:[e.jsxs("div",{className:"text-muted-foreground flex items-center justify-between gap-3 text-xs",children:[e.jsxs("span",{className:"inline-flex items-center gap-1.5",children:[e.jsx(ue,{className:"h-3.5 w-3.5"}),"背景可见度"]}),e.jsxs("span",{children:[l,"%"]})]}),e.jsx(Ke,{min:0,max:100,step:1,value:l,onChange:i=>t.setBackgroundImageOpacity(Number(i)/100),tooltip:{formatter:i=>i!=null?`${i}%`:""}})]}),e.jsxs("div",{className:"space-y-2",children:[e.jsxs("div",{className:"text-muted-foreground flex items-center justify-between gap-3 text-xs",children:[e.jsxs("span",{className:"inline-flex items-center gap-1.5",children:[e.jsx(Pt,{className:"h-3.5 w-3.5"}),"虚化强度"]}),e.jsxs("span",{children:[t.backgroundImageBlur,"px"]})]}),e.jsx(Ke,{min:0,max:50,step:.5,value:t.backgroundImageBlur,onChange:i=>t.setBackgroundImageBlur(Number(i)),tooltip:{formatter:i=>i!=null?`${i}px`:""}})]})]})]})]})})]})}function na(){const{showToast:s}=Ce(),[t,n]=g.useState(""),[a,r]=g.useState(!1),[l,o]=g.useState(!1);g.useEffect(()=>{let h=!0;return(async()=>{const i=(await ct())?.currentPath??await mt();h&&i&&n(i)})().catch(c=>{h&&console.error("Failed to load data path:",c)}),()=>{h=!1}},[]);const x=()=>{r(!0)},b=async()=>{o(!0);try{await xt(),s("数据已清空","success"),r(!1),setTimeout(()=>window.location.reload(),1e3)}catch(h){console.error("Clear failed:",h),s("清空失败","error")}finally{o(!1)}};return e.jsxs(e.Fragment,{children:[e.jsxs("div",{className:"space-y-6",children:[e.jsx(M,{title:"数据目录",children:e.jsx("div",{className:"space-y-3 p-4",children:e.jsxs("div",{className:"flex items-center gap-3",children:[e.jsx(St,{className:"text-muted-foreground h-5 w-5"}),e.jsxs("div",{className:"flex-1",children:[e.jsx("p",{className:"text-sm font-medium",children:"数据目录"}),e.jsxs(j,{type:"link",onClick:()=>t&&void ut(t),className:"text-primary mt-0.5 flex h-auto cursor-pointer items-center gap-1 p-0 font-mono text-xs hover:underline",title:"打开文件夹",children:[t||"加载中…",e.jsx(Ct,{className:"h-3 w-3"})]})]})]})})}),e.jsx(M,{title:"危险操作",children:e.jsx(K,{label:"清空数据",description:"删除所有本地数据",children:e.jsx(j,{danger:!0,type:"primary",onClick:x,className:"bg-destructive hover:bg-destructive/90 h-9 rounded-lg px-4 text-sm font-medium text-white transition-colors",children:"清空数据"})})}),e.jsx(M,{title:"本地数据路径",children:e.jsx("div",{className:"text-muted-foreground space-y-1 p-4 text-sm",children:t?["aim.db","data/","config/","skills/","logs/"].map(h=>e.jsxs("p",{className:"break-all font-mono text-xs",children:[t.replace(/\/$/,""),"/",h]},h)):e.jsx("p",{className:"italic",children:"加载中…"})})})]}),e.jsx(W,{title:e.jsxs("span",{className:"flex items-center gap-2 text-red-500",children:[e.jsx(he,{className:"h-5 w-5"}),"危险操作"]}),open:a,onCancel:()=>!l&&r(!1),mask:{closable:!l},destroyOnHidden:!0,footer:[e.jsx(j,{disabled:l,onClick:()=>r(!1),children:"取消"},"cancel"),e.jsx(j,{danger:!0,type:"primary",loading:l,onClick:()=>{b()},children:"确认清除"},"ok")],children:e.jsx("p",{className:"text-muted-foreground text-sm",children:"删除所有本地数据"})})]})}function la(){const s=te(),t=_();return e.jsx("div",{className:"space-y-6",children:e.jsxs(M,{title:"启动设置",children:[e.jsx(K,{label:"开机自启动",description:`系统启动时自动运行 ${s}`,children:e.jsx(B,{checked:t.launchAtStartup,onChange:t.setLaunchAtStartup})}),e.jsx(K,{label:"启动时最小化",description:"启动后最小化到系统托盘",children:e.jsx(B,{checked:t.minimizeOnLaunch,onChange:t.setMinimizeOnLaunch})}),navigator.platform.toLowerCase().includes("win")&&e.jsx(K,{label:"关闭窗口行为",description:"点击关闭按钮时的行为",children:e.jsx(H,{value:t.closeAction,onChange:n=>t.setCloseAction(n),options:[{value:"ask",label:"每次询问"},{value:"minimize",label:"最小化到托盘"},{value:"exit",label:"退出应用"}],className:"w-40"})})]})})}function ia(){const s=_();return e.jsx("div",{className:"space-y-6",children:e.jsxs(M,{title:"通知",children:[e.jsx(K,{label:"启用通知",description:"允许应用发送桌面通知",children:e.jsx(B,{checked:s.enableNotifications,onChange:s.setEnableNotifications})}),e.jsx(K,{label:"复制成功提示",description:"复制 IPrompt 后显示提示",children:e.jsx(B,{checked:s.showCopyNotification,onChange:s.setShowCopyNotification})}),e.jsx(K,{label:"保存成功提示",description:"保存更改后显示提示",children:e.jsx(B,{checked:s.showSaveNotification,onChange:s.setShowSaveNotification})})]})})}var D=(s=>(s.EStdio="stdio",s.ESse="sse",s.EHttp="http",s))(D||{}),U=(s=>(s.EIdle="idle",s.EConnecting="connecting",s.EConnected="connected",s.EError="error",s.EDisabled="disabled",s))(U||{});const se={"mcp-settings":"_mcp-settings_cx6ue_1","mcp-settings-toolbar":"_mcp-settings-toolbar_cx6ue_6","mcp-settings-json":"_mcp-settings-json_cx6ue_11","mcp-settings-json-input":"_mcp-settings-json-input_cx6ue_14","mcp-settings-json-actions":"_mcp-settings-json-actions_cx6ue_18"};function oa(s){if(!s?.trim())return;const t=s.trim();if(t.startsWith("[")){const n=JSON.parse(t);if(!Array.isArray(n)||n.some(a=>typeof a!="string"))throw new Error("args 必须是字符串数组 JSON");return n}return t.split(",").map(n=>n.trim()).filter(Boolean)}function Ve(s,t){if(!s?.trim())return;const n=JSON.parse(s);if(!n||typeof n!="object"||Array.isArray(n))throw new Error(`${t} 必须是 JSON 对象`);const a={};for(const[r,l]of Object.entries(n)){if(typeof l!="string")throw new Error(`${t} 的值必须是字符串`);a[r]=l}return a}function da(s){switch(s){case U.EConnected:return"success";case U.EError:return"error";case U.EDisabled:return"default";case U.EConnecting:return"processing";default:return"warning"}}function ca(s){switch(s){case U.EConnected:return"已连接";case U.EError:return"错误";case U.EDisabled:return"已禁用";case U.EConnecting:return"连接中";default:return"空闲"}}function ma(){const{showToast:s}=Ce(),[t,n]=g.useState([]),[a,r]=g.useState(`{
+import {
+  a4 as $t,
+  a0 as At,
+  _ as Ct,
+  a2 as Et,
+  N as He,
+  m as Ie,
+  R as It,
+  a6 as Kt,
+  $ as Mt,
+  C as Nt,
+  a3 as Ot,
+  Z as Pt,
+  O as Se,
+  F as St,
+  a1 as Tt,
+  a5 as Ut,
+  L as ae,
+  T as as,
+  Q as es,
+  h as he,
+  Y as kt,
+  v as ls,
+  z as ns,
+  c as pe,
+  k as rs,
+  V as ss,
+  p as ts,
+  I as ue,
+  S as vt,
+  H as wt,
+  j as yt,
+} from './icons-B5Lu0sqU.js';
+import {
+  bj as $s,
+  dc as Be,
+  bm as Bs,
+  br as Ce,
+  da as De,
+  bl as Ds,
+  d4 as F,
+  cS as Fs,
+  cM as G,
+  cY as Gs,
+  cO as Hs,
+  cU as J,
+  cP as Js,
+  bk as Ks,
+  dv as Le,
+  cL as Ls,
+  cH as Os,
+  ca as Q,
+  cZ as Qs,
+  bc as Re,
+  cK as Rs,
+  bo as Us,
+  cQ as Vs,
+  cJ as We,
+  c_ as Ws,
+  d3 as Xe,
+  d1 as Xs,
+  cT as Ye,
+  c$ as Ys,
+  cW as Ze,
+  d0 as Zs,
+  bp as _,
+  dd as _e,
+  c4 as _s,
+  de as at,
+  d8 as be,
+  dw as bt,
+  dl as ct,
+  cV as de,
+  dk as dt,
+  d6 as ee,
+  d2 as et,
+  d7 as fe,
+  du as ft,
+  dt as gt,
+  ds as ht,
+  di as it,
+  db as je,
+  dx as jt,
+  dh as lt,
+  dm as mt,
+  dg as nt,
+  cI as oe,
+  dj as ot,
+  dq as pt,
+  cX as qs,
+  df as rt,
+  d5 as st,
+  bB as te,
+  d9 as tt,
+  dn as ut,
+  dr as ve,
+  cR as xe,
+  dp as xt,
+  c9 as z,
+  dy as ze,
+  cN as zs,
+} from './index-C2avURFS.js';
+import './markdown-it-vendor-DL4wSELR.js';
+import { q as e } from './markdown-vendor-DldLOD9R.js';
+import { a as Ne, b as we, t as ye } from './testing-qyiiDhJu.js';
+import {
+  D as As,
+  w as B,
+  A as Cs,
+  h as Es,
+  x as Ge,
+  S as H,
+  e as I,
+  i as Is,
+  z as Ke,
+  n as Ms,
+  F as O,
+  L as Qe,
+  E as Ts,
+  C as Ue,
+  M as W,
+  p as X,
+  y as ce,
+  r as g,
+  B as j,
+  o as me,
+} from './ui-vendor-C-FKu2uc.js';
+async function Dt(s, t, n = 'openai') {
+  if (!t || !s)
+    return { success: !1, models: [], error: 'Please fill in API Key and API URL first' };
+  try {
+    const a = Os($s(s, n)),
+      r = Us({ apiProtocol: n, provider: '', apiUrl: s }),
+      l = Ks(r, t, { accept: 'application/json', useNativeGeminiAuth: r === 'gemini', apiUrl: s }),
+      o = Ds(),
+      x = o
+        ? Bs(await o.request({ method: 'GET', url: a, headers: l }))
+        : await fetch(a, { method: 'GET', headers: l });
+    if (!x.ok) {
+      const h = await x.text(),
+        c =
+          x.status === 401 || x.status === 403
+            ? 'auth'
+            : x.status === 404 || x.status === 405 || x.status === 501
+              ? 'unsupported'
+              : 'http';
+      return {
+        success: !1,
+        models: [],
+        error: `获取模型列表失败: ${x.status} - ${h.substring(0, 100)}`,
+        reason: c,
+        endpoint: a,
+        status: x.status,
+      };
+    }
+    const b = await x.json();
+    return b.data && Array.isArray(b.data) && n === 'anthropic'
+      ? {
+          success: !0,
+          models: b.data
+            .filter((c) => typeof c.id == 'string')
+            .map((c) => ({
+              id: c.id,
+              name: c.display_name || c.id,
+              owned_by: 'Anthropic',
+              created: c.created_at ? Date.parse(c.created_at) : void 0,
+            }))
+            .sort((c, i) => c.id.localeCompare(i.id)),
+        }
+      : b.data && Array.isArray(b.data)
+        ? {
+            success: !0,
+            models: b.data
+              .filter((c) => c.id)
+              .map((c) => ({ id: c.id, name: c.id, owned_by: c.owned_by, created: c.created }))
+              .sort((c, i) => c.id.localeCompare(i.id)),
+          }
+        : b.models && Array.isArray(b.models)
+          ? {
+              success: !0,
+              models: b.models
+                .filter((c) => c.name)
+                .map((c) => {
+                  const i = c.name.replace(/^models\//, '');
+                  return {
+                    id: i,
+                    name: c.displayName ? `${c.displayName} (${i})` : i,
+                    owned_by: 'Google',
+                    description: c.description,
+                  };
+                })
+                .sort((c, i) => c.id.localeCompare(i.id)),
+            }
+          : Array.isArray(b)
+            ? {
+                success: !0,
+                models: b
+                  .filter((c) => c.id || c.model)
+                  .map((c) => ({ id: c.id || c.model || '', name: c.name || c.id || c.model })),
+              }
+            : {
+                success: !1,
+                models: [],
+                error: '无法解析模型列表响应',
+                reason: 'unsupported',
+                endpoint: a,
+              };
+  } catch (a) {
+    const r = a instanceof Error ? a.message : '获取模型列表失败';
+    return {
+      success: !1,
+      models: [],
+      error: r,
+      reason:
+        r.toLowerCase().includes('failed to fetch') || r.toLowerCase().includes('network')
+          ? 'network'
+          : 'http',
+    };
+  }
+}
+function ka({ isOpen: s, onClose: t }) {
+  const n = _((l) => l.themeMode),
+    a = _((l) => l.setThemeMode),
+    r = [
+      { value: 'light', label: '浅色', icon: Se },
+      { value: 'dark', label: '深色', icon: es },
+      { value: 'system', label: '跟随系统', icon: ss },
+    ];
+  return e.jsx(W, {
+    open: s,
+    onCancel: t,
+    title: '设置',
+    width: 500,
+    footer: null,
+    destroyOnHidden: !0,
+    children: e.jsxs('div', {
+      className: 'space-y-6',
+      children: [
+        e.jsxs('div', {
+          className: 'space-y-3',
+          children: [
+            e.jsxs('h3', {
+              className: 'text-foreground flex items-center gap-2 text-sm font-semibold',
+              children: [e.jsx(Se, { className: 'text-primary h-4 w-4' }), '显示设置'],
+            }),
+            e.jsx('div', {
+              className: 'grid grid-cols-3 gap-2',
+              children: r.map((l) =>
+                e.jsxs(
+                  j,
+                  {
+                    type: 'text',
+                    onClick: () => a(l.value),
+                    className: `flex h-auto flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${n === l.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'} `,
+                    children: [
+                      e.jsx(l.icon, {
+                        className: `h-6 w-6 ${n === l.value ? 'text-primary' : 'text-muted-foreground'}`,
+                      }),
+                      e.jsx('span', {
+                        className: `text-sm font-medium ${n === l.value ? 'text-primary' : 'text-foreground'}`,
+                        children: l.label,
+                      }),
+                    ],
+                  },
+                  l.value,
+                ),
+              ),
+            }),
+          ],
+        }),
+        e.jsx('div', {
+          className: 'flex justify-end pt-2',
+          children: e.jsx(j, { type: 'primary', onClick: t, children: '完成' }),
+        }),
+      ],
+    }),
+  });
+}
+function M({ title: s, children: t }) {
+  return e.jsxs('div', {
+    className: 'relative',
+    children: [
+      e.jsx('h3', { className: 'text-muted-foreground mb-2 text-sm font-medium', children: s }),
+      e.jsx('div', { className: 'app-settings-card', children: t }),
+    ],
+  });
+}
+function K({ label: s, description: t, children: n }) {
+  return e.jsxs('div', {
+    className:
+      'border-border/70 hover:bg-muted/20 flex items-center justify-between border-b px-4 py-3 transition-colors last:border-0',
+    children: [
+      e.jsxs('div', {
+        children: [
+          e.jsx('div', { className: 'text-sm font-medium', children: s }),
+          t && e.jsx('div', { className: 'text-muted-foreground mt-0.5 text-xs', children: t }),
+        ],
+      }),
+      n,
+    ],
+  });
+}
+function Pa({ checked: s, onChange: t, defaultChecked: n = !1 }) {
+  return e.jsx(B, { checked: s, defaultChecked: n, onChange: t });
+}
+const is = g.memo(function ({ value: t, onChange: n, placeholder: a, className: r = '' }) {
+  return e.jsx(I.Password, {
+    value: t,
+    onChange: (l) => n(l.target.value),
+    placeholder: a,
+    className: `app-settings-input placeholder:text-muted-foreground/60 h-10 w-full rounded-lg text-sm ${r}`,
+  });
+});
+function Bt() {
+  const s = te(),
+    t = _s(),
+    n = oe((c) => c.localVersion),
+    a = oe((c) => c.config),
+    r = oe((c) => {
+      const i = c.config?.update?.version?.trim();
+      return i ? We(i, c.localVersion) > 0 : !1;
+    }),
+    [l, o] = g.useState(!1),
+    x = a?.update,
+    b = x?.version?.trim(),
+    h = () => {
+      const c = x?.download?.trim();
+      c && Ls(c);
+    };
+  return e.jsxs(e.Fragment, {
+    children: [
+      e.jsx('div', {
+        className: 'space-y-6',
+        children: e.jsxs(M, {
+          title: '版本信息',
+          children: [
+            e.jsx(K, {
+              label: '当前版本',
+              description: `本机已安装的 ${s} 版本号`,
+              children: e.jsxs('div', {
+                className: 'flex items-center gap-2 text-sm',
+                children: [
+                  e.jsx('span', { children: n }),
+                  r && b
+                    ? e.jsx('button', {
+                        type: 'button',
+                        className: 'text-primary hover:underline',
+                        onClick: () => o(!0),
+                        children: '发现新版本',
+                      })
+                    : null,
+                ],
+              }),
+            }),
+            b
+              ? e.jsx(K, {
+                  label: '最新版本',
+                  description: '在线配置中的最新发布版本',
+                  children: e.jsx('span', { className: 'text-sm', children: b }),
+                })
+              : null,
+          ],
+        }),
+      }),
+      e.jsx(W, {
+        centered: !0,
+        open: l,
+        title: '版本更新',
+        onCancel: () => o(!1),
+        footer: [
+          e.jsx(j, { onClick: () => o(!1), children: '关闭' }, 'close'),
+          x?.download
+            ? e.jsx(j, { type: 'primary', onClick: h, children: '下载更新' }, 'download')
+            : null,
+        ],
+        children: e.jsxs('div', {
+          className: 'space-y-3',
+          children: [
+            e.jsxs('div', {
+              className: 'text-sm',
+              children: [
+                e.jsx('span', { className: 'text-muted-foreground', children: '新版本：' }),
+                e.jsx('span', { className: 'font-medium', children: b }),
+              ],
+            }),
+            x?.description?.trim()
+              ? e.jsx('div', {
+                  className: 'border-border rounded-lg border p-3',
+                  children: e.jsx(Rs, {
+                    instanceKey: 'about-update-description',
+                    content: x.description,
+                    isStreaming: !1,
+                    theme: t.theme,
+                    previewTheme: t.previewTheme,
+                    codeTheme: t.codeTheme,
+                  }),
+                })
+              : null,
+          ],
+        }),
+      }),
+    ],
+  });
+}
+function os({ apiUrl: s, apiProtocol: t, provider: n, model: a, modelType: r = 'chat' }) {
+  const l = te(),
+    o = s.trim(),
+    x = g.useMemo(() => G(s), [s]),
+    b = g.useMemo(() => zs(s), [s]),
+    h = g.useMemo(
+      () =>
+        r === 'image' ? Hs(s, { provider: n, model: a }) : r === 'embedding' ? Js(s) : Vs(s, t),
+      [t, s, a, r, n],
+    ),
+    c = !!(o && !o.endsWith('#') && b && b !== o.replace(/\/$/, '')),
+    i = g.useMemo(
+      () =>
+        t === 'gemini'
+          ? [
+              'https://generativelanguage.googleapis.com',
+              'https://generativelanguage.googleapis.com/v1beta',
+            ]
+          : t === 'anthropic'
+            ? ['https://api.anthropic.com', 'https://api.anthropic.com/v1']
+            : [xe(n)?.defaultUrl || 'https://api.openai.com', 'https://api.example.com/v1'].filter(
+                Boolean,
+              ),
+      [t, n],
+    );
+  return e.jsxs('div', {
+    className: 'border-border/60 bg-muted/20 mt-2 space-y-2 rounded-lg border p-3 text-xs',
+    children: [
+      e.jsx('div', {
+        className: 'text-muted-foreground',
+        children: `这里只填供应商基础地址或版本根路径即可，不用手动补 /chat/completions、/embeddings 或 /images/generations，${l} 会自动补全。`,
+      }),
+      e.jsxs('div', {
+        className: 'text-muted-foreground',
+        children: [
+          e.jsxs('span', { className: 'text-foreground font-medium', children: ['示例', ':'] }),
+          ' ',
+          e.jsx('span', { className: 'font-mono', children: i.join('  ·  ') }),
+        ],
+      }),
+      b
+        ? e.jsxs('div', {
+            className: 'text-muted-foreground flex flex-col gap-1',
+            children: [
+              e.jsxs('span', {
+                className: 'text-foreground font-medium',
+                children: ['保存后的 Base URL', ':'],
+              }),
+              e.jsx('span', { className: 'text-primary break-all font-mono', children: b }),
+            ],
+          })
+        : null,
+      h
+        ? e.jsxs('div', {
+            className: 'text-muted-foreground flex flex-col gap-1',
+            children: [
+              e.jsxs('span', {
+                className: 'text-foreground font-medium',
+                children: ['实际请求地址预览', ':'],
+              }),
+              e.jsx('span', { className: 'text-primary break-all font-mono', children: h }),
+            ],
+          })
+        : null,
+      o.endsWith('#')
+        ? e.jsx('div', {
+            className:
+              'inline-flex w-fit rounded-md border border-amber-500/20 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-600 dark:text-amber-400',
+            children: '已禁用自动填充 (#)',
+          })
+        : null,
+      c || x !== o
+        ? e.jsx('div', {
+            className: 'text-[11px] text-amber-600 dark:text-amber-400',
+            children: '检测到你粘贴了完整 endpoint，失焦或保存时会自动收敛为基础地址。',
+          })
+        : null,
+    ],
+  });
+}
+function ds(s) {
+  const t = new Map();
+  for (const a of s) {
+    const r = a.group ?? '';
+    (t.has(r) || t.set(r, []), t.get(r).push(a));
+  }
+  const n = [...t.keys()];
+  return n.length === 1 && n[0] === ''
+    ? t.get('').map((a) => ({ value: a.value, label: a.label }))
+    : n.map((a) => ({
+        label: a,
+        options: t.get(a).map((r) => ({ value: r.value, label: r.label })),
+      }));
+}
+function _t({ title: s, value: t, detail: n, tone: a, icon: r }) {
+  const l = a === 'ready';
+  return e.jsxs('div', {
+    className:
+      'border-border/60 bg-card relative flex flex-col justify-between rounded-xl border p-3.5 shadow-sm transition-shadow hover:shadow-md',
+    children: [
+      e.jsx('div', {
+        className: `absolute right-3 top-3 h-1.5 w-1.5 rounded-full ${l ? 'bg-emerald-500 ring-[3px] ring-emerald-500/20' : 'bg-amber-500 ring-[3px] ring-amber-500/20'}`,
+      }),
+      e.jsxs('div', {
+        children: [
+          e.jsxs('div', {
+            className: 'text-muted-foreground flex items-center gap-2',
+            children: [
+              e.jsx(r, { className: 'h-4 w-4' }),
+              e.jsx('span', { className: 'text-xs font-medium', children: s }),
+            ],
+          }),
+          e.jsx('div', {
+            className: 'text-foreground mt-1.5 text-xl font-semibold tracking-tight',
+            children: t,
+          }),
+        ],
+      }),
+      e.jsx('div', {
+        className: 'text-muted-foreground mt-3 line-clamp-1 text-[11px]',
+        title: n,
+        children: n,
+      }),
+    ],
+  });
+}
+function Rt({
+  label: s,
+  desc: t,
+  value: n,
+  models: a,
+  modelType: r = 'chat',
+  onChange: l,
+  disabled: o,
+  emptyHint: x,
+}) {
+  return e.jsxs('div', {
+    className:
+      'hover:bg-muted/30 flex flex-col gap-3 p-4 transition-colors md:flex-row md:items-center md:justify-between',
+    children: [
+      e.jsxs('div', {
+        className: 'min-w-0 space-y-1',
+        children: [
+          e.jsx('div', { className: 'text-sm font-medium', children: s }),
+          e.jsx('div', { className: 'text-muted-foreground text-xs', children: t }),
+        ],
+      }),
+      e.jsxs('div', {
+        className: 'w-full md:w-[280px]',
+        children: [
+          e.jsx(Fs, {
+            className: 'w-full',
+            value: n,
+            onChange: l,
+            models: a,
+            modelType: r,
+            disabled: o,
+            placeholder: '选择模型',
+          }),
+          x
+            ? e.jsx('div', { className: 'text-muted-foreground mt-1.5 text-xs', children: x })
+            : null,
+        ],
+      }),
+    ],
+  });
+}
+function Lt({ endpointDraft: s, setEndpointDraft: t, onClose: n, onSave: a }) {
+  return e.jsx(W, {
+    open: !0,
+    onCancel: n,
+    footer: null,
+    width: 600,
+    destroyOnHidden: !0,
+    title: e.jsxs('div', {
+      children: [
+        e.jsx('div', { children: '编辑端点' }),
+        e.jsx('div', {
+          className: 'text-muted-foreground mt-1 text-xs font-normal',
+          children: '会把该端点下所有模型的 provider / API Key / API 地址一并更新。',
+        }),
+      ],
+    }),
+    children: e.jsxs('div', {
+      className: 'space-y-4',
+      children: [
+        e.jsxs('div', {
+          children: [
+            e.jsx('label', {
+              className: 'text-muted-foreground mb-1 block text-xs',
+              children: '供应商',
+            }),
+            e.jsx(H, {
+              className: 'w-full',
+              value: s.provider,
+              onChange: (r) => {
+                const l = xe(r);
+                t(
+                  (o) =>
+                    o && {
+                      ...o,
+                      provider: r,
+                      apiProtocol: l?.recommendedProtocol || o.apiProtocol,
+                      apiUrl: l?.defaultUrl || o.apiUrl,
+                    },
+                );
+              },
+              options: ds(Ye.map((r) => ({ value: r.id, label: r.name, group: r.group }))),
+            }),
+          ],
+        }),
+        e.jsxs('div', {
+          children: [
+            e.jsx('label', {
+              className: 'text-muted-foreground mb-1 block text-xs',
+              children: '协议',
+            }),
+            e.jsx(H, {
+              className: 'w-full',
+              value: s.apiProtocol,
+              onChange: (r) => t((l) => l && { ...l, apiProtocol: r }),
+              options: [
+                { value: 'openai', label: J('openai') },
+                { value: 'gemini', label: J('gemini') },
+                { value: 'anthropic', label: J('anthropic') },
+              ],
+            }),
+          ],
+        }),
+        e.jsxs('div', {
+          children: [
+            e.jsx('label', {
+              className: 'text-muted-foreground mb-1 block text-xs',
+              children: 'API Key',
+            }),
+            e.jsx(is, {
+              value: s.apiKey,
+              placeholder: '输入 API Key',
+              onChange: (r) => t((l) => l && { ...l, apiKey: r }),
+            }),
+          ],
+        }),
+        e.jsxs('div', {
+          children: [
+            e.jsx('label', {
+              className: 'text-muted-foreground mb-1 block text-xs',
+              children: 'API 地址',
+            }),
+            e.jsx(I, {
+              value: s.apiUrl,
+              onChange: (r) => t((l) => l && { ...l, apiUrl: r.target.value }),
+              onBlur: () =>
+                t((r) => {
+                  if (!r) return r;
+                  const l = G(r.apiUrl);
+                  return l === r.apiUrl ? r : { ...r, apiUrl: l };
+                }),
+              'aria-label': 'API 地址',
+              placeholder: 'https://api.example.com/v1',
+              className: 'bg-muted h-10 w-full rounded-lg px-3 text-sm',
+            }),
+            e.jsx(os, { apiUrl: s.apiUrl, apiProtocol: s.apiProtocol, provider: s.provider }),
+          ],
+        }),
+        e.jsxs('div', {
+          className: 'border-border flex justify-end gap-2 border-t pt-4',
+          children: [
+            e.jsx(j, { onClick: n, children: '取消' }),
+            e.jsx(j, { type: 'primary', onClick: a, children: '保存修改' }),
+          ],
+        }),
+      ],
+    }),
+  });
+}
+function zt(s, t) {
+  return t ? `${s.name ?? ''} ${s.model ?? ''}`.toLowerCase().includes(t) : !0;
+}
+function ke({
+  model: s,
+  badges: t,
+  testingModelId: n,
+  onTestModel: a,
+  onSetDefaultModel: r,
+  onEditModel: l,
+  onDeleteModel: o,
+}) {
+  return e.jsxs('div', {
+    className: `hover:bg-muted/10 group relative flex flex-col gap-3 px-4 py-2.5 transition-colors md:flex-row md:items-center md:justify-between ${s.isDefault ? 'bg-primary/[0.06]' : ''}`,
+    children: [
+      s.isDefault
+        ? e.jsx('span', {
+            className: 'text-primary/80 absolute left-2 top-1 text-[10px] font-medium',
+            children: '默认',
+          })
+        : null,
+      e.jsxs('div', {
+        className: 'flex min-w-0 items-center gap-4',
+        children: [
+          e.jsx('div', {
+            className: 'border-border/60 bg-background text-primary rounded-lg border p-2',
+            children: Ze(Ws(s), 20),
+          }),
+          e.jsxs('div', {
+            className: 'min-w-0',
+            children: [
+              e.jsx('div', { className: 'text-sm font-medium', children: s.name || s.model }),
+              s.name
+                ? e.jsx('div', { className: 'text-muted-foreground text-xs', children: s.model })
+                : null,
+            ],
+          }),
+          e.jsx('div', {
+            className: 'flex flex-wrap gap-1.5',
+            children: t.map((x) =>
+              e.jsx(
+                'span',
+                {
+                  className: `inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${x.primary ? 'bg-primary/10 text-primary' : 'border-border/60 text-muted-foreground border'}`,
+                  children: x.label,
+                },
+                `${s.id}-${x.label}`,
+              ),
+            ),
+          }),
+        ],
+      }),
+      e.jsxs('div', {
+        className: 'flex items-center gap-1.5',
+        children: [
+          e.jsx(j, {
+            type: 'text',
+            size: 'small',
+            onClick: () => a(s),
+            disabled: n === s.id,
+            'aria-label': '测试',
+            title: '测试',
+            className:
+              'text-muted-foreground hover:border-border hover:bg-muted/50 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent transition-all disabled:opacity-50',
+            children:
+              n === s.id
+                ? e.jsx(ae, { className: 'h-3.5 w-3.5 animate-spin' })
+                : e.jsx(Ie, { className: 'h-3.5 w-3.5' }),
+          }),
+          s.isDefault
+            ? null
+            : e.jsx(j, {
+                type: 'text',
+                size: 'small',
+                onClick: () => r(s.id),
+                'aria-label': '设为默认',
+                title: '设为默认',
+                className:
+                  'text-muted-foreground hover:border-border hover:bg-muted/50 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent transition-all',
+                children: e.jsx(kt, { className: 'h-3.5 w-3.5' }),
+              }),
+          e.jsx(j, {
+            type: 'text',
+            size: 'small',
+            onClick: () => l(s),
+            'aria-label': '编辑',
+            title: '编辑',
+            className:
+              'text-muted-foreground hover:border-border hover:bg-muted/50 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent transition-all',
+            children: e.jsx(ts, { className: 'h-3.5 w-3.5' }),
+          }),
+          e.jsx(j, {
+            type: 'text',
+            size: 'small',
+            onClick: () => o(s),
+            'aria-label': '删除',
+            title: '删除',
+            className:
+              'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent text-red-500 transition-all hover:border-red-500/20 hover:bg-red-500/5',
+            children: e.jsx(as, { className: 'h-3.5 w-3.5' }),
+          }),
+        ],
+      }),
+    ],
+  });
+}
+function Pe(s, t) {
+  return [...(t.get(s.id) ?? []).map((n) => ({ label: n, primary: !0 }))];
+}
+function Ht({
+  models: s,
+  modelScenarioBadges: t,
+  testingModelId: n,
+  onTestModel: a,
+  onSetDefaultModel: r,
+  onEditModel: l,
+  onDeleteModel: o,
+}) {
+  const x = Q(s, 'chat'),
+    b = Q(s, 'embedding'),
+    h = Q(s, 'image'),
+    c = [
+      x.length > 0
+        ? {
+            key: 'chat',
+            label: e.jsxs('span', {
+              className: 'text-muted-foreground text-xs font-medium',
+              children: [
+                '对话',
+                e.jsx('span', {
+                  className: 'text-muted-foreground/70 ml-1.5 font-normal',
+                  children: x.length,
+                }),
+              ],
+            }),
+            children: e.jsx('div', {
+              className: 'divide-border/40 divide-y',
+              children: x.map((i) =>
+                e.jsx(
+                  ke,
+                  {
+                    model: i,
+                    badges: Pe(i, t),
+                    testingModelId: n,
+                    onTestModel: a,
+                    onSetDefaultModel: r,
+                    onEditModel: l,
+                    onDeleteModel: o,
+                  },
+                  i.id,
+                ),
+              ),
+            }),
+          }
+        : null,
+      b.length > 0
+        ? {
+            key: 'embedding',
+            label: e.jsxs('span', {
+              className: 'text-muted-foreground text-xs font-medium',
+              children: [
+                '嵌入',
+                e.jsx('span', {
+                  className: 'text-muted-foreground/70 ml-1.5 font-normal',
+                  children: b.length,
+                }),
+              ],
+            }),
+            children: e.jsx('div', {
+              className: 'divide-border/40 divide-y',
+              children: b.map((i) =>
+                e.jsx(
+                  ke,
+                  {
+                    model: i,
+                    badges: Pe(i, t),
+                    testingModelId: n,
+                    onTestModel: a,
+                    onSetDefaultModel: r,
+                    onEditModel: l,
+                    onDeleteModel: o,
+                  },
+                  i.id,
+                ),
+              ),
+            }),
+          }
+        : null,
+      h.length > 0
+        ? {
+            key: 'image',
+            label: e.jsxs('span', {
+              className: 'text-muted-foreground text-xs font-medium',
+              children: [
+                '生图',
+                e.jsx('span', {
+                  className: 'text-muted-foreground/70 ml-1.5 font-normal',
+                  children: h.length,
+                }),
+              ],
+            }),
+            children: e.jsx('div', {
+              className: 'divide-border/40 divide-y',
+              children: h.map((i) =>
+                e.jsx(
+                  ke,
+                  {
+                    model: i,
+                    badges: Pe(i, t),
+                    testingModelId: n,
+                    onTestModel: a,
+                    onSetDefaultModel: r,
+                    onEditModel: l,
+                    onDeleteModel: o,
+                  },
+                  i.id,
+                ),
+              ),
+            }),
+          }
+        : null,
+    ].filter(Boolean);
+  return c.length === 0
+    ? null
+    : e.jsx(Ge, {
+        defaultActiveKey: c.map((i) => i.key),
+        ghost: !0,
+        size: 'small',
+        className: 'endpoint-model-categories',
+        items: c,
+      });
+}
+function Jt({
+  endpointGroups: s,
+  endpointStatuses: t,
+  testingEndpointKey: n,
+  testingModelId: a,
+  modelScenarioBadges: r,
+  onTestEndpoint: l,
+  onEditEndpoint: o,
+  onDeleteEndpoint: x,
+  onAddModel: b,
+  onSetDefaultModel: h,
+  onTestModel: c,
+  onEditModel: i,
+  onDeleteModel: y,
+}) {
+  const [w, T] = g.useState(''),
+    E = w.trim().toLowerCase(),
+    A = g.useMemo(
+      () =>
+        E
+          ? s
+              .map((m) => ({ ...m, models: m.models.filter((v) => zt(v, E)) }))
+              .filter((m) => m.models.length > 0)
+          : s,
+      [s, E],
+    ),
+    R = g.useMemo(() => (A[0]?.key ? [A[0].key] : []), [A]);
+  return e.jsxs('div', {
+    children: [
+      e.jsxs('div', {
+        className: 'mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between',
+        children: [
+          e.jsx('h3', {
+            className: 'text-muted-foreground text-sm font-medium',
+            children: '已配置账户 / 端点',
+          }),
+          e.jsx(I, {
+            allowClear: !0,
+            prefix: e.jsx(vt, { className: 'text-muted-foreground h-4 w-4' }),
+            placeholder: '搜索模型名称…',
+            value: w,
+            onChange: (m) => T(m.target.value),
+            className: 'sm:max-w-xs',
+          }),
+        ],
+      }),
+      s.length === 0
+        ? e.jsx('div', {
+            className:
+              'border-border bg-card text-muted-foreground rounded-xl border border-dashed p-8 text-center text-sm',
+            children: '还没有添加任何模型。先添加一个对话、嵌入或生图模型。',
+          })
+        : A.length === 0
+          ? e.jsx('div', {
+              className:
+                'border-border bg-card text-muted-foreground rounded-xl border border-dashed p-8 text-center text-sm',
+              children: '没有匹配的模型，请调整搜索关键词。',
+            })
+          : e.jsx(Ge, {
+              defaultActiveKey: R,
+              items: A.map((m) => {
+                const v =
+                  t[m.key] ??
+                  (m.models.some(de)
+                    ? { tone: 'warning', label: '未验证', detail: `${m.models.length} 个模型` }
+                    : { tone: 'warning', label: '未配置', detail: '缺少完整的模型配置' });
+                return {
+                  key: m.key,
+                  label: e.jsxs('div', {
+                    className: 'flex min-w-0 items-center gap-3 py-1',
+                    children: [
+                      e.jsx('div', {
+                        className:
+                          'border-border/60 bg-background text-primary rounded-lg border p-2 shadow-sm',
+                        children: Ze(qs(m.provider, m.models), 18),
+                      }),
+                      e.jsxs('div', {
+                        className: 'min-w-0',
+                        children: [
+                          e.jsxs('div', {
+                            className: 'flex flex-wrap items-center gap-2 text-sm font-semibold',
+                            children: [
+                              Gs(m.provider),
+                              e.jsx('span', {
+                                className:
+                                  'border-border/60 text-muted-foreground inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium',
+                                children: J(m.apiProtocol),
+                              }),
+                              e.jsxs('span', {
+                                className: `inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${v.tone === 'ready' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : v.tone === 'error' ? 'bg-red-500/10 text-red-600 dark:text-red-400' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'}`,
+                                children: [
+                                  v.tone === 'ready'
+                                    ? e.jsx(Nt, { className: 'h-3 w-3' })
+                                    : e.jsx(wt, { className: 'h-3 w-3' }),
+                                  v.label,
+                                ],
+                              }),
+                            ],
+                          }),
+                          e.jsx('div', {
+                            className: 'text-muted-foreground mt-0.5 text-xs',
+                            children: Qs(m.apiUrl, '未配置地址'),
+                          }),
+                          e.jsx('div', {
+                            className: 'text-muted-foreground mt-1 text-[11px]',
+                            children: v.detail,
+                          }),
+                        ],
+                      }),
+                    ],
+                  }),
+                  extra: e.jsxs('div', {
+                    className: 'flex flex-wrap items-center gap-2',
+                    onClick: (P) => P.stopPropagation(),
+                    children: [
+                      e.jsxs(j, {
+                        type: 'text',
+                        size: 'small',
+                        onClick: () => l(m),
+                        disabled: n === m.key,
+                        className:
+                          'text-muted-foreground hover:border-border hover:bg-background inline-flex h-8 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs transition-all disabled:opacity-50',
+                        children: [
+                          n === m.key
+                            ? e.jsx(ae, { className: 'h-3.5 w-3.5 animate-spin' })
+                            : e.jsx(yt, { className: 'h-3.5 w-3.5' }),
+                          '测试连接',
+                        ],
+                      }),
+                      e.jsxs(j, {
+                        type: 'text',
+                        size: 'small',
+                        onClick: () => o(m),
+                        className:
+                          'text-muted-foreground hover:border-border hover:bg-background inline-flex h-8 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs transition-all',
+                        children: [e.jsx(ts, { className: 'h-3.5 w-3.5' }), '编辑'],
+                      }),
+                      e.jsxs(j, {
+                        type: 'text',
+                        size: 'small',
+                        onClick: () => x(m),
+                        className:
+                          'inline-flex h-8 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs text-red-500 transition-all hover:border-red-500/20 hover:bg-red-500/5',
+                        children: [e.jsx(as, { className: 'h-3.5 w-3.5' }), '删除'],
+                      }),
+                      e.jsxs(j, {
+                        type: 'text',
+                        size: 'small',
+                        onClick: () =>
+                          b({
+                            provider: m.provider,
+                            apiProtocol: m.apiProtocol,
+                            apiKey: m.models[0]?.apiKey || '',
+                            apiUrl: m.apiUrl,
+                            type: m.models[0]?.type ?? 'chat',
+                          }),
+                        className:
+                          'bg-primary/10 text-primary hover:bg-primary/20 inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors',
+                        children: [e.jsx(pe, { className: 'h-3.5 w-3.5' }), '添加模型'],
+                      }),
+                    ],
+                  }),
+                  children: e.jsx('div', {
+                    className: 'bg-card',
+                    children: e.jsx(Ht, {
+                      models: m.models,
+                      modelScenarioBadges: r,
+                      testingModelId: a,
+                      onTestModel: c,
+                      onSetDefaultModel: h,
+                      onEditModel: i,
+                      onDeleteModel: y,
+                    }),
+                  }),
+                };
+              }),
+            }),
+    ],
+  });
+}
+function Me(s, t) {
+  const n = s.toLowerCase();
+  if (n.includes('failed to fetch') || n.includes('networkerror')) {
+    try {
+      const a = typeof window < 'u' ? window.location.origin : '',
+        r = t ? new URL(t).origin : '';
+      if (a && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(a) && r)
+        return `浏览器把这次跨域请求（CORS）拦截了。当前页面 ${a} 不能直接请求 ${r}。请在服务端放开 CORS，或者把这条请求改走 Electron 主进程代理。`;
+      if (r)
+        return `浏览器把这次跨域请求（CORS）拦截了，目标接口是 ${r}。请在服务端放开 CORS，或者改走应用侧代理。`;
+    } catch {}
+    return '请求还没到供应商就失败了，请检查 API 地址、网络、代理或 CORS 限制。';
+  }
+  return n.includes('401') ||
+    n.includes('403') ||
+    n.includes('unauthorized') ||
+    n.includes('invalid api key')
+    ? '供应商拒绝了这次请求，请检查 API Key、账号权限和 endpoint 路径。'
+    : s;
+}
+function Vt(s, t) {
+  if (s.success && s.models.length === 0)
+    return {
+      message: '供应商没有返回任何模型。如果它隐藏了列表接口，可以直接手动填写模型 ID。',
+      type: 'warning',
+    };
+  switch (s.reason) {
+    case 'auth':
+      return { message: '模型列表请求被拒绝，请检查 API Key 和供应商权限设置。', type: 'error' };
+    case 'unsupported':
+    case 'parse':
+      return {
+        message: '这个供应商没有返回兼容的模型列表接口，你仍然可以直接手动填写模型 ID。',
+        type: 'info',
+      };
+    case 'network':
+      return {
+        message: Me(
+          s.error || '无法连接到模型列表接口，请检查 API 地址、网络、代理或 CORS 限制。',
+          s.endpoint || t,
+        ),
+        type: 'warning',
+      };
+    default:
+      return { message: s.error || '拉取模型列表失败', type: 'error' };
+  }
+}
+function q(s, t, n) {
+  return `${s} 测试成功 (${t}ms)`;
+}
+function Je(s, t, n) {
+  return `${s} 测试失败: ${Me(t, n)}`;
+}
+function Ft({
+  testingDefault: s,
+  hasLegacyOnlyConfig: t,
+  statusCards: n,
+  defaultModelDisplayName: a,
+  onTestDefault: r,
+  onAddModel: l,
+  onImportLegacy: o,
+}) {
+  return e.jsxs(e.Fragment, {
+    children: [
+      e.jsxs('div', {
+        className: 'flex flex-col gap-4 pt-2 md:flex-row md:items-start md:justify-between',
+        children: [
+          e.jsx('div', {
+            children: e.jsx('h2', {
+              className: 'text-lg font-semibold tracking-tight',
+              children: 'AI 模型工作台',
+            }),
+          }),
+          e.jsxs('div', {
+            className: 'flex flex-wrap items-center justify-end gap-3 md:shrink-0',
+            children: [
+              e.jsxs('div', {
+                className: 'flex items-center gap-3',
+                children: [
+                  a
+                    ? e.jsx('span', {
+                        className:
+                          'text-muted-foreground max-w-[220px] truncate text-xs leading-tight',
+                        title: a,
+                        children: a,
+                      })
+                    : null,
+                  e.jsxs(j, {
+                    onClick: r,
+                    disabled: s,
+                    className:
+                      'border-border bg-background hover:bg-accent hover:text-accent-foreground inline-flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border px-4 text-sm font-medium leading-none shadow-sm transition-colors disabled:opacity-50',
+                    children: [
+                      s
+                        ? e.jsx(ae, { className: 'text-muted-foreground h-4 w-4 animate-spin' })
+                        : e.jsx(Ie, { className: 'text-muted-foreground h-4 w-4' }),
+                      '测试默认模型',
+                    ],
+                  }),
+                ],
+              }),
+              e.jsxs(j, {
+                type: 'primary',
+                onClick: l,
+                className:
+                  'bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-4 text-sm font-medium leading-none shadow-sm transition-colors',
+                children: [e.jsx(pe, { className: 'h-4 w-4' }), '添加模型'],
+              }),
+            ],
+          }),
+        ],
+      }),
+      t
+        ? e.jsx('div', {
+            className: 'rounded-xl border border-amber-500/30 bg-amber-500/5 p-4',
+            children: e.jsxs('div', {
+              className: 'flex items-start justify-between gap-4',
+              children: [
+                e.jsxs('div', {
+                  children: [
+                    e.jsx('div', {
+                      className: 'text-sm font-medium',
+                      children: '检测到旧版单模型配置',
+                    }),
+                    e.jsx('div', {
+                      className: 'text-muted-foreground mt-1 text-xs',
+                      children:
+                        '当前 AI 功能仍可继续使用旧版默认配置，但新工作台需要把它导入到多模型列表中。',
+                    }),
+                  ],
+                }),
+                e.jsx(j, {
+                  type: 'primary',
+                  size: 'small',
+                  onClick: o,
+                  className:
+                    'bg-primary text-primary-foreground inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-3 text-xs font-medium leading-none',
+                  children: '导入旧版配置',
+                }),
+              ],
+            }),
+          })
+        : null,
+      e.jsxs('div', {
+        children: [
+          e.jsx('h3', {
+            className: 'text-muted-foreground mb-3 text-sm font-medium',
+            children: '状态总览',
+          }),
+          e.jsx('div', {
+            className: 'grid gap-4 md:grid-cols-2 xl:grid-cols-4',
+            children: n.map((x) => e.jsx(_t, { ...x }, x.title)),
+          }),
+        ],
+      }),
+    ],
+  });
+}
+function qt({ availableModels: s, setModelForm: t, selectedIds: n, onSelectionChange: a }) {
+  const [r, l] = g.useState(''),
+    o = g.useMemo(() => Ys(s), [s]),
+    x = g.useMemo(() => Zs(o, r), [o, r]),
+    b = g.useMemo(() => Xs(x), [x]);
+  if (s.length === 0) return null;
+  const h = (c) => {
+    const i = Array.isArray(c) ? c : [c];
+    a(i);
+    const y = i[i.length - 1];
+    y && t((w) => ({ ...w, model: y }));
+  };
+  return e.jsxs('div', {
+    className: 'border-border bg-muted/20 rounded-xl border',
+    children: [
+      e.jsx('div', {
+        className: 'border-border/60 border-b px-3 py-2.5',
+        children: e.jsxs('div', {
+          className: 'mb-2 flex items-center justify-between',
+          children: [
+            e.jsx('span', {
+              className: 'text-muted-foreground text-xs font-medium',
+              children: '选择模型',
+            }),
+            e.jsxs('span', {
+              className: 'text-muted-foreground text-[11px]',
+              children: [
+                `共 ${s.length} 个模型`,
+                r.trim() && x.length !== o.length && ` · ${x.length}`,
+                n.length > 0 &&
+                  e.jsx('span', {
+                    className: 'bg-primary/10 text-primary ml-1.5 rounded px-1.5 py-0.5',
+                    children: `${n.length} 已选`,
+                  }),
+              ],
+            }),
+          ],
+        }),
+      }),
+      e.jsx('div', {
+        className: 'p-1.5',
+        children: e.jsx(et, {
+          tree: b,
+          selectionMode: 'multiple',
+          value: n,
+          onChange: h,
+          showSearch: !0,
+          searchQuery: r,
+          onSearchQueryChange: l,
+          maxHeight: 240,
+        }),
+      }),
+    ],
+  });
+}
+function Gt({
+  modelForm: s,
+  setModelForm: t,
+  fetchingModels: n,
+  onFetchModels: a,
+  isEditing: r = !1,
+}) {
+  return e.jsxs(e.Fragment, {
+    children: [
+      e.jsxs('div', {
+        className: r ? 'grid gap-4 md:grid-cols-2' : void 0,
+        children: [
+          e.jsxs('div', {
+            children: [
+              e.jsx('label', {
+                className: 'text-muted-foreground mb-1 block text-xs',
+                children: '模型类型',
+              }),
+              e.jsx(H, {
+                className: 'w-full',
+                size: 'middle',
+                value: s.type,
+                onChange: (l) =>
+                  t((o) => ({
+                    ...o,
+                    type: l,
+                    apiProtocol: l === 'embedding' ? 'openai' : o.apiProtocol,
+                  })),
+                options: [
+                  { value: 'chat', label: '对话模型' },
+                  { value: 'embedding', label: '嵌入模型（知识库）' },
+                  { value: 'image', label: '图像模型' },
+                ],
+              }),
+            ],
+          }),
+          r
+            ? e.jsxs('div', {
+                children: [
+                  e.jsx('label', {
+                    className: 'text-muted-foreground mb-1 block text-xs',
+                    children: '自定义名称（可选）',
+                  }),
+                  e.jsx(I, {
+                    size: 'middle',
+                    value: s.name,
+                    onChange: (l) => t((o) => ({ ...o, name: l.target.value })),
+                    'aria-label': '自定义名称（可选）',
+                    placeholder: '例如：我的 GPT-4o、工作用',
+                    className: 'bg-muted w-full rounded-lg text-sm',
+                  }),
+                ],
+              })
+            : null,
+        ],
+      }),
+      r
+        ? null
+        : e.jsxs(e.Fragment, {
+            children: [
+              e.jsxs('div', {
+                className: 'grid gap-4 md:grid-cols-2',
+                children: [
+                  e.jsxs('div', {
+                    children: [
+                      e.jsx('label', {
+                        className: 'text-muted-foreground mb-1 block text-xs',
+                        children: '供应商',
+                      }),
+                      e.jsx(H, {
+                        className: 'w-full',
+                        value: s.provider,
+                        onChange: (l) => {
+                          const o = xe(l);
+                          t((x) => ({
+                            ...x,
+                            provider: l,
+                            apiProtocol:
+                              x.type === 'embedding'
+                                ? 'openai'
+                                : o?.recommendedProtocol || x.apiProtocol,
+                            apiUrl: o?.defaultUrl || x.apiUrl,
+                          }));
+                        },
+                        options: ds(
+                          Ye.map((l) => ({ value: l.id, label: l.name, group: l.group })),
+                        ),
+                      }),
+                    ],
+                  }),
+                  e.jsxs('div', {
+                    children: [
+                      e.jsx('label', {
+                        className: 'text-muted-foreground mb-1 block text-xs',
+                        children: '协议',
+                      }),
+                      e.jsx(H, {
+                        className: 'w-full',
+                        value: s.apiProtocol,
+                        disabled: s.type === 'embedding',
+                        onChange: (l) => t((o) => ({ ...o, apiProtocol: l })),
+                        options: [
+                          { value: 'openai', label: J('openai') },
+                          { value: 'gemini', label: J('gemini') },
+                          { value: 'anthropic', label: J('anthropic') },
+                        ],
+                      }),
+                    ],
+                  }),
+                  e.jsxs('div', {
+                    children: [
+                      e.jsx('label', {
+                        className: 'text-muted-foreground mb-1 block text-xs',
+                        children: 'API Key',
+                      }),
+                      e.jsx(is, {
+                        value: s.apiKey,
+                        placeholder: '输入 API Key',
+                        onChange: (l) => t((o) => ({ ...o, apiKey: l })),
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+              e.jsxs('div', {
+                children: [
+                  e.jsx('label', {
+                    className: 'text-muted-foreground mb-1 block text-xs',
+                    children: 'API 地址',
+                  }),
+                  e.jsx(I, {
+                    value: s.apiUrl,
+                    onChange: (l) => t((o) => ({ ...o, apiUrl: l.target.value })),
+                    onBlur: () =>
+                      t((l) => {
+                        const o = G(l.apiUrl);
+                        return o === l.apiUrl ? l : { ...l, apiUrl: o };
+                      }),
+                    'aria-label': 'API 地址',
+                    placeholder: 'https://api.example.com/v1',
+                    className: 'bg-muted h-10 w-full rounded-lg px-3 text-sm',
+                  }),
+                  s.type === 'embedding'
+                    ? e.jsx(os, {
+                        apiUrl: s.apiUrl,
+                        apiProtocol: 'openai',
+                        provider: s.provider,
+                        model: s.model,
+                        modelType: 'embedding',
+                      })
+                    : null,
+                ],
+              }),
+              e.jsxs('div', {
+                children: [
+                  e.jsxs('div', {
+                    className:
+                      'text-muted-foreground mb-1 flex items-center justify-between text-xs',
+                    children: [
+                      e.jsx('span', { children: '模型名称' }),
+                      e.jsxs(j, {
+                        type: 'text',
+                        size: 'small',
+                        onClick: a,
+                        disabled: n,
+                        className:
+                          'text-primary hover:bg-primary/10 inline-flex items-center gap-1 rounded-md px-2 py-1 disabled:opacity-50',
+                        children: [
+                          n
+                            ? e.jsx(ae, { className: 'h-3.5 w-3.5 animate-spin' })
+                            : e.jsx(rs, { className: 'h-3.5 w-3.5' }),
+                          '获取模型',
+                        ],
+                      }),
+                    ],
+                  }),
+                  e.jsx(I, {
+                    value: s.model,
+                    onChange: (l) => t((o) => ({ ...o, model: l.target.value })),
+                    'aria-label': '模型名称',
+                    placeholder:
+                      s.type === 'embedding'
+                        ? '例如：text-embedding-3-small、bge-m3'
+                        : '例如：gpt-4o、deepseek-chat',
+                    className: 'bg-muted h-10 w-full rounded-lg px-3 text-sm',
+                  }),
+                  s.type === 'embedding'
+                    ? e.jsx('div', {
+                        className: 'mt-1.5 text-xs text-amber-600 dark:text-amber-400',
+                        children:
+                          '嵌入模型与“文本切分”对话模型用途不同；知识库入库必须配置此类型。',
+                      })
+                    : null,
+                ],
+              }),
+            ],
+          }),
+    ],
+  });
+}
+const { TextArea: Qt } = I;
+function Wt({ modelForm: s, setModelForm: t }) {
+  return e.jsxs('div', {
+    className: 'mt-4',
+    children: [
+      e.jsx('label', {
+        className: 'text-muted-foreground mb-1 block text-xs',
+        children: '自定义参数 (JSON)',
+      }),
+      e.jsx(Qt, {
+        value: s.chatParams.customParamsText,
+        onChange: (n) =>
+          t((a) => ({ ...a, chatParams: { ...a.chatParams, customParamsText: n.target.value } })),
+        placeholder: '{"max_completion_tokens": 4096, "reasoning_effort": "medium"}',
+        rows: 4,
+        className: 'text-sm',
+      }),
+      e.jsx('div', {
+        className: 'text-muted-foreground mt-1 text-[11px]',
+        children: '可选 JSON 对象，会合并进 API 请求体（需符合当前协议）。',
+      }),
+    ],
+  });
+}
+function Yt({ modelForm: s, setModelForm: t }) {
+  const n = g.useMemo(
+    () => 'border-border bg-background h-10 w-full rounded-lg border px-3 text-sm',
+    [],
+  );
+  return e.jsxs('div', {
+    className: 'grid gap-4 md:grid-cols-2',
+    children: [
+      e.jsxs('div', {
+        children: [
+          e.jsx('label', {
+            className: 'text-muted-foreground mb-1 block text-xs',
+            children: '温度 (Temperature)',
+          }),
+          e.jsx(X, {
+            min: 0,
+            max: 2,
+            step: 0.1,
+            className: 'w-full',
+            value: s.chatParams.temperature,
+            onChange: (a) =>
+              t((r) => ({
+                ...r,
+                chatParams: { ...r.chatParams, temperature: Number(a ?? r.chatParams.temperature) },
+              })),
+          }),
+        ],
+      }),
+      e.jsxs('div', {
+        children: [
+          e.jsx('label', {
+            className: 'text-muted-foreground mb-1 block text-xs',
+            children: '最大 Token 数',
+          }),
+          e.jsx(X, {
+            min: 1,
+            step: 1,
+            className: 'w-full',
+            value: s.chatParams.maxTokens,
+            onChange: (a) =>
+              t((r) => ({
+                ...r,
+                chatParams: { ...r.chatParams, maxTokens: Number(a ?? r.chatParams.maxTokens) },
+              })),
+          }),
+        ],
+      }),
+      e.jsxs('div', {
+        children: [
+          e.jsx('label', {
+            className: 'text-muted-foreground mb-1 block text-xs',
+            children: 'Top P',
+          }),
+          e.jsx(X, {
+            min: 0,
+            max: 1,
+            step: 0.01,
+            className: 'w-full',
+            value: s.chatParams.topP,
+            onChange: (a) =>
+              t((r) => ({
+                ...r,
+                chatParams: { ...r.chatParams, topP: Number(a ?? r.chatParams.topP) },
+              })),
+          }),
+        ],
+      }),
+      e.jsxs('div', {
+        children: [
+          e.jsx('label', {
+            className: 'text-muted-foreground mb-1 block text-xs',
+            children: 'Top K',
+          }),
+          e.jsx('input', {
+            type: 'number',
+            min: 1,
+            step: 1,
+            value: s.chatParams.topK,
+            onChange: (a) =>
+              t((r) => ({ ...r, chatParams: { ...r.chatParams, topK: a.target.value } })),
+            className: n,
+          }),
+        ],
+      }),
+      e.jsxs('div', {
+        children: [
+          e.jsx('label', {
+            className: 'text-muted-foreground mb-1 block text-xs',
+            children: '频率惩罚',
+          }),
+          e.jsx(X, {
+            min: -2,
+            max: 2,
+            step: 0.1,
+            className: 'w-full',
+            value: s.chatParams.frequencyPenalty,
+            onChange: (a) =>
+              t((r) => ({
+                ...r,
+                chatParams: {
+                  ...r.chatParams,
+                  frequencyPenalty: Number(a ?? r.chatParams.frequencyPenalty),
+                },
+              })),
+          }),
+        ],
+      }),
+      e.jsxs('div', {
+        children: [
+          e.jsx('label', {
+            className: 'text-muted-foreground mb-1 block text-xs',
+            children: '存在惩罚',
+          }),
+          e.jsx(X, {
+            min: -2,
+            max: 2,
+            step: 0.1,
+            className: 'w-full',
+            value: s.chatParams.presencePenalty,
+            onChange: (a) =>
+              t((r) => ({
+                ...r,
+                chatParams: {
+                  ...r.chatParams,
+                  presencePenalty: Number(a ?? r.chatParams.presencePenalty),
+                },
+              })),
+          }),
+        ],
+      }),
+    ],
+  });
+}
+function Zt({ modelForm: s, setModelForm: t }) {
+  const n = s.apiProtocol === 'anthropic';
+  return e.jsxs('div', {
+    className: 'mt-4 grid gap-4 md:grid-cols-2',
+    children: [
+      e.jsx('div', {
+        className:
+          'border-border bg-background flex items-center gap-3 rounded-lg border px-3 py-2 text-sm',
+        children: e.jsx(Ue, {
+          checked: s.chatParams.stream,
+          disabled: n,
+          onChange: (a) =>
+            t((r) => ({ ...r, chatParams: { ...r.chatParams, stream: a.target.checked } })),
+          children: n ? '流式输出（Anthropic 协议暂不支持）' : '流式输出',
+        }),
+      }),
+      e.jsx('div', {
+        className:
+          'border-border bg-background flex items-center gap-3 rounded-lg border px-3 py-2 text-sm',
+        children: e.jsx(Ue, {
+          checked: s.chatParams.enableThinking,
+          onChange: (a) =>
+            t((r) => ({ ...r, chatParams: { ...r.chatParams, enableThinking: a.target.checked } })),
+          children: '开启思考模式',
+        }),
+      }),
+    ],
+  });
+}
+function Xt({ modelForm: s, setModelForm: t }) {
+  return e.jsxs('div', {
+    className: 'border-border mt-4 rounded-xl border p-4',
+    children: [
+      e.jsx('div', { className: 'mb-3 text-sm font-medium', children: '对话参数' }),
+      e.jsx(Yt, { modelForm: s, setModelForm: t }),
+      e.jsx(Zt, { modelForm: s, setModelForm: t }),
+      e.jsx(Wt, { modelForm: s, setModelForm: t }),
+    ],
+  });
+}
+function ea({
+  editingModelId: s,
+  modelForm: t,
+  setModelForm: n,
+  availableModels: a,
+  fetchingModels: r,
+  testingModelId: l,
+  savingModel: o,
+  onClose: x,
+  onFetchModels: b,
+  onTestDraft: h,
+  onSave: c,
+  onBatchAdd: i,
+}) {
+  const y = s || '__draft__',
+    [w, T] = g.useState([]),
+    E = w.length > 1,
+    A = () => {
+      E && i ? i(w) : c();
+    };
+  return e.jsx(W, {
+    open: !0,
+    onCancel: x,
+    footer: null,
+    width: 800,
+    destroyOnHidden: !0,
+    title: e.jsxs('div', {
+      children: [
+        e.jsx('div', { children: s ? '编辑模型' : '添加模型' }),
+        e.jsx('div', {
+          className: 'text-muted-foreground mt-1 text-xs font-normal',
+          children: '保存后会立即写入设置，并参与默认模型选择。',
+        }),
+      ],
+    }),
+    children: e.jsxs('div', {
+      className: 'space-y-4',
+      children: [
+        e.jsx(Gt, {
+          modelForm: t,
+          setModelForm: n,
+          fetchingModels: r,
+          onFetchModels: b,
+          isEditing: !!s,
+        }),
+        s
+          ? null
+          : e.jsx(qt, {
+              availableModels: a,
+              modelForm: t,
+              setModelForm: n,
+              selectedIds: w,
+              onSelectionChange: T,
+            }),
+        t.type === 'chat' ? e.jsx(Xt, { modelForm: t, setModelForm: n }) : null,
+        e.jsxs('div', {
+          className: 'border-border flex items-center justify-between border-t pt-4',
+          children: [
+            e.jsxs(j, {
+              onClick: h,
+              disabled: l === y,
+              className:
+                'border-border bg-background inline-flex h-9 items-center gap-2 rounded-lg border px-4 text-sm',
+              children: [
+                l === y
+                  ? e.jsx(ae, { className: 'h-4 w-4 animate-spin' })
+                  : e.jsx(Ie, { className: 'h-4 w-4' }),
+                '测试当前配置',
+              ],
+            }),
+            e.jsxs('div', {
+              className: 'flex items-center gap-2',
+              children: [
+                e.jsx(j, {
+                  onClick: x,
+                  className:
+                    'border-border inline-flex h-9 items-center rounded-lg border px-4 text-sm',
+                  children: '取消',
+                }),
+                e.jsx(j, {
+                  type: 'primary',
+                  onClick: A,
+                  disabled: o,
+                  className:
+                    'bg-primary text-primary-foreground inline-flex h-9 items-center rounded-lg px-4 text-sm font-medium',
+                  children: E ? `添加 ${w.length} 个模型` : s ? '保存修改' : '添加模型',
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    }),
+  });
+}
+function sa({
+  chatModels: s,
+  imageModels: t,
+  embeddingModels: n,
+  allModels: a,
+  scenarioModelDefaults: r,
+  onScenarioChange: l,
+}) {
+  return e.jsx(M, {
+    title: '场景默认模型',
+    children: e.jsx('div', {
+      className: 'divide-border/50 divide-y',
+      children: Xe.map((o) => {
+        const x = o.type === 'chat' ? s : o.type === 'embedding' ? n : t,
+          b = z(a, r, o.key, o.type),
+          h = new Set(x.map((w) => w.id)),
+          c = r[o.key],
+          i = c && h.has(c) ? c : b && h.has(b.id) ? b.id : (x[0]?.id ?? ''),
+          y =
+            o.type === 'image'
+              ? '请先在下方添加「图像模型」，或配置名称含 dall-e / flux 等生图模型 ID 的对话模型'
+              : o.type === 'embedding'
+                ? '请先在下方添加「嵌入模型（知识库）」，文本切分模型不能代替嵌入模型'
+                : '请先在下方添加对话模型';
+        return e.jsx(
+          Rt,
+          {
+            label: o.label,
+            desc: o.desc,
+            disabled: x.length === 0,
+            emptyHint: x.length === 0 ? y : void 0,
+            value: i,
+            models: x,
+            modelType: o.type,
+            onChange: (w) => l(o.key, w || null),
+          },
+          o.key,
+        );
+      }),
+    }),
+  });
+}
+function ta() {
+  const s = _(),
+    { showToast: t } = Ce(),
+    { modal: n } = Cs.useApp(),
+    [a, r] = g.useState(F),
+    [l, o] = g.useState(null),
+    [x, b] = g.useState(!1),
+    [h, c] = g.useState(!1),
+    [i, y] = g.useState(null),
+    [w, T] = g.useState(!1),
+    [E, A] = g.useState(null),
+    [R, m] = g.useState(null),
+    [v, P] = g.useState(!1),
+    [p, N] = g.useState([]),
+    [k, Y] = g.useState(!1),
+    [Z, V] = g.useState({}),
+    C = s.aiModels,
+    L = g.useMemo(() => Q(C, 'chat'), [C]),
+    re = g.useMemo(() => Q(C, 'embedding'), [C]),
+    ne = g.useMemo(() => Q(C, 'image'), [C]),
+    le = g.useMemo(() => L.find((d) => d.isDefault) ?? L[0] ?? null, [L]),
+    $ = g.useMemo(
+      () => ({
+        quickAdd: z(C, s.scenarioModelDefaults, 'quickAdd', 'chat'),
+        promptTest: z(C, s.scenarioModelDefaults, 'promptTest', 'chat'),
+        imageTest: z(C, s.scenarioModelDefaults, 'imageTest', 'image'),
+        translation: z(C, s.scenarioModelDefaults, 'translation', 'chat'),
+        textSegment: z(C, s.scenarioModelDefaults, 'textSegment', 'chat'),
+        knowledgeEmbedding: z(C, s.scenarioModelDefaults, 'knowledgeEmbedding', 'embedding'),
+      }),
+      [C, s.scenarioModelDefaults],
+    ),
+    Ae = g.useMemo(() => {
+      const d = C.reduce((u, f) => {
+        const S = st(f);
+        return (
+          u[S] ||
+            (u[S] = {
+              key: S,
+              provider: f.provider,
+              apiProtocol: f.apiProtocol,
+              apiUrl: f.apiUrl,
+              models: [],
+            }),
+          u[S].models.push(f),
+          u
+        );
+      }, {});
+      return Object.values(d).sort((u, f) => u.provider.localeCompare(f.provider));
+    }, [C]),
+    cs = g.useMemo(
+      () =>
+        C.length === 0 &&
+        !!(s.aiProvider.trim() && s.aiApiKey.trim() && s.aiApiUrl.trim() && s.aiModel.trim()),
+      [C.length, s.aiApiKey, s.aiApiUrl, s.aiModel, s.aiProvider],
+    ),
+    ms = g.useMemo(
+      () => [
+        {
+          title: '对话模型',
+          value: String(L.length),
+          detail: `默认: ${ee(le, '未配置')}`,
+          tone: L.length > 0 ? 'ready' : 'warning',
+          icon: ns,
+        },
+        {
+          title: '嵌入模型',
+          value: String(re.length),
+          detail: `知识库: ${ee($.knowledgeEmbedding, '未配置')}`,
+          tone: re.length > 0 ? 'ready' : 'warning',
+          icon: ls,
+        },
+        {
+          title: '生图模型',
+          value: String(ne.length),
+          detail: `默认: ${ee($.imageTest, '未配置')}`,
+          tone: ne.length > 0 ? 'ready' : 'warning',
+          icon: ue,
+        },
+      ],
+      [L.length, le, re.length, ne.length, $],
+    ),
+    us = g.useMemo(() => ee(le, '未配置默认模型'), [le]),
+    xs = g.useMemo(() => {
+      const d = Object.entries($),
+        u = new Map();
+      for (const [f, S] of d) {
+        if (!S) continue;
+        const ie = Xe.find((Ss) => Ss.key === f)?.badge ?? null;
+        if (!ie) continue;
+        const $e = u.get(S.id) ?? [];
+        ($e.push(ie), u.set(S.id, $e));
+      }
+      return u;
+    }, [$]),
+    Te = (d) => {
+      const u = d?.provider || F.provider,
+        f = xe(u),
+        S = d?.apiProtocol ?? f?.recommendedProtocol ?? F.apiProtocol;
+      (o(null),
+        N([]),
+        r({
+          ...F,
+          ...d,
+          provider: u,
+          apiProtocol: S,
+          apiUrl: d?.apiUrl ?? f?.defaultUrl ?? F.apiUrl,
+          chatParams: d?.chatParams ? { ...be(), ...d.chatParams } : be(),
+          imageParams: d?.imageParams ? { ...fe(), ...d.imageParams } : fe(),
+        }),
+        b(!0));
+    },
+    ps = (d) => {
+      (o(d.id), N([]), r(tt(d)), b(!0));
+    },
+    ge = () => {
+      (o(null), N([]), b(!1), r({ ...F, chatParams: be(), imageParams: fe() }));
+    },
+    hs = async () => {
+      if (!a.apiKey.trim() || !a.apiUrl.trim()) {
+        t('请先填写 API Key 和 API 地址', 'error');
+        return;
+      }
+      Y(!0);
+      const d = await Dt(a.apiUrl, a.apiKey, a.apiProtocol);
+      if ((Y(!1), !d.success || d.models.length === 0)) {
+        const u = Vt(d, a.apiUrl);
+        t(u.message, u.type);
+        return;
+      }
+      (N(d.models), t(`已加载 ${d.models.length} 个模型`, 'success'));
+    },
+    gs = async () => {
+      if (!a.apiKey.trim() || !a.apiUrl.trim() || !a.model.trim()) {
+        t('请填写完整的模型配置', 'error');
+        return;
+      }
+      A(l || '__draft__');
+      const d = a.name.trim() || a.model.trim() || 'AI';
+      try {
+        if (a.type === 'embedding') {
+          const u = await ye({
+            provider: a.provider,
+            apiProtocol: 'openai',
+            apiKey: a.apiKey,
+            apiUrl: a.apiUrl,
+            model: a.model,
+            type: 'embedding',
+          });
+          if (!u.success) throw new Error(u.error || '嵌入接口连接失败');
+          t(q(d, u.latency), 'success');
+        } else if (je({ type: a.type, model: a.model, provider: a.provider, apiUrl: a.apiUrl })) {
+          const u = await Ne(
+            {
+              provider: a.provider,
+              apiProtocol: a.apiProtocol,
+              apiKey: a.apiKey,
+              apiUrl: a.apiUrl,
+              model: a.model,
+              type: a.type,
+            },
+            'A minimal product illustration on a clean background',
+          );
+          if (!u.success) throw new Error(u.error || '连接失败');
+          t(q(d, u.latency), 'success');
+        } else {
+          const u = await we({
+            provider: a.provider,
+            apiProtocol: a.apiProtocol,
+            apiKey: a.apiKey,
+            apiUrl: a.apiUrl,
+            model: a.model,
+          });
+          if (!u.success) throw new Error(u.error || '连接失败');
+          t(q(d, u.latency), 'success');
+        }
+      } catch (u) {
+        const f = u instanceof Error ? u.message : String(u);
+        t(Je(d, f, a.apiUrl), 'error');
+      } finally {
+        A(null);
+      }
+    },
+    fs = () => {
+      if (!a.provider.trim() || !a.apiKey.trim() || !a.apiUrl.trim() || !a.model.trim()) {
+        t('请填写完整的模型配置', 'error');
+        return;
+      }
+      const d = a.type === 'chat' ? Be(a) : void 0,
+        u = a.type === 'image' ? _e(a) : void 0;
+      if (a.type === 'chat' && !d) {
+        t('自定义参数必须是 JSON 对象，且值只能是字符串、数字或布尔值', 'error');
+        return;
+      }
+      P(!0);
+      const f = {
+        name: a.name.trim(),
+        provider: a.provider.trim(),
+        apiProtocol: a.apiProtocol,
+        apiKey: a.apiKey.trim(),
+        apiUrl: G(a.apiUrl),
+        model: a.model.trim(),
+        type: a.type,
+        chatParams: a.type === 'chat' ? d : void 0,
+        imageParams: a.type === 'image' ? u : void 0,
+      };
+      (l
+        ? (s.updateAiModel(l, f), t('模型已更新', 'success'))
+        : (s.addAiModel(f), t('模型已添加', 'success')),
+        P(!1),
+        ge());
+    },
+    bs = (d) => {
+      if (!a.provider.trim() || !a.apiKey.trim() || !a.apiUrl.trim()) {
+        t('请先填写 API Key 和 API 地址', 'error');
+        return;
+      }
+      const u = a.type === 'chat' ? Be(a) : void 0,
+        f = a.type === 'image' ? _e(a) : void 0;
+      if (a.type === 'chat' && !u) {
+        t('自定义参数必须是 JSON 对象，且值只能是字符串、数字或布尔值', 'error');
+        return;
+      }
+      P(!0);
+      for (const S of d)
+        s.addAiModel({
+          name: '',
+          provider: a.provider.trim(),
+          apiProtocol: a.apiProtocol,
+          apiKey: a.apiKey.trim(),
+          apiUrl: G(a.apiUrl),
+          model: S,
+          type: a.type,
+          chatParams: a.type === 'chat' ? u : void 0,
+          imageParams: a.type === 'image' ? f : void 0,
+        });
+      (P(!1), t(`模型已添加 (${d.length})`, 'success'), ge());
+    },
+    js = (d) => {
+      n.confirm({
+        title: '确认删除模型？',
+        content: '确定要删除这个模型配置吗？',
+        okText: '确定',
+        cancelText: '取消',
+        okButtonProps: { danger: !0 },
+        onOk: () => {
+          (s.deleteAiModel(d.id), t('模型已删除', 'success'));
+        },
+      });
+    },
+    Ee = async (d) => {
+      if (!de(d)) {
+        t('该模型配置不完整，无法测试', 'error');
+        return;
+      }
+      A(d.id);
+      const u = ee(d, 'AI');
+      try {
+        if (De(d)) {
+          const f = await ye({
+            provider: d.provider,
+            apiProtocol: 'openai',
+            apiKey: d.apiKey,
+            apiUrl: d.apiUrl,
+            model: d.model,
+            type: 'embedding',
+          });
+          if (!f.success) throw new Error(f.error || '嵌入接口连接失败');
+          t(q(u, f.latency), 'success');
+        } else if (je(d)) {
+          const f = await Ne(
+            {
+              provider: d.provider,
+              apiProtocol: d.apiProtocol,
+              apiKey: d.apiKey,
+              apiUrl: d.apiUrl,
+              model: d.model,
+              type: d.type,
+            },
+            'A minimal product illustration on a clean background',
+          );
+          if (!f.success) throw new Error(f.error || '连接失败');
+          t(q(u, f.latency), 'success');
+        } else {
+          const f = await we({
+            provider: d.provider,
+            apiProtocol: d.apiProtocol,
+            apiKey: d.apiKey,
+            apiUrl: d.apiUrl,
+            model: d.model,
+          });
+          if (!f.success) throw new Error(f.error || '连接失败');
+          t(q(u, f.latency), 'success');
+        }
+      } catch (f) {
+        const S = f instanceof Error ? f.message : String(f);
+        t(Je(u, S, d.apiUrl), 'error');
+      } finally {
+        A(null);
+      }
+    },
+    vs = async (d) => {
+      const u = d.models.find(de);
+      if (!u) {
+        t('该端点下还没有可测试的完整模型', 'error');
+        return;
+      }
+      m(d.key);
+      try {
+        if (De(u)) {
+          const f = await ye({
+            provider: u.provider,
+            apiProtocol: 'openai',
+            apiKey: u.apiKey,
+            apiUrl: u.apiUrl,
+            model: u.model,
+            type: 'embedding',
+          });
+          if (!f.success) throw new Error(f.error || '嵌入接口连接失败');
+          (V((S) => ({
+            ...S,
+            [d.key]: { tone: 'ready', label: '已连接', detail: `${u.model} · ${f.latency}ms` },
+          })),
+            t(`嵌入端点连接成功（${f.latency}ms）`, 'success'));
+        } else if (je(u)) {
+          const f = await Ne(
+            {
+              provider: u.provider,
+              apiProtocol: u.apiProtocol,
+              apiKey: u.apiKey,
+              apiUrl: u.apiUrl,
+              model: u.model,
+              type: u.type,
+            },
+            'A minimal product illustration on a clean background',
+          );
+          if (!f.success) throw new Error(f.error || '连接失败');
+          (V((S) => ({
+            ...S,
+            [d.key]: { tone: 'ready', label: '已连接', detail: `${u.model} · ${f.latency}ms` },
+          })),
+            t(`端点连接成功（${f.latency}ms）`, 'success'));
+        } else {
+          const f = await we({
+            provider: u.provider,
+            apiProtocol: u.apiProtocol,
+            apiKey: u.apiKey,
+            apiUrl: u.apiUrl,
+            model: u.model,
+          });
+          if (!f.success) throw new Error(f.error || '连接失败');
+          (V((S) => ({
+            ...S,
+            [d.key]: { tone: 'ready', label: '已连接', detail: `${u.model} · ${f.latency}ms` },
+          })),
+            t(`端点连接成功（${f.latency}ms）`, 'success'));
+        }
+      } catch (f) {
+        const S = Me(f instanceof Error ? f.message : String(f), u.apiUrl);
+        (V((ie) => ({ ...ie, [d.key]: { tone: 'error', label: '连接失败', detail: S } })),
+          t(S, 'error'));
+      } finally {
+        m(null);
+      }
+    },
+    ys = (d) => {
+      const u = d.models[0];
+      (y({
+        key: d.key,
+        provider: u.provider,
+        apiProtocol: u.apiProtocol,
+        apiKey: u.apiKey,
+        apiUrl: u.apiUrl,
+      }),
+        c(!0));
+    },
+    Oe = () => {
+      (c(!1), y(null));
+    },
+    Ns = (d) => {
+      n.confirm({
+        title: '确认删除端点？',
+        content: '删除当前端点将清空该端点下所有的模型',
+        okText: '确定',
+        cancelText: '取消',
+        okButtonProps: { danger: !0 },
+        onOk: () => {
+          for (const u of d.models) s.deleteAiModel(u.id);
+          (V((u) => {
+            const f = { ...u };
+            return (delete f[d.key], f);
+          }),
+            t('端点已删除', 'success'));
+        },
+      });
+    },
+    ws = () => {
+      if (!i) return;
+      const d = Ae.find((u) => u.key === i.key);
+      if (d) {
+        for (const u of d.models)
+          s.updateAiModel(u.id, {
+            provider: i.provider.trim(),
+            apiProtocol: i.apiProtocol,
+            apiKey: i.apiKey.trim(),
+            apiUrl: G(i.apiUrl),
+          });
+        (V((u) => {
+          const f = { ...u };
+          return (delete f[i.key], f);
+        }),
+          Oe(),
+          t('端点配置已更新', 'success'));
+      }
+    },
+    ks = async () => {
+      const d = $.promptTest || $.imageTest || $.translation || $.knowledgeEmbedding;
+      if (!d || !de(d)) {
+        t('还没有可测试的默认模型', 'error');
+        return;
+      }
+      (T(!0), await Ee(d), T(!1));
+    },
+    Ps = () => {
+      (s.addAiModel({
+        name: s.aiModel,
+        provider: s.aiProvider,
+        apiProtocol: s.aiApiProtocol,
+        apiKey: s.aiApiKey,
+        apiUrl: s.aiApiUrl,
+        model: s.aiModel,
+        type: 'chat',
+      }),
+        t('已导入旧版默认模型配置', 'success'));
+    };
+  return e.jsxs('div', {
+    className: 'mx-auto max-w-5xl space-y-10 pb-10',
+    children: [
+      e.jsx(Ft, {
+        testingDefault: w,
+        hasLegacyOnlyConfig: cs,
+        statusCards: ms,
+        defaultModelDisplayName: us,
+        onTestDefault: () => {
+          ks();
+        },
+        onAddModel: () => Te(),
+        onImportLegacy: Ps,
+      }),
+      e.jsx(sa, {
+        chatModels: L,
+        imageModels: ne,
+        embeddingModels: re,
+        allModels: C,
+        scenarioModelDefaults: s.scenarioModelDefaults,
+        onScenarioChange: (d, u) => s.setScenarioModelDefault(d, u),
+      }),
+      e.jsx(Jt, {
+        endpointGroups: Ae,
+        endpointStatuses: Z,
+        testingEndpointKey: R,
+        testingModelId: E,
+        modelScenarioBadges: xs,
+        onTestEndpoint: (d) => {
+          vs(d);
+        },
+        onEditEndpoint: ys,
+        onDeleteEndpoint: Ns,
+        onAddModel: Te,
+        onSetDefaultModel: (d) => s.setDefaultAiModel(d),
+        onTestModel: (d) => {
+          Ee(d);
+        },
+        onEditModel: ps,
+        onDeleteModel: js,
+      }),
+      x
+        ? e.jsx(ea, {
+            editingModelId: l,
+            modelForm: a,
+            setModelForm: r,
+            availableModels: p,
+            fetchingModels: k,
+            testingModelId: E,
+            savingModel: v,
+            onClose: ge,
+            onFetchModels: () => {
+              hs();
+            },
+            onTestDraft: () => {
+              gs();
+            },
+            onSave: fs,
+            onBatchAdd: bs,
+          })
+        : null,
+      h && i ? e.jsx(Lt, { endpointDraft: i, setEndpointDraft: y, onClose: Oe, onSave: ws }) : null,
+    ],
+  });
+}
+function aa({
+  backgroundImageFileName: s,
+  renderedBackgroundOpacity: t,
+  renderedBackgroundBlur: n,
+  imageAlt: a,
+  emptyLabel: r,
+}) {
+  return s
+    ? e.jsxs('div', {
+        className:
+          'background-preview-stage bg-background text-foreground app-background-mode-image pointer-events-none relative h-full w-full select-none overflow-hidden rounded-xl',
+        children: [
+          e.jsx(dt, { src: s, alt: a, opacity: t, blur: n }),
+          e.jsxs('div', {
+            className:
+              'background-preview-shell app-wallpaper-shell relative z-10 flex h-full w-full flex-col overflow-hidden',
+            children: [
+              e.jsxs('div', {
+                className:
+                  'border-border app-wallpaper-toolbar flex h-9 shrink-0 items-center gap-2 border-b px-2.5',
+                children: [
+                  e.jsx('div', { className: 'app-wallpaper-surface h-5 w-5 shrink-0 rounded-md' }),
+                  e.jsx('div', {
+                    className: 'flex-1',
+                    children: e.jsx('div', {
+                      className: 'border-border app-wallpaper-search h-5 rounded-md border',
+                    }),
+                  }),
+                  e.jsx('div', { className: 'app-wallpaper-surface h-5 w-5 shrink-0 rounded-md' }),
+                ],
+              }),
+              e.jsxs('div', {
+                className: 'flex flex-1 overflow-hidden',
+                children: [
+                  e.jsxs('div', {
+                    className:
+                      'app-left-rail-glass border-border app-wallpaper-panel-strong flex w-20 shrink-0 flex-col gap-2 border-r p-2',
+                    children: [
+                      e.jsx('div', { className: 'app-wallpaper-surface-strong h-5 rounded-md' }),
+                      e.jsx('div', { className: 'app-wallpaper-surface h-4 rounded-md' }),
+                      e.jsx('div', { className: 'app-wallpaper-surface h-4 rounded-md' }),
+                      e.jsx('div', {
+                        className: 'sidebar-tag-section app-wallpaper-panel mt-auto h-8 rounded-lg',
+                      }),
+                    ],
+                  }),
+                  e.jsxs('div', {
+                    className: 'app-wallpaper-section flex flex-1 overflow-hidden',
+                    children: [
+                      e.jsxs('div', {
+                        className:
+                          'prompt-list-pane border-border flex w-28 shrink-0 flex-col border-r',
+                        children: [
+                          e.jsxs('div', {
+                            className:
+                              'prompt-list-header border-border app-wallpaper-toolbar flex h-8 shrink-0 items-center justify-between gap-2 border-b px-2',
+                            children: [
+                              e.jsx('div', { className: 'bg-foreground/15 h-2 w-8 rounded' }),
+                              e.jsx('div', {
+                                className:
+                                  'prompt-list-view-toggle border-border app-wallpaper-surface h-5 w-10 rounded-md border',
+                              }),
+                            ],
+                          }),
+                          e.jsxs('div', {
+                            className: 'flex flex-1 flex-col gap-2 p-2',
+                            children: [
+                              e.jsx('div', {
+                                className:
+                                  'prompt-list-card border-border app-wallpaper-surface-strong h-10 rounded-lg border',
+                              }),
+                              e.jsx('div', {
+                                className:
+                                  'prompt-list-card border-border app-wallpaper-surface h-10 rounded-lg border',
+                              }),
+                              e.jsx('div', {
+                                className:
+                                  'prompt-list-card border-border app-wallpaper-surface h-10 rounded-lg border',
+                              }),
+                            ],
+                          }),
+                        ],
+                      }),
+                      e.jsxs('div', {
+                        className: 'flex flex-1 flex-col gap-2 p-2',
+                        children: [
+                          e.jsx('div', { className: 'app-wallpaper-surface h-8 w-24 rounded-lg' }),
+                          e.jsx('div', {
+                            className: 'border-border app-wallpaper-panel h-12 rounded-xl border',
+                          }),
+                          e.jsx('div', {
+                            className: 'border-border app-wallpaper-panel flex-1 rounded-xl border',
+                          }),
+                        ],
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      })
+    : e.jsxs('div', {
+        className:
+          'text-muted-foreground flex h-full w-full flex-col items-center justify-center gap-2',
+        children: [
+          e.jsx(ue, { className: 'h-8 w-8 opacity-50' }),
+          e.jsx('span', { className: 'text-sm', children: r }),
+        ],
+      });
+}
+function ra() {
+  const s = te(),
+    t = _(),
+    [n, a] = g.useState(!1),
+    r = !!t.backgroundImageFileName,
+    l = g.useMemo(() => Math.round(t.backgroundImageOpacity * 100), [t.backgroundImageOpacity]),
+    o = g.useMemo(() => at(t.backgroundImageOpacity), [t.backgroundImageOpacity]),
+    x = g.useMemo(() => rt(t.backgroundImageBlur), [t.backgroundImageBlur]);
+  g.useMemo(() => Math.round(o * 100), [o]);
+  const b = async () => {
+      if (!n) {
+        a(!0);
+        try {
+          const i = await it(),
+            y = Array.isArray(i) ? i[0] : void 0;
+          if (!y) return;
+          const w = await ot([y]),
+            T = Array.isArray(w) ? w[0] : void 0;
+          if (!T) return;
+          t.applyBackgroundImageSelection(T);
+        } finally {
+          a(!1);
+        }
+      }
+    },
+    h = () => {
+      t.setBackgroundImageFileName(void 0);
+    },
+    c = [
+      { id: 'light', label: '浅色', icon: e.jsx(Se, { className: 'h-4 w-4' }) },
+      { id: 'dark', label: '深色', icon: e.jsx(es, { className: 'h-4 w-4' }) },
+      { id: 'system', label: '跟随系统', icon: e.jsx(ss, { className: 'h-4 w-4' }) },
+    ];
+  return e.jsxs('div', {
+    className: 'space-y-6',
+    children: [
+      e.jsx(M, {
+        title: '主题模式',
+        children: e.jsx('div', {
+          className: 'p-4',
+          children: e.jsx(ce, {
+            block: !0,
+            value: t.themeMode,
+            onChange: (i) => t.setThemeMode(i),
+            options: c.map((i) => ({
+              value: i.id,
+              label: e.jsxs('span', {
+                className: 'inline-flex items-center justify-center gap-2',
+                children: [i.icon, i.label],
+              }),
+            })),
+          }),
+        }),
+      }),
+      e.jsx(M, {
+        title: '主题颜色',
+        children: e.jsxs('div', {
+          className: 'p-4',
+          children: [
+            e.jsx('div', {
+              className: 'mb-3 flex items-center justify-end',
+              children: e.jsx('div', {
+                className: 'text-muted-foreground text-xs tabular-nums',
+                children:
+                  t.themeColor === 'custom'
+                    ? `自定义 ${t.customThemeHex}`
+                    : t.themeColor === 'royal-blue'
+                      ? '宝蓝'
+                      : t.themeColor === 'blue'
+                        ? '雾蓝'
+                        : t.themeColor === 'purple'
+                          ? '烟紫'
+                          : t.themeColor === 'green'
+                            ? '豆绿'
+                            : t.themeColor === 'orange'
+                              ? '杏橘'
+                              : t.themeColor === 'teal'
+                                ? '青黛'
+                                : t.themeColor,
+              }),
+            }),
+            e.jsxs('div', {
+              className: 'flex w-full items-center overflow-y-visible px-2 py-2',
+              children: [
+                nt.map((i) => {
+                  const y =
+                      i.id === 'royal-blue'
+                        ? '宝蓝'
+                        : i.id === 'blue'
+                          ? '雾蓝'
+                          : i.id === 'purple'
+                            ? '烟紫'
+                            : i.id === 'green'
+                              ? '豆绿'
+                              : i.id === 'orange'
+                                ? '杏橘'
+                                : i.id === 'teal'
+                                  ? '青黛'
+                                  : i.id,
+                    w = t.themeColor === i.id;
+                  return e.jsx(
+                    'div',
+                    {
+                      className: 'flex min-w-0 flex-1 justify-center',
+                      children: e.jsx(j, {
+                        type: 'text',
+                        onClick: () => t.setThemeColor(i.id),
+                        className: `relative h-10 w-10 flex-shrink-0 rounded-full transition-all duration-200 ${w ? 'ring-primary ring-offset-background ring-2 ring-offset-2' : 'hover:opacity-90'}`,
+                        title: y,
+                        'aria-label': y,
+                        style: { backgroundColor: `hsl(${i.hue}, ${i.saturation}%, 55%)` },
+                        children:
+                          w &&
+                          e.jsx('span', {
+                            className: 'absolute inset-0 grid place-items-center',
+                            children: e.jsx(He, { className: 'h-4 w-4 text-white drop-shadow' }),
+                          }),
+                      }),
+                    },
+                    i.id,
+                  );
+                }),
+                e.jsx('div', {
+                  className: 'flex min-w-0 flex-1 justify-center',
+                  children: e.jsx(j, {
+                    type: 'text',
+                    onClick: () => t.setThemeColor('custom'),
+                    className: `relative h-10 w-10 flex-shrink-0 rounded-full transition-all duration-200 ${t.themeColor === 'custom' ? 'ring-primary ring-offset-background ring-2 ring-offset-2' : 'hover:opacity-95'}`,
+                    title: '自定义',
+                    'aria-label': '自定义',
+                    style: { backgroundColor: t.customThemeHex },
+                    children:
+                      t.themeColor === 'custom' &&
+                      e.jsx('span', {
+                        className: 'absolute inset-0 grid place-items-center',
+                        children: e.jsx(He, { className: 'h-4 w-4 text-white drop-shadow' }),
+                      }),
+                  }),
+                }),
+              ],
+            }),
+            t.themeColor === 'custom' &&
+              e.jsxs('div', {
+                className:
+                  'app-settings-subtle animate-in fade-in slide-in-from-bottom-2 mt-4 rounded-xl p-4 duration-200',
+                children: [
+                  e.jsxs('div', {
+                    className: 'flex items-center justify-between gap-3',
+                    children: [
+                      e.jsxs('div', {
+                        children: [
+                          e.jsx('div', { className: 'text-sm font-medium', children: '自定义' }),
+                          e.jsx('div', {
+                            className: 'text-muted-foreground mt-0.5 text-xs',
+                            children: '选择任意颜色，立即应用到全局主题',
+                          }),
+                        ],
+                      }),
+                      e.jsxs(me, {
+                        align: 'center',
+                        wrap: !0,
+                        children: [
+                          e.jsx('input', {
+                            type: 'color',
+                            value: t.customThemeHex,
+                            onChange: (i) => t.setCustomThemeHex(i.target.value),
+                            className:
+                              'border-border h-9 w-10 cursor-pointer rounded-lg border bg-transparent p-1',
+                            'aria-label': '自定义',
+                          }),
+                          e.jsx(I, {
+                            value: t.customThemeHex,
+                            onChange: (i) => t.setCustomThemeHex(i.target.value),
+                            className: 'w-28 font-mono',
+                            placeholder: '#3b82f6',
+                          }),
+                        ],
+                      }),
+                    ],
+                  }),
+                  e.jsxs('div', {
+                    className: 'mt-4 flex items-center gap-2',
+                    children: [
+                      e.jsx('div', {
+                        className:
+                          'bg-primary text-primary-foreground flex h-9 flex-1 items-center justify-center rounded-lg text-sm font-medium',
+                        children: '主按钮',
+                      }),
+                      e.jsx('div', {
+                        className:
+                          'bg-accent text-accent-foreground flex h-9 flex-1 items-center justify-center rounded-lg text-sm font-medium',
+                        children: '强调',
+                      }),
+                      e.jsx('div', {
+                        className:
+                          'app-settings-input flex h-9 flex-1 items-center justify-center rounded-lg text-sm font-medium',
+                        children: '中性',
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+          ],
+        }),
+      }),
+      e.jsx(M, {
+        title: '字体大小',
+        children: e.jsx('div', {
+          className: 'p-4',
+          children: e.jsx(ce, {
+            block: !0,
+            value: t.fontSize,
+            onChange: (i) => t.setFontSize(String(i)),
+            options: lt.map((i) => ({
+              value: i.id,
+              label: e.jsxs('span', {
+                className: 'flex flex-col items-center gap-0.5 py-0.5 text-[13px]',
+                children: [
+                  e.jsx('span', {
+                    children:
+                      i.id === 'small'
+                        ? '小'
+                        : i.id === 'medium'
+                          ? '中'
+                          : i.id === 'large'
+                            ? '大'
+                            : i.id,
+                  }),
+                  e.jsxs('span', {
+                    className: 'text-[11px] opacity-70',
+                    children: [i.value, 'px'],
+                  }),
+                ],
+              }),
+            })),
+          }),
+        }),
+      }),
+      e.jsx(M, {
+        title: '背景图',
+        children: e.jsxs('div', {
+          className: 'space-y-4 p-4',
+          children: [
+            e.jsxs('div', {
+              className: 'flex items-start justify-between gap-3',
+              children: [
+                e.jsxs('div', {
+                  className: 'min-w-0',
+                  children: [
+                    e.jsxs('div', {
+                      className: 'text-foreground flex items-center gap-2 text-sm font-medium',
+                      children: [
+                        e.jsx(ue, { className: 'text-muted-foreground h-4 w-4' }),
+                        '桌面背景',
+                      ],
+                    }),
+                    e.jsx('p', {
+                      className: 'text-muted-foreground mt-1 text-xs leading-6',
+                      children: `选一张喜欢的本地图片，就能把它设成桌面端背景，让 ${s} 更贴近你的工作氛围，图片会统一保存在 ${s} 图片目录里，设置中只保留引用。`,
+                    }),
+                  ],
+                }),
+                e.jsxs(me, {
+                  className: 'shrink-0',
+                  wrap: !0,
+                  children: [
+                    e.jsx(j, {
+                      type: 'primary',
+                      loading: n,
+                      onClick: () => {
+                        b();
+                      },
+                      children: r ? '更换图片' : '选择图片',
+                    }),
+                    e.jsx(j, {
+                      icon: e.jsx(he, { className: 'h-4 w-4' }),
+                      disabled: !r,
+                      onClick: h,
+                      children: '清除',
+                    }),
+                  ],
+                }),
+              ],
+            }),
+            e.jsxs('div', {
+              className: 'app-settings-subtle space-y-3 rounded-2xl p-3',
+              children: [
+                e.jsx('div', {
+                  className:
+                    'app-settings-input relative aspect-[16/9] w-full overflow-hidden rounded-xl',
+                  children: e.jsx(aa, {
+                    backgroundImageFileName: t.backgroundImageFileName,
+                    renderedBackgroundOpacity: o,
+                    renderedBackgroundBlur: x,
+                    imageAlt: '背景图预览',
+                    emptyLabel: '暂未选择背景图',
+                  }),
+                }),
+                e.jsxs('div', {
+                  className: 'grid grid-cols-1 gap-4 md:grid-cols-2',
+                  children: [
+                    e.jsxs('div', {
+                      className: 'space-y-2',
+                      children: [
+                        e.jsxs('div', {
+                          className:
+                            'text-muted-foreground flex items-center justify-between gap-3 text-xs',
+                          children: [
+                            e.jsxs('span', {
+                              className: 'inline-flex items-center gap-1.5',
+                              children: [e.jsx(ue, { className: 'h-3.5 w-3.5' }), '背景可见度'],
+                            }),
+                            e.jsxs('span', { children: [l, '%'] }),
+                          ],
+                        }),
+                        e.jsx(Ke, {
+                          min: 0,
+                          max: 100,
+                          step: 1,
+                          value: l,
+                          onChange: (i) => t.setBackgroundImageOpacity(Number(i) / 100),
+                          tooltip: { formatter: (i) => (i != null ? `${i}%` : '') },
+                        }),
+                      ],
+                    }),
+                    e.jsxs('div', {
+                      className: 'space-y-2',
+                      children: [
+                        e.jsxs('div', {
+                          className:
+                            'text-muted-foreground flex items-center justify-between gap-3 text-xs',
+                          children: [
+                            e.jsxs('span', {
+                              className: 'inline-flex items-center gap-1.5',
+                              children: [e.jsx(Pt, { className: 'h-3.5 w-3.5' }), '虚化强度'],
+                            }),
+                            e.jsxs('span', { children: [t.backgroundImageBlur, 'px'] }),
+                          ],
+                        }),
+                        e.jsx(Ke, {
+                          min: 0,
+                          max: 50,
+                          step: 0.5,
+                          value: t.backgroundImageBlur,
+                          onChange: (i) => t.setBackgroundImageBlur(Number(i)),
+                          tooltip: { formatter: (i) => (i != null ? `${i}px` : '') },
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        }),
+      }),
+    ],
+  });
+}
+function na() {
+  const { showToast: s } = Ce(),
+    [t, n] = g.useState(''),
+    [a, r] = g.useState(!1),
+    [l, o] = g.useState(!1);
+  g.useEffect(() => {
+    let h = !0;
+    return (
+      (async () => {
+        const i = (await ct())?.currentPath ?? (await mt());
+        h && i && n(i);
+      })().catch((c) => {
+        h && console.error('Failed to load data path:', c);
+      }),
+      () => {
+        h = !1;
+      }
+    );
+  }, []);
+  const x = () => {
+      r(!0);
+    },
+    b = async () => {
+      o(!0);
+      try {
+        (await xt(),
+          s('数据已清空', 'success'),
+          r(!1),
+          setTimeout(() => window.location.reload(), 1e3));
+      } catch (h) {
+        (console.error('Clear failed:', h), s('清空失败', 'error'));
+      } finally {
+        o(!1);
+      }
+    };
+  return e.jsxs(e.Fragment, {
+    children: [
+      e.jsxs('div', {
+        className: 'space-y-6',
+        children: [
+          e.jsx(M, {
+            title: '数据目录',
+            children: e.jsx('div', {
+              className: 'space-y-3 p-4',
+              children: e.jsxs('div', {
+                className: 'flex items-center gap-3',
+                children: [
+                  e.jsx(St, { className: 'text-muted-foreground h-5 w-5' }),
+                  e.jsxs('div', {
+                    className: 'flex-1',
+                    children: [
+                      e.jsx('p', { className: 'text-sm font-medium', children: '数据目录' }),
+                      e.jsxs(j, {
+                        type: 'link',
+                        onClick: () => t && void ut(t),
+                        className:
+                          'text-primary mt-0.5 flex h-auto cursor-pointer items-center gap-1 p-0 font-mono text-xs hover:underline',
+                        title: '打开文件夹',
+                        children: [t || '加载中…', e.jsx(Ct, { className: 'h-3 w-3' })],
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            }),
+          }),
+          e.jsx(M, {
+            title: '危险操作',
+            children: e.jsx(K, {
+              label: '清空数据',
+              description: '删除所有本地数据',
+              children: e.jsx(j, {
+                danger: !0,
+                type: 'primary',
+                onClick: x,
+                className:
+                  'bg-destructive hover:bg-destructive/90 h-9 rounded-lg px-4 text-sm font-medium text-white transition-colors',
+                children: '清空数据',
+              }),
+            }),
+          }),
+          e.jsx(M, {
+            title: '本地数据路径',
+            children: e.jsx('div', {
+              className: 'text-muted-foreground space-y-1 p-4 text-sm',
+              children: t
+                ? ['aim.db', 'data/', 'config/', 'skills/', 'logs/'].map((h) =>
+                    e.jsxs(
+                      'p',
+                      {
+                        className: 'break-all font-mono text-xs',
+                        children: [t.replace(/\/$/, ''), '/', h],
+                      },
+                      h,
+                    ),
+                  )
+                : e.jsx('p', { className: 'italic', children: '加载中…' }),
+            }),
+          }),
+        ],
+      }),
+      e.jsx(W, {
+        title: e.jsxs('span', {
+          className: 'flex items-center gap-2 text-red-500',
+          children: [e.jsx(he, { className: 'h-5 w-5' }), '危险操作'],
+        }),
+        open: a,
+        onCancel: () => !l && r(!1),
+        mask: { closable: !l },
+        destroyOnHidden: !0,
+        footer: [
+          e.jsx(j, { disabled: l, onClick: () => r(!1), children: '取消' }, 'cancel'),
+          e.jsx(
+            j,
+            {
+              danger: !0,
+              type: 'primary',
+              loading: l,
+              onClick: () => {
+                b();
+              },
+              children: '确认清除',
+            },
+            'ok',
+          ),
+        ],
+        children: e.jsx('p', {
+          className: 'text-muted-foreground text-sm',
+          children: '删除所有本地数据',
+        }),
+      }),
+    ],
+  });
+}
+function la() {
+  const s = te(),
+    t = _();
+  return e.jsx('div', {
+    className: 'space-y-6',
+    children: e.jsxs(M, {
+      title: '启动设置',
+      children: [
+        e.jsx(K, {
+          label: '开机自启动',
+          description: `系统启动时自动运行 ${s}`,
+          children: e.jsx(B, { checked: t.launchAtStartup, onChange: t.setLaunchAtStartup }),
+        }),
+        e.jsx(K, {
+          label: '启动时最小化',
+          description: '启动后最小化到系统托盘',
+          children: e.jsx(B, { checked: t.minimizeOnLaunch, onChange: t.setMinimizeOnLaunch }),
+        }),
+        navigator.platform.toLowerCase().includes('win') &&
+          e.jsx(K, {
+            label: '关闭窗口行为',
+            description: '点击关闭按钮时的行为',
+            children: e.jsx(H, {
+              value: t.closeAction,
+              onChange: (n) => t.setCloseAction(n),
+              options: [
+                { value: 'ask', label: '每次询问' },
+                { value: 'minimize', label: '最小化到托盘' },
+                { value: 'exit', label: '退出应用' },
+              ],
+              className: 'w-40',
+            }),
+          }),
+      ],
+    }),
+  });
+}
+function ia() {
+  const s = _();
+  return e.jsx('div', {
+    className: 'space-y-6',
+    children: e.jsxs(M, {
+      title: '通知',
+      children: [
+        e.jsx(K, {
+          label: '启用通知',
+          description: '允许应用发送桌面通知',
+          children: e.jsx(B, {
+            checked: s.enableNotifications,
+            onChange: s.setEnableNotifications,
+          }),
+        }),
+        e.jsx(K, {
+          label: '复制成功提示',
+          description: '复制 IPrompt 后显示提示',
+          children: e.jsx(B, {
+            checked: s.showCopyNotification,
+            onChange: s.setShowCopyNotification,
+          }),
+        }),
+        e.jsx(K, {
+          label: '保存成功提示',
+          description: '保存更改后显示提示',
+          children: e.jsx(B, {
+            checked: s.showSaveNotification,
+            onChange: s.setShowSaveNotification,
+          }),
+        }),
+      ],
+    }),
+  });
+}
+var D = ((s) => ((s.EStdio = 'stdio'), (s.ESse = 'sse'), (s.EHttp = 'http'), s))(D || {}),
+  U = ((s) => (
+    (s.EIdle = 'idle'),
+    (s.EConnecting = 'connecting'),
+    (s.EConnected = 'connected'),
+    (s.EError = 'error'),
+    (s.EDisabled = 'disabled'),
+    s
+  ))(U || {});
+const se = {
+  'mcp-settings': '_mcp-settings_cx6ue_1',
+  'mcp-settings-toolbar': '_mcp-settings-toolbar_cx6ue_6',
+  'mcp-settings-json': '_mcp-settings-json_cx6ue_11',
+  'mcp-settings-json-input': '_mcp-settings-json-input_cx6ue_14',
+  'mcp-settings-json-actions': '_mcp-settings-json-actions_cx6ue_18',
+};
+function oa(s) {
+  if (!s?.trim()) return;
+  const t = s.trim();
+  if (t.startsWith('[')) {
+    const n = JSON.parse(t);
+    if (!Array.isArray(n) || n.some((a) => typeof a != 'string'))
+      throw new Error('args 必须是字符串数组 JSON');
+    return n;
+  }
+  return t
+    .split(',')
+    .map((n) => n.trim())
+    .filter(Boolean);
+}
+function Ve(s, t) {
+  if (!s?.trim()) return;
+  const n = JSON.parse(s);
+  if (!n || typeof n != 'object' || Array.isArray(n)) throw new Error(`${t} 必须是 JSON 对象`);
+  const a = {};
+  for (const [r, l] of Object.entries(n)) {
+    if (typeof l != 'string') throw new Error(`${t} 的值必须是字符串`);
+    a[r] = l;
+  }
+  return a;
+}
+function da(s) {
+  switch (s) {
+    case U.EConnected:
+      return 'success';
+    case U.EError:
+      return 'error';
+    case U.EDisabled:
+      return 'default';
+    case U.EConnecting:
+      return 'processing';
+    default:
+      return 'warning';
+  }
+}
+function ca(s) {
+  switch (s) {
+    case U.EConnected:
+      return '已连接';
+    case U.EError:
+      return '错误';
+    case U.EDisabled:
+      return '已禁用';
+    case U.EConnecting:
+      return '连接中';
+    default:
+      return '空闲';
+  }
+}
+function ma() {
+  const { showToast: s } = Ce(),
+    [t, n] = g.useState([]),
+    [a, r] = g.useState(`{
   "mcpServers": {}
 }
-`),[l,o]=g.useState(!1),[x,b]=g.useState(!1),[h,c]=g.useState(null),[i]=O.useForm(),y=g.useCallback(async()=>{o(!0);try{const[p,N]=await Promise.all([pt(),ve()]);n(p),r(`${JSON.stringify(N,null,2)}
-`)}catch(p){s(String(p),"error")}finally{o(!1)}},[s]);g.useEffect(()=>{y()},[y]);const w=async p=>{const N=await ft(p);N.errors.length>0?s(`部分 Server 无效：${N.errors.map(k=>`${k.name}: ${k.message}`).join("；")}`,"error"):s("MCP 配置已保存","success"),await y()},T=()=>{c(null),i.setFieldsValue({name:"",type:D.EStdio,command:"",argsText:"",envText:"",cwd:"",url:"",headersText:"",disabled:!1}),b(!0)},E=p=>{c(p.name),i.setFieldsValue({name:p.name,type:p.transport,command:p.entry.command??"",argsText:p.entry.args?JSON.stringify(p.entry.args):"",envText:p.entry.env?JSON.stringify(p.entry.env,null,2):"",cwd:p.entry.cwd??"",url:p.entry.url??"",headersText:p.entry.headers?JSON.stringify(p.entry.headers,null,2):"",disabled:!!p.entry.disabled}),b(!0)},A=async()=>{try{const p=await i.validateFields(),N=p.name.trim();if(!N)throw new Error("名称不能为空");const k={type:p.type,disabled:!!p.disabled};p.type===D.EStdio?(k.command=p.command?.trim(),k.args=oa(p.argsText),k.env=Ve(p.envText,"env"),k.cwd=p.cwd?.trim()||void 0):(k.url=p.url?.trim(),k.headers=Ve(p.headersText,"headers"));const Z={...(await ve()).mcpServers};h&&h!==N&&delete Z[h],Z[N]=k,await w({mcpServers:Z}),b(!1)}catch(p){if(p&&typeof p=="object"&&"errorFields"in p)return;s(String(p),"error")}},R=async p=>{const k={...(await ve()).mcpServers};delete k[p],await w({mcpServers:k})},m=async()=>{try{const p=JSON.parse(a);if(!p?.mcpServers||typeof p.mcpServers!="object")throw new Error("缺少 mcpServers 对象");await w(p)}catch(p){s(String(p),"error")}},v=g.useMemo(()=>[{label:"stdio",value:D.EStdio},{label:"sse",value:D.ESse},{label:"http",value:D.EHttp}],[]),P=O.useWatch("type",i);return e.jsxs("div",{className:se["mcp-settings"],children:[e.jsxs(M,{title:"MCP Servers",children:[e.jsx("div",{className:se["mcp-settings-toolbar"],children:e.jsxs(me,{children:[e.jsx(j,{type:"primary",icon:e.jsx(pe,{className:"h-3.5 w-3.5"}),onClick:T,children:"新增"}),e.jsx(j,{icon:e.jsx(It,{className:"h-3.5 w-3.5"}),loading:l,onClick:()=>{y()},children:"刷新"})]})}),e.jsx(Is,{rowKey:"name",size:"small",loading:l,pagination:!1,dataSource:t,columns:[{title:"名称",dataIndex:"name",key:"name"},{title:"类型",dataIndex:"transport",key:"transport",width:90},{title:"状态",dataIndex:"status",key:"status",width:110,render:p=>e.jsx(Ms,{color:da(p),children:ca(p)})},{title:"工具数",dataIndex:"toolCount",key:"toolCount",width:80},{title:"错误",dataIndex:"errorMessage",key:"errorMessage",ellipsis:!0,render:p=>p||"-"},{title:"启用",key:"enabled",width:80,render:(p,N)=>e.jsx(B,{checked:!N.entry.disabled,onChange:k=>{ht(N.name,!k).then(()=>y()).catch(Y=>s(String(Y),"error"))}})},{title:"操作",key:"actions",width:220,render:(p,N)=>e.jsxs(me,{size:"small",children:[e.jsx(j,{type:"link",size:"small",onClick:()=>E(N),children:"编辑"}),e.jsx(j,{type:"link",size:"small",onClick:()=>{gt(N.name).then(()=>y()).catch(k=>s(String(k),"error"))},children:"重连"}),e.jsx(j,{type:"link",size:"small",danger:!0,icon:e.jsx(he,{className:"h-3.5 w-3.5"}),onClick:()=>{R(N.name).catch(k=>s(String(k),"error"))},children:"删除"})]})}]})]}),e.jsx(M,{title:"原始 JSON（mcp.json）",children:e.jsxs("div",{className:se["mcp-settings-json"],children:[e.jsx(I.TextArea,{value:a,onChange:p=>r(p.target.value),autoSize:{minRows:12,maxRows:24},className:se["mcp-settings-json-input"]}),e.jsx("div",{className:se["mcp-settings-json-actions"],children:e.jsx(j,{type:"primary",onClick:()=>{m()},children:"保存 JSON"})})]})}),e.jsx(W,{title:h?"编辑 MCP Server":"新增 MCP Server",open:x,onCancel:()=>b(!1),onOk:()=>{A()},destroyOnHidden:!0,width:640,children:e.jsxs(O,{form:i,layout:"vertical",initialValues:{type:D.EStdio,disabled:!1},children:[e.jsx(O.Item,{label:"名称",name:"name",rules:[{required:!0,message:"请输入名称"}],children:e.jsx(I,{placeholder:"例如 filesystem",disabled:!!h})}),e.jsx(O.Item,{label:"类型",name:"type",rules:[{required:!0}],children:e.jsx(H,{options:v})}),P===D.EStdio?e.jsxs(e.Fragment,{children:[e.jsx(O.Item,{label:"command",name:"command",rules:[{required:!0,message:"请输入 command"}],children:e.jsx(I,{placeholder:"npx / node / python"})}),e.jsx(O.Item,{label:"args",name:"argsText",children:e.jsx(I.TextArea,{placeholder:'JSON 数组或逗号分隔，如 ["-y","pkg"]'})}),e.jsx(O.Item,{label:"env",name:"envText",children:e.jsx(I.TextArea,{placeholder:'JSON 对象，如 {"KEY":"value"}'})}),e.jsx(O.Item,{label:"cwd",name:"cwd",children:e.jsx(I,{placeholder:"可选工作目录"})})]}):e.jsxs(e.Fragment,{children:[e.jsx(O.Item,{label:"url",name:"url",rules:[{required:!0,message:"请输入 url"}],children:e.jsx(I,{placeholder:"https://example.com/mcp"})}),e.jsx(O.Item,{label:"headers",name:"headersText",children:e.jsx(I.TextArea,{placeholder:'JSON 对象，如 {"Authorization":"Bearer xxx"}'})})]}),e.jsx(O.Item,{label:"禁用",name:"disabled",valuePropName:"checked",children:e.jsx(B,{})})]})})]})}function ua(){const s=navigator.userAgent.toLowerCase();return s.includes("win")?"win32":s.includes("mac")?"darwin":"linux"}function Fe(s,t){const n=s.trim().replace(/[\\/]+$/,""),a=t.split(/[\\/]+/).filter(Boolean);if(a.length===0)return n;const r=n.includes("\\")?"\\":"/";return`${n}${r}${a.join(r)}`}function xa(){const s=_();return g.useMemo(()=>bt(jt,s.skillPlatformOrder??[]),[s.skillPlatformOrder])}function pa(s,t,n){if(t===n)return null;const a=s.indexOf(t),r=s.indexOf(n);if(a===-1||r===-1)return null;const l=[...s],[o]=l.splice(a,1);return l.splice(r,0,o),l}function ha(){const s=te(),t=_(),n=xa(),a=ua(),[r,l]=g.useState(""),[o,x]=g.useState(null),[b,h]=g.useState(null),[c,i]=g.useState("skill"),y=(m,v)=>{const P=n.map(k=>k.id),p=P.indexOf(m);if(p===-1)return;const N=v==="up"?p-1:p+1;N<0||N>=P.length||([P[p],P[N]]=[P[N],P[p]],t.setSkillPlatformOrder(P))},w=(m,v)=>{const P=pa(n.map(p=>p.id),m,v);P&&t.setSkillPlatformOrder(P)},T=m=>v=>{x(m),h(m),v.dataTransfer.effectAllowed="move",v.dataTransfer.setData("text/plain",m)},E=m=>v=>{!o||o===m||(v.preventDefault(),v.dataTransfer.dropEffect="move",h(m))},A=m=>v=>{v.preventDefault();const P=v.dataTransfer.getData("text/plain")||o;P&&w(P,m),x(null),h(null)},R=()=>{x(null),h(null)};return e.jsxs(e.Fragment,{children:[e.jsx("div",{className:"mb-4",children:e.jsx(ce,{value:c,onChange:m=>i(m),options:[{label:"技能配置",value:"skill"},{label:"MCP",value:"mcp"}]})}),c==="mcp"?e.jsx(ma,{}):e.jsxs(e.Fragment,{children:[e.jsx(M,{title:"ISkill 安装方式",children:e.jsxs("div",{className:"space-y-3 p-4",children:[e.jsx("p",{className:"text-muted-foreground text-xs",children:`选择从 ${s} 库向 AI 工具平台安装 ISkill 的方式。`}),e.jsx(ce,{block:!0,value:t.skillInstallMethod,onChange:m=>t.setSkillInstallMethod(m),options:[{value:"symlink",label:e.jsxs("div",{className:"px-1 py-1 text-left",children:[e.jsx("div",{className:"text-sm font-semibold",children:"软链接"}),e.jsx("p",{className:"text-muted-foreground mt-1 text-[11px] font-normal leading-snug",children:`在平台目录创建软链接指向 ${s} 的 Skills 目录，同步更新更高效`})]})},{value:"copy",label:e.jsxs("div",{className:"px-1 py-1 text-left",children:[e.jsx("div",{className:"text-sm font-semibold",children:"复制文件"}),e.jsx("p",{className:"text-muted-foreground mt-1 text-[11px] font-normal leading-snug",children:"直接将 SKILL.md 复制到平台目录，与平台目录独立"})]})}]})]})}),e.jsx(M,{title:"平台显示顺序",children:e.jsxs("div",{className:"space-y-3 p-4",children:[e.jsxs("div",{className:"flex items-center justify-between gap-3",children:[e.jsx("p",{className:"text-muted-foreground text-xs",children:"控制 ISkill 详情页和批量部署面板中的平台展示顺序。"}),e.jsx(j,{size:"small",icon:e.jsx(Mt,{className:"h-3.5 w-3.5"}),onClick:()=>t.resetSkillPlatformOrder(),children:"重置顺序"})]}),e.jsx("div",{role:"list","aria-label":"平台显示顺序",className:"border-border/70 app-wallpaper-surface space-y-2 rounded-xl border p-3",children:n.map((m,v)=>e.jsxs("div",{role:"listitem","data-platform-id":m.id,draggable:!0,onDragStart:T(m.id),onDragOver:E(m.id),onDrop:A(m.id),onDragEnd:R,className:`app-wallpaper-surface-strong flex cursor-grab items-center justify-between gap-3 rounded-xl border px-3 py-2 transition-colors active:cursor-grabbing ${o===m.id?"border-primary/40 opacity-60":b===m.id?"border-primary/60 ring-primary/30 ring-1":"border-border/60"}`,children:[e.jsxs("div",{className:"flex min-w-0 items-center gap-3",children:[e.jsx(At,{className:"text-muted-foreground h-4 w-4 shrink-0"}),e.jsx(Re,{platformId:m.id,size:20}),e.jsxs("div",{className:"min-w-0",children:[e.jsx("div",{className:"text-foreground text-sm font-medium",children:m.name}),e.jsx("div",{className:"text-muted-foreground text-[11px]",children:t.customPlatformRootPaths[m.id]||Le(m,a)})]})]}),e.jsxs("div",{className:"flex items-center gap-1",children:[e.jsx(j,{size:"small",type:"default",icon:e.jsx(Tt,{className:"h-3.5 w-3.5"}),onClick:()=>y(m.id,"up"),disabled:v===0,title:"上移"}),e.jsx(j,{size:"small",type:"default",icon:e.jsx(Et,{className:"h-3.5 w-3.5"}),onClick:()=>y(m.id,"down"),disabled:v===n.length-1,title:"下移"})]})]},m.id))})]})}),e.jsx(M,{title:"平台根目录",children:e.jsxs("div",{className:"space-y-3 p-4",children:[e.jsx("p",{className:"text-muted-foreground text-xs",children:`为每个 AI 工具覆写平台根目录。${s} 会从这里派生 skills、全局规则等内部路径。`}),e.jsx("div",{className:"border-border overflow-hidden rounded-lg border",children:n.map(m=>{const v=t.customPlatformRootPaths[m.id]||"",P=Le(m,a),p=v||P,N=Fe(p,m.skillsRelativePath);return e.jsxs("div",{className:"border-border/70 space-y-3 border-b px-3 py-3 last:border-0",children:[e.jsxs("div",{className:"flex items-center gap-2",children:[e.jsx(Re,{platformId:m.id,size:16}),e.jsx("span",{className:"text-foreground text-sm font-medium",children:m.name})]}),e.jsxs("div",{className:"text-muted-foreground text-[11px]",children:["默认路径",":",e.jsx("span",{className:"ml-1 font-mono",children:P})]}),e.jsxs("div",{className:"bg-muted/30 text-muted-foreground grid gap-2 rounded-lg p-3 text-[11px]",children:[e.jsxs("div",{children:["派生 ISkill 路径",":",e.jsx("span",{className:"ml-1 font-mono",children:N})]}),m.configFiles?.length?e.jsxs("div",{children:["派生配置文件",":",e.jsx("span",{className:"ml-1 font-mono",children:m.configFiles.map(k=>Fe(p,k)).join(", ")})]}):null,e.jsx("div",{className:"text-muted-foreground/80 text-[10px]",children:"Skills、Rules 以及相关配置文件都由平台根目录派生。"})]}),e.jsxs("div",{className:"flex items-center gap-2",children:[e.jsx(I,{value:v,onChange:k=>t.setCustomPlatformRootPath(m.id,k.target.value),placeholder:"留空则使用默认根目录，例如 ~/.trae-cn",className:"flex-1"}),e.jsx(j,{onClick:()=>t.resetCustomPlatformRootPath(m.id),disabled:!v,children:"恢复默认"})]})]},m.id)})})]})}),e.jsx(M,{title:"额外扫描目录",children:e.jsxs("div",{className:"space-y-3 p-4",children:[e.jsx("p",{className:"text-muted-foreground text-xs",children:"添加额外的 ISkill 目录用于导入和发现。这里不会覆盖平台默认目录。"}),e.jsxs("div",{className:"flex items-center gap-2",children:[e.jsx(I,{value:r,onChange:m=>l(m.target.value),onKeyDown:m=>{m.key==="Enter"&&r.trim()&&(t.addCustomSkillScanPath(r.trim()),l(""))},placeholder:"输入路径，如 ~/myskills",className:"flex-1"}),e.jsx(j,{type:"primary",icon:e.jsx(pe,{className:"h-4 w-4"}),onClick:()=>{r.trim()&&(t.addCustomSkillScanPath(r.trim()),l(""))},children:"添加"})]}),t.customSkillScanPaths.length>0?e.jsx("div",{className:"border-border overflow-hidden rounded-lg border",children:t.customSkillScanPaths.map((m,v)=>e.jsxs("div",{className:"border-border/70 hover:bg-muted/20 flex items-center justify-between border-b px-3 py-2.5 transition-colors last:border-0",children:[e.jsx("span",{className:"text-foreground mr-3 flex-1 truncate font-mono text-sm",children:m}),e.jsx(j,{type:"text",danger:!0,size:"small",icon:e.jsx(he,{className:"h-3.5 w-3.5"}),onClick:()=>t.removeCustomSkillScanPath(m),title:"删除"})]},`${m}-${v}`))}):e.jsx("p",{className:"text-muted-foreground/60 text-xs italic",children:"暂未添加自定义路径"})]})})]})]})}const{Sider:ga,Content:fa}=Qe,qe=[{id:"general",label:"常规设置",icon:Ot},{id:"appearance",label:"显示设置",icon:$t},{id:"data",label:"数据设置",icon:ls},{id:"skill",label:"Agent管理",icon:rs},{id:"ai",label:"AI 模型",icon:ns},{id:"notifications",label:"通知",icon:Ut},{id:"about",label:"关于",icon:Kt}];function Sa({onBack:s,initialSection:t="general"}){const n=qe,[a,r]=g.useState(t);g.useEffect(()=>{qe.some(h=>h.id===t)&&r(t)},[t]);const l=oe(h=>{const c=h.config?.update?.version?.trim();return c?We(c,h.localVersion)>0:!1}),o=g.useMemo(()=>n.map(h=>{const c=h.icon,i=h.id==="about"&&l?e.jsxs("span",{className:ze["settings-menu-badge"],children:[h.label,e.jsx("span",{className:ze["settings-menu-badge-dot"]})]}):h.label;return{key:h.id,icon:e.jsx(c,{className:"h-4 w-4"}),label:i}}),[n,l]),x=()=>{switch(a){case"general":return e.jsx(la,{});case"appearance":return e.jsx(ra,{});case"data":return e.jsx(na,{});case"skill":return e.jsx(ha,{});case"ai":return e.jsx(ta,{});case"notifications":return e.jsx(ia,{});case"about":return e.jsx(Bt,{});default:return null}},b=n.find(h=>h.id===a)?.label;return e.jsxs(Qe,{className:"min-h-0 flex-1 bg-transparent",children:[e.jsxs(ga,{width:224,className:"app-wallpaper-panel border-border border-r bg-transparent",children:[e.jsx("div",{className:"border-border border-b p-3",children:e.jsx(j,{type:"text",icon:e.jsx(As,{}),onClick:s,className:"text-muted-foreground",children:"返回"})}),e.jsx(Ts,{mode:"inline",selectedKeys:[a],items:o,onClick:({key:h})=>r(String(h)),className:"border-0 bg-transparent",style:{borderInlineEnd:0}})]}),e.jsx(fa,{className:"app-wallpaper-section min-h-0 overflow-y-auto px-6 py-5",children:e.jsxs("div",{className:"mx-auto max-w-4xl",children:[e.jsx(Es.Title,{level:4,className:"!mb-4 !mt-0",children:b??""}),e.jsx("div",{className:"animate-in fade-in slide-in-from-bottom-2 duration-200",children:x()},a)]})})]})}export{Bt as AboutSettings,ta as AiSettings,ra as AppearanceSettings,na as DataSettings,la as GeneralSettings,ia as NotificationsSettings,is as PasswordInput,K as SettingItem,M as SettingSection,ka as SettingsModal,Sa as SettingsPage,ha as SkillSettings,Pa as ToggleSwitch,Ws as getModelCategory};
+`),
+    [l, o] = g.useState(!1),
+    [x, b] = g.useState(!1),
+    [h, c] = g.useState(null),
+    [i] = O.useForm(),
+    y = g.useCallback(async () => {
+      o(!0);
+      try {
+        const [p, N] = await Promise.all([pt(), ve()]);
+        (n(p),
+          r(`${JSON.stringify(N, null, 2)}
+`));
+      } catch (p) {
+        s(String(p), 'error');
+      } finally {
+        o(!1);
+      }
+    }, [s]);
+  g.useEffect(() => {
+    y();
+  }, [y]);
+  const w = async (p) => {
+      const N = await ft(p);
+      (N.errors.length > 0
+        ? s(
+            `部分 Server 无效：${N.errors.map((k) => `${k.name}: ${k.message}`).join('；')}`,
+            'error',
+          )
+        : s('MCP 配置已保存', 'success'),
+        await y());
+    },
+    T = () => {
+      (c(null),
+        i.setFieldsValue({
+          name: '',
+          type: D.EStdio,
+          command: '',
+          argsText: '',
+          envText: '',
+          cwd: '',
+          url: '',
+          headersText: '',
+          disabled: !1,
+        }),
+        b(!0));
+    },
+    E = (p) => {
+      (c(p.name),
+        i.setFieldsValue({
+          name: p.name,
+          type: p.transport,
+          command: p.entry.command ?? '',
+          argsText: p.entry.args ? JSON.stringify(p.entry.args) : '',
+          envText: p.entry.env ? JSON.stringify(p.entry.env, null, 2) : '',
+          cwd: p.entry.cwd ?? '',
+          url: p.entry.url ?? '',
+          headersText: p.entry.headers ? JSON.stringify(p.entry.headers, null, 2) : '',
+          disabled: !!p.entry.disabled,
+        }),
+        b(!0));
+    },
+    A = async () => {
+      try {
+        const p = await i.validateFields(),
+          N = p.name.trim();
+        if (!N) throw new Error('名称不能为空');
+        const k = { type: p.type, disabled: !!p.disabled };
+        p.type === D.EStdio
+          ? ((k.command = p.command?.trim()),
+            (k.args = oa(p.argsText)),
+            (k.env = Ve(p.envText, 'env')),
+            (k.cwd = p.cwd?.trim() || void 0))
+          : ((k.url = p.url?.trim()), (k.headers = Ve(p.headersText, 'headers')));
+        const Z = { ...(await ve()).mcpServers };
+        (h && h !== N && delete Z[h], (Z[N] = k), await w({ mcpServers: Z }), b(!1));
+      } catch (p) {
+        if (p && typeof p == 'object' && 'errorFields' in p) return;
+        s(String(p), 'error');
+      }
+    },
+    R = async (p) => {
+      const k = { ...(await ve()).mcpServers };
+      (delete k[p], await w({ mcpServers: k }));
+    },
+    m = async () => {
+      try {
+        const p = JSON.parse(a);
+        if (!p?.mcpServers || typeof p.mcpServers != 'object')
+          throw new Error('缺少 mcpServers 对象');
+        await w(p);
+      } catch (p) {
+        s(String(p), 'error');
+      }
+    },
+    v = g.useMemo(
+      () => [
+        { label: 'stdio', value: D.EStdio },
+        { label: 'sse', value: D.ESse },
+        { label: 'http', value: D.EHttp },
+      ],
+      [],
+    ),
+    P = O.useWatch('type', i);
+  return e.jsxs('div', {
+    className: se['mcp-settings'],
+    children: [
+      e.jsxs(M, {
+        title: 'MCP Servers',
+        children: [
+          e.jsx('div', {
+            className: se['mcp-settings-toolbar'],
+            children: e.jsxs(me, {
+              children: [
+                e.jsx(j, {
+                  type: 'primary',
+                  icon: e.jsx(pe, { className: 'h-3.5 w-3.5' }),
+                  onClick: T,
+                  children: '新增',
+                }),
+                e.jsx(j, {
+                  icon: e.jsx(It, { className: 'h-3.5 w-3.5' }),
+                  loading: l,
+                  onClick: () => {
+                    y();
+                  },
+                  children: '刷新',
+                }),
+              ],
+            }),
+          }),
+          e.jsx(Is, {
+            rowKey: 'name',
+            size: 'small',
+            loading: l,
+            pagination: !1,
+            dataSource: t,
+            columns: [
+              { title: '名称', dataIndex: 'name', key: 'name' },
+              { title: '类型', dataIndex: 'transport', key: 'transport', width: 90 },
+              {
+                title: '状态',
+                dataIndex: 'status',
+                key: 'status',
+                width: 110,
+                render: (p) => e.jsx(Ms, { color: da(p), children: ca(p) }),
+              },
+              { title: '工具数', dataIndex: 'toolCount', key: 'toolCount', width: 80 },
+              {
+                title: '错误',
+                dataIndex: 'errorMessage',
+                key: 'errorMessage',
+                ellipsis: !0,
+                render: (p) => p || '-',
+              },
+              {
+                title: '启用',
+                key: 'enabled',
+                width: 80,
+                render: (p, N) =>
+                  e.jsx(B, {
+                    checked: !N.entry.disabled,
+                    onChange: (k) => {
+                      ht(N.name, !k)
+                        .then(() => y())
+                        .catch((Y) => s(String(Y), 'error'));
+                    },
+                  }),
+              },
+              {
+                title: '操作',
+                key: 'actions',
+                width: 220,
+                render: (p, N) =>
+                  e.jsxs(me, {
+                    size: 'small',
+                    children: [
+                      e.jsx(j, {
+                        type: 'link',
+                        size: 'small',
+                        onClick: () => E(N),
+                        children: '编辑',
+                      }),
+                      e.jsx(j, {
+                        type: 'link',
+                        size: 'small',
+                        onClick: () => {
+                          gt(N.name)
+                            .then(() => y())
+                            .catch((k) => s(String(k), 'error'));
+                        },
+                        children: '重连',
+                      }),
+                      e.jsx(j, {
+                        type: 'link',
+                        size: 'small',
+                        danger: !0,
+                        icon: e.jsx(he, { className: 'h-3.5 w-3.5' }),
+                        onClick: () => {
+                          R(N.name).catch((k) => s(String(k), 'error'));
+                        },
+                        children: '删除',
+                      }),
+                    ],
+                  }),
+              },
+            ],
+          }),
+        ],
+      }),
+      e.jsx(M, {
+        title: '原始 JSON（mcp.json）',
+        children: e.jsxs('div', {
+          className: se['mcp-settings-json'],
+          children: [
+            e.jsx(I.TextArea, {
+              value: a,
+              onChange: (p) => r(p.target.value),
+              autoSize: { minRows: 12, maxRows: 24 },
+              className: se['mcp-settings-json-input'],
+            }),
+            e.jsx('div', {
+              className: se['mcp-settings-json-actions'],
+              children: e.jsx(j, {
+                type: 'primary',
+                onClick: () => {
+                  m();
+                },
+                children: '保存 JSON',
+              }),
+            }),
+          ],
+        }),
+      }),
+      e.jsx(W, {
+        title: h ? '编辑 MCP Server' : '新增 MCP Server',
+        open: x,
+        onCancel: () => b(!1),
+        onOk: () => {
+          A();
+        },
+        destroyOnHidden: !0,
+        width: 640,
+        children: e.jsxs(O, {
+          form: i,
+          layout: 'vertical',
+          initialValues: { type: D.EStdio, disabled: !1 },
+          children: [
+            e.jsx(O.Item, {
+              label: '名称',
+              name: 'name',
+              rules: [{ required: !0, message: '请输入名称' }],
+              children: e.jsx(I, { placeholder: '例如 filesystem', disabled: !!h }),
+            }),
+            e.jsx(O.Item, {
+              label: '类型',
+              name: 'type',
+              rules: [{ required: !0 }],
+              children: e.jsx(H, { options: v }),
+            }),
+            P === D.EStdio
+              ? e.jsxs(e.Fragment, {
+                  children: [
+                    e.jsx(O.Item, {
+                      label: 'command',
+                      name: 'command',
+                      rules: [{ required: !0, message: '请输入 command' }],
+                      children: e.jsx(I, { placeholder: 'npx / node / python' }),
+                    }),
+                    e.jsx(O.Item, {
+                      label: 'args',
+                      name: 'argsText',
+                      children: e.jsx(I.TextArea, {
+                        placeholder: 'JSON 数组或逗号分隔，如 ["-y","pkg"]',
+                      }),
+                    }),
+                    e.jsx(O.Item, {
+                      label: 'env',
+                      name: 'envText',
+                      children: e.jsx(I.TextArea, { placeholder: 'JSON 对象，如 {"KEY":"value"}' }),
+                    }),
+                    e.jsx(O.Item, {
+                      label: 'cwd',
+                      name: 'cwd',
+                      children: e.jsx(I, { placeholder: '可选工作目录' }),
+                    }),
+                  ],
+                })
+              : e.jsxs(e.Fragment, {
+                  children: [
+                    e.jsx(O.Item, {
+                      label: 'url',
+                      name: 'url',
+                      rules: [{ required: !0, message: '请输入 url' }],
+                      children: e.jsx(I, { placeholder: 'https://example.com/mcp' }),
+                    }),
+                    e.jsx(O.Item, {
+                      label: 'headers',
+                      name: 'headersText',
+                      children: e.jsx(I.TextArea, {
+                        placeholder: 'JSON 对象，如 {"Authorization":"Bearer xxx"}',
+                      }),
+                    }),
+                  ],
+                }),
+            e.jsx(O.Item, {
+              label: '禁用',
+              name: 'disabled',
+              valuePropName: 'checked',
+              children: e.jsx(B, {}),
+            }),
+          ],
+        }),
+      }),
+    ],
+  });
+}
+function ua() {
+  const s = navigator.userAgent.toLowerCase();
+  return s.includes('win') ? 'win32' : s.includes('mac') ? 'darwin' : 'linux';
+}
+function Fe(s, t) {
+  const n = s.trim().replace(/[\\/]+$/, ''),
+    a = t.split(/[\\/]+/).filter(Boolean);
+  if (a.length === 0) return n;
+  const r = n.includes('\\') ? '\\' : '/';
+  return `${n}${r}${a.join(r)}`;
+}
+function xa() {
+  const s = _();
+  return g.useMemo(() => bt(jt, s.skillPlatformOrder ?? []), [s.skillPlatformOrder]);
+}
+function pa(s, t, n) {
+  if (t === n) return null;
+  const a = s.indexOf(t),
+    r = s.indexOf(n);
+  if (a === -1 || r === -1) return null;
+  const l = [...s],
+    [o] = l.splice(a, 1);
+  return (l.splice(r, 0, o), l);
+}
+function ha() {
+  const s = te(),
+    t = _(),
+    n = xa(),
+    a = ua(),
+    [r, l] = g.useState(''),
+    [o, x] = g.useState(null),
+    [b, h] = g.useState(null),
+    [c, i] = g.useState('skill'),
+    y = (m, v) => {
+      const P = n.map((k) => k.id),
+        p = P.indexOf(m);
+      if (p === -1) return;
+      const N = v === 'up' ? p - 1 : p + 1;
+      N < 0 || N >= P.length || (([P[p], P[N]] = [P[N], P[p]]), t.setSkillPlatformOrder(P));
+    },
+    w = (m, v) => {
+      const P = pa(
+        n.map((p) => p.id),
+        m,
+        v,
+      );
+      P && t.setSkillPlatformOrder(P);
+    },
+    T = (m) => (v) => {
+      (x(m),
+        h(m),
+        (v.dataTransfer.effectAllowed = 'move'),
+        v.dataTransfer.setData('text/plain', m));
+    },
+    E = (m) => (v) => {
+      !o || o === m || (v.preventDefault(), (v.dataTransfer.dropEffect = 'move'), h(m));
+    },
+    A = (m) => (v) => {
+      v.preventDefault();
+      const P = v.dataTransfer.getData('text/plain') || o;
+      (P && w(P, m), x(null), h(null));
+    },
+    R = () => {
+      (x(null), h(null));
+    };
+  return e.jsxs(e.Fragment, {
+    children: [
+      e.jsx('div', {
+        className: 'mb-4',
+        children: e.jsx(ce, {
+          value: c,
+          onChange: (m) => i(m),
+          options: [
+            { label: '技能配置', value: 'skill' },
+            { label: 'MCP', value: 'mcp' },
+          ],
+        }),
+      }),
+      c === 'mcp'
+        ? e.jsx(ma, {})
+        : e.jsxs(e.Fragment, {
+            children: [
+              e.jsx(M, {
+                title: 'ISkill 安装方式',
+                children: e.jsxs('div', {
+                  className: 'space-y-3 p-4',
+                  children: [
+                    e.jsx('p', {
+                      className: 'text-muted-foreground text-xs',
+                      children: `选择从 ${s} 库向 AI 工具平台安装 ISkill 的方式。`,
+                    }),
+                    e.jsx(ce, {
+                      block: !0,
+                      value: t.skillInstallMethod,
+                      onChange: (m) => t.setSkillInstallMethod(m),
+                      options: [
+                        {
+                          value: 'symlink',
+                          label: e.jsxs('div', {
+                            className: 'px-1 py-1 text-left',
+                            children: [
+                              e.jsx('div', {
+                                className: 'text-sm font-semibold',
+                                children: '软链接',
+                              }),
+                              e.jsx('p', {
+                                className:
+                                  'text-muted-foreground mt-1 text-[11px] font-normal leading-snug',
+                                children: `在平台目录创建软链接指向 ${s} 的 Skills 目录，同步更新更高效`,
+                              }),
+                            ],
+                          }),
+                        },
+                        {
+                          value: 'copy',
+                          label: e.jsxs('div', {
+                            className: 'px-1 py-1 text-left',
+                            children: [
+                              e.jsx('div', {
+                                className: 'text-sm font-semibold',
+                                children: '复制文件',
+                              }),
+                              e.jsx('p', {
+                                className:
+                                  'text-muted-foreground mt-1 text-[11px] font-normal leading-snug',
+                                children: '直接将 SKILL.md 复制到平台目录，与平台目录独立',
+                              }),
+                            ],
+                          }),
+                        },
+                      ],
+                    }),
+                  ],
+                }),
+              }),
+              e.jsx(M, {
+                title: '平台显示顺序',
+                children: e.jsxs('div', {
+                  className: 'space-y-3 p-4',
+                  children: [
+                    e.jsxs('div', {
+                      className: 'flex items-center justify-between gap-3',
+                      children: [
+                        e.jsx('p', {
+                          className: 'text-muted-foreground text-xs',
+                          children: '控制 ISkill 详情页和批量部署面板中的平台展示顺序。',
+                        }),
+                        e.jsx(j, {
+                          size: 'small',
+                          icon: e.jsx(Mt, { className: 'h-3.5 w-3.5' }),
+                          onClick: () => t.resetSkillPlatformOrder(),
+                          children: '重置顺序',
+                        }),
+                      ],
+                    }),
+                    e.jsx('div', {
+                      role: 'list',
+                      'aria-label': '平台显示顺序',
+                      className:
+                        'border-border/70 app-wallpaper-surface space-y-2 rounded-xl border p-3',
+                      children: n.map((m, v) =>
+                        e.jsxs(
+                          'div',
+                          {
+                            role: 'listitem',
+                            'data-platform-id': m.id,
+                            draggable: !0,
+                            onDragStart: T(m.id),
+                            onDragOver: E(m.id),
+                            onDrop: A(m.id),
+                            onDragEnd: R,
+                            className: `app-wallpaper-surface-strong flex cursor-grab items-center justify-between gap-3 rounded-xl border px-3 py-2 transition-colors active:cursor-grabbing ${o === m.id ? 'border-primary/40 opacity-60' : b === m.id ? 'border-primary/60 ring-primary/30 ring-1' : 'border-border/60'}`,
+                            children: [
+                              e.jsxs('div', {
+                                className: 'flex min-w-0 items-center gap-3',
+                                children: [
+                                  e.jsx(At, {
+                                    className: 'text-muted-foreground h-4 w-4 shrink-0',
+                                  }),
+                                  e.jsx(Re, { platformId: m.id, size: 20 }),
+                                  e.jsxs('div', {
+                                    className: 'min-w-0',
+                                    children: [
+                                      e.jsx('div', {
+                                        className: 'text-foreground text-sm font-medium',
+                                        children: m.name,
+                                      }),
+                                      e.jsx('div', {
+                                        className: 'text-muted-foreground text-[11px]',
+                                        children: t.customPlatformRootPaths[m.id] || Le(m, a),
+                                      }),
+                                    ],
+                                  }),
+                                ],
+                              }),
+                              e.jsxs('div', {
+                                className: 'flex items-center gap-1',
+                                children: [
+                                  e.jsx(j, {
+                                    size: 'small',
+                                    type: 'default',
+                                    icon: e.jsx(Tt, { className: 'h-3.5 w-3.5' }),
+                                    onClick: () => y(m.id, 'up'),
+                                    disabled: v === 0,
+                                    title: '上移',
+                                  }),
+                                  e.jsx(j, {
+                                    size: 'small',
+                                    type: 'default',
+                                    icon: e.jsx(Et, { className: 'h-3.5 w-3.5' }),
+                                    onClick: () => y(m.id, 'down'),
+                                    disabled: v === n.length - 1,
+                                    title: '下移',
+                                  }),
+                                ],
+                              }),
+                            ],
+                          },
+                          m.id,
+                        ),
+                      ),
+                    }),
+                  ],
+                }),
+              }),
+              e.jsx(M, {
+                title: '平台根目录',
+                children: e.jsxs('div', {
+                  className: 'space-y-3 p-4',
+                  children: [
+                    e.jsx('p', {
+                      className: 'text-muted-foreground text-xs',
+                      children: `为每个 AI 工具覆写平台根目录。${s} 会从这里派生 skills、全局规则等内部路径。`,
+                    }),
+                    e.jsx('div', {
+                      className: 'border-border overflow-hidden rounded-lg border',
+                      children: n.map((m) => {
+                        const v = t.customPlatformRootPaths[m.id] || '',
+                          P = Le(m, a),
+                          p = v || P,
+                          N = Fe(p, m.skillsRelativePath);
+                        return e.jsxs(
+                          'div',
+                          {
+                            className:
+                              'border-border/70 space-y-3 border-b px-3 py-3 last:border-0',
+                            children: [
+                              e.jsxs('div', {
+                                className: 'flex items-center gap-2',
+                                children: [
+                                  e.jsx(Re, { platformId: m.id, size: 16 }),
+                                  e.jsx('span', {
+                                    className: 'text-foreground text-sm font-medium',
+                                    children: m.name,
+                                  }),
+                                ],
+                              }),
+                              e.jsxs('div', {
+                                className: 'text-muted-foreground text-[11px]',
+                                children: [
+                                  '默认路径',
+                                  ':',
+                                  e.jsx('span', { className: 'ml-1 font-mono', children: P }),
+                                ],
+                              }),
+                              e.jsxs('div', {
+                                className:
+                                  'bg-muted/30 text-muted-foreground grid gap-2 rounded-lg p-3 text-[11px]',
+                                children: [
+                                  e.jsxs('div', {
+                                    children: [
+                                      '派生 ISkill 路径',
+                                      ':',
+                                      e.jsx('span', { className: 'ml-1 font-mono', children: N }),
+                                    ],
+                                  }),
+                                  m.configFiles?.length
+                                    ? e.jsxs('div', {
+                                        children: [
+                                          '派生配置文件',
+                                          ':',
+                                          e.jsx('span', {
+                                            className: 'ml-1 font-mono',
+                                            children: m.configFiles.map((k) => Fe(p, k)).join(', '),
+                                          }),
+                                        ],
+                                      })
+                                    : null,
+                                  e.jsx('div', {
+                                    className: 'text-muted-foreground/80 text-[10px]',
+                                    children: 'Skills、Rules 以及相关配置文件都由平台根目录派生。',
+                                  }),
+                                ],
+                              }),
+                              e.jsxs('div', {
+                                className: 'flex items-center gap-2',
+                                children: [
+                                  e.jsx(I, {
+                                    value: v,
+                                    onChange: (k) =>
+                                      t.setCustomPlatformRootPath(m.id, k.target.value),
+                                    placeholder: '留空则使用默认根目录，例如 ~/.trae-cn',
+                                    className: 'flex-1',
+                                  }),
+                                  e.jsx(j, {
+                                    onClick: () => t.resetCustomPlatformRootPath(m.id),
+                                    disabled: !v,
+                                    children: '恢复默认',
+                                  }),
+                                ],
+                              }),
+                            ],
+                          },
+                          m.id,
+                        );
+                      }),
+                    }),
+                  ],
+                }),
+              }),
+              e.jsx(M, {
+                title: '额外扫描目录',
+                children: e.jsxs('div', {
+                  className: 'space-y-3 p-4',
+                  children: [
+                    e.jsx('p', {
+                      className: 'text-muted-foreground text-xs',
+                      children: '添加额外的 ISkill 目录用于导入和发现。这里不会覆盖平台默认目录。',
+                    }),
+                    e.jsxs('div', {
+                      className: 'flex items-center gap-2',
+                      children: [
+                        e.jsx(I, {
+                          value: r,
+                          onChange: (m) => l(m.target.value),
+                          onKeyDown: (m) => {
+                            m.key === 'Enter' &&
+                              r.trim() &&
+                              (t.addCustomSkillScanPath(r.trim()), l(''));
+                          },
+                          placeholder: '输入路径，如 ~/myskills',
+                          className: 'flex-1',
+                        }),
+                        e.jsx(j, {
+                          type: 'primary',
+                          icon: e.jsx(pe, { className: 'h-4 w-4' }),
+                          onClick: () => {
+                            r.trim() && (t.addCustomSkillScanPath(r.trim()), l(''));
+                          },
+                          children: '添加',
+                        }),
+                      ],
+                    }),
+                    t.customSkillScanPaths.length > 0
+                      ? e.jsx('div', {
+                          className: 'border-border overflow-hidden rounded-lg border',
+                          children: t.customSkillScanPaths.map((m, v) =>
+                            e.jsxs(
+                              'div',
+                              {
+                                className:
+                                  'border-border/70 hover:bg-muted/20 flex items-center justify-between border-b px-3 py-2.5 transition-colors last:border-0',
+                                children: [
+                                  e.jsx('span', {
+                                    className:
+                                      'text-foreground mr-3 flex-1 truncate font-mono text-sm',
+                                    children: m,
+                                  }),
+                                  e.jsx(j, {
+                                    type: 'text',
+                                    danger: !0,
+                                    size: 'small',
+                                    icon: e.jsx(he, { className: 'h-3.5 w-3.5' }),
+                                    onClick: () => t.removeCustomSkillScanPath(m),
+                                    title: '删除',
+                                  }),
+                                ],
+                              },
+                              `${m}-${v}`,
+                            ),
+                          ),
+                        })
+                      : e.jsx('p', {
+                          className: 'text-muted-foreground/60 text-xs italic',
+                          children: '暂未添加自定义路径',
+                        }),
+                  ],
+                }),
+              }),
+            ],
+          }),
+    ],
+  });
+}
+const { Sider: ga, Content: fa } = Qe,
+  qe = [
+    { id: 'general', label: '常规设置', icon: Ot },
+    { id: 'appearance', label: '显示设置', icon: $t },
+    { id: 'data', label: '数据设置', icon: ls },
+    { id: 'skill', label: 'Agent管理', icon: rs },
+    { id: 'ai', label: 'AI 模型', icon: ns },
+    { id: 'notifications', label: '通知', icon: Ut },
+    { id: 'about', label: '关于', icon: Kt },
+  ];
+function Sa({ onBack: s, initialSection: t = 'general' }) {
+  const n = qe,
+    [a, r] = g.useState(t);
+  g.useEffect(() => {
+    qe.some((h) => h.id === t) && r(t);
+  }, [t]);
+  const l = oe((h) => {
+      const c = h.config?.update?.version?.trim();
+      return c ? We(c, h.localVersion) > 0 : !1;
+    }),
+    o = g.useMemo(
+      () =>
+        n.map((h) => {
+          const c = h.icon,
+            i =
+              h.id === 'about' && l
+                ? e.jsxs('span', {
+                    className: ze['settings-menu-badge'],
+                    children: [
+                      h.label,
+                      e.jsx('span', { className: ze['settings-menu-badge-dot'] }),
+                    ],
+                  })
+                : h.label;
+          return { key: h.id, icon: e.jsx(c, { className: 'h-4 w-4' }), label: i };
+        }),
+      [n, l],
+    ),
+    x = () => {
+      switch (a) {
+        case 'general':
+          return e.jsx(la, {});
+        case 'appearance':
+          return e.jsx(ra, {});
+        case 'data':
+          return e.jsx(na, {});
+        case 'skill':
+          return e.jsx(ha, {});
+        case 'ai':
+          return e.jsx(ta, {});
+        case 'notifications':
+          return e.jsx(ia, {});
+        case 'about':
+          return e.jsx(Bt, {});
+        default:
+          return null;
+      }
+    },
+    b = n.find((h) => h.id === a)?.label;
+  return e.jsxs(Qe, {
+    className: 'min-h-0 flex-1 bg-transparent',
+    children: [
+      e.jsxs(ga, {
+        width: 224,
+        className: 'app-wallpaper-panel border-border border-r bg-transparent',
+        children: [
+          e.jsx('div', {
+            className: 'border-border border-b p-3',
+            children: e.jsx(j, {
+              type: 'text',
+              icon: e.jsx(As, {}),
+              onClick: s,
+              className: 'text-muted-foreground',
+              children: '返回',
+            }),
+          }),
+          e.jsx(Ts, {
+            mode: 'inline',
+            selectedKeys: [a],
+            items: o,
+            onClick: ({ key: h }) => r(String(h)),
+            className: 'border-0 bg-transparent',
+            style: { borderInlineEnd: 0 },
+          }),
+        ],
+      }),
+      e.jsx(fa, {
+        className: 'app-wallpaper-section min-h-0 overflow-y-auto px-6 py-5',
+        children: e.jsxs('div', {
+          className: 'mx-auto max-w-4xl',
+          children: [
+            e.jsx(Es.Title, { level: 4, className: '!mb-4 !mt-0', children: b ?? '' }),
+            e.jsx(
+              'div',
+              {
+                className: 'animate-in fade-in slide-in-from-bottom-2 duration-200',
+                children: x(),
+              },
+              a,
+            ),
+          ],
+        }),
+      }),
+    ],
+  });
+}
+export {
+  Bt as AboutSettings,
+  ta as AiSettings,
+  ra as AppearanceSettings,
+  na as DataSettings,
+  la as GeneralSettings,
+  ia as NotificationsSettings,
+  is as PasswordInput,
+  K as SettingItem,
+  M as SettingSection,
+  ka as SettingsModal,
+  Sa as SettingsPage,
+  ha as SkillSettings,
+  Pa as ToggleSwitch,
+  Ws as getModelCategory,
+};

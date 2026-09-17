@@ -26,7 +26,9 @@
     "@momo/markdown": "workspace:*",
     "axios": "^1.12.2",
     "classnames": "^2.5.1",
-    "lucide-react": "^0.460.0"
+    "fflate": "^0.8.2",
+    "lucide-react": "^0.460.0",
+    "@momo/agent-contracts": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",

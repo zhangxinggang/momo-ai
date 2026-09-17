@@ -356,8 +356,12 @@ export const useSettingsStore = create<ISettingsState>()(
   persist(
     (set, get) => {
       const touch = (): string => new Date().toISOString();
-      const setTouched = (partial: Partial<ISettingsState>) =>
+      const setTouched = (partial: Partial<ISettingsState>) => {
         set({ ...partial, settingsUpdatedAt: touch() } as ISettingsState);
+        if (Array.isArray(partial.aiModels)) {
+          syncSettingsToMain({ aiModels: partial.aiModels });
+        }
+      };
       const normalizeProjectScanPaths = (
         scanPaths: string[] | undefined,
         rootPath: string,
@@ -1054,6 +1058,7 @@ export const useSettingsStore = create<ISettingsState>()(
           backgroundImageBlur: state?.backgroundImageBlur,
         });
         syncSettingsToMain({
+          ...(state && Array.isArray(state.aiModels) ? { aiModels: state.aiModels } : {}),
           customPlatformRootPaths: state?.customPlatformRootPaths || {},
           customSkillPlatformPaths: state?.customSkillPlatformPaths || {},
           skillPlatformOrder: state?.skillPlatformOrder || [],

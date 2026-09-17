@@ -231,21 +231,32 @@ function ensureWebviewExternalLinkHandlers(): void {
 
 const winEvent = ({ win }: { win: BrowserWindow }) => {
   ensureWebviewExternalLinkHandlers();
+  let closeApproved = false;
+  let closeConfirmationPending = false;
 
   win.on('close', async (event) => {
-    if (!closeConfirm) return;
+    if (!closeConfirm || closeApproved) return;
     event?.preventDefault();
-    const result = await dialog.showMessageBox(win, {
-      type: 'question',
-      buttons: ['取消', '确认关闭'],
-      defaultId: 0,
-      cancelId: 0,
-      title: '确认关闭',
-      message: '确定要关闭吗?',
-    });
-    if (result.response === 1) {
-      setMainWindow(null);
-      app.quit();
+    if (closeConfirmationPending) return;
+    closeConfirmationPending = true;
+    try {
+      const result = await dialog.showMessageBox(win, {
+        type: 'question',
+        buttons: ['取消', '确认关闭'],
+        defaultId: 0,
+        cancelId: 0,
+        title: '确认关闭',
+        message: '确定要关闭吗?',
+      });
+      if (result.response === 1) {
+        // app.quit() emits close again; the confirmed window must allow it.
+        closeApproved = true;
+        app.quit();
+      }
+    } catch (error) {
+      console.error('Failed to confirm window close:', error);
+    } finally {
+      closeConfirmationPending = false;
     }
   });
   win.on('closed', () => {

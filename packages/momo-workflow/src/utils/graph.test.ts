@@ -11,6 +11,7 @@ import {
   buildWorkflowResourceSteps,
   buildWorkflowSteps,
   createResourceNode,
+  isParallelGroupOutputReady,
   validateWorkflowGraph,
 } from './graph';
 import { createWebpageNode, isLeafNode, isResourceNode, isWebpageNode } from './parallel-graph';
@@ -246,5 +247,63 @@ describe('validateWorkflowGraph', () => {
     ];
     const result = validateWorkflowGraph([a, p1, par, b], edges);
     expect(result.ok).toBe(true);
+  });
+
+  it('网页节点作为首个节点时校验通过', () => {
+    const web = createWebpageNode({ nodeId: 'n-web', nodeName: '网页' });
+    const prompt = createResourceNode({
+      resourceKind: 'prompt',
+      resourceId: 'p1',
+      nodeName: 'P1',
+      nodeId: 'n-p1',
+    });
+    const result = validateWorkflowGraph(
+      [web, prompt],
+      [{ id: 'e1', source: 'n-web', target: 'n-p1' }],
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it('网页节点出现在后续步骤时校验失败', () => {
+    const prompt = createResourceNode({
+      resourceKind: 'prompt',
+      resourceId: 'p1',
+      nodeName: 'P1',
+      nodeId: 'n-p1',
+    });
+    const web = createWebpageNode({ nodeId: 'n-web', nodeName: '网页' });
+    const result = validateWorkflowGraph(
+      [prompt, web],
+      [{ id: 'e1', source: 'n-p1', target: 'n-web' }],
+    );
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain('第一个节点');
+  });
+
+  it('网页节点位于首个并行步骤内时校验通过', () => {
+    const web = createWebpageNode({ nodeId: 'n-web', nodeName: '网页' });
+    web.parentId = 'n-par';
+    const parallel = makeParallel('n-par', ['n-web']);
+    const prompt = createResourceNode({
+      resourceKind: 'prompt',
+      resourceId: 'p1',
+      nodeName: 'P1',
+      nodeId: 'n-p1',
+    });
+    const result = validateWorkflowGraph(
+      [web, parallel, prompt],
+      [{ id: 'e1', source: 'n-par', target: 'n-p1' }],
+    );
+    expect(result.ok).toBe(true);
+  });
+});
+
+describe('isParallelGroupOutputReady', () => {
+  it('每个子节点有运行结果或文件之一即可完成', () => {
+    const children = [
+      { nodeId: 'n-a', resourceKind: 'prompt' as const, resourceId: 'p-a', nodeName: 'A' },
+      { nodeId: 'n-b', resourceKind: 'skill' as const, resourceId: 's-b', nodeName: 'B' },
+    ];
+    expect(isParallelGroupOutputReady(children, { 'n-a': '文本结果' }, { 'n-b': true })).toBe(true);
   });
 });

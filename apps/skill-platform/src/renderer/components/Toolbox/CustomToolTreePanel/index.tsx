@@ -5,11 +5,13 @@ import {
   type IMomoTreeAdapter,
   type IMomoTreeNode,
 } from '@momo/tree';
+import { useConfirmLeaveAiChat } from '@renderer/hooks/useConfirmLeaveAiChat';
 import { useCustomToolStore, useUIStore } from '@renderer/store';
 import { useCallback, useMemo } from 'react';
 
 /** 自定义工具树（对齐笔记树交互） */
 export function CustomToolTreePanel() {
+  const confirmLeaveAiChat = useConfirmLeaveAiChat();
   const treeData = useCustomToolStore((state) => state.treeData);
   const treeSearchQuery = useCustomToolStore((state) => state.treeSearchQuery);
   const selectedId = useCustomToolStore((state) => state.selectedId);
@@ -30,6 +32,19 @@ export function CustomToolTreePanel() {
     setActiveToolboxToolKey('');
   }, [setActiveToolboxToolKey]);
 
+  const confirmCurrentToolLeave = useCallback(
+    (nextId: string) => {
+      if (!selectedId || selectedId === nextId) {
+        return Promise.resolve(true);
+      }
+      return confirmLeaveAiChat({
+        scope: 'toolbox',
+        isGenerating: generationTasks[selectedId]?.status === 'generating',
+      });
+    },
+    [confirmLeaveAiChat, generationTasks, selectedId],
+  );
+
   const renderNodeExtra = useCallback(
     (node: IMomoTreeNode) =>
       generationTasks[node.id]?.status === 'generating' ? (
@@ -46,6 +61,9 @@ export function CustomToolTreePanel() {
       onDelete: (nodeId) => deleteNode(nodeId),
       onMove: (nodeId, targetParentId) => moveNode(nodeId, targetParentId),
       onEdit: async (nodeId) => {
+        if (!(await confirmCurrentToolLeave(nodeId))) {
+          return;
+        }
         clearSystemSelection();
         await selectFile(nodeId);
         enterEditMode();
@@ -54,6 +72,7 @@ export function CustomToolTreePanel() {
     }),
     [
       clearSystemSelection,
+      confirmCurrentToolLeave,
       createFolder,
       createTool,
       deleteNode,
@@ -73,8 +92,13 @@ export function CustomToolTreePanel() {
       onExpandedChange={setExpandedKeys}
       onSelectFolder={selectFolder}
       onSelectFile={(fileId) => {
-        clearSystemSelection();
-        void selectFile(fileId);
+        void (async () => {
+          if (!(await confirmCurrentToolLeave(fileId))) {
+            return;
+          }
+          clearSystemSelection();
+          await selectFile(fileId);
+        })();
       }}
       adapter={adapter}
       labels={{

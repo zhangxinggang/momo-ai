@@ -1,6 +1,7 @@
 {
   "name": "@momo/electron",
   "version": "1.0.0",
+  "packageManager": "pnpm@10.33.2",
   "description": "",
   "keywords": [],
   "author": "zhangxinggang",
@@ -24,7 +25,8 @@
     "electron:dev": "node ./scripts/dev.cjs",
     "electron:dev:license": "cross-env REQUIRE_LICENSE=true pnpm run electron:dev",
     "electron:dev:set-auth": "cross-env NODE_ENV=development ELECTRON_DEV_SET_AUTH=true pnpm run electron:dev",
-    "prod": "node ./scripts/prod.cjs"
+    "prod": "node ./scripts/prod.cjs",
+    "test": "node --test scripts/tests/*.test.cjs"
   },
   "dependencies": {
     "@momo/server": "workspace:*",

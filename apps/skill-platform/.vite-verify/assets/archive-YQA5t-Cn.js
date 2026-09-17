@@ -1,5 +1,296 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./jszip.min-DnpxAPiE.js","./ui-vendor-C-FKu2uc.js","./markdown-vendor-DldLOD9R.js","./markdown-it-vendor-DL4wSELR.js","./markdown-vendor-CmuYMs8x.css","./index-BS2K-uXd.js","./assets-Cqo46k_X.js","./index-C2avURFS.js","./icons-B5Lu0sqU.js","./index-DUUm-ELF.css","./printLayout-DpvXGlU9.js","./worker-DJ__aWVE.js"])))=>i.map(i=>d[i]);
-import{_ as re}from"./markdown-vendor-DldLOD9R.js";import{r as je,j as xe}from"./assets-Cqo46k_X.js";import{u as Ve,an as He}from"./index-C2avURFS.js";import"./ui-vendor-C-FKu2uc.js";import"./markdown-it-vendor-DL4wSELR.js";import"./icons-B5Lu0sqU.js";const Xe=Ve,M=e=>{const t=e.split(/[?#]/)[0]||e,r=t.lastIndexOf(".");return r===-1?"":t.slice(r+1).toLowerCase()},Ze=new Set([".ds_store","desktop.ini","thumbs.db"]),ne=e=>{var t;const o=e.replace(/^\/+/,"").replace(/\\/g,"/").split("/").filter(Boolean),a=((t=o[o.length-1])===null||t===void 0?void 0:t.toLowerCase())||"";return o.some(n=>n==="__MACOSX"||n.startsWith("._"))||Ze.has(a)},Ee=e=>{const t=M(e);return Xe.includes(t)},A=e=>{if(!Number.isFinite(e)||e<0)return"-";if(e<1024)return`${e} B`;const t=["KB","MB","GB"];let r=e/1024;for(const o of t){if(r<1024||o===t[t.length-1])return`${r.toFixed(r<10?1:0)} ${o}`;r/=1024}return`${e} B`},Ke=e=>typeof e=="object"&&e!==null&&"extract"in e&&typeof e.extract=="function",ke=(e,t="")=>{const r=[];return Object.entries(e).forEach(([o,a])=>{const n=t?`${t}/${o}`:o;if(!ne(n)){if(Ke(a)){const h=a.name||o,l=M(h);r.push({id:n,path:n,name:h,extension:l,size:a.size||0,lastModified:a.lastModified,depth:n.split("/").length-1,previewable:Ee(h),compressedFile:a});return}a&&typeof a=="object"&&r.push(...ke(a,n))}}),r},Ge=(e,t,r)=>["archive-entry",e,t,r.path,r.size,r.lastModified||0].join(":"),Ye="flyfish-file-viewer-cache",_="archiveEntries",Je=1,qe=24*1024*1024,Qe=96*1024*1024;let D=null;const et=()=>typeof indexedDB<"u",Ae=()=>et()?D||(D=new Promise((e,t)=>{const r=indexedDB.open(Ye,Je);r.onupgradeneeded=()=>{const o=r.result;o.objectStoreNames.contains(_)||o.createObjectStore(_,{keyPath:"key"}).createIndex("updatedAt","updatedAt")},r.onsuccess=()=>e(r.result),r.onerror=()=>t(r.error)}),D):Promise.reject(new Error("IndexedDB 不可用")),_e=async(e,t)=>{const r=await Ae();return new Promise((o,a)=>{const n=r.transaction(_,e),h=t(n.objectStore(_));h.onsuccess=()=>o(h.result),h.onerror=()=>a(h.error),n.onerror=()=>a(n.error)})},tt=async e=>{try{return await _e("readonly",r=>r.get(e))||null}catch{return null}},rt=async()=>{try{const e=await Ae();await new Promise((t,r)=>{const o=e.transaction(_,"readwrite"),a=o.objectStore(_),n=a.index("updatedAt"),h=[];let l=0;n.openCursor().onsuccess=v=>{const u=v.target.result;if(!u){for(;l>Qe&&h.length;){const y=h.shift();y&&(l-=y.size,a.delete(y.key))}return}const b=u.value;l+=b.size||0,h.push({key:b.key,size:b.size||0}),u.continue()},o.oncomplete=()=>t(),o.onerror=()=>r(o.error)})}catch{}},nt=async e=>{if(!(e.size>qe))try{await _e("readwrite",t=>t.put({...e,updatedAt:Date.now()})),await rt()}catch{}},it=new Set(["zip","zipx","jar","war","ear","apk","cbz"]),ot=new Set(["tar","tgz","gz","gzip"]),C=512,ie=e=>{const t=new Uint8Array(e.byteLength);return t.set(e),t.buffer},at=async(e,t)=>{if(typeof DecompressionStream>"u")return null;const r=new Blob([ie(e)]).stream().pipeThrough(new DecompressionStream(t));return new Uint8Array(await new Response(r).arrayBuffer())},W=e=>e.replace(/^\/+/,"").replace(/\\/g,"/"),st=e=>{const t=W(e).split("/");return t[t.length-1]||e},ct=e=>Math.max(0,W(e).split("/").length-1),oe=e=>{const t=W(e.path),r=st(t);return{id:t,path:t,name:r,extension:M(r),size:e.size,lastModified:e.lastModified,depth:ct(t),previewable:Ee(r),compressedFile:{name:r,size:e.size,lastModified:e.lastModified,async extract(){const o=await e.load();return new File([o],r,{type:"application/octet-stream",lastModified:e.lastModified||Date.now()})}}}},lt=(e,t,r)=>{const o=new TextDecoder("ascii").decode(e.slice(t,t+r)).replace(/\0.*$/,"").trim();return o&&Number.parseInt(o,8)||0},dt=(e,t)=>{const r=new TextDecoder("utf-8"),o=r.decode(e.slice(t,t+100)).replace(/\0.*$/,""),a=r.decode(e.slice(t+345,t+500)).replace(/\0.*$/,"");return W(a?`${a}/${o}`:o)},ht=e=>{const t=[];let r=0;for(;r+C<=e.length&&!e.slice(r,r+C).every(u=>u===0);){const a=dt(e,r),n=lt(e,r+124,12),h=String.fromCharCode(e[r+156]||0),l=r+C,v=l+Math.ceil(n/C)*C;if(a&&h!=="5"&&!ne(a)){const u=e.slice(l,l+n);t.push(oe({path:a,size:n,load:async()=>ie(u)}))}r=v}return t},pt=e=>{const t=e.toLowerCase();return t.endsWith(".tar.gz")||t.endsWith(".tgz")?"tgz":M(e)},ut=e=>{const t=e.toLowerCase();return t.endsWith(".gzip")?e.slice(0,-5)||"archive":t.endsWith(".gz")?e.slice(0,-3)||"archive":`${e}.bin`},ft=async e=>{const{default:t}=await re(async()=>{const{default:a}=await import("./jszip.min-DnpxAPiE.js").then(n=>n.j);return{default:a}},__vite__mapDeps([0,1,2,3,4]),import.meta.url),r=await t.loadAsync(e),o=[];return r.forEach((a,n)=>{var h,l;if(n.dir)return;const v=n,u=W(a);ne(u)||o.push(oe({path:u,size:((h=v._data)===null||h===void 0?void 0:h.uncompressedSize)||0,lastModified:(l=n.date)===null||l===void 0?void 0:l.getTime(),load:async()=>n.async("arraybuffer")}))}),o},vt=async(e,t,r)=>{const o=new Uint8Array(e),a=r==="tar"?o:await at(o,"gzip");if(!a)return null;if(r==="gz"||r==="gzip"){const n=t.toLowerCase();if(!(n.endsWith(".tar.gz")||n.endsWith(".tgz"))){const l=ut(t);return[oe({path:l,size:a.byteLength,load:async()=>ie(a)})]}}return ht(a)},wt=async(e,t)=>{const r=pt(t);return it.has(r)?ft(e):ot.has(r)?vt(e,t,r):null},mt=320*1024*1024,gt=64*1024*1024,bt=3e4,yt=5e3,xt=`
+const __vite__mapDeps = (
+  i,
+  m = __vite__mapDeps,
+  d = m.f ||
+    (m.f = [
+      './jszip.min-DnpxAPiE.js',
+      './ui-vendor-C-FKu2uc.js',
+      './markdown-vendor-DldLOD9R.js',
+      './markdown-it-vendor-DL4wSELR.js',
+      './markdown-vendor-CmuYMs8x.css',
+      './index-BS2K-uXd.js',
+      './assets-Cqo46k_X.js',
+      './index-C2avURFS.js',
+      './icons-B5Lu0sqU.js',
+      './index-DUUm-ELF.css',
+      './printLayout-DpvXGlU9.js',
+      './worker-DJ__aWVE.js',
+    ]),
+) => i.map((i) => d[i]);
+import { r as je, j as xe } from './assets-Cqo46k_X.js';
+import './icons-B5Lu0sqU.js';
+import { an as He, u as Ve } from './index-C2avURFS.js';
+import './markdown-it-vendor-DL4wSELR.js';
+import { _ as re } from './markdown-vendor-DldLOD9R.js';
+import './ui-vendor-C-FKu2uc.js';
+const Xe = Ve,
+  M = (e) => {
+    const t = e.split(/[?#]/)[0] || e,
+      r = t.lastIndexOf('.');
+    return r === -1 ? '' : t.slice(r + 1).toLowerCase();
+  },
+  Ze = new Set(['.ds_store', 'desktop.ini', 'thumbs.db']),
+  ne = (e) => {
+    var t;
+    const o = e.replace(/^\/+/, '').replace(/\\/g, '/').split('/').filter(Boolean),
+      a = ((t = o[o.length - 1]) === null || t === void 0 ? void 0 : t.toLowerCase()) || '';
+    return o.some((n) => n === '__MACOSX' || n.startsWith('._')) || Ze.has(a);
+  },
+  Ee = (e) => {
+    const t = M(e);
+    return Xe.includes(t);
+  },
+  A = (e) => {
+    if (!Number.isFinite(e) || e < 0) return '-';
+    if (e < 1024) return `${e} B`;
+    const t = ['KB', 'MB', 'GB'];
+    let r = e / 1024;
+    for (const o of t) {
+      if (r < 1024 || o === t[t.length - 1]) return `${r.toFixed(r < 10 ? 1 : 0)} ${o}`;
+      r /= 1024;
+    }
+    return `${e} B`;
+  },
+  Ke = (e) =>
+    typeof e == 'object' && e !== null && 'extract' in e && typeof e.extract == 'function',
+  ke = (e, t = '') => {
+    const r = [];
+    return (
+      Object.entries(e).forEach(([o, a]) => {
+        const n = t ? `${t}/${o}` : o;
+        if (!ne(n)) {
+          if (Ke(a)) {
+            const h = a.name || o,
+              l = M(h);
+            r.push({
+              id: n,
+              path: n,
+              name: h,
+              extension: l,
+              size: a.size || 0,
+              lastModified: a.lastModified,
+              depth: n.split('/').length - 1,
+              previewable: Ee(h),
+              compressedFile: a,
+            });
+            return;
+          }
+          a && typeof a == 'object' && r.push(...ke(a, n));
+        }
+      }),
+      r
+    );
+  },
+  Ge = (e, t, r) => ['archive-entry', e, t, r.path, r.size, r.lastModified || 0].join(':'),
+  Ye = 'flyfish-file-viewer-cache',
+  _ = 'archiveEntries',
+  Je = 1,
+  qe = 24 * 1024 * 1024,
+  Qe = 96 * 1024 * 1024;
+let D = null;
+const et = () => typeof indexedDB < 'u',
+  Ae = () =>
+    et()
+      ? D ||
+        ((D = new Promise((e, t) => {
+          const r = indexedDB.open(Ye, Je);
+          ((r.onupgradeneeded = () => {
+            const o = r.result;
+            o.objectStoreNames.contains(_) ||
+              o.createObjectStore(_, { keyPath: 'key' }).createIndex('updatedAt', 'updatedAt');
+          }),
+            (r.onsuccess = () => e(r.result)),
+            (r.onerror = () => t(r.error)));
+        })),
+        D)
+      : Promise.reject(new Error('IndexedDB 不可用')),
+  _e = async (e, t) => {
+    const r = await Ae();
+    return new Promise((o, a) => {
+      const n = r.transaction(_, e),
+        h = t(n.objectStore(_));
+      ((h.onsuccess = () => o(h.result)),
+        (h.onerror = () => a(h.error)),
+        (n.onerror = () => a(n.error)));
+    });
+  },
+  tt = async (e) => {
+    try {
+      return (await _e('readonly', (r) => r.get(e))) || null;
+    } catch {
+      return null;
+    }
+  },
+  rt = async () => {
+    try {
+      const e = await Ae();
+      await new Promise((t, r) => {
+        const o = e.transaction(_, 'readwrite'),
+          a = o.objectStore(_),
+          n = a.index('updatedAt'),
+          h = [];
+        let l = 0;
+        ((n.openCursor().onsuccess = (v) => {
+          const u = v.target.result;
+          if (!u) {
+            for (; l > Qe && h.length; ) {
+              const y = h.shift();
+              y && ((l -= y.size), a.delete(y.key));
+            }
+            return;
+          }
+          const b = u.value;
+          ((l += b.size || 0), h.push({ key: b.key, size: b.size || 0 }), u.continue());
+        }),
+          (o.oncomplete = () => t()),
+          (o.onerror = () => r(o.error)));
+      });
+    } catch {}
+  },
+  nt = async (e) => {
+    if (!(e.size > qe))
+      try {
+        (await _e('readwrite', (t) => t.put({ ...e, updatedAt: Date.now() })), await rt());
+      } catch {}
+  },
+  it = new Set(['zip', 'zipx', 'jar', 'war', 'ear', 'apk', 'cbz']),
+  ot = new Set(['tar', 'tgz', 'gz', 'gzip']),
+  C = 512,
+  ie = (e) => {
+    const t = new Uint8Array(e.byteLength);
+    return (t.set(e), t.buffer);
+  },
+  at = async (e, t) => {
+    if (typeof DecompressionStream > 'u') return null;
+    const r = new Blob([ie(e)]).stream().pipeThrough(new DecompressionStream(t));
+    return new Uint8Array(await new Response(r).arrayBuffer());
+  },
+  W = (e) => e.replace(/^\/+/, '').replace(/\\/g, '/'),
+  st = (e) => {
+    const t = W(e).split('/');
+    return t[t.length - 1] || e;
+  },
+  ct = (e) => Math.max(0, W(e).split('/').length - 1),
+  oe = (e) => {
+    const t = W(e.path),
+      r = st(t);
+    return {
+      id: t,
+      path: t,
+      name: r,
+      extension: M(r),
+      size: e.size,
+      lastModified: e.lastModified,
+      depth: ct(t),
+      previewable: Ee(r),
+      compressedFile: {
+        name: r,
+        size: e.size,
+        lastModified: e.lastModified,
+        async extract() {
+          const o = await e.load();
+          return new File([o], r, {
+            type: 'application/octet-stream',
+            lastModified: e.lastModified || Date.now(),
+          });
+        },
+      },
+    };
+  },
+  lt = (e, t, r) => {
+    const o = new TextDecoder('ascii')
+      .decode(e.slice(t, t + r))
+      .replace(/\0.*$/, '')
+      .trim();
+    return (o && Number.parseInt(o, 8)) || 0;
+  },
+  dt = (e, t) => {
+    const r = new TextDecoder('utf-8'),
+      o = r.decode(e.slice(t, t + 100)).replace(/\0.*$/, ''),
+      a = r.decode(e.slice(t + 345, t + 500)).replace(/\0.*$/, '');
+    return W(a ? `${a}/${o}` : o);
+  },
+  ht = (e) => {
+    const t = [];
+    let r = 0;
+    for (; r + C <= e.length && !e.slice(r, r + C).every((u) => u === 0); ) {
+      const a = dt(e, r),
+        n = lt(e, r + 124, 12),
+        h = String.fromCharCode(e[r + 156] || 0),
+        l = r + C,
+        v = l + Math.ceil(n / C) * C;
+      if (a && h !== '5' && !ne(a)) {
+        const u = e.slice(l, l + n);
+        t.push(oe({ path: a, size: n, load: async () => ie(u) }));
+      }
+      r = v;
+    }
+    return t;
+  },
+  pt = (e) => {
+    const t = e.toLowerCase();
+    return t.endsWith('.tar.gz') || t.endsWith('.tgz') ? 'tgz' : M(e);
+  },
+  ut = (e) => {
+    const t = e.toLowerCase();
+    return t.endsWith('.gzip')
+      ? e.slice(0, -5) || 'archive'
+      : t.endsWith('.gz')
+        ? e.slice(0, -3) || 'archive'
+        : `${e}.bin`;
+  },
+  ft = async (e) => {
+    const { default: t } = await re(
+        async () => {
+          const { default: a } = await import('./jszip.min-DnpxAPiE.js').then((n) => n.j);
+          return { default: a };
+        },
+        __vite__mapDeps([0, 1, 2, 3, 4]),
+        import.meta.url,
+      ),
+      r = await t.loadAsync(e),
+      o = [];
+    return (
+      r.forEach((a, n) => {
+        var h, l;
+        if (n.dir) return;
+        const v = n,
+          u = W(a);
+        ne(u) ||
+          o.push(
+            oe({
+              path: u,
+              size: ((h = v._data) === null || h === void 0 ? void 0 : h.uncompressedSize) || 0,
+              lastModified: (l = n.date) === null || l === void 0 ? void 0 : l.getTime(),
+              load: async () => n.async('arraybuffer'),
+            }),
+          );
+      }),
+      o
+    );
+  },
+  vt = async (e, t, r) => {
+    const o = new Uint8Array(e),
+      a = r === 'tar' ? o : await at(o, 'gzip');
+    if (!a) return null;
+    if (r === 'gz' || r === 'gzip') {
+      const n = t.toLowerCase();
+      if (!(n.endsWith('.tar.gz') || n.endsWith('.tgz'))) {
+        const l = ut(t);
+        return [oe({ path: l, size: a.byteLength, load: async () => ie(a) })];
+      }
+    }
+    return ht(a);
+  },
+  wt = async (e, t) => {
+    const r = pt(t);
+    return it.has(r) ? ft(e) : ot.has(r) ? vt(e, t, r) : null;
+  },
+  mt = 320 * 1024 * 1024,
+  gt = 64 * 1024 * 1024,
+  bt = 3e4,
+  yt = 5e3,
+  xt = `
 .archive-shell,.archive-viewer{position:relative;box-sizing:border-box;height:100%;min-height:0;display:grid;grid-template-columns:minmax(280px,34%) minmax(0,1fr);background:#edf2f7;color:#172033;font-family:Aptos,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif}
 .archive-shell *,.archive-viewer *{box-sizing:border-box}
 .archive-sidebar{min-width:0;min-height:0;display:flex;flex-direction:column;gap:12px;padding:16px;border-right:1px solid rgba(23,32,51,.08);background:rgba(255,255,255,.72)}
@@ -36,4 +327,394 @@ import{_ as re}from"./markdown-vendor-DldLOD9R.js";import{r as je,j as xe}from".
 @media (prefers-color-scheme:dark){.file-viewer[data-viewer-theme='system'] .archive-shell,.file-viewer[data-viewer-theme='system'] .archive-viewer{background:#101820;color:#e6edf3}.file-viewer[data-viewer-theme='system'] .archive-sidebar,.file-viewer[data-viewer-theme='system'] .archive-preview-toolbar{border-color:rgba(139,148,158,.2);background:rgba(21,27,35,.82)}.file-viewer[data-viewer-theme='system'] .archive-entry,.file-viewer[data-viewer-theme='system'] .archive-search,.file-viewer[data-viewer-theme='system'] .archive-state>div{background:#151b23;color:#e6edf3;border-color:rgba(139,148,158,.2)}.file-viewer[data-viewer-theme='system'] .archive-empty strong{color:#f8fafc}}
 @keyframes archive-spin{to{transform:rotate(360deg)}}
 @media (max-width:860px){.archive-shell,.archive-viewer{grid-template-columns:1fr;grid-template-rows:minmax(220px,38%) minmax(0,1fr)}.archive-sidebar{border-right:0;border-bottom:1px solid rgba(23,32,51,.08)}}
-`,Et=e=>{const t=e.createElement("style");return t.textContent=xt,t},c=(e,t,r,o)=>{const a=e.createElement(t);return r&&(a.className=r),o!==void 0&&(a.textContent=o),a},kt=e=>e instanceof Error?e.message:typeof e=="string"?e:JSON.stringify(e),te=async(e,t,r,o)=>{let a=0;const n=o||(typeof window<"u"?window:void 0);try{return await Promise.race([e,new Promise((h,l)=>{a=n?.setTimeout?n.setTimeout(()=>l(new Error(r)),t):setTimeout(()=>l(new Error(r)),t)})])}finally{n?.clearTimeout?n.clearTimeout(a):clearTimeout(a)}},At=e=>e.baseURI||e.URL||"http://localhost/",_t=e=>{var t;const r=((t=e.defaultView)===null||t===void 0?void 0:t.Worker)||(typeof Worker<"u"?Worker:void 0);if(!r)throw new Error("当前浏览器不支持 Web Worker");return r},zt=e=>{var t;return((t=e.defaultView)===null||t===void 0?void 0:t.File)||(typeof File<"u"?File:void 0)},St=(e,t,r)=>{const o=zt(e);return o?new o([t],r,{type:"application/octet-stream"}):Object.assign(new Blob([t],{type:"application/octet-stream"}),{name:r})},Tt=async e=>{try{const t=await fetch(e,{method:"HEAD",cache:"no-cache"}),r=t.headers.get("content-type")||"";if(t.ok&&/javascript|ecmascript|octet-stream/i.test(r))return!0;if(t.status&&t.status!==405)return!1}catch{}try{const t=await fetch(e,{method:"GET",cache:"no-cache",headers:{Range:"bytes=0-0"}}),r=t.headers.get("content-type")||"";return t.ok&&/javascript|ecmascript|octet-stream/i.test(r)}catch{return!1}},Ct=(e,t)=>{const r=JSON.stringify(t);return e.replace(/new URL\((['"])libarchive\.wasm\1\s*,\s*import\.meta\.url\)\.href/g,r)},Wt=async(e,t)=>{if(!e.wasmUrl)return e.workerUrl;const r=await fetch(e.workerUrl,{cache:"no-cache"});if(!r.ok)throw new Error(`无法读取 libarchive Worker: ${r.status}`);const o=await r.text(),a=URL.createObjectURL(new Blob([Ct(o,e.wasmUrl)],{type:"application/javascript"}));return t.push(a),a},Lt=async(e,t)=>{const r=[],o=At(e),a=t?.wasmUrl?je(t,""):void 0;if(t?.workerUrl)return r.push({label:"自定义 libarchive Worker",workerUrl:xe(t,o),wasmUrl:a}),r;const n=xe(void 0,o);return await Tt(n)&&r.push({label:"静态 libarchive Worker",workerUrl:n,wasmUrl:a}),r},Rt=(e,t)=>({...e?.options||{},archive:t}),ze=async(e,t,r,o)=>{const{fileViewerCoreRendererDispatcher:a}=await re(async()=>{const{fileViewerCoreRendererDispatcher:h}=await import("./index-BS2K-uXd.js");return{fileViewerCoreRendererDispatcher:h}},__vite__mapDeps([5,6,7,2,1,3,4,8,9,10,11]),import.meta.url),n=a.resolve(t);if(!n){r.textContent=`不支持.${t}格式的在线预览，请下载后预览或转换为支持的格式`;return}return n(e,r,t,{...o,renderNestedBuffer:o?.renderNestedBuffer||ze})};async function Pt(e,t,r,o){var a;const n=t.ownerDocument,h=n.defaultView||null,l=(a=o?.options)===null||a===void 0?void 0:a.archive,v=o?.filename||"archive.bin",u=l?.maxArchiveSize||mt,b=l?.maxEntryPreviewSize||gt,y=l?.cache!==!1,P=l?.workerTimeoutMs||bt,$=[],ae=[];let m=null,g=[],f=null,N,F=!1,j="正在读取压缩包目录...",V="大文件会在 Worker 中解析，避免阻塞主线程。",H="",L="",X=null,se="";const Se=Et(n),z=c(n,"section","archive-shell archive-viewer"),ce=c(n,"aside","archive-sidebar"),le=c(n,"div","archive-head"),Te=c(n,"span",void 0,"ARCHIVE"),Ce=c(n,"strong",void 0,v),de=c(n,"p");le.append(Te,Ce,de);const Z=c(n,"div","archive-warning"),K=c(n,"div","archive-info"),S=c(n,"input","archive-search");S.type="search",S.placeholder="筛选压缩包内文件";const R=c(n,"div","archive-list");R.setAttribute("role","list"),ce.append(le,Z,K,S,R);const he=c(n,"main","archive-preview"),pe=c(n,"div","archive-preview-toolbar"),G=c(n,"div");G.append(c(n,"span",void 0,"压缩包内预览"),c(n,"strong",void 0,"请选择一个文件"));const U=c(n,"button",void 0,"下载文件");U.type="button",pe.append(G,U);const T=c(n,"div","archive-nested-target");he.append(pe,T),z.append(ce,he);const Y=c(n,"div","archive-state"),ue=c(n,"div"),We=c(n,"span","archive-spinner"),fe=c(n,"div"),ve=c(n,"strong",void 0,j),we=c(n,"p",void 0,V);fe.append(ve,we),ue.append(We,fe),Y.append(ue),z.append(Y);const J=c(n,"div","archive-error"),Le=c(n,"strong",void 0,"压缩包预览提示"),me=c(n,"p");J.append(Le,me),z.append(J),t.replaceChildren(Se,z);const ge=(i,s,d)=>{i.addEventListener(s,d),ae.push(()=>i.removeEventListener(s,d))},Re=()=>{const i=g.reduce((d,p)=>d+p.size,0),s=g.filter(d=>d.previewable).length;return{count:g.length,totalSize:i,previewableCount:s}},Ue=()=>{const i=se.trim().toLowerCase();return(i?g.filter(d=>d.path.toLowerCase().includes(i)):g).slice(0,yt)},be=async()=>{await He(N),N=void 0,T.replaceChildren()},q=async()=>{var i;await((i=m?.close)===null||i===void 0?void 0:i.call(m)),m=null},x=()=>{const i=Re();de.textContent=`${i.count} 个文件 · ${A(i.totalSize)} · ${i.previewableCount} 个可直接预览`,Z.textContent="检测到加密内容，当前在线预览不接收密码，建议下载后本地解压。",Z.classList.toggle("archive-hidden",!X),K.textContent=L,K.classList.toggle("archive-hidden",!L),Y.classList.toggle("archive-hidden",!F),ve.textContent=j,we.textContent=V,J.classList.toggle("archive-hidden",!H),me.textContent=H,U.hidden=!f;const s=G.querySelector("strong");s&&(s.textContent=f?.name||"请选择一个文件")},B=()=>{if(f||F||T.childElementCount)return;const i=c(n,"div","archive-empty");i.append(c(n,"strong",void 0,"选择左侧文件即可预览"),c(n,"p",void 0,"压缩包只读取目录；文件内容会在点击后按需解压，并在体积允许时缓存到 IndexedDB。")),T.replaceChildren(i)},I=()=>{R.replaceChildren(),Ue().forEach(i=>{const s=c(n,"button","archive-entry");s.type="button",s.style.setProperty("--entry-depth",String(i.depth)),s.classList.toggle("active",f?.id===i.id);const d=c(n,"span","entry-ext",i.extension||"file"),p=c(n,"span","entry-copy");p.append(c(n,"strong",void 0,i.name),c(n,"em",void 0,i.path)),s.append(d,p,c(n,"small",void 0,A(i.size))),s.addEventListener("click",()=>{Pe(i)}),R.append(s)})},w=(i,s,d)=>{F=i,s&&(j=s),d&&(V=d),x(),B()},E=i=>{H=i,x()},Be=i=>{i.forEach(s=>s.terminate()),i.length=0},Ie=async(i,s)=>{const d=[],p=await Wt(s,$),k=_t(n);try{i.init({getWorker:()=>{const O=new k(p,{type:"module"});return d.push(O),O}}),w(!0,`正在初始化${s.label}...`,"如果当前服务器没有正确发布 Worker/WASM，会自动切换兼容模式。");const Q=St(n,e,v),ee=await te(i.open(Q),P,`${s.label} 初始化超时`,h);m=ee,X=await te(ee.hasEncryptedData(),P,`${s.label} 加密检测超时`,h).catch(()=>null),w(!0,"正在读取压缩包目录...","目录读取完成后，点击内部文件才会按需解压。");const Ne=await te(ee.getFilesObject(),P,`${s.label} 读取目录超时`,h);return g=ke(Ne).sort((O,Fe)=>O.path.localeCompare(Fe.path)),x(),I(),B(),!0}catch(Q){throw m||Be(d),Q}},Oe=async()=>{w(!0,"Worker 不可用，正在切换 ZIP/TAR 兼容模式...","兼容模式无需额外静态 Worker，适合手机 WebView 或本地临时服务器。");const i=await wt(e,v);return i?(g=i.sort((s,d)=>s.path.localeCompare(d.path)),X=null,L="当前环境的 libarchive Worker 未能启动，已自动切换到 ZIP/TAR/GZIP 兼容模式。RAR、7z 等格式仍建议发布 vendor/libarchive/worker-bundle.js 与 libarchive.wasm。",x(),I(),B(),!0):!1},De=async()=>{if(e.byteLength>u){E(`压缩包体积 ${A(e.byteLength)} 超过安全上限 ${A(u)}，请下载后在本地解压。`);return}w(!0,"正在初始化压缩包解析 Worker...","大文件会在 Worker 中解析，避免阻塞主线程。"),E(""),L="";try{const[{Archive:i},s]=await Promise.all([re(()=>import("./libarchive-CNftN_Ih.js"),[],import.meta.url),Lt(n,l)]),d=[];for(const p of s)try{await q(),await Ie(i,p);return}catch(k){d.push(`${p.label}: ${kt(k)}`)}if(await q(),await Oe())return;throw new Error(d.join("；")||"压缩包 Worker 初始化失败")}catch(i){console.error(i),E(i instanceof Error?i.message:String(i))}finally{w(!1)}},Me=async(i,s)=>{await be();const d=c(n,"div","archive-nested-content");T.append(d);const p={...o,filename:i.name,options:Rt(o,l)};N=o?.renderNestedBuffer?await o.renderNestedBuffer(s,i.extension,d,p):await ze(s,i.extension,d,p)},ye=async i=>{const s=Ge(v,e.byteLength,i);if(y){const k=await tt(s);if(k)return k.buffer}const p=await(await i.compressedFile.extract()).arrayBuffer();return y&&await nt({key:s,filename:i.name,size:p.byteLength,updatedAt:Date.now(),buffer:p}),p};async function Pe(i){if(f=i,I(),x(),i.size>b){E(`压缩包内文件 ${i.name} 体积 ${A(i.size)} 超过预览上限 ${A(b)}。`);return}w(!0,`正在按需解压 ${i.name}...`),E("");try{const s=await ye(i);w(!0,`正在渲染 ${i.name}...`),await Me(i,s)}catch(s){console.error(s),E(s instanceof Error?s.message:String(s))}finally{w(!1)}}const $e=async i=>{w(!0,`正在导出 ${i.name}...`);try{const s=await ye(i),d=URL.createObjectURL(new Blob([s]));$.push(d);const p=n.createElement("a");p.href=d,p.download=i.name,n.body.append(p),p.click(),p.remove()}finally{w(!1)}};return ge(S,"input",()=>{se=S.value,I()}),ge(U,"click",()=>{f&&$e(f)}),x(),B(),De(),{$el:z,async unmount(){ae.splice(0).forEach(i=>i()),await be(),await q(),$.forEach(i=>URL.revokeObjectURL(i)),t.replaceChildren()}}}export{Pt as default};
+`,
+  Et = (e) => {
+    const t = e.createElement('style');
+    return ((t.textContent = xt), t);
+  },
+  c = (e, t, r, o) => {
+    const a = e.createElement(t);
+    return (r && (a.className = r), o !== void 0 && (a.textContent = o), a);
+  },
+  kt = (e) => (e instanceof Error ? e.message : typeof e == 'string' ? e : JSON.stringify(e)),
+  te = async (e, t, r, o) => {
+    let a = 0;
+    const n = o || (typeof window < 'u' ? window : void 0);
+    try {
+      return await Promise.race([
+        e,
+        new Promise((h, l) => {
+          a = n?.setTimeout
+            ? n.setTimeout(() => l(new Error(r)), t)
+            : setTimeout(() => l(new Error(r)), t);
+        }),
+      ]);
+    } finally {
+      n?.clearTimeout ? n.clearTimeout(a) : clearTimeout(a);
+    }
+  },
+  At = (e) => e.baseURI || e.URL || 'http://localhost/',
+  _t = (e) => {
+    var t;
+    const r =
+      ((t = e.defaultView) === null || t === void 0 ? void 0 : t.Worker) ||
+      (typeof Worker < 'u' ? Worker : void 0);
+    if (!r) throw new Error('当前浏览器不支持 Web Worker');
+    return r;
+  },
+  zt = (e) => {
+    var t;
+    return (
+      ((t = e.defaultView) === null || t === void 0 ? void 0 : t.File) ||
+      (typeof File < 'u' ? File : void 0)
+    );
+  },
+  St = (e, t, r) => {
+    const o = zt(e);
+    return o
+      ? new o([t], r, { type: 'application/octet-stream' })
+      : Object.assign(new Blob([t], { type: 'application/octet-stream' }), { name: r });
+  },
+  Tt = async (e) => {
+    try {
+      const t = await fetch(e, { method: 'HEAD', cache: 'no-cache' }),
+        r = t.headers.get('content-type') || '';
+      if (t.ok && /javascript|ecmascript|octet-stream/i.test(r)) return !0;
+      if (t.status && t.status !== 405) return !1;
+    } catch {}
+    try {
+      const t = await fetch(e, {
+          method: 'GET',
+          cache: 'no-cache',
+          headers: { Range: 'bytes=0-0' },
+        }),
+        r = t.headers.get('content-type') || '';
+      return t.ok && /javascript|ecmascript|octet-stream/i.test(r);
+    } catch {
+      return !1;
+    }
+  },
+  Ct = (e, t) => {
+    const r = JSON.stringify(t);
+    return e.replace(/new URL\((['"])libarchive\.wasm\1\s*,\s*import\.meta\.url\)\.href/g, r);
+  },
+  Wt = async (e, t) => {
+    if (!e.wasmUrl) return e.workerUrl;
+    const r = await fetch(e.workerUrl, { cache: 'no-cache' });
+    if (!r.ok) throw new Error(`无法读取 libarchive Worker: ${r.status}`);
+    const o = await r.text(),
+      a = URL.createObjectURL(new Blob([Ct(o, e.wasmUrl)], { type: 'application/javascript' }));
+    return (t.push(a), a);
+  },
+  Lt = async (e, t) => {
+    const r = [],
+      o = At(e),
+      a = t?.wasmUrl ? je(t, '') : void 0;
+    if (t?.workerUrl)
+      return (r.push({ label: '自定义 libarchive Worker', workerUrl: xe(t, o), wasmUrl: a }), r);
+    const n = xe(void 0, o);
+    return (
+      (await Tt(n)) && r.push({ label: '静态 libarchive Worker', workerUrl: n, wasmUrl: a }),
+      r
+    );
+  },
+  Rt = (e, t) => ({ ...(e?.options || {}), archive: t }),
+  ze = async (e, t, r, o) => {
+    const { fileViewerCoreRendererDispatcher: a } = await re(
+        async () => {
+          const { fileViewerCoreRendererDispatcher: h } = await import('./index-BS2K-uXd.js');
+          return { fileViewerCoreRendererDispatcher: h };
+        },
+        __vite__mapDeps([5, 6, 7, 2, 1, 3, 4, 8, 9, 10, 11]),
+        import.meta.url,
+      ),
+      n = a.resolve(t);
+    if (!n) {
+      r.textContent = `不支持.${t}格式的在线预览，请下载后预览或转换为支持的格式`;
+      return;
+    }
+    return n(e, r, t, { ...o, renderNestedBuffer: o?.renderNestedBuffer || ze });
+  };
+async function Pt(e, t, r, o) {
+  var a;
+  const n = t.ownerDocument,
+    h = n.defaultView || null,
+    l = (a = o?.options) === null || a === void 0 ? void 0 : a.archive,
+    v = o?.filename || 'archive.bin',
+    u = l?.maxArchiveSize || mt,
+    b = l?.maxEntryPreviewSize || gt,
+    y = l?.cache !== !1,
+    P = l?.workerTimeoutMs || bt,
+    $ = [],
+    ae = [];
+  let m = null,
+    g = [],
+    f = null,
+    N,
+    F = !1,
+    j = '正在读取压缩包目录...',
+    V = '大文件会在 Worker 中解析，避免阻塞主线程。',
+    H = '',
+    L = '',
+    X = null,
+    se = '';
+  const Se = Et(n),
+    z = c(n, 'section', 'archive-shell archive-viewer'),
+    ce = c(n, 'aside', 'archive-sidebar'),
+    le = c(n, 'div', 'archive-head'),
+    Te = c(n, 'span', void 0, 'ARCHIVE'),
+    Ce = c(n, 'strong', void 0, v),
+    de = c(n, 'p');
+  le.append(Te, Ce, de);
+  const Z = c(n, 'div', 'archive-warning'),
+    K = c(n, 'div', 'archive-info'),
+    S = c(n, 'input', 'archive-search');
+  ((S.type = 'search'), (S.placeholder = '筛选压缩包内文件'));
+  const R = c(n, 'div', 'archive-list');
+  (R.setAttribute('role', 'list'), ce.append(le, Z, K, S, R));
+  const he = c(n, 'main', 'archive-preview'),
+    pe = c(n, 'div', 'archive-preview-toolbar'),
+    G = c(n, 'div');
+  G.append(c(n, 'span', void 0, '压缩包内预览'), c(n, 'strong', void 0, '请选择一个文件'));
+  const U = c(n, 'button', void 0, '下载文件');
+  ((U.type = 'button'), pe.append(G, U));
+  const T = c(n, 'div', 'archive-nested-target');
+  (he.append(pe, T), z.append(ce, he));
+  const Y = c(n, 'div', 'archive-state'),
+    ue = c(n, 'div'),
+    We = c(n, 'span', 'archive-spinner'),
+    fe = c(n, 'div'),
+    ve = c(n, 'strong', void 0, j),
+    we = c(n, 'p', void 0, V);
+  (fe.append(ve, we), ue.append(We, fe), Y.append(ue), z.append(Y));
+  const J = c(n, 'div', 'archive-error'),
+    Le = c(n, 'strong', void 0, '压缩包预览提示'),
+    me = c(n, 'p');
+  (J.append(Le, me), z.append(J), t.replaceChildren(Se, z));
+  const ge = (i, s, d) => {
+      (i.addEventListener(s, d), ae.push(() => i.removeEventListener(s, d)));
+    },
+    Re = () => {
+      const i = g.reduce((d, p) => d + p.size, 0),
+        s = g.filter((d) => d.previewable).length;
+      return { count: g.length, totalSize: i, previewableCount: s };
+    },
+    Ue = () => {
+      const i = se.trim().toLowerCase();
+      return (i ? g.filter((d) => d.path.toLowerCase().includes(i)) : g).slice(0, yt);
+    },
+    be = async () => {
+      (await He(N), (N = void 0), T.replaceChildren());
+    },
+    q = async () => {
+      var i;
+      (await ((i = m?.close) === null || i === void 0 ? void 0 : i.call(m)), (m = null));
+    },
+    x = () => {
+      const i = Re();
+      ((de.textContent = `${i.count} 个文件 · ${A(i.totalSize)} · ${i.previewableCount} 个可直接预览`),
+        (Z.textContent = '检测到加密内容，当前在线预览不接收密码，建议下载后本地解压。'),
+        Z.classList.toggle('archive-hidden', !X),
+        (K.textContent = L),
+        K.classList.toggle('archive-hidden', !L),
+        Y.classList.toggle('archive-hidden', !F),
+        (ve.textContent = j),
+        (we.textContent = V),
+        J.classList.toggle('archive-hidden', !H),
+        (me.textContent = H),
+        (U.hidden = !f));
+      const s = G.querySelector('strong');
+      s && (s.textContent = f?.name || '请选择一个文件');
+    },
+    B = () => {
+      if (f || F || T.childElementCount) return;
+      const i = c(n, 'div', 'archive-empty');
+      (i.append(
+        c(n, 'strong', void 0, '选择左侧文件即可预览'),
+        c(
+          n,
+          'p',
+          void 0,
+          '压缩包只读取目录；文件内容会在点击后按需解压，并在体积允许时缓存到 IndexedDB。',
+        ),
+      ),
+        T.replaceChildren(i));
+    },
+    I = () => {
+      (R.replaceChildren(),
+        Ue().forEach((i) => {
+          const s = c(n, 'button', 'archive-entry');
+          ((s.type = 'button'),
+            s.style.setProperty('--entry-depth', String(i.depth)),
+            s.classList.toggle('active', f?.id === i.id));
+          const d = c(n, 'span', 'entry-ext', i.extension || 'file'),
+            p = c(n, 'span', 'entry-copy');
+          (p.append(c(n, 'strong', void 0, i.name), c(n, 'em', void 0, i.path)),
+            s.append(d, p, c(n, 'small', void 0, A(i.size))),
+            s.addEventListener('click', () => {
+              Pe(i);
+            }),
+            R.append(s));
+        }));
+    },
+    w = (i, s, d) => {
+      ((F = i), s && (j = s), d && (V = d), x(), B());
+    },
+    E = (i) => {
+      ((H = i), x());
+    },
+    Be = (i) => {
+      (i.forEach((s) => s.terminate()), (i.length = 0));
+    },
+    Ie = async (i, s) => {
+      const d = [],
+        p = await Wt(s, $),
+        k = _t(n);
+      try {
+        (i.init({
+          getWorker: () => {
+            const O = new k(p, { type: 'module' });
+            return (d.push(O), O);
+          },
+        }),
+          w(
+            !0,
+            `正在初始化${s.label}...`,
+            '如果当前服务器没有正确发布 Worker/WASM，会自动切换兼容模式。',
+          ));
+        const Q = St(n, e, v),
+          ee = await te(i.open(Q), P, `${s.label} 初始化超时`, h);
+        ((m = ee),
+          (X = await te(ee.hasEncryptedData(), P, `${s.label} 加密检测超时`, h).catch(() => null)),
+          w(!0, '正在读取压缩包目录...', '目录读取完成后，点击内部文件才会按需解压。'));
+        const Ne = await te(ee.getFilesObject(), P, `${s.label} 读取目录超时`, h);
+        return ((g = ke(Ne).sort((O, Fe) => O.path.localeCompare(Fe.path))), x(), I(), B(), !0);
+      } catch (Q) {
+        throw (m || Be(d), Q);
+      }
+    },
+    Oe = async () => {
+      w(
+        !0,
+        'Worker 不可用，正在切换 ZIP/TAR 兼容模式...',
+        '兼容模式无需额外静态 Worker，适合手机 WebView 或本地临时服务器。',
+      );
+      const i = await wt(e, v);
+      return i
+        ? ((g = i.sort((s, d) => s.path.localeCompare(d.path))),
+          (X = null),
+          (L =
+            '当前环境的 libarchive Worker 未能启动，已自动切换到 ZIP/TAR/GZIP 兼容模式。RAR、7z 等格式仍建议发布 vendor/libarchive/worker-bundle.js 与 libarchive.wasm。'),
+          x(),
+          I(),
+          B(),
+          !0)
+        : !1;
+    },
+    De = async () => {
+      if (e.byteLength > u) {
+        E(`压缩包体积 ${A(e.byteLength)} 超过安全上限 ${A(u)}，请下载后在本地解压。`);
+        return;
+      }
+      (w(!0, '正在初始化压缩包解析 Worker...', '大文件会在 Worker 中解析，避免阻塞主线程。'),
+        E(''),
+        (L = ''));
+      try {
+        const [{ Archive: i }, s] = await Promise.all([
+            re(() => import('./libarchive-CNftN_Ih.js'), [], import.meta.url),
+            Lt(n, l),
+          ]),
+          d = [];
+        for (const p of s)
+          try {
+            (await q(), await Ie(i, p));
+            return;
+          } catch (k) {
+            d.push(`${p.label}: ${kt(k)}`);
+          }
+        if ((await q(), await Oe())) return;
+        throw new Error(d.join('；') || '压缩包 Worker 初始化失败');
+      } catch (i) {
+        (console.error(i), E(i instanceof Error ? i.message : String(i)));
+      } finally {
+        w(!1);
+      }
+    },
+    Me = async (i, s) => {
+      await be();
+      const d = c(n, 'div', 'archive-nested-content');
+      T.append(d);
+      const p = { ...o, filename: i.name, options: Rt(o, l) };
+      N = o?.renderNestedBuffer
+        ? await o.renderNestedBuffer(s, i.extension, d, p)
+        : await ze(s, i.extension, d, p);
+    },
+    ye = async (i) => {
+      const s = Ge(v, e.byteLength, i);
+      if (y) {
+        const k = await tt(s);
+        if (k) return k.buffer;
+      }
+      const p = await (await i.compressedFile.extract()).arrayBuffer();
+      return (
+        y &&
+          (await nt({
+            key: s,
+            filename: i.name,
+            size: p.byteLength,
+            updatedAt: Date.now(),
+            buffer: p,
+          })),
+        p
+      );
+    };
+  async function Pe(i) {
+    if (((f = i), I(), x(), i.size > b)) {
+      E(`压缩包内文件 ${i.name} 体积 ${A(i.size)} 超过预览上限 ${A(b)}。`);
+      return;
+    }
+    (w(!0, `正在按需解压 ${i.name}...`), E(''));
+    try {
+      const s = await ye(i);
+      (w(!0, `正在渲染 ${i.name}...`), await Me(i, s));
+    } catch (s) {
+      (console.error(s), E(s instanceof Error ? s.message : String(s)));
+    } finally {
+      w(!1);
+    }
+  }
+  const $e = async (i) => {
+    w(!0, `正在导出 ${i.name}...`);
+    try {
+      const s = await ye(i),
+        d = URL.createObjectURL(new Blob([s]));
+      $.push(d);
+      const p = n.createElement('a');
+      ((p.href = d), (p.download = i.name), n.body.append(p), p.click(), p.remove());
+    } finally {
+      w(!1);
+    }
+  };
+  return (
+    ge(S, 'input', () => {
+      ((se = S.value), I());
+    }),
+    ge(U, 'click', () => {
+      f && $e(f);
+    }),
+    x(),
+    B(),
+    De(),
+    {
+      $el: z,
+      async unmount() {
+        (ae.splice(0).forEach((i) => i()),
+          await be(),
+          await q(),
+          $.forEach((i) => URL.revokeObjectURL(i)),
+          t.replaceChildren());
+      },
+    }
+  );
+}
+export { Pt as default };

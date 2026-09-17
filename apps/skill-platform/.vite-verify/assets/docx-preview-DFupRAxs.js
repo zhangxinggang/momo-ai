@@ -1,7 +1,4591 @@
-import{e as We}from"./jszip.min-DnpxAPiE.js";import"./ui-vendor-C-FKu2uc.js";import"./markdown-vendor-DldLOD9R.js";import"./markdown-it-vendor-DL4wSELR.js";const Pe=(Ue=We,$e={"./comments/comments-extended-part":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.CommentsExtendedPart=void 0;const d=E("../common/part"),i=E("../utils");class T extends d.Part{constructor(a,C){super(a,C),this.comments=[]}parseXml(a){const C=this._package.xmlParser;for(let D of C.elements(a,"commentEx"))this.comments.push({paraId:C.attr(D,"paraId"),paraIdParent:C.attr(D,"paraIdParent"),done:C.boolAttr(D,"done")});this.commentMap=(0,i.keyBy)(this.comments,D=>D.paraId)}}f.CommentsExtendedPart=T},"./comments/comments-part":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.CommentsPart=void 0;const d=E("../common/part"),i=E("../utils");class T extends d.Part{constructor(a,C,D){super(a,C),this._documentParser=D}parseXml(a){this.comments=this._documentParser.parseComments(a),this.commentMap=(0,i.keyBy)(this.comments,C=>C.id)}}f.CommentsPart=T},"./comments/elements":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.WmlCommentRangeEnd=f.WmlCommentRangeStart=f.WmlCommentReference=f.WmlComment=void 0;const d=E("../document/dom");class i extends d.OpenXmlElementBase{constructor(){super(...arguments),this.type=d.DomType.Comment}}f.WmlComment=i;class T extends d.OpenXmlElementBase{constructor(D){super(),this.id=D,this.type=d.DomType.CommentReference}}f.WmlCommentReference=T;class k extends d.OpenXmlElementBase{constructor(D){super(),this.id=D,this.type=d.DomType.CommentRangeStart}}f.WmlCommentRangeStart=k;class a extends d.OpenXmlElementBase{constructor(D){super(),this.id=D,this.type=d.DomType.CommentRangeEnd}}f.WmlCommentRangeEnd=a},"./common/content-types":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.parseContentTypes=function(d,i){return i.elements(d).map(T=>({extension:i.attr(T,"Extension"),partName:i.attr(T,"PartName"),contentType:i.attr(T,"ContentType")}))}},"./common/open-xml-package":function(E,H,f){var d=this&&this.__importDefault||function(A){return A&&A.__esModule?A:{default:A}};Object.defineProperty(f,"__esModule",{value:!0}),f.OpenXmlPackage=void 0;const i=d(E("jszip")),T=E("../parser/xml-parser"),k=E("../utils"),a=E("./relationship"),C=E("./content-types");class D{constructor(e,t){this._zip=e,this.options=t,this.xmlParser=new T.XmlParser}get(e){const t=(function(n){return n.startsWith("/")?n.substr(1):n})(e);return this._zip.files[t]??this._zip.files[t.replace(/\//g,"\\")]}update(e,t){this._zip.file(e,t)}static async load(e,t){const n=await i.default.loadAsync(e);return new D(n,t)}save(e="blob"){return this._zip.generateAsync({type:e})}load(e,t="string"){return this.get(e)?.async(t)??Promise.resolve(null)}async loadRelationships(e=null){let t="_rels/.rels";if(e!=null){const[l,u]=(0,k.splitPath)(e);t=`${l}_rels/${u}.rels`}const n=await this.load(t);return n?(0,a.parseRelationships)(M(this.parseXmlDocument(n)),this.xmlParser):null}async loadContentTypes(){const e=await this.load("[Content_Types].xml");return e?(0,C.parseContentTypes)(M(this.parseXmlDocument(e)),this.xmlParser):[]}parseXmlDocument(e){return(0,T.parseXmlString)(e,this.options.trimXmlDeclaration)}}function M(A){return A.firstElementChild??A.documentElement}f.OpenXmlPackage=D},"./common/part":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.Part=void 0;const d=E("../parser/xml-parser");f.Part=class{constructor(i,T){this._package=i,this.path=T}async load(){this.rels=await this._package.loadRelationships(this.path);const i=await this._package.load(this.path),T=this._package.parseXmlDocument(i);this._package.options.keepOrigin&&(this._xmlDocument=T),this.parseXml(T.firstElementChild??T.documentElement)}save(){this._package.update(this.path,(0,d.serializeXmlString)(this._xmlDocument))}parseXml(i){}}},"./common/relationship":function(E,H,f){var d;Object.defineProperty(f,"__esModule",{value:!0}),f.RelationshipTypes=void 0,f.parseRelationships=function(i,T){return T.elements(i).map(k=>({id:T.attr(k,"Id"),type:T.attr(k,"Type"),target:T.attr(k,"Target"),targetMode:T.attr(k,"TargetMode")}))},(function(i){i.OfficeDocument="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument",i.FontTable="http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable",i.Image="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image",i.Numbering="http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering",i.Styles="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",i.StylesWithEffects="http://schemas.microsoft.com/office/2007/relationships/stylesWithEffects",i.Theme="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme",i.Settings="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings",i.WebSettings="http://schemas.openxmlformats.org/officeDocument/2006/relationships/webSettings",i.Hyperlink="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink",i.Footnotes="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footnotes",i.Endnotes="http://schemas.openxmlformats.org/officeDocument/2006/relationships/endnotes",i.Footer="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer",i.Header="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header",i.ExtendedProperties="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties",i.CoreProperties="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties",i.CustomProperties="http://schemas.openxmlformats.org/package/2006/relationships/metadata/custom-properties",i.Comments="http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments",i.CommentsExtended="http://schemas.microsoft.com/office/2011/relationships/commentsExtended",i.AltChunk="http://schemas.openxmlformats.org/officeDocument/2006/relationships/aFChunk",i.Chart="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart",i.ChartUserShapes="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chartUserShapes",i.DiagramData="http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramData",i.DiagramLayout="http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramLayout",i.DiagramQuickStyle="http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramQuickStyle",i.DiagramColors="http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramColors",i.Ink="http://schemas.microsoft.com/office/2007/relationships/ink",i.ContentPart="http://schemas.openxmlformats.org/officeDocument/2006/relationships/contentPart"})(d||(f.RelationshipTypes=d={}))},"./document/bookmarks":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.parseBookmarkStart=function(i,T){return{type:d.DomType.BookmarkStart,id:T.attr(i,"id"),name:T.attr(i,"name"),colFirst:T.intAttr(i,"colFirst"),colLast:T.intAttr(i,"colLast")}},f.parseBookmarkEnd=function(i,T){return{type:d.DomType.BookmarkEnd,id:T.attr(i,"id")}};const d=E("./dom")},"./document/border":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.parseBorder=i,f.parseBorders=function(T,k){var a={};for(let C of k.elements(T))switch(C.localName){case"left":a.left=i(C,k);break;case"top":a.top=i(C,k);break;case"right":a.right=i(C,k);break;case"bottom":a.bottom=i(C,k)}return a};const d=E("./common");function i(T,k){return{type:k.attr(T,"val"),color:k.attr(T,"color"),size:k.lengthAttr(T,"sz",d.LengthUsage.Border),offset:k.lengthAttr(T,"space",d.LengthUsage.Point),frame:k.boolAttr(T,"frame"),shadow:k.boolAttr(T,"shadow")}}},"./document/common":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.LengthUsage=f.ns=void 0,f.convertLength=function(i,T=f.LengthUsage.Dxa){if(i==null||i===""||/.+(p[xt]|[%])$/i.test(i))return i;var k=parseFloat(i);if(Number.isNaN(k))return null;var a=k*T.mul;return T.min!=null&&T.max!=null&&(a=(0,d.clamp)(a,T.min,T.max)),`${a.toFixed(2)}${T.unit}`},f.convertBoolean=function(i,T=!1){switch(i){case"1":case"on":case"true":return!0;case"0":case"off":case"false":return!1;default:return T}},f.convertPercentage=function(i){return i?parseInt(i)/100:null},f.parseCommonProperty=function(i,T,k){if(i.namespaceURI!=f.ns.wordml)return!1;switch(i.localName){case"color":T.color=k.attr(i,"val");break;case"sz":T.fontSize=k.lengthAttr(i,"val",f.LengthUsage.FontSize);break;case"szCs":T.fontSize??(T.fontSize=k.lengthAttr(i,"val",f.LengthUsage.FontSize));break;default:return!1}return!0};const d=E("../utils");f.ns={wordml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main",drawingml:"http://schemas.openxmlformats.org/drawingml/2006/main",picture:"http://schemas.openxmlformats.org/drawingml/2006/picture",wordprocessingCanvas:"http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas",wordprocessingGroup:"http://schemas.microsoft.com/office/word/2010/wordprocessingGroup",wordprocessingShape:"http://schemas.microsoft.com/office/word/2010/wordprocessingShape",chart:"http://schemas.openxmlformats.org/drawingml/2006/chart",diagram:"http://schemas.openxmlformats.org/drawingml/2006/diagram",relationship:"http://schemas.openxmlformats.org/officeDocument/2006/relationships",drawing2014:"http://schemas.microsoft.com/office/drawing/2014/main",ink2010:"http://schemas.microsoft.com/office/2010/ink",word2010:"http://schemas.microsoft.com/office/word/2010/wordml",compatibility:"http://schemas.openxmlformats.org/markup-compatibility/2006",math:"http://schemas.openxmlformats.org/officeDocument/2006/math"},f.LengthUsage={Dxa:{mul:.05,unit:"pt"},SignedDxa:{mul:.05,unit:"pt"},Emu:{mul:1/12700,unit:"pt"},FontSize:{mul:.5,unit:"pt"},SignedHalfPoint:{mul:.5,unit:"pt"},Border:{mul:.125,unit:"pt",min:.25,max:12},Point:{mul:1,unit:"pt"},Percent:{mul:.02,unit:"%"},LineHeight:{mul:1/240,unit:""},VmlEmu:{mul:1/12700,unit:""}}},"./document/document-part":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.DocumentPart=void 0;const d=E("../common/part");class i extends d.Part{constructor(k,a,C){super(k,a),this._documentParser=C}parseXml(k){this.body=this._documentParser.parseDocumentFile(k)}}f.DocumentPart=i},"./document/document":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0})},"./document/dom":function(E,H,f){var d;Object.defineProperty(f,"__esModule",{value:!0}),f.OpenXmlElementBase=f.DomType=void 0,(function(i){i.Document="document",i.Paragraph="paragraph",i.Run="run",i.Break="break",i.NoBreakHyphen="noBreakHyphen",i.Table="table",i.Row="row",i.Cell="cell",i.Hyperlink="hyperlink",i.SmartTag="smartTag",i.Drawing="drawing",i.Image="image",i.Text="text",i.Tab="tab",i.PositionalTab="positionalTab",i.SoftHyphen="softHyphen",i.Symbol="symbol",i.BookmarkStart="bookmarkStart",i.BookmarkEnd="bookmarkEnd",i.Footer="footer",i.Header="header",i.FootnoteReference="footnoteReference",i.EndnoteReference="endnoteReference",i.Footnote="footnote",i.Endnote="endnote",i.SimpleField="simpleField",i.ComplexField="complexField",i.Instruction="instruction",i.VmlPicture="vmlPicture",i.MmlMath="mmlMath",i.Shape="shape",i.MmlMathParagraph="mmlMathParagraph",i.MmlFraction="mmlFraction",i.MmlFunction="mmlFunction",i.MmlFunctionName="mmlFunctionName",i.MmlNumerator="mmlNumerator",i.MmlDenominator="mmlDenominator",i.MmlRadical="mmlRadical",i.MmlBase="mmlBase",i.MmlDegree="mmlDegree",i.MmlSuperscript="mmlSuperscript",i.MmlSubscript="mmlSubscript",i.MmlPreSubSuper="mmlPreSubSuper",i.MmlSubArgument="mmlSubArgument",i.MmlSuperArgument="mmlSuperArgument",i.MmlNary="mmlNary",i.MmlDelimiter="mmlDelimiter",i.MmlRun="mmlRun",i.MmlEquationArray="mmlEquationArray",i.MmlLimit="mmlLimit",i.MmlLimitLower="mmlLimitLower",i.MmlLimitUpper="mmlLimitUpper",i.MmlSubSuperscript="mmlSubSuperscript",i.MmlPhantom="mmlPhantom",i.MmlBorderBox="mmlBorderBox",i.MmlAccent="mmlAccent",i.MmlMatrix="mmlMatrix",i.MmlMatrixRow="mmlMatrixRow",i.MmlBox="mmlBox",i.MmlBar="mmlBar",i.MmlGroupChar="mmlGroupChar",i.VmlElement="vmlElement",i.Chart="chart",i.SmartArt="smartArt",i.Ink="ink",i.Ruby="ruby",i.RubyBase="rubyBase",i.RubyText="rubyText",i.Inserted="inserted",i.Deleted="deleted",i.DeletedText="deletedText",i.Comment="comment",i.CommentReference="commentReference",i.CommentRangeStart="commentRangeStart",i.CommentRangeEnd="commentRangeEnd",i.AltChunk="altChunk"})(d||(f.DomType=d={})),f.OpenXmlElementBase=class{constructor(){this.children=[],this.cssStyle={}}}},"./document/fields":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0})},"./document/line-spacing":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.parseLineSpacing=function(d,i){return{before:i.lengthAttr(d,"before"),after:i.lengthAttr(d,"after"),line:i.intAttr(d,"line"),lineRule:i.attr(d,"lineRule")}}},"./document/paragraph":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.parseParagraphProperties=function(M,A){let e={};for(let t of A.elements(M))a(t,e,A);return e},f.parseParagraphProperty=a,f.parseTabs=C,f.parseNumbering=D;const d=E("./common"),i=E("./section"),T=E("./line-spacing"),k=E("./run");function a(M,A,e){if(M.namespaceURI!=d.ns.wordml)return!1;if((0,d.parseCommonProperty)(M,A,e))return!0;switch(M.localName){case"tabs":A.tabs=C(M,e);break;case"sectPr":A.sectionProps=(0,i.parseSectionProperties)(M,e);break;case"numPr":A.numbering=D(M,e);break;case"spacing":return A.lineSpacing=(0,T.parseLineSpacing)(M,e),!1;case"textAlignment":return A.textAlignment=e.attr(M,"val"),!1;case"keepLines":A.keepLines=e.boolAttr(M,"val",!0);break;case"keepNext":A.keepNext=e.boolAttr(M,"val",!0);break;case"pageBreakBefore":A.pageBreakBefore=e.boolAttr(M,"val",!0);break;case"widowControl":A.widowControl=e.boolAttr(M,"val",!0);break;case"outlineLvl":A.outlineLevel=e.intAttr(M,"val");break;case"pStyle":A.styleName=e.attr(M,"val");break;case"rPr":A.runProps=(0,k.parseRunProperties)(M,e);break;default:return!1}return!0}function C(M,A){return A.elements(M,"tab").map(e=>({position:A.lengthAttr(e,"pos"),leader:A.attr(e,"leader"),style:A.attr(e,"val")}))}function D(M,A){var e={};for(let t of A.elements(M))switch(t.localName){case"numId":e.id=A.attr(t,"val");break;case"ilvl":e.level=A.intAttr(t,"val")}return e}},"./document/run":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.parseRunProperties=function(T,k){let a={};for(let C of k.elements(T))i(C,a,k);return a},f.parseRunProperty=i;const d=E("./common");function i(T,k,a){return!!(0,d.parseCommonProperty)(T,k,a)}},"./document/section":function(E,H,f){var d=this&&this.__importDefault||function(A){return A&&A.__esModule?A:{default:A}};Object.defineProperty(f,"__esModule",{value:!0}),f.SectionType=void 0,f.isSectionPageBreak=function(A){return A==null||A===k.NextPage||A===k.EvenPage||A===k.OddPage},f.isSectionColumnBreak=function(A){return A===k.NextColumn},f.parseSectionProperties=function(A,e=i.default){var t={};for(let n of e.elements(A))switch(n.localName){case"pgSz":t.pageSize={width:e.lengthAttr(n,"w"),height:e.lengthAttr(n,"h"),orientation:e.attr(n,"orient")};break;case"type":t.type=e.attr(n,"val");break;case"pgMar":t.pageMargins={left:e.lengthAttr(n,"left"),right:e.lengthAttr(n,"right"),top:e.lengthAttr(n,"top"),bottom:e.lengthAttr(n,"bottom"),header:e.lengthAttr(n,"header"),footer:e.lengthAttr(n,"footer"),gutter:e.lengthAttr(n,"gutter")};break;case"cols":t.columns=a(n,e);break;case"headerReference":(t.headerRefs??(t.headerRefs=[])).push(M(n,e));break;case"footerReference":(t.footerRefs??(t.footerRefs=[])).push(M(n,e));break;case"titlePg":t.titlePage=e.boolAttr(n,"val",!0);break;case"pgBorders":t.pageBorders=(0,T.parseBorders)(n,e);break;case"pgNumType":t.pageNumber=C(n,e);break;case"docGrid":t.docGrid=D(n,e)}return t};const i=d(E("../parser/xml-parser")),T=E("./border");var k;function a(A,e){return{numberOfColumns:e.intAttr(A,"num"),space:e.lengthAttr(A,"space"),separator:e.boolAttr(A,"sep"),equalWidth:e.boolAttr(A,"equalWidth",!0),columns:e.elements(A,"col").map(t=>({width:e.lengthAttr(t,"w"),space:e.lengthAttr(t,"space")}))}}function C(A,e){return{chapSep:e.attr(A,"chapSep"),chapStyle:e.attr(A,"chapStyle"),format:e.attr(A,"fmt"),start:e.intAttr(A,"start")}}function D(A,e){const t=e.intAttr(A,"charSpace",null);return{type:e.attr(A,"type"),linePitch:e.lengthAttr(A,"linePitch"),charSpace:t==null?null:`${(t/4096).toFixed(4)}em`,charSpaceRaw:t}}function M(A,e){return{id:e.attr(A,"id"),type:e.attr(A,"type")}}(function(A){A.Continuous="continuous",A.NextPage="nextPage",A.NextColumn="nextColumn",A.EvenPage="evenPage",A.OddPage="oddPage"})(k||(f.SectionType=k={}))},"./document/style":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0})},"./document-parser":function(E,H,f){var d=this&&this.__importDefault||function(s){return s&&s.__esModule?s:{default:s}};Object.defineProperty(f,"__esModule",{value:!0}),f.DocumentParser=f.autos=void 0;const i=E("./document/dom"),T=E("./document/paragraph"),k=E("./document/section"),a=d(E("./parser/xml-parser")),C=E("./document/run"),D=E("./document/bookmarks"),M=E("./document/common"),A=E("./vml/vml"),e=E("./comments/elements"),t=E("./utils");f.autos={shd:"inherit",color:"black",borderColor:"black",highlight:"transparent"};const n=[M.ns.wordprocessingShape,M.ns.wordprocessingCanvas,M.ns.wordprocessingGroup,M.ns.drawingml,M.ns.picture],l={oMath:i.DomType.MmlMath,oMathPara:i.DomType.MmlMathParagraph,f:i.DomType.MmlFraction,func:i.DomType.MmlFunction,fName:i.DomType.MmlFunctionName,num:i.DomType.MmlNumerator,den:i.DomType.MmlDenominator,rad:i.DomType.MmlRadical,deg:i.DomType.MmlDegree,e:i.DomType.MmlBase,sSup:i.DomType.MmlSuperscript,sSub:i.DomType.MmlSubscript,sPre:i.DomType.MmlPreSubSuper,sup:i.DomType.MmlSuperArgument,sub:i.DomType.MmlSubArgument,d:i.DomType.MmlDelimiter,nary:i.DomType.MmlNary,eqArr:i.DomType.MmlEquationArray,lim:i.DomType.MmlLimit,limLow:i.DomType.MmlLimitLower,limUpp:i.DomType.MmlLimitUpper,sSubSup:i.DomType.MmlSubSuperscript,phant:i.DomType.MmlPhantom,borderBox:i.DomType.MmlBorderBox,acc:i.DomType.MmlAccent,m:i.DomType.MmlMatrix,mr:i.DomType.MmlMatrixRow,box:i.DomType.MmlBox,bar:i.DomType.MmlBar,groupChr:i.DomType.MmlGroupChar};f.DocumentParser=class{constructor(s){this.options={ignoreWidth:!1,debug:!1,hideWebHiddenContent:!1,...s}}parseNotes(s,r,o){var c=[];for(let h of a.default.elements(s,r)){const m=new o;m.id=a.default.attr(h,"id"),m.noteType=a.default.attr(h,"type"),m.children=this.parseBodyElements(h),c.push(m)}return c}parseComments(s){var r=[];for(let o of a.default.elements(s,"comment")){const c=new e.WmlComment;c.id=a.default.attr(o,"id"),c.author=a.default.attr(o,"author"),c.initials=a.default.attr(o,"initials"),c.date=a.default.attr(o,"date"),c.children=this.parseBodyElements(o),r.push(c)}return r}parseDocumentFile(s){var r=a.default.element(s,"body"),o=a.default.element(s,"background"),c=a.default.element(r,"sectPr");return{type:i.DomType.Document,children:this.parseBodyElements(r),props:c?(0,k.parseSectionProperties)(c,a.default):{},cssStyle:o?this.parseBackground(o):{}}}parseBackground(s){var r={},o=p.colorAttr(s,"color");return o&&(r["background-color"]=o),r}parseBodyElements(s){var r=[];for(const o of a.default.elements(s))switch(o.localName){case"p":r.push(this.parseParagraph(o));break;case"altChunk":r.push(this.parseAltChunk(o));break;case"tbl":r.push(this.parseTable(o));break;case"sdt":r.push(...this.parseSdt(o,c=>this.parseBodyElements(c)))}return r}parseStylesFile(s){var r=[];for(const o of a.default.elements(s))switch(o.localName){case"style":r.push(this.parseStyle(o));break;case"docDefaults":r.push(this.parseDefaultStyles(o))}return r}parseDefaultStyles(s){var r={id:null,name:null,target:null,basedOn:null,styles:[]};for(const h of a.default.elements(s))switch(h.localName){case"rPrDefault":var o=a.default.element(h,"rPr");o&&r.styles.push({target:"span",values:this.parseDefaultProperties(o,{})});break;case"pPrDefault":var c=a.default.element(h,"pPr");c&&r.styles.push({target:"p",values:this.parseDefaultProperties(c,{})})}return r}parseStyle(s){var r={id:a.default.attr(s,"styleId"),isDefault:a.default.boolAttr(s,"default"),name:null,target:null,basedOn:null,styles:[],linked:null};switch(a.default.attr(s,"type")){case"paragraph":r.target="p";break;case"table":r.target="table";break;case"character":r.target="span"}for(const o of a.default.elements(s))switch(o.localName){case"basedOn":r.basedOn=a.default.attr(o,"val");break;case"name":r.name=a.default.attr(o,"val");break;case"link":r.linked=a.default.attr(o,"val");break;case"next":r.next=a.default.attr(o,"val");break;case"aliases":r.aliases=a.default.attr(o,"val").split(",");break;case"pPr":r.styles.push({target:"p",values:this.parseDefaultProperties(o,{})}),r.paragraphProps=(0,T.parseParagraphProperties)(o,a.default);break;case"rPr":r.styles.push({target:"span",values:this.parseDefaultProperties(o,{})}),r.runProps=(0,C.parseRunProperties)(o,a.default);break;case"tblPr":case"tcPr":r.styles.push({target:"td",values:this.parseDefaultProperties(o,{})});break;case"tblStylePr":for(let c of this.parseTableStyle(o))r.styles.push(c);break;case"rsid":case"qFormat":case"hidden":case"semiHidden":case"unhideWhenUsed":case"autoRedefine":case"uiPriority":break;default:this.options.debug&&console.warn(`DOCX: Unknown style element: ${o.localName}`)}return r}parseTableStyle(s){var r=[],o="",c="";switch(a.default.attr(s,"type")){case"firstRow":c=".first-row",o="tr.first-row td";break;case"lastRow":c=".last-row",o="tr.last-row td";break;case"firstCol":c=".first-col",o="td.first-col";break;case"lastCol":c=".last-col",o="td.last-col";break;case"band1Vert":c=":not(.no-vband)",o="td.odd-col";break;case"band2Vert":c=":not(.no-vband)",o="td.even-col";break;case"band1Horz":c=":not(.no-hband)",o="tr.odd-row";break;case"band2Horz":c=":not(.no-hband)",o="tr.even-row";break;default:return[]}for(const h of a.default.elements(s))switch(h.localName){case"pPr":r.push({target:`${o} p`,mod:c,values:this.parseDefaultProperties(h,{})});break;case"rPr":r.push({target:`${o} span`,mod:c,values:this.parseDefaultProperties(h,{})});break;case"tblPr":case"tcPr":r.push({target:o,mod:c,values:this.parseDefaultProperties(h,{})})}return r}parseNumberingFile(s){const r=[],o=[],c={},h=[],m=[];for(const P of a.default.elements(s))switch(P.localName){case"numPicBullet":o.push(this.parseNumberingPicBullet(P));break;case"abstractNum":h.push(P);break;case"num":m.push(P)}for(const P of h)c[a.default.attr(P,"abstractNumId")]=this.parseAbstractNumbering(P,o);for(const P of m){const x=a.default.attr(P,"numId"),y=(c[a.default.elementAttr(P,"abstractNumId","val")]??[]).map(w=>this.cloneNumberingLevel(w,x));for(const w of a.default.elements(P,"lvlOverride")){const N=a.default.intAttr(w,"ilvl"),$=a.default.element(w,"lvl"),R=a.default.element(w,"startOverride");let X=y.find(Q=>Q.level==N);if($){X=this.parseNumberingLevel(x,$,o);const Q=y.findIndex(ue=>ue.level==N);Q>=0?y[Q]=X:y.push(X)}R&&X&&(X.start=a.default.intAttr(R,"val",X.start))}r.push(...y)}return r}cloneNumberingLevel(s,r){return{...s,id:r,pStyle:{...s.pStyle},rStyle:{...s.rStyle},bullet:s.bullet?{...s.bullet}:null}}parseNumberingPicBullet(s){const r=a.default.intAttr(s,"numPicBulletId"),o=a.default.element(s,"pict"),c=o&&a.default.element(o,"shape"),h=c&&a.default.element(c,"imagedata");if(h)return{id:r,src:a.default.attr(h,"id"),style:a.default.attr(c,"style")};const m=a.default.element(s,"drawing"),P=m?this.findDescendant(m,"blip"):null;if(P){const x=m?this.findDescendant(m,"extent"):null,y=[];if(x){const w=a.default.lengthAttr(x,"cx",M.LengthUsage.Emu),N=a.default.lengthAttr(x,"cy",M.LengthUsage.Emu);w&&y.push(`width:${w};`),N&&y.push(`height:${N};`)}return{id:r,src:a.default.attr(P,"embed")??a.default.attr(P,"link"),style:y.join("")||void 0}}return null}parseAbstractNumbering(s,r){var o=[],c=a.default.attr(s,"abstractNumId");for(const h of a.default.elements(s))h.localName==="lvl"&&o.push(this.parseNumberingLevel(c,h,r));return o}parseNumberingLevel(s,r,o){var c={id:s,level:a.default.intAttr(r,"ilvl"),start:1,pStyleName:void 0,pStyle:{},rStyle:{},suff:"tab"};for(const m of a.default.elements(r))switch(m.localName){case"start":c.start=a.default.intAttr(m,"val");break;case"pPr":this.parseDefaultProperties(m,c.pStyle);break;case"rPr":this.parseDefaultProperties(m,c.rStyle);break;case"lvlPicBulletId":var h=a.default.intAttr(m,"val");c.bullet=o.find(P=>P?.id==h);break;case"lvlText":c.levelText=a.default.attr(m,"val");break;case"pStyle":c.pStyleName=a.default.attr(m,"val");break;case"numFmt":c.format=a.default.attr(m,"val");break;case"lvlRestart":c.restart=a.default.intAttr(m,"val");break;case"suff":c.suff=a.default.attr(m,"val")}return c}parseSdt(s,r){const o=a.default.element(s,"sdtContent");return o?r(o):[]}parseInserted(s,r){return{type:i.DomType.Inserted,children:r(s)?.children??[]}}parseDeleted(s,r){return{type:i.DomType.Deleted,children:r(s)?.children??[]}}parseAltChunk(s){return{type:i.DomType.AltChunk,children:[],id:a.default.attr(s,"id")}}parseParagraph(s){var r={type:i.DomType.Paragraph,children:[]};for(let o of a.default.elements(s))switch(o.localName){case"pPr":this.parseParagraphProperties(o,r);break;case"r":r.children.push(this.parseRun(o,r));break;case"hyperlink":r.children.push(this.parseHyperlink(o,r));break;case"smartTag":r.children.push(this.parseSmartTag(o,r));break;case"bookmarkStart":r.children.push((0,D.parseBookmarkStart)(o,a.default));break;case"bookmarkEnd":r.children.push((0,D.parseBookmarkEnd)(o,a.default));break;case"commentRangeStart":r.children.push(new e.WmlCommentRangeStart(a.default.attr(o,"id")));break;case"commentRangeEnd":r.children.push(new e.WmlCommentRangeEnd(a.default.attr(o,"id")));break;case"oMath":case"oMathPara":{const c=this.parseMathElement(o);c&&r.children.push(c);break}case"sdt":r.children.push(...this.parseSdt(o,c=>this.parseParagraph(c).children));break;case"ins":r.children.push(this.parseInserted(o,c=>this.parseParagraph(c)));break;case"del":r.children.push(this.parseDeleted(o,c=>this.parseParagraph(c)))}return r}parseParagraphProperties(s,r){this.parseDefaultProperties(s,r.cssStyle={},null,o=>{if(o.localName=="rPr"){a.default.element(o,"del")&&(r.props={...r.props??{},deletedParagraphMark:!0});const c=r.cssStyle["background-color"];return this.parseDefaultProperties(o,r.cssStyle),c==null?delete r.cssStyle["background-color"]:r.cssStyle["background-color"]=c,(0,T.parseParagraphProperty)(o,r,a.default),!0}if((0,T.parseParagraphProperty)(o,r,a.default))return!0;switch(o.localName){case"pStyle":r.styleName=a.default.attr(o,"val");break;case"cnfStyle":r.className=g.classNameOfCnfStyle(o);break;case"framePr":this.parseFrame(o,r);break;default:return!1}return!0})}parseFrame(s,r){a.default.attr(s,"dropCap")=="drop"&&(r.cssStyle.float="left")}parseHyperlink(s,r){var o={type:i.DomType.Hyperlink,parent:r,children:[]};o.anchor=a.default.attr(s,"anchor"),o.id=a.default.attr(s,"id");for(const c of a.default.elements(s))c.localName==="r"&&o.children.push(this.parseRun(c,o));return o}parseSmartTag(s,r){var o={type:i.DomType.SmartTag,parent:r,children:[]},c=a.default.attr(s,"uri"),h=a.default.attr(s,"element");c&&(o.uri=c),h&&(o.element=h);for(const m of a.default.elements(s))switch(m.localName){case"r":o.children.push(this.parseRun(m,o));break;case"smartTag":o.children.push(this.parseSmartTag(m,o))}return o}parseSimpleField(s,r){const o={type:i.DomType.SimpleField,parent:r,children:[],instruction:a.default.attr(s,"instr"),lock:a.default.boolAttr(s,"lock",!1),dirty:a.default.boolAttr(s,"dirty",!1)};for(const c of a.default.elements(s))switch(c.localName){case"r":o.children.push(this.parseRun(c,o));break;case"hyperlink":o.children.push(this.parseHyperlink(c,o));break;case"smartTag":o.children.push(this.parseSmartTag(c,o));break;case"bookmarkStart":o.children.push((0,D.parseBookmarkStart)(c,a.default));break;case"bookmarkEnd":o.children.push((0,D.parseBookmarkEnd)(c,a.default));break;case"commentRangeStart":o.children.push(new e.WmlCommentRangeStart(a.default.attr(c,"id")));break;case"commentRangeEnd":o.children.push(new e.WmlCommentRangeEnd(a.default.attr(c,"id")));break;case"sdt":o.children.push(...this.parseSdt(c,h=>this.parseParagraph(h).children));break;case"ins":o.children.push(this.parseInserted(c,h=>this.parseParagraph(h)));break;case"del":o.children.push(this.parseDeleted(c,h=>this.parseParagraph(h)))}return o}parseRun(s,r){var o={type:i.DomType.Run,parent:r,children:[]};for(let c of a.default.elements(s))if(c=this.checkAlternateContent(c),c)switch(c.localName){case"t":o.children.push({type:i.DomType.Text,text:c.textContent});break;case"delText":o.children.push({type:i.DomType.DeletedText,text:c.textContent});break;case"commentReference":o.children.push(new e.WmlCommentReference(a.default.attr(c,"id")));break;case"fldSimple":o.children.push(this.parseSimpleField(c,o));break;case"instrText":o.fieldRun=!0,o.children.push({type:i.DomType.Instruction,text:c.textContent});break;case"fldChar":o.fieldRun=!0,o.children.push({type:i.DomType.ComplexField,charType:a.default.attr(c,"fldCharType"),lock:a.default.boolAttr(c,"lock",!1),dirty:a.default.boolAttr(c,"dirty",!1)});break;case"noBreakHyphen":o.children.push({type:i.DomType.NoBreakHyphen});break;case"softHyphen":o.children.push({type:i.DomType.SoftHyphen});break;case"cr":o.children.push({type:i.DomType.Break,break:"line"});break;case"ptab":o.children.push({type:i.DomType.PositionalTab});break;case"br":o.children.push({type:i.DomType.Break,break:a.default.attr(c,"type")||"textWrapping"});break;case"lastRenderedPageBreak":o.children.push({type:i.DomType.Break,break:"lastRenderedPageBreak"});break;case"sym":o.children.push({type:i.DomType.Symbol,font:(0,t.encloseFontFamily)(a.default.attr(c,"font")),char:a.default.hexAttr(c,"char")});break;case"tab":o.children.push({type:i.DomType.Tab});break;case"footnoteReference":o.children.push({type:i.DomType.FootnoteReference,id:a.default.attr(c,"id")});break;case"endnoteReference":o.children.push({type:i.DomType.EndnoteReference,id:a.default.attr(c,"id")});break;case"drawing":let h=this.parseDrawing(c);h&&o.children.push(h);break;case"pict":case"object":o.children.push(this.parseVmlPicture(c));break;case"ruby":o.children.push(this.parseRuby(c));break;case"rPr":this.parseRunProperties(c,o)}return o}parseRuby(s){const r={type:i.DomType.Ruby,children:[]};for(const o of a.default.elements(s))switch(o.localName){case"rubyPr":for(const c of a.default.elements(o))c.localName==="rubyAlign"&&(r.align=a.default.attr(c,"val"));break;case"rt":r.children.push(this.parseRubyContent(o,i.DomType.RubyText));break;case"rubyBase":r.children.push(this.parseRubyContent(o,i.DomType.RubyBase))}return r}parseRubyContent(s,r){const o={type:r,children:[]};for(const c of a.default.elements(s))if(c.localName=="r")o.children.push(this.parseRun(c,o));else if(r==i.DomType.RubyText&&c.localName=="rPr"){const h=a.default.element(c,"hps"),m=h?a.default.intAttr(h,"val",null):null;m!=null&&(o.cssStyle={...o.cssStyle??{},fontSize:m/2+"pt"})}return o}parseMathElement(s){const r=`${s.localName}Pr`,o={type:l[s.localName],children:[]};let c=!1;const h=m=>{if(l[m.localName]){const x=this.parseMathElement(m);x?(x.parent=o,o.children.push(x)):c=!0}else if(m.localName=="r"){var P=this.parseRun(m,o);P.type=i.DomType.MmlRun,o.children.push(P)}else if(m.localName==r)o.props=this.parseMathProperies(m);else if(m.localName=="ins")for(const x of a.default.elements(m))h(x);else if(m.localName=="del")if(this.options.renderChanges)for(const x of a.default.elements(m))h(x);else c=!0};for(const m of a.default.elements(s))h(m);return c&&!this.hasVisibleMathContent(o)?null:o}hasVisibleMathContent(s){for(const r of s.children??[]){switch(r.type){case i.DomType.Text:if(r.text?.length)return!0;break;case i.DomType.DeletedText:if(this.options.renderChanges&&r.text?.length)return!0;break;case i.DomType.Symbol:case i.DomType.Tab:case i.DomType.PositionalTab:case i.DomType.NoBreakHyphen:case i.DomType.Break:return!0}if(this.hasVisibleMathContent(r))return!0}return!1}parseMathProperies(s){const r={};for(const o of a.default.elements(s))switch(o.localName){case"chr":r.char=a.default.attr(o,"val");break;case"vertJc":r.verticalJustification=a.default.attr(o,"val");break;case"pos":r.position=a.default.attr(o,"val");break;case"degHide":r.hideDegree=a.default.boolAttr(o,"val");break;case"begChr":r.beginChar=a.default.attr(o,"val");break;case"endChr":r.endChar=a.default.attr(o,"val");break;case"limLoc":r.limitLocation=a.default.attr(o,"val");break;case"grow":r.grow=a.default.boolAttr(o,"val");break;case"sepChr":r.separatorChar=a.default.attr(o,"val")}return r}parseRunProperties(s,r){this.parseDefaultProperties(s,r.cssStyle={},null,o=>{switch(o.localName){case"rStyle":r.styleName=a.default.attr(o,"val");break;case"vertAlign":r.verticalAlign=g.valueOfVertAlign(o,!0);break;default:return!1}return!0})}parseVmlPicture(s){const r={type:i.DomType.VmlPicture,children:[]};for(const o of a.default.elements(s)){const c=(0,A.parseVmlElement)(o,this);c&&r.children.push(c)}return r}checkAlternateContent(s){if(s.localName!="AlternateContent")return s;for(const o of a.default.elements(s).filter(c=>c.localName=="Choice")){const c=(a.default.attr(o,"Requires")??"").split(/\s+/).filter(Boolean);if(c.length>0&&c.every(h=>n.includes(s.lookupNamespaceURI(h)))){const h=a.default.elements(o)[0];if(h)return h}}const r=a.default.element(s,"Fallback");return r?a.default.elements(r)[0]:null}parseDrawing(s){for(var r of a.default.elements(s))switch(r.localName){case"inline":case"anchor":return this.parseDrawingWrapper(r)}}parseDrawingWrapper(s){var r,o,c,h,m,P,x,y,w,N,$,R={type:i.DomType.Drawing,children:[],cssStyle:{},props:{}},X=s.localName=="anchor";const Q=(xe,pe)=>{pe&&(R.cssStyle[xe]=g.addSize(R.cssStyle[xe],pe))};Q("margin-left",a.default.lengthAttr(s,"distL",M.LengthUsage.Emu)),Q("margin-top",a.default.lengthAttr(s,"distT",M.LengthUsage.Emu)),Q("margin-right",a.default.lengthAttr(s,"distR",M.LengthUsage.Emu)),Q("margin-bottom",a.default.lengthAttr(s,"distB",M.LengthUsage.Emu));let ue=null,ve=null,we=null,Me=a.default.boolAttr(s,"simplePos",!1),_e=a.default.boolAttr(s,"behindDoc",!1),Re=a.default.intAttr(s,"relativeHeight",null);Re!=null&&(R.cssStyle["z-index"]=`${Math.max(1,Math.round(Re/1e3))}`),_e&&(R.cssStyle["z-index"]="0");let de={relative:"page",align:"left",offset:"0"},fe={relative:"page",align:"top",offset:"0"},Ce=!1,De=!1,Le=!1;for(var te of a.default.elements(s))switch(te.localName){case"simplePos":Me&&(de.offset=a.default.lengthAttr(te,"x",M.LengthUsage.Emu),fe.offset=a.default.lengthAttr(te,"y",M.LengthUsage.Emu),De=de.offset!=null,Le=fe.offset!=null);break;case"extent":R.cssStyle.width=a.default.lengthAttr(te,"cx",M.LengthUsage.Emu),R.cssStyle.height=a.default.lengthAttr(te,"cy",M.LengthUsage.Emu);break;case"effectExtent":Q("margin-left",a.default.lengthAttr(te,"l",M.LengthUsage.Emu)),Q("margin-top",a.default.lengthAttr(te,"t",M.LengthUsage.Emu)),Q("margin-right",a.default.lengthAttr(te,"r",M.LengthUsage.Emu)),Q("margin-bottom",a.default.lengthAttr(te,"b",M.LengthUsage.Emu));break;case"docPr":R.props.title=a.default.attr(te,"title")??a.default.attr(te,"name"),R.props.alt=a.default.attr(te,"descr")??R.props.title;break;case"positionH":case"positionV":if(!Me){let xe=te.localName=="positionH",pe=xe?de:fe;var Fe=a.default.element(te,"align"),Be=a.default.element(te,"posOffset");pe.relative=a.default.attr(te,"relativeFrom")??pe.relative,Fe&&(pe.align=Fe.textContent,xe&&(Ce=!0)),Be&&(pe.offset=(0,M.convertLength)(Be.textContent,M.LengthUsage.Emu),xe?De=pe.offset!=null:Le=pe.offset!=null)}break;case"wrapTopAndBottom":ue="wrapTopAndBottom";break;case"wrapNone":ue="wrapNone";break;case"wrapSquare":ue="wrapSquare",ve=a.default.attr(te,"wrapText");break;case"wrapTight":ue="wrapTight",ve=a.default.attr(te,"wrapText"),we=this.parseWrapPolygon(te);break;case"wrapThrough":ue="wrapThrough",ve=a.default.attr(te,"wrapText"),we=this.parseWrapPolygon(te);break;case"graphic":var le=this.parseGraphic(te);le&&(le.type==i.DomType.Image?((r=le).alt??(r.alt=R.props.alt),(o=le).title??(o.title=R.props.title)):le.type==i.DomType.Shape?((c=le).alt??(c.alt=R.props.alt),(h=le).title??(h.title=R.props.title)):le.type==i.DomType.Chart?((m=le).alt??(m.alt=R.props.alt),(P=le).title??(P.title=R.props.title)):le.type==i.DomType.SmartArt?((x=le).alt??(x.alt=R.props.alt),(y=le).title??(y.title=R.props.title)):le.type==i.DomType.Ink&&((w=le).alt??(w.alt=R.props.alt),(N=le).title??(N.title=R.props.title)),R.children.push(le))}R.props.anchorPosition={horizontal:{...de},vertical:{...fe},wrapType:ue,layoutInCell:a.default.boolAttr(s,"layoutInCell",!0),simplePos:Me};const Oe=()=>{switch(de.align){case"center":R.cssStyle["margin-left"]="auto",R.cssStyle["margin-right"]="auto";break;case"right":R.cssStyle["margin-left"]="auto"}};return ue=="wrapTopAndBottom"?(R.cssStyle.display="block",R.cssStyle.clear="both",Ce?Oe():De&&de.offset&&(R.cssStyle["margin-inline-start"]=g.addSize(R.cssStyle["margin-inline-start"],de.offset)),Le&&fe.offset&&(R.cssStyle["margin-top"]=g.addSize(R.cssStyle["margin-top"],fe.offset))):ue=="wrapNone"?(R.cssStyle.display="block",R.cssStyle.position=X?"absolute":"relative",de.offset&&(R.cssStyle.left=de.offset),fe.offset&&(R.cssStyle.top=fe.offset)):ue=="wrapSquare"||ue=="wrapTight"||ue=="wrapThrough"?(we&&(R.cssStyle["shape-outside"]=we,($=R.cssStyle)["clip-path"]??($["clip-path"]=we)),ve=="left"?R.cssStyle.float="right":ve=="right"?R.cssStyle.float="left":de.align=="left"||de.align=="right"?R.cssStyle.float=de.align:(R.cssStyle.display="block",Oe())):!X||de.align!="left"&&de.align!="right"?R.cssStyle["vertical-align"]="text-bottom":R.cssStyle.float=de.align,R}parseWrapPolygon(s){const r=a.default.element(s,"wrapPolygon");if(!r)return null;const o=[],c=h=>{const m=a.default.lengthAttr(h,"x",M.LengthUsage.Emu),P=a.default.lengthAttr(h,"y",M.LengthUsage.Emu);m&&P&&o.push(`${m} ${P}`)};for(const h of a.default.elements(r))h.localName!="start"&&h.localName!="lineTo"||c(h);return o.length>=3?`polygon(${o.join(", ")})`:null}parseGraphic(s){var r=a.default.element(s,"graphicData");if(!r)return null;for(let c of a.default.elements(r))switch(c.localName){case"pic":return this.parsePicture(c);case"wpc":case"wgp":case"grpSp":return this.parseDrawingContainer(c);case"wsp":case"sp":case"cxnSp":return this.parseWordprocessingShape(c);case"chart":return this.parseChartReference(c);case"relIds":case"diagram":return this.parseSmartArtReference(c);case"contentPart":case"ink":return this.parseInkReference(c)}const o=this.findDescendant(r,"contentPart");return o?this.parseInkReference(o):null}parseDrawingContainer(s){const r={type:i.DomType.Shape,children:[],cssStyle:{display:"inline-block",position:"relative",width:"100%",height:"100%",overflow:"visible","box-sizing":"border-box"},props:{dmlContainer:!0}},o=this.parseDmlGroupTransform(s);for(const c of a.default.elements(s))switch(c.localName){case"wsp":case"sp":case"cxnSp":const h=this.parseDmlPositionedShape(c,o);h&&r.children.push(h);break;case"grpSp":case"wgp":const m=this.parseDrawingContainer(c);m&&r.children.push(m)}return r}parseDmlGroupTransform(s){const r=a.default.element(s,"grpSpPr"),o=r?a.default.element(r,"xfrm"):a.default.element(s,"xfrm"),c=o?a.default.element(o,"off"):null,h=o?a.default.element(o,"ext"):null,m=o?a.default.element(o,"chOff"):null,P=o?a.default.element(o,"chExt"):null,x=h?a.default.floatAttr(h,"cx",null):null,y=h?a.default.floatAttr(h,"cy",null):null,w=P?a.default.floatAttr(P,"cx",null):null,N=P?a.default.floatAttr(P,"cy",null):null;return{offsetX:m?a.default.floatAttr(m,"x",0):0,offsetY:m?a.default.floatAttr(m,"y",0):0,left:c?a.default.floatAttr(c,"x",0):0,top:c?a.default.floatAttr(c,"y",0):0,scaleX:x&&w?x/w:1,scaleY:y&&N?y/N:1}}parseDmlPositionedShape(s,r){const o=a.default.element(s,"spPr");if(!o)return null;const c=this.parseDmlShapeBounds(o,r),h=[];let m=null,P=!1;for(const Q of a.default.elements(s))switch(Q.localName){case"txbx":case"textBox":P=!0;for(const ue of a.default.elements(Q,"txbxContent"))h.push(...this.parseBodyElements(ue));break;case"bodyPr":m=Q}m??(m=a.default.element(s,"bodyPr"));const x={position:"absolute",left:this.pt(c.left),top:this.pt(c.top),width:this.pt(c.width),height:this.pt(c.height),"box-sizing":"border-box",overflow:"hidden"},y=a.default.element(s,"cNvPr"),w=a.default.element(o,"custGeom"),N=a.default.element(o,"prstGeom"),$=this.parseDmlFillStyle(o),R=this.parseDmlLineStyle(a.default.element(o,"ln"));if(w){const Q=this.parseDmlCustomGeometry(w);return{type:i.DomType.Shape,children:[],cssStyle:{...x,overflow:"visible"},props:{dmlSvg:!0,viewBox:Q?.viewBox??"0 0 1 1",pathD:Q?.d??"",fill:$.fill??"none",stroke:R.stroke??"none",strokeWidth:R.strokeWidth??"0",strokeDasharray:R.strokeDasharray},title:y?a.default.attr(y,"title")??a.default.attr(y,"name"):null,alt:y?a.default.attr(y,"descr"):null}}$.backgroundColor&&(x["background-color"]=$.backgroundColor),$.backgroundImage&&(x["background-image"]=$.backgroundImage),R.stroke&&R.stroke!="none"?x.border=`${R.strokeWidth||"0.75pt"} ${R.borderType||"solid"} ${R.stroke}`:x.border="none";const X=P?this.parseDmlTextBoxProperties(m):null;return{type:i.DomType.Shape,children:h,cssStyle:x,props:{dmlShape:!0,presetGeometry:N?a.default.attr(N,"prst"):null,...X},title:y?a.default.attr(y,"title")??a.default.attr(y,"name"):null,alt:y?a.default.attr(y,"descr"):null}}parseDmlShapeBounds(s,r){const o=a.default.element(s,"xfrm"),c=o?a.default.element(o,"off"):null,h=o?a.default.element(o,"ext"):null,m=r?.scaleX??1,P=r?.scaleY??1,x=r?.offsetX??0,y=r?.offsetY??0,w=r?.left??0,N=r?.top??0,$=c?a.default.floatAttr(c,"x",0):0,R=c?a.default.floatAttr(c,"y",0):0,X=h?a.default.floatAttr(h,"cx",0):0,Q=h?a.default.floatAttr(h,"cy",0):0;return{left:this.emuToPt(w+($-x)*m),top:this.emuToPt(N+(R-y)*P),width:Math.max(0,this.emuToPt(X*m)),height:Math.max(0,this.emuToPt(Q*P))}}parseDmlFillStyle(s){if(a.default.element(s,"noFill"))return{fill:"none",backgroundColor:"transparent"};const r=a.default.element(s,"solidFill");if(r){const c=this.parseDmlColor(r)??"transparent";return{fill:c,backgroundColor:c}}const o=a.default.element(s,"pattFill");if(o){const c=this.parseDmlColor(a.default.element(o,"fgClr"))??"currentColor",h=this.parseDmlColor(a.default.element(o,"bgClr"))??"transparent",m=a.default.attr(o,"prst");return{fill:h,backgroundColor:h,backgroundImage:`repeating-linear-gradient(${m&&m.toLowerCase().includes("horz")?"0deg":"90deg"}, ${c} 0, ${c} 0.75pt, ${h} 0.75pt, ${h} 3pt)`}}return{fill:"none",backgroundColor:"transparent"}}parseDmlLineStyle(s){if(!s||a.default.element(s,"noFill"))return{stroke:"none",strokeWidth:"0",borderType:"none"};const r=this.parseDmlColor(a.default.element(s,"solidFill"))??"black",o=a.default.attr(s,"w")?this.pt(this.emuToPt(a.default.floatAttr(s,"w",0))):"0.75pt",c=a.default.elementAttr(s,"prstDash","val");let h=null,m="solid";return c&&c!="solid"&&(m="dashed",h=c=="dot"?"1 2":"4 3"),{stroke:r,strokeWidth:o,borderType:m,strokeDasharray:h}}parseDmlCustomGeometry(s){const r=a.default.element(s,"pathLst"),o=r?a.default.elements(r,"path"):[];let c="",h=1,m=1;for(const P of o){const x=a.default.floatAttr(P,"w",h),y=a.default.floatAttr(P,"h",m);h=Math.max(h,x||1),m=Math.max(m,y||1),c+=this.parseDmlPathData(P,x||1,y||1)}return{d:c.trim(),viewBox:`0 0 ${h} ${m}`}}parseDmlPathData(s,r,o){const c=[],h=m=>{const P=a.default.element(m,"pt");return P?`${this.dmlCoord(a.default.attr(P,"x"),r,o)} ${this.dmlCoord(a.default.attr(P,"y"),r,o)}`:"0 0"};for(const m of a.default.elements(s))switch(m.localName){case"moveTo":c.push(`M ${h(m)}`);break;case"lnTo":c.push(`L ${h(m)}`);break;case"cubicBezTo":const P=a.default.elements(m,"pt").map(y=>`${this.dmlCoord(a.default.attr(y,"x"),r,o)} ${this.dmlCoord(a.default.attr(y,"y"),r,o)}`);P.length==3&&c.push(`C ${P.join(" ")}`);break;case"quadBezTo":const x=a.default.elements(m,"pt").map(y=>`${this.dmlCoord(a.default.attr(y,"x"),r,o)} ${this.dmlCoord(a.default.attr(y,"y"),r,o)}`);x.length==2&&c.push(`Q ${x.join(" ")}`);break;case"close":c.push("Z")}return c.join(" ")+" "}dmlCoord(s,r,o){if(s=="w"||s=="r")return r;if(s=="h"||s=="b")return o;if(s=="l"||s=="t")return 0;const c=parseFloat(s);return Number.isFinite(c)?c:0}dmlVerticalAlign(s){switch(s?a.default.attr(s,"anchor"):null){case"ctr":return"center";case"b":return"flex-end";default:return"flex-start"}}applyDmlTextInsets(s,r){if(!s)return;const o={lIns:"padding-left",tIns:"padding-top",rIns:"padding-right",bIns:"padding-bottom"};for(const[c,h]of Object.entries(o)){const m=a.default.attr(s,c);m!=null&&(r[h]=this.pt(this.emuToPt(parseFloat(m))))}}parseDmlTextBoxProperties(s){const r={};return this.applyDmlTextInsets(s,r),{dmlTextBox:!0,textInsets:r,textVerticalAlign:this.dmlVerticalAlign(s)}}emuToPt(s){return(Number.isFinite(s)?s:0)/12700}pt(s){return Math.round(100*s)/100+"pt"}parseChartReference(s){return{type:i.DomType.Chart,id:a.default.attr(s,"id"),cssStyle:{width:"100%",height:"100%"}}}parseSmartArtReference(s){const r=s.localName=="relIds"?s:this.findDescendant(s,"relIds");return{type:i.DomType.SmartArt,dataId:r?a.default.attr(r,"dm"):a.default.attr(s,"dm"),layoutId:r?a.default.attr(r,"lo"):a.default.attr(s,"lo"),styleId:r?a.default.attr(r,"qs"):a.default.attr(s,"qs"),colorId:r?a.default.attr(r,"cs"):a.default.attr(s,"cs"),cssStyle:{width:"100%",height:"100%"}}}parseInkReference(s){return{type:i.DomType.Ink,id:a.default.attr(s,"id"),cssStyle:{width:"100%",height:"100%"}}}parseGraphicPlaceholder(s){return{type:i.DomType.Shape,children:[{type:i.DomType.Text,text:`[${s}]`}],cssStyle:{display:"inline-flex","align-items":"center","justify-content":"center",border:"1px solid #999","background-color":"#f8f8f8",color:"#555","min-width":"2in","min-height":"1in"}}}parseWordprocessingShape(s){const r={type:i.DomType.Shape,children:[],cssStyle:{display:"inline-block",position:"relative","box-sizing":"border-box",overflow:"hidden"}},o=this.findDescendant(s,"cNvPr");let c=null,h=!1;o&&(r.title=a.default.attr(o,"title")??a.default.attr(o,"name"),r.alt=a.default.attr(o,"descr")??r.title);for(const m of a.default.elements(s))switch(m.localName){case"spPr":this.parseDmlShapeProperties(m,r.cssStyle);break;case"txbx":case"textBox":h=!0;for(const P of a.default.elements(m,"txbxContent"))r.children.push(...this.parseBodyElements(P));break;case"bodyPr":c=m}return h&&(r.props={...r.props??{},...this.parseDmlTextBoxProperties(c)}),r}parseDmlShapeProperties(s,r){const o=a.default.element(s,"xfrm");if(o)for(const P of a.default.elements(o))switch(P.localName){case"ext":r.width=a.default.lengthAttr(P,"cx",M.LengthUsage.Emu),r.height=a.default.lengthAttr(P,"cy",M.LengthUsage.Emu);break;case"off":r.left=a.default.lengthAttr(P,"x",M.LengthUsage.Emu),r.top=a.default.lengthAttr(P,"y",M.LengthUsage.Emu)}const c=a.default.element(s,"solidFill"),h=a.default.element(s,"noFill"),m=a.default.element(s,"ln");if(c?r["background-color"]=this.parseDmlColor(c)??r["background-color"]:h&&(r["background-color"]="transparent"),m){const P=this.parseDmlColor(a.default.element(m,"solidFill"))??"black",x=a.default.lengthAttr(m,"w",M.LengthUsage.Emu)??"1px",y=a.default.elementAttr(m,"prstDash","val"),w=y&&y!="solid"?"dashed":"solid";r.border=`${x} ${w} ${P}`}}parseDmlColor(s){if(!s)return null;const r=a.default.element(s,"srgbClr"),o=a.default.element(s,"schemeClr"),c=a.default.element(s,"prstClr"),h=a.default.element(s,"sysClr");if(r)return this.applyDmlColorTransforms(r,`#${a.default.attr(r,"val")}`);if(o){const m=this.resolveDmlSchemeColor(a.default.attr(o,"val")),P=this.dmlSchemeColorFallback(m);return this.applyDmlColorTransforms(o,`var(--docx-${m}-color${P?`, ${P}`:""})`)}return h?this.applyDmlColorTransforms(h,`#${a.default.attr(h,"lastClr")??a.default.attr(h,"val")}`):c?this.applyDmlColorTransforms(c,a.default.attr(c,"val")):null}resolveDmlSchemeColor(s){switch(s){case"bg1":return"lt1";case"tx1":return"dk1";case"bg2":return"lt2";case"tx2":return"dk2";default:return s}}dmlSchemeColorFallback(s){switch(s){case"dk1":return"#000000";case"lt1":return"#FFFFFF";case"dk2":return"#44546A";case"lt2":return"#E7E6E6";case"accent1":return"#4472C4";case"accent2":return"#ED7D31";case"accent3":return"#A5A5A5";case"accent4":return"#FFC000";case"accent5":return"#5B9BD5";case"accent6":return"#70AD47";case"hlink":return"#0563C1";case"folHlink":return"#954F72";default:return null}}applyDmlColorTransforms(s,r){const o=a.default.elementAttr(s,"lumMod","val"),c=a.default.elementAttr(s,"lumOff","val");if(o!=null){const h=Math.max(0,Math.min(100,parseFloat(o)/1e3));Number.isFinite(h)&&h<100&&(r=`color-mix(in srgb, ${r} ${h}%, black)`)}if(c!=null){const h=Math.max(0,Math.min(100,parseFloat(c)/1e3));Number.isFinite(h)&&h>0&&(r=`color-mix(in srgb, ${r} ${100-h}%, white)`)}return r}findDescendant(s,r){for(const o of a.default.elements(s)){if(o.localName==r)return o;const c=this.findDescendant(o,r);if(c)return c}return null}parsePicture(s){var r={type:i.DomType.Image,src:"",cssStyle:{}},o=a.default.element(s,"blipFill"),c=o?a.default.element(o,"blip"):null,h=o?a.default.element(o,"srcRect"):null;r.src=c?a.default.attr(c,"embed")??a.default.attr(c,"link"):"";const m=this.findDescendant(s,"cNvPr");m&&(r.title=a.default.attr(m,"title")??a.default.attr(m,"name"),r.alt=a.default.attr(m,"descr")??r.title),h&&(r.srcRect=[a.default.intAttr(h,"l",0)/1e5,a.default.intAttr(h,"t",0)/1e5,a.default.intAttr(h,"r",0)/1e5,a.default.intAttr(h,"b",0)/1e5]);var P=a.default.element(s,"spPr"),x=P?a.default.element(P,"xfrm"):null,y=[];if(r.cssStyle.display="block",r.cssStyle.position="relative",r.cssStyle["object-fit"]="contain",x)for(var w of(r.rotation=a.default.intAttr(x,"rot",0)/6e4,a.default.boolAttr(x,"flipH",!1)&&y.push("scaleX(-1)"),a.default.boolAttr(x,"flipV",!1)&&y.push("scaleY(-1)"),a.default.elements(x)))switch(w.localName){case"ext":r.cssStyle.width=a.default.lengthAttr(w,"cx",M.LengthUsage.Emu),r.cssStyle.height=a.default.lengthAttr(w,"cy",M.LengthUsage.Emu);break;case"off":r.cssStyle.left=a.default.lengthAttr(w,"x",M.LengthUsage.Emu),r.cssStyle.top=a.default.lengthAttr(w,"y",M.LengthUsage.Emu)}return y.length>0&&(r.cssStyle.transform=y.join(" ")),r.cssStyle.width||(r.cssStyle.width="100%"),r.cssStyle.height||(r.cssStyle.height="100%"),r}parseTable(s){var r={type:i.DomType.Table,children:[]};for(const o of a.default.elements(s))switch(o.localName){case"tr":r.children.push(this.parseTableRow(o));break;case"tblGrid":r.columns=this.parseTableColumns(o);break;case"tblPr":this.parseTableProperties(o,r)}return r}parseTableColumns(s){var r=[];for(const o of a.default.elements(s))o.localName==="gridCol"&&r.push({width:a.default.lengthAttr(o,"w")});return r}parseTableProperties(s,r){r.cssStyle={},r.cellStyle={};let o=null;switch(this.parseDefaultProperties(s,r.cssStyle,r.cellStyle,c=>{switch(c.localName){case"tblStyle":r.styleName=a.default.attr(c,"val");break;case"tblLook":r.className=g.classNameOftblLook(c);break;case"tblInd":o=this.parseTableIndentation(c);break;case"tblpPr":this.parseTablePosition(c,r);break;case"tblStyleColBandSize":r.colBandSize=a.default.intAttr(c,"val");break;case"tblStyleRowBandSize":r.rowBandSize=a.default.intAttr(c,"val");break;case"hidden":r.cssStyle.display="none";break;default:return!1}return!0}),r.cssStyle["text-align"]){case"center":delete r.cssStyle["text-align"],r.cssStyle["margin-left"]="auto",r.cssStyle["margin-right"]="auto";break;case"right":delete r.cssStyle["text-align"],r.cssStyle["margin-left"]="auto";break;default:delete r.cssStyle["text-align"],o&&(r.cssStyle["margin-inline-start"]=g.addSize(r.cssStyle["margin-inline-start"],o))}}parseTableIndentation(s){const r=a.default.attr(s,"type");return r=="pct"||r=="auto"?null:a.default.lengthAttr(s,"w",M.LengthUsage.SignedDxa)}parseTablePosition(s,r){var o=a.default.lengthAttr(s,"topFromText"),c=a.default.lengthAttr(s,"bottomFromText"),h=a.default.lengthAttr(s,"rightFromText"),m=a.default.lengthAttr(s,"leftFromText");r.cssStyle.float="left",r.cssStyle["margin-bottom"]=g.addSize(r.cssStyle["margin-bottom"],c),r.cssStyle["margin-left"]=g.addSize(r.cssStyle["margin-left"],m),r.cssStyle["margin-right"]=g.addSize(r.cssStyle["margin-right"],h),r.cssStyle["margin-top"]=g.addSize(r.cssStyle["margin-top"],o)}parseTableRow(s){var r={type:i.DomType.Row,children:[]};for(const o of a.default.elements(s))switch(o.localName){case"tc":r.children.push(this.parseTableCell(o));break;case"trPr":case"tblPrEx":this.parseTableRowProperties(o,r)}return r}parseTableRowProperties(s,r){const o={};r.cssStyle=this.parseDefaultProperties(s,o,null,c=>{switch(c.localName){case"cnfStyle":r.className=g.classNameOfCnfStyle(c);break;case"tblHeader":r.isHeader=a.default.boolAttr(c,"val");break;case"gridBefore":r.gridBefore=a.default.intAttr(c,"val");break;case"gridAfter":r.gridAfter=a.default.intAttr(c,"val");break;case"cantSplit":a.default.boolAttr(c,"val",!0)&&(o["break-inside"]="avoid");break;default:return!1}return!0})}parseTableCell(s){var r={type:i.DomType.Cell,children:[]};for(const o of a.default.elements(s))switch(o.localName){case"tbl":r.children.push(this.parseTable(o));break;case"p":r.children.push(this.parseParagraph(o));break;case"tcPr":this.parseTableCellProperties(o,r)}return r}parseTableCellProperties(s,r){r.cssStyle=this.parseDefaultProperties(s,{},null,o=>{switch(o.localName){case"gridSpan":r.span=a.default.intAttr(o,"val",null);break;case"vMerge":r.verticalMerge=a.default.attr(o,"val")??"continue";break;case"cnfStyle":r.className=g.classNameOfCnfStyle(o);break;default:return!1}return!0}),this.parseTableCellVerticalText(s,r)}parseTableCellVerticalText(s,r){const o={btLr:{writingMode:"vertical-rl",transform:"rotate(180deg)"},lrTb:{writingMode:"vertical-lr",transform:"none"},tbRl:{writingMode:"vertical-rl",transform:"none"}};for(const c of a.default.elements(s))if(c.localName==="textDirection"){const h=o[a.default.attr(c,"val")]||{writingMode:"horizontal-tb"};r.cssStyle["writing-mode"]=h.writingMode,r.cssStyle.transform=h.transform}}parseDefaultProperties(s,r=null,o=null,c=null){r=r||{};for(const h of a.default.elements(s))if(!c?.(h))switch(h.localName){case"jc":r["text-align"]=g.valueOfJc(h);break;case"textAlignment":r["vertical-align"]=g.valueOfTextAlignment(h);break;case"color":r.color=p.colorAttr(h,"val",null,f.autos.color);break;case"sz":r["font-size"]=r["min-height"]=a.default.lengthAttr(h,"val",M.LengthUsage.FontSize);break;case"szCs":r["font-size"]??(r["font-size"]=a.default.lengthAttr(h,"val",M.LengthUsage.FontSize)),r["min-height"]??(r["min-height"]=r["font-size"]);break;case"shd":r["background-color"]=p.colorAttr(h,"fill",null,f.autos.shd);break;case"highlight":r["background-color"]=p.colorAttr(h,"val",null,f.autos.highlight);break;case"vertAlign":r["vertical-align"]=g.valueOfVertAlign(h);break;case"position":r["vertical-align"]=a.default.lengthAttr(h,"val",M.LengthUsage.SignedHalfPoint);break;case"scale":r["font-stretch"]=`${a.default.intAttr(h,"val",100)}%`;break;case"tcW":if(this.options.ignoreWidth)break;case"tblW":r.width=g.valueOfSize(h,"w");break;case"trHeight":this.parseTrHeight(h,r);break;case"strike":r["text-decoration"]=a.default.boolAttr(h,"val",!0)?"line-through":"none";break;case"dstrike":a.default.boolAttr(h,"val",!0)?(r["text-decoration-line"]="line-through",r["text-decoration-style"]="double"):r["text-decoration"]="none";break;case"b":r["font-weight"]=a.default.boolAttr(h,"val",!0)?"bold":"normal";break;case"i":r["font-style"]=a.default.boolAttr(h,"val",!0)?"italic":"normal";break;case"bCs":r["--docx-bidi-font-weight"]=a.default.boolAttr(h,"val",!0)?"bold":"normal",r.direction=="rtl"&&(r["font-weight"]=r["--docx-bidi-font-weight"]);break;case"iCs":r["--docx-bidi-font-style"]=a.default.boolAttr(h,"val",!0)?"italic":"normal",r.direction=="rtl"&&(r["font-style"]=r["--docx-bidi-font-style"]);break;case"caps":r["text-transform"]=a.default.boolAttr(h,"val",!0)?"uppercase":"none";break;case"smallCaps":r["font-variant"]=a.default.boolAttr(h,"val",!0)?"small-caps":"none";break;case"rtl":a.default.boolAttr(h,"val",!0)&&(r.direction="rtl",r["unicode-bidi"]="embed",r["--docx-bidi-font-weight"]&&(r["font-weight"]=r["--docx-bidi-font-weight"]),r["--docx-bidi-font-style"]&&(r["font-style"]=r["--docx-bidi-font-style"]));break;case"outline":a.default.boolAttr(h,"val",!0)&&(r["-webkit-text-stroke"]="0.5px currentColor");break;case"shadow":a.default.boolAttr(h,"val",!0)&&(r["text-shadow"]="1px 1px 0 currentColor");break;case"emboss":a.default.boolAttr(h,"val",!0)&&(r["text-shadow"]="-1px -1px 0 rgba(255,255,255,.75), 1px 1px 0 rgba(0,0,0,.35)");break;case"imprint":a.default.boolAttr(h,"val",!0)&&(r["text-shadow"]="1px 1px 0 rgba(255,255,255,.75), -1px -1px 0 rgba(0,0,0,.35)");break;case"em":r["text-emphasis-style"]=g.valueOfEmphasisMark(h);break;case"u":this.parseUnderline(h,r);break;case"ind":case"tblInd":this.parseIndentation(h,r);break;case"rFonts":this.parseFont(h,r);break;case"tblBorders":this.parseBorderProperties(h,o||r);break;case"tblCellSpacing":r["border-spacing"]=g.valueOfMargin(h),r["border-collapse"]="separate";break;case"pBdr":this.parseBorderProperties(h,r);break;case"bdr":r.border=g.valueOfBorder(h);break;case"tcBorders":this.parseBorderProperties(h,r);break;case"vanish":a.default.boolAttr(h,"val",!0)&&(r.display="none");break;case"kern":r["font-kerning"]=a.default.intAttr(h,"val",0)>0?"normal":"none";break;case"noWrap":r["white-space"]=a.default.boolAttr(h,"val",!0)?"nowrap":"normal";break;case"snapToGrid":r["--docx-snap-to-grid"]=a.default.boolAttr(h,"val",!0)?"1":"0";break;case"fitText":this.parseFitText(h,r);break;case"eastAsianLayout":this.parseEastAsianLayout(h,r);break;case"tblCellMar":case"tcMar":this.parseMarginProperties(h,o||r);break;case"tblLayout":r["table-layout"]=g.valueOfTblLayout(h);break;case"vAlign":r["vertical-align"]=g.valueOfTextAlignment(h);break;case"spacing":s.localName=="pPr"?this.parseSpacing(h,r):s.localName=="rPr"&&(r["letter-spacing"]=a.default.lengthAttr(h,"val",M.LengthUsage.SignedDxa));break;case"wordWrap":a.default.boolAttr(h,"val")&&(r["overflow-wrap"]="break-word");break;case"suppressAutoHyphens":r.hyphens=a.default.boolAttr(h,"val",!0)?"none":"auto";break;case"lang":r.$lang=a.default.attr(h,"val");break;case"rtl":case"bidi":a.default.boolAttr(h,"val",!0)&&(r.direction="rtl");break;case"pageBreakBefore":a.default.boolAttr(h,"val",!0)&&(r["break-before"]="page");break;case"keepLines":a.default.boolAttr(h,"val",!0)&&(r["break-inside"]="avoid");break;case"keepNext":a.default.boolAttr(h,"val",!0)&&(r["break-after"]="avoid");break;case"widowControl":a.default.boolAttr(h,"val",!0)&&(r.orphans="2",r.widows="2");break;case"webHidden":this.options.hideWebHiddenContent&&a.default.boolAttr(h,"val",!0)&&(r.display="none");break;case"specVanish":a.default.boolAttr(h,"val",!0)&&(r.display="none");break;case"tabs":case"outlineLvl":case"contextualSpacing":case"tblStyleColBandSize":case"tblStyleRowBandSize":case"suppressLineNumbers":case"noProof":break;default:this.options.debug&&console.warn(`DOCX: Unknown document element: ${s.localName}.${h.localName}`)}return r}parseFitText(s,r){const o=a.default.lengthAttr(s,"val");o&&(r.display="inline-block",r.width=o,r["text-align"]="justify",r["text-align-last"]="justify")}parseEastAsianLayout(s,r){a.default.boolAttr(s,"combine",!1)&&(r["text-combine-upright"]="all"),a.default.boolAttr(s,"vert",!1)&&(r["writing-mode"]="vertical-rl"),a.default.boolAttr(s,"vertCompress",!1)&&(r["font-stretch"]="condensed")}parseUnderline(s,r){var o=a.default.attr(s,"val");if(o!=null){switch(o){case"dash":case"dashDotDotHeavy":case"dashDotHeavy":case"dashedHeavy":case"dashLong":case"dashLongHeavy":case"dotDash":case"dotDotDash":r["text-decoration"]="underline dashed";break;case"dotted":case"dottedHeavy":r["text-decoration"]="underline dotted";break;case"double":r["text-decoration"]="underline double";break;case"single":case"thick":case"words":r["text-decoration"]="underline";break;case"wave":case"wavyDouble":case"wavyHeavy":r["text-decoration"]="underline wavy";break;case"none":r["text-decoration"]="none"}var c=p.colorAttr(s,"color");c&&(r["text-decoration-color"]=c)}}parseFont(s,r){var o=a.default.attr(s,"ascii"),c=a.default.attr(s,"hAnsi"),h=a.default.attr(s,"eastAsia"),m=a.default.attr(s,"cs"),P=[o,c,g.themeValue(s,"asciiTheme"),g.themeValue(s,"hAnsiTheme"),h,g.themeValue(s,"eastAsiaTheme"),m,g.themeValue(s,"cstheme")??g.themeValue(s,"csTheme")].filter(x=>x).map(x=>(0,t.encloseFontFamily)(x));if(P.length>0){const x=(r["font-family"]??"").split(",").map(y=>y.trim()).filter(y=>y);r["font-family"]=[...new Set([...x,...P])].join(", ")}}parseIndentation(s,r){var o=a.default.lengthAttr(s,"firstLine"),c=a.default.lengthAttr(s,"hanging"),h=a.default.lengthAttr(s,"left"),m=a.default.lengthAttr(s,"start"),P=a.default.lengthAttr(s,"right"),x=a.default.lengthAttr(s,"end");o&&(r["text-indent"]=o,r["--docx-text-indent"]=o),c&&(r["text-indent"]=`-${c}`,r["--docx-text-indent"]=`-${c}`,r["--docx-hanging-indent"]=c),(h||m)&&(r["margin-inline-start"]=h||m,r["--docx-margin-inline-start"]=h||m),(P||x)&&(r["margin-inline-end"]=P||x,r["--docx-margin-inline-end"]=P||x)}parseSpacing(s,r){var o=a.default.lengthAttr(s,"before"),c=a.default.lengthAttr(s,"after"),h=a.default.intAttr(s,"beforeLines",null),m=a.default.intAttr(s,"afterLines",null),P=a.default.boolAttr(s,"beforeAutospacing",!1),x=a.default.boolAttr(s,"afterAutospacing",!1),y=a.default.intAttr(s,"line",null),w=a.default.attr(s,"lineRule");if(P?r["margin-top"]="auto":h!=null?r["margin-top"]=`${(h/100).toFixed(2)}em`:o&&(r["margin-top"]=o),x?r["margin-bottom"]="auto":m!=null?r["margin-bottom"]=`${(m/100).toFixed(2)}em`:c&&(r["margin-bottom"]=c),y!==null)switch(w??"auto"){case"auto":default:r["line-height"]=`${(y/240).toFixed(2)}`;break;case"atLeast":r["line-height"]=`max(1em, ${(y/20).toFixed(2)}pt)`,r["min-height"]=`${(y/20).toFixed(2)}pt`;break;case"exact":case"exactly":r["line-height"]=r["min-height"]=`${(y/20).toFixed(2)}pt`}}parseMarginProperties(s,r){for(const o of a.default.elements(s))switch(o.localName){case"left":case"start":r["padding-left"]=g.valueOfMargin(o);break;case"right":case"end":r["padding-right"]=g.valueOfMargin(o);break;case"top":r["padding-top"]=g.valueOfMargin(o);break;case"bottom":r["padding-bottom"]=g.valueOfMargin(o)}}parseTrHeight(s,r){a.default.attr(s,"hRule"),r.height=a.default.lengthAttr(s,"val")}parseBorderProperties(s,r){for(const o of a.default.elements(s)){const c=g.valueOfBorder(o);switch(o.localName){case"start":case"left":r["border-left"]=c;break;case"end":case"right":r["border-right"]=c;break;case"top":r["border-top"]=c;break;case"bottom":r["border-bottom"]=c;break;case"insideH":r["border-top"]??(r["border-top"]=c),r["border-bottom"]??(r["border-bottom"]=c);break;case"insideV":r["border-left"]??(r["border-left"]=c),r["border-right"]??(r["border-right"]=c)}}}};const u=["black","blue","cyan","darkBlue","darkCyan","darkGray","darkGreen","darkMagenta","darkRed","darkYellow","green","lightGray","magenta","none","red","white","yellow"];class p{static colorAttr(r,o,c=null,h="black"){var m=a.default.attr(r,o);if(m)return m=="auto"?h:u.includes(m)?m:`#${m}`;var P=a.default.attr(r,"themeColor");return P?`var(--docx-${P}-color)`:c}}class g{static themeValue(r,o){var c=a.default.attr(r,o);return c?`var(--docx-${c}-font)`:null}static valueOfSize(r,o){var c=M.LengthUsage.Dxa;switch(a.default.attr(r,"type")){case"dxa":break;case"pct":c=M.LengthUsage.Percent;break;case"auto":return"auto"}return a.default.lengthAttr(r,o,c)}static valueOfMargin(r){return a.default.lengthAttr(r,"w")}static valueOfBorder(r){var o=g.parseBorderType(a.default.attr(r,"val"));if(o=="none")return"none";var c=p.colorAttr(r,"color",f.autos.borderColor,f.autos.borderColor);return`${a.default.lengthAttr(r,"sz",M.LengthUsage.Border)??"1pt"} ${o} ${c=="auto"?f.autos.borderColor:c}`}static parseBorderType(r){switch(r){case"single":case"dashDotStroked":case"thick":case"thickThinLargeGap":case"thickThinMediumGap":case"thickThinSmallGap":case"thinThickLargeGap":case"thinThickMediumGap":case"thinThickSmallGap":case"thinThickThinLargeGap":case"thinThickThinMediumGap":case"thinThickThinSmallGap":case"threeDEmboss":case"threeDEngrave":case"wave":return"solid";case"dashed":case"dashSmallGap":return"dashed";case"dotDash":case"dotDotDash":case"dotted":return"dotted";case"double":case"doubleWave":case"triple":return"double";case"inset":return"inset";case"nil":case"none":return"none";case"outset":return"outset"}return"solid"}static valueOfTblLayout(r){return a.default.attr(r,"val")=="fixed"?"fixed":"auto"}static classNameOfCnfStyle(r){const o=a.default.attr(r,"val");return["first-row","last-row","first-col","last-col","odd-col","even-col","odd-row","even-row","ne-cell","nw-cell","se-cell","sw-cell"].filter((c,h)=>o[h]=="1").join(" ")}static valueOfJc(r){var o=a.default.attr(r,"val");switch(o){case"start":case"left":return"left";case"center":return"center";case"end":case"right":return"right";case"both":return"justify"}return o}static valueOfVertAlign(r,o=!1){var c=a.default.attr(r,"val");switch(c){case"subscript":return"sub";case"superscript":return o?"sup":"super"}return o?null:c}static valueOfEmphasisMark(r){switch(a.default.attr(r,"val")){case"none":return"none";case"comma":return'"﹐"';case"circle":return"circle";default:return"dot"}}static valueOfTextAlignment(r){var o=a.default.attr(r,"val");switch(o){case"auto":case"baseline":return"baseline";case"top":return"top";case"center":return"middle";case"bottom":return"bottom"}return o}static addSize(r,o){return r&&r!="0.00pt"&&r!="0px"?o&&o!="0.00pt"&&o!="0px"?`calc(${r} + ${o})`:r:o}static classNameOftblLook(r){const o=a.default.hexAttr(r,"val",0);let c="";return(a.default.boolAttr(r,"firstRow")||32&o)&&(c+=" first-row"),(a.default.boolAttr(r,"lastRow")||64&o)&&(c+=" last-row"),(a.default.boolAttr(r,"firstColumn")||128&o)&&(c+=" first-col"),(a.default.boolAttr(r,"lastColumn")||256&o)&&(c+=" last-col"),(a.default.boolAttr(r,"noHBand")||512&o)&&(c+=" no-hband"),(a.default.boolAttr(r,"noVBand")||1024&o)&&(c+=" no-vband"),c.trim()}}},"./document-props/core-props-part":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.CorePropsPart=void 0;const d=E("../common/part"),i=E("./core-props");class T extends d.Part{parseXml(a){this.props=(0,i.parseCoreProps)(a,this._package.xmlParser)}}f.CorePropsPart=T},"./document-props/core-props":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.parseCoreProps=function(d,i){const T={};for(let k of i.elements(d))switch(k.localName){case"title":T.title=k.textContent;break;case"description":T.description=k.textContent;break;case"subject":T.subject=k.textContent;break;case"creator":T.creator=k.textContent;break;case"keywords":T.keywords=k.textContent;break;case"language":T.language=k.textContent;break;case"lastModifiedBy":T.lastModifiedBy=k.textContent;break;case"revision":k.textContent&&(T.revision=parseInt(k.textContent))}return T}},"./document-props/custom-props-part":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.CustomPropsPart=void 0;const d=E("../common/part"),i=E("./custom-props");class T extends d.Part{parseXml(a){this.props=(0,i.parseCustomProps)(a,this._package.xmlParser)}}f.CustomPropsPart=T},"./document-props/custom-props":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.parseCustomProps=function(d,i){return i.elements(d,"property").map(T=>{const k=T.firstChild;return{formatId:i.attr(T,"fmtid"),name:i.attr(T,"name"),type:k.nodeName,value:k.textContent}})}},"./document-props/extended-props-part":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.ExtendedPropsPart=void 0;const d=E("../common/part"),i=E("./extended-props");class T extends d.Part{parseXml(a){this.props=(0,i.parseExtendedProps)(a,this._package.xmlParser)}}f.ExtendedPropsPart=T},"./document-props/extended-props":function(E,H,f){function d(i){if(i!==void 0)return parseInt(i)}Object.defineProperty(f,"__esModule",{value:!0}),f.parseExtendedProps=function(i,T){const k={};for(let a of T.elements(i))switch(a.localName){case"Template":k.template=a.textContent;break;case"Pages":k.pages=d(a.textContent);break;case"Words":k.words=d(a.textContent);break;case"Characters":k.characters=d(a.textContent);break;case"Application":k.application=a.textContent;break;case"Lines":k.lines=d(a.textContent);break;case"Paragraphs":k.paragraphs=d(a.textContent);break;case"Company":k.company=a.textContent;break;case"AppVersion":k.appVersion=a.textContent}return k}},"./docx-preview-worker":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0});const d=E("./word-document"),i=E("./document-parser"),T=E("./input-validation"),k=self;function a(C,D,M={}){k.postMessage({id:C,type:D,...M})}k.onmessage=async C=>{const D=C.data;if(!D||D.type!=="parse")return;const M=D.id;try{const A={...D.options,useWorker:!1,h:void 0,progress:void 0};(0,T.assertNonEmptyDocxInput)(D.data),a(M,"progress",{message:"Loading package relationships"});const e=await d.WordDocument.load(D.data,new i.DocumentParser(A),A);a(M,"progress",{message:"Serializing parsed document model"}),a(M,"parsed",{snapshot:await e.createSnapshot()})}catch(A){a(M,"error",{error:{message:A?.message??`${A}`,stack:A?.stack}})}}},"./docx-preview":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.defaultOptions=void 0,f.parseAsync=D,f.renderDocument=A,f.renderAsync=async function(o,c,h,m){const P={...f.defaultOptions,...m};(0,a.assertViewerLicense)("docx",P.licenseToken);const x=await D(o,P),y=await A(x,P);h??(h=c),h.innerHTML="",c.innerHTML="";let w=0;for(let $ of y)($.nodeName==="STYLE"?h:c).appendChild($),w++,P.renderYieldEveryMs>0&&w%8==0&&await r();p(c,P.className);let N=null;return P.awaitLayout&&(P.progress?.({phase:"layout",message:"Measuring rendered pages"}),N=await l(c,P),p(c,P.className)),P.progress?.({phase:"done",current:N?.pageCount,total:N?.pageCount,message:"DOCX render complete"}),x},f.parseAsyncInWorker=n,f.awaitRenderedLayout=l,f.collectLayoutSnapshot=u,f.syncNumberingMarkerStyles=p,f.yieldToBrowser=r;const d=E("./word-document"),i=E("./document-parser"),T=E("./html-renderer"),k=E("./html"),a=E("./license-gate"),C=E("./input-validation");function D(o,c){const h={...f.defaultOptions,...c};return(0,a.assertViewerLicense)("docx",h.licenseToken),(0,C.assertNonEmptyDocxInput)(o),(function(m){return!(!m.useWorker||!m.workerUrl||typeof Worker>"u")})(h)?n(o,h).catch(m=>{if(!h.workerFallback)throw m;h.debug&&console.warn("docx-preview: worker parsing failed; falling back to main thread",m);const P={...h,useWorker:!1};return M(o,P)}):M(o,h)}function M(o,c){return(0,C.assertNonEmptyDocxInput)(o),c.progress?.({phase:"parse",message:"Parsing DOCX on main thread"}),d.WordDocument.load(o,new i.DocumentParser(c),c)}async function A(o,c){const h={...f.defaultOptions,...c};return(0,a.assertViewerLicense)("docx",h.licenseToken),await new T.HtmlRenderer().render(o,h)}function e(o){const{h:c,progress:h,licenseToken:m,...P}=o;return{...P,useWorker:!1}}f.defaultOptions={ignoreHeight:!1,ignoreWidth:!1,fixedPageHeight:!0,ignoreFonts:!1,breakPages:!0,strictWordCompatibility:!0,paginationTolerance:2,maxDynamicPaginationPasses:1e3,awaitLayout:!0,useWorker:!0,workerUrl:void 0,workerJsZipUrl:void 0,workerFallback:!0,workerTimeout:12e4,renderPageBatchSize:2,renderYieldEveryMs:16,progress:void 0,preserveComplexFieldResults:!0,updatePageReferences:!1,hideWebHiddenContent:!1,debug:!1,experimental:!1,className:"docx",inWrapper:!0,hideWrapperOnPrint:!1,trimXmlDeclaration:!0,ignoreLastRenderedPageBreak:!1,renderHeaders:!0,renderFooters:!0,renderFootnotes:!0,renderEndnotes:!0,useBase64URL:!1,renderChanges:!1,renderComments:!1,renderAltChunks:!0,h:k.h};let t=0;function n(o,c){const h={...f.defaultOptions,...c};return(0,a.assertViewerLicense)("docx",h.licenseToken),(0,C.assertNonEmptyDocxInput)(o),h.workerUrl&&typeof Worker<"u"?(h.progress?.({phase:"worker",message:"Starting DOCX parse worker"}),new Promise((m,P)=>{const x=++t,y=new Worker(h.workerUrl);let w=!1,N=null;const $=()=>{w=!0,N&&clearTimeout(N),y.terminate()};h.workerTimeout>0&&(N=setTimeout(()=>{w||($(),P(new Error(`docx-preview worker timed out after ${h.workerTimeout}ms`)))},h.workerTimeout)),y.onerror=R=>{w||($(),P(new Error(R.message||"docx-preview worker error")))},y.onmessage=R=>{const X=R.data??{};if(X.id===x||X.type==="ready")if(X.type!=="progress"){if(X.type==="parsed")return $(),h.progress?.({phase:"worker",message:"Worker parse complete"}),void m(d.WordDocument.fromSnapshot(X.snapshot,h));if(X.type==="error"){$();const Q=new Error(X.error?.message??"docx-preview worker parse failed");Q.stack=X.error?.stack,P(Q)}}else h.progress?.({phase:"worker",current:X.current,total:X.total,message:X.message})},y.postMessage({type:"parse",id:x,data:o,options:e(h),jsZipUrl:h.workerJsZipUrl})})):M(o,{...h,useWorker:!1})}async function l(o,c){const h={...f.defaultOptions,...c};await(async function(P){const x=Array.from(P.querySelectorAll("img"));await Promise.allSettled(x.map(y=>y.complete?Promise.resolve():new Promise(w=>{y.addEventListener("load",w,{once:!0}),y.addEventListener("error",w,{once:!0})})))})(o),document.fonts?.ready&&await document.fonts.ready;const m=o.querySelector(`.${h.className}-wrapper`);if(h.breakPages&&h.fixedPageHeight&&!h.ignoreHeight&&m)for(let P=0;P<Math.max(2,Math.min(120,h.maxDynamicPaginationPasses??120))&&(await r(),m.dataset.docxPaginated!=="true")&&(m.dataset.docxPaginating==="true"||m.dataset.docxPaginationScheduled==="true");P++);return await r(),u(o,h)}function u(o,c){const h={...f.defaultOptions,...c},m=Array.from(o.querySelectorAll(`section.${h.className}`)).map((P,x)=>{const y=Array.from(P.querySelectorAll("[data-docx-field-instr]")),w=Array.from(P.querySelectorAll("img")).filter($=>!$.complete||$.naturalWidth===0).length,N=P.clientHeight>0&&P.scrollHeight>P.clientHeight+(h.paginationTolerance??2);return{index:x+1,section:P.dataset.docxSection??"",pageNumber:parseInt(P.dataset.docxPageNumber??`${x+1}`,10),sectionPageNumber:parseInt(P.dataset.docxSectionPageNumber??"1",10),width:P.clientWidth,height:P.clientHeight,scrollHeight:P.scrollHeight,overflow:N,textLength:P.textContent?.length??0,anchors:Array.from(P.querySelectorAll("[id]")).map($=>$.id).filter(Boolean),fields:y.map($=>({instruction:$.dataset.docxFieldInstr??"",value:$.textContent??""})),floats:P.querySelectorAll('[data-docx-float="true"]').length,unresolvedMedia:w}});return{pageCount:m.length,overflowPages:m.filter(P=>P.overflow).map(P=>P.index),unresolvedMedia:m.reduce((P,x)=>P+x.unresolvedMedia,0),pages:m}}function p(o,c="docx"){if(!o||typeof getComputedStyle!="function")return;const h=Array.from(o.querySelectorAll("p")),m=`${c}-num-`;for(const P of h){if(!P.className?.includes(m))continue;const x=getComputedStyle(P,"::before");if(!x.content||x.content=="none"||x.content=="normal")continue;const y=g(P);if(!y||y==P)continue;const w=getComputedStyle(y);s(P,"--docx-marker-font-family",w.fontFamily),s(P,"--docx-marker-font-size",w.fontSize),s(P,"--docx-marker-font-style",w.fontStyle),s(P,"--docx-marker-font-weight",w.fontWeight)}}function g(o){const c=document.createTreeWalker(o,NodeFilter.SHOW_TEXT);for(;c.nextNode();){const h=c.currentNode;if(!h.nodeValue?.trim())continue;const m=h.parentElement;if(!m||m==o)return o;const P=getComputedStyle(m);if(P.display!="none"&&P.visibility!="hidden")return m}return null}function s(o,c,h){h&&o.style.setProperty(c,h)}function r(){return new Promise(o=>{const c=globalThis;typeof c.requestIdleCallback=="function"?c.requestIdleCallback(()=>o(),{timeout:32}):typeof c.requestAnimationFrame=="function"?c.requestAnimationFrame(()=>o()):setTimeout(o,0)})}},"./font-table/font-table":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.FontTablePart=void 0;const d=E("../common/part"),i=E("./fonts");class T extends d.Part{parseXml(a){this.fonts=(0,i.parseFonts)(a,this._package.xmlParser)}}f.FontTablePart=T},"./font-table/fonts":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.parseFonts=function(k,a){return a.elements(k).map(C=>i(C,a))},f.parseFont=i,f.parseEmbedFontRef=T;const d={embedRegular:"regular",embedBold:"bold",embedItalic:"italic",embedBoldItalic:"boldItalic"};function i(k,a){let C={name:a.attr(k,"name"),embedFontRefs:[]};for(let D of a.elements(k))switch(D.localName){case"family":C.family=a.attr(D,"val");break;case"altName":C.altName=a.attr(D,"val");break;case"embedRegular":case"embedBold":case"embedItalic":case"embedBoldItalic":C.embedFontRefs.push(T(D,a))}return C}function T(k,a){return{id:a.attr(k,"id"),key:a.attr(k,"fontKey"),type:d[k.localName]}}},"./header-footer/elements":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.WmlFooter=f.WmlHeader=void 0;const d=E("../document/dom");class i extends d.OpenXmlElementBase{constructor(){super(...arguments),this.type=d.DomType.Header}}f.WmlHeader=i;class T extends d.OpenXmlElementBase{constructor(){super(...arguments),this.type=d.DomType.Footer}}f.WmlFooter=T},"./header-footer/parts":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.FooterPart=f.HeaderPart=f.BaseHeaderFooterPart=void 0;const d=E("../common/part"),i=E("./elements");class T extends d.Part{constructor(a,C,D){super(a,C),this._documentParser=D}parseXml(a){this.rootElement=this.createRootElement(),this.rootElement.children=this._documentParser.parseBodyElements(a)}}f.BaseHeaderFooterPart=T,f.HeaderPart=class extends T{createRootElement(){return new i.WmlHeader}},f.FooterPart=class extends T{createRootElement(){return new i.WmlFooter}}},"./html-renderer":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.HtmlRenderer=void 0;const d=E("./document/dom"),i=E("./utils"),T=E("./javascript"),k=E("./document/section"),a=E("./html"),C=E("./parser/xml-parser");function D(e){return e>="0"&&e<="9"}function M(e){if(!e)return!1;const t=e.charCodeAt(0);return t>=65&&t<=90||t>=97&&t<=122||t>=913&&t<=1023||t>=119808&&t<=120831}function A(e){return"()+-−=<>≤≥≈≠×÷*/·∙∑Σ∏∫√∞∂∇,.;:[]{}|‖!′″→←↔⇒⇔∈∉⊂⊃⊆⊇∧∨¬".includes(e)}f.HtmlRenderer=class{constructor(){this.className="docx",this.styleMap={},this.currentPart=null,this.currentSectionProps=null,this.currentPageNumber=1,this.currentSectionNumber=1,this.currentSectionPageNumber=1,this.totalPages=1,this.sectionPageCount=1,this.tableVerticalMerges=[],this.currentVerticalMerge=null,this.tableCellPositions=[],this.currentCellPosition=null,this.currentTableRow=null,this.footnoteMap={},this.endnoteMap={},this.currentEndnoteIds=[],this.usedHederFooterParts=[],this.currentTabs=[],this.currentParagraph=null,this.currentParagraphTabIndex=0,this.currentParagraphTabCount=0,this.commentMap={},this.bookmarkTextMap={},this.bookmarkIdToName={},this.tocEntries=[],this.fieldSeqCounters={},this.fieldSetValues={},this.headingIndex=0,this.tasks=[],this.postRenderTasks=[],this.h=a.h}async render(e,t){this.document=e,this.options=t,this.className=t.className,this.rootSelector=t.inWrapper?`.${this.className}-wrapper`:":root",this.h=t.h??a.h,this.styleMap=null,this.tasks=[],this.postRenderTasks=[],this.currentTabs=[],this.fieldSeqCounters={},this.fieldSetValues={},this.headingIndex=0,this.options.renderComments&&globalThis.Highlight&&(this.commentHighlight=new Highlight);const n=[...this.renderDefaultStyle()];e.themePart&&n.push(...this.renderTheme(e.themePart)),e.stylesPart!=null&&(this.styleMap=this.processStyles(e.stylesPart.styles),n.push(...this.renderStyles(e.stylesPart.styles))),e.numberingPart&&(this.prodessNumberings(e.numberingPart.domNumberings),n.push(...await this.renderNumbering(e.numberingPart.domNumberings))),e.footnotesPart&&(this.footnoteMap=(0,i.keyBy)(e.footnotesPart.notes,u=>u.id)),e.endnotesPart&&(this.endnoteMap=(0,i.keyBy)(e.endnotesPart.notes,u=>u.id)),e.settingsPart&&(this.defaultTabSize=e.settingsPart.settings?.defaultTabStop),!t.ignoreFonts&&e.fontTablePart&&n.push(...await this.renderFontTable(e.fontTablePart));var l=await this.renderSections(e.documentPart.body);if(this.options.inWrapper){const u=this.renderWrapper(l);n.push(u),this.shouldRunDynamicPagination()&&this.scheduleDynamicPagination(u)}else n.push(...l);return this.commentHighlight&&t.renderComments&&CSS.highlights.set(`${this.className}-comments`,this.commentHighlight),await Promise.allSettled(this.tasks),this.postRenderTasks.forEach(u=>u()),this.refreshTabStops(),n}renderTheme(e){const t={},n=e.theme?.fontScheme;n&&(n.majorFont&&(t["--docx-majorHAnsi-font"]=n.majorFont.latinTypeface,t["--docx-majorEastAsia-font"]=n.majorFont.eaTypeface??n.majorFont.latinTypeface,t["--docx-majorBidi-font"]=n.majorFont.csTypeface??n.majorFont.latinTypeface,t["--docx-majorCs-font"]=n.majorFont.csTypeface??n.majorFont.latinTypeface),n.minorFont&&(t["--docx-minorHAnsi-font"]=n.minorFont.latinTypeface,t["--docx-minorEastAsia-font"]=n.minorFont.eaTypeface??n.minorFont.latinTypeface,t["--docx-minorBidi-font"]=n.minorFont.csTypeface??n.minorFont.latinTypeface,t["--docx-minorCs-font"]=n.minorFont.csTypeface??n.minorFont.latinTypeface));const l=e.theme?.colorScheme;if(l)for(let[p,g]of Object.entries(l.colors))t[`--docx-${p}-color`]=`#${g}`;const u=this.styleToString(`.${this.className}`,t);return[this.h({tagName:"#comment",children:["docxjs document theme values"]}),this.h({tagName:"style",children:[u]})]}async renderFontTable(e){const t=[];for(let n of e.fonts)for(let l of n.embedFontRefs)try{const u=await this.document.loadFont(l.id,l.key),p={"font-family":(0,i.encloseFontFamily)(n.name),src:`url(${u})`};l.type!="bold"&&l.type!="boldItalic"||(p["font-weight"]="bold"),l.type!="italic"&&l.type!="boldItalic"||(p["font-style"]="italic"),t.push(this.h({tagName:"#comment",children:[`docxjs ${n.name} font`]})),t.push(this.h({tagName:"style",children:[this.styleToString("@font-face",p)]}))}catch{this.options.debug&&console.warn(`Can't load font with id ${l.id} and key ${l.key}`)}return t}processStyleName(e){return e?`${this.className}_${(0,i.escapeClassName)(e)}`:this.className}processStyles(e){const t=(0,i.keyBy)(e.filter(l=>l.id!=null),l=>l.id);for(const l of e.filter(u=>u.basedOn)){var n=t[l.basedOn];if(n){l.paragraphProps=(0,i.mergeDeep)({},n.paragraphProps,l.paragraphProps),l.runProps=(0,i.mergeDeep)({},n.runProps,l.runProps);for(const u of n.styles){const p=l.styles.find(g=>g.target==u.target);p?this.copyStyleProperties(u.values,p.values):l.styles.push({...u,values:{...u.values}})}}else this.options.debug&&console.warn(`Can't find base style ${l.basedOn}`)}for(let l of e)l.cssName=this.processStyleName(l.id);return t}prodessNumberings(e){for(let t of e.filter(n=>n.pStyleName)){const n=this.findStyle(t.pStyleName);n?.paragraphProps?.numbering&&(n.paragraphProps.numbering.level=t.level)}}processElement(e){if(e.children)for(var t of e.children)t.parent=e,t.type==d.DomType.Table?this.processTable(t):this.processElement(t)}processTable(e){const t=e.children??[];let n=e.columns?.length??0;for(const p of t){let g=p.gridBefore??0;for(const s of p.children??[])g+=s.span??1;n=Math.max(n,g+(p.gridAfter??0))}const l=Math.max(e.rowBandSize??1,1),u=Math.max(e.colBandSize??1,1);t.forEach((p,g)=>{g==0&&this.appendClassName(p,"first-row"),g==t.length-1&&this.appendClassName(p,"last-row"),this.appendClassName(p,Math.floor(g/l)%2==0?"odd-row":"even-row");let s=p.gridBefore??0;for(const r of p.children??[]){r.cssStyle=this.copyStyleProperties(e.cellStyle,r.cssStyle,["border-left","border-right","border-top","border-bottom","padding-left","padding-right","padding-top","padding-bottom"]);const o=r.span??1,c=s+o-1;s==0&&this.appendClassName(r,"first-col"),n>0&&c>=n-1&&this.appendClassName(r,"last-col"),this.appendClassName(r,Math.floor(s/u)%2==0?"odd-col":"even-col"),this.processElement(r),s+=o}})}collectDocumentMetadata(e){this.bookmarkTextMap={},this.bookmarkIdToName={},this.tocEntries=[];const t={},n=l=>{if(l.type!=d.DomType.Deleted||this.options.renderChanges){switch(l.type){case d.DomType.BookmarkStart:{const u=l;u.id&&u.name&&(this.bookmarkIdToName[u.id]=u.name,t[u.id]=[]);break}case d.DomType.BookmarkEnd:{const u=l,p=this.bookmarkIdToName[u.id];p&&t[u.id]&&(this.bookmarkTextMap[p]=t[u.id].join("").trim(),delete t[u.id]);break}case d.DomType.Text:for(const u of Object.keys(t))t[u].push(l.text??"");break;case d.DomType.DeletedText:if(this.options.renderChanges)for(const u of Object.keys(t))t[u].push(l.text??"")}for(const u of l.children??[])n(u)}};for(const l of e.children??[])n(l);for(const[l,u]of Object.entries(t)){const p=this.bookmarkIdToName[l];p&&(this.bookmarkTextMap[p]=u.join("").trim())}for(const l of e.children??[])this.collectTocEntries(l)}collectTocEntries(e){if(e.type!=d.DomType.Deleted||this.options.renderChanges){if(e.type==d.DomType.Paragraph){const t=e,n=this.findStyle(t.styleName),l=this.extractText(t).trim();let u=t.outlineLevel??n?.paragraphProps?.outlineLevel;if(u==null&&t.styleName){const p=/heading(\d+)|(?:^|[-_ ])h(\d+)$/i.exec(t.styleName);p&&(u=parseInt(p[1]??p[2],10)-1)}if(l&&u!=null&&u>=0&&u<9){const p=this.findFirstBookmark(t),g=p?.name&&!p.name.startsWith("_")?p.name:`${this.className}-heading-${++this.headingIndex}`;t.props={...t.props??{},anchorId:g},this.tocEntries.push({level:u+1,text:l,id:g})}}for(const t of e.children??[])this.collectTocEntries(t)}}findFirstBookmark(e){if(e.type==d.DomType.BookmarkStart)return e;for(const t of e.children??[]){const n=this.findFirstBookmark(t);if(n)return n}return null}extractText(e){switch(e.type){case d.DomType.Text:return e.text??"";case d.DomType.DeletedText:return this.options.renderChanges?e.text??"":"";case d.DomType.Deleted:return this.options.renderChanges?(e.children??[]).map(t=>this.extractText(t)).join(""):"";case d.DomType.Inserted:return(e.children??[]).map(t=>this.extractText(t)).join("");case d.DomType.Tab:case d.DomType.PositionalTab:return"	";case d.DomType.NoBreakHyphen:return"‑";case d.DomType.SoftHyphen:return"";case d.DomType.Break:return`
-`;case d.DomType.Instruction:case d.DomType.ComplexField:return""}return(e.children??[]).map(t=>this.extractText(t)).join("")}appendClassName(e,t){e.className=(0,a.cx)(e.className,t)}copyStyleProperties(e,t,n=null){if(!e)return t;for(var l of(t==null&&(t={}),n==null&&(n=Object.getOwnPropertyNames(e)),n))e.hasOwnProperty(l)&&!t.hasOwnProperty(l)&&(t[l]=e[l]);return t}createPageElement(e,t,n){const l={...n};let u=null,p=null;if(t){if(t.pageMargins&&(l.paddingLeft=this.addSize(t.pageMargins.left,t.pageMargins.gutter),l.paddingRight=t.pageMargins.right,l.paddingTop=t.pageMargins.top,l.paddingBottom=t.pageMargins.bottom),t.pageSize){let s=t.pageSize.width,r=t.pageSize.height;if(t.pageSize.orientation=="landscape"){const o=this.parseCssLengthValue(s),c=this.parseCssLengthValue(r);o!=null&&c!=null&&o<c&&([s,r]=[r,s])}u=s,p=r,this.options.ignoreWidth||(l.width=s),(!this.options.ignoreHeight||!this.options.breakPages)&&(l.minHeight=r,!this.options.ignoreHeight&&this.options.breakPages&&this.options.fixedPageHeight&&(l.height=r))}t.pageBorders&&(this.applyPageBorder(l,"top",t.pageBorders.top),this.applyPageBorder(l,"right",t.pageBorders.right),this.applyPageBorder(l,"bottom",t.pageBorders.bottom),this.applyPageBorder(l,"left",t.pageBorders.left))}const g=this.h({tagName:"section",className:e,style:l});return u&&this.setCssStyle(g,"--docx-page-width",u),p&&this.setCssStyle(g,"--docx-page-height",p),g}addSize(e,t){return e?t&&t!="0.00pt"&&t!="0px"?`calc(${e} + ${t})`:e:t}parseCssLengthValue(e){if(!e)return null;const t=/^(-?\d+(?:\.\d+)?)/.exec(e);return t?parseFloat(t[1]):null}applyPageBorder(e,t,n){if(!n)return;const l=this.borderTypeToCss(n.type);e[`border-${t}`]=l=="none"?"none":`${n.size??"1px"} ${l} ${this.borderColor(n.color)}`}borderTypeToCss(e){switch(e){case"nil":case"none":return"none";case"double":case"triple":return"double";case"dashed":case"dashSmallGap":return"dashed";case"dotted":case"dotDash":case"dotDotDash":return"dotted"}return"solid"}borderColor(e){return e&&e!="auto"?/^[0-9a-f]{6}$/i.test(e)?`#${e}`:e:"black"}createSectionContent(e){const t={},n=e.columns?.numberOfColumns??e.columns?.columns?.length;return e.docGrid&&(e.docGrid.linePitch&&(t["--docx-doc-grid-line-pitch"]=e.docGrid.linePitch),e.docGrid.charSpace&&(t.letterSpacing=e.docGrid.charSpace)),this.document.settingsPart?.settings?.kinsoku&&(t.lineBreak="strict",t.wordBreak="keep-all"),this.document.settingsPart?.settings?.overflowPunctuation&&(t.hangingPunctuation="allow-end"),this.document.settingsPart?.settings?.topLinePunctuation&&(t["text-spacing-trim"]="space-start"),(this.document.settingsPart?.settings?.autoSpaceDE||this.document.settingsPart?.settings?.autoSpaceDN)&&(t["text-autospace"]=[this.document.settingsPart?.settings?.autoSpaceDE?"ideograph-alpha":null,this.document.settingsPart?.settings?.autoSpaceDN?"ideograph-numeric":null].filter(Boolean).join(" ")),e.columns&&n&&(t.columnCount=`${n}`,t.columnGap=e.columns.space,!e.columns.equalWidth&&e.columns.columns?.length>0&&(t.columnWidth=e.columns.columns[0].width,t.columnGap=e.columns.columns[0].space??t.columnGap),e.columns.separator&&(t.columnRule="1px solid black")),this.h({tagName:"article",style:t})}async renderSections(e){const t=[];this.processElement(e),this.collectDocumentMetadata(e);const n=this.splitBySection(e.children,e.props),l=this.groupByPageBreaks(n);let u=null,p=0,g=0;const s=new Map,r=new Map,o=new Map,c=new Map,h=P=>{if(!o.has(P)){const x=++g;o.set(P,`${this.className}-section-${x}`),c.set(P,x)}};for(const P of l){const x=P[0].sectProps;h(x),s.set(x,(s.get(x)??0)+1)}this.totalPages=l.length;for(let P=0,x=l.length;P<x;P++){this.currentFootnoteIds=[];let y=l[P][0].sectProps;h(y);const w=u!=y;p=w&&y?.pageNumber?.start!=null?y.pageNumber.start:p+1,this.currentPageNumber=p,this.currentSectionNumber=c.get(y)??1,this.currentSectionProps=y,this.currentSectionPageNumber=(r.get(y)??0)+1,this.sectionPageCount=s.get(y)??1,r.set(y,this.currentSectionPageNumber);const N=this.createPageElement(this.className,y,e.cssStyle);N.dataset.docxSection=o.get(y),N.dataset.docxSectionNumber=`${this.currentSectionNumber}`,N.dataset.docxSectionPageNumber=`${this.currentSectionPageNumber}`,N.dataset.docxSectionPageCount=`${this.sectionPageCount}`,N.dataset.docxPageNumber=`${p}`,w&&y?.pageNumber?.start!=null&&(N.dataset.docxPageStart=`${y.pageNumber.start}`),this.options.renderHeaders&&this.renderHeaderFooter(y.headerRefs,y,p,w,N);for(const $ of l[P]){this.currentSectionProps=$.sectProps;var m=this.createSectionContent($.sectProps);$.columnBreak&&(m.style.breakBefore="column"),this.renderElements($.elements,m),N.appendChild(m),y=$.sectProps}if(this.options.renderFootnotes){const $=this.renderNotes(this.currentFootnoteIds,this.footnoteMap,this.document.footnotesPart);$&&N.appendChild($)}if(this.options.renderEndnotes&&P==x-1){const $=this.renderNotes(this.currentEndnoteIds,this.endnoteMap,this.document.endnotesPart);$&&N.appendChild($)}this.currentSectionProps=y,this.options.renderFooters&&this.renderHeaderFooter(y.footerRefs,y,p,w,N),t.push(N),await this.yieldDuringRender(P+1,x),u=y}return t}renderHeaderFooter(e,t,n,l,u){if(!e)return;const p=!!this.document.settingsPart?.settings?.evenAndOddHeaders,g=e.find(o=>o.type=="default");var s=(t.titlePage&&l?e.find(o=>o.type=="first"):null)??(p&&n%2==0?e.find(o=>o.type=="even"):null)??g??e.find(o=>o.type=="first")??(p?e.find(o=>o.type=="even"):null),r=s&&this.document.findPartByRelId(s.id,this.document.documentPart);if(r){this.currentPart=r,this.usedHederFooterParts.includes(r.path)||(this.processElement(r.rootElement),this.usedHederFooterParts.push(r.path));const[o]=this.renderElements([r.rootElement],u);t?.pageMargins&&(r.rootElement.type===d.DomType.Header?(o.style.marginTop=`calc(${t.pageMargins.header} - ${t.pageMargins.top})`,o.style.minHeight=`calc(${t.pageMargins.top} - ${t.pageMargins.header})`):r.rootElement.type===d.DomType.Footer&&(o.style.marginBottom=`calc(${t.pageMargins.footer} - ${t.pageMargins.bottom})`,o.style.minHeight=`calc(${t.pageMargins.bottom} - ${t.pageMargins.footer})`)),this.currentPart=null}}isPageBreakElement(e){return e.type==d.DomType.Break&&(e.break=="lastRenderedPageBreak"?!this.options.ignoreLastRenderedPageBreak:e.break=="page")}isPageBreakSection(e,t){return!(!e||!t||e.pageSize?.orientation==t.pageSize?.orientation&&e.pageSize?.width==t.pageSize?.width&&e.pageSize?.height==t.pageSize?.height)}splitBySection(e,t){let n={sectProps:null,elements:[],pageBreak:!1,columnBreak:!1},l=[n];const u=(g=!1,s=!1)=>{if(n.elements.length==0&&n.sectProps==null)return n.pageBreak||(n.pageBreak=g),void(n.columnBreak||(n.columnBreak=s));n.pageBreak||(n.pageBreak=g),n.columnBreak||(n.columnBreak=s),n={sectProps:null,elements:[],pageBreak:!1,columnBreak:!1},l.push(n)};for(let g of e){if(g.type!=d.DomType.Paragraph){if(g.type==d.DomType.Table)for(const h of this.splitTableByPageBreaks(g))h.table.children?.length&&n.elements.push(h.table),h.breakAfter&&u(!0);else n.elements.push(g);continue}const s=g,r=this.findStyle(s.styleName),o=s.pageBreakBefore??r?.paragraphProps?.pageBreakBefore;this.options.breakPages&&o&&n.elements.length>0&&u(!0);const c=this.splitParagraphByPageBreaks(s);for(const h of c)n.elements.push(h.paragraph),h.breakAfter&&u(!0);s.sectionProps&&(n.sectProps=s.sectionProps,u((0,k.isSectionPageBreak)(s.sectionProps.type),(0,k.isSectionColumnBreak)(s.sectionProps.type)))}if(l=l.filter(g=>g.elements.length>0),l.length==0)return[{sectProps:t,elements:[],pageBreak:!1,columnBreak:!1}];let p=null;for(let g=l.length-1;g>=0;g--)l[g].sectProps==null?l[g].sectProps=p??t:p=l[g].sectProps;return l}hasPageBreakElement(e){return!!this.isPageBreakElement(e)||(e.children?.some(t=>this.hasPageBreakElement(t))??!1)}splitTableByPageBreaks(e){if(!this.options.breakPages||!e.children?.length)return[{table:e,breakAfter:!1}];if(!e.children.some(g=>this.hasPageBreakElement(g)))return[{table:e,breakAfter:!1}];const t=e.children,n=[];for(const g of t){if(!g.isHeader)break;n.push(g)}const l=[];let u=[];const p=g=>{if(u.length==0&&l.length>0)return;const s=l.length>0;let r=u;s&&n.length>0&&!u.some(o=>o.isHeader)&&(r=[...n,...u]),l.push({table:{...e,children:r},breakAfter:g}),u=[]};for(const g of t)u.push(g),this.hasPageBreakElement(g)&&p(!0);return p(!1),l.length>0?l:[{table:e,breakAfter:!1}]}splitElementByPageBreaks(e){if(this.isPageBreakElement(e))return[{breakAfter:!0}];if(!e.children?.length)return[{element:e}];const t=[];let n={...e,children:[]};const l=()=>{n.children.length>0&&t.push({element:n}),n={...e,children:[]}};for(const u of e.children)for(const p of this.splitElementByPageBreaks(u))p.element&&n.children.push(p.element),p.breakAfter&&(l(),t.push({breakAfter:!0}));return l(),t.length>0?t:[{element:e}]}splitParagraphByPageBreaks(e){if(!this.options.breakPages||!e.children?.length)return[{paragraph:e,breakAfter:!1}];const t=[];let n={...e,children:[]};const l=p=>{(n.children.length>0||t.length==0)&&t.push({paragraph:n,breakAfter:p}),n={...e,sectionProps:null,children:[]}};for(const p of e.children)for(const g of this.splitElementByPageBreaks(p))g.element&&n.children.push(g.element),g.breakAfter&&l(!0);(n.children.length>0||t.length==0)&&t.push({paragraph:n,breakAfter:!1});const u=t[t.length-1]?.paragraph;for(const p of t)p.paragraph!=u&&(p.paragraph.sectionProps=null);return t}styleValuesForTarget(e,t){return e?.styles?.find(n=>n.target==t)?.values}styleValue(e,t,n){return this.styleValuesForTarget(e,t)?.[n]}effectiveParagraphCssValue(e,t,n){return e.cssStyle?.[n]??this.styleValue(t,"p",n)}isInsideTableCell(e){for(let t=e.parent;t;t=t.parent)if(t.type==d.DomType.Cell)return!0;return!1}paragraphUsesDocumentGrid(e,t){if(!this.currentSectionProps?.docGrid?.linePitch||this.isInsideTableCell(e)&&!this.document.settingsPart?.settings?.adjustLineHeightInTable)return!1;const l=this.effectiveParagraphCssValue(e,t,"--docx-snap-to-grid");return l==null||!/^(0|false|off)$/i.test(l)}setCssStyle(e,t,n){const l=e.style;typeof l.setProperty=="function"?l.setProperty(t,n):l[t]=n}applyDocumentGridLinePitch(e,t,n){if(!this.paragraphUsesDocumentGrid(e,t)||this.effectiveParagraphCssValue(e,t,"line-height"))return;const l=this.currentSectionProps.docGrid.linePitch,u=this.effectiveParagraphCssValue(e,t,"min-height");if(!u)return void this.setCssStyle(n,"min-height",l);const p=this.parseCssLengthValue(u),g=this.parseCssLengthValue(l);p!=null&&g!=null?p<g&&this.setCssStyle(n,"min-height",l):this.setCssStyle(n,"min-height",`max(${u}, ${l})`)}groupByPageBreaks(e){let t=[],n=null;const l=[t];for(let u of e)n&&(n.pageBreak||this.isPageBreakSection(n.sectProps,u.sectProps))&&(t=[],l.push(t)),t.push(u),n=u;return l.filter(u=>u.length>0)}async yieldDuringRender(e,t){const n=this.options.renderPageBatchSize??0;this.options.progress&&this.options.progress({phase:"render",current:e,total:t,message:`Rendered ${e}/${t} logical pages`}),n>0&&e%n==0&&await this.yieldToBrowser()}async yieldToBrowser(){(this.options.renderYieldEveryMs??0)<=0||await new Promise(e=>{const t=globalThis;typeof t.requestIdleCallback=="function"?t.requestIdleCallback(()=>e(),{timeout:Math.max(1,this.options.renderYieldEveryMs??16)}):typeof t.requestAnimationFrame=="function"?t.requestAnimationFrame(()=>e()):setTimeout(e,0)})}renderWrapper(e){return this.h({tagName:"div",className:this.className+"-wrapper",children:e})}shouldRunDynamicPagination(){return!(!this.options.breakPages||!this.options.fixedPageHeight||this.options.ignoreHeight||typeof document>"u"||typeof requestAnimationFrame!="function")}scheduleDynamicPagination(e){if(!e||e.dataset.docxPaginated=="true"||e.dataset.docxPaginating=="true"||e.dataset.docxPaginationScheduled=="true")return;e.dataset.docxPaginationScheduled="true";const t=()=>{(document.fonts?.ready??Promise.resolve()).finally(()=>{requestAnimationFrame(()=>requestAnimationFrame(()=>this.performDynamicPagination(e)))})},n=()=>{e&&e.dataset.docxPaginated!="true"&&e.dataset.docxPaginating!="true"&&(e.isConnected?t():setTimeout(n,0))};n()}async performDynamicPagination(e){if(!e||e.dataset.docxPaginated=="true"||e.dataset.docxPaginating=="true")return;if(!e.isConnected)return void setTimeout(()=>this.performDynamicPagination(e),0);delete e.dataset.docxPaginationScheduled,e.dataset.docxPaginating="true";const t=Array.from(e.querySelectorAll(":scope > section."+this.className)),n=this.options.maxDynamicPaginationPasses??1e3;let l=0;for(let u=0;u<t.length;u++){const p=t[u];let g=p.querySelector(":scope > article");for(u%2==0&&await this.yieldToBrowser();g&&this.isPageOverflowing(p)&&g.children.length>0&&l++<n;){const s=this.createContinuationPage(p),r=s.querySelector(":scope > article");let o=!1,c=0;for(;this.isPageOverflowing(p)&&g.lastElementChild&&c++<500;)if(c%20==0&&await this.yieldToBrowser(),g.children.length>1){let h=this.pickPaginationChunk(g);if(h.length==0)break;if(h.length>=g.children.length){if(this.splitOverflowBlock(g.lastElementChild,p,r)){o=!0;continue}h=[g.lastElementChild]}for(let m=h.length-1;m>=0;m--)r.prepend(h[m]),o=!0}else{if(!this.splitOverflowBlock(g.lastElementChild,p,r))break;o=!0}if(!o||r.children.length==0){s.remove();break}t.splice(u+1,0,s)}}this.cleanupEmptyNumberedParagraphs(e),this.removeEmptyDynamicPages(e),this.updateDynamicFieldPages(e),delete e.dataset.docxPaginating,e.dataset.docxPaginated="true"}pickPaginationChunk(e){const t=Array.from(e.children);if(t.length==0)return[];let n=t.length-1;for(;n>0&&this.isKeepWithNext(t[n-1]);)n--;return t.slice(n)}isKeepWithNext(e){if(e.dataset.docxKeepNext=="true")return!0;const t=getComputedStyle(e);return t.breakAfter=="avoid"||t.pageBreakAfter=="avoid"}isPageOverflowing(e){const t=this.options.paginationTolerance??2,n=e.clientHeight;if(n<=0)return!1;if(e.scrollHeight>n+t)return!0;const l=e.getBoundingClientRect();let u=l.top;for(const p of Array.from(e.children)){const g=p.getBoundingClientRect();if(u=Math.max(u,g.bottom),p.tagName.toLowerCase()=="article")for(const s of Array.from(p.children)){const r=s.getBoundingClientRect();u=Math.max(u,r.bottom)}}return u>l.bottom+t}createContinuationPage(e){const t=e.cloneNode(!0);t.dataset.docxDynamicPage="true",t.removeAttribute("id");for(const n of Array.from(t.querySelectorAll(":scope > article")))n.textContent="";return e.after(t),t}splitOverflowBlock(e,t,n){if(!e||e.dataset.docxKeepLines=="true")return!1;const l=getComputedStyle(e);if(l.breakInside=="avoid"||l.pageBreakInside=="avoid")return!1;switch(e.tagName.toLowerCase()){case"p":return this.splitParagraphBlock(e,t,n);case"table":return this.splitTableBlock(e,t,n)}return!1}splitParagraphBlock(e,t,n){if(!e.hasChildNodes())return!1;const l=this.cloneBlockShell(e);l.dataset.docxContinued="true",n.prepend(l);let u=!1,p=0;for(;this.isPageOverflowing(t)&&e.hasChildNodes()&&p++<1e3&&this.moveTailInlineNode(e,l,t);)u=!0,this.removeEmptyInlineContainers(e);return u?(e.hasChildNodes()?this.options.strictWordCompatibility&&e.dataset.docxWidowControl=="true"&&this.rebalanceWidowOrphan(e,l,t):e.remove(),!0):(l.remove(),!1)}splitTableBlock(e,t,n){const l=this.tableContentRows(e);if(l.length<=1)return!1;const u=this.cloneBlockShell(e);u.dataset.docxContinued="true";for(const s of Array.from(e.children))s.tagName?.toLowerCase()=="colgroup"&&u.appendChild(s.cloneNode(!0));for(const s of l.filter(r=>r.dataset.docxRepeatHeader=="true")){const r=s.cloneNode(!0);r.dataset.docxRepeatedHeader="true",u.appendChild(r)}n.prepend(u);let p=!1,g=0;for(;this.isPageOverflowing(t)&&this.tableContentRows(e).length>1&&g++<500;){const s=this.tableContentRows(e).filter(o=>o.dataset.docxRepeatedHeader!="true"),r=s[s.length-1];if(!r)break;u.insertBefore(r,this.firstMovedTableRow(u)),p=!0}return!!p||(u.remove(),!1)}cloneBlockShell(e){const t=e.cloneNode(!1);return t.removeAttribute("id"),t}tableContentRows(e){return Array.from(e.querySelectorAll(":scope > tr, :scope > tbody > tr"))}firstMovedTableRow(e){return this.tableContentRows(e).find(t=>t.dataset.docxRepeatedHeader!="true")??null}moveTailInlineNode(e,t,n){const l=e.lastChild;if(!l)return!1;if(l.nodeType==Node.TEXT_NODE)return this.moveTextTail(l,t,n);if(l instanceof Element&&l.childNodes.length>0&&l.tagName?.toLowerCase()!="br"){const u=l.cloneNode(!1);u.removeAttribute("id"),t.prepend(u);const p=this.moveTailInlineNode(l,u,n);return l.hasChildNodes()||l.remove(),u.hasChildNodes()||u.remove(),p}return t.prepend(l),!0}moveTextTail(e,t,n){const l=e.data??"";if(!l)return!1;const u=document.createTextNode("");if(t.prepend(u),l.length==1)return u.data=l,e.remove(),!0;let p=1,g=l.length,s=l.length;for(;p<=g;){const r=Math.floor((p+g)/2);e.data=l.substring(0,l.length-r),u.data=l.substring(l.length-r),this.isPageOverflowing(n)?p=r+1:(s=r,g=r-1)}return s=this.adjustSplitToWordBoundary(l,s),e.data=l.substring(0,l.length-s),u.data=l.substring(l.length-s),e.data||e.remove(),!0}adjustSplitToWordBoundary(e,t){if(t<=1||t>=e.length)return t;const n=e.length-t,l=e.lastIndexOf(" ",n);return l>0&&n-l<32?e.length-l-1:t}removeEmptyInlineContainers(e){for(const t of Array.from(e.childNodes))t instanceof HTMLElement&&(this.removeEmptyInlineContainers(t),t.hasChildNodes()||/^(br|img|svg|math)$/i.test(t.tagName)||t.remove())}cleanupEmptyNumberedParagraphs(e){const t=`p[class*="${this.className}-num-"]`;for(const n of Array.from(e.querySelectorAll(t))){if(this.hasVisiblePaginationContent(n)||!n.id&&!n.querySelector("[id], a[name]"))continue;const l=this.findNextVisiblePaginationBlock(e,n);l&&this.moveAnchorsToBlock(n,l),n.remove()}}removeEmptyDynamicPages(e){const t=Array.from(e.querySelectorAll(`:scope > section.${this.className}[data-docx-dynamic-page="true"]`));for(const n of t){const l=n.querySelector(":scope > article");l&&!Array.from(l.children).some(u=>this.hasVisiblePaginationContent(u))&&n.remove()}}findNextVisiblePaginationBlock(e,t){const n=Array.from(e.querySelectorAll("article p, article table, article figure, article img, article svg, article math"));for(let l=n.indexOf(t)+1;l<n.length;l++){const u=n[l];if(this.hasVisiblePaginationContent(u))return u}return null}hasVisiblePaginationContent(e){return(e.textContent??"").replace(/\s+/g,"").length>0||!!e.querySelector("br,img,svg,math,object,canvas,video,table")}moveAnchorsToBlock(e,t){const n=Array.from(e.querySelectorAll("[id], a[name]"));e.id&&!t.id&&(t.id=e.id);for(let l=n.length-1;l>=0;l--){const u=n[l];u.id&&t.querySelector(`#${CSS.escape(u.id)}`)||t.prepend(u)}}rebalanceWidowOrphan(e,t,n){const l=this.visualLineCount(e),u=this.visualLineCount(t);if(l>=2&&u>=2)return;if(l<2&&e.parentElement&&t.hasChildNodes())return t.prepend(...Array.from(e.childNodes)),void e.remove();let p=0;for(;this.visualLineCount(t)<2&&e.hasChildNodes()&&p++<20&&!this.isPageOverflowing(n)&&this.moveTailInlineNode(e,t,n););}visualLineCount(e){try{const t=document.createRange();t.selectNodeContents(e);const n=Array.from(t.getClientRects());t.detach?.();const l=new Set(n.map(u=>Math.round(u.top)));return Math.max(l.size,1)}catch{return 1}}updateDynamicFieldPages(e){const t=Array.from(e.querySelectorAll(":scope > section."+this.className)),n={},l={},u={},p=[],g=[];let s=0,r="";for(const o of t){const c=o.dataset.docxSection??"";l[c]=(l[c]??0)+1}if(t.forEach((o,c)=>{const h=o.dataset.docxSection??"";if(h!=r){const m=o.dataset.docxPageStart!=null?parseInt(o.dataset.docxPageStart,10):null;s=Number.isFinite(m)?m:s+1,u[h]=1,r=h}else s++,u[h]=(u[h]??0)+1;o.dataset.docxPageNumber=`${s}`,o.dataset.docxSectionPageNumber=`${u[h]}`,o.dataset.docxSectionPageCount=`${l[h]??1}`,p[c]=s,g[c]=u[h];for(const m of Array.from(o.querySelectorAll("[id]")))m.id&&n[m.id]==null&&(n[m.id]=s)}),t.forEach((o,c)=>{const h=o.dataset.docxSection??"";for(const m of Array.from(o.querySelectorAll("[data-docx-field-instr]"))){const P=this.evaluateDynamicField(m.dataset.docxFieldInstr,p[c]??c+1,t.length,n,l[h]??1,g[c]??1,parseInt(o.dataset.docxSectionNumber??"1",10));P!=null&&(m.textContent=P)}}),this.options.updatePageReferences)for(const o of Array.from(e.querySelectorAll("[data-docx-page-ref]"))){const c=o.dataset.docxPageRef;o.textContent=`${n[c]??1}`}}evaluateDynamicField(e,t,n,l,u=n,p=t,g=1){const s=this.tokenizeFieldInstruction((e??"").replace(/\s+/g," ").trim()),r=s[0]?.replace(/^=/,"").toUpperCase();let o=null;switch(r){case"PAGE":o=this.formatFieldNumber(t,this.fieldFormatSwitchToNumFormat(this.fieldSwitch(s,"\\*")??this.currentSectionProps?.pageNumber?.format));break;case"NUMPAGES":o=this.formatFieldNumber(n,this.fieldFormatSwitchToNumFormat(this.fieldSwitch(s,"\\*")??this.currentSectionProps?.pageNumber?.format));break;case"SECTIONPAGES":o=this.formatFieldNumber(u,this.fieldFormatSwitchToNumFormat(this.fieldSwitch(s,"\\*")??this.currentSectionProps?.pageNumber?.format));break;case"SECTION":o=this.formatFieldNumber(g,this.fieldFormatSwitchToNumFormat(this.fieldSwitch(s,"\\*")??"decimal"));break;case"PAGEREF":{if(!this.options.updatePageReferences)return null;const c=this.firstFieldArgument(s);o=c?`${l[c]??1}`:"";break}}return o==null?null:this.applyFieldFormatting(o,e)}renderDefaultStyle(){var e=this.className,t=`
+import { e as We } from './jszip.min-DnpxAPiE.js';
+import './markdown-it-vendor-DL4wSELR.js';
+import './markdown-vendor-DldLOD9R.js';
+import './ui-vendor-C-FKu2uc.js';
+const Pe =
+  ((Ue = We),
+  ($e = {
+    './comments/comments-extended-part': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }), (f.CommentsExtendedPart = void 0));
+      const d = E('../common/part'),
+        i = E('../utils');
+      class T extends d.Part {
+        constructor(a, C) {
+          (super(a, C), (this.comments = []));
+        }
+        parseXml(a) {
+          const C = this._package.xmlParser;
+          for (let D of C.elements(a, 'commentEx'))
+            this.comments.push({
+              paraId: C.attr(D, 'paraId'),
+              paraIdParent: C.attr(D, 'paraIdParent'),
+              done: C.boolAttr(D, 'done'),
+            });
+          this.commentMap = (0, i.keyBy)(this.comments, (D) => D.paraId);
+        }
+      }
+      f.CommentsExtendedPart = T;
+    },
+    './comments/comments-part': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }), (f.CommentsPart = void 0));
+      const d = E('../common/part'),
+        i = E('../utils');
+      class T extends d.Part {
+        constructor(a, C, D) {
+          (super(a, C), (this._documentParser = D));
+        }
+        parseXml(a) {
+          ((this.comments = this._documentParser.parseComments(a)),
+            (this.commentMap = (0, i.keyBy)(this.comments, (C) => C.id)));
+        }
+      }
+      f.CommentsPart = T;
+    },
+    './comments/elements': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.WmlCommentRangeEnd =
+          f.WmlCommentRangeStart =
+          f.WmlCommentReference =
+          f.WmlComment =
+            void 0));
+      const d = E('../document/dom');
+      class i extends d.OpenXmlElementBase {
+        constructor() {
+          (super(...arguments), (this.type = d.DomType.Comment));
+        }
+      }
+      f.WmlComment = i;
+      class T extends d.OpenXmlElementBase {
+        constructor(D) {
+          (super(), (this.id = D), (this.type = d.DomType.CommentReference));
+        }
+      }
+      f.WmlCommentReference = T;
+      class k extends d.OpenXmlElementBase {
+        constructor(D) {
+          (super(), (this.id = D), (this.type = d.DomType.CommentRangeStart));
+        }
+      }
+      f.WmlCommentRangeStart = k;
+      class a extends d.OpenXmlElementBase {
+        constructor(D) {
+          (super(), (this.id = D), (this.type = d.DomType.CommentRangeEnd));
+        }
+      }
+      f.WmlCommentRangeEnd = a;
+    },
+    './common/content-types': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.parseContentTypes = function (d, i) {
+          return i
+            .elements(d)
+            .map((T) => ({
+              extension: i.attr(T, 'Extension'),
+              partName: i.attr(T, 'PartName'),
+              contentType: i.attr(T, 'ContentType'),
+            }));
+        }));
+    },
+    './common/open-xml-package': function (E, H, f) {
+      var d =
+        (this && this.__importDefault) ||
+        function (A) {
+          return A && A.__esModule ? A : { default: A };
+        };
+      (Object.defineProperty(f, '__esModule', { value: !0 }), (f.OpenXmlPackage = void 0));
+      const i = d(E('jszip')),
+        T = E('../parser/xml-parser'),
+        k = E('../utils'),
+        a = E('./relationship'),
+        C = E('./content-types');
+      class D {
+        constructor(e, t) {
+          ((this._zip = e), (this.options = t), (this.xmlParser = new T.XmlParser()));
+        }
+        get(e) {
+          const t = (function (n) {
+            return n.startsWith('/') ? n.substr(1) : n;
+          })(e);
+          return this._zip.files[t] ?? this._zip.files[t.replace(/\//g, '\\')];
+        }
+        update(e, t) {
+          this._zip.file(e, t);
+        }
+        static async load(e, t) {
+          const n = await i.default.loadAsync(e);
+          return new D(n, t);
+        }
+        save(e = 'blob') {
+          return this._zip.generateAsync({ type: e });
+        }
+        load(e, t = 'string') {
+          return this.get(e)?.async(t) ?? Promise.resolve(null);
+        }
+        async loadRelationships(e = null) {
+          let t = '_rels/.rels';
+          if (e != null) {
+            const [l, u] = (0, k.splitPath)(e);
+            t = `${l}_rels/${u}.rels`;
+          }
+          const n = await this.load(t);
+          return n ? (0, a.parseRelationships)(M(this.parseXmlDocument(n)), this.xmlParser) : null;
+        }
+        async loadContentTypes() {
+          const e = await this.load('[Content_Types].xml');
+          return e ? (0, C.parseContentTypes)(M(this.parseXmlDocument(e)), this.xmlParser) : [];
+        }
+        parseXmlDocument(e) {
+          return (0, T.parseXmlString)(e, this.options.trimXmlDeclaration);
+        }
+      }
+      function M(A) {
+        return A.firstElementChild ?? A.documentElement;
+      }
+      f.OpenXmlPackage = D;
+    },
+    './common/part': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }), (f.Part = void 0));
+      const d = E('../parser/xml-parser');
+      f.Part = class {
+        constructor(i, T) {
+          ((this._package = i), (this.path = T));
+        }
+        async load() {
+          this.rels = await this._package.loadRelationships(this.path);
+          const i = await this._package.load(this.path),
+            T = this._package.parseXmlDocument(i);
+          (this._package.options.keepOrigin && (this._xmlDocument = T),
+            this.parseXml(T.firstElementChild ?? T.documentElement));
+        }
+        save() {
+          this._package.update(this.path, (0, d.serializeXmlString)(this._xmlDocument));
+        }
+        parseXml(i) {}
+      };
+    },
+    './common/relationship': function (E, H, f) {
+      var d;
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.RelationshipTypes = void 0),
+        (f.parseRelationships = function (i, T) {
+          return T.elements(i).map((k) => ({
+            id: T.attr(k, 'Id'),
+            type: T.attr(k, 'Type'),
+            target: T.attr(k, 'Target'),
+            targetMode: T.attr(k, 'TargetMode'),
+          }));
+        }),
+        (function (i) {
+          ((i.OfficeDocument =
+            'http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument'),
+            (i.FontTable =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable'),
+            (i.Image = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image'),
+            (i.Numbering =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering'),
+            (i.Styles =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles'),
+            (i.StylesWithEffects =
+              'http://schemas.microsoft.com/office/2007/relationships/stylesWithEffects'),
+            (i.Theme = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme'),
+            (i.Settings =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings'),
+            (i.WebSettings =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/webSettings'),
+            (i.Hyperlink =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink'),
+            (i.Footnotes =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/footnotes'),
+            (i.Endnotes =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/endnotes'),
+            (i.Footer =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer'),
+            (i.Header =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/header'),
+            (i.ExtendedProperties =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties'),
+            (i.CoreProperties =
+              'http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties'),
+            (i.CustomProperties =
+              'http://schemas.openxmlformats.org/package/2006/relationships/metadata/custom-properties'),
+            (i.Comments =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments'),
+            (i.CommentsExtended =
+              'http://schemas.microsoft.com/office/2011/relationships/commentsExtended'),
+            (i.AltChunk =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/aFChunk'),
+            (i.Chart = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart'),
+            (i.ChartUserShapes =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/chartUserShapes'),
+            (i.DiagramData =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramData'),
+            (i.DiagramLayout =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramLayout'),
+            (i.DiagramQuickStyle =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramQuickStyle'),
+            (i.DiagramColors =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramColors'),
+            (i.Ink = 'http://schemas.microsoft.com/office/2007/relationships/ink'),
+            (i.ContentPart =
+              'http://schemas.openxmlformats.org/officeDocument/2006/relationships/contentPart'));
+        })(d || (f.RelationshipTypes = d = {})));
+    },
+    './document/bookmarks': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.parseBookmarkStart = function (i, T) {
+          return {
+            type: d.DomType.BookmarkStart,
+            id: T.attr(i, 'id'),
+            name: T.attr(i, 'name'),
+            colFirst: T.intAttr(i, 'colFirst'),
+            colLast: T.intAttr(i, 'colLast'),
+          };
+        }),
+        (f.parseBookmarkEnd = function (i, T) {
+          return { type: d.DomType.BookmarkEnd, id: T.attr(i, 'id') };
+        }));
+      const d = E('./dom');
+    },
+    './document/border': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.parseBorder = i),
+        (f.parseBorders = function (T, k) {
+          var a = {};
+          for (let C of k.elements(T))
+            switch (C.localName) {
+              case 'left':
+                a.left = i(C, k);
+                break;
+              case 'top':
+                a.top = i(C, k);
+                break;
+              case 'right':
+                a.right = i(C, k);
+                break;
+              case 'bottom':
+                a.bottom = i(C, k);
+            }
+          return a;
+        }));
+      const d = E('./common');
+      function i(T, k) {
+        return {
+          type: k.attr(T, 'val'),
+          color: k.attr(T, 'color'),
+          size: k.lengthAttr(T, 'sz', d.LengthUsage.Border),
+          offset: k.lengthAttr(T, 'space', d.LengthUsage.Point),
+          frame: k.boolAttr(T, 'frame'),
+          shadow: k.boolAttr(T, 'shadow'),
+        };
+      }
+    },
+    './document/common': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.LengthUsage = f.ns = void 0),
+        (f.convertLength = function (i, T = f.LengthUsage.Dxa) {
+          if (i == null || i === '' || /.+(p[xt]|[%])$/i.test(i)) return i;
+          var k = parseFloat(i);
+          if (Number.isNaN(k)) return null;
+          var a = k * T.mul;
+          return (
+            T.min != null && T.max != null && (a = (0, d.clamp)(a, T.min, T.max)),
+            `${a.toFixed(2)}${T.unit}`
+          );
+        }),
+        (f.convertBoolean = function (i, T = !1) {
+          switch (i) {
+            case '1':
+            case 'on':
+            case 'true':
+              return !0;
+            case '0':
+            case 'off':
+            case 'false':
+              return !1;
+            default:
+              return T;
+          }
+        }),
+        (f.convertPercentage = function (i) {
+          return i ? parseInt(i) / 100 : null;
+        }),
+        (f.parseCommonProperty = function (i, T, k) {
+          if (i.namespaceURI != f.ns.wordml) return !1;
+          switch (i.localName) {
+            case 'color':
+              T.color = k.attr(i, 'val');
+              break;
+            case 'sz':
+              T.fontSize = k.lengthAttr(i, 'val', f.LengthUsage.FontSize);
+              break;
+            case 'szCs':
+              T.fontSize ?? (T.fontSize = k.lengthAttr(i, 'val', f.LengthUsage.FontSize));
+              break;
+            default:
+              return !1;
+          }
+          return !0;
+        }));
+      const d = E('../utils');
+      ((f.ns = {
+        wordml: 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
+        drawingml: 'http://schemas.openxmlformats.org/drawingml/2006/main',
+        picture: 'http://schemas.openxmlformats.org/drawingml/2006/picture',
+        wordprocessingCanvas: 'http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas',
+        wordprocessingGroup: 'http://schemas.microsoft.com/office/word/2010/wordprocessingGroup',
+        wordprocessingShape: 'http://schemas.microsoft.com/office/word/2010/wordprocessingShape',
+        chart: 'http://schemas.openxmlformats.org/drawingml/2006/chart',
+        diagram: 'http://schemas.openxmlformats.org/drawingml/2006/diagram',
+        relationship: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
+        drawing2014: 'http://schemas.microsoft.com/office/drawing/2014/main',
+        ink2010: 'http://schemas.microsoft.com/office/2010/ink',
+        word2010: 'http://schemas.microsoft.com/office/word/2010/wordml',
+        compatibility: 'http://schemas.openxmlformats.org/markup-compatibility/2006',
+        math: 'http://schemas.openxmlformats.org/officeDocument/2006/math',
+      }),
+        (f.LengthUsage = {
+          Dxa: { mul: 0.05, unit: 'pt' },
+          SignedDxa: { mul: 0.05, unit: 'pt' },
+          Emu: { mul: 1 / 12700, unit: 'pt' },
+          FontSize: { mul: 0.5, unit: 'pt' },
+          SignedHalfPoint: { mul: 0.5, unit: 'pt' },
+          Border: { mul: 0.125, unit: 'pt', min: 0.25, max: 12 },
+          Point: { mul: 1, unit: 'pt' },
+          Percent: { mul: 0.02, unit: '%' },
+          LineHeight: { mul: 1 / 240, unit: '' },
+          VmlEmu: { mul: 1 / 12700, unit: '' },
+        }));
+    },
+    './document/document-part': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }), (f.DocumentPart = void 0));
+      const d = E('../common/part');
+      class i extends d.Part {
+        constructor(k, a, C) {
+          (super(k, a), (this._documentParser = C));
+        }
+        parseXml(k) {
+          this.body = this._documentParser.parseDocumentFile(k);
+        }
+      }
+      f.DocumentPart = i;
+    },
+    './document/document': function (E, H, f) {
+      Object.defineProperty(f, '__esModule', { value: !0 });
+    },
+    './document/dom': function (E, H, f) {
+      var d;
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.OpenXmlElementBase = f.DomType = void 0),
+        (function (i) {
+          ((i.Document = 'document'),
+            (i.Paragraph = 'paragraph'),
+            (i.Run = 'run'),
+            (i.Break = 'break'),
+            (i.NoBreakHyphen = 'noBreakHyphen'),
+            (i.Table = 'table'),
+            (i.Row = 'row'),
+            (i.Cell = 'cell'),
+            (i.Hyperlink = 'hyperlink'),
+            (i.SmartTag = 'smartTag'),
+            (i.Drawing = 'drawing'),
+            (i.Image = 'image'),
+            (i.Text = 'text'),
+            (i.Tab = 'tab'),
+            (i.PositionalTab = 'positionalTab'),
+            (i.SoftHyphen = 'softHyphen'),
+            (i.Symbol = 'symbol'),
+            (i.BookmarkStart = 'bookmarkStart'),
+            (i.BookmarkEnd = 'bookmarkEnd'),
+            (i.Footer = 'footer'),
+            (i.Header = 'header'),
+            (i.FootnoteReference = 'footnoteReference'),
+            (i.EndnoteReference = 'endnoteReference'),
+            (i.Footnote = 'footnote'),
+            (i.Endnote = 'endnote'),
+            (i.SimpleField = 'simpleField'),
+            (i.ComplexField = 'complexField'),
+            (i.Instruction = 'instruction'),
+            (i.VmlPicture = 'vmlPicture'),
+            (i.MmlMath = 'mmlMath'),
+            (i.Shape = 'shape'),
+            (i.MmlMathParagraph = 'mmlMathParagraph'),
+            (i.MmlFraction = 'mmlFraction'),
+            (i.MmlFunction = 'mmlFunction'),
+            (i.MmlFunctionName = 'mmlFunctionName'),
+            (i.MmlNumerator = 'mmlNumerator'),
+            (i.MmlDenominator = 'mmlDenominator'),
+            (i.MmlRadical = 'mmlRadical'),
+            (i.MmlBase = 'mmlBase'),
+            (i.MmlDegree = 'mmlDegree'),
+            (i.MmlSuperscript = 'mmlSuperscript'),
+            (i.MmlSubscript = 'mmlSubscript'),
+            (i.MmlPreSubSuper = 'mmlPreSubSuper'),
+            (i.MmlSubArgument = 'mmlSubArgument'),
+            (i.MmlSuperArgument = 'mmlSuperArgument'),
+            (i.MmlNary = 'mmlNary'),
+            (i.MmlDelimiter = 'mmlDelimiter'),
+            (i.MmlRun = 'mmlRun'),
+            (i.MmlEquationArray = 'mmlEquationArray'),
+            (i.MmlLimit = 'mmlLimit'),
+            (i.MmlLimitLower = 'mmlLimitLower'),
+            (i.MmlLimitUpper = 'mmlLimitUpper'),
+            (i.MmlSubSuperscript = 'mmlSubSuperscript'),
+            (i.MmlPhantom = 'mmlPhantom'),
+            (i.MmlBorderBox = 'mmlBorderBox'),
+            (i.MmlAccent = 'mmlAccent'),
+            (i.MmlMatrix = 'mmlMatrix'),
+            (i.MmlMatrixRow = 'mmlMatrixRow'),
+            (i.MmlBox = 'mmlBox'),
+            (i.MmlBar = 'mmlBar'),
+            (i.MmlGroupChar = 'mmlGroupChar'),
+            (i.VmlElement = 'vmlElement'),
+            (i.Chart = 'chart'),
+            (i.SmartArt = 'smartArt'),
+            (i.Ink = 'ink'),
+            (i.Ruby = 'ruby'),
+            (i.RubyBase = 'rubyBase'),
+            (i.RubyText = 'rubyText'),
+            (i.Inserted = 'inserted'),
+            (i.Deleted = 'deleted'),
+            (i.DeletedText = 'deletedText'),
+            (i.Comment = 'comment'),
+            (i.CommentReference = 'commentReference'),
+            (i.CommentRangeStart = 'commentRangeStart'),
+            (i.CommentRangeEnd = 'commentRangeEnd'),
+            (i.AltChunk = 'altChunk'));
+        })(d || (f.DomType = d = {})),
+        (f.OpenXmlElementBase = class {
+          constructor() {
+            ((this.children = []), (this.cssStyle = {}));
+          }
+        }));
+    },
+    './document/fields': function (E, H, f) {
+      Object.defineProperty(f, '__esModule', { value: !0 });
+    },
+    './document/line-spacing': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.parseLineSpacing = function (d, i) {
+          return {
+            before: i.lengthAttr(d, 'before'),
+            after: i.lengthAttr(d, 'after'),
+            line: i.intAttr(d, 'line'),
+            lineRule: i.attr(d, 'lineRule'),
+          };
+        }));
+    },
+    './document/paragraph': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.parseParagraphProperties = function (M, A) {
+          let e = {};
+          for (let t of A.elements(M)) a(t, e, A);
+          return e;
+        }),
+        (f.parseParagraphProperty = a),
+        (f.parseTabs = C),
+        (f.parseNumbering = D));
+      const d = E('./common'),
+        i = E('./section'),
+        T = E('./line-spacing'),
+        k = E('./run');
+      function a(M, A, e) {
+        if (M.namespaceURI != d.ns.wordml) return !1;
+        if ((0, d.parseCommonProperty)(M, A, e)) return !0;
+        switch (M.localName) {
+          case 'tabs':
+            A.tabs = C(M, e);
+            break;
+          case 'sectPr':
+            A.sectionProps = (0, i.parseSectionProperties)(M, e);
+            break;
+          case 'numPr':
+            A.numbering = D(M, e);
+            break;
+          case 'spacing':
+            return ((A.lineSpacing = (0, T.parseLineSpacing)(M, e)), !1);
+          case 'textAlignment':
+            return ((A.textAlignment = e.attr(M, 'val')), !1);
+          case 'keepLines':
+            A.keepLines = e.boolAttr(M, 'val', !0);
+            break;
+          case 'keepNext':
+            A.keepNext = e.boolAttr(M, 'val', !0);
+            break;
+          case 'pageBreakBefore':
+            A.pageBreakBefore = e.boolAttr(M, 'val', !0);
+            break;
+          case 'widowControl':
+            A.widowControl = e.boolAttr(M, 'val', !0);
+            break;
+          case 'outlineLvl':
+            A.outlineLevel = e.intAttr(M, 'val');
+            break;
+          case 'pStyle':
+            A.styleName = e.attr(M, 'val');
+            break;
+          case 'rPr':
+            A.runProps = (0, k.parseRunProperties)(M, e);
+            break;
+          default:
+            return !1;
+        }
+        return !0;
+      }
+      function C(M, A) {
+        return A.elements(M, 'tab').map((e) => ({
+          position: A.lengthAttr(e, 'pos'),
+          leader: A.attr(e, 'leader'),
+          style: A.attr(e, 'val'),
+        }));
+      }
+      function D(M, A) {
+        var e = {};
+        for (let t of A.elements(M))
+          switch (t.localName) {
+            case 'numId':
+              e.id = A.attr(t, 'val');
+              break;
+            case 'ilvl':
+              e.level = A.intAttr(t, 'val');
+          }
+        return e;
+      }
+    },
+    './document/run': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.parseRunProperties = function (T, k) {
+          let a = {};
+          for (let C of k.elements(T)) i(C, a, k);
+          return a;
+        }),
+        (f.parseRunProperty = i));
+      const d = E('./common');
+      function i(T, k, a) {
+        return !!(0, d.parseCommonProperty)(T, k, a);
+      }
+    },
+    './document/section': function (E, H, f) {
+      var d =
+        (this && this.__importDefault) ||
+        function (A) {
+          return A && A.__esModule ? A : { default: A };
+        };
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.SectionType = void 0),
+        (f.isSectionPageBreak = function (A) {
+          return A == null || A === k.NextPage || A === k.EvenPage || A === k.OddPage;
+        }),
+        (f.isSectionColumnBreak = function (A) {
+          return A === k.NextColumn;
+        }),
+        (f.parseSectionProperties = function (A, e = i.default) {
+          var t = {};
+          for (let n of e.elements(A))
+            switch (n.localName) {
+              case 'pgSz':
+                t.pageSize = {
+                  width: e.lengthAttr(n, 'w'),
+                  height: e.lengthAttr(n, 'h'),
+                  orientation: e.attr(n, 'orient'),
+                };
+                break;
+              case 'type':
+                t.type = e.attr(n, 'val');
+                break;
+              case 'pgMar':
+                t.pageMargins = {
+                  left: e.lengthAttr(n, 'left'),
+                  right: e.lengthAttr(n, 'right'),
+                  top: e.lengthAttr(n, 'top'),
+                  bottom: e.lengthAttr(n, 'bottom'),
+                  header: e.lengthAttr(n, 'header'),
+                  footer: e.lengthAttr(n, 'footer'),
+                  gutter: e.lengthAttr(n, 'gutter'),
+                };
+                break;
+              case 'cols':
+                t.columns = a(n, e);
+                break;
+              case 'headerReference':
+                (t.headerRefs ?? (t.headerRefs = [])).push(M(n, e));
+                break;
+              case 'footerReference':
+                (t.footerRefs ?? (t.footerRefs = [])).push(M(n, e));
+                break;
+              case 'titlePg':
+                t.titlePage = e.boolAttr(n, 'val', !0);
+                break;
+              case 'pgBorders':
+                t.pageBorders = (0, T.parseBorders)(n, e);
+                break;
+              case 'pgNumType':
+                t.pageNumber = C(n, e);
+                break;
+              case 'docGrid':
+                t.docGrid = D(n, e);
+            }
+          return t;
+        }));
+      const i = d(E('../parser/xml-parser')),
+        T = E('./border');
+      var k;
+      function a(A, e) {
+        return {
+          numberOfColumns: e.intAttr(A, 'num'),
+          space: e.lengthAttr(A, 'space'),
+          separator: e.boolAttr(A, 'sep'),
+          equalWidth: e.boolAttr(A, 'equalWidth', !0),
+          columns: e
+            .elements(A, 'col')
+            .map((t) => ({ width: e.lengthAttr(t, 'w'), space: e.lengthAttr(t, 'space') })),
+        };
+      }
+      function C(A, e) {
+        return {
+          chapSep: e.attr(A, 'chapSep'),
+          chapStyle: e.attr(A, 'chapStyle'),
+          format: e.attr(A, 'fmt'),
+          start: e.intAttr(A, 'start'),
+        };
+      }
+      function D(A, e) {
+        const t = e.intAttr(A, 'charSpace', null);
+        return {
+          type: e.attr(A, 'type'),
+          linePitch: e.lengthAttr(A, 'linePitch'),
+          charSpace: t == null ? null : `${(t / 4096).toFixed(4)}em`,
+          charSpaceRaw: t,
+        };
+      }
+      function M(A, e) {
+        return { id: e.attr(A, 'id'), type: e.attr(A, 'type') };
+      }
+      (function (A) {
+        ((A.Continuous = 'continuous'),
+          (A.NextPage = 'nextPage'),
+          (A.NextColumn = 'nextColumn'),
+          (A.EvenPage = 'evenPage'),
+          (A.OddPage = 'oddPage'));
+      })(k || (f.SectionType = k = {}));
+    },
+    './document/style': function (E, H, f) {
+      Object.defineProperty(f, '__esModule', { value: !0 });
+    },
+    './document-parser': function (E, H, f) {
+      var d =
+        (this && this.__importDefault) ||
+        function (s) {
+          return s && s.__esModule ? s : { default: s };
+        };
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.DocumentParser = f.autos = void 0));
+      const i = E('./document/dom'),
+        T = E('./document/paragraph'),
+        k = E('./document/section'),
+        a = d(E('./parser/xml-parser')),
+        C = E('./document/run'),
+        D = E('./document/bookmarks'),
+        M = E('./document/common'),
+        A = E('./vml/vml'),
+        e = E('./comments/elements'),
+        t = E('./utils');
+      f.autos = { shd: 'inherit', color: 'black', borderColor: 'black', highlight: 'transparent' };
+      const n = [
+          M.ns.wordprocessingShape,
+          M.ns.wordprocessingCanvas,
+          M.ns.wordprocessingGroup,
+          M.ns.drawingml,
+          M.ns.picture,
+        ],
+        l = {
+          oMath: i.DomType.MmlMath,
+          oMathPara: i.DomType.MmlMathParagraph,
+          f: i.DomType.MmlFraction,
+          func: i.DomType.MmlFunction,
+          fName: i.DomType.MmlFunctionName,
+          num: i.DomType.MmlNumerator,
+          den: i.DomType.MmlDenominator,
+          rad: i.DomType.MmlRadical,
+          deg: i.DomType.MmlDegree,
+          e: i.DomType.MmlBase,
+          sSup: i.DomType.MmlSuperscript,
+          sSub: i.DomType.MmlSubscript,
+          sPre: i.DomType.MmlPreSubSuper,
+          sup: i.DomType.MmlSuperArgument,
+          sub: i.DomType.MmlSubArgument,
+          d: i.DomType.MmlDelimiter,
+          nary: i.DomType.MmlNary,
+          eqArr: i.DomType.MmlEquationArray,
+          lim: i.DomType.MmlLimit,
+          limLow: i.DomType.MmlLimitLower,
+          limUpp: i.DomType.MmlLimitUpper,
+          sSubSup: i.DomType.MmlSubSuperscript,
+          phant: i.DomType.MmlPhantom,
+          borderBox: i.DomType.MmlBorderBox,
+          acc: i.DomType.MmlAccent,
+          m: i.DomType.MmlMatrix,
+          mr: i.DomType.MmlMatrixRow,
+          box: i.DomType.MmlBox,
+          bar: i.DomType.MmlBar,
+          groupChr: i.DomType.MmlGroupChar,
+        };
+      f.DocumentParser = class {
+        constructor(s) {
+          this.options = { ignoreWidth: !1, debug: !1, hideWebHiddenContent: !1, ...s };
+        }
+        parseNotes(s, r, o) {
+          var c = [];
+          for (let h of a.default.elements(s, r)) {
+            const m = new o();
+            ((m.id = a.default.attr(h, 'id')),
+              (m.noteType = a.default.attr(h, 'type')),
+              (m.children = this.parseBodyElements(h)),
+              c.push(m));
+          }
+          return c;
+        }
+        parseComments(s) {
+          var r = [];
+          for (let o of a.default.elements(s, 'comment')) {
+            const c = new e.WmlComment();
+            ((c.id = a.default.attr(o, 'id')),
+              (c.author = a.default.attr(o, 'author')),
+              (c.initials = a.default.attr(o, 'initials')),
+              (c.date = a.default.attr(o, 'date')),
+              (c.children = this.parseBodyElements(o)),
+              r.push(c));
+          }
+          return r;
+        }
+        parseDocumentFile(s) {
+          var r = a.default.element(s, 'body'),
+            o = a.default.element(s, 'background'),
+            c = a.default.element(r, 'sectPr');
+          return {
+            type: i.DomType.Document,
+            children: this.parseBodyElements(r),
+            props: c ? (0, k.parseSectionProperties)(c, a.default) : {},
+            cssStyle: o ? this.parseBackground(o) : {},
+          };
+        }
+        parseBackground(s) {
+          var r = {},
+            o = p.colorAttr(s, 'color');
+          return (o && (r['background-color'] = o), r);
+        }
+        parseBodyElements(s) {
+          var r = [];
+          for (const o of a.default.elements(s))
+            switch (o.localName) {
+              case 'p':
+                r.push(this.parseParagraph(o));
+                break;
+              case 'altChunk':
+                r.push(this.parseAltChunk(o));
+                break;
+              case 'tbl':
+                r.push(this.parseTable(o));
+                break;
+              case 'sdt':
+                r.push(...this.parseSdt(o, (c) => this.parseBodyElements(c)));
+            }
+          return r;
+        }
+        parseStylesFile(s) {
+          var r = [];
+          for (const o of a.default.elements(s))
+            switch (o.localName) {
+              case 'style':
+                r.push(this.parseStyle(o));
+                break;
+              case 'docDefaults':
+                r.push(this.parseDefaultStyles(o));
+            }
+          return r;
+        }
+        parseDefaultStyles(s) {
+          var r = { id: null, name: null, target: null, basedOn: null, styles: [] };
+          for (const h of a.default.elements(s))
+            switch (h.localName) {
+              case 'rPrDefault':
+                var o = a.default.element(h, 'rPr');
+                o && r.styles.push({ target: 'span', values: this.parseDefaultProperties(o, {}) });
+                break;
+              case 'pPrDefault':
+                var c = a.default.element(h, 'pPr');
+                c && r.styles.push({ target: 'p', values: this.parseDefaultProperties(c, {}) });
+            }
+          return r;
+        }
+        parseStyle(s) {
+          var r = {
+            id: a.default.attr(s, 'styleId'),
+            isDefault: a.default.boolAttr(s, 'default'),
+            name: null,
+            target: null,
+            basedOn: null,
+            styles: [],
+            linked: null,
+          };
+          switch (a.default.attr(s, 'type')) {
+            case 'paragraph':
+              r.target = 'p';
+              break;
+            case 'table':
+              r.target = 'table';
+              break;
+            case 'character':
+              r.target = 'span';
+          }
+          for (const o of a.default.elements(s))
+            switch (o.localName) {
+              case 'basedOn':
+                r.basedOn = a.default.attr(o, 'val');
+                break;
+              case 'name':
+                r.name = a.default.attr(o, 'val');
+                break;
+              case 'link':
+                r.linked = a.default.attr(o, 'val');
+                break;
+              case 'next':
+                r.next = a.default.attr(o, 'val');
+                break;
+              case 'aliases':
+                r.aliases = a.default.attr(o, 'val').split(',');
+                break;
+              case 'pPr':
+                (r.styles.push({ target: 'p', values: this.parseDefaultProperties(o, {}) }),
+                  (r.paragraphProps = (0, T.parseParagraphProperties)(o, a.default)));
+                break;
+              case 'rPr':
+                (r.styles.push({ target: 'span', values: this.parseDefaultProperties(o, {}) }),
+                  (r.runProps = (0, C.parseRunProperties)(o, a.default)));
+                break;
+              case 'tblPr':
+              case 'tcPr':
+                r.styles.push({ target: 'td', values: this.parseDefaultProperties(o, {}) });
+                break;
+              case 'tblStylePr':
+                for (let c of this.parseTableStyle(o)) r.styles.push(c);
+                break;
+              case 'rsid':
+              case 'qFormat':
+              case 'hidden':
+              case 'semiHidden':
+              case 'unhideWhenUsed':
+              case 'autoRedefine':
+              case 'uiPriority':
+                break;
+              default:
+                this.options.debug && console.warn(`DOCX: Unknown style element: ${o.localName}`);
+            }
+          return r;
+        }
+        parseTableStyle(s) {
+          var r = [],
+            o = '',
+            c = '';
+          switch (a.default.attr(s, 'type')) {
+            case 'firstRow':
+              ((c = '.first-row'), (o = 'tr.first-row td'));
+              break;
+            case 'lastRow':
+              ((c = '.last-row'), (o = 'tr.last-row td'));
+              break;
+            case 'firstCol':
+              ((c = '.first-col'), (o = 'td.first-col'));
+              break;
+            case 'lastCol':
+              ((c = '.last-col'), (o = 'td.last-col'));
+              break;
+            case 'band1Vert':
+              ((c = ':not(.no-vband)'), (o = 'td.odd-col'));
+              break;
+            case 'band2Vert':
+              ((c = ':not(.no-vband)'), (o = 'td.even-col'));
+              break;
+            case 'band1Horz':
+              ((c = ':not(.no-hband)'), (o = 'tr.odd-row'));
+              break;
+            case 'band2Horz':
+              ((c = ':not(.no-hband)'), (o = 'tr.even-row'));
+              break;
+            default:
+              return [];
+          }
+          for (const h of a.default.elements(s))
+            switch (h.localName) {
+              case 'pPr':
+                r.push({ target: `${o} p`, mod: c, values: this.parseDefaultProperties(h, {}) });
+                break;
+              case 'rPr':
+                r.push({ target: `${o} span`, mod: c, values: this.parseDefaultProperties(h, {}) });
+                break;
+              case 'tblPr':
+              case 'tcPr':
+                r.push({ target: o, mod: c, values: this.parseDefaultProperties(h, {}) });
+            }
+          return r;
+        }
+        parseNumberingFile(s) {
+          const r = [],
+            o = [],
+            c = {},
+            h = [],
+            m = [];
+          for (const P of a.default.elements(s))
+            switch (P.localName) {
+              case 'numPicBullet':
+                o.push(this.parseNumberingPicBullet(P));
+                break;
+              case 'abstractNum':
+                h.push(P);
+                break;
+              case 'num':
+                m.push(P);
+            }
+          for (const P of h)
+            c[a.default.attr(P, 'abstractNumId')] = this.parseAbstractNumbering(P, o);
+          for (const P of m) {
+            const x = a.default.attr(P, 'numId'),
+              y = (c[a.default.elementAttr(P, 'abstractNumId', 'val')] ?? []).map((w) =>
+                this.cloneNumberingLevel(w, x),
+              );
+            for (const w of a.default.elements(P, 'lvlOverride')) {
+              const N = a.default.intAttr(w, 'ilvl'),
+                $ = a.default.element(w, 'lvl'),
+                R = a.default.element(w, 'startOverride');
+              let X = y.find((Q) => Q.level == N);
+              if ($) {
+                X = this.parseNumberingLevel(x, $, o);
+                const Q = y.findIndex((ue) => ue.level == N);
+                Q >= 0 ? (y[Q] = X) : y.push(X);
+              }
+              R && X && (X.start = a.default.intAttr(R, 'val', X.start));
+            }
+            r.push(...y);
+          }
+          return r;
+        }
+        cloneNumberingLevel(s, r) {
+          return {
+            ...s,
+            id: r,
+            pStyle: { ...s.pStyle },
+            rStyle: { ...s.rStyle },
+            bullet: s.bullet ? { ...s.bullet } : null,
+          };
+        }
+        parseNumberingPicBullet(s) {
+          const r = a.default.intAttr(s, 'numPicBulletId'),
+            o = a.default.element(s, 'pict'),
+            c = o && a.default.element(o, 'shape'),
+            h = c && a.default.element(c, 'imagedata');
+          if (h) return { id: r, src: a.default.attr(h, 'id'), style: a.default.attr(c, 'style') };
+          const m = a.default.element(s, 'drawing'),
+            P = m ? this.findDescendant(m, 'blip') : null;
+          if (P) {
+            const x = m ? this.findDescendant(m, 'extent') : null,
+              y = [];
+            if (x) {
+              const w = a.default.lengthAttr(x, 'cx', M.LengthUsage.Emu),
+                N = a.default.lengthAttr(x, 'cy', M.LengthUsage.Emu);
+              (w && y.push(`width:${w};`), N && y.push(`height:${N};`));
+            }
+            return {
+              id: r,
+              src: a.default.attr(P, 'embed') ?? a.default.attr(P, 'link'),
+              style: y.join('') || void 0,
+            };
+          }
+          return null;
+        }
+        parseAbstractNumbering(s, r) {
+          var o = [],
+            c = a.default.attr(s, 'abstractNumId');
+          for (const h of a.default.elements(s))
+            h.localName === 'lvl' && o.push(this.parseNumberingLevel(c, h, r));
+          return o;
+        }
+        parseNumberingLevel(s, r, o) {
+          var c = {
+            id: s,
+            level: a.default.intAttr(r, 'ilvl'),
+            start: 1,
+            pStyleName: void 0,
+            pStyle: {},
+            rStyle: {},
+            suff: 'tab',
+          };
+          for (const m of a.default.elements(r))
+            switch (m.localName) {
+              case 'start':
+                c.start = a.default.intAttr(m, 'val');
+                break;
+              case 'pPr':
+                this.parseDefaultProperties(m, c.pStyle);
+                break;
+              case 'rPr':
+                this.parseDefaultProperties(m, c.rStyle);
+                break;
+              case 'lvlPicBulletId':
+                var h = a.default.intAttr(m, 'val');
+                c.bullet = o.find((P) => P?.id == h);
+                break;
+              case 'lvlText':
+                c.levelText = a.default.attr(m, 'val');
+                break;
+              case 'pStyle':
+                c.pStyleName = a.default.attr(m, 'val');
+                break;
+              case 'numFmt':
+                c.format = a.default.attr(m, 'val');
+                break;
+              case 'lvlRestart':
+                c.restart = a.default.intAttr(m, 'val');
+                break;
+              case 'suff':
+                c.suff = a.default.attr(m, 'val');
+            }
+          return c;
+        }
+        parseSdt(s, r) {
+          const o = a.default.element(s, 'sdtContent');
+          return o ? r(o) : [];
+        }
+        parseInserted(s, r) {
+          return { type: i.DomType.Inserted, children: r(s)?.children ?? [] };
+        }
+        parseDeleted(s, r) {
+          return { type: i.DomType.Deleted, children: r(s)?.children ?? [] };
+        }
+        parseAltChunk(s) {
+          return { type: i.DomType.AltChunk, children: [], id: a.default.attr(s, 'id') };
+        }
+        parseParagraph(s) {
+          var r = { type: i.DomType.Paragraph, children: [] };
+          for (let o of a.default.elements(s))
+            switch (o.localName) {
+              case 'pPr':
+                this.parseParagraphProperties(o, r);
+                break;
+              case 'r':
+                r.children.push(this.parseRun(o, r));
+                break;
+              case 'hyperlink':
+                r.children.push(this.parseHyperlink(o, r));
+                break;
+              case 'smartTag':
+                r.children.push(this.parseSmartTag(o, r));
+                break;
+              case 'bookmarkStart':
+                r.children.push((0, D.parseBookmarkStart)(o, a.default));
+                break;
+              case 'bookmarkEnd':
+                r.children.push((0, D.parseBookmarkEnd)(o, a.default));
+                break;
+              case 'commentRangeStart':
+                r.children.push(new e.WmlCommentRangeStart(a.default.attr(o, 'id')));
+                break;
+              case 'commentRangeEnd':
+                r.children.push(new e.WmlCommentRangeEnd(a.default.attr(o, 'id')));
+                break;
+              case 'oMath':
+              case 'oMathPara': {
+                const c = this.parseMathElement(o);
+                c && r.children.push(c);
+                break;
+              }
+              case 'sdt':
+                r.children.push(...this.parseSdt(o, (c) => this.parseParagraph(c).children));
+                break;
+              case 'ins':
+                r.children.push(this.parseInserted(o, (c) => this.parseParagraph(c)));
+                break;
+              case 'del':
+                r.children.push(this.parseDeleted(o, (c) => this.parseParagraph(c)));
+            }
+          return r;
+        }
+        parseParagraphProperties(s, r) {
+          this.parseDefaultProperties(s, (r.cssStyle = {}), null, (o) => {
+            if (o.localName == 'rPr') {
+              a.default.element(o, 'del') &&
+                (r.props = { ...(r.props ?? {}), deletedParagraphMark: !0 });
+              const c = r.cssStyle['background-color'];
+              return (
+                this.parseDefaultProperties(o, r.cssStyle),
+                c == null
+                  ? delete r.cssStyle['background-color']
+                  : (r.cssStyle['background-color'] = c),
+                (0, T.parseParagraphProperty)(o, r, a.default),
+                !0
+              );
+            }
+            if ((0, T.parseParagraphProperty)(o, r, a.default)) return !0;
+            switch (o.localName) {
+              case 'pStyle':
+                r.styleName = a.default.attr(o, 'val');
+                break;
+              case 'cnfStyle':
+                r.className = g.classNameOfCnfStyle(o);
+                break;
+              case 'framePr':
+                this.parseFrame(o, r);
+                break;
+              default:
+                return !1;
+            }
+            return !0;
+          });
+        }
+        parseFrame(s, r) {
+          a.default.attr(s, 'dropCap') == 'drop' && (r.cssStyle.float = 'left');
+        }
+        parseHyperlink(s, r) {
+          var o = { type: i.DomType.Hyperlink, parent: r, children: [] };
+          ((o.anchor = a.default.attr(s, 'anchor')), (o.id = a.default.attr(s, 'id')));
+          for (const c of a.default.elements(s))
+            c.localName === 'r' && o.children.push(this.parseRun(c, o));
+          return o;
+        }
+        parseSmartTag(s, r) {
+          var o = { type: i.DomType.SmartTag, parent: r, children: [] },
+            c = a.default.attr(s, 'uri'),
+            h = a.default.attr(s, 'element');
+          (c && (o.uri = c), h && (o.element = h));
+          for (const m of a.default.elements(s))
+            switch (m.localName) {
+              case 'r':
+                o.children.push(this.parseRun(m, o));
+                break;
+              case 'smartTag':
+                o.children.push(this.parseSmartTag(m, o));
+            }
+          return o;
+        }
+        parseSimpleField(s, r) {
+          const o = {
+            type: i.DomType.SimpleField,
+            parent: r,
+            children: [],
+            instruction: a.default.attr(s, 'instr'),
+            lock: a.default.boolAttr(s, 'lock', !1),
+            dirty: a.default.boolAttr(s, 'dirty', !1),
+          };
+          for (const c of a.default.elements(s))
+            switch (c.localName) {
+              case 'r':
+                o.children.push(this.parseRun(c, o));
+                break;
+              case 'hyperlink':
+                o.children.push(this.parseHyperlink(c, o));
+                break;
+              case 'smartTag':
+                o.children.push(this.parseSmartTag(c, o));
+                break;
+              case 'bookmarkStart':
+                o.children.push((0, D.parseBookmarkStart)(c, a.default));
+                break;
+              case 'bookmarkEnd':
+                o.children.push((0, D.parseBookmarkEnd)(c, a.default));
+                break;
+              case 'commentRangeStart':
+                o.children.push(new e.WmlCommentRangeStart(a.default.attr(c, 'id')));
+                break;
+              case 'commentRangeEnd':
+                o.children.push(new e.WmlCommentRangeEnd(a.default.attr(c, 'id')));
+                break;
+              case 'sdt':
+                o.children.push(...this.parseSdt(c, (h) => this.parseParagraph(h).children));
+                break;
+              case 'ins':
+                o.children.push(this.parseInserted(c, (h) => this.parseParagraph(h)));
+                break;
+              case 'del':
+                o.children.push(this.parseDeleted(c, (h) => this.parseParagraph(h)));
+            }
+          return o;
+        }
+        parseRun(s, r) {
+          var o = { type: i.DomType.Run, parent: r, children: [] };
+          for (let c of a.default.elements(s))
+            if (((c = this.checkAlternateContent(c)), c))
+              switch (c.localName) {
+                case 't':
+                  o.children.push({ type: i.DomType.Text, text: c.textContent });
+                  break;
+                case 'delText':
+                  o.children.push({ type: i.DomType.DeletedText, text: c.textContent });
+                  break;
+                case 'commentReference':
+                  o.children.push(new e.WmlCommentReference(a.default.attr(c, 'id')));
+                  break;
+                case 'fldSimple':
+                  o.children.push(this.parseSimpleField(c, o));
+                  break;
+                case 'instrText':
+                  ((o.fieldRun = !0),
+                    o.children.push({ type: i.DomType.Instruction, text: c.textContent }));
+                  break;
+                case 'fldChar':
+                  ((o.fieldRun = !0),
+                    o.children.push({
+                      type: i.DomType.ComplexField,
+                      charType: a.default.attr(c, 'fldCharType'),
+                      lock: a.default.boolAttr(c, 'lock', !1),
+                      dirty: a.default.boolAttr(c, 'dirty', !1),
+                    }));
+                  break;
+                case 'noBreakHyphen':
+                  o.children.push({ type: i.DomType.NoBreakHyphen });
+                  break;
+                case 'softHyphen':
+                  o.children.push({ type: i.DomType.SoftHyphen });
+                  break;
+                case 'cr':
+                  o.children.push({ type: i.DomType.Break, break: 'line' });
+                  break;
+                case 'ptab':
+                  o.children.push({ type: i.DomType.PositionalTab });
+                  break;
+                case 'br':
+                  o.children.push({
+                    type: i.DomType.Break,
+                    break: a.default.attr(c, 'type') || 'textWrapping',
+                  });
+                  break;
+                case 'lastRenderedPageBreak':
+                  o.children.push({ type: i.DomType.Break, break: 'lastRenderedPageBreak' });
+                  break;
+                case 'sym':
+                  o.children.push({
+                    type: i.DomType.Symbol,
+                    font: (0, t.encloseFontFamily)(a.default.attr(c, 'font')),
+                    char: a.default.hexAttr(c, 'char'),
+                  });
+                  break;
+                case 'tab':
+                  o.children.push({ type: i.DomType.Tab });
+                  break;
+                case 'footnoteReference':
+                  o.children.push({
+                    type: i.DomType.FootnoteReference,
+                    id: a.default.attr(c, 'id'),
+                  });
+                  break;
+                case 'endnoteReference':
+                  o.children.push({
+                    type: i.DomType.EndnoteReference,
+                    id: a.default.attr(c, 'id'),
+                  });
+                  break;
+                case 'drawing':
+                  let h = this.parseDrawing(c);
+                  h && o.children.push(h);
+                  break;
+                case 'pict':
+                case 'object':
+                  o.children.push(this.parseVmlPicture(c));
+                  break;
+                case 'ruby':
+                  o.children.push(this.parseRuby(c));
+                  break;
+                case 'rPr':
+                  this.parseRunProperties(c, o);
+              }
+          return o;
+        }
+        parseRuby(s) {
+          const r = { type: i.DomType.Ruby, children: [] };
+          for (const o of a.default.elements(s))
+            switch (o.localName) {
+              case 'rubyPr':
+                for (const c of a.default.elements(o))
+                  c.localName === 'rubyAlign' && (r.align = a.default.attr(c, 'val'));
+                break;
+              case 'rt':
+                r.children.push(this.parseRubyContent(o, i.DomType.RubyText));
+                break;
+              case 'rubyBase':
+                r.children.push(this.parseRubyContent(o, i.DomType.RubyBase));
+            }
+          return r;
+        }
+        parseRubyContent(s, r) {
+          const o = { type: r, children: [] };
+          for (const c of a.default.elements(s))
+            if (c.localName == 'r') o.children.push(this.parseRun(c, o));
+            else if (r == i.DomType.RubyText && c.localName == 'rPr') {
+              const h = a.default.element(c, 'hps'),
+                m = h ? a.default.intAttr(h, 'val', null) : null;
+              m != null && (o.cssStyle = { ...(o.cssStyle ?? {}), fontSize: m / 2 + 'pt' });
+            }
+          return o;
+        }
+        parseMathElement(s) {
+          const r = `${s.localName}Pr`,
+            o = { type: l[s.localName], children: [] };
+          let c = !1;
+          const h = (m) => {
+            if (l[m.localName]) {
+              const x = this.parseMathElement(m);
+              x ? ((x.parent = o), o.children.push(x)) : (c = !0);
+            } else if (m.localName == 'r') {
+              var P = this.parseRun(m, o);
+              ((P.type = i.DomType.MmlRun), o.children.push(P));
+            } else if (m.localName == r) o.props = this.parseMathProperies(m);
+            else if (m.localName == 'ins') for (const x of a.default.elements(m)) h(x);
+            else if (m.localName == 'del')
+              if (this.options.renderChanges) for (const x of a.default.elements(m)) h(x);
+              else c = !0;
+          };
+          for (const m of a.default.elements(s)) h(m);
+          return c && !this.hasVisibleMathContent(o) ? null : o;
+        }
+        hasVisibleMathContent(s) {
+          for (const r of s.children ?? []) {
+            switch (r.type) {
+              case i.DomType.Text:
+                if (r.text?.length) return !0;
+                break;
+              case i.DomType.DeletedText:
+                if (this.options.renderChanges && r.text?.length) return !0;
+                break;
+              case i.DomType.Symbol:
+              case i.DomType.Tab:
+              case i.DomType.PositionalTab:
+              case i.DomType.NoBreakHyphen:
+              case i.DomType.Break:
+                return !0;
+            }
+            if (this.hasVisibleMathContent(r)) return !0;
+          }
+          return !1;
+        }
+        parseMathProperies(s) {
+          const r = {};
+          for (const o of a.default.elements(s))
+            switch (o.localName) {
+              case 'chr':
+                r.char = a.default.attr(o, 'val');
+                break;
+              case 'vertJc':
+                r.verticalJustification = a.default.attr(o, 'val');
+                break;
+              case 'pos':
+                r.position = a.default.attr(o, 'val');
+                break;
+              case 'degHide':
+                r.hideDegree = a.default.boolAttr(o, 'val');
+                break;
+              case 'begChr':
+                r.beginChar = a.default.attr(o, 'val');
+                break;
+              case 'endChr':
+                r.endChar = a.default.attr(o, 'val');
+                break;
+              case 'limLoc':
+                r.limitLocation = a.default.attr(o, 'val');
+                break;
+              case 'grow':
+                r.grow = a.default.boolAttr(o, 'val');
+                break;
+              case 'sepChr':
+                r.separatorChar = a.default.attr(o, 'val');
+            }
+          return r;
+        }
+        parseRunProperties(s, r) {
+          this.parseDefaultProperties(s, (r.cssStyle = {}), null, (o) => {
+            switch (o.localName) {
+              case 'rStyle':
+                r.styleName = a.default.attr(o, 'val');
+                break;
+              case 'vertAlign':
+                r.verticalAlign = g.valueOfVertAlign(o, !0);
+                break;
+              default:
+                return !1;
+            }
+            return !0;
+          });
+        }
+        parseVmlPicture(s) {
+          const r = { type: i.DomType.VmlPicture, children: [] };
+          for (const o of a.default.elements(s)) {
+            const c = (0, A.parseVmlElement)(o, this);
+            c && r.children.push(c);
+          }
+          return r;
+        }
+        checkAlternateContent(s) {
+          if (s.localName != 'AlternateContent') return s;
+          for (const o of a.default.elements(s).filter((c) => c.localName == 'Choice')) {
+            const c = (a.default.attr(o, 'Requires') ?? '').split(/\s+/).filter(Boolean);
+            if (c.length > 0 && c.every((h) => n.includes(s.lookupNamespaceURI(h)))) {
+              const h = a.default.elements(o)[0];
+              if (h) return h;
+            }
+          }
+          const r = a.default.element(s, 'Fallback');
+          return r ? a.default.elements(r)[0] : null;
+        }
+        parseDrawing(s) {
+          for (var r of a.default.elements(s))
+            switch (r.localName) {
+              case 'inline':
+              case 'anchor':
+                return this.parseDrawingWrapper(r);
+            }
+        }
+        parseDrawingWrapper(s) {
+          var r,
+            o,
+            c,
+            h,
+            m,
+            P,
+            x,
+            y,
+            w,
+            N,
+            $,
+            R = { type: i.DomType.Drawing, children: [], cssStyle: {}, props: {} },
+            X = s.localName == 'anchor';
+          const Q = (xe, pe) => {
+            pe && (R.cssStyle[xe] = g.addSize(R.cssStyle[xe], pe));
+          };
+          (Q('margin-left', a.default.lengthAttr(s, 'distL', M.LengthUsage.Emu)),
+            Q('margin-top', a.default.lengthAttr(s, 'distT', M.LengthUsage.Emu)),
+            Q('margin-right', a.default.lengthAttr(s, 'distR', M.LengthUsage.Emu)),
+            Q('margin-bottom', a.default.lengthAttr(s, 'distB', M.LengthUsage.Emu)));
+          let ue = null,
+            ve = null,
+            we = null,
+            Me = a.default.boolAttr(s, 'simplePos', !1),
+            _e = a.default.boolAttr(s, 'behindDoc', !1),
+            Re = a.default.intAttr(s, 'relativeHeight', null);
+          (Re != null && (R.cssStyle['z-index'] = `${Math.max(1, Math.round(Re / 1e3))}`),
+            _e && (R.cssStyle['z-index'] = '0'));
+          let de = { relative: 'page', align: 'left', offset: '0' },
+            fe = { relative: 'page', align: 'top', offset: '0' },
+            Ce = !1,
+            De = !1,
+            Le = !1;
+          for (var te of a.default.elements(s))
+            switch (te.localName) {
+              case 'simplePos':
+                Me &&
+                  ((de.offset = a.default.lengthAttr(te, 'x', M.LengthUsage.Emu)),
+                  (fe.offset = a.default.lengthAttr(te, 'y', M.LengthUsage.Emu)),
+                  (De = de.offset != null),
+                  (Le = fe.offset != null));
+                break;
+              case 'extent':
+                ((R.cssStyle.width = a.default.lengthAttr(te, 'cx', M.LengthUsage.Emu)),
+                  (R.cssStyle.height = a.default.lengthAttr(te, 'cy', M.LengthUsage.Emu)));
+                break;
+              case 'effectExtent':
+                (Q('margin-left', a.default.lengthAttr(te, 'l', M.LengthUsage.Emu)),
+                  Q('margin-top', a.default.lengthAttr(te, 't', M.LengthUsage.Emu)),
+                  Q('margin-right', a.default.lengthAttr(te, 'r', M.LengthUsage.Emu)),
+                  Q('margin-bottom', a.default.lengthAttr(te, 'b', M.LengthUsage.Emu)));
+                break;
+              case 'docPr':
+                ((R.props.title = a.default.attr(te, 'title') ?? a.default.attr(te, 'name')),
+                  (R.props.alt = a.default.attr(te, 'descr') ?? R.props.title));
+                break;
+              case 'positionH':
+              case 'positionV':
+                if (!Me) {
+                  let xe = te.localName == 'positionH',
+                    pe = xe ? de : fe;
+                  var Fe = a.default.element(te, 'align'),
+                    Be = a.default.element(te, 'posOffset');
+                  ((pe.relative = a.default.attr(te, 'relativeFrom') ?? pe.relative),
+                    Fe && ((pe.align = Fe.textContent), xe && (Ce = !0)),
+                    Be &&
+                      ((pe.offset = (0, M.convertLength)(Be.textContent, M.LengthUsage.Emu)),
+                      xe ? (De = pe.offset != null) : (Le = pe.offset != null)));
+                }
+                break;
+              case 'wrapTopAndBottom':
+                ue = 'wrapTopAndBottom';
+                break;
+              case 'wrapNone':
+                ue = 'wrapNone';
+                break;
+              case 'wrapSquare':
+                ((ue = 'wrapSquare'), (ve = a.default.attr(te, 'wrapText')));
+                break;
+              case 'wrapTight':
+                ((ue = 'wrapTight'),
+                  (ve = a.default.attr(te, 'wrapText')),
+                  (we = this.parseWrapPolygon(te)));
+                break;
+              case 'wrapThrough':
+                ((ue = 'wrapThrough'),
+                  (ve = a.default.attr(te, 'wrapText')),
+                  (we = this.parseWrapPolygon(te)));
+                break;
+              case 'graphic':
+                var le = this.parseGraphic(te);
+                le &&
+                  (le.type == i.DomType.Image
+                    ? ((r = le).alt ?? (r.alt = R.props.alt),
+                      (o = le).title ?? (o.title = R.props.title))
+                    : le.type == i.DomType.Shape
+                      ? ((c = le).alt ?? (c.alt = R.props.alt),
+                        (h = le).title ?? (h.title = R.props.title))
+                      : le.type == i.DomType.Chart
+                        ? ((m = le).alt ?? (m.alt = R.props.alt),
+                          (P = le).title ?? (P.title = R.props.title))
+                        : le.type == i.DomType.SmartArt
+                          ? ((x = le).alt ?? (x.alt = R.props.alt),
+                            (y = le).title ?? (y.title = R.props.title))
+                          : le.type == i.DomType.Ink &&
+                            ((w = le).alt ?? (w.alt = R.props.alt),
+                            (N = le).title ?? (N.title = R.props.title)),
+                  R.children.push(le));
+            }
+          R.props.anchorPosition = {
+            horizontal: { ...de },
+            vertical: { ...fe },
+            wrapType: ue,
+            layoutInCell: a.default.boolAttr(s, 'layoutInCell', !0),
+            simplePos: Me,
+          };
+          const Oe = () => {
+            switch (de.align) {
+              case 'center':
+                ((R.cssStyle['margin-left'] = 'auto'), (R.cssStyle['margin-right'] = 'auto'));
+                break;
+              case 'right':
+                R.cssStyle['margin-left'] = 'auto';
+            }
+          };
+          return (
+            ue == 'wrapTopAndBottom'
+              ? ((R.cssStyle.display = 'block'),
+                (R.cssStyle.clear = 'both'),
+                Ce
+                  ? Oe()
+                  : De &&
+                    de.offset &&
+                    (R.cssStyle['margin-inline-start'] = g.addSize(
+                      R.cssStyle['margin-inline-start'],
+                      de.offset,
+                    )),
+                Le &&
+                  fe.offset &&
+                  (R.cssStyle['margin-top'] = g.addSize(R.cssStyle['margin-top'], fe.offset)))
+              : ue == 'wrapNone'
+                ? ((R.cssStyle.display = 'block'),
+                  (R.cssStyle.position = X ? 'absolute' : 'relative'),
+                  de.offset && (R.cssStyle.left = de.offset),
+                  fe.offset && (R.cssStyle.top = fe.offset))
+                : ue == 'wrapSquare' || ue == 'wrapTight' || ue == 'wrapThrough'
+                  ? (we &&
+                      ((R.cssStyle['shape-outside'] = we),
+                      ($ = R.cssStyle)['clip-path'] ?? ($['clip-path'] = we)),
+                    ve == 'left'
+                      ? (R.cssStyle.float = 'right')
+                      : ve == 'right'
+                        ? (R.cssStyle.float = 'left')
+                        : de.align == 'left' || de.align == 'right'
+                          ? (R.cssStyle.float = de.align)
+                          : ((R.cssStyle.display = 'block'), Oe()))
+                  : !X || (de.align != 'left' && de.align != 'right')
+                    ? (R.cssStyle['vertical-align'] = 'text-bottom')
+                    : (R.cssStyle.float = de.align),
+            R
+          );
+        }
+        parseWrapPolygon(s) {
+          const r = a.default.element(s, 'wrapPolygon');
+          if (!r) return null;
+          const o = [],
+            c = (h) => {
+              const m = a.default.lengthAttr(h, 'x', M.LengthUsage.Emu),
+                P = a.default.lengthAttr(h, 'y', M.LengthUsage.Emu);
+              m && P && o.push(`${m} ${P}`);
+            };
+          for (const h of a.default.elements(r))
+            (h.localName != 'start' && h.localName != 'lineTo') || c(h);
+          return o.length >= 3 ? `polygon(${o.join(', ')})` : null;
+        }
+        parseGraphic(s) {
+          var r = a.default.element(s, 'graphicData');
+          if (!r) return null;
+          for (let c of a.default.elements(r))
+            switch (c.localName) {
+              case 'pic':
+                return this.parsePicture(c);
+              case 'wpc':
+              case 'wgp':
+              case 'grpSp':
+                return this.parseDrawingContainer(c);
+              case 'wsp':
+              case 'sp':
+              case 'cxnSp':
+                return this.parseWordprocessingShape(c);
+              case 'chart':
+                return this.parseChartReference(c);
+              case 'relIds':
+              case 'diagram':
+                return this.parseSmartArtReference(c);
+              case 'contentPart':
+              case 'ink':
+                return this.parseInkReference(c);
+            }
+          const o = this.findDescendant(r, 'contentPart');
+          return o ? this.parseInkReference(o) : null;
+        }
+        parseDrawingContainer(s) {
+          const r = {
+              type: i.DomType.Shape,
+              children: [],
+              cssStyle: {
+                display: 'inline-block',
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                overflow: 'visible',
+                'box-sizing': 'border-box',
+              },
+              props: { dmlContainer: !0 },
+            },
+            o = this.parseDmlGroupTransform(s);
+          for (const c of a.default.elements(s))
+            switch (c.localName) {
+              case 'wsp':
+              case 'sp':
+              case 'cxnSp':
+                const h = this.parseDmlPositionedShape(c, o);
+                h && r.children.push(h);
+                break;
+              case 'grpSp':
+              case 'wgp':
+                const m = this.parseDrawingContainer(c);
+                m && r.children.push(m);
+            }
+          return r;
+        }
+        parseDmlGroupTransform(s) {
+          const r = a.default.element(s, 'grpSpPr'),
+            o = r ? a.default.element(r, 'xfrm') : a.default.element(s, 'xfrm'),
+            c = o ? a.default.element(o, 'off') : null,
+            h = o ? a.default.element(o, 'ext') : null,
+            m = o ? a.default.element(o, 'chOff') : null,
+            P = o ? a.default.element(o, 'chExt') : null,
+            x = h ? a.default.floatAttr(h, 'cx', null) : null,
+            y = h ? a.default.floatAttr(h, 'cy', null) : null,
+            w = P ? a.default.floatAttr(P, 'cx', null) : null,
+            N = P ? a.default.floatAttr(P, 'cy', null) : null;
+          return {
+            offsetX: m ? a.default.floatAttr(m, 'x', 0) : 0,
+            offsetY: m ? a.default.floatAttr(m, 'y', 0) : 0,
+            left: c ? a.default.floatAttr(c, 'x', 0) : 0,
+            top: c ? a.default.floatAttr(c, 'y', 0) : 0,
+            scaleX: x && w ? x / w : 1,
+            scaleY: y && N ? y / N : 1,
+          };
+        }
+        parseDmlPositionedShape(s, r) {
+          const o = a.default.element(s, 'spPr');
+          if (!o) return null;
+          const c = this.parseDmlShapeBounds(o, r),
+            h = [];
+          let m = null,
+            P = !1;
+          for (const Q of a.default.elements(s))
+            switch (Q.localName) {
+              case 'txbx':
+              case 'textBox':
+                P = !0;
+                for (const ue of a.default.elements(Q, 'txbxContent'))
+                  h.push(...this.parseBodyElements(ue));
+                break;
+              case 'bodyPr':
+                m = Q;
+            }
+          m ?? (m = a.default.element(s, 'bodyPr'));
+          const x = {
+              position: 'absolute',
+              left: this.pt(c.left),
+              top: this.pt(c.top),
+              width: this.pt(c.width),
+              height: this.pt(c.height),
+              'box-sizing': 'border-box',
+              overflow: 'hidden',
+            },
+            y = a.default.element(s, 'cNvPr'),
+            w = a.default.element(o, 'custGeom'),
+            N = a.default.element(o, 'prstGeom'),
+            $ = this.parseDmlFillStyle(o),
+            R = this.parseDmlLineStyle(a.default.element(o, 'ln'));
+          if (w) {
+            const Q = this.parseDmlCustomGeometry(w);
+            return {
+              type: i.DomType.Shape,
+              children: [],
+              cssStyle: { ...x, overflow: 'visible' },
+              props: {
+                dmlSvg: !0,
+                viewBox: Q?.viewBox ?? '0 0 1 1',
+                pathD: Q?.d ?? '',
+                fill: $.fill ?? 'none',
+                stroke: R.stroke ?? 'none',
+                strokeWidth: R.strokeWidth ?? '0',
+                strokeDasharray: R.strokeDasharray,
+              },
+              title: y ? (a.default.attr(y, 'title') ?? a.default.attr(y, 'name')) : null,
+              alt: y ? a.default.attr(y, 'descr') : null,
+            };
+          }
+          ($.backgroundColor && (x['background-color'] = $.backgroundColor),
+            $.backgroundImage && (x['background-image'] = $.backgroundImage),
+            R.stroke && R.stroke != 'none'
+              ? (x.border = `${R.strokeWidth || '0.75pt'} ${R.borderType || 'solid'} ${R.stroke}`)
+              : (x.border = 'none'));
+          const X = P ? this.parseDmlTextBoxProperties(m) : null;
+          return {
+            type: i.DomType.Shape,
+            children: h,
+            cssStyle: x,
+            props: { dmlShape: !0, presetGeometry: N ? a.default.attr(N, 'prst') : null, ...X },
+            title: y ? (a.default.attr(y, 'title') ?? a.default.attr(y, 'name')) : null,
+            alt: y ? a.default.attr(y, 'descr') : null,
+          };
+        }
+        parseDmlShapeBounds(s, r) {
+          const o = a.default.element(s, 'xfrm'),
+            c = o ? a.default.element(o, 'off') : null,
+            h = o ? a.default.element(o, 'ext') : null,
+            m = r?.scaleX ?? 1,
+            P = r?.scaleY ?? 1,
+            x = r?.offsetX ?? 0,
+            y = r?.offsetY ?? 0,
+            w = r?.left ?? 0,
+            N = r?.top ?? 0,
+            $ = c ? a.default.floatAttr(c, 'x', 0) : 0,
+            R = c ? a.default.floatAttr(c, 'y', 0) : 0,
+            X = h ? a.default.floatAttr(h, 'cx', 0) : 0,
+            Q = h ? a.default.floatAttr(h, 'cy', 0) : 0;
+          return {
+            left: this.emuToPt(w + ($ - x) * m),
+            top: this.emuToPt(N + (R - y) * P),
+            width: Math.max(0, this.emuToPt(X * m)),
+            height: Math.max(0, this.emuToPt(Q * P)),
+          };
+        }
+        parseDmlFillStyle(s) {
+          if (a.default.element(s, 'noFill'))
+            return { fill: 'none', backgroundColor: 'transparent' };
+          const r = a.default.element(s, 'solidFill');
+          if (r) {
+            const c = this.parseDmlColor(r) ?? 'transparent';
+            return { fill: c, backgroundColor: c };
+          }
+          const o = a.default.element(s, 'pattFill');
+          if (o) {
+            const c = this.parseDmlColor(a.default.element(o, 'fgClr')) ?? 'currentColor',
+              h = this.parseDmlColor(a.default.element(o, 'bgClr')) ?? 'transparent',
+              m = a.default.attr(o, 'prst');
+            return {
+              fill: h,
+              backgroundColor: h,
+              backgroundImage: `repeating-linear-gradient(${m && m.toLowerCase().includes('horz') ? '0deg' : '90deg'}, ${c} 0, ${c} 0.75pt, ${h} 0.75pt, ${h} 3pt)`,
+            };
+          }
+          return { fill: 'none', backgroundColor: 'transparent' };
+        }
+        parseDmlLineStyle(s) {
+          if (!s || a.default.element(s, 'noFill'))
+            return { stroke: 'none', strokeWidth: '0', borderType: 'none' };
+          const r = this.parseDmlColor(a.default.element(s, 'solidFill')) ?? 'black',
+            o = a.default.attr(s, 'w')
+              ? this.pt(this.emuToPt(a.default.floatAttr(s, 'w', 0)))
+              : '0.75pt',
+            c = a.default.elementAttr(s, 'prstDash', 'val');
+          let h = null,
+            m = 'solid';
+          return (
+            c && c != 'solid' && ((m = 'dashed'), (h = c == 'dot' ? '1 2' : '4 3')),
+            { stroke: r, strokeWidth: o, borderType: m, strokeDasharray: h }
+          );
+        }
+        parseDmlCustomGeometry(s) {
+          const r = a.default.element(s, 'pathLst'),
+            o = r ? a.default.elements(r, 'path') : [];
+          let c = '',
+            h = 1,
+            m = 1;
+          for (const P of o) {
+            const x = a.default.floatAttr(P, 'w', h),
+              y = a.default.floatAttr(P, 'h', m);
+            ((h = Math.max(h, x || 1)),
+              (m = Math.max(m, y || 1)),
+              (c += this.parseDmlPathData(P, x || 1, y || 1)));
+          }
+          return { d: c.trim(), viewBox: `0 0 ${h} ${m}` };
+        }
+        parseDmlPathData(s, r, o) {
+          const c = [],
+            h = (m) => {
+              const P = a.default.element(m, 'pt');
+              return P
+                ? `${this.dmlCoord(a.default.attr(P, 'x'), r, o)} ${this.dmlCoord(a.default.attr(P, 'y'), r, o)}`
+                : '0 0';
+            };
+          for (const m of a.default.elements(s))
+            switch (m.localName) {
+              case 'moveTo':
+                c.push(`M ${h(m)}`);
+                break;
+              case 'lnTo':
+                c.push(`L ${h(m)}`);
+                break;
+              case 'cubicBezTo':
+                const P = a.default
+                  .elements(m, 'pt')
+                  .map(
+                    (y) =>
+                      `${this.dmlCoord(a.default.attr(y, 'x'), r, o)} ${this.dmlCoord(a.default.attr(y, 'y'), r, o)}`,
+                  );
+                P.length == 3 && c.push(`C ${P.join(' ')}`);
+                break;
+              case 'quadBezTo':
+                const x = a.default
+                  .elements(m, 'pt')
+                  .map(
+                    (y) =>
+                      `${this.dmlCoord(a.default.attr(y, 'x'), r, o)} ${this.dmlCoord(a.default.attr(y, 'y'), r, o)}`,
+                  );
+                x.length == 2 && c.push(`Q ${x.join(' ')}`);
+                break;
+              case 'close':
+                c.push('Z');
+            }
+          return c.join(' ') + ' ';
+        }
+        dmlCoord(s, r, o) {
+          if (s == 'w' || s == 'r') return r;
+          if (s == 'h' || s == 'b') return o;
+          if (s == 'l' || s == 't') return 0;
+          const c = parseFloat(s);
+          return Number.isFinite(c) ? c : 0;
+        }
+        dmlVerticalAlign(s) {
+          switch (s ? a.default.attr(s, 'anchor') : null) {
+            case 'ctr':
+              return 'center';
+            case 'b':
+              return 'flex-end';
+            default:
+              return 'flex-start';
+          }
+        }
+        applyDmlTextInsets(s, r) {
+          if (!s) return;
+          const o = {
+            lIns: 'padding-left',
+            tIns: 'padding-top',
+            rIns: 'padding-right',
+            bIns: 'padding-bottom',
+          };
+          for (const [c, h] of Object.entries(o)) {
+            const m = a.default.attr(s, c);
+            m != null && (r[h] = this.pt(this.emuToPt(parseFloat(m))));
+          }
+        }
+        parseDmlTextBoxProperties(s) {
+          const r = {};
+          return (
+            this.applyDmlTextInsets(s, r),
+            { dmlTextBox: !0, textInsets: r, textVerticalAlign: this.dmlVerticalAlign(s) }
+          );
+        }
+        emuToPt(s) {
+          return (Number.isFinite(s) ? s : 0) / 12700;
+        }
+        pt(s) {
+          return Math.round(100 * s) / 100 + 'pt';
+        }
+        parseChartReference(s) {
+          return {
+            type: i.DomType.Chart,
+            id: a.default.attr(s, 'id'),
+            cssStyle: { width: '100%', height: '100%' },
+          };
+        }
+        parseSmartArtReference(s) {
+          const r = s.localName == 'relIds' ? s : this.findDescendant(s, 'relIds');
+          return {
+            type: i.DomType.SmartArt,
+            dataId: r ? a.default.attr(r, 'dm') : a.default.attr(s, 'dm'),
+            layoutId: r ? a.default.attr(r, 'lo') : a.default.attr(s, 'lo'),
+            styleId: r ? a.default.attr(r, 'qs') : a.default.attr(s, 'qs'),
+            colorId: r ? a.default.attr(r, 'cs') : a.default.attr(s, 'cs'),
+            cssStyle: { width: '100%', height: '100%' },
+          };
+        }
+        parseInkReference(s) {
+          return {
+            type: i.DomType.Ink,
+            id: a.default.attr(s, 'id'),
+            cssStyle: { width: '100%', height: '100%' },
+          };
+        }
+        parseGraphicPlaceholder(s) {
+          return {
+            type: i.DomType.Shape,
+            children: [{ type: i.DomType.Text, text: `[${s}]` }],
+            cssStyle: {
+              display: 'inline-flex',
+              'align-items': 'center',
+              'justify-content': 'center',
+              border: '1px solid #999',
+              'background-color': '#f8f8f8',
+              color: '#555',
+              'min-width': '2in',
+              'min-height': '1in',
+            },
+          };
+        }
+        parseWordprocessingShape(s) {
+          const r = {
+              type: i.DomType.Shape,
+              children: [],
+              cssStyle: {
+                display: 'inline-block',
+                position: 'relative',
+                'box-sizing': 'border-box',
+                overflow: 'hidden',
+              },
+            },
+            o = this.findDescendant(s, 'cNvPr');
+          let c = null,
+            h = !1;
+          o &&
+            ((r.title = a.default.attr(o, 'title') ?? a.default.attr(o, 'name')),
+            (r.alt = a.default.attr(o, 'descr') ?? r.title));
+          for (const m of a.default.elements(s))
+            switch (m.localName) {
+              case 'spPr':
+                this.parseDmlShapeProperties(m, r.cssStyle);
+                break;
+              case 'txbx':
+              case 'textBox':
+                h = !0;
+                for (const P of a.default.elements(m, 'txbxContent'))
+                  r.children.push(...this.parseBodyElements(P));
+                break;
+              case 'bodyPr':
+                c = m;
+            }
+          return (h && (r.props = { ...(r.props ?? {}), ...this.parseDmlTextBoxProperties(c) }), r);
+        }
+        parseDmlShapeProperties(s, r) {
+          const o = a.default.element(s, 'xfrm');
+          if (o)
+            for (const P of a.default.elements(o))
+              switch (P.localName) {
+                case 'ext':
+                  ((r.width = a.default.lengthAttr(P, 'cx', M.LengthUsage.Emu)),
+                    (r.height = a.default.lengthAttr(P, 'cy', M.LengthUsage.Emu)));
+                  break;
+                case 'off':
+                  ((r.left = a.default.lengthAttr(P, 'x', M.LengthUsage.Emu)),
+                    (r.top = a.default.lengthAttr(P, 'y', M.LengthUsage.Emu)));
+              }
+          const c = a.default.element(s, 'solidFill'),
+            h = a.default.element(s, 'noFill'),
+            m = a.default.element(s, 'ln');
+          if (
+            (c
+              ? (r['background-color'] = this.parseDmlColor(c) ?? r['background-color'])
+              : h && (r['background-color'] = 'transparent'),
+            m)
+          ) {
+            const P = this.parseDmlColor(a.default.element(m, 'solidFill')) ?? 'black',
+              x = a.default.lengthAttr(m, 'w', M.LengthUsage.Emu) ?? '1px',
+              y = a.default.elementAttr(m, 'prstDash', 'val'),
+              w = y && y != 'solid' ? 'dashed' : 'solid';
+            r.border = `${x} ${w} ${P}`;
+          }
+        }
+        parseDmlColor(s) {
+          if (!s) return null;
+          const r = a.default.element(s, 'srgbClr'),
+            o = a.default.element(s, 'schemeClr'),
+            c = a.default.element(s, 'prstClr'),
+            h = a.default.element(s, 'sysClr');
+          if (r) return this.applyDmlColorTransforms(r, `#${a.default.attr(r, 'val')}`);
+          if (o) {
+            const m = this.resolveDmlSchemeColor(a.default.attr(o, 'val')),
+              P = this.dmlSchemeColorFallback(m);
+            return this.applyDmlColorTransforms(o, `var(--docx-${m}-color${P ? `, ${P}` : ''})`);
+          }
+          return h
+            ? this.applyDmlColorTransforms(
+                h,
+                `#${a.default.attr(h, 'lastClr') ?? a.default.attr(h, 'val')}`,
+              )
+            : c
+              ? this.applyDmlColorTransforms(c, a.default.attr(c, 'val'))
+              : null;
+        }
+        resolveDmlSchemeColor(s) {
+          switch (s) {
+            case 'bg1':
+              return 'lt1';
+            case 'tx1':
+              return 'dk1';
+            case 'bg2':
+              return 'lt2';
+            case 'tx2':
+              return 'dk2';
+            default:
+              return s;
+          }
+        }
+        dmlSchemeColorFallback(s) {
+          switch (s) {
+            case 'dk1':
+              return '#000000';
+            case 'lt1':
+              return '#FFFFFF';
+            case 'dk2':
+              return '#44546A';
+            case 'lt2':
+              return '#E7E6E6';
+            case 'accent1':
+              return '#4472C4';
+            case 'accent2':
+              return '#ED7D31';
+            case 'accent3':
+              return '#A5A5A5';
+            case 'accent4':
+              return '#FFC000';
+            case 'accent5':
+              return '#5B9BD5';
+            case 'accent6':
+              return '#70AD47';
+            case 'hlink':
+              return '#0563C1';
+            case 'folHlink':
+              return '#954F72';
+            default:
+              return null;
+          }
+        }
+        applyDmlColorTransforms(s, r) {
+          const o = a.default.elementAttr(s, 'lumMod', 'val'),
+            c = a.default.elementAttr(s, 'lumOff', 'val');
+          if (o != null) {
+            const h = Math.max(0, Math.min(100, parseFloat(o) / 1e3));
+            Number.isFinite(h) && h < 100 && (r = `color-mix(in srgb, ${r} ${h}%, black)`);
+          }
+          if (c != null) {
+            const h = Math.max(0, Math.min(100, parseFloat(c) / 1e3));
+            Number.isFinite(h) && h > 0 && (r = `color-mix(in srgb, ${r} ${100 - h}%, white)`);
+          }
+          return r;
+        }
+        findDescendant(s, r) {
+          for (const o of a.default.elements(s)) {
+            if (o.localName == r) return o;
+            const c = this.findDescendant(o, r);
+            if (c) return c;
+          }
+          return null;
+        }
+        parsePicture(s) {
+          var r = { type: i.DomType.Image, src: '', cssStyle: {} },
+            o = a.default.element(s, 'blipFill'),
+            c = o ? a.default.element(o, 'blip') : null,
+            h = o ? a.default.element(o, 'srcRect') : null;
+          r.src = c ? (a.default.attr(c, 'embed') ?? a.default.attr(c, 'link')) : '';
+          const m = this.findDescendant(s, 'cNvPr');
+          (m &&
+            ((r.title = a.default.attr(m, 'title') ?? a.default.attr(m, 'name')),
+            (r.alt = a.default.attr(m, 'descr') ?? r.title)),
+            h &&
+              (r.srcRect = [
+                a.default.intAttr(h, 'l', 0) / 1e5,
+                a.default.intAttr(h, 't', 0) / 1e5,
+                a.default.intAttr(h, 'r', 0) / 1e5,
+                a.default.intAttr(h, 'b', 0) / 1e5,
+              ]));
+          var P = a.default.element(s, 'spPr'),
+            x = P ? a.default.element(P, 'xfrm') : null,
+            y = [];
+          if (
+            ((r.cssStyle.display = 'block'),
+            (r.cssStyle.position = 'relative'),
+            (r.cssStyle['object-fit'] = 'contain'),
+            x)
+          )
+            for (var w of ((r.rotation = a.default.intAttr(x, 'rot', 0) / 6e4),
+            a.default.boolAttr(x, 'flipH', !1) && y.push('scaleX(-1)'),
+            a.default.boolAttr(x, 'flipV', !1) && y.push('scaleY(-1)'),
+            a.default.elements(x)))
+              switch (w.localName) {
+                case 'ext':
+                  ((r.cssStyle.width = a.default.lengthAttr(w, 'cx', M.LengthUsage.Emu)),
+                    (r.cssStyle.height = a.default.lengthAttr(w, 'cy', M.LengthUsage.Emu)));
+                  break;
+                case 'off':
+                  ((r.cssStyle.left = a.default.lengthAttr(w, 'x', M.LengthUsage.Emu)),
+                    (r.cssStyle.top = a.default.lengthAttr(w, 'y', M.LengthUsage.Emu)));
+              }
+          return (
+            y.length > 0 && (r.cssStyle.transform = y.join(' ')),
+            r.cssStyle.width || (r.cssStyle.width = '100%'),
+            r.cssStyle.height || (r.cssStyle.height = '100%'),
+            r
+          );
+        }
+        parseTable(s) {
+          var r = { type: i.DomType.Table, children: [] };
+          for (const o of a.default.elements(s))
+            switch (o.localName) {
+              case 'tr':
+                r.children.push(this.parseTableRow(o));
+                break;
+              case 'tblGrid':
+                r.columns = this.parseTableColumns(o);
+                break;
+              case 'tblPr':
+                this.parseTableProperties(o, r);
+            }
+          return r;
+        }
+        parseTableColumns(s) {
+          var r = [];
+          for (const o of a.default.elements(s))
+            o.localName === 'gridCol' && r.push({ width: a.default.lengthAttr(o, 'w') });
+          return r;
+        }
+        parseTableProperties(s, r) {
+          ((r.cssStyle = {}), (r.cellStyle = {}));
+          let o = null;
+          switch (
+            (this.parseDefaultProperties(s, r.cssStyle, r.cellStyle, (c) => {
+              switch (c.localName) {
+                case 'tblStyle':
+                  r.styleName = a.default.attr(c, 'val');
+                  break;
+                case 'tblLook':
+                  r.className = g.classNameOftblLook(c);
+                  break;
+                case 'tblInd':
+                  o = this.parseTableIndentation(c);
+                  break;
+                case 'tblpPr':
+                  this.parseTablePosition(c, r);
+                  break;
+                case 'tblStyleColBandSize':
+                  r.colBandSize = a.default.intAttr(c, 'val');
+                  break;
+                case 'tblStyleRowBandSize':
+                  r.rowBandSize = a.default.intAttr(c, 'val');
+                  break;
+                case 'hidden':
+                  r.cssStyle.display = 'none';
+                  break;
+                default:
+                  return !1;
+              }
+              return !0;
+            }),
+            r.cssStyle['text-align'])
+          ) {
+            case 'center':
+              (delete r.cssStyle['text-align'],
+                (r.cssStyle['margin-left'] = 'auto'),
+                (r.cssStyle['margin-right'] = 'auto'));
+              break;
+            case 'right':
+              (delete r.cssStyle['text-align'], (r.cssStyle['margin-left'] = 'auto'));
+              break;
+            default:
+              (delete r.cssStyle['text-align'],
+                o &&
+                  (r.cssStyle['margin-inline-start'] = g.addSize(
+                    r.cssStyle['margin-inline-start'],
+                    o,
+                  )));
+          }
+        }
+        parseTableIndentation(s) {
+          const r = a.default.attr(s, 'type');
+          return r == 'pct' || r == 'auto'
+            ? null
+            : a.default.lengthAttr(s, 'w', M.LengthUsage.SignedDxa);
+        }
+        parseTablePosition(s, r) {
+          var o = a.default.lengthAttr(s, 'topFromText'),
+            c = a.default.lengthAttr(s, 'bottomFromText'),
+            h = a.default.lengthAttr(s, 'rightFromText'),
+            m = a.default.lengthAttr(s, 'leftFromText');
+          ((r.cssStyle.float = 'left'),
+            (r.cssStyle['margin-bottom'] = g.addSize(r.cssStyle['margin-bottom'], c)),
+            (r.cssStyle['margin-left'] = g.addSize(r.cssStyle['margin-left'], m)),
+            (r.cssStyle['margin-right'] = g.addSize(r.cssStyle['margin-right'], h)),
+            (r.cssStyle['margin-top'] = g.addSize(r.cssStyle['margin-top'], o)));
+        }
+        parseTableRow(s) {
+          var r = { type: i.DomType.Row, children: [] };
+          for (const o of a.default.elements(s))
+            switch (o.localName) {
+              case 'tc':
+                r.children.push(this.parseTableCell(o));
+                break;
+              case 'trPr':
+              case 'tblPrEx':
+                this.parseTableRowProperties(o, r);
+            }
+          return r;
+        }
+        parseTableRowProperties(s, r) {
+          const o = {};
+          r.cssStyle = this.parseDefaultProperties(s, o, null, (c) => {
+            switch (c.localName) {
+              case 'cnfStyle':
+                r.className = g.classNameOfCnfStyle(c);
+                break;
+              case 'tblHeader':
+                r.isHeader = a.default.boolAttr(c, 'val');
+                break;
+              case 'gridBefore':
+                r.gridBefore = a.default.intAttr(c, 'val');
+                break;
+              case 'gridAfter':
+                r.gridAfter = a.default.intAttr(c, 'val');
+                break;
+              case 'cantSplit':
+                a.default.boolAttr(c, 'val', !0) && (o['break-inside'] = 'avoid');
+                break;
+              default:
+                return !1;
+            }
+            return !0;
+          });
+        }
+        parseTableCell(s) {
+          var r = { type: i.DomType.Cell, children: [] };
+          for (const o of a.default.elements(s))
+            switch (o.localName) {
+              case 'tbl':
+                r.children.push(this.parseTable(o));
+                break;
+              case 'p':
+                r.children.push(this.parseParagraph(o));
+                break;
+              case 'tcPr':
+                this.parseTableCellProperties(o, r);
+            }
+          return r;
+        }
+        parseTableCellProperties(s, r) {
+          ((r.cssStyle = this.parseDefaultProperties(s, {}, null, (o) => {
+            switch (o.localName) {
+              case 'gridSpan':
+                r.span = a.default.intAttr(o, 'val', null);
+                break;
+              case 'vMerge':
+                r.verticalMerge = a.default.attr(o, 'val') ?? 'continue';
+                break;
+              case 'cnfStyle':
+                r.className = g.classNameOfCnfStyle(o);
+                break;
+              default:
+                return !1;
+            }
+            return !0;
+          })),
+            this.parseTableCellVerticalText(s, r));
+        }
+        parseTableCellVerticalText(s, r) {
+          const o = {
+            btLr: { writingMode: 'vertical-rl', transform: 'rotate(180deg)' },
+            lrTb: { writingMode: 'vertical-lr', transform: 'none' },
+            tbRl: { writingMode: 'vertical-rl', transform: 'none' },
+          };
+          for (const c of a.default.elements(s))
+            if (c.localName === 'textDirection') {
+              const h = o[a.default.attr(c, 'val')] || { writingMode: 'horizontal-tb' };
+              ((r.cssStyle['writing-mode'] = h.writingMode), (r.cssStyle.transform = h.transform));
+            }
+        }
+        parseDefaultProperties(s, r = null, o = null, c = null) {
+          r = r || {};
+          for (const h of a.default.elements(s))
+            if (!c?.(h))
+              switch (h.localName) {
+                case 'jc':
+                  r['text-align'] = g.valueOfJc(h);
+                  break;
+                case 'textAlignment':
+                  r['vertical-align'] = g.valueOfTextAlignment(h);
+                  break;
+                case 'color':
+                  r.color = p.colorAttr(h, 'val', null, f.autos.color);
+                  break;
+                case 'sz':
+                  r['font-size'] = r['min-height'] = a.default.lengthAttr(
+                    h,
+                    'val',
+                    M.LengthUsage.FontSize,
+                  );
+                  break;
+                case 'szCs':
+                  (r['font-size'] ??
+                    (r['font-size'] = a.default.lengthAttr(h, 'val', M.LengthUsage.FontSize)),
+                    r['min-height'] ?? (r['min-height'] = r['font-size']));
+                  break;
+                case 'shd':
+                  r['background-color'] = p.colorAttr(h, 'fill', null, f.autos.shd);
+                  break;
+                case 'highlight':
+                  r['background-color'] = p.colorAttr(h, 'val', null, f.autos.highlight);
+                  break;
+                case 'vertAlign':
+                  r['vertical-align'] = g.valueOfVertAlign(h);
+                  break;
+                case 'position':
+                  r['vertical-align'] = a.default.lengthAttr(
+                    h,
+                    'val',
+                    M.LengthUsage.SignedHalfPoint,
+                  );
+                  break;
+                case 'scale':
+                  r['font-stretch'] = `${a.default.intAttr(h, 'val', 100)}%`;
+                  break;
+                case 'tcW':
+                  if (this.options.ignoreWidth) break;
+                case 'tblW':
+                  r.width = g.valueOfSize(h, 'w');
+                  break;
+                case 'trHeight':
+                  this.parseTrHeight(h, r);
+                  break;
+                case 'strike':
+                  r['text-decoration'] = a.default.boolAttr(h, 'val', !0) ? 'line-through' : 'none';
+                  break;
+                case 'dstrike':
+                  a.default.boolAttr(h, 'val', !0)
+                    ? ((r['text-decoration-line'] = 'line-through'),
+                      (r['text-decoration-style'] = 'double'))
+                    : (r['text-decoration'] = 'none');
+                  break;
+                case 'b':
+                  r['font-weight'] = a.default.boolAttr(h, 'val', !0) ? 'bold' : 'normal';
+                  break;
+                case 'i':
+                  r['font-style'] = a.default.boolAttr(h, 'val', !0) ? 'italic' : 'normal';
+                  break;
+                case 'bCs':
+                  ((r['--docx-bidi-font-weight'] = a.default.boolAttr(h, 'val', !0)
+                    ? 'bold'
+                    : 'normal'),
+                    r.direction == 'rtl' && (r['font-weight'] = r['--docx-bidi-font-weight']));
+                  break;
+                case 'iCs':
+                  ((r['--docx-bidi-font-style'] = a.default.boolAttr(h, 'val', !0)
+                    ? 'italic'
+                    : 'normal'),
+                    r.direction == 'rtl' && (r['font-style'] = r['--docx-bidi-font-style']));
+                  break;
+                case 'caps':
+                  r['text-transform'] = a.default.boolAttr(h, 'val', !0) ? 'uppercase' : 'none';
+                  break;
+                case 'smallCaps':
+                  r['font-variant'] = a.default.boolAttr(h, 'val', !0) ? 'small-caps' : 'none';
+                  break;
+                case 'rtl':
+                  a.default.boolAttr(h, 'val', !0) &&
+                    ((r.direction = 'rtl'),
+                    (r['unicode-bidi'] = 'embed'),
+                    r['--docx-bidi-font-weight'] &&
+                      (r['font-weight'] = r['--docx-bidi-font-weight']),
+                    r['--docx-bidi-font-style'] && (r['font-style'] = r['--docx-bidi-font-style']));
+                  break;
+                case 'outline':
+                  a.default.boolAttr(h, 'val', !0) &&
+                    (r['-webkit-text-stroke'] = '0.5px currentColor');
+                  break;
+                case 'shadow':
+                  a.default.boolAttr(h, 'val', !0) && (r['text-shadow'] = '1px 1px 0 currentColor');
+                  break;
+                case 'emboss':
+                  a.default.boolAttr(h, 'val', !0) &&
+                    (r['text-shadow'] =
+                      '-1px -1px 0 rgba(255,255,255,.75), 1px 1px 0 rgba(0,0,0,.35)');
+                  break;
+                case 'imprint':
+                  a.default.boolAttr(h, 'val', !0) &&
+                    (r['text-shadow'] =
+                      '1px 1px 0 rgba(255,255,255,.75), -1px -1px 0 rgba(0,0,0,.35)');
+                  break;
+                case 'em':
+                  r['text-emphasis-style'] = g.valueOfEmphasisMark(h);
+                  break;
+                case 'u':
+                  this.parseUnderline(h, r);
+                  break;
+                case 'ind':
+                case 'tblInd':
+                  this.parseIndentation(h, r);
+                  break;
+                case 'rFonts':
+                  this.parseFont(h, r);
+                  break;
+                case 'tblBorders':
+                  this.parseBorderProperties(h, o || r);
+                  break;
+                case 'tblCellSpacing':
+                  ((r['border-spacing'] = g.valueOfMargin(h)), (r['border-collapse'] = 'separate'));
+                  break;
+                case 'pBdr':
+                  this.parseBorderProperties(h, r);
+                  break;
+                case 'bdr':
+                  r.border = g.valueOfBorder(h);
+                  break;
+                case 'tcBorders':
+                  this.parseBorderProperties(h, r);
+                  break;
+                case 'vanish':
+                  a.default.boolAttr(h, 'val', !0) && (r.display = 'none');
+                  break;
+                case 'kern':
+                  r['font-kerning'] = a.default.intAttr(h, 'val', 0) > 0 ? 'normal' : 'none';
+                  break;
+                case 'noWrap':
+                  r['white-space'] = a.default.boolAttr(h, 'val', !0) ? 'nowrap' : 'normal';
+                  break;
+                case 'snapToGrid':
+                  r['--docx-snap-to-grid'] = a.default.boolAttr(h, 'val', !0) ? '1' : '0';
+                  break;
+                case 'fitText':
+                  this.parseFitText(h, r);
+                  break;
+                case 'eastAsianLayout':
+                  this.parseEastAsianLayout(h, r);
+                  break;
+                case 'tblCellMar':
+                case 'tcMar':
+                  this.parseMarginProperties(h, o || r);
+                  break;
+                case 'tblLayout':
+                  r['table-layout'] = g.valueOfTblLayout(h);
+                  break;
+                case 'vAlign':
+                  r['vertical-align'] = g.valueOfTextAlignment(h);
+                  break;
+                case 'spacing':
+                  s.localName == 'pPr'
+                    ? this.parseSpacing(h, r)
+                    : s.localName == 'rPr' &&
+                      (r['letter-spacing'] = a.default.lengthAttr(
+                        h,
+                        'val',
+                        M.LengthUsage.SignedDxa,
+                      ));
+                  break;
+                case 'wordWrap':
+                  a.default.boolAttr(h, 'val') && (r['overflow-wrap'] = 'break-word');
+                  break;
+                case 'suppressAutoHyphens':
+                  r.hyphens = a.default.boolAttr(h, 'val', !0) ? 'none' : 'auto';
+                  break;
+                case 'lang':
+                  r.$lang = a.default.attr(h, 'val');
+                  break;
+                case 'rtl':
+                case 'bidi':
+                  a.default.boolAttr(h, 'val', !0) && (r.direction = 'rtl');
+                  break;
+                case 'pageBreakBefore':
+                  a.default.boolAttr(h, 'val', !0) && (r['break-before'] = 'page');
+                  break;
+                case 'keepLines':
+                  a.default.boolAttr(h, 'val', !0) && (r['break-inside'] = 'avoid');
+                  break;
+                case 'keepNext':
+                  a.default.boolAttr(h, 'val', !0) && (r['break-after'] = 'avoid');
+                  break;
+                case 'widowControl':
+                  a.default.boolAttr(h, 'val', !0) && ((r.orphans = '2'), (r.widows = '2'));
+                  break;
+                case 'webHidden':
+                  this.options.hideWebHiddenContent &&
+                    a.default.boolAttr(h, 'val', !0) &&
+                    (r.display = 'none');
+                  break;
+                case 'specVanish':
+                  a.default.boolAttr(h, 'val', !0) && (r.display = 'none');
+                  break;
+                case 'tabs':
+                case 'outlineLvl':
+                case 'contextualSpacing':
+                case 'tblStyleColBandSize':
+                case 'tblStyleRowBandSize':
+                case 'suppressLineNumbers':
+                case 'noProof':
+                  break;
+                default:
+                  this.options.debug &&
+                    console.warn(`DOCX: Unknown document element: ${s.localName}.${h.localName}`);
+              }
+          return r;
+        }
+        parseFitText(s, r) {
+          const o = a.default.lengthAttr(s, 'val');
+          o &&
+            ((r.display = 'inline-block'),
+            (r.width = o),
+            (r['text-align'] = 'justify'),
+            (r['text-align-last'] = 'justify'));
+        }
+        parseEastAsianLayout(s, r) {
+          (a.default.boolAttr(s, 'combine', !1) && (r['text-combine-upright'] = 'all'),
+            a.default.boolAttr(s, 'vert', !1) && (r['writing-mode'] = 'vertical-rl'),
+            a.default.boolAttr(s, 'vertCompress', !1) && (r['font-stretch'] = 'condensed'));
+        }
+        parseUnderline(s, r) {
+          var o = a.default.attr(s, 'val');
+          if (o != null) {
+            switch (o) {
+              case 'dash':
+              case 'dashDotDotHeavy':
+              case 'dashDotHeavy':
+              case 'dashedHeavy':
+              case 'dashLong':
+              case 'dashLongHeavy':
+              case 'dotDash':
+              case 'dotDotDash':
+                r['text-decoration'] = 'underline dashed';
+                break;
+              case 'dotted':
+              case 'dottedHeavy':
+                r['text-decoration'] = 'underline dotted';
+                break;
+              case 'double':
+                r['text-decoration'] = 'underline double';
+                break;
+              case 'single':
+              case 'thick':
+              case 'words':
+                r['text-decoration'] = 'underline';
+                break;
+              case 'wave':
+              case 'wavyDouble':
+              case 'wavyHeavy':
+                r['text-decoration'] = 'underline wavy';
+                break;
+              case 'none':
+                r['text-decoration'] = 'none';
+            }
+            var c = p.colorAttr(s, 'color');
+            c && (r['text-decoration-color'] = c);
+          }
+        }
+        parseFont(s, r) {
+          var o = a.default.attr(s, 'ascii'),
+            c = a.default.attr(s, 'hAnsi'),
+            h = a.default.attr(s, 'eastAsia'),
+            m = a.default.attr(s, 'cs'),
+            P = [
+              o,
+              c,
+              g.themeValue(s, 'asciiTheme'),
+              g.themeValue(s, 'hAnsiTheme'),
+              h,
+              g.themeValue(s, 'eastAsiaTheme'),
+              m,
+              g.themeValue(s, 'cstheme') ?? g.themeValue(s, 'csTheme'),
+            ]
+              .filter((x) => x)
+              .map((x) => (0, t.encloseFontFamily)(x));
+          if (P.length > 0) {
+            const x = (r['font-family'] ?? '')
+              .split(',')
+              .map((y) => y.trim())
+              .filter((y) => y);
+            r['font-family'] = [...new Set([...x, ...P])].join(', ');
+          }
+        }
+        parseIndentation(s, r) {
+          var o = a.default.lengthAttr(s, 'firstLine'),
+            c = a.default.lengthAttr(s, 'hanging'),
+            h = a.default.lengthAttr(s, 'left'),
+            m = a.default.lengthAttr(s, 'start'),
+            P = a.default.lengthAttr(s, 'right'),
+            x = a.default.lengthAttr(s, 'end');
+          (o && ((r['text-indent'] = o), (r['--docx-text-indent'] = o)),
+            c &&
+              ((r['text-indent'] = `-${c}`),
+              (r['--docx-text-indent'] = `-${c}`),
+              (r['--docx-hanging-indent'] = c)),
+            (h || m) &&
+              ((r['margin-inline-start'] = h || m), (r['--docx-margin-inline-start'] = h || m)),
+            (P || x) &&
+              ((r['margin-inline-end'] = P || x), (r['--docx-margin-inline-end'] = P || x)));
+        }
+        parseSpacing(s, r) {
+          var o = a.default.lengthAttr(s, 'before'),
+            c = a.default.lengthAttr(s, 'after'),
+            h = a.default.intAttr(s, 'beforeLines', null),
+            m = a.default.intAttr(s, 'afterLines', null),
+            P = a.default.boolAttr(s, 'beforeAutospacing', !1),
+            x = a.default.boolAttr(s, 'afterAutospacing', !1),
+            y = a.default.intAttr(s, 'line', null),
+            w = a.default.attr(s, 'lineRule');
+          if (
+            (P
+              ? (r['margin-top'] = 'auto')
+              : h != null
+                ? (r['margin-top'] = `${(h / 100).toFixed(2)}em`)
+                : o && (r['margin-top'] = o),
+            x
+              ? (r['margin-bottom'] = 'auto')
+              : m != null
+                ? (r['margin-bottom'] = `${(m / 100).toFixed(2)}em`)
+                : c && (r['margin-bottom'] = c),
+            y !== null)
+          )
+            switch (w ?? 'auto') {
+              case 'auto':
+              default:
+                r['line-height'] = `${(y / 240).toFixed(2)}`;
+                break;
+              case 'atLeast':
+                ((r['line-height'] = `max(1em, ${(y / 20).toFixed(2)}pt)`),
+                  (r['min-height'] = `${(y / 20).toFixed(2)}pt`));
+                break;
+              case 'exact':
+              case 'exactly':
+                r['line-height'] = r['min-height'] = `${(y / 20).toFixed(2)}pt`;
+            }
+        }
+        parseMarginProperties(s, r) {
+          for (const o of a.default.elements(s))
+            switch (o.localName) {
+              case 'left':
+              case 'start':
+                r['padding-left'] = g.valueOfMargin(o);
+                break;
+              case 'right':
+              case 'end':
+                r['padding-right'] = g.valueOfMargin(o);
+                break;
+              case 'top':
+                r['padding-top'] = g.valueOfMargin(o);
+                break;
+              case 'bottom':
+                r['padding-bottom'] = g.valueOfMargin(o);
+            }
+        }
+        parseTrHeight(s, r) {
+          (a.default.attr(s, 'hRule'), (r.height = a.default.lengthAttr(s, 'val')));
+        }
+        parseBorderProperties(s, r) {
+          for (const o of a.default.elements(s)) {
+            const c = g.valueOfBorder(o);
+            switch (o.localName) {
+              case 'start':
+              case 'left':
+                r['border-left'] = c;
+                break;
+              case 'end':
+              case 'right':
+                r['border-right'] = c;
+                break;
+              case 'top':
+                r['border-top'] = c;
+                break;
+              case 'bottom':
+                r['border-bottom'] = c;
+                break;
+              case 'insideH':
+                (r['border-top'] ?? (r['border-top'] = c),
+                  r['border-bottom'] ?? (r['border-bottom'] = c));
+                break;
+              case 'insideV':
+                (r['border-left'] ?? (r['border-left'] = c),
+                  r['border-right'] ?? (r['border-right'] = c));
+            }
+          }
+        }
+      };
+      const u = [
+        'black',
+        'blue',
+        'cyan',
+        'darkBlue',
+        'darkCyan',
+        'darkGray',
+        'darkGreen',
+        'darkMagenta',
+        'darkRed',
+        'darkYellow',
+        'green',
+        'lightGray',
+        'magenta',
+        'none',
+        'red',
+        'white',
+        'yellow',
+      ];
+      class p {
+        static colorAttr(r, o, c = null, h = 'black') {
+          var m = a.default.attr(r, o);
+          if (m) return m == 'auto' ? h : u.includes(m) ? m : `#${m}`;
+          var P = a.default.attr(r, 'themeColor');
+          return P ? `var(--docx-${P}-color)` : c;
+        }
+      }
+      class g {
+        static themeValue(r, o) {
+          var c = a.default.attr(r, o);
+          return c ? `var(--docx-${c}-font)` : null;
+        }
+        static valueOfSize(r, o) {
+          var c = M.LengthUsage.Dxa;
+          switch (a.default.attr(r, 'type')) {
+            case 'dxa':
+              break;
+            case 'pct':
+              c = M.LengthUsage.Percent;
+              break;
+            case 'auto':
+              return 'auto';
+          }
+          return a.default.lengthAttr(r, o, c);
+        }
+        static valueOfMargin(r) {
+          return a.default.lengthAttr(r, 'w');
+        }
+        static valueOfBorder(r) {
+          var o = g.parseBorderType(a.default.attr(r, 'val'));
+          if (o == 'none') return 'none';
+          var c = p.colorAttr(r, 'color', f.autos.borderColor, f.autos.borderColor);
+          return `${a.default.lengthAttr(r, 'sz', M.LengthUsage.Border) ?? '1pt'} ${o} ${c == 'auto' ? f.autos.borderColor : c}`;
+        }
+        static parseBorderType(r) {
+          switch (r) {
+            case 'single':
+            case 'dashDotStroked':
+            case 'thick':
+            case 'thickThinLargeGap':
+            case 'thickThinMediumGap':
+            case 'thickThinSmallGap':
+            case 'thinThickLargeGap':
+            case 'thinThickMediumGap':
+            case 'thinThickSmallGap':
+            case 'thinThickThinLargeGap':
+            case 'thinThickThinMediumGap':
+            case 'thinThickThinSmallGap':
+            case 'threeDEmboss':
+            case 'threeDEngrave':
+            case 'wave':
+              return 'solid';
+            case 'dashed':
+            case 'dashSmallGap':
+              return 'dashed';
+            case 'dotDash':
+            case 'dotDotDash':
+            case 'dotted':
+              return 'dotted';
+            case 'double':
+            case 'doubleWave':
+            case 'triple':
+              return 'double';
+            case 'inset':
+              return 'inset';
+            case 'nil':
+            case 'none':
+              return 'none';
+            case 'outset':
+              return 'outset';
+          }
+          return 'solid';
+        }
+        static valueOfTblLayout(r) {
+          return a.default.attr(r, 'val') == 'fixed' ? 'fixed' : 'auto';
+        }
+        static classNameOfCnfStyle(r) {
+          const o = a.default.attr(r, 'val');
+          return [
+            'first-row',
+            'last-row',
+            'first-col',
+            'last-col',
+            'odd-col',
+            'even-col',
+            'odd-row',
+            'even-row',
+            'ne-cell',
+            'nw-cell',
+            'se-cell',
+            'sw-cell',
+          ]
+            .filter((c, h) => o[h] == '1')
+            .join(' ');
+        }
+        static valueOfJc(r) {
+          var o = a.default.attr(r, 'val');
+          switch (o) {
+            case 'start':
+            case 'left':
+              return 'left';
+            case 'center':
+              return 'center';
+            case 'end':
+            case 'right':
+              return 'right';
+            case 'both':
+              return 'justify';
+          }
+          return o;
+        }
+        static valueOfVertAlign(r, o = !1) {
+          var c = a.default.attr(r, 'val');
+          switch (c) {
+            case 'subscript':
+              return 'sub';
+            case 'superscript':
+              return o ? 'sup' : 'super';
+          }
+          return o ? null : c;
+        }
+        static valueOfEmphasisMark(r) {
+          switch (a.default.attr(r, 'val')) {
+            case 'none':
+              return 'none';
+            case 'comma':
+              return '"﹐"';
+            case 'circle':
+              return 'circle';
+            default:
+              return 'dot';
+          }
+        }
+        static valueOfTextAlignment(r) {
+          var o = a.default.attr(r, 'val');
+          switch (o) {
+            case 'auto':
+            case 'baseline':
+              return 'baseline';
+            case 'top':
+              return 'top';
+            case 'center':
+              return 'middle';
+            case 'bottom':
+              return 'bottom';
+          }
+          return o;
+        }
+        static addSize(r, o) {
+          return r && r != '0.00pt' && r != '0px'
+            ? o && o != '0.00pt' && o != '0px'
+              ? `calc(${r} + ${o})`
+              : r
+            : o;
+        }
+        static classNameOftblLook(r) {
+          const o = a.default.hexAttr(r, 'val', 0);
+          let c = '';
+          return (
+            (a.default.boolAttr(r, 'firstRow') || 32 & o) && (c += ' first-row'),
+            (a.default.boolAttr(r, 'lastRow') || 64 & o) && (c += ' last-row'),
+            (a.default.boolAttr(r, 'firstColumn') || 128 & o) && (c += ' first-col'),
+            (a.default.boolAttr(r, 'lastColumn') || 256 & o) && (c += ' last-col'),
+            (a.default.boolAttr(r, 'noHBand') || 512 & o) && (c += ' no-hband'),
+            (a.default.boolAttr(r, 'noVBand') || 1024 & o) && (c += ' no-vband'),
+            c.trim()
+          );
+        }
+      }
+    },
+    './document-props/core-props-part': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }), (f.CorePropsPart = void 0));
+      const d = E('../common/part'),
+        i = E('./core-props');
+      class T extends d.Part {
+        parseXml(a) {
+          this.props = (0, i.parseCoreProps)(a, this._package.xmlParser);
+        }
+      }
+      f.CorePropsPart = T;
+    },
+    './document-props/core-props': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.parseCoreProps = function (d, i) {
+          const T = {};
+          for (let k of i.elements(d))
+            switch (k.localName) {
+              case 'title':
+                T.title = k.textContent;
+                break;
+              case 'description':
+                T.description = k.textContent;
+                break;
+              case 'subject':
+                T.subject = k.textContent;
+                break;
+              case 'creator':
+                T.creator = k.textContent;
+                break;
+              case 'keywords':
+                T.keywords = k.textContent;
+                break;
+              case 'language':
+                T.language = k.textContent;
+                break;
+              case 'lastModifiedBy':
+                T.lastModifiedBy = k.textContent;
+                break;
+              case 'revision':
+                k.textContent && (T.revision = parseInt(k.textContent));
+            }
+          return T;
+        }));
+    },
+    './document-props/custom-props-part': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }), (f.CustomPropsPart = void 0));
+      const d = E('../common/part'),
+        i = E('./custom-props');
+      class T extends d.Part {
+        parseXml(a) {
+          this.props = (0, i.parseCustomProps)(a, this._package.xmlParser);
+        }
+      }
+      f.CustomPropsPart = T;
+    },
+    './document-props/custom-props': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.parseCustomProps = function (d, i) {
+          return i.elements(d, 'property').map((T) => {
+            const k = T.firstChild;
+            return {
+              formatId: i.attr(T, 'fmtid'),
+              name: i.attr(T, 'name'),
+              type: k.nodeName,
+              value: k.textContent,
+            };
+          });
+        }));
+    },
+    './document-props/extended-props-part': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }), (f.ExtendedPropsPart = void 0));
+      const d = E('../common/part'),
+        i = E('./extended-props');
+      class T extends d.Part {
+        parseXml(a) {
+          this.props = (0, i.parseExtendedProps)(a, this._package.xmlParser);
+        }
+      }
+      f.ExtendedPropsPart = T;
+    },
+    './document-props/extended-props': function (E, H, f) {
+      function d(i) {
+        if (i !== void 0) return parseInt(i);
+      }
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.parseExtendedProps = function (i, T) {
+          const k = {};
+          for (let a of T.elements(i))
+            switch (a.localName) {
+              case 'Template':
+                k.template = a.textContent;
+                break;
+              case 'Pages':
+                k.pages = d(a.textContent);
+                break;
+              case 'Words':
+                k.words = d(a.textContent);
+                break;
+              case 'Characters':
+                k.characters = d(a.textContent);
+                break;
+              case 'Application':
+                k.application = a.textContent;
+                break;
+              case 'Lines':
+                k.lines = d(a.textContent);
+                break;
+              case 'Paragraphs':
+                k.paragraphs = d(a.textContent);
+                break;
+              case 'Company':
+                k.company = a.textContent;
+                break;
+              case 'AppVersion':
+                k.appVersion = a.textContent;
+            }
+          return k;
+        }));
+    },
+    './docx-preview-worker': function (E, H, f) {
+      Object.defineProperty(f, '__esModule', { value: !0 });
+      const d = E('./word-document'),
+        i = E('./document-parser'),
+        T = E('./input-validation'),
+        k = self;
+      function a(C, D, M = {}) {
+        k.postMessage({ id: C, type: D, ...M });
+      }
+      k.onmessage = async (C) => {
+        const D = C.data;
+        if (!D || D.type !== 'parse') return;
+        const M = D.id;
+        try {
+          const A = { ...D.options, useWorker: !1, h: void 0, progress: void 0 };
+          ((0, T.assertNonEmptyDocxInput)(D.data),
+            a(M, 'progress', { message: 'Loading package relationships' }));
+          const e = await d.WordDocument.load(D.data, new i.DocumentParser(A), A);
+          (a(M, 'progress', { message: 'Serializing parsed document model' }),
+            a(M, 'parsed', { snapshot: await e.createSnapshot() }));
+        } catch (A) {
+          a(M, 'error', { error: { message: A?.message ?? `${A}`, stack: A?.stack } });
+        }
+      };
+    },
+    './docx-preview': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.defaultOptions = void 0),
+        (f.parseAsync = D),
+        (f.renderDocument = A),
+        (f.renderAsync = async function (o, c, h, m) {
+          const P = { ...f.defaultOptions, ...m };
+          (0, a.assertViewerLicense)('docx', P.licenseToken);
+          const x = await D(o, P),
+            y = await A(x, P);
+          (h ?? (h = c), (h.innerHTML = ''), (c.innerHTML = ''));
+          let w = 0;
+          for (let $ of y)
+            (($.nodeName === 'STYLE' ? h : c).appendChild($),
+              w++,
+              P.renderYieldEveryMs > 0 && w % 8 == 0 && (await r()));
+          p(c, P.className);
+          let N = null;
+          return (
+            P.awaitLayout &&
+              (P.progress?.({ phase: 'layout', message: 'Measuring rendered pages' }),
+              (N = await l(c, P)),
+              p(c, P.className)),
+            P.progress?.({
+              phase: 'done',
+              current: N?.pageCount,
+              total: N?.pageCount,
+              message: 'DOCX render complete',
+            }),
+            x
+          );
+        }),
+        (f.parseAsyncInWorker = n),
+        (f.awaitRenderedLayout = l),
+        (f.collectLayoutSnapshot = u),
+        (f.syncNumberingMarkerStyles = p),
+        (f.yieldToBrowser = r));
+      const d = E('./word-document'),
+        i = E('./document-parser'),
+        T = E('./html-renderer'),
+        k = E('./html'),
+        a = E('./license-gate'),
+        C = E('./input-validation');
+      function D(o, c) {
+        const h = { ...f.defaultOptions, ...c };
+        return (
+          (0, a.assertViewerLicense)('docx', h.licenseToken),
+          (0, C.assertNonEmptyDocxInput)(o),
+          (function (m) {
+            return !(!m.useWorker || !m.workerUrl || typeof Worker > 'u');
+          })(h)
+            ? n(o, h).catch((m) => {
+                if (!h.workerFallback) throw m;
+                h.debug &&
+                  console.warn(
+                    'docx-preview: worker parsing failed; falling back to main thread',
+                    m,
+                  );
+                const P = { ...h, useWorker: !1 };
+                return M(o, P);
+              })
+            : M(o, h)
+        );
+      }
+      function M(o, c) {
+        return (
+          (0, C.assertNonEmptyDocxInput)(o),
+          c.progress?.({ phase: 'parse', message: 'Parsing DOCX on main thread' }),
+          d.WordDocument.load(o, new i.DocumentParser(c), c)
+        );
+      }
+      async function A(o, c) {
+        const h = { ...f.defaultOptions, ...c };
+        return (
+          (0, a.assertViewerLicense)('docx', h.licenseToken),
+          await new T.HtmlRenderer().render(o, h)
+        );
+      }
+      function e(o) {
+        const { h: c, progress: h, licenseToken: m, ...P } = o;
+        return { ...P, useWorker: !1 };
+      }
+      f.defaultOptions = {
+        ignoreHeight: !1,
+        ignoreWidth: !1,
+        fixedPageHeight: !0,
+        ignoreFonts: !1,
+        breakPages: !0,
+        strictWordCompatibility: !0,
+        paginationTolerance: 2,
+        maxDynamicPaginationPasses: 1e3,
+        awaitLayout: !0,
+        useWorker: !0,
+        workerUrl: void 0,
+        workerJsZipUrl: void 0,
+        workerFallback: !0,
+        workerTimeout: 12e4,
+        renderPageBatchSize: 2,
+        renderYieldEveryMs: 16,
+        progress: void 0,
+        preserveComplexFieldResults: !0,
+        updatePageReferences: !1,
+        hideWebHiddenContent: !1,
+        debug: !1,
+        experimental: !1,
+        className: 'docx',
+        inWrapper: !0,
+        hideWrapperOnPrint: !1,
+        trimXmlDeclaration: !0,
+        ignoreLastRenderedPageBreak: !1,
+        renderHeaders: !0,
+        renderFooters: !0,
+        renderFootnotes: !0,
+        renderEndnotes: !0,
+        useBase64URL: !1,
+        renderChanges: !1,
+        renderComments: !1,
+        renderAltChunks: !0,
+        h: k.h,
+      };
+      let t = 0;
+      function n(o, c) {
+        const h = { ...f.defaultOptions, ...c };
+        return (
+          (0, a.assertViewerLicense)('docx', h.licenseToken),
+          (0, C.assertNonEmptyDocxInput)(o),
+          h.workerUrl && typeof Worker < 'u'
+            ? (h.progress?.({ phase: 'worker', message: 'Starting DOCX parse worker' }),
+              new Promise((m, P) => {
+                const x = ++t,
+                  y = new Worker(h.workerUrl);
+                let w = !1,
+                  N = null;
+                const $ = () => {
+                  ((w = !0), N && clearTimeout(N), y.terminate());
+                };
+                (h.workerTimeout > 0 &&
+                  (N = setTimeout(() => {
+                    w ||
+                      ($(),
+                      P(new Error(`docx-preview worker timed out after ${h.workerTimeout}ms`)));
+                  }, h.workerTimeout)),
+                  (y.onerror = (R) => {
+                    w || ($(), P(new Error(R.message || 'docx-preview worker error')));
+                  }),
+                  (y.onmessage = (R) => {
+                    const X = R.data ?? {};
+                    if (X.id === x || X.type === 'ready')
+                      if (X.type !== 'progress') {
+                        if (X.type === 'parsed')
+                          return (
+                            $(),
+                            h.progress?.({ phase: 'worker', message: 'Worker parse complete' }),
+                            void m(d.WordDocument.fromSnapshot(X.snapshot, h))
+                          );
+                        if (X.type === 'error') {
+                          $();
+                          const Q = new Error(
+                            X.error?.message ?? 'docx-preview worker parse failed',
+                          );
+                          ((Q.stack = X.error?.stack), P(Q));
+                        }
+                      } else
+                        h.progress?.({
+                          phase: 'worker',
+                          current: X.current,
+                          total: X.total,
+                          message: X.message,
+                        });
+                  }),
+                  y.postMessage({
+                    type: 'parse',
+                    id: x,
+                    data: o,
+                    options: e(h),
+                    jsZipUrl: h.workerJsZipUrl,
+                  }));
+              }))
+            : M(o, { ...h, useWorker: !1 })
+        );
+      }
+      async function l(o, c) {
+        const h = { ...f.defaultOptions, ...c };
+        (await (async function (P) {
+          const x = Array.from(P.querySelectorAll('img'));
+          await Promise.allSettled(
+            x.map((y) =>
+              y.complete
+                ? Promise.resolve()
+                : new Promise((w) => {
+                    (y.addEventListener('load', w, { once: !0 }),
+                      y.addEventListener('error', w, { once: !0 }));
+                  }),
+            ),
+          );
+        })(o),
+          document.fonts?.ready && (await document.fonts.ready));
+        const m = o.querySelector(`.${h.className}-wrapper`);
+        if (h.breakPages && h.fixedPageHeight && !h.ignoreHeight && m)
+          for (
+            let P = 0;
+            P < Math.max(2, Math.min(120, h.maxDynamicPaginationPasses ?? 120)) &&
+            (await r(), m.dataset.docxPaginated !== 'true') &&
+            (m.dataset.docxPaginating === 'true' || m.dataset.docxPaginationScheduled === 'true');
+            P++
+          );
+        return (await r(), u(o, h));
+      }
+      function u(o, c) {
+        const h = { ...f.defaultOptions, ...c },
+          m = Array.from(o.querySelectorAll(`section.${h.className}`)).map((P, x) => {
+            const y = Array.from(P.querySelectorAll('[data-docx-field-instr]')),
+              w = Array.from(P.querySelectorAll('img')).filter(
+                ($) => !$.complete || $.naturalWidth === 0,
+              ).length,
+              N =
+                P.clientHeight > 0 &&
+                P.scrollHeight > P.clientHeight + (h.paginationTolerance ?? 2);
+            return {
+              index: x + 1,
+              section: P.dataset.docxSection ?? '',
+              pageNumber: parseInt(P.dataset.docxPageNumber ?? `${x + 1}`, 10),
+              sectionPageNumber: parseInt(P.dataset.docxSectionPageNumber ?? '1', 10),
+              width: P.clientWidth,
+              height: P.clientHeight,
+              scrollHeight: P.scrollHeight,
+              overflow: N,
+              textLength: P.textContent?.length ?? 0,
+              anchors: Array.from(P.querySelectorAll('[id]'))
+                .map(($) => $.id)
+                .filter(Boolean),
+              fields: y.map(($) => ({
+                instruction: $.dataset.docxFieldInstr ?? '',
+                value: $.textContent ?? '',
+              })),
+              floats: P.querySelectorAll('[data-docx-float="true"]').length,
+              unresolvedMedia: w,
+            };
+          });
+        return {
+          pageCount: m.length,
+          overflowPages: m.filter((P) => P.overflow).map((P) => P.index),
+          unresolvedMedia: m.reduce((P, x) => P + x.unresolvedMedia, 0),
+          pages: m,
+        };
+      }
+      function p(o, c = 'docx') {
+        if (!o || typeof getComputedStyle != 'function') return;
+        const h = Array.from(o.querySelectorAll('p')),
+          m = `${c}-num-`;
+        for (const P of h) {
+          if (!P.className?.includes(m)) continue;
+          const x = getComputedStyle(P, '::before');
+          if (!x.content || x.content == 'none' || x.content == 'normal') continue;
+          const y = g(P);
+          if (!y || y == P) continue;
+          const w = getComputedStyle(y);
+          (s(P, '--docx-marker-font-family', w.fontFamily),
+            s(P, '--docx-marker-font-size', w.fontSize),
+            s(P, '--docx-marker-font-style', w.fontStyle),
+            s(P, '--docx-marker-font-weight', w.fontWeight));
+        }
+      }
+      function g(o) {
+        const c = document.createTreeWalker(o, NodeFilter.SHOW_TEXT);
+        for (; c.nextNode(); ) {
+          const h = c.currentNode;
+          if (!h.nodeValue?.trim()) continue;
+          const m = h.parentElement;
+          if (!m || m == o) return o;
+          const P = getComputedStyle(m);
+          if (P.display != 'none' && P.visibility != 'hidden') return m;
+        }
+        return null;
+      }
+      function s(o, c, h) {
+        h && o.style.setProperty(c, h);
+      }
+      function r() {
+        return new Promise((o) => {
+          const c = globalThis;
+          typeof c.requestIdleCallback == 'function'
+            ? c.requestIdleCallback(() => o(), { timeout: 32 })
+            : typeof c.requestAnimationFrame == 'function'
+              ? c.requestAnimationFrame(() => o())
+              : setTimeout(o, 0);
+        });
+      }
+    },
+    './font-table/font-table': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }), (f.FontTablePart = void 0));
+      const d = E('../common/part'),
+        i = E('./fonts');
+      class T extends d.Part {
+        parseXml(a) {
+          this.fonts = (0, i.parseFonts)(a, this._package.xmlParser);
+        }
+      }
+      f.FontTablePart = T;
+    },
+    './font-table/fonts': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.parseFonts = function (k, a) {
+          return a.elements(k).map((C) => i(C, a));
+        }),
+        (f.parseFont = i),
+        (f.parseEmbedFontRef = T));
+      const d = {
+        embedRegular: 'regular',
+        embedBold: 'bold',
+        embedItalic: 'italic',
+        embedBoldItalic: 'boldItalic',
+      };
+      function i(k, a) {
+        let C = { name: a.attr(k, 'name'), embedFontRefs: [] };
+        for (let D of a.elements(k))
+          switch (D.localName) {
+            case 'family':
+              C.family = a.attr(D, 'val');
+              break;
+            case 'altName':
+              C.altName = a.attr(D, 'val');
+              break;
+            case 'embedRegular':
+            case 'embedBold':
+            case 'embedItalic':
+            case 'embedBoldItalic':
+              C.embedFontRefs.push(T(D, a));
+          }
+        return C;
+      }
+      function T(k, a) {
+        return { id: a.attr(k, 'id'), key: a.attr(k, 'fontKey'), type: d[k.localName] };
+      }
+    },
+    './header-footer/elements': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }), (f.WmlFooter = f.WmlHeader = void 0));
+      const d = E('../document/dom');
+      class i extends d.OpenXmlElementBase {
+        constructor() {
+          (super(...arguments), (this.type = d.DomType.Header));
+        }
+      }
+      f.WmlHeader = i;
+      class T extends d.OpenXmlElementBase {
+        constructor() {
+          (super(...arguments), (this.type = d.DomType.Footer));
+        }
+      }
+      f.WmlFooter = T;
+    },
+    './header-footer/parts': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.FooterPart = f.HeaderPart = f.BaseHeaderFooterPart = void 0));
+      const d = E('../common/part'),
+        i = E('./elements');
+      class T extends d.Part {
+        constructor(a, C, D) {
+          (super(a, C), (this._documentParser = D));
+        }
+        parseXml(a) {
+          ((this.rootElement = this.createRootElement()),
+            (this.rootElement.children = this._documentParser.parseBodyElements(a)));
+        }
+      }
+      ((f.BaseHeaderFooterPart = T),
+        (f.HeaderPart = class extends T {
+          createRootElement() {
+            return new i.WmlHeader();
+          }
+        }),
+        (f.FooterPart = class extends T {
+          createRootElement() {
+            return new i.WmlFooter();
+          }
+        }));
+    },
+    './html-renderer': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }), (f.HtmlRenderer = void 0));
+      const d = E('./document/dom'),
+        i = E('./utils'),
+        T = E('./javascript'),
+        k = E('./document/section'),
+        a = E('./html'),
+        C = E('./parser/xml-parser');
+      function D(e) {
+        return e >= '0' && e <= '9';
+      }
+      function M(e) {
+        if (!e) return !1;
+        const t = e.charCodeAt(0);
+        return (
+          (t >= 65 && t <= 90) ||
+          (t >= 97 && t <= 122) ||
+          (t >= 913 && t <= 1023) ||
+          (t >= 119808 && t <= 120831)
+        );
+      }
+      function A(e) {
+        return '()+-−=<>≤≥≈≠×÷*/·∙∑Σ∏∫√∞∂∇,.;:[]{}|‖!′″→←↔⇒⇔∈∉⊂⊃⊆⊇∧∨¬'.includes(e);
+      }
+      f.HtmlRenderer = class {
+        constructor() {
+          ((this.className = 'docx'),
+            (this.styleMap = {}),
+            (this.currentPart = null),
+            (this.currentSectionProps = null),
+            (this.currentPageNumber = 1),
+            (this.currentSectionNumber = 1),
+            (this.currentSectionPageNumber = 1),
+            (this.totalPages = 1),
+            (this.sectionPageCount = 1),
+            (this.tableVerticalMerges = []),
+            (this.currentVerticalMerge = null),
+            (this.tableCellPositions = []),
+            (this.currentCellPosition = null),
+            (this.currentTableRow = null),
+            (this.footnoteMap = {}),
+            (this.endnoteMap = {}),
+            (this.currentEndnoteIds = []),
+            (this.usedHederFooterParts = []),
+            (this.currentTabs = []),
+            (this.currentParagraph = null),
+            (this.currentParagraphTabIndex = 0),
+            (this.currentParagraphTabCount = 0),
+            (this.commentMap = {}),
+            (this.bookmarkTextMap = {}),
+            (this.bookmarkIdToName = {}),
+            (this.tocEntries = []),
+            (this.fieldSeqCounters = {}),
+            (this.fieldSetValues = {}),
+            (this.headingIndex = 0),
+            (this.tasks = []),
+            (this.postRenderTasks = []),
+            (this.h = a.h));
+        }
+        async render(e, t) {
+          ((this.document = e),
+            (this.options = t),
+            (this.className = t.className),
+            (this.rootSelector = t.inWrapper ? `.${this.className}-wrapper` : ':root'),
+            (this.h = t.h ?? a.h),
+            (this.styleMap = null),
+            (this.tasks = []),
+            (this.postRenderTasks = []),
+            (this.currentTabs = []),
+            (this.fieldSeqCounters = {}),
+            (this.fieldSetValues = {}),
+            (this.headingIndex = 0),
+            this.options.renderComments &&
+              globalThis.Highlight &&
+              (this.commentHighlight = new Highlight()));
+          const n = [...this.renderDefaultStyle()];
+          (e.themePart && n.push(...this.renderTheme(e.themePart)),
+            e.stylesPart != null &&
+              ((this.styleMap = this.processStyles(e.stylesPart.styles)),
+              n.push(...this.renderStyles(e.stylesPart.styles))),
+            e.numberingPart &&
+              (this.prodessNumberings(e.numberingPart.domNumberings),
+              n.push(...(await this.renderNumbering(e.numberingPart.domNumberings)))),
+            e.footnotesPart &&
+              (this.footnoteMap = (0, i.keyBy)(e.footnotesPart.notes, (u) => u.id)),
+            e.endnotesPart && (this.endnoteMap = (0, i.keyBy)(e.endnotesPart.notes, (u) => u.id)),
+            e.settingsPart && (this.defaultTabSize = e.settingsPart.settings?.defaultTabStop),
+            !t.ignoreFonts &&
+              e.fontTablePart &&
+              n.push(...(await this.renderFontTable(e.fontTablePart))));
+          var l = await this.renderSections(e.documentPart.body);
+          if (this.options.inWrapper) {
+            const u = this.renderWrapper(l);
+            (n.push(u), this.shouldRunDynamicPagination() && this.scheduleDynamicPagination(u));
+          } else n.push(...l);
+          return (
+            this.commentHighlight &&
+              t.renderComments &&
+              CSS.highlights.set(`${this.className}-comments`, this.commentHighlight),
+            await Promise.allSettled(this.tasks),
+            this.postRenderTasks.forEach((u) => u()),
+            this.refreshTabStops(),
+            n
+          );
+        }
+        renderTheme(e) {
+          const t = {},
+            n = e.theme?.fontScheme;
+          n &&
+            (n.majorFont &&
+              ((t['--docx-majorHAnsi-font'] = n.majorFont.latinTypeface),
+              (t['--docx-majorEastAsia-font'] =
+                n.majorFont.eaTypeface ?? n.majorFont.latinTypeface),
+              (t['--docx-majorBidi-font'] = n.majorFont.csTypeface ?? n.majorFont.latinTypeface),
+              (t['--docx-majorCs-font'] = n.majorFont.csTypeface ?? n.majorFont.latinTypeface)),
+            n.minorFont &&
+              ((t['--docx-minorHAnsi-font'] = n.minorFont.latinTypeface),
+              (t['--docx-minorEastAsia-font'] =
+                n.minorFont.eaTypeface ?? n.minorFont.latinTypeface),
+              (t['--docx-minorBidi-font'] = n.minorFont.csTypeface ?? n.minorFont.latinTypeface),
+              (t['--docx-minorCs-font'] = n.minorFont.csTypeface ?? n.minorFont.latinTypeface)));
+          const l = e.theme?.colorScheme;
+          if (l) for (let [p, g] of Object.entries(l.colors)) t[`--docx-${p}-color`] = `#${g}`;
+          const u = this.styleToString(`.${this.className}`, t);
+          return [
+            this.h({ tagName: '#comment', children: ['docxjs document theme values'] }),
+            this.h({ tagName: 'style', children: [u] }),
+          ];
+        }
+        async renderFontTable(e) {
+          const t = [];
+          for (let n of e.fonts)
+            for (let l of n.embedFontRefs)
+              try {
+                const u = await this.document.loadFont(l.id, l.key),
+                  p = { 'font-family': (0, i.encloseFontFamily)(n.name), src: `url(${u})` };
+                ((l.type != 'bold' && l.type != 'boldItalic') || (p['font-weight'] = 'bold'),
+                  (l.type != 'italic' && l.type != 'boldItalic') || (p['font-style'] = 'italic'),
+                  t.push(this.h({ tagName: '#comment', children: [`docxjs ${n.name} font`] })),
+                  t.push(
+                    this.h({ tagName: 'style', children: [this.styleToString('@font-face', p)] }),
+                  ));
+              } catch {
+                this.options.debug &&
+                  console.warn(`Can't load font with id ${l.id} and key ${l.key}`);
+              }
+          return t;
+        }
+        processStyleName(e) {
+          return e ? `${this.className}_${(0, i.escapeClassName)(e)}` : this.className;
+        }
+        processStyles(e) {
+          const t = (0, i.keyBy)(
+            e.filter((l) => l.id != null),
+            (l) => l.id,
+          );
+          for (const l of e.filter((u) => u.basedOn)) {
+            var n = t[l.basedOn];
+            if (n) {
+              ((l.paragraphProps = (0, i.mergeDeep)({}, n.paragraphProps, l.paragraphProps)),
+                (l.runProps = (0, i.mergeDeep)({}, n.runProps, l.runProps)));
+              for (const u of n.styles) {
+                const p = l.styles.find((g) => g.target == u.target);
+                p
+                  ? this.copyStyleProperties(u.values, p.values)
+                  : l.styles.push({ ...u, values: { ...u.values } });
+              }
+            } else this.options.debug && console.warn(`Can't find base style ${l.basedOn}`);
+          }
+          for (let l of e) l.cssName = this.processStyleName(l.id);
+          return t;
+        }
+        prodessNumberings(e) {
+          for (let t of e.filter((n) => n.pStyleName)) {
+            const n = this.findStyle(t.pStyleName);
+            n?.paragraphProps?.numbering && (n.paragraphProps.numbering.level = t.level);
+          }
+        }
+        processElement(e) {
+          if (e.children)
+            for (var t of e.children)
+              ((t.parent = e),
+                t.type == d.DomType.Table ? this.processTable(t) : this.processElement(t));
+        }
+        processTable(e) {
+          const t = e.children ?? [];
+          let n = e.columns?.length ?? 0;
+          for (const p of t) {
+            let g = p.gridBefore ?? 0;
+            for (const s of p.children ?? []) g += s.span ?? 1;
+            n = Math.max(n, g + (p.gridAfter ?? 0));
+          }
+          const l = Math.max(e.rowBandSize ?? 1, 1),
+            u = Math.max(e.colBandSize ?? 1, 1);
+          t.forEach((p, g) => {
+            (g == 0 && this.appendClassName(p, 'first-row'),
+              g == t.length - 1 && this.appendClassName(p, 'last-row'),
+              this.appendClassName(p, Math.floor(g / l) % 2 == 0 ? 'odd-row' : 'even-row'));
+            let s = p.gridBefore ?? 0;
+            for (const r of p.children ?? []) {
+              r.cssStyle = this.copyStyleProperties(e.cellStyle, r.cssStyle, [
+                'border-left',
+                'border-right',
+                'border-top',
+                'border-bottom',
+                'padding-left',
+                'padding-right',
+                'padding-top',
+                'padding-bottom',
+              ]);
+              const o = r.span ?? 1,
+                c = s + o - 1;
+              (s == 0 && this.appendClassName(r, 'first-col'),
+                n > 0 && c >= n - 1 && this.appendClassName(r, 'last-col'),
+                this.appendClassName(r, Math.floor(s / u) % 2 == 0 ? 'odd-col' : 'even-col'),
+                this.processElement(r),
+                (s += o));
+            }
+          });
+        }
+        collectDocumentMetadata(e) {
+          ((this.bookmarkTextMap = {}), (this.bookmarkIdToName = {}), (this.tocEntries = []));
+          const t = {},
+            n = (l) => {
+              if (l.type != d.DomType.Deleted || this.options.renderChanges) {
+                switch (l.type) {
+                  case d.DomType.BookmarkStart: {
+                    const u = l;
+                    u.id && u.name && ((this.bookmarkIdToName[u.id] = u.name), (t[u.id] = []));
+                    break;
+                  }
+                  case d.DomType.BookmarkEnd: {
+                    const u = l,
+                      p = this.bookmarkIdToName[u.id];
+                    p &&
+                      t[u.id] &&
+                      ((this.bookmarkTextMap[p] = t[u.id].join('').trim()), delete t[u.id]);
+                    break;
+                  }
+                  case d.DomType.Text:
+                    for (const u of Object.keys(t)) t[u].push(l.text ?? '');
+                    break;
+                  case d.DomType.DeletedText:
+                    if (this.options.renderChanges)
+                      for (const u of Object.keys(t)) t[u].push(l.text ?? '');
+                }
+                for (const u of l.children ?? []) n(u);
+              }
+            };
+          for (const l of e.children ?? []) n(l);
+          for (const [l, u] of Object.entries(t)) {
+            const p = this.bookmarkIdToName[l];
+            p && (this.bookmarkTextMap[p] = u.join('').trim());
+          }
+          for (const l of e.children ?? []) this.collectTocEntries(l);
+        }
+        collectTocEntries(e) {
+          if (e.type != d.DomType.Deleted || this.options.renderChanges) {
+            if (e.type == d.DomType.Paragraph) {
+              const t = e,
+                n = this.findStyle(t.styleName),
+                l = this.extractText(t).trim();
+              let u = t.outlineLevel ?? n?.paragraphProps?.outlineLevel;
+              if (u == null && t.styleName) {
+                const p = /heading(\d+)|(?:^|[-_ ])h(\d+)$/i.exec(t.styleName);
+                p && (u = parseInt(p[1] ?? p[2], 10) - 1);
+              }
+              if (l && u != null && u >= 0 && u < 9) {
+                const p = this.findFirstBookmark(t),
+                  g =
+                    p?.name && !p.name.startsWith('_')
+                      ? p.name
+                      : `${this.className}-heading-${++this.headingIndex}`;
+                ((t.props = { ...(t.props ?? {}), anchorId: g }),
+                  this.tocEntries.push({ level: u + 1, text: l, id: g }));
+              }
+            }
+            for (const t of e.children ?? []) this.collectTocEntries(t);
+          }
+        }
+        findFirstBookmark(e) {
+          if (e.type == d.DomType.BookmarkStart) return e;
+          for (const t of e.children ?? []) {
+            const n = this.findFirstBookmark(t);
+            if (n) return n;
+          }
+          return null;
+        }
+        extractText(e) {
+          switch (e.type) {
+            case d.DomType.Text:
+              return e.text ?? '';
+            case d.DomType.DeletedText:
+              return this.options.renderChanges ? (e.text ?? '') : '';
+            case d.DomType.Deleted:
+              return this.options.renderChanges
+                ? (e.children ?? []).map((t) => this.extractText(t)).join('')
+                : '';
+            case d.DomType.Inserted:
+              return (e.children ?? []).map((t) => this.extractText(t)).join('');
+            case d.DomType.Tab:
+            case d.DomType.PositionalTab:
+              return '	';
+            case d.DomType.NoBreakHyphen:
+              return '‑';
+            case d.DomType.SoftHyphen:
+              return '';
+            case d.DomType.Break:
+              return `
+`;
+            case d.DomType.Instruction:
+            case d.DomType.ComplexField:
+              return '';
+          }
+          return (e.children ?? []).map((t) => this.extractText(t)).join('');
+        }
+        appendClassName(e, t) {
+          e.className = (0, a.cx)(e.className, t);
+        }
+        copyStyleProperties(e, t, n = null) {
+          if (!e) return t;
+          for (var l of (t == null && (t = {}),
+          n == null && (n = Object.getOwnPropertyNames(e)),
+          n))
+            e.hasOwnProperty(l) && !t.hasOwnProperty(l) && (t[l] = e[l]);
+          return t;
+        }
+        createPageElement(e, t, n) {
+          const l = { ...n };
+          let u = null,
+            p = null;
+          if (t) {
+            if (
+              (t.pageMargins &&
+                ((l.paddingLeft = this.addSize(t.pageMargins.left, t.pageMargins.gutter)),
+                (l.paddingRight = t.pageMargins.right),
+                (l.paddingTop = t.pageMargins.top),
+                (l.paddingBottom = t.pageMargins.bottom)),
+              t.pageSize)
+            ) {
+              let s = t.pageSize.width,
+                r = t.pageSize.height;
+              if (t.pageSize.orientation == 'landscape') {
+                const o = this.parseCssLengthValue(s),
+                  c = this.parseCssLengthValue(r);
+                o != null && c != null && o < c && ([s, r] = [r, s]);
+              }
+              ((u = s),
+                (p = r),
+                this.options.ignoreWidth || (l.width = s),
+                (!this.options.ignoreHeight || !this.options.breakPages) &&
+                  ((l.minHeight = r),
+                  !this.options.ignoreHeight &&
+                    this.options.breakPages &&
+                    this.options.fixedPageHeight &&
+                    (l.height = r)));
+            }
+            t.pageBorders &&
+              (this.applyPageBorder(l, 'top', t.pageBorders.top),
+              this.applyPageBorder(l, 'right', t.pageBorders.right),
+              this.applyPageBorder(l, 'bottom', t.pageBorders.bottom),
+              this.applyPageBorder(l, 'left', t.pageBorders.left));
+          }
+          const g = this.h({ tagName: 'section', className: e, style: l });
+          return (
+            u && this.setCssStyle(g, '--docx-page-width', u),
+            p && this.setCssStyle(g, '--docx-page-height', p),
+            g
+          );
+        }
+        addSize(e, t) {
+          return e ? (t && t != '0.00pt' && t != '0px' ? `calc(${e} + ${t})` : e) : t;
+        }
+        parseCssLengthValue(e) {
+          if (!e) return null;
+          const t = /^(-?\d+(?:\.\d+)?)/.exec(e);
+          return t ? parseFloat(t[1]) : null;
+        }
+        applyPageBorder(e, t, n) {
+          if (!n) return;
+          const l = this.borderTypeToCss(n.type);
+          e[`border-${t}`] =
+            l == 'none' ? 'none' : `${n.size ?? '1px'} ${l} ${this.borderColor(n.color)}`;
+        }
+        borderTypeToCss(e) {
+          switch (e) {
+            case 'nil':
+            case 'none':
+              return 'none';
+            case 'double':
+            case 'triple':
+              return 'double';
+            case 'dashed':
+            case 'dashSmallGap':
+              return 'dashed';
+            case 'dotted':
+            case 'dotDash':
+            case 'dotDotDash':
+              return 'dotted';
+          }
+          return 'solid';
+        }
+        borderColor(e) {
+          return e && e != 'auto' ? (/^[0-9a-f]{6}$/i.test(e) ? `#${e}` : e) : 'black';
+        }
+        createSectionContent(e) {
+          const t = {},
+            n = e.columns?.numberOfColumns ?? e.columns?.columns?.length;
+          return (
+            e.docGrid &&
+              (e.docGrid.linePitch && (t['--docx-doc-grid-line-pitch'] = e.docGrid.linePitch),
+              e.docGrid.charSpace && (t.letterSpacing = e.docGrid.charSpace)),
+            this.document.settingsPart?.settings?.kinsoku &&
+              ((t.lineBreak = 'strict'), (t.wordBreak = 'keep-all')),
+            this.document.settingsPart?.settings?.overflowPunctuation &&
+              (t.hangingPunctuation = 'allow-end'),
+            this.document.settingsPart?.settings?.topLinePunctuation &&
+              (t['text-spacing-trim'] = 'space-start'),
+            (this.document.settingsPart?.settings?.autoSpaceDE ||
+              this.document.settingsPart?.settings?.autoSpaceDN) &&
+              (t['text-autospace'] = [
+                this.document.settingsPart?.settings?.autoSpaceDE ? 'ideograph-alpha' : null,
+                this.document.settingsPart?.settings?.autoSpaceDN ? 'ideograph-numeric' : null,
+              ]
+                .filter(Boolean)
+                .join(' ')),
+            e.columns &&
+              n &&
+              ((t.columnCount = `${n}`),
+              (t.columnGap = e.columns.space),
+              !e.columns.equalWidth &&
+                e.columns.columns?.length > 0 &&
+                ((t.columnWidth = e.columns.columns[0].width),
+                (t.columnGap = e.columns.columns[0].space ?? t.columnGap)),
+              e.columns.separator && (t.columnRule = '1px solid black')),
+            this.h({ tagName: 'article', style: t })
+          );
+        }
+        async renderSections(e) {
+          const t = [];
+          (this.processElement(e), this.collectDocumentMetadata(e));
+          const n = this.splitBySection(e.children, e.props),
+            l = this.groupByPageBreaks(n);
+          let u = null,
+            p = 0,
+            g = 0;
+          const s = new Map(),
+            r = new Map(),
+            o = new Map(),
+            c = new Map(),
+            h = (P) => {
+              if (!o.has(P)) {
+                const x = ++g;
+                (o.set(P, `${this.className}-section-${x}`), c.set(P, x));
+              }
+            };
+          for (const P of l) {
+            const x = P[0].sectProps;
+            (h(x), s.set(x, (s.get(x) ?? 0) + 1));
+          }
+          this.totalPages = l.length;
+          for (let P = 0, x = l.length; P < x; P++) {
+            this.currentFootnoteIds = [];
+            let y = l[P][0].sectProps;
+            h(y);
+            const w = u != y;
+            ((p = w && y?.pageNumber?.start != null ? y.pageNumber.start : p + 1),
+              (this.currentPageNumber = p),
+              (this.currentSectionNumber = c.get(y) ?? 1),
+              (this.currentSectionProps = y),
+              (this.currentSectionPageNumber = (r.get(y) ?? 0) + 1),
+              (this.sectionPageCount = s.get(y) ?? 1),
+              r.set(y, this.currentSectionPageNumber));
+            const N = this.createPageElement(this.className, y, e.cssStyle);
+            ((N.dataset.docxSection = o.get(y)),
+              (N.dataset.docxSectionNumber = `${this.currentSectionNumber}`),
+              (N.dataset.docxSectionPageNumber = `${this.currentSectionPageNumber}`),
+              (N.dataset.docxSectionPageCount = `${this.sectionPageCount}`),
+              (N.dataset.docxPageNumber = `${p}`),
+              w &&
+                y?.pageNumber?.start != null &&
+                (N.dataset.docxPageStart = `${y.pageNumber.start}`),
+              this.options.renderHeaders && this.renderHeaderFooter(y.headerRefs, y, p, w, N));
+            for (const $ of l[P]) {
+              this.currentSectionProps = $.sectProps;
+              var m = this.createSectionContent($.sectProps);
+              ($.columnBreak && (m.style.breakBefore = 'column'),
+                this.renderElements($.elements, m),
+                N.appendChild(m),
+                (y = $.sectProps));
+            }
+            if (this.options.renderFootnotes) {
+              const $ = this.renderNotes(
+                this.currentFootnoteIds,
+                this.footnoteMap,
+                this.document.footnotesPart,
+              );
+              $ && N.appendChild($);
+            }
+            if (this.options.renderEndnotes && P == x - 1) {
+              const $ = this.renderNotes(
+                this.currentEndnoteIds,
+                this.endnoteMap,
+                this.document.endnotesPart,
+              );
+              $ && N.appendChild($);
+            }
+            ((this.currentSectionProps = y),
+              this.options.renderFooters && this.renderHeaderFooter(y.footerRefs, y, p, w, N),
+              t.push(N),
+              await this.yieldDuringRender(P + 1, x),
+              (u = y));
+          }
+          return t;
+        }
+        renderHeaderFooter(e, t, n, l, u) {
+          if (!e) return;
+          const p = !!this.document.settingsPart?.settings?.evenAndOddHeaders,
+            g = e.find((o) => o.type == 'default');
+          var s =
+              (t.titlePage && l ? e.find((o) => o.type == 'first') : null) ??
+              (p && n % 2 == 0 ? e.find((o) => o.type == 'even') : null) ??
+              g ??
+              e.find((o) => o.type == 'first') ??
+              (p ? e.find((o) => o.type == 'even') : null),
+            r = s && this.document.findPartByRelId(s.id, this.document.documentPart);
+          if (r) {
+            ((this.currentPart = r),
+              this.usedHederFooterParts.includes(r.path) ||
+                (this.processElement(r.rootElement), this.usedHederFooterParts.push(r.path)));
+            const [o] = this.renderElements([r.rootElement], u);
+            (t?.pageMargins &&
+              (r.rootElement.type === d.DomType.Header
+                ? ((o.style.marginTop = `calc(${t.pageMargins.header} - ${t.pageMargins.top})`),
+                  (o.style.minHeight = `calc(${t.pageMargins.top} - ${t.pageMargins.header})`))
+                : r.rootElement.type === d.DomType.Footer &&
+                  ((o.style.marginBottom = `calc(${t.pageMargins.footer} - ${t.pageMargins.bottom})`),
+                  (o.style.minHeight = `calc(${t.pageMargins.bottom} - ${t.pageMargins.footer})`))),
+              (this.currentPart = null));
+          }
+        }
+        isPageBreakElement(e) {
+          return (
+            e.type == d.DomType.Break &&
+            (e.break == 'lastRenderedPageBreak'
+              ? !this.options.ignoreLastRenderedPageBreak
+              : e.break == 'page')
+          );
+        }
+        isPageBreakSection(e, t) {
+          return !(
+            !e ||
+            !t ||
+            (e.pageSize?.orientation == t.pageSize?.orientation &&
+              e.pageSize?.width == t.pageSize?.width &&
+              e.pageSize?.height == t.pageSize?.height)
+          );
+        }
+        splitBySection(e, t) {
+          let n = { sectProps: null, elements: [], pageBreak: !1, columnBreak: !1 },
+            l = [n];
+          const u = (g = !1, s = !1) => {
+            if (n.elements.length == 0 && n.sectProps == null)
+              return (
+                n.pageBreak || (n.pageBreak = g),
+                void (n.columnBreak || (n.columnBreak = s))
+              );
+            (n.pageBreak || (n.pageBreak = g),
+              n.columnBreak || (n.columnBreak = s),
+              (n = { sectProps: null, elements: [], pageBreak: !1, columnBreak: !1 }),
+              l.push(n));
+          };
+          for (let g of e) {
+            if (g.type != d.DomType.Paragraph) {
+              if (g.type == d.DomType.Table)
+                for (const h of this.splitTableByPageBreaks(g))
+                  (h.table.children?.length && n.elements.push(h.table), h.breakAfter && u(!0));
+              else n.elements.push(g);
+              continue;
+            }
+            const s = g,
+              r = this.findStyle(s.styleName),
+              o = s.pageBreakBefore ?? r?.paragraphProps?.pageBreakBefore;
+            this.options.breakPages && o && n.elements.length > 0 && u(!0);
+            const c = this.splitParagraphByPageBreaks(s);
+            for (const h of c) (n.elements.push(h.paragraph), h.breakAfter && u(!0));
+            s.sectionProps &&
+              ((n.sectProps = s.sectionProps),
+              u(
+                (0, k.isSectionPageBreak)(s.sectionProps.type),
+                (0, k.isSectionColumnBreak)(s.sectionProps.type),
+              ));
+          }
+          if (((l = l.filter((g) => g.elements.length > 0)), l.length == 0))
+            return [{ sectProps: t, elements: [], pageBreak: !1, columnBreak: !1 }];
+          let p = null;
+          for (let g = l.length - 1; g >= 0; g--)
+            l[g].sectProps == null ? (l[g].sectProps = p ?? t) : (p = l[g].sectProps);
+          return l;
+        }
+        hasPageBreakElement(e) {
+          return (
+            !!this.isPageBreakElement(e) ||
+            (e.children?.some((t) => this.hasPageBreakElement(t)) ?? !1)
+          );
+        }
+        splitTableByPageBreaks(e) {
+          if (!this.options.breakPages || !e.children?.length)
+            return [{ table: e, breakAfter: !1 }];
+          if (!e.children.some((g) => this.hasPageBreakElement(g)))
+            return [{ table: e, breakAfter: !1 }];
+          const t = e.children,
+            n = [];
+          for (const g of t) {
+            if (!g.isHeader) break;
+            n.push(g);
+          }
+          const l = [];
+          let u = [];
+          const p = (g) => {
+            if (u.length == 0 && l.length > 0) return;
+            const s = l.length > 0;
+            let r = u;
+            (s && n.length > 0 && !u.some((o) => o.isHeader) && (r = [...n, ...u]),
+              l.push({ table: { ...e, children: r }, breakAfter: g }),
+              (u = []));
+          };
+          for (const g of t) (u.push(g), this.hasPageBreakElement(g) && p(!0));
+          return (p(!1), l.length > 0 ? l : [{ table: e, breakAfter: !1 }]);
+        }
+        splitElementByPageBreaks(e) {
+          if (this.isPageBreakElement(e)) return [{ breakAfter: !0 }];
+          if (!e.children?.length) return [{ element: e }];
+          const t = [];
+          let n = { ...e, children: [] };
+          const l = () => {
+            (n.children.length > 0 && t.push({ element: n }), (n = { ...e, children: [] }));
+          };
+          for (const u of e.children)
+            for (const p of this.splitElementByPageBreaks(u))
+              (p.element && n.children.push(p.element),
+                p.breakAfter && (l(), t.push({ breakAfter: !0 })));
+          return (l(), t.length > 0 ? t : [{ element: e }]);
+        }
+        splitParagraphByPageBreaks(e) {
+          if (!this.options.breakPages || !e.children?.length)
+            return [{ paragraph: e, breakAfter: !1 }];
+          const t = [];
+          let n = { ...e, children: [] };
+          const l = (p) => {
+            ((n.children.length > 0 || t.length == 0) && t.push({ paragraph: n, breakAfter: p }),
+              (n = { ...e, sectionProps: null, children: [] }));
+          };
+          for (const p of e.children)
+            for (const g of this.splitElementByPageBreaks(p))
+              (g.element && n.children.push(g.element), g.breakAfter && l(!0));
+          (n.children.length > 0 || t.length == 0) && t.push({ paragraph: n, breakAfter: !1 });
+          const u = t[t.length - 1]?.paragraph;
+          for (const p of t) p.paragraph != u && (p.paragraph.sectionProps = null);
+          return t;
+        }
+        styleValuesForTarget(e, t) {
+          return e?.styles?.find((n) => n.target == t)?.values;
+        }
+        styleValue(e, t, n) {
+          return this.styleValuesForTarget(e, t)?.[n];
+        }
+        effectiveParagraphCssValue(e, t, n) {
+          return e.cssStyle?.[n] ?? this.styleValue(t, 'p', n);
+        }
+        isInsideTableCell(e) {
+          for (let t = e.parent; t; t = t.parent) if (t.type == d.DomType.Cell) return !0;
+          return !1;
+        }
+        paragraphUsesDocumentGrid(e, t) {
+          if (
+            !this.currentSectionProps?.docGrid?.linePitch ||
+            (this.isInsideTableCell(e) &&
+              !this.document.settingsPart?.settings?.adjustLineHeightInTable)
+          )
+            return !1;
+          const l = this.effectiveParagraphCssValue(e, t, '--docx-snap-to-grid');
+          return l == null || !/^(0|false|off)$/i.test(l);
+        }
+        setCssStyle(e, t, n) {
+          const l = e.style;
+          typeof l.setProperty == 'function' ? l.setProperty(t, n) : (l[t] = n);
+        }
+        applyDocumentGridLinePitch(e, t, n) {
+          if (
+            !this.paragraphUsesDocumentGrid(e, t) ||
+            this.effectiveParagraphCssValue(e, t, 'line-height')
+          )
+            return;
+          const l = this.currentSectionProps.docGrid.linePitch,
+            u = this.effectiveParagraphCssValue(e, t, 'min-height');
+          if (!u) return void this.setCssStyle(n, 'min-height', l);
+          const p = this.parseCssLengthValue(u),
+            g = this.parseCssLengthValue(l);
+          p != null && g != null
+            ? p < g && this.setCssStyle(n, 'min-height', l)
+            : this.setCssStyle(n, 'min-height', `max(${u}, ${l})`);
+        }
+        groupByPageBreaks(e) {
+          let t = [],
+            n = null;
+          const l = [t];
+          for (let u of e)
+            (n &&
+              (n.pageBreak || this.isPageBreakSection(n.sectProps, u.sectProps)) &&
+              ((t = []), l.push(t)),
+              t.push(u),
+              (n = u));
+          return l.filter((u) => u.length > 0);
+        }
+        async yieldDuringRender(e, t) {
+          const n = this.options.renderPageBatchSize ?? 0;
+          (this.options.progress &&
+            this.options.progress({
+              phase: 'render',
+              current: e,
+              total: t,
+              message: `Rendered ${e}/${t} logical pages`,
+            }),
+            n > 0 && e % n == 0 && (await this.yieldToBrowser()));
+        }
+        async yieldToBrowser() {
+          (this.options.renderYieldEveryMs ?? 0) <= 0 ||
+            (await new Promise((e) => {
+              const t = globalThis;
+              typeof t.requestIdleCallback == 'function'
+                ? t.requestIdleCallback(() => e(), {
+                    timeout: Math.max(1, this.options.renderYieldEveryMs ?? 16),
+                  })
+                : typeof t.requestAnimationFrame == 'function'
+                  ? t.requestAnimationFrame(() => e())
+                  : setTimeout(e, 0);
+            }));
+        }
+        renderWrapper(e) {
+          return this.h({ tagName: 'div', className: this.className + '-wrapper', children: e });
+        }
+        shouldRunDynamicPagination() {
+          return !(
+            !this.options.breakPages ||
+            !this.options.fixedPageHeight ||
+            this.options.ignoreHeight ||
+            typeof document > 'u' ||
+            typeof requestAnimationFrame != 'function'
+          );
+        }
+        scheduleDynamicPagination(e) {
+          if (
+            !e ||
+            e.dataset.docxPaginated == 'true' ||
+            e.dataset.docxPaginating == 'true' ||
+            e.dataset.docxPaginationScheduled == 'true'
+          )
+            return;
+          e.dataset.docxPaginationScheduled = 'true';
+          const t = () => {
+              (document.fonts?.ready ?? Promise.resolve()).finally(() => {
+                requestAnimationFrame(() =>
+                  requestAnimationFrame(() => this.performDynamicPagination(e)),
+                );
+              });
+            },
+            n = () => {
+              e &&
+                e.dataset.docxPaginated != 'true' &&
+                e.dataset.docxPaginating != 'true' &&
+                (e.isConnected ? t() : setTimeout(n, 0));
+            };
+          n();
+        }
+        async performDynamicPagination(e) {
+          if (!e || e.dataset.docxPaginated == 'true' || e.dataset.docxPaginating == 'true') return;
+          if (!e.isConnected) return void setTimeout(() => this.performDynamicPagination(e), 0);
+          (delete e.dataset.docxPaginationScheduled, (e.dataset.docxPaginating = 'true'));
+          const t = Array.from(e.querySelectorAll(':scope > section.' + this.className)),
+            n = this.options.maxDynamicPaginationPasses ?? 1e3;
+          let l = 0;
+          for (let u = 0; u < t.length; u++) {
+            const p = t[u];
+            let g = p.querySelector(':scope > article');
+            for (
+              u % 2 == 0 && (await this.yieldToBrowser());
+              g && this.isPageOverflowing(p) && g.children.length > 0 && l++ < n;
+            ) {
+              const s = this.createContinuationPage(p),
+                r = s.querySelector(':scope > article');
+              let o = !1,
+                c = 0;
+              for (; this.isPageOverflowing(p) && g.lastElementChild && c++ < 500; )
+                if ((c % 20 == 0 && (await this.yieldToBrowser()), g.children.length > 1)) {
+                  let h = this.pickPaginationChunk(g);
+                  if (h.length == 0) break;
+                  if (h.length >= g.children.length) {
+                    if (this.splitOverflowBlock(g.lastElementChild, p, r)) {
+                      o = !0;
+                      continue;
+                    }
+                    h = [g.lastElementChild];
+                  }
+                  for (let m = h.length - 1; m >= 0; m--) (r.prepend(h[m]), (o = !0));
+                } else {
+                  if (!this.splitOverflowBlock(g.lastElementChild, p, r)) break;
+                  o = !0;
+                }
+              if (!o || r.children.length == 0) {
+                s.remove();
+                break;
+              }
+              t.splice(u + 1, 0, s);
+            }
+          }
+          (this.cleanupEmptyNumberedParagraphs(e),
+            this.removeEmptyDynamicPages(e),
+            this.updateDynamicFieldPages(e),
+            delete e.dataset.docxPaginating,
+            (e.dataset.docxPaginated = 'true'));
+        }
+        pickPaginationChunk(e) {
+          const t = Array.from(e.children);
+          if (t.length == 0) return [];
+          let n = t.length - 1;
+          for (; n > 0 && this.isKeepWithNext(t[n - 1]); ) n--;
+          return t.slice(n);
+        }
+        isKeepWithNext(e) {
+          if (e.dataset.docxKeepNext == 'true') return !0;
+          const t = getComputedStyle(e);
+          return t.breakAfter == 'avoid' || t.pageBreakAfter == 'avoid';
+        }
+        isPageOverflowing(e) {
+          const t = this.options.paginationTolerance ?? 2,
+            n = e.clientHeight;
+          if (n <= 0) return !1;
+          if (e.scrollHeight > n + t) return !0;
+          const l = e.getBoundingClientRect();
+          let u = l.top;
+          for (const p of Array.from(e.children)) {
+            const g = p.getBoundingClientRect();
+            if (((u = Math.max(u, g.bottom)), p.tagName.toLowerCase() == 'article'))
+              for (const s of Array.from(p.children)) {
+                const r = s.getBoundingClientRect();
+                u = Math.max(u, r.bottom);
+              }
+          }
+          return u > l.bottom + t;
+        }
+        createContinuationPage(e) {
+          const t = e.cloneNode(!0);
+          ((t.dataset.docxDynamicPage = 'true'), t.removeAttribute('id'));
+          for (const n of Array.from(t.querySelectorAll(':scope > article'))) n.textContent = '';
+          return (e.after(t), t);
+        }
+        splitOverflowBlock(e, t, n) {
+          if (!e || e.dataset.docxKeepLines == 'true') return !1;
+          const l = getComputedStyle(e);
+          if (l.breakInside == 'avoid' || l.pageBreakInside == 'avoid') return !1;
+          switch (e.tagName.toLowerCase()) {
+            case 'p':
+              return this.splitParagraphBlock(e, t, n);
+            case 'table':
+              return this.splitTableBlock(e, t, n);
+          }
+          return !1;
+        }
+        splitParagraphBlock(e, t, n) {
+          if (!e.hasChildNodes()) return !1;
+          const l = this.cloneBlockShell(e);
+          ((l.dataset.docxContinued = 'true'), n.prepend(l));
+          let u = !1,
+            p = 0;
+          for (
+            ;
+            this.isPageOverflowing(t) &&
+            e.hasChildNodes() &&
+            p++ < 1e3 &&
+            this.moveTailInlineNode(e, l, t);
+          )
+            ((u = !0), this.removeEmptyInlineContainers(e));
+          return u
+            ? (e.hasChildNodes()
+                ? this.options.strictWordCompatibility &&
+                  e.dataset.docxWidowControl == 'true' &&
+                  this.rebalanceWidowOrphan(e, l, t)
+                : e.remove(),
+              !0)
+            : (l.remove(), !1);
+        }
+        splitTableBlock(e, t, n) {
+          const l = this.tableContentRows(e);
+          if (l.length <= 1) return !1;
+          const u = this.cloneBlockShell(e);
+          u.dataset.docxContinued = 'true';
+          for (const s of Array.from(e.children))
+            s.tagName?.toLowerCase() == 'colgroup' && u.appendChild(s.cloneNode(!0));
+          for (const s of l.filter((r) => r.dataset.docxRepeatHeader == 'true')) {
+            const r = s.cloneNode(!0);
+            ((r.dataset.docxRepeatedHeader = 'true'), u.appendChild(r));
+          }
+          n.prepend(u);
+          let p = !1,
+            g = 0;
+          for (; this.isPageOverflowing(t) && this.tableContentRows(e).length > 1 && g++ < 500; ) {
+            const s = this.tableContentRows(e).filter(
+                (o) => o.dataset.docxRepeatedHeader != 'true',
+              ),
+              r = s[s.length - 1];
+            if (!r) break;
+            (u.insertBefore(r, this.firstMovedTableRow(u)), (p = !0));
+          }
+          return !!p || (u.remove(), !1);
+        }
+        cloneBlockShell(e) {
+          const t = e.cloneNode(!1);
+          return (t.removeAttribute('id'), t);
+        }
+        tableContentRows(e) {
+          return Array.from(e.querySelectorAll(':scope > tr, :scope > tbody > tr'));
+        }
+        firstMovedTableRow(e) {
+          return (
+            this.tableContentRows(e).find((t) => t.dataset.docxRepeatedHeader != 'true') ?? null
+          );
+        }
+        moveTailInlineNode(e, t, n) {
+          const l = e.lastChild;
+          if (!l) return !1;
+          if (l.nodeType == Node.TEXT_NODE) return this.moveTextTail(l, t, n);
+          if (l instanceof Element && l.childNodes.length > 0 && l.tagName?.toLowerCase() != 'br') {
+            const u = l.cloneNode(!1);
+            (u.removeAttribute('id'), t.prepend(u));
+            const p = this.moveTailInlineNode(l, u, n);
+            return (l.hasChildNodes() || l.remove(), u.hasChildNodes() || u.remove(), p);
+          }
+          return (t.prepend(l), !0);
+        }
+        moveTextTail(e, t, n) {
+          const l = e.data ?? '';
+          if (!l) return !1;
+          const u = document.createTextNode('');
+          if ((t.prepend(u), l.length == 1)) return ((u.data = l), e.remove(), !0);
+          let p = 1,
+            g = l.length,
+            s = l.length;
+          for (; p <= g; ) {
+            const r = Math.floor((p + g) / 2);
+            ((e.data = l.substring(0, l.length - r)),
+              (u.data = l.substring(l.length - r)),
+              this.isPageOverflowing(n) ? (p = r + 1) : ((s = r), (g = r - 1)));
+          }
+          return (
+            (s = this.adjustSplitToWordBoundary(l, s)),
+            (e.data = l.substring(0, l.length - s)),
+            (u.data = l.substring(l.length - s)),
+            e.data || e.remove(),
+            !0
+          );
+        }
+        adjustSplitToWordBoundary(e, t) {
+          if (t <= 1 || t >= e.length) return t;
+          const n = e.length - t,
+            l = e.lastIndexOf(' ', n);
+          return l > 0 && n - l < 32 ? e.length - l - 1 : t;
+        }
+        removeEmptyInlineContainers(e) {
+          for (const t of Array.from(e.childNodes))
+            t instanceof HTMLElement &&
+              (this.removeEmptyInlineContainers(t),
+              t.hasChildNodes() || /^(br|img|svg|math)$/i.test(t.tagName) || t.remove());
+        }
+        cleanupEmptyNumberedParagraphs(e) {
+          const t = `p[class*="${this.className}-num-"]`;
+          for (const n of Array.from(e.querySelectorAll(t))) {
+            if (this.hasVisiblePaginationContent(n) || (!n.id && !n.querySelector('[id], a[name]')))
+              continue;
+            const l = this.findNextVisiblePaginationBlock(e, n);
+            (l && this.moveAnchorsToBlock(n, l), n.remove());
+          }
+        }
+        removeEmptyDynamicPages(e) {
+          const t = Array.from(
+            e.querySelectorAll(`:scope > section.${this.className}[data-docx-dynamic-page="true"]`),
+          );
+          for (const n of t) {
+            const l = n.querySelector(':scope > article');
+            l &&
+              !Array.from(l.children).some((u) => this.hasVisiblePaginationContent(u)) &&
+              n.remove();
+          }
+        }
+        findNextVisiblePaginationBlock(e, t) {
+          const n = Array.from(
+            e.querySelectorAll(
+              'article p, article table, article figure, article img, article svg, article math',
+            ),
+          );
+          for (let l = n.indexOf(t) + 1; l < n.length; l++) {
+            const u = n[l];
+            if (this.hasVisiblePaginationContent(u)) return u;
+          }
+          return null;
+        }
+        hasVisiblePaginationContent(e) {
+          return (
+            (e.textContent ?? '').replace(/\s+/g, '').length > 0 ||
+            !!e.querySelector('br,img,svg,math,object,canvas,video,table')
+          );
+        }
+        moveAnchorsToBlock(e, t) {
+          const n = Array.from(e.querySelectorAll('[id], a[name]'));
+          e.id && !t.id && (t.id = e.id);
+          for (let l = n.length - 1; l >= 0; l--) {
+            const u = n[l];
+            (u.id && t.querySelector(`#${CSS.escape(u.id)}`)) || t.prepend(u);
+          }
+        }
+        rebalanceWidowOrphan(e, t, n) {
+          const l = this.visualLineCount(e),
+            u = this.visualLineCount(t);
+          if (l >= 2 && u >= 2) return;
+          if (l < 2 && e.parentElement && t.hasChildNodes())
+            return (t.prepend(...Array.from(e.childNodes)), void e.remove());
+          let p = 0;
+          for (
+            ;
+            this.visualLineCount(t) < 2 &&
+            e.hasChildNodes() &&
+            p++ < 20 &&
+            !this.isPageOverflowing(n) &&
+            this.moveTailInlineNode(e, t, n);
+          );
+        }
+        visualLineCount(e) {
+          try {
+            const t = document.createRange();
+            t.selectNodeContents(e);
+            const n = Array.from(t.getClientRects());
+            t.detach?.();
+            const l = new Set(n.map((u) => Math.round(u.top)));
+            return Math.max(l.size, 1);
+          } catch {
+            return 1;
+          }
+        }
+        updateDynamicFieldPages(e) {
+          const t = Array.from(e.querySelectorAll(':scope > section.' + this.className)),
+            n = {},
+            l = {},
+            u = {},
+            p = [],
+            g = [];
+          let s = 0,
+            r = '';
+          for (const o of t) {
+            const c = o.dataset.docxSection ?? '';
+            l[c] = (l[c] ?? 0) + 1;
+          }
+          if (
+            (t.forEach((o, c) => {
+              const h = o.dataset.docxSection ?? '';
+              if (h != r) {
+                const m =
+                  o.dataset.docxPageStart != null ? parseInt(o.dataset.docxPageStart, 10) : null;
+                ((s = Number.isFinite(m) ? m : s + 1), (u[h] = 1), (r = h));
+              } else (s++, (u[h] = (u[h] ?? 0) + 1));
+              ((o.dataset.docxPageNumber = `${s}`),
+                (o.dataset.docxSectionPageNumber = `${u[h]}`),
+                (o.dataset.docxSectionPageCount = `${l[h] ?? 1}`),
+                (p[c] = s),
+                (g[c] = u[h]));
+              for (const m of Array.from(o.querySelectorAll('[id]')))
+                m.id && n[m.id] == null && (n[m.id] = s);
+            }),
+            t.forEach((o, c) => {
+              const h = o.dataset.docxSection ?? '';
+              for (const m of Array.from(o.querySelectorAll('[data-docx-field-instr]'))) {
+                const P = this.evaluateDynamicField(
+                  m.dataset.docxFieldInstr,
+                  p[c] ?? c + 1,
+                  t.length,
+                  n,
+                  l[h] ?? 1,
+                  g[c] ?? 1,
+                  parseInt(o.dataset.docxSectionNumber ?? '1', 10),
+                );
+                P != null && (m.textContent = P);
+              }
+            }),
+            this.options.updatePageReferences)
+          )
+            for (const o of Array.from(e.querySelectorAll('[data-docx-page-ref]'))) {
+              const c = o.dataset.docxPageRef;
+              o.textContent = `${n[c] ?? 1}`;
+            }
+        }
+        evaluateDynamicField(e, t, n, l, u = n, p = t, g = 1) {
+          const s = this.tokenizeFieldInstruction((e ?? '').replace(/\s+/g, ' ').trim()),
+            r = s[0]?.replace(/^=/, '').toUpperCase();
+          let o = null;
+          switch (r) {
+            case 'PAGE':
+              o = this.formatFieldNumber(
+                t,
+                this.fieldFormatSwitchToNumFormat(
+                  this.fieldSwitch(s, '\\*') ?? this.currentSectionProps?.pageNumber?.format,
+                ),
+              );
+              break;
+            case 'NUMPAGES':
+              o = this.formatFieldNumber(
+                n,
+                this.fieldFormatSwitchToNumFormat(
+                  this.fieldSwitch(s, '\\*') ?? this.currentSectionProps?.pageNumber?.format,
+                ),
+              );
+              break;
+            case 'SECTIONPAGES':
+              o = this.formatFieldNumber(
+                u,
+                this.fieldFormatSwitchToNumFormat(
+                  this.fieldSwitch(s, '\\*') ?? this.currentSectionProps?.pageNumber?.format,
+                ),
+              );
+              break;
+            case 'SECTION':
+              o = this.formatFieldNumber(
+                g,
+                this.fieldFormatSwitchToNumFormat(this.fieldSwitch(s, '\\*') ?? 'decimal'),
+              );
+              break;
+            case 'PAGEREF': {
+              if (!this.options.updatePageReferences) return null;
+              const c = this.firstFieldArgument(s);
+              o = c ? `${l[c] ?? 1}` : '';
+              break;
+            }
+          }
+          return o == null ? null : this.applyFieldFormatting(o, e);
+        }
+        renderDefaultStyle() {
+          var e = this.className,
+            t = `
 .${e}-wrapper { background: gray; padding: 30px; padding-bottom: 0px; display: flex; flex-flow: column; align-items: center; }
-.${e}-wrapper>section.${e} { background: white; box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); margin-bottom: 30px; }`;this.options.hideWrapperOnPrint&&(t=`@media not print { ${t} }`);var n=`${t}
+.${e}-wrapper>section.${e} { background: white; box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); margin-bottom: 30px; }`;
+          this.options.hideWrapperOnPrint && (t = `@media not print { ${t} }`);
+          var n = `${t}
 .${e} { color: black; hyphens: auto; text-underline-position: from-font; font-kerning: normal; font-variant-ligatures: common-ligatures contextual; text-rendering: optimizeLegibility; line-break: auto; }
 section.${e} { box-sizing: border-box; display: flex; flex-flow: column nowrap; position: relative; overflow: visible; }
 section.${e}>article { margin-bottom: auto; z-index: 1; }
@@ -39,12 +4623,4516 @@ section.${e}>footer { z-index: 1; }
 .${e} a { color: inherit; text-decoration: inherit; }
 .${e} svg { fill: transparent; }
 @media print { .${e}-wrapper { background: transparent; padding: 0; display: block; } section.${e} { margin: 0 auto; box-shadow: none; break-after: page; page-break-after: always; } }
-`;return this.options.renderComments&&(n+=`
+`;
+          return (
+            this.options.renderComments &&
+              (n += `
 .${e}-comment-ref { cursor: default; }
 .${e}-comment-popover { display: none; z-index: 1000; padding: 0.5rem; background: white; position: absolute; box-shadow: 0 0 0.25rem rgba(0, 0, 0, 0.25); width: 30ch; }
 .${e}-comment-ref:hover~.${e}-comment-popover { display: block; }
 .${e}-comment-author,.${e}-comment-date { font-size: 0.875rem; color: #888; }
-`),[this.h({tagName:"#comment",children:["docxjs library predefined styles"]}),this.h({tagName:"style",children:[n]})]}async renderNumbering(e){var t="",n=[];const l=new Map,u=new Map(e.map(o=>[`${o.id}:${o.level}`,this.numFormatToCssValue(o.format)])),p=(o,c)=>{const h=l.get(o)??[];h.push(c),l.set(o,h)};for(var g of e){var s=`p.${this.numberingClass(g.id,g.level)}`,r="none";if(g.bullet){let o=`--${this.className}-${g.bullet.src}`.toLowerCase();t+=this.styleToString(`${s}:before`,{content:"' '",display:"inline-block",background:`var(${o})`},g.bullet.style);try{const c=await this.document.loadNumberingImage(g.bullet.src);t+=`${this.rootSelector} { ${o}: url(${c}) }`}catch{this.options.debug&&console.warn(`Can't load numbering image with src ${g.bullet.src}`)}}else if(g.levelText){let o=this.numberingCounter(g.id,g.level);const c=o+" "+(g.start-1),h=this.numberingRestartLevel(g);h!=null&&p(`p.${this.numberingClass(g.id,h)}`,c),n.push(c);const m=this.normalizeNumberingLevelText(g.levelText,g.format,g.rStyle),P=this.numberingMarkerRunStyle(g.rStyle,m.normalized);t+=this.styleToString(`${s}:before`,{content:this.levelTextToContent(m.text,g.suff,g.id,this.numFormatToCssValue(g.format),u),"counter-increment":o,"font-family":"var(--docx-marker-font-family, inherit)","font-size":"var(--docx-marker-font-size, inherit)","font-style":"var(--docx-marker-font-style, inherit)","font-weight":"var(--docx-marker-font-weight, inherit)",...P})}else r=this.numFormatToCssValue(g.format);t+=this.styleToString(s,{display:"list-item","list-style-position":"inside","list-style-type":r,...g.pStyle})}for(const[o,c]of l)t+=this.styleToString(o,{"counter-set":c.join(" ")});return n.length>0&&(t+=this.styleToString(this.rootSelector,{"counter-reset":n.join(" ")})),[this.h({tagName:"#comment",children:["docxjs document numbering styles"]}),this.h({tagName:"style",children:[t]})]}renderStyles(e){var t="";const n=this.styleMap,l=(0,i.keyBy)(e.filter(s=>s.isDefault),s=>s.target);for(const s of e){var u=s.styles;if(s.linked){var p=s.linked&&n[s.linked];p?u=u.concat(p.styles):this.options.debug&&console.warn(`Can't find linked style ${s.linked}`)}for(const r of u){var g=`${s.target??""}.${s.cssName}${r.mod??""}`;s.target!=r.target&&(g+=` ${r.target}`),l[s.target]==s&&(g=`.${this.className} ${s.target}, `+g),t+=this.styleToString(g,r.values)}}return[this.h({tagName:"#comment",children:["docxjs document styles"]}),this.h({tagName:"style",children:[t]})]}renderNotes(e,t,n){var l=e.map(u=>t[u]).filter(u=>u);if(l.length>0){const u=this.currentPart;this.currentPart=n??u;const p=this.renderElements(l);return this.currentPart=u,this.h({tagName:"ol",children:p})}}renderElement(e){switch(e.type){case d.DomType.Paragraph:return this.renderParagraph(e);case d.DomType.BookmarkStart:return this.renderBookmarkStart(e);case d.DomType.BookmarkEnd:return null;case d.DomType.Run:return this.renderRun(e);case d.DomType.Table:return this.renderTable(e);case d.DomType.Row:return this.renderTableRow(e);case d.DomType.Cell:return this.renderTableCell(e);case d.DomType.Hyperlink:return this.renderHyperlink(e);case d.DomType.SmartTag:return this.renderSmartTag(e);case d.DomType.Drawing:return this.renderDrawing(e);case d.DomType.Image:return this.renderImage(e);case d.DomType.Shape:return this.renderShape(e);case d.DomType.Chart:return this.renderChart(e);case d.DomType.SmartArt:return this.renderSmartArt(e);case d.DomType.Ink:return this.renderInk(e);case d.DomType.SimpleField:return this.renderSimpleField(e);case d.DomType.Instruction:case d.DomType.ComplexField:return null;case d.DomType.Text:return this.renderText(e);case d.DomType.DeletedText:return this.renderDeletedText(e);case d.DomType.Tab:return this.renderTab(e);case d.DomType.Symbol:return this.renderSymbol(e);case d.DomType.Break:return this.renderBreak(e);case d.DomType.Footer:return this.renderContainer(e,"footer");case d.DomType.Header:return this.renderContainer(e,"header");case d.DomType.Footnote:case d.DomType.Endnote:return this.renderContainer(e,"li");case d.DomType.FootnoteReference:return this.renderFootnoteReference(e);case d.DomType.EndnoteReference:return this.renderEndnoteReference(e);case d.DomType.NoBreakHyphen:return this.h("‑");case d.DomType.SoftHyphen:return this.h("­");case d.DomType.PositionalTab:return this.renderTab(e);case d.DomType.Ruby:return this.renderRuby(e);case d.DomType.RubyBase:return this.renderContainer(e,"span");case d.DomType.RubyText:return this.toHTML(e,a.ns.html,"rt");case d.DomType.VmlPicture:return this.renderVmlPicture(e);case d.DomType.VmlElement:return this.renderVmlElement(e);case d.DomType.MmlMath:return this.renderContainerNS(e,a.ns.mathML,"math",{xmlns:a.ns.mathML});case d.DomType.MmlMathParagraph:return this.renderMmlMathParagraph(e);case d.DomType.MmlFraction:return this.renderContainerNS(e,a.ns.mathML,"mfrac");case d.DomType.MmlBase:return this.renderContainerNS(e,a.ns.mathML,e.parent?.type==d.DomType.MmlMatrixRow?"mtd":"mrow");case d.DomType.MmlNumerator:case d.DomType.MmlDenominator:case d.DomType.MmlFunction:case d.DomType.MmlLimit:case d.DomType.MmlBox:return this.renderContainerNS(e,a.ns.mathML,"mrow");case d.DomType.MmlGroupChar:return this.renderMmlGroupChar(e);case d.DomType.MmlLimitLower:return this.renderContainerNS(e,a.ns.mathML,"munder");case d.DomType.MmlLimitUpper:return this.renderContainerNS(e,a.ns.mathML,"mover");case d.DomType.MmlSubSuperscript:return this.renderContainerNS(e,a.ns.mathML,"msubsup");case d.DomType.MmlPhantom:return this.renderMmlPhantom(e);case d.DomType.MmlBorderBox:return this.renderContainerNS(e,a.ns.mathML,"menclose");case d.DomType.MmlAccent:return this.renderMmlAccent(e);case d.DomType.MmlMatrix:return this.renderContainerNS(e,a.ns.mathML,"mtable");case d.DomType.MmlMatrixRow:return this.renderContainerNS(e,a.ns.mathML,"mtr");case d.DomType.MmlRadical:return this.renderMmlRadical(e);case d.DomType.MmlSuperscript:return this.renderContainerNS(e,a.ns.mathML,"msup");case d.DomType.MmlSubscript:return this.renderContainerNS(e,a.ns.mathML,"msub");case d.DomType.MmlDegree:case d.DomType.MmlSuperArgument:case d.DomType.MmlSubArgument:return this.renderContainerNS(e,a.ns.mathML,"mrow");case d.DomType.MmlFunctionName:return this.renderContainerNS(e,a.ns.mathML,"mi");case d.DomType.MmlDelimiter:return this.renderMmlDelimiter(e);case d.DomType.MmlRun:return this.renderMmlRun(e);case d.DomType.MmlNary:return this.renderMmlNary(e);case d.DomType.MmlPreSubSuper:return this.renderMmlPreSubSuper(e);case d.DomType.MmlBar:return this.renderMmlBar(e);case d.DomType.MmlEquationArray:return this.renderMllList(e);case d.DomType.Inserted:return this.renderInserted(e);case d.DomType.Deleted:return this.renderDeleted(e);case d.DomType.CommentRangeStart:return this.renderCommentRangeStart(e);case d.DomType.CommentRangeEnd:return this.renderCommentRangeEnd(e);case d.DomType.CommentReference:return this.renderCommentReference(e);case d.DomType.AltChunk:return this.renderAltChunk(e)}return null}renderElements(e,t){if(e==null)return null;const n=[];for(let l=0;l<e.length;l++){const u=this.tryRenderComplexField(e,l);u?(n.push(...(0,i.asArray)(u.node).filter(p=>p!=null)),l=u.nextIndex-1):n.push(...(0,i.asArray)(this.renderElement(e[l])).filter(p=>p!=null))}return t&&n.forEach(l=>t.appendChild((0,i.isString)(l)?document.createTextNode(l):l)),n}tryRenderComplexField(e,t){if(!this.hasFieldChar(e[t],"begin"))return null;let n=0,l=!1,u="";const p=[];for(let g=t;g<e.length;g++){const s=e[g],r=s.type==d.DomType.Run?{...s,fieldRun:!1,children:[]}:null;if(s.type==d.DomType.Run){for(const o of s.children??[]){if(o.type==d.DomType.ComplexField){const c=o;if(c.charType=="begin")n++;else if(c.charType=="separate"&&n==1)l=!0;else if(c.charType=="end"&&(n--,n==0))return r.children.length>0&&p.push(r),{node:this.renderSimpleField({type:d.DomType.SimpleField,instruction:u,lock:!1,dirty:!1,children:p}),nextIndex:g+1};continue}l||n!=1||o.type!=d.DomType.Instruction?l&&n>0&&r.children.push(o):u+=o.text??""}r.children.length>0&&p.push(r)}else l&&n>0&&p.push(s)}return null}hasFieldChar(e,t){return e.type==d.DomType.Run&&e.children?.some(n=>n.type==d.DomType.ComplexField&&n.charType==t)}renderContainer(e,t){return this.h({tagName:t,children:this.renderElements(e.children)})}renderContainerNS(e,t,n,l){return this.h({ns:t,tagName:n,children:this.renderElements(e.children),...l})}effectiveParagraphTabs(e,t){if(!e?.length)return t;if(!t?.length)return e;const n=[...t];for(const l of e){const u=this.parseCssLengthValue(l.position),p=n.findIndex(g=>this.parseCssLengthValue(g.position)==u);p>=0?n[p]=l:n.push(l)}return n.sort((l,u)=>(this.parseCssLengthValue(l.position)??0)-(this.parseCssLengthValue(u.position)??0))}countParagraphTabs(e){let t=0;const n=l=>{l.type!=d.DomType.Tab&&l.type!=d.DomType.PositionalTab||t++;for(const u of l.children??[])n(u)};return n(e),t}isLeaderTabStop(e){return!!e?.leader&&e.leader!="none"&&e.style!="clear"}resolveRenderedTabStop(e,t,n){if(!e?.length)return null;const l=e[Math.min(t,Math.max(e.length-1,0))],u=[...e].reverse().find(s=>this.isLeaderTabStop(s)),p=this.findStyle(this.currentParagraph?.styleName),g=!!u&&!!(this.currentParagraph?.numbering??p?.paragraphProps?.numbering)&&this.isTocParagraphStyle(this.currentParagraph?.styleName,p);return u?n<=1?g?u:l:t>=n-1?u:this.isLeaderTabStop(l)?e.slice(0,Math.min(t+1,e.length)).reverse().find(s=>!this.isLeaderTabStop(s)&&s.style!="clear")??e.find(s=>!this.isLeaderTabStop(s)&&s.style!="clear")??null:l:l}renderParagraph(e){const t=this.findStyle(e.styleName);e.tabs=this.effectiveParagraphTabs(e.tabs,t?.paragraphProps?.tabs);const n=this.currentParagraph,l=this.currentParagraphTabIndex,u=this.currentParagraphTabCount;this.currentParagraph=e,this.currentParagraphTabIndex=0,this.currentParagraphTabCount=this.countParagraphTabs(e);const p=this.renderElements(e.children),g=e.props?.deletedParagraphMark&&!this.options.renderChanges;if(g&&!this.hasRenderedContent(p))return this.currentParagraph=n,this.currentParagraphTabIndex=l,this.currentParagraphTabCount=u,null;if(g)return this.currentParagraph=n,this.currentParagraphTabIndex=l,this.currentParagraphTabCount=u,p;var s=this.toHTML(e,a.ns.html,"p",this.wrapTabLeaderChildren(p,!0));this.currentParagraph=n,this.currentParagraphTabIndex=l,this.currentParagraphTabCount=u;const r=e.numbering??t?.paragraphProps?.numbering;r&&s.classList.add(this.numberingClass(r.id,r.level));const o=t?.paragraphProps;(e.pageBreakBefore??o?.pageBreakBefore)&&(s.style.breakBefore="page",s.dataset.docxPageBreakBefore="true"),(e.keepLines??o?.keepLines)&&(s.style.breakInside="avoid",s.dataset.docxKeepLines="true"),(e.keepNext??o?.keepNext)&&(s.style.breakAfter="avoid",s.dataset.docxKeepNext="true"),(e.widowControl??o?.widowControl)&&(s.style.orphans="2",s.style.widows="2",s.dataset.docxWidowControl="true"),this.applyDocumentGridLinePitch(e,t,s);const c=e.tabs?.find(h=>this.isLeaderTabStop(h));return c&&(s.classList.add(`${this.className}-tab-leader-paragraph`),s.dataset.docxHasTabLeader="true",s.dataset.docxTabLeader=c.leader,s.dataset.docxTabAlign=c.style),this.isTocParagraphStyle(e.styleName,t)&&(s.classList.add(`${this.className}-toc-paragraph`),s.dataset.docxTocEntry="true"),this.hasParagraphRelativeAnchor(e)&&(s.style.position&&s.style.position!="static"||(s.style.position="relative"),s.dataset.docxAnchorContext="paragraph"),e.props?.anchorId&&(s.id=e.props.anchorId,s.setAttribute("id",e.props.anchorId)),s}hasParagraphRelativeAnchor(e){for(const t of e.children??[]){if(t.type==d.DomType.Drawing&&t.cssStyle?.position=="absolute"){const n=t.props?.anchorPosition,l=n?.vertical?.relative,u=n?.horizontal?.relative;if(l=="paragraph"||l=="line"||l=="character"||u=="character")return!0}if(this.hasParagraphRelativeAnchor(t))return!0}return!1}renderHyperlink(e){const t=this.renderElements(e.children),n=this.toH(e,a.ns.html,"a",this.wrapTabLeaderChildren(t));if(n.href="",e.id){const l=this.currentPart??this.document.documentPart,u=l?.rels?.find(p=>p.id==e.id&&p.targetMode==="External");n.href=u?.target??n.href}return!n.href&&e.anchor&&(n.href+=`#${e.anchor}`),this.h(n)}wrapTabLeaderChildren(e,t=!1){if(!e?.length||e.some(s=>this.hasCssClass(s,`${this.className}-tab-leader-title`)))return e;let n=-1;for(let s=e.length-1;s>=0;s--)if(this.isTabLeaderNode(e[s])){n=s;break}if(n<0)return e;const l=e.slice(0,n),u=e[n],p=e.slice(n+1);this.addCssClass(u,`${this.className}-tab-leader-fill`);const g=[this.h({tagName:"span",className:`${this.className}-tab-leader-title`,children:l}),u,this.h({tagName:"span",className:`${this.className}-tab-leader-page`,children:p})];return t?[this.h({tagName:"span",className:`${this.className}-tab-leader-line`,children:g})]:g}isTabLeaderNode(e){const t=this.nodeDatasetValue(e,"docxTabLeader");return this.hasCssClass(e,this.tabStopClass())&&!!t&&t!="none"}nodeDatasetValue(e,t){const n=e,l=n?.dataset?.[t];if(l!=null)return String(l);const u="data-"+t.replace(/[A-Z]/g,p=>"-"+p.toLowerCase());return typeof n?.getAttribute=="function"?n.getAttribute(u):n?.attributes?.[u]}hasCssClass(e,t){const n=e;return!(!n||!t)&&(typeof n.classList?.contains=="function"?n.classList.contains(t):this.nodeClassName(n).split(/\s+/).includes(t))}addCssClass(e,t){const n=e;if(!n||!t||this.hasCssClass(e,t))return;if(typeof n.classList?.add=="function")return void n.classList.add(t);const l=(0,a.cx)(this.nodeClassName(n),t);typeof n.setAttribute=="function"?n.setAttribute("class",l):(n.attributes??(n.attributes={}),n.attributes.class=l)}nodeClassName(e){return typeof e?.className=="string"?e.className:typeof e?.className?.baseVal=="string"?e.className.baseVal:typeof e?.getAttribute=="function"?e.getAttribute("class")??"":e?.attributes?.class??""}renderSmartTag(e){return this.renderContainer(e,"span")}renderCommentRangeStart(e){if(!this.options.renderComments)return null;const t=new Range;this.commentHighlight?.add(t);const n=this.h({tagName:"#comment",children:[`start of comment #${e.id}`]});return this.later(()=>t.setStart(n,0)),this.commentMap[e.id]=t,n}renderCommentRangeEnd(e){if(!this.options.renderComments)return null;const t=this.commentMap[e.id],n=this.h({tagName:"#comment",children:[`end of comment #${e.id}`]});return this.later(()=>t?.setEnd(n,0)),n}renderCommentReference(e){if(!this.options.renderComments)return null;var t=this.document.commentsPart?.commentMap[e.id];if(!t)return null;const n=this.h({tagName:"span",className:`${this.className}-comment-ref`,children:["💬"]}),l=this.h({tagName:"div",className:`${this.className}-comment-popover`,children:[this.h({tagName:"div",className:`${this.className}-comment-author`,children:[t.author]}),this.h({tagName:"div",className:`${this.className}-comment-date`,children:[new Date(t.date).toLocaleString()]}),...this.renderElements(t.children)]});return this.h({tagName:"#fragment",children:[this.h({tagName:"#comment",children:[`comment #${t.id} by ${t.author} on ${t.date}`]}),n,l]})}renderAltChunk(e){if(!this.options.renderAltChunks)return null;var t=this.h({tagName:"iframe",sandbox:"",referrerPolicy:"no-referrer",loading:"lazy"});return this.tasks.push(this.document.loadAltChunk(e.id,this.currentPart).then(n=>{t.srcdoc=n})),t}renderDrawing(e){e.cssStyle?.["shape-outside"]&&(e.className=(0,a.cx)(e.className,`${this.className}-float-wrap`));var t=this.toHTML(e,a.ns.html,"div");return(e.cssStyle?.float||e.cssStyle?.position=="absolute")&&(t.dataset.docxFloat="true"),t.style.display||(t.style.display="inline-block"),t.style.position||(t.style.position="relative"),t.style.textIndent="0px",t}renderImage(e){let t=this.toHTML(e,a.ns.html,"img",[]),n=e.cssStyle?.transform;if(e.alt&&(t.alt=e.alt),e.title&&(t.title=e.title),e.srcRect&&e.srcRect.some(s=>s!=0)){var[l,u,p,g]=e.srcRect;n=`${n??""} scale(${1/(1-l-p)}, ${1/(1-u-g)})`,t.style.clipPath=`inset(${(100*u).toFixed(2)}% ${(100*p).toFixed(2)}% ${(100*g).toFixed(2)}% ${(100*l).toFixed(2)}%)`,t.style.transformOrigin="top left"}return e.rotation&&(n=`rotate(${e.rotation}deg) ${n??""}`),t.style.transform=n?.trim(),this.document&&e.src&&this.tasks.push(this.document.loadDocumentImage(e.src,this.currentPart).then(s=>{t.src=s,s&&t.setAttribute("src",s)})),t}renderShape(e){if(e.props?.dmlSvg)return this.renderDmlSvgShape(e);const t=e.props?.dmlTextBox?[this.renderDmlTextBox(e)]:null,n=this.toHTML(e,a.ns.html,"div",t);return n.style.display||(n.style.display="inline-block"),e.title&&(n.title=e.title),e.alt&&(n.setAttribute("role","img"),n.setAttribute("aria-label",e.alt)),n}renderDmlTextBox(e){return this.h({tagName:"div",className:`${this.className}-shape-textbox`,style:{"box-sizing":"border-box",display:"flex","flex-direction":"column","justify-content":e.props?.textVerticalAlign??"flex-start","align-items":"stretch",width:"100%",height:"100%",overflow:"hidden",...e.props?.textInsets??{}},children:this.renderElements(e.children)})}renderDmlSvgShape(e){const t=this.createSvgElement("svg",{style:e.cssStyle}),n=e.props??{};t.setAttribute("viewBox",n.viewBox??"0 0 1 1"),t.setAttribute("preserveAspectRatio","none"),t.setAttribute("focusable","false"),e.title&&t.appendChild(this.createSvgElement("title",null,[e.title])),e.alt&&(t.setAttribute("role","img"),t.setAttribute("aria-label",e.alt));const l=this.createSvgElement("path");return l.setAttribute("d",n.pathD??""),l.setAttribute("fill",n.fill??"none"),l.setAttribute("stroke",n.stroke??"none"),l.setAttribute("stroke-width",n.strokeWidth??"0"),l.setAttribute("stroke-linejoin","round"),l.setAttribute("stroke-linecap","round"),n.strokeDasharray&&l.setAttribute("stroke-dasharray",n.strokeDasharray),t.appendChild(l),t}renderChart(e){const t=this.toHTML(e,a.ns.html,"div",[]);if(t.className=(0,a.cx)(t.className,`${this.className}-chart`),e.title&&(t.title=e.title),e.alt&&(t.setAttribute("role","img"),t.setAttribute("aria-label",e.alt)),t.appendChild(this.renderGraphicLoading("Chart")),e.id){const n=this.currentPart;this.tasks.push(this.document.loadRelationshipXml(e.id,n).then(l=>{t.textContent="",t.appendChild(l?this.renderChartSvg(l):this.renderGraphicLoading("Chart"))}).catch(()=>{t.textContent="",t.appendChild(this.renderGraphicLoading("Chart"))}))}return t}renderSmartArt(e){const t=this.toHTML(e,a.ns.html,"div",[]);if(t.className=(0,a.cx)(t.className,`${this.className}-smartart`),e.title&&(t.title=e.title),e.alt&&(t.setAttribute("role","img"),t.setAttribute("aria-label",e.alt)),t.appendChild(this.renderGraphicLoading("SmartArt")),e.dataId){const n=this.currentPart;this.tasks.push(this.document.loadRelationshipXml(e.dataId,n).then(l=>{t.textContent="",t.appendChild(l?this.renderSmartArtSvg(l):this.renderGraphicLoading("SmartArt"))}).catch(()=>{t.textContent="",t.appendChild(this.renderGraphicLoading("SmartArt"))}))}return t}renderInk(e){const t=this.toHTML(e,a.ns.html,"div",[]);if(t.className=(0,a.cx)(t.className,`${this.className}-ink`),e.title&&(t.title=e.title),e.alt&&(t.setAttribute("role","img"),t.setAttribute("aria-label",e.alt)),t.appendChild(this.renderGraphicLoading("Ink")),e.id){const n=this.currentPart;this.tasks.push(this.document.loadRelationshipText(e.id,n).then(l=>{if(t.textContent="",l?.trim().startsWith("<"))try{return void t.appendChild(this.renderInkSvg((0,C.parseXmlString)(l,!0)))}catch{}return this.document.loadRelationshipBlobUrl(e.id,n).then(u=>{t.textContent="",u?t.appendChild(this.h({tagName:"img",src:u,alt:e.alt??"Ink",style:{width:"100%",height:"100%",objectFit:"contain"}})):t.appendChild(this.renderGraphicLoading("Ink"))})}).catch(()=>{t.textContent="",t.appendChild(this.renderGraphicLoading("Ink"))}))}return t}renderGraphicLoading(e){return this.h({tagName:"span",style:{display:"inline-flex","align-items":"center","justify-content":"center",width:"100%",height:"100%","min-width":"2in","min-height":"1in",border:"1px solid currentColor"},children:[`[${e}]`]})}renderChartSvg(e){const t=e.documentElement,n=this.detectChartType(t),l=this.parseChartSeries(t,n),u=this.createSvgElement("svg",{style:{width:"100%",height:"100%",display:"block"}});u.setAttribute("viewBox","0 0 640 360"),u.setAttribute("preserveAspectRatio","xMidYMid meet");const p=this.extractChartTitle(t);if(p&&u.appendChild(this.svgText(p,320,24,"middle","14px","bold")),l.length==0||l.every(g=>g.values.length==0))return u.appendChild(this.svgText("Chart",320,180,"middle","18px")),u;switch(n){case"pieChart":case"doughnutChart":this.drawPieChart(u,l[0]);break;case"lineChart":case"scatterChart":case"areaChart":this.drawLineChart(u,l,n=="areaChart");break;default:this.drawBarChart(u,l)}return u}detectChartType(e){return["barChart","bar3DChart","lineChart","pieChart","doughnutChart","areaChart","scatterChart","ofPieChart","radarChart"].find(t=>this.firstByLocal(e,t))??"barChart"}parseChartSeries(e,t){const n=this.firstByLocal(e,t)??e;return this.elementsByLocal(n,"ser").map((l,u)=>{const p=this.firstByLocal(l,"tx"),g=this.firstByLocal(l,"cat")??this.firstByLocal(l,"xVal"),s=this.firstByLocal(l,"val")??this.firstByLocal(l,"yVal"),r=this.chartCacheValues(g),o=this.chartCacheValues(s).map(c=>parseFloat(c)).filter(c=>!Number.isNaN(c));return{name:this.chartText(p)||`Series ${u+1}`,categories:r.length>0?r:o.map((c,h)=>`${h+1}`),values:o}})}chartCacheValues(e){return e?this.elementsByLocal(e,"pt").map(t=>({index:parseInt(t.getAttribute("idx")??"0",10),value:this.firstByLocal(t,"v")?.textContent??""})).sort((t,n)=>t.index-n.index).map(t=>t.value):[]}chartText(e){if(!e)return"";const t=this.chartCacheValues(e);return t.length>0?t.join(" "):this.elementsByLocal(e,"t").map(n=>n.textContent).filter(Boolean).join(" ").trim()}extractChartTitle(e){const t=this.firstByLocal(e,"title");return this.chartText(t)}drawBarChart(e,t){const l=t[0]?.categories??[],u=Math.max(1,...t.flatMap(s=>s.values)),p=540/Math.max(l.length,1),g=p/Math.max(t.length+1,2);e.appendChild(this.svgLine(60,300,600,300)),e.appendChild(this.svgLine(60,300,60,70)),t.forEach((s,r)=>{s.values.forEach((o,c)=>{const h=Math.max(0,o/u*230),m=this.createSvgElement("rect");m.setAttribute("x",""+(60+c*p+r*g+.2*g)),m.setAttribute("y",""+(300-h)),m.setAttribute("width",""+.8*g),m.setAttribute("height",`${h}`),m.style.fill=this.chartColor(r),e.appendChild(m)})}),l.slice(0,12).forEach((s,r)=>{e.appendChild(this.svgText(s,60+r*p+p/2,318,"middle","10px"))}),t.forEach((s,r)=>this.drawLegend(e,s.name,r,70+130*r,335))}drawLineChart(e,t,n=!1){const u=Math.max(1,...t.flatMap(s=>s.values)),p=Math.max(...t.map(s=>s.values.length),1),g=540/Math.max(p-1,1);e.appendChild(this.svgLine(60,300,600,300)),e.appendChild(this.svgLine(60,300,60,70)),t.forEach((s,r)=>{const o=s.values.map((h,m)=>[60+m*g,300-h/u*230]),c=this.createSvgElement("path");if(c.setAttribute("d",o.map((h,m)=>`${m==0?"M":"L"}${h[0]},${h[1]}`).join(" ")),c.style.stroke=this.chartColor(r),c.style.strokeWidth="2",c.style.fill="none",e.appendChild(c),n&&o.length>1){const h=this.createSvgElement("path");h.setAttribute("d",`${o.map((m,P)=>`${P==0?"M":"L"}${m[0]},${m[1]}`).join(" ")} L${o[o.length-1][0]},300 L${o[0][0]},300 Z`),h.style.fill=this.chartColor(r),h.style.opacity="0.25",e.appendChild(h)}for(const[h,m]of o){const P=this.createSvgElement("circle");P.setAttribute("cx",`${h}`),P.setAttribute("cy",`${m}`),P.setAttribute("r","3"),P.style.fill=this.chartColor(r),e.appendChild(P)}}),(t[0]?.categories??[]).slice(0,12).forEach((s,r)=>{e.appendChild(this.svgText(s,60+r*g,318,"middle","10px"))}),t.forEach((s,r)=>this.drawLegend(e,s.name,r,70+130*r,335))}drawPieChart(e,t){const n=t.values,l=t.categories,u=n.reduce((g,s)=>g+Math.max(0,s),0)||1;let p=-90;n.forEach((g,s)=>{const r=Math.max(0,g)/u*360,o=this.createSvgElement("path");o.setAttribute("d",this.pieSlicePath(300,180,110,p,p+r)),o.style.fill=this.chartColor(s),e.appendChild(o),this.drawLegend(e,l[s]??`${s+1}`,s,450,90+22*s),p+=r})}pieSlicePath(e,t,n,l,u){const p=this.polar(e,t,n,u),g=this.polar(e,t,n,l),s=u-l<=180?"0":"1";return`M${e},${t} L${p.x},${p.y} A${n},${n} 0 ${s},0 ${g.x},${g.y} Z`}polar(e,t,n,l){const u=(l-90)*Math.PI/180;return{x:e+n*Math.cos(u),y:t+n*Math.sin(u)}}drawLegend(e,t,n,l,u){const p=this.createSvgElement("rect");p.setAttribute("x",`${l}`),p.setAttribute("y",""+(u-10)),p.setAttribute("width","10"),p.setAttribute("height","10"),p.style.fill=this.chartColor(n),e.appendChild(p),e.appendChild(this.svgText(t,l+14,u,"start","10px"))}chartColor(e){return`hsl(${47*e%360}, 65%, 48%)`}renderSmartArtSvg(e){const t=e.documentElement,n=this.elementsByLocal(t,"pt").map(r=>({id:r.getAttribute("modelId"),type:r.getAttribute("type"),text:this.elementsByLocal(r,"t").map(o=>o.textContent).filter(Boolean).join(" ").trim()})).filter(r=>r.id&&r.text&&r.type!="doc"),l=this.elementsByLocal(t,"cxn").map(r=>({src:r.getAttribute("srcId"),dst:r.getAttribute("destId")})).filter(r=>r.src&&r.dst&&n.some(o=>o.id==r.src)&&n.some(o=>o.id==r.dst)),u=this.createSvgElement("svg",{style:{width:"100%",height:"100%",display:"block"}});if(u.setAttribute("viewBox","0 0 640 360"),u.setAttribute("preserveAspectRatio","xMidYMid meet"),n.length==0)return u.appendChild(this.svgText("SmartArt",320,180,"middle","18px")),u;const p=this.layoutDiagramNodes(n,l),g={},s=Math.min(90,260/Math.max(p.length,1));p.forEach((r,o)=>{const c=55+o*s,h=560/Math.max(r.length,1);r.forEach((m,P)=>{g[m.id]={x:40+h*P+Math.max(0,h-140)/2,y:c}})});for(const r of l){const o=g[r.src],c=g[r.dst];o&&c&&u.appendChild(this.svgLine(o.x+70,o.y+44,c.x+70,c.y))}return n.forEach((r,o)=>{const c=g[r.id];if(!c)return;const h=this.createSvgElement("rect");h.setAttribute("x",`${c.x}`),h.setAttribute("y",`${c.y}`),h.setAttribute("width","140"),h.setAttribute("height","44"),h.setAttribute("rx","8"),h.style.fill=this.chartColor(o),h.style.opacity="0.18",h.style.stroke=this.chartColor(o),u.appendChild(h),u.appendChild(this.svgText(r.text,c.x+70,c.y+27,"middle","11px"))}),u}layoutDiagramNodes(e,t){const n=new Map(e.map(s=>[s.id,0]));t.forEach(s=>n.set(s.dst,(n.get(s.dst)??0)+1));let l=e.filter(s=>(n.get(s.id)??0)==0);const u=new Set,p=[];for(l.length==0&&(l=e.slice(0,1));l.length>0;){p.push(l),l.forEach(r=>u.add(r.id));const s=t.filter(r=>l.some(o=>o.id==r.src)).map(r=>r.dst).filter(r=>!u.has(r));l=[...new Set(s)].map(r=>e.find(o=>o.id==r)).filter(Boolean)}const g=e.filter(s=>!u.has(s.id));return g.length>0&&p.push(g),p}renderInkSvg(e){const t=this.createSvgElement("svg",{style:{width:"100%",height:"100%",display:"block"}});t.setAttribute("viewBox","0 0 640 360"),t.setAttribute("preserveAspectRatio","xMidYMid meet");const n=this.elementsByLocal(e.documentElement,"trace").map(m=>this.inkTraceToPoints(m.textContent)),l=this.elementsByLocal(e.documentElement,"path").map(m=>m.getAttribute("d")).filter(Boolean);if(n.length==0&&l.length==0)return t.appendChild(this.svgText("Ink",320,180,"middle","18px")),t;const u=n.flat(),p=Math.min(...u.map(m=>m[0]),0),g=Math.min(...u.map(m=>m[1]),0),s=Math.max(...u.map(m=>m[0]),640),r=Math.max(...u.map(m=>m[1]),360),o=Math.min(600/Math.max(s-p,1),320/Math.max(r-g,1)),c=20-p*o,h=20-g*o;for(const m of n){if(m.length<2)continue;const P=this.createSvgElement("path");P.setAttribute("d",m.map((x,y)=>`${y==0?"M":"L"}${x[0]*o+c},${x[1]*o+h}`).join(" ")),P.style.fill="none",P.style.stroke="currentColor",P.style.strokeWidth="2",P.style.strokeLinecap="round",P.style.strokeLinejoin="round",t.appendChild(P)}for(const m of l){const P=this.createSvgElement("path");P.setAttribute("d",m),P.style.fill="none",P.style.stroke="currentColor",P.style.strokeWidth="2",t.appendChild(P)}return t}inkTraceToPoints(e){const t=(e??"").match(/-?\d+(?:\.\d+)?/g)?.map(Number)??[],n=[];for(let l=0;l+1<t.length;l+=2)n.push([t[l],t[l+1]]);return n}svgLine(e,t,n,l){const u=this.createSvgElement("line");return u.setAttribute("x1",`${e}`),u.setAttribute("y1",`${t}`),u.setAttribute("x2",`${n}`),u.setAttribute("y2",`${l}`),u.style.stroke="currentColor",u.style.strokeWidth="1",u}svgText(e,t,n,l="start",u="12px",p=null){const g=this.createSvgElement("text");return g.setAttribute("x",`${t}`),g.setAttribute("y",`${n}`),g.setAttribute("text-anchor",l),g.style.fill="currentColor",g.style.fontSize=u,p&&(g.style.fontWeight=p),g.appendChild(document.createTextNode(e)),g}elementsByLocal(e,t){const n=e.documentElement??e;return Array.from(n.getElementsByTagName("*")).filter(l=>l.localName==t)}firstByLocal(e,t){return this.elementsByLocal(e,t)[0]??null}renderSimpleField(e){const t=this.evaluateFieldNode(e);return t===void 0?this.renderElements(e.children??[]):t==null?null:(0,i.isString)(t)?this.renderFieldText(t,e.instruction):t}renderFieldText(e,t){const n=this.h({tagName:"span",className:`${this.className}-field`,children:[e]});return t&&(n.dataset.docxFieldInstr=t),n}evaluateFieldNode(e){const t=(e.instruction??"").replace(/\s+/g," ").trim();if(!t)return;if(t.startsWith("=")){const u=this.evaluateFormula(t.substring(1));return u==null?void 0:this.applyFieldFormatting(`${u}`,t)}const n=this.tokenizeFieldInstruction(t),l=n[0]?.replace(/^=/,"").toUpperCase();if(!this.shouldPreserveStoredFieldResult(l,e))switch(l){case"PAGE":return this.applyFieldFormatting(this.formatFieldNumber(this.currentPageNumber,this.currentSectionProps?.pageNumber?.format),t);case"NUMPAGES":return this.applyFieldFormatting(this.formatFieldNumber(this.totalPages,this.currentSectionProps?.pageNumber?.format),t);case"SECTIONPAGES":return this.applyFieldFormatting(this.formatFieldNumber(this.sectionPageCount,this.currentSectionProps?.pageNumber?.format),t);case"SECTION":return this.applyFieldFormatting(this.formatFieldNumber(this.currentSectionNumber,"decimal"),t);case"DATE":case"TIME":case"CREATEDATE":case"SAVEDATE":case"PRINTDATE":return this.applyFieldFormatting(this.evaluateDateField(n,l),t);case"AUTHOR":return this.applyFieldFormatting(this.document.corePropsPart?.props?.creator??"",t);case"TITLE":return this.applyFieldFormatting(this.document.corePropsPart?.props?.title??"",t);case"SUBJECT":return this.applyFieldFormatting(this.document.corePropsPart?.props?.subject??"",t);case"KEYWORDS":return this.applyFieldFormatting(this.document.corePropsPart?.props?.keywords??"",t);case"NUMWORDS":return this.applyFieldFormatting(`${this.document.extendedPropsPart?.props?.words??""}`,t);case"NUMCHARS":return this.applyFieldFormatting(`${this.document.extendedPropsPart?.props?.characters??""}`,t);case"FILENAME":return this.applyFieldFormatting(this.document.documentPart?.path?.split("/").pop()??"",t);case"DOCPROPERTY":return this.applyFieldFormatting(this.evaluateDocPropertyField(n),t);case"DOCVARIABLE":return this.applyFieldFormatting(this.evaluateDocVariableField(n),t);case"MERGEFIELD":return;case"SET":return this.evaluateSetField(n),null;case"QUOTE":return this.applyFieldFormatting(n.slice(1).map(u=>this.resolveFieldValue(u)).join(""),t);case"HYPERLINK":return this.renderHyperlinkField(n,e);case"IF":return this.applyFieldFormatting(this.evaluateIfField(n),t);case"REF":case"STYLEREF":case"NOTEREF":return this.applyFieldFormatting(this.evaluateRefField(n),t);case"PAGEREF":return this.applyFieldFormatting(this.evaluatePageRefField(n),t);case"SEQ":return this.applyFieldFormatting(this.evaluateSeqField(n),t);case"LISTNUM":return this.applyFieldFormatting(this.evaluateListNumField(n),t);case"TC":case"XE":return null;case"TOC":return this.renderTocField(n);case"SYMBOL":return this.evaluateSymbolField(n)}}shouldPreserveStoredFieldResult(e,t){if(!this.options.preserveComplexFieldResults||!t.children?.length)return!1;switch(e){case"PAGE":case"NUMPAGES":case"SECTIONPAGES":case"SECTION":return!1;case"PAGEREF":return!this.options.updatePageReferences;case"TOC":case"REF":case"STYLEREF":case"NOTEREF":case"SEQ":case"LISTNUM":case"IF":case"DOCVARIABLE":case"MERGEFIELD":return!0}return!1}tokenizeFieldInstruction(e){const t=[];let n="",l=null,u=!1;for(const p of e)u?(n+=p,u=!1):p!="\\"?p!='"'&&p!="'"?!/\s/.test(p)||l?n+=p:n&&(t.push(n),n=""):l==p?(l=null,t.push(n),n=""):l?n+=p:(n.trim()&&t.push(n.trim()),n="",l=p):l?u=!0:(n&&(t.push(n),n=""),n="\\");return n&&t.push(n),t}fieldSwitch(e,t){const n=t.toLowerCase(),l=e.findIndex(u=>u.toLowerCase()==n);return l>=0?e[l+1]:null}hasFieldSwitch(e,t){const n=t.toLowerCase();return e.some(l=>l.toLowerCase()==n)}firstFieldArgument(e,t=1){for(let n=t;n<e.length;n++){if(!e[n]?.startsWith("\\"))return e[n];n++}return null}evaluateDateField(e,t){const n=this.fieldSwitch(e,"\\@"),l=new Date;return n?this.formatFieldDate(l,n):t=="TIME"?l.toLocaleTimeString():l.toLocaleDateString()}formatFieldDate(e,t){const n=(o,c=2)=>`${o}`.padStart(c,"0"),l=["January","February","March","April","May","June","July","August","September","October","November","December"],u=l.map(o=>o.substring(0,3)),p=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],g=p.map(o=>o.substring(0,3)),s=[[/yyyy/g,`${e.getFullYear()}`],[/yy/g,n(e.getFullYear()%100)],[/MMMM/g,l[e.getMonth()]],[/MMM/g,u[e.getMonth()]],[/MM/g,n(e.getMonth()+1)],[/M/g,`${e.getMonth()+1}`],[/dddd/g,p[e.getDay()]],[/ddd/g,g[e.getDay()]],[/dd/g,n(e.getDate())],[/d/g,`${e.getDate()}`],[/HH/g,n(e.getHours())],[/H/g,`${e.getHours()}`],[/hh/g,n((e.getHours()+11)%12+1)],[/h/g,""+((e.getHours()+11)%12+1)],[/mm/g,n(e.getMinutes())],[/m/g,`${e.getMinutes()}`],[/ss/g,n(e.getSeconds())],[/s/g,`${e.getSeconds()}`],[/AM\/PM/g,e.getHours()<12?"AM":"PM"],[/am\/pm/g,e.getHours()<12?"am":"pm"]];let r=t;for(const[o,c]of s)r=r.replace(o,c);return r}evaluateDocPropertyField(e){const t=this.firstFieldArgument(e)?.toLowerCase();if(!t)return"";const n={...this.document.corePropsPart?.props??{},...this.document.extendedPropsPart?.props??{}};for(const[l,u]of Object.entries(n))if(l.toLowerCase()==t)return u==null?"":`${u}`;return""}evaluateSetField(e){const t=this.firstFieldArgument(e);if(!t)return;const n=e.slice(e.indexOf(t)+1).filter(l=>!l.startsWith("\\")).map(l=>this.resolveFieldValue(l)).join(" ");this.fieldSetValues[t]=n}evaluateDocVariableField(e){const t=this.firstFieldArgument(e);return t?this.fieldSetValues[t]??"":""}renderHyperlinkField(e,t){const n=this.fieldSwitch(e,"\\l"),l=this.firstFieldArgument(e)??"",u=n?`${l}#${n}`:l,p=this.h({tagName:"a",href:u,children:this.renderElements(t.children??[])});return p.textContent||(p.textContent=u||n),p}evaluateIfField(e){const t=["<>",">=","<=","=",">","<"],n=e.findIndex((x,y)=>y>0&&t.includes(x));if(n<0)return"";const l=this.resolveFieldValue(e.slice(1,n).join(" ")),u=e[n],p=this.resolveFieldValue(e[n+1]??""),g=e[n+2]??"",s=e[n+3]??"",r=parseFloat(l),o=parseFloat(p),c=!Number.isNaN(r)&&!Number.isNaN(o),h=c?r:l,m=c?o:p;let P=!1;switch(u){case"=":P=h==m;break;case"<>":P=h!=m;break;case">":P=h>m;break;case"<":P=h<m;break;case">=":P=h>=m;break;case"<=":P=h<=m}return this.resolveFieldValue(P?g:s)}resolveFieldValue(e){const t=(e??"").trim();if(/^[-+]?\d+(?:\.\d+)?$/.test(t))return t;if(this.bookmarkTextMap.hasOwnProperty(t))return this.bookmarkTextMap[t];if(this.fieldSetValues.hasOwnProperty(t))return this.fieldSetValues[t];if(t.startsWith("=")){const l=this.evaluateFormula(t.substring(1));return l==null?"":`${l}`}const n=this.tokenizeFieldInstruction(t)[0]?.toUpperCase();if(["PAGE","NUMPAGES","SECTIONPAGES","SECTION","DATE","TIME","AUTHOR","TITLE","SUBJECT","KEYWORDS","REF","PAGEREF","SEQ","DOCPROPERTY"].includes(n)){const l=this.evaluateFieldNode({type:d.DomType.SimpleField,instruction:t,lock:!1,dirty:!1,children:[]});if((0,i.isString)(l))return l}return t}evaluateRefField(e){const t=this.firstFieldArgument(e);return t?this.bookmarkTextMap[t]??this.fieldSetValues[t]??"":""}evaluatePageRefField(e){const t=this.firstFieldArgument(e);return t?`${this.bookmarkTextMap[t]!=null?Math.max(this.currentPageNumber,1):1}`:""}evaluateSeqField(e){const t=this.firstFieldArgument(e);if(!t||this.hasFieldSwitch(e,"\\h"))return"";const n=this.fieldSwitch(e,"\\r"),l=this.hasFieldSwitch(e,"\\c");n!=null?this.fieldSeqCounters[t]=parseInt(n,10)||0:l||(this.fieldSeqCounters[t]=(this.fieldSeqCounters[t]??0)+1);const u=this.fieldSwitch(e,"\\*")??"decimal";return this.formatFieldNumber(this.fieldSeqCounters[t]??0,this.fieldFormatSwitchToNumFormat(u))}evaluateListNumField(e){const t=this.firstFieldArgument(e)??"LISTNUM";this.fieldSeqCounters[t]=(this.fieldSeqCounters[t]??0)+1;const n=this.fieldSwitch(e,"*")??"decimal";return this.formatFieldNumber(this.fieldSeqCounters[t],this.fieldFormatSwitchToNumFormat(n))}renderTocField(e){let t=1,n=9;const l=this.fieldSwitch(e,"\\o");if(l){const p=/(\d+)\s*-\s*(\d+)/.exec(l);p&&(t=parseInt(p[1],10),n=parseInt(p[2],10))}const u=this.tocEntries.filter(p=>p.level>=t&&p.level<=n).map(p=>{const g=this.h({tagName:"span",className:`${this.className}-toc-page`,children:["1"]});return g.dataset.docxPageRef=p.id,this.h({tagName:"div",className:`${this.className}-toc-entry ${this.className}-toc-level-${p.level}`,children:[this.h({tagName:"a",className:`${this.className}-toc-title`,href:`#${p.id}`,children:[p.text]}),g]})});return this.h({tagName:"div",className:`${this.className}-toc`,children:u})}evaluateSymbolField(e){const t=parseInt(e[1],10);return Number.isFinite(t)?String.fromCharCode(t):""}evaluateFormula(e){const t=e.replace(/,/g,"").trim();if(!/^[0-9+\-*/().\s]+$/.test(t))return null;try{const n=Function(`"use strict"; return (${t});`)();return Number.isFinite(n)?n:null}catch{return null}}applyFieldFormatting(e,t){const n=this.tokenizeFieldInstruction(t);let l=e??"";const u=this.fieldSwitch(n,"\\*"),p=u?.toUpperCase(),g=this.fieldSwitch(n,"\\#");if(g){const s=parseFloat(l);Number.isNaN(s)||(l=this.formatNumberPicture(s,g))}switch(p){case"UPPER":l=l.toUpperCase();break;case"LOWER":l=l.toLowerCase();break;case"FIRSTCAP":l=l.substring(0,1).toUpperCase()+l.substring(1).toLowerCase();break;case"CAPS":l=l.replace(/\b\w/g,s=>s.toUpperCase());break;case"ROMAN":{const s=parseInt(l,10);Number.isNaN(s)||(l=u=="roman"?this.toRoman(s).toLowerCase():this.toRoman(s).toUpperCase());break}case"ALPHABETIC":{const s=parseInt(l,10);Number.isNaN(s)||(l=u=="alphabetic"?this.toLetters(s).toLowerCase():this.toLetters(s).toUpperCase());break}}return l}formatNumberPicture(e,t){const n=t.indexOf("."),l=n>=0?t.length-n-1:0;let u=e.toFixed(l);if(t.includes(",")){const[p,g]=u.split(".");u=p.replace(/\B(?=(\d{3})+(?!\d))/g,",")+(g!=null?`.${g}`:"")}return u}fieldFormatSwitchToNumFormat(e){if(e=="roman")return"lowerRoman";if(e=="alphabetic")return"lowerLetter";switch(e?.toUpperCase()){case"ROMAN":return"upperRoman";case"ALPHABETIC":return"upperLetter";default:return"decimal"}}formatFieldNumber(e,t){switch(t){case"upperRoman":return this.toRoman(e).toUpperCase();case"lowerRoman":return this.toRoman(e).toLowerCase();case"upperLetter":return this.toLetters(e).toUpperCase();case"lowerLetter":return this.toLetters(e).toLowerCase();case"decimalZero":return e<10?`0${e}`:`${e}`;default:return`${e}`}}toRoman(e){const t=[[1e3,"M"],[900,"CM"],[500,"D"],[400,"CD"],[100,"C"],[90,"XC"],[50,"L"],[40,"XL"],[10,"X"],[9,"IX"],[5,"V"],[4,"IV"],[1,"I"]];let n=Math.max(Math.floor(e),0),l="";for(const[u,p]of t)for(;n>=u;)l+=p,n-=u;return l||`${e}`}toLetters(e){let t=Math.max(Math.floor(e),1),n="";for(;t>0;)t--,n=String.fromCharCode(65+t%26)+n,t=Math.floor(t/26);return n}renderRuby(e){const t=e.children?.find(p=>p.type==d.DomType.RubyBase),n=e.children?.find(p=>p.type==d.DomType.RubyText),l=[...t?this.renderElements(t.children):[],...n?(0,i.asArray)(this.renderElement(n)).filter(p=>p!=null):[]],u=this.h({tagName:"ruby",children:l});return e.align&&(u.style.rubyAlign=e.align),u}hasRenderedContent(e){for(const t of e??[]){if(!t)continue;const n=t,l=n.nodeType,u=String(n.localName??n.tagName??n.nodeName??"").toLowerCase();if(l==3||u=="#text"){if((n.textContent??n.text??n.data??"").length)return!0;continue}if(["br","img","svg","math","table"].includes(u)||(n.textContent??"").length)return!0;const p=Array.from(n.childNodes??n.children??[]);if(p.length&&this.hasRenderedContent(p))return!0}return!1}renderText(e){return this.h(this.applyCjkLineBreakGuards(e.text))}applyCjkLineBreakGuards(e){if(!e||!this.document.settingsPart?.settings?.kinsoku)return e;const t=this.document.settingsPart.settings.noLineBreaksBefore??`!),.:;?]}¢°·'"†‡›℃∶、。々〉》」』】〕〗〙〛〜゠ァィゥェォッャュョヮ・ー－？！％，．：；゛゜ヽヾゝゞー`,n=this.document.settingsPart.settings.noLineBreaksAfter??`([{$£¥'"“‘〈《「『【〔〖〘〚`;let l="";for(const u of e)t.includes(u)&&(l+="⁠"),l+=u,n.includes(u)&&(l+="⁠");return l}renderDeletedText(e){return this.options.renderChanges?this.renderText(e):null}renderBreak(e){switch(e.break){case"textWrapping":case"line":return this.h({tagName:"br"});case"column":return this.h({tagName:"span",style:{breakAfter:"column"}});case"page":return this.options.breakPages?null:this.h({tagName:"span",style:{breakAfter:"page"}});case"lastRenderedPageBreak":return this.options.breakPages||this.options.ignoreLastRenderedPageBreak?null:this.h({tagName:"span",style:{breakAfter:"page"}})}return null}renderInserted(e){return this.options.renderChanges?this.renderContainer(e,"ins"):this.renderElements(e.children)}renderDeleted(e){return this.options.renderChanges?this.renderContainer(e,"del"):null}renderSymbol(e){return this.h({tagName:"span",children:[String.fromCharCode(e.char)],style:{fontFamily:e.font}})}renderFootnoteReference(e){return this.currentFootnoteIds.push(e.id),this.h({tagName:"sup",children:[`${this.currentFootnoteIds.length}`]})}renderEndnoteReference(e){return this.currentEndnoteIds.push(e.id),this.h({tagName:"sup",children:[`${this.currentEndnoteIds.length}`]})}renderTab(e){const t=this.currentParagraph??(function(s,r){for(var o=s.parent;o!=null&&o.type!=r;)o=o.parent;return o})(e,d.DomType.Paragraph),n=t?.tabs??[],l=n.filter(s=>s?.style!="clear"),u=this.currentParagraphTabIndex++,p=this.resolveRenderedTabStop(l,u,this.currentParagraphTabCount);var g=this.h({tagName:"span",className:this.tabStopClass(),children:[" "]});return g.dataset.docxTab="true",p&&(g.dataset.docxTabAlign=p.style??"left",g.dataset.docxTabLeader=p.leader??"none",p.position&&(g.dataset.docxTabPos=p.position)),this.options.experimental&&this.currentTabs.push({stops:n,span:g}),g}renderBookmarkStart(e){const t=this.h({tagName:"span"});return e.name&&(t.id=e.name,t.setAttribute("id",e.name)),t}renderRun(e){const t=e.fieldRun?e.children?.filter(u=>u.type!=d.DomType.Instruction&&u.type!=d.DomType.ComplexField):e.children;if(e.fieldRun&&(!t||t.length==0))return null;let n=this.renderElements(t);if(e.verticalAlign&&(n=[this.h({tagName:e.verticalAlign,children:this.renderElements(t)})]),!e.verticalAlign&&t?.length==1&&(t[0].type==d.DomType.Tab||t[0].type==d.DomType.PositionalTab)&&n?.length==1){const u=n[0];return e.cssStyle&&Object.assign(u.style,e.cssStyle),e.className&&u.classList.add(e.className),u}const l=this.toHTML(e,a.ns.html,"span",n);return e.id&&(l.id=e.id),l}renderTable(e){e.columns?.length&&!e.cssStyle?.["table-layout"]&&(e.cssStyle??(e.cssStyle={}),e.cssStyle["table-layout"]="fixed"),this.tableCellPositions.push(this.currentCellPosition),this.tableVerticalMerges.push(this.currentVerticalMerge),this.currentVerticalMerge={},this.currentCellPosition={col:0,row:0};const t=[];return e.columns&&t.push(this.renderTableColumns(e.columns)),t.push(...this.renderElements(e.children)),this.currentVerticalMerge=this.tableVerticalMerges.pop(),this.currentCellPosition=this.tableCellPositions.pop(),this.toHTML(e,a.ns.html,"table",t)}renderTableColumns(e){const t=e.map(n=>this.h({tagName:"col",style:{width:n.width}}));return this.h({tagName:"colgroup",children:t})}renderTableRow(e){this.currentCellPosition.col=0;const t=[],n=this.currentTableRow;this.currentTableRow=e,e.gridBefore&&t.push(this.renderTableCellPlaceholder(e.gridBefore)),t.push(...this.renderElements(e.children)),e.gridAfter&&t.push(this.renderTableCellPlaceholder(e.gridAfter)),this.currentTableRow=n,this.currentCellPosition.row++;const l=this.toHTML(e,a.ns.html,"tr",t);return e.isHeader&&(l.dataset.docxRepeatHeader="true"),l}renderTableCellPlaceholder(e){return this.h({tagName:"td",colSpan:e,style:{border:"none"}})}renderTableCell(e){const t=this.currentTableRow?.isHeader?"th":"td";let n=this.toHTML(e,a.ns.html,t);const l=this.currentCellPosition.col;return e.verticalMerge?e.verticalMerge=="restart"?(this.currentVerticalMerge[l]=n,n.rowSpan=1):this.currentVerticalMerge[l]&&(this.currentVerticalMerge[l].rowSpan+=1,n.style.display="none"):this.currentVerticalMerge[l]=null,e.span&&(n.colSpan=e.span),this.currentCellPosition.col+=n.colSpan,n}renderVmlPicture(e){return this.renderContainer(e,"div")}renderVmlElement(e){var t=this.h({ns:a.ns.svg,tagName:"svg",style:e.cssStyleText});const n=this.renderVmlChildElement(e);e.imageHref?.id&&this.tasks.push(this.document?.loadDocumentImage(e.imageHref.id,this.currentPart).then(u=>n.setAttribute("href",u))),t.appendChild(n);const l=globalThis.requestAnimationFrame;return(typeof l=="function"?l.bind(globalThis):u=>setTimeout(()=>u(Date.now()),0))(()=>{try{const u=t.firstElementChild,p=typeof u?.getBBox=="function"?u.getBBox():null;p&&Number.isFinite(p.width)&&Number.isFinite(p.height)&&p.width>0&&p.height>0&&(t.setAttribute("width",`${Math.ceil(p.x+p.width)}`),t.setAttribute("height",`${Math.ceil(p.y+p.height)}`))}catch{}}),t}renderVmlChildElement(e){const t=this.createSvgElement(e.tagName);Object.entries(e.attrs).forEach(([n,l])=>t.setAttribute(n,l));for(let n of e.children)if(n.type==d.DomType.VmlElement)t.appendChild(this.renderVmlChildElement(n));else for(const l of(0,i.asArray)(this.renderElement(n)).filter(u=>u!=null))t.appendChild((0,i.isString)(l)?document.createTextNode(l):l);return t}renderMmlMathParagraph(e){const t=this.renderElements(e.children);for(const n of t)n?.localName=="math"&&n.setAttribute("display","block");return this.h({tagName:"div",className:`${this.className}-math-paragraph`,style:{textAlign:"center"},children:t})}renderMmlPhantom(e){return this.renderContainerNS(e,a.ns.mathML,"mphantom")}renderMmlAccent(e){const t=e.children?.find(u=>u.type==d.DomType.MmlBase),n=this.createMathMLElement("mo",null,[e.props?.char??"^"]),l=t?(0,i.asArray)(this.renderElement(t)).filter(u=>u!=null):[];return this.createMathMLElement("mover",null,[...l,n])}renderMmlRadical(e){const t=e.children.find(l=>l.type==d.DomType.MmlBase);if(e.props?.hideDegree)return this.createMathMLElement("msqrt",null,this.renderElements([t]));const n=e.children.find(l=>l.type==d.DomType.MmlDegree);return this.createMathMLElement("mroot",null,this.renderElements([t,n]))}renderMmlDelimiter(e){const t=[],n=e.props?.beginChar,l=e.props?.endChar;return n!==""&&t.push(this.createMathMLElement("mo",null,[n??"("])),t.push(...this.renderElements(e.children)),l!==""&&t.push(this.createMathMLElement("mo",null,[l??")"])),this.createMathMLElement("mrow",null,t)}renderMmlNary(e){const t=[],n=(0,i.keyBy)(e.children,r=>r.type),l=n[d.DomType.MmlSuperArgument],u=n[d.DomType.MmlSubArgument],p=l?this.createMathMLElement("mrow",null,this.renderElements(l.children)):null,g=u?this.createMathMLElement("mrow",null,this.renderElements(u.children)):null,s=this.createMathMLElement("mo",null,[e.props?.char??"∫"]);return p&&g?t.push(this.createMathMLElement("munderover",null,[s,g,p])):p?t.push(this.createMathMLElement("mover",null,[s,p])):g?t.push(this.createMathMLElement("munder",null,[s,g])):t.push(s),n[d.DomType.MmlBase]&&t.push(...this.renderElements(n[d.DomType.MmlBase].children)),this.createMathMLElement("mrow",null,t)}renderMmlPreSubSuper(e){const t=[],n=(0,i.keyBy)(e.children,r=>r.type),l=n[d.DomType.MmlSuperArgument],u=n[d.DomType.MmlSubArgument],p=this.createMathMLElement("mrow",null,l?this.renderElements(l.children):[]),g=this.createMathMLElement("mrow",null,u?this.renderElements(u.children):[]),s=this.createMathMLElement("mrow",null,[]);return t.push(this.createMathMLElement("msubsup",null,[s,g,p])),n[d.DomType.MmlBase]&&t.push(...this.renderElements(n[d.DomType.MmlBase].children)),this.createMathMLElement("mrow",null,t)}renderMmlGroupChar(e){const t=e.props?.verticalJustification==="bot"?"munder":"mover",n=this.createMathMLElement("mrow",null,this.renderElements(e.children)),l=this.createMathMLElement("mo",null,[e.props?.char??"⏞"]);return this.createMathMLElement(t,null,[n,l])}renderMmlBar(e){const t={};switch(e.props.position){case"top":t.textDecoration="overline";break;case"bottom":t.textDecoration="underline"}return this.renderContainerNS(e,a.ns.mathML,"mrow",{style:t})}renderMmlRun(e){const t=this.extractMathRunText(e);if(t!=null){const n=this.renderMathTextTokens(t,e.cssStyle);return n.length?n:null}return this.renderContainerNS(e,a.ns.mathML,"mrow")}extractMathRunText(e){let t="";for(const n of e.children??[])switch(n.type){case d.DomType.Text:t+=n.text??"";break;case d.DomType.DeletedText:this.options.renderChanges&&(t+=n.text??"");break;case d.DomType.Symbol:t+=String.fromCharCode(n.char);break;case d.DomType.Tab:t+=" ";break;case d.DomType.NoBreakHyphen:t+="‑";break;case d.DomType.SoftHyphen:break;default:return null}return t}renderMathTextTokens(e,t){const n=[];let l=0;for(;l<e.length;){const u=e[l];if(/\s/.test(u)){let p=l+1;for(;p<e.length&&/\s/.test(e[p]);)p++;n.push(this.createMathMLElement("mspace",{width:.25*Math.max(1,p-l)+"em"})),l=p;continue}if(D(u)){let p=l+1;for(;p<e.length&&(D(e[p])||e[p]==".");)p++;n.push(this.createMathToken("mn",e.substring(l,p),t)),l=p;continue}if(M(u)){let p=l+1;for(;p<e.length&&M(e[p]);)p++;n.push(this.createMathToken("mi",e.substring(l,p),t)),l=p;continue}A(u)?n.push(this.createMathToken("mo",u,t)):n.push(this.createMathToken("mtext",u,t)),l++}return n}createMathToken(e,t,n){return this.createMathMLElement(e,n?{style:n}:null,[t])}renderMllList(e){const t=this.renderElements(e.children).map(n=>this.createMathMLElement("mtr",null,[this.createMathMLElement("mtd",null,[n])]));return this.toHTML(e,a.ns.mathML,"mtable",t)}toH(e,t,n,l=null){const{$lang:u,...p}=e.cssStyle??{};return{ns:t,tagName:n,className:(0,a.cx)(e.className,e.styleName&&this.processStyleName(e.styleName)),lang:u,style:p,children:l??this.renderElements(e.children)}}toHTML(e,t,n,l=null){return this.h(this.toH(e,t,n,l))}findStyle(e){return e&&this.styleMap?.[e]}isTocParagraphStyle(e,t){return[e,t?.id,t?.name,t?.cssName,...t?.aliases??[]].filter(Boolean).map(n=>String(n).replace(/[\s_-]+/g,"").toLowerCase()).some(n=>/^toc[1-9]$/.test(n))}numberingClass(e,t){return`${this.className}-num-${e}-${t}`}tabStopClass(){return`${this.className}-tab-stop`}styleToString(e,t,n=null){let l=`${e} {\r
-`;for(const u in t)u.startsWith("$")||(l+=`  ${u}: ${t[u]};\r
-`);return n&&(l+=n),l+`}\r
-`}numberingCounter(e,t){return`${this.className}-num-${e}-${t}`}numberingRestartLevel(e){if(e.level<=0)return null;if(e.restart==null)return e.level-1;if(e.restart==0)return null;const t=e.restart-1;return t>=0&&t<e.level?t:null}numberingMarkerRunStyle(e,t){if(!e)return e;const n={...e};return t&&delete n["font-family"],n}normalizeNumberingLevelText(e,t,n){if(t!="bullet"||!e)return{text:e,normalized:!1};const l=(n?.["font-family"]??"").toLowerCase();let u=!1,p=null;if(l.includes("wingdings"))p=this.wingdingsBulletMap();else{if(!l.includes("symbol"))return{text:e,normalized:!1};p=this.symbolBulletMap()}let g="";for(const s of e){const r=p[s.charCodeAt(0)];r?(g+=r,u=!0):g+=s}return{text:g,normalized:u}}symbolBulletMap(){return{183:"•",8226:"•",61623:"•"}}wingdingsBulletMap(){return{61548:"●",61550:"■",61557:"◆",61598:"·",61599:"•",61600:"▪",61601:"○",61604:"◉",61605:"◎",61607:"▪",61608:"◻",61656:"➢",61672:"➔",61690:"▫",61691:"✗",61692:"✓",61693:"☒",61694:"☑"}}levelTextToContent(e,t,n,l,u){const p=[];let g=0;for(const o of e.matchAll(/%\d+/g)){o.index>g&&p.push(`"${this.escapeCssString(e.substring(g,o.index))}"`);let c=parseInt(o[0].substring(1),10)-1;const h=u?.get(`${n}:${c}`)??l??"decimal";p.push(`counter(${this.numberingCounter(n,c)}, ${h})`),g=o.index+o[0].length}const s=e.substring(g);s&&p.push(`"${this.escapeCssString(s)}"`);const r=this.numberingSuffixToCssContent(t);return r&&p.push(r),p.length>0?p.join(" "):'""'}numberingSuffixToCssContent(e){switch(e||"tab"){case"nothing":return"";case"space":return'"\\000020"';default:return'"\\000009"'}}escapeCssString(e){return e.replace(/\\/g,"\\\\").replace(/"/g,'\\"').replace(/\r?\n/g,"\\A ")}numFormatToCssValue(e){return{none:"none",bullet:"disc",decimal:"decimal",lowerLetter:"lower-alpha",upperLetter:"upper-alpha",lowerRoman:"lower-roman",upperRoman:"upper-roman",decimalZero:"decimal-leading-zero",aiueo:"katakana",aiueoFullWidth:"katakana",chineseCounting:"simp-chinese-informal",chineseCountingThousand:"simp-chinese-informal",chineseLegalSimplified:"simp-chinese-formal",chosung:"hangul-consonant",ideographDigital:"cjk-ideographic",ideographTraditional:"cjk-heavenly-stem",ideographLegalTraditional:"trad-chinese-formal",ideographZodiac:"cjk-earthly-branch",iroha:"katakana-iroha",irohaFullWidth:"katakana-iroha",japaneseCounting:"japanese-informal",japaneseDigitalTenThousand:"cjk-decimal",japaneseLegal:"japanese-formal",thaiNumbers:"thai",koreanCounting:"korean-hangul-formal",koreanDigital:"korean-hangul-formal",koreanDigital2:"korean-hanja-informal",hebrew1:"hebrew",hebrew2:"hebrew",hindiNumbers:"devanagari",ganada:"hangul",taiwaneseCounting:"cjk-ideographic",taiwaneseCountingThousand:"cjk-ideographic",taiwaneseDigital:"cjk-decimal"}[e]??e??"decimal"}refreshTabStops(){this.options.experimental&&setTimeout(()=>{const e=(0,T.computePixelToPoint)();for(let t of this.currentTabs)(0,T.updateTabStop)(t.span,t.stops,this.defaultTabSize,e)},500)}createElementNS(e,t,n,l){return this.h({ns:e,tagName:t,children:l,...n})}createElement(e,t,n){return this.createElementNS(a.ns.html,e,t,n)}createMathMLElement(e,t,n){return this.createElementNS(a.ns.mathML,e,t,n)}createSvgElement(e,t,n){return this.createElementNS(a.ns.svg,e,t,n)}later(e){this.postRenderTasks.push(e)}}},"./html":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.ns=void 0,f.h=function T(k){if((0,d.isString)(k))return document.createTextNode(k);if(k instanceof Node)return k;const{ns:a,tagName:C,className:D,style:M,children:A,...e}=k;if(C==="#fragment")return document.createDocumentFragment();if(C==="#comment")return document.createComment(A[0]);const t=a?document.createElementNS(a,C):document.createElement(C);if(D&&t.setAttribute("class",D),M&&((0,d.isString)(M)?t.setAttribute("style",M):Object.assign(t.style,M)),e)for(const[n,l]of Object.entries(e))l!==void 0&&(t[n]=l);return A&&A.forEach(n=>t.appendChild(T(n))),t},f.cx=function(...T){return T.filter(Boolean).join(" ")};const d=E("./utils");var i;(function(T){T.html="http://www.w3.org/1999/xhtml",T.svg="http://www.w3.org/2000/svg",T.mathML="http://www.w3.org/1998/Math/MathML"})(i||(f.ns=i={}))},"./input-validation":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.EMPTY_DOCX_ERROR_MESSAGE=void 0,f.assertNonEmptyDocxInput=function(d){if((function(i){return i==null?0:typeof Blob<"u"&&i instanceof Blob?i.size:typeof ArrayBuffer<"u"&&(i instanceof ArrayBuffer||ArrayBuffer.isView(i))?i.byteLength:typeof i.size=="number"?i.size:typeof i.byteLength=="number"?i.byteLength:typeof i.length=="number"?i.length:null})(d)===0)throw new Error(f.EMPTY_DOCX_ERROR_MESSAGE)},f.EMPTY_DOCX_ERROR_MESSAGE="文件为空或尚未保存，无法作为 Word 文档打开。请在 WPS/Word 中保存后重新上传。"},"./javascript":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.computePixelToPoint=function(a=document.body){const C=document.createElement("div");C.style.width="100pt",a.appendChild(C);const D=100/C.offsetWidth;return a.removeChild(C),D},f.updateTabStop=function(a,C,D,M=.75){const A=a.closest("p");if(!A)return;const e=a.getBoundingClientRect(),t=A.getBoundingClientRect(),n=getComputedStyle(A),l=T(n.marginInlineStart||n.marginLeft),u=T(n.marginInlineEnd||n.marginRight),p=C?.length>0?C.map(y=>({pos:k(y.position),leader:y.leader,style:y.style})).sort((y,w)=>y.pos-w.pos):[d],g=p[p.length-1],s=(t.width+l+u)*M,r=Number.isFinite(k(D))?k(D):36;let o=g.pos+r;if(o<s)for(;o<s&&p.length<i;o+=r)p.push({...d,pos:o});const c=t.left-l,h=(e.left-c)*M,m=p.find(y=>y.style!="clear"&&y.pos>h);if(m==null)return;let P=1;if(m.style=="right"||m.style=="center"){const y=Array.from(A.querySelectorAll(`.${a.className}`)),w=y.indexOf(a)+1,N=document.createRange();N.setStart(a,1),w<y.length?N.setEndBefore(y[w]):N.setEndAfter(A);const $=m.style=="center"?.5:1,R=N.getBoundingClientRect(),X=R.left+$*R.width-c;P=m.pos-X*M}else P=m.pos-h;const x=Math.max(Number.isFinite(P)?P:0,0);switch(a.innerHTML="&nbsp;",a.style.display="inline-block",a.style.width=`${x.toFixed(2)}pt`,a.style.minWidth="0pt",a.style.lineHeight="1",a.style.whiteSpace="nowrap",a.style.wordSpacing="normal",a.style.textDecoration="none",a.style.borderBottom="",a.style.height="",a.style.transform="",m.leader){case"dot":case"middleDot":a.style.borderBottom="1px dotted currentColor",a.style.height=".85em",a.style.transform="translateY(-.18em)";break;case"hyphen":case"heavy":case"underscore":a.style.borderBottom="1px solid currentColor",a.style.height=".85em",a.style.transform="translateY(-.18em)"}};const d={pos:0,leader:"none",style:"left"},i=50;function T(a){const C=parseFloat(a);return Number.isFinite(C)?C:0}function k(a){return parseFloat(a)}},"./length":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.Length=void 0;const d=E("./utils");class i{constructor(k,a){this.value=k,this.type=a}static parse(k){const a=parseFloat(k),C=/p[tx]$/i.exec(k)?.[0];return new i(a,C)}static from(k){return(0,d.isString)(k)?i.parse(k):k instanceof i?k:null}add(k){if(k.type!==this.type)throw new Error("Can't do math on different types");return new i(this.value+k.value,this.type)}mul(k){return new i(this.value*k,this.type)}valueOf(){return this.value}toString(){return`${this.value.toFixed(2)}${this.type??""}`}}f.Length=i},"./license-gate":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.assertViewerLicense=function(d,i){}},"./metafile/emf-to-svg":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.isEmfBinary=k,f.convertEmfToSvgDataUrl=function(b,v){const S=a(b,v);return S?`data:image/svg+xml;charset=utf-8,${encodeURIComponent(S)}`:null},f.convertEmfToSvg=a;const d={HEADER:1,POLYBEZIER:2,POLYGON:3,POLYLINE:4,POLYBEZIERTO:5,POLYLINETO:6,POLYPOLYLINE:7,POLYPOLYGON:8,SETWINDOWEXTEX:9,SETWINDOWORGEX:10,SETVIEWPORTEXTEX:11,SETVIEWPORTORGEX:12,EOF:14,SETPIXELV:15,SETBKMODE:18,SETPOLYFILLMODE:19,SETTEXTALIGN:22,SETTEXTCOLOR:24,SETBKCOLOR:25,MOVETOEX:27,SCALEVIEWPORTEXTEX:31,SCALEWINDOWEXTEX:32,SAVEDC:33,RESTOREDC:34,SETWORLDTRANSFORM:35,MODIFYWORLDTRANSFORM:36,SELECTOBJECT:37,CREATEPEN:38,CREATEBRUSHINDIRECT:39,DELETEOBJECT:40,ELLIPSE:42,RECTANGLE:43,ROUNDRECT:44,ARC:45,CHORD:46,PIE:47,LINETO:54,ARCTO:55,POLYDRAW:56,BEGINPATH:59,ENDPATH:60,CLOSEFIGURE:61,FILLPATH:62,STROKEANDFILLPATH:63,STROKEPATH:64,BITBLT:76,STRETCHBLT:77,STRETCHDIBITS:81,EXTCREATEFONTINDIRECTW:82,EXTTEXTOUTA:83,EXTTEXTOUTW:84,POLYBEZIER16:85,POLYGON16:86,POLYLINE16:87,POLYBEZIERTO16:88,POLYLINETO16:89,POLYPOLYLINE16:90,POLYPOLYGON16:91,POLYDRAW16:92,EXTCREATEPEN:95,POLYTEXTOUTA:96,POLYTEXTOUTW:97,SMALLTEXTOUT:108,ALPHABLEND:114,TRANSPARENTBLT:116},i={0:{type:"brush",color:"#ffffff"},1:{type:"brush",color:"#c0c0c0"},2:{type:"brush",color:"#808080"},3:{type:"brush",color:"#404040"},4:{type:"brush",color:"#000000"},5:{type:"brush",color:"none",nullBrush:!0},6:{type:"pen",color:"#ffffff",width:1},7:{type:"pen",color:"#000000",width:1},8:{type:"pen",color:"none",width:0,nullPen:!0},18:{type:"brush",color:"#ffffff"},19:{type:"pen",color:"#000000",width:1}},T={m11:1,m12:0,m21:0,m22:1,dx:0,dy:0};function k(b){if(!b||b.length<48)return!1;const v=e(b);return v.getUint32(0,!0)==d.HEADER&&v.getUint32(40,!0)==1179469088}function a(b,v={}){if(!k(b))return null;const S=e(b),B=S.getUint32(4,!0),O=t(S,8),_=t(S,24),V=S.byteLength>=52?S.getUint32(48,!0):0,I=Math.max(1,O.right-O.left),z=Math.max(1,O.bottom-O.top),q=Math.max(1,_.right-_.left)/100,U=Math.max(1,_.bottom-_.top)/100,L={world:A(T),windowOrg:{x:0,y:0},windowExt:null,viewportOrg:{x:0,y:0},viewportExt:null,pen:{type:"pen",color:"#000000",width:1},brush:{type:"brush",color:"#ffffff",nullBrush:!0},font:null,textColor:"#000000",bkColor:"#ffffff",bkMode:1,polyFillMode:1,textAlign:0,currentPoint:{x:0,y:0}},Y=[],j={},ee=[];let F=Math.max(8,B||108),se=1,ie="",re=!1,be=0;const ge=v.maxRecords??Math.max(1e4,V+100),he=v.maxShapes??5e4,Z=K=>{!K||be>=he||(ee.push(K),be++)},oe=K=>{K&&(ie+=(ie?" ":"")+K)};for(;F+8<=S.byteLength&&se++<=ge;){const K=S.getUint32(F,!0),ce=S.getUint32(F+4,!0);if(ce<8||F+ce>S.byteLength)break;switch(K){case d.EOF:F+=ce,se=ge+1;break;case d.SETWINDOWEXTEX:L.windowExt=l(S,F+8);break;case d.SETWINDOWORGEX:L.windowOrg=n(S,F+8);break;case d.SETVIEWPORTEXTEX:L.viewportExt=l(S,F+8);break;case d.SETVIEWPORTORGEX:L.viewportOrg=n(S,F+8);break;case d.SCALEWINDOWEXTEX:L.windowExt&&(L.windowExt=o(S,F,L.windowExt));break;case d.SCALEVIEWPORTEXTEX:L.viewportExt&&(L.viewportExt=o(S,F,L.viewportExt));break;case d.SETWORLDTRANSFORM:L.world=p(S,F+8);break;case d.MODIFYWORLDTRANSFORM:{const W=p(S,F+8),G=S.getUint32(F+32,!0);G==1?L.world=A(T):G==2?L.world=g(W,L.world):G==3?L.world=g(L.world,W):G==4&&(L.world=W);break}case d.SAVEDC:Y.push(C(L));break;case d.RESTOREDC:{const W=S.getInt32(F+8,!0);if(W<0)for(let G=0;G<Math.min(-W,Y.length);G++)Object.assign(L,Y.pop());else if(W>0&&W<=Y.length){const G=Y[W-1];Y.length=W-1,Object.assign(L,C(G))}break}case d.SETBKMODE:L.bkMode=S.getUint32(F+8,!0);break;case d.SETPOLYFILLMODE:L.polyFillMode=S.getUint32(F+8,!0);break;case d.SETTEXTALIGN:L.textAlign=S.getUint32(F+8,!0);break;case d.SETTEXTCOLOR:L.textColor=c(S.getUint32(F+8,!0));break;case d.SETBKCOLOR:L.bkColor=c(S.getUint32(F+8,!0));break;case d.CREATEPEN:{const W=S.getUint32(F+8,!0),G=S.getUint32(F+12,!0),me=Math.abs(S.getInt32(F+16,!0)),Te=c(S.getUint32(F+24,!0));j[W]={type:"pen",color:Te,width:me||1,nullPen:(15&G)==5};break}case d.EXTCREATEPEN:{const W=S.getUint32(F+8,!0),G=S.getUint32(F+28,!0),me=Math.abs(S.getInt32(F+32,!0)),Te=S.getUint32(F+36,!0),ye=c(S.getUint32(F+40,!0));j[W]={type:"pen",color:ye,width:me||1,nullPen:(15&G)==5||Te==1};break}case d.CREATEBRUSHINDIRECT:{const W=S.getUint32(F+8,!0),G=S.getUint32(F+12,!0),me=c(S.getUint32(F+16,!0));j[W]={type:"brush",color:me,nullBrush:G==1};break}case d.EXTCREATEFONTINDIRECTW:j[S.getUint32(F+8,!0)]=Me(S,F+12,ce-12);break;case d.SELECTOBJECT:{const W=S.getUint32(F+8,!0),G=2147483648&W?i[2147483647&W]:j[W];G?.type=="pen"?L.pen=D(G):G?.type=="brush"?L.brush=M(G):G?.type=="font"&&(L.font={...G});break}case d.DELETEOBJECT:delete j[S.getUint32(F+8,!0)];break;case d.BEGINPATH:re=!0,ie="";break;case d.ENDPATH:re=!1;break;case d.CLOSEFIGURE:oe("Z");break;case d.MOVETOEX:{const W=s(L,n(S,F+8));L.currentPoint=W,re&&oe(`M ${m(W.x)} ${m(W.y)}`);break}case d.LINETO:{const W=s(L,n(S,F+8));re?oe(`L ${m(W.x)} ${m(W.y)}`):Z(`<path d="M ${m(L.currentPoint.x)} ${m(L.currentPoint.y)} L ${m(W.x)} ${m(W.y)}" ${x(L,!1,!0)}/>`),L.currentPoint=W;break}case d.POLYLINE:case d.POLYGON:N(S,F,K==d.POLYGON,!1,re,L,oe,Z);break;case d.POLYLINETO:N(S,F,!1,!0,re,L,oe,Z);break;case d.POLYLINE16:case d.POLYGON16:w(S,F,K==d.POLYGON16,!1,re,L,oe,Z);break;case d.POLYLINETO16:w(S,F,!1,!0,re,L,oe,Z);break;case d.POLYBEZIER:R(S,F,!1,!1,re,L,oe,Z);break;case d.POLYBEZIERTO:R(S,F,!1,!0,re,L,oe,Z);break;case d.POLYBEZIER16:R(S,F,!0,!1,re,L,oe,Z);break;case d.POLYBEZIERTO16:R(S,F,!0,!0,re,L,oe,Z);break;case d.POLYPOLYLINE:case d.POLYPOLYGON:X(S,F,K==d.POLYPOLYGON,!1,re,L,oe,Z);break;case d.POLYPOLYLINE16:case d.POLYPOLYGON16:X(S,F,K==d.POLYPOLYGON16,!0,re,L,oe,Z);break;case d.POLYDRAW:Q(S,F,!1,re,L,oe,Z);break;case d.POLYDRAW16:Q(S,F,!0,re,L,oe,Z);break;case d.RECTANGLE:ue(S,F,L,Z,!1);break;case d.ELLIPSE:ve(S,F,L,Z);break;case d.ROUNDRECT:ue(S,F,L,Z,!0);break;case d.ARC:case d.ARCTO:case d.CHORD:case d.PIE:we(S,F,K,re,L,oe,Z);break;case d.FILLPATH:y(ie,L,Z,!0,!1),ie="";break;case d.STROKEPATH:y(ie,L,Z,!1,!0),ie="";break;case d.STROKEANDFILLPATH:y(ie,L,Z,!0,!0),ie="";break;case d.EXTTEXTOUTA:case d.EXTTEXTOUTW:_e(S,F,ce,L,Z,K==d.EXTTEXTOUTW);break;case d.POLYTEXTOUTA:case d.POLYTEXTOUTW:Re(S,F,ce,L,Z,K==d.POLYTEXTOUTW);break;case d.SMALLTEXTOUT:de(S,F,ce,L,Z);break;case d.SETPIXELV:Fe(S,F,L,Z);break;case d.BITBLT:case d.STRETCHBLT:case d.STRETCHDIBITS:case d.ALPHABLEND:case d.TRANSPARENTBLT:Be(S,F,ce,K,L,Z)}F+=ce}if(ie&&y(ie,L,Z,!0,!0),!ee.length){const K=(function(ce,W){const G=(function(ye){const Ne=(function(J){const ne=[137,80,78,71,13,10,26,10];for(let ae=0;ae+ne.length+12<=J.length;ae++){if(!le(J,ne,ae))continue;let ke=ae+8;for(;ke+12<=J.length;){const He=Oe(J,ke),je=String.fromCharCode(J[ke+4],J[ke+5],J[ke+6],J[ke+7]);if(ke+=12+He,ke>J.length)break;if(je=="IEND")return J.subarray(ae,ke)}}return null})(ye);if(Ne)return`data:image/png;base64,${Ee(Ne)}`;const Se=(function(J){for(let ne=0;ne+4<J.length;ne++)if(J[ne]==255&&J[ne+1]==216&&J[ne+2]==255){for(let ae=ne+4;ae+1<J.length;ae++)if(J[ae]==255&&J[ae+1]==217)return J.subarray(ne,ae+2)}return null})(ye);if(Se)return`data:image/jpeg;base64,${Ee(Se)}`;const Ae=(function(J){for(let ne=0;ne+14<J.length;ne++){if(J[ne]!=66||J[ne+1]!=77)continue;const ae=xe(J,ne+2);if(ae>14&&ne+ae<=J.length)return J.subarray(ne,ne+ae)}return null})(ye);return Ae?`data:image/bmp;base64,${Ee(Ae)}`:null})(ce);if(!G)return[];const me=Math.max(1,W.right-W.left),Te=Math.max(1,W.bottom-W.top);return[`<image x="${m(W.left)}" y="${m(W.top)}" width="${m(me)}" height="${m(Te)}" href="${G}" preserveAspectRatio="xMidYMid meet"/>`]})(b,O);K.length&&ee.push(...K)}return ee.length?`<svg xmlns="http://www.w3.org/2000/svg" width="${m(q)}mm" height="${m(U)}mm" viewBox="${m(O.left)} ${m(O.top)} ${m(I)} ${m(z)}" preserveAspectRatio="xMidYMid meet" data-docx-metafile="emf">${ee.join("")}</svg>`:(function(K,ce,W,G,me){return`<svg xmlns="http://www.w3.org/2000/svg" width="${m(G)}mm" height="${m(me)}mm" viewBox="${m(W.left)} ${m(W.top)} ${m(K)} ${m(ce)}" preserveAspectRatio="xMidYMid meet" data-docx-metafile="emf"><rect x="${m(W.left)}" y="${m(W.top)}" width="${m(K)}" height="${m(ce)}" fill="none" stroke="#999" stroke-width="1"/><text x="${m(W.left+K/2)}" y="${m(W.top+ce/2)}" text-anchor="middle" font-size="12" fill="#666">${P("Unsupported EMF image")}</text></svg>`})(I,z,O,q,U)}function C(b){return{world:A(b.world),windowOrg:{...b.windowOrg},windowExt:b.windowExt?{...b.windowExt}:null,viewportOrg:{...b.viewportOrg},viewportExt:b.viewportExt?{...b.viewportExt}:null,pen:D(b.pen),brush:M(b.brush),font:b.font?{...b.font}:null,textColor:b.textColor,bkColor:b.bkColor,bkMode:b.bkMode,polyFillMode:b.polyFillMode,textAlign:b.textAlign,currentPoint:{...b.currentPoint}}}function D(b){return{...b}}function M(b){return{...b}}function A(b){return{...b}}function e(b){return new DataView(b.buffer,b.byteOffset,b.byteLength)}function t(b,v){return{left:b.getInt32(v,!0),top:b.getInt32(v+4,!0),right:b.getInt32(v+8,!0),bottom:b.getInt32(v+12,!0)}}function n(b,v){return{x:b.getInt32(v,!0),y:b.getInt32(v+4,!0)}}function l(b,v){return n(b,v)}function u(b,v){return{x:b.getInt16(v,!0),y:b.getInt16(v+2,!0)}}function p(b,v){return{m11:b.getFloat32(v,!0),m12:b.getFloat32(v+4,!0),m21:b.getFloat32(v+8,!0),m22:b.getFloat32(v+12,!0),dx:b.getFloat32(v+16,!0),dy:b.getFloat32(v+20,!0)}}function g(b,v){return{m11:b.m11*v.m11+b.m12*v.m21,m12:b.m11*v.m12+b.m12*v.m22,m21:b.m21*v.m11+b.m22*v.m21,m22:b.m21*v.m12+b.m22*v.m22,dx:b.dx*v.m11+b.dy*v.m21+v.dx,dy:b.dx*v.m12+b.dy*v.m22+v.dy}}function s(b,v){const S=b.world;let B=v.x*S.m11+v.y*S.m21+S.dx,O=v.x*S.m12+v.y*S.m22+S.dy;return b.windowExt&&b.viewportExt&&b.windowExt.x&&b.windowExt.y&&(B=(B-b.windowOrg.x)*b.viewportExt.x/b.windowExt.x+b.viewportOrg.x,O=(O-b.windowOrg.y)*b.viewportExt.y/b.windowExt.y+b.viewportOrg.y),{x:B,y:O}}function r(b){let v=Math.hypot(b.world.m11,b.world.m12),S=Math.hypot(b.world.m21,b.world.m22);b.windowExt&&b.viewportExt&&b.windowExt.x&&b.windowExt.y&&(v*=Math.abs(b.viewportExt.x/b.windowExt.x),S*=Math.abs(b.viewportExt.y/b.windowExt.y));const B=(v+S)/2;return Number.isFinite(B)&&B>0?B:1}function o(b,v,S){const B=b.getInt32(v+8,!0),O=b.getInt32(v+12,!0),_=b.getInt32(v+16,!0),V=b.getInt32(v+20,!0);return{x:O?S.x*B/O:S.x,y:V?S.y*_/V:S.y}}function c(b){const v=b>>8&255,S=b>>16&255;return`#${h(255&b)}${h(v)}${h(S)}`}function h(b){return Math.max(0,Math.min(255,0|b)).toString(16).padStart(2,"0")}function m(b){return Number.isFinite(b)?""+Math.round(1e3*b)/1e3:"0"}function P(b){return`${b??""}`.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g,"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function x(b,v,S){const B=[];if(v&&!b.brush.nullBrush?(B.push(`fill="${b.brush.color}"`),B.push(`fill-rule="${b.polyFillMode==2?"nonzero":"evenodd"}"`)):B.push('fill="none"'),S&&!b.pen.nullPen){const O=r(b),_=b.pen.width==0?1:Math.max(.35,b.pen.width*O);B.push(`stroke="${b.pen.color}"`),B.push(`stroke-width="${m(_)}"`),B.push('stroke-linecap="square"'),B.push('stroke-linejoin="miter"')}else B.push('stroke="none"');return B.join(" ")}function y(b,v,S,B,O){b&&S(`<path d="${b}" ${x(v,B,O)}/>`)}function w(b,v,S,B,O,_,V,I){const z=b.getUint32(v+24,!0);if(!z||v+28+4*z>b.byteLength)return;const q=[];for(let U=0;U<z;U++)q.push(s(_,u(b,v+28+4*U)));$(q,S,B,O,_,V,I)}function N(b,v,S,B,O,_,V,I){const z=b.getUint32(v+24,!0);if(!z||v+28+8*z>b.byteLength)return;const q=[];for(let U=0;U<z;U++)q.push(s(_,n(b,v+28+8*U)));$(q,S,B,O,_,V,I)}function $(b,v,S,B,O,_,V){if(!b.length)return;let I=B&&S?"":S?`M ${m(O.currentPoint.x)} ${m(O.currentPoint.y)}`:`M ${m(b[0].x)} ${m(b[0].y)}`;for(let z=S?0:1;z<b.length;z++)I+=` L ${m(b[z].x)} ${m(b[z].y)}`;v&&(I+=" Z"),O.currentPoint=b[b.length-1],B?_(I.trim()):V(`<path d="${I.trim()}" ${x(O,v,!0)}/>`)}function R(b,v,S,B,O,_,V,I){const z=b.getUint32(v+24,!0),q=S?4:8;if(!z||v+28+z*q>b.byteLength)return;const U=[];for(let j=0;j<z;j++){const ee=S?u(b,v+28+j*q):n(b,v+28+j*q);U.push(s(_,ee))}let L=O&&B?"":B?`M ${m(_.currentPoint.x)} ${m(_.currentPoint.y)}`:`M ${m(U[0].x)} ${m(U[0].y)}`,Y=B?_.currentPoint:U[0];for(let j=B?0:1;j+2<U.length;j+=3){const ee=U[j],F=U[j+1],se=U[j+2];L+=` C ${m(ee.x)} ${m(ee.y)} ${m(F.x)} ${m(F.y)} ${m(se.x)} ${m(se.y)}`,Y=se}_.currentPoint=Y,O?V(L.trim()):I(`<path d="${L.trim()}" ${x(_,!1,!0)}/>`)}function X(b,v,S,B,O,_,V,I){const z=b.getUint32(v+24,!0),q=b.getUint32(v+28,!0),U=v+32,L=U+4*z,Y=B?4:8;if(!z||!q||L+q*Y>b.byteLength)return;let j=0;for(let ee=0;ee<z;ee++){const F=b.getUint32(U+4*ee,!0);if(!F||j+F>q)break;const se=[];for(let ie=0;ie<F;ie++){const re=L+(j+ie)*Y,be=B?u(b,re):n(b,re);se.push(s(_,be))}$(se,S,!1,O,_,V,I),j+=F}}function Q(b,v,S,B,O,_,V){const I=b.getUint32(v+24,!0),z=S?4:8,q=v+28,U=q+I*z;if(!I||U+I>b.byteLength)return;const L=[];for(let ee=0;ee<I;ee++){const F=q+ee*z,se=S?u(b,F):n(b,F);L.push(s(O,se))}let Y="",j=0;for(;j<I;){const ee=b.getUint8(U+j),F=6&ee;F==6?(Y+=` M ${m(L[j].x)} ${m(L[j].y)}`,O.currentPoint=L[j],j++):F==2?(Y+=` L ${m(L[j].x)} ${m(L[j].y)}`,O.currentPoint=L[j],j++):F==4&&j+2<I?(Y+=` C ${m(L[j].x)} ${m(L[j].y)} ${m(L[j+1].x)} ${m(L[j+1].y)} ${m(L[j+2].x)} ${m(L[j+2].y)}`,O.currentPoint=L[j+2],j+=3):j++,1&ee&&(Y+=" Z")}Y=Y.trim(),Y&&(B?_(Y):V(`<path d="${Y}" ${x(O,!1,!0)}/>`))}function ue(b,v,S,B,O){const _=t(b,v+8),V=s(S,{x:_.left,y:_.top}),I=s(S,{x:_.right,y:_.bottom}),z=Math.min(V.x,I.x),q=Math.min(V.y,I.y),U=Math.abs(I.x-V.x),L=Math.abs(I.y-V.y),Y=O?` rx="${m(Math.min(U,L)/8)}" ry="${m(Math.min(U,L)/8)}"`:"";B(`<rect x="${m(z)}" y="${m(q)}" width="${m(U)}" height="${m(L)}"${Y} ${x(S,!0,!0)}/>`)}function ve(b,v,S,B){const O=t(b,v+8),_=s(S,{x:O.left,y:O.top}),V=s(S,{x:O.right,y:O.bottom}),I=(_.x+V.x)/2,z=(_.y+V.y)/2,q=Math.abs(V.x-_.x)/2,U=Math.abs(V.y-_.y)/2;B(`<ellipse cx="${m(I)}" cy="${m(z)}" rx="${m(q)}" ry="${m(U)}" ${x(S,!0,!0)}/>`)}function we(b,v,S,B,O,_,V){const I=t(b,v+8),z=n(b,v+24),q=n(b,v+32),U=(I.left+I.right)/2,L=(I.top+I.bottom)/2,Y=Math.abs(I.right-I.left)/2,j=Math.abs(I.bottom-I.top)/2;if(!Y||!j)return;const ee=Math.atan2(z.y-L,z.x-U);let F=Math.atan2(q.y-L,q.x-U),se=F-ee;se<=0&&(se+=2*Math.PI);const ie=se>Math.PI?1:0,re=s(O,{x:U+Math.cos(ee)*Y,y:L+Math.sin(ee)*j}),be=s(O,{x:U+Math.cos(F)*Y,y:L+Math.sin(F)*j}),ge=s(O,{x:U,y:L}),he=s(O,{x:U+Y,y:L}),Z=s(O,{x:U,y:L+j}),oe=Math.max(.01,Math.abs(he.x-ge.x)||Math.abs(Z.x-ge.x)),K=Math.max(.01,Math.abs(Z.y-ge.y)||Math.abs(he.y-ge.y)),ce=`A ${m(oe)} ${m(K)} 0 ${ie} 1 ${m(be.x)} ${m(be.y)}`;let W=`M ${m(re.x)} ${m(re.y)} ${ce}`,G=!1;S==d.CHORD?(W+=" Z",G=!0):S==d.PIE&&(W+=` L ${m(ge.x)} ${m(ge.y)} Z`,G=!0),S==d.ARCTO&&(O.currentPoint=be),B?_(W):V(`<path d="${W}" ${x(O,G,!0)}/>`)}function Me(b,v,S){const B=S>=4?b.getInt32(v,!0):12,O=S>=20?b.getInt32(v+16,!0):400,_=S>=21&&b.getUint8(v+20)!=0,V=S>=22&&b.getUint8(v+21)!=0;let I="";const z=v+28,q=Math.max(0,Math.min(64,S-28));for(let U=0;U+1<q;U+=2){const L=b.getUint16(z+U,!0);if(!L)break;I+=String.fromCharCode(L)}return{type:"font",family:I,size:Math.abs(B)||12,weight:O,italic:_,underline:V}}function _e(b,v,S,B,O,_){if(S<76)return;const V=s(B,n(b,v+36)),I=b.getUint32(v+44,!0),z=b.getUint32(v+48,!0);!I||z<=0||z+I*(_?2:1)>S||te(_?fe(b,v+z,I):Ce(new Uint8Array(b.buffer,b.byteOffset+v+z,I)),V,B,O)}function Re(b,v,S,B,O,_){if(S<40)return;const V=b.getUint32(v+36,!0);let I=v+40;for(let z=0;z<V&&I+40<=v+S;z++,I+=40){const q=s(B,n(b,I)),U=b.getUint32(I+8,!0),L=b.getUint32(I+12,!0);!U||!L||L+U*(_?2:1)>S||te(_?fe(b,v+L,U):Ce(new Uint8Array(b.buffer,b.byteOffset+v+L,U)),q,B,O)}}function de(b,v,S,B,O){if(S<36)return;const _=s(B,n(b,v+8)),V=b.getUint32(v+16,!0),I=512&b.getUint32(v+20,!0)?40:28;!V||I+V>S||te(Ce(new Uint8Array(b.buffer,b.byteOffset+v+I,V)),_,B,O)}function fe(b,v,S){let B="";for(let O=0;O<S;O++){const _=b.getUint16(v+2*O,!0);_&&(B+=String.fromCharCode(_))}return B}function Ce(b){if(!b.length)return"";const v=globalThis.TextDecoder;if(v)try{return new v("gb18030").decode(b).replace(/\0+$/g,"")}catch{try{return new v("windows-1252").decode(b).replace(/\0+$/g,"")}catch{}}let S="";for(const B of b)B&&(S+=String.fromCharCode(B));return S}function De(b){const v=6&b.textAlign;return v==6?'text-anchor="middle"':v==2?'text-anchor="end"':""}function Le(b){const v=24&b.textAlign;return v==0?'dominant-baseline="text-before-edge"':v==8?'dominant-baseline="text-after-edge"':""}function te(b,v,S,B){b&&B(`<text ${(function(O,_){const V=O.font,I=Math.max(1,(V?.size??12)*r(O));return[`x="${m(_.x)}"`,`y="${m(_.y)}"`,`fill="${O.textColor}"`,`font-size="${m(I)}"`,V?.family?`font-family="${P(V.family)}"`:"",V?.weight?`font-weight="${V.weight>=600?"bold":"normal"}"`:"",V?.italic?'font-style="italic"':"",V?.underline?'text-decoration="underline"':"",De(O),Le(O)].filter(Boolean).join(" ")})(S,v)}>${P(b)}</text>`)}function Fe(b,v,S,B){if(v+20>b.byteLength)return;const O=s(S,n(b,v+8)),_=c(b.getUint32(v+16,!0));B(`<rect x="${m(O.x)}" y="${m(O.y)}" width="1" height="1" fill="${_}" stroke="none"/>`)}function Be(b,v,S,B,O,_){let V=0,I=0,z=0,q=0,U=0,L=0,Y=0,j=0;if(B==d.STRETCHDIBITS){if(S<80)return;V=b.getInt32(v+24,!0),I=b.getInt32(v+28,!0),U=b.getUint32(v+48,!0),L=b.getUint32(v+52,!0),Y=b.getUint32(v+56,!0),j=b.getUint32(v+60,!0),z=b.getInt32(v+72,!0),q=b.getInt32(v+76,!0)}else{if(S<100)return;V=b.getInt32(v+24,!0),I=b.getInt32(v+28,!0),z=b.getInt32(v+32,!0),q=b.getInt32(v+36,!0),U=b.getUint32(v+84,!0),L=b.getUint32(v+88,!0),Y=b.getUint32(v+92,!0),j=b.getUint32(v+96,!0)}if(!U||!L||!Y||!j||U+L>S||Y+j>S)return;const ee=(function(he,Z,oe,K,ce,W){const G=Z+oe,me=Z+ce;if(K<4||G+K>he.byteLength||me+W>he.byteLength)return null;const Te=he.getUint32(G,!0)>=40&&K>=20?he.getUint32(G+16,!0):0,ye=new Uint8Array(he.buffer,he.byteOffset+me,W);if(Te==4)return`data:image/jpeg;base64,${Ee(ye)}`;if(Te==5)return`data:image/png;base64,${Ee(ye)}`;const Ne=new Uint8Array(K+W);return Ne.set(new Uint8Array(he.buffer,he.byteOffset+G,K),0),Ne.set(ye,K),(function(Se,Ae){if(!Se?.length||Ae<=0||Ae>Se.length)return null;const J=14+Se.length,ne=14+Ae,ae=new Uint8Array(J);return ae[0]=66,ae[1]=77,pe(ae,2,J),pe(ae,10,ne),ae.set(Se,14),`data:image/bmp;base64,${Ee(ae)}`})(Ne,K)})(b,v,U,L,Y,j);if(!ee)return;const F=s(O,{x:V,y:I}),se=s(O,{x:V+z,y:I+q}),ie=Math.min(F.x,se.x),re=Math.min(F.y,se.y),be=Math.abs(se.x-F.x),ge=Math.abs(se.y-F.y);_(`<image x="${m(ie)}" y="${m(re)}" width="${m(be)}" height="${m(ge)}" href="${ee}" preserveAspectRatio="none"/>`)}function le(b,v,S){for(let B=0;B<v.length;B++)if(b[S+B]!=v[B])return!1;return!0}function Oe(b,v){return(b[v]<<24|b[v+1]<<16|b[v+2]<<8|b[v+3])>>>0}function xe(b,v){return(b[v]|b[v+1]<<8|b[v+2]<<16|b[v+3]<<24)>>>0}function pe(b,v,S){b[v]=255&S,b[v+1]=S>>8&255,b[v+2]=S>>16&255,b[v+3]=S>>24&255}function Ee(b){let v="";for(let B=0;B<b.length;B+=32768)v+=String.fromCharCode(...b.subarray(B,B+32768));if(typeof btoa=="function")return btoa(v);const S=globalThis.Buffer;return S?S.from(b).toString("base64"):v}},"./notes/elements":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.WmlEndnote=f.WmlFootnote=f.WmlBaseNote=void 0;const d=E("../document/dom");class i{}f.WmlBaseNote=i,f.WmlFootnote=class extends i{constructor(){super(...arguments),this.type=d.DomType.Footnote}},f.WmlEndnote=class extends i{constructor(){super(...arguments),this.type=d.DomType.Endnote}}},"./notes/parts":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.EndnotesPart=f.FootnotesPart=f.BaseNotePart=void 0;const d=E("../common/part"),i=E("./elements");class T extends d.Part{constructor(a,C,D){super(a,C),this._documentParser=D}}f.BaseNotePart=T,f.FootnotesPart=class extends T{constructor(k,a,C){super(k,a,C)}parseXml(k){this.notes=this._documentParser.parseNotes(k,"footnote",i.WmlFootnote)}},f.EndnotesPart=class extends T{constructor(k,a,C){super(k,a,C)}parseXml(k){this.notes=this._documentParser.parseNotes(k,"endnote",i.WmlEndnote)}}},"./numbering/numbering-part":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.NumberingPart=void 0;const d=E("../common/part"),i=E("./numbering");class T extends d.Part{constructor(a,C,D){super(a,C),this._documentParser=D}parseXml(a){Object.assign(this,(0,i.parseNumberingPart)(a,this._package.xmlParser)),this.domNumberings=this._documentParser.parseNumberingFile(a)}}f.NumberingPart=T},"./numbering/numbering":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.parseNumberingPart=function(A,e){let t={numberings:[],abstractNumberings:[],bulletPictures:[]};for(let n of e.elements(A))switch(n.localName){case"num":t.numberings.push(T(n,e));break;case"abstractNum":t.abstractNumberings.push(k(n,e));break;case"numPicBullet":t.bulletPictures.push(D(n,e))}return t},f.parseNumbering=T,f.parseAbstractNumbering=k,f.parseNumberingLevel=a,f.parseNumberingLevelOverrride=C,f.parseNumberingBulletPicture=D;const d=E("../document/paragraph"),i=E("../document/run");function T(A,e){let t={id:e.attr(A,"numId"),overrides:[]};for(let n of e.elements(A))switch(n.localName){case"abstractNumId":t.abstractId=e.attr(n,"val");break;case"lvlOverride":t.overrides.push(C(n,e))}return t}function k(A,e){let t={id:e.attr(A,"abstractNumId"),levels:[]};for(let n of e.elements(A))switch(n.localName){case"name":t.name=e.attr(n,"val");break;case"multiLevelType":t.multiLevelType=e.attr(n,"val");break;case"numStyleLink":t.numberingStyleLink=e.attr(n,"val");break;case"styleLink":t.styleLink=e.attr(n,"val");break;case"lvl":t.levels.push(a(n,e))}return t}function a(A,e){let t={level:e.intAttr(A,"ilvl")};for(let n of e.elements(A))switch(n.localName){case"start":t.start=e.attr(n,"val");break;case"lvlRestart":t.restart=e.intAttr(n,"val");break;case"numFmt":t.format=e.attr(n,"val");break;case"lvlText":t.text=e.attr(n,"val");break;case"lvlJc":t.justification=e.attr(n,"val");break;case"lvlPicBulletId":t.bulletPictureId=e.attr(n,"val");break;case"pStyle":t.paragraphStyle=e.attr(n,"val");break;case"pPr":t.paragraphProps=(0,d.parseParagraphProperties)(n,e);break;case"rPr":t.runProps=(0,i.parseRunProperties)(n,e)}return t}function C(A,e){let t={level:e.intAttr(A,"ilvl")};for(let n of e.elements(A))switch(n.localName){case"startOverride":t.start=e.intAttr(n,"val");break;case"lvl":t.numberingLevel=a(n,e)}return t}function D(A,e){var t=e.attr(A,"numPicBulletId"),n=e.element(A,"pict"),l=n&&e.element(n,"shape"),u=l&&e.element(l,"imagedata");if(u)return{id:t,referenceId:e.attr(u,"id"),style:e.attr(l,"style")};var p=e.element(A,"drawing"),g=p&&M(p,"blip",e);return g?{id:t,referenceId:e.attr(g,"embed")??e.attr(g,"link"),style:null}:null}function M(A,e,t){for(const n of t.elements(A)){if(n.localName==e)return n;const l=M(n,e,t);if(l)return l}return null}},"./parser/xml-parser":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.XmlParser=void 0,f.parseXmlString=function(k,a=!1){var C;a&&(k=k.replace(/<[?].*[?]>/,"")),k=(C=k).charCodeAt(0)===65279?C.substring(1):C;const D=new DOMParser().parseFromString(k,"application/xml"),M=(A=D,A.getElementsByTagName("parsererror")[0]?.textContent);var A;if(M)throw new Error(M);return D},f.serializeXmlString=function(k){return new XMLSerializer().serializeToString(k)};const d=E("../document/common");class i{elements(a,C=null){const D=[];for(let M=0,A=a.childNodes.length;M<A;M++){let e=a.childNodes.item(M);e.nodeType!=1||C!=null&&e.localName!=C||D.push(e)}return D}element(a,C){for(let D=0,M=a.childNodes.length;D<M;D++){let A=a.childNodes.item(D);if(A.nodeType==1&&A.localName==C)return A}return null}elementAttr(a,C,D){var M=this.element(a,C);return M?this.attr(M,D):void 0}attrs(a){return Array.from(a.attributes)}attr(a,C){for(let D=0,M=a.attributes.length;D<M;D++){let A=a.attributes.item(D);if(A.localName==C)return A.value}return null}intAttr(a,C,D=null){var M=this.attr(a,C);return M!=null&&M!==""?parseInt(M,10):D}hexAttr(a,C,D=null){var M=this.attr(a,C);return M!=null&&M!==""?parseInt(M,16):D}floatAttr(a,C,D=null){var M=this.attr(a,C);return M!=null&&M!==""?parseFloat(M):D}boolAttr(a,C,D=null){return(0,d.convertBoolean)(this.attr(a,C),D)}lengthAttr(a,C,D=d.LengthUsage.Dxa){return(0,d.convertLength)(this.attr(a,C),D)}}f.XmlParser=i;const T=new i;f.default=T},"./settings/settings-part":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.SettingsPart=void 0;const d=E("../common/part"),i=E("./settings");class T extends d.Part{constructor(a,C){super(a,C)}parseXml(a){this.settings=(0,i.parseSettings)(a,this._package.xmlParser)}}f.SettingsPart=T},"./settings/settings":function(E,H,f){function d(i,T){var k={defaultNoteIds:[]};for(let a of T.elements(i))switch(a.localName){case"numFmt":k.nummeringFormat=T.attr(a,"val");break;case"footnote":case"endnote":k.defaultNoteIds.push(T.attr(a,"id"))}return k}Object.defineProperty(f,"__esModule",{value:!0}),f.parseSettings=function(i,T){var k={};for(let a of T.elements(i))switch(a.localName){case"defaultTabStop":k.defaultTabStop=T.lengthAttr(a,"val");break;case"footnotePr":k.footnoteProps=d(a,T);break;case"endnotePr":k.endnoteProps=d(a,T);break;case"autoHyphenation":k.autoHyphenation=T.boolAttr(a,"val");break;case"kinsoku":k.kinsoku=T.boolAttr(a,"val",!0);break;case"overflowPunct":k.overflowPunctuation=T.boolAttr(a,"val",!0);break;case"topLinePunct":k.topLinePunctuation=T.boolAttr(a,"val",!0);break;case"autoSpaceDE":k.autoSpaceDE=T.boolAttr(a,"val",!0);break;case"autoSpaceDN":k.autoSpaceDN=T.boolAttr(a,"val",!0);break;case"noLineBreaksAfter":k.noLineBreaksAfter=T.attr(a,"val")||a.textContent||"";break;case"noLineBreaksBefore":k.noLineBreaksBefore=T.attr(a,"val")||a.textContent||"";break;case"evenAndOddHeaders":k.evenAndOddHeaders=T.boolAttr(a,"val",!0);break;case"splitPgBreakAndParaMark":k.splitPageBreakAndParagraphMark=T.boolAttr(a,"val",!0);break;case"compat":for(const C of T.elements(a))C.localName=="adjustLineHeightInTable"&&(k.adjustLineHeightInTable=T.boolAttr(C,"val",!0))}return k},f.parseNoteProperties=d},"./styles/styles-part":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.StylesPart=void 0;const d=E("../common/part");class i extends d.Part{constructor(k,a,C){super(k,a),this._documentParser=C}parseXml(k){this.styles=this._documentParser.parseStylesFile(k)}}f.StylesPart=i},"./theme/theme-part":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.ThemePart=void 0;const d=E("../common/part"),i=E("./theme");class T extends d.Part{constructor(a,C){super(a,C)}parseXml(a){this.theme=(0,i.parseTheme)(a,this._package.xmlParser)}}f.ThemePart=T},"./theme/theme":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.DmlTheme=void 0,f.parseTheme=function(a,C){var D=new d,M=C.element(a,"themeElements");for(let A of C.elements(M))switch(A.localName){case"clrScheme":D.colorScheme=i(A,C);break;case"fontScheme":D.fontScheme=T(A,C)}return D},f.parseColorScheme=i,f.parseFontScheme=T,f.parseFontInfo=k;class d{}function i(a,C){var D={name:C.attr(a,"name"),colors:{}};for(let e of C.elements(a)){var M=C.element(e,"srgbClr"),A=C.element(e,"sysClr");M?D.colors[e.localName]=C.attr(M,"val"):A&&(D.colors[e.localName]=C.attr(A,"lastClr"))}return D}function T(a,C){var D={name:C.attr(a,"name")};for(let M of C.elements(a))switch(M.localName){case"majorFont":D.majorFont=k(M,C);break;case"minorFont":D.minorFont=k(M,C)}return D}function k(a,C){return{latinTypeface:C.elementAttr(a,"latin","typeface"),eaTypeface:C.elementAttr(a,"ea","typeface"),csTypeface:C.elementAttr(a,"cs","typeface")}}f.DmlTheme=d},"./utils":function(E,H,f){function d(i){return i&&typeof i=="object"&&!Array.isArray(i)}Object.defineProperty(f,"__esModule",{value:!0}),f.escapeClassName=function(i){return i?.replace(/[ .]+/g,"-").replace(/[&]+/g,"and").toLowerCase()},f.encloseFontFamily=function(i){return/^[^"'].*\s.*[^"']$/.test(i)?`'${i}'`:i},f.splitPath=function(i){let T=i.lastIndexOf("/")+1;return[T==0?"":i.substring(0,T),T==0?i:i.substring(T)]},f.resolvePath=function(i,T){try{const k="http://docx/";return new URL(i,k+T).toString().substring(k.length)}catch{return`${T}${i}`}},f.keyBy=function(i,T){return i.reduce((k,a)=>(k[T(a)]=a,k),{})},f.blobToBase64=function(i){return new Promise((T,k)=>{const a=new FileReader;a.onloadend=()=>T(a.result),a.onerror=()=>k(),a.readAsDataURL(i)})},f.isObject=d,f.isString=function(i){return typeof i=="string"||i instanceof String},f.mergeDeep=function i(T,...k){if(!k.length)return T;const a=k.shift();if(d(T)&&d(a))for(const C in a)d(a[C])?i(T[C]??(T[C]={}),a[C]):T[C]=a[C];return i(T,...k)},f.parseCssRules=function(i){const T={};for(const k of(i??"").split(";")){const a=k.indexOf(":");if(a<=0)continue;const C=k.substring(0,a).trim(),D=k.substring(a+1).trim();C&&(T[C]=D)}return T},f.formatCssRules=function(i){return Object.entries(i??{}).map(([T,k])=>`${T}: ${k}`).join(";")},f.asArray=function(i){return Array.isArray(i)?i:[i]},f.clamp=function(i,T,k){return T>i?T:k<i?k:i}},"./vml/vml":function(E,H,f){var d=this&&this.__importDefault||function(l){return l&&l.__esModule?l:{default:l}};Object.defineProperty(f,"__esModule",{value:!0}),f.VmlElement=void 0,f.parseVmlElement=function l(u,p){var g=new a;switch(u.localName){case"rect":g.tagName="rect",Object.assign(g.attrs,{width:"100%",height:"100%"});break;case"oval":g.tagName="ellipse",Object.assign(g.attrs,{cx:"50%",cy:"50%",rx:"50%",ry:"50%"});break;case"line":g.tagName="line";break;case"shape":g.tagName="g";break;case"textbox":g.tagName="foreignObject",Object.assign(g.attrs,{width:"100%",height:"100%"});break;default:return null}for(const s of k.default.attrs(u))switch(s.localName){case"style":g.cssStyleText=s.value;break;case"fillcolor":g.attrs.fill=s.value;break;case"strokecolor":g.attrs.stroke=s.value;break;case"strokeweight":g.attrs["stroke-width"]=(0,i.convertLength)(s.value,i.LengthUsage.Point)??s.value;break;case"filled":s.value!="f"&&s.value!="false"||(g.attrs.fill="none");break;case"stroked":s.value!="f"&&s.value!="false"||(g.attrs.stroke="none");break;case"path":g.tagName="path",g.attrs.d=n(s.value);break;case"from":const[r,o]=t(s.value);Object.assign(g.attrs,{x1:r,y1:o});break;case"to":const[c,h]=t(s.value);Object.assign(g.attrs,{x2:c,y2:h})}for(const s of k.default.elements(u))switch(s.localName){case"stroke":Object.assign(g.attrs,A(s));break;case"fill":Object.assign(g.attrs,e(s));break;case"imagedata":g.tagName="image",Object.assign(g.attrs,C(s)),g.imageHref={id:k.default.attr(s,"id")??k.default.attr(s,"relid")??k.default.attr(s,"pict"),title:k.default.attr(s,"title")};break;case"txbxContent":g.children.push(...p.parseBodyElements(s));break;default:const r=l(s,p);r&&g.children.push(r)}return g};const i=E("../document/common"),T=E("../document/dom"),k=d(E("../parser/xml-parser"));class a extends T.OpenXmlElementBase{constructor(){super(...arguments),this.type=T.DomType.VmlElement,this.attrs={}}}function C(l){const u=D(k.default.attr(l,"cropleft")),p=D(k.default.attr(l,"croptop")),g=D(k.default.attr(l,"cropright")),s=D(k.default.attr(l,"cropbottom")),r=Math.max(1e-4,1-u-g),o=Math.max(1e-4,1-p-s),c={x:M(-u/r),y:M(-p/o),width:M(1/r),height:M(1/o)};return(u||p||g||s)&&(c.preserveAspectRatio="none"),c}function D(l){if(!l)return 0;const u=String(l).trim();if(!u)return 0;let p;return p=/^-?\d+(\.\d+)?f$/i.test(u)?parseFloat(u.slice(0,-1))/65536:u.endsWith("%")?parseFloat(u)/100:parseFloat(u),Number.isFinite(p)?Math.max(0,Math.min(.9999,p)):0}function M(l){return Math.round(1e5*l)/1e3+"%"}function A(l){const u={},p=k.default.attr(l,"color"),g=k.default.attr(l,"weight"),s=k.default.attr(l,"on");return s=="f"||s=="false"?u.stroke="none":p&&(u.stroke=p),u["stroke-width"]=g?(0,i.convertLength)(g,i.LengthUsage.Point)??g:"1px",u}function e(l){const u={},p=k.default.attr(l,"color")??k.default.attr(l,"color2"),g=k.default.attr(l,"on"),s=k.default.attr(l,"opacity");return g=="f"||g=="false"?u.fill="none":p&&(u.fill=p),s&&(u["fill-opacity"]=s.endsWith("%")?""+parseFloat(s)/100:s),u}function t(l){return l.split(",")}function n(l){return l.replace(/([mlxe])|([-\d]+)|([,])/g,u=>/[-\d]/.test(u)?(0,i.convertLength)(u,i.LengthUsage.VmlEmu):/[ml,]/.test(u)?u:"")}f.VmlElement=a},"./word-document":function(E,H,f){Object.defineProperty(f,"__esModule",{value:!0}),f.WordDocument=void 0,f.deobfuscate=m;const d=E("./common/relationship"),i=E("./font-table/font-table"),T=E("./common/open-xml-package"),k=E("./document/document-part"),a=E("./utils"),C=E("./numbering/numbering-part"),D=E("./styles/styles-part"),M=E("./header-footer/parts"),A=E("./document-props/extended-props-part"),e=E("./document-props/core-props-part"),t=E("./theme/theme-part"),n=E("./notes/parts"),l=E("./settings/settings-part"),u=E("./document-props/custom-props-part"),p=E("./comments/comments-part"),g=E("./comments/comments-extended-part"),s=E("./parser/xml-parser"),r=E("./metafile/emf-to-svg"),o=[{type:d.RelationshipTypes.OfficeDocument,target:"word/document.xml"},{type:d.RelationshipTypes.ExtendedProperties,target:"docProps/app.xml"},{type:d.RelationshipTypes.CoreProperties,target:"docProps/core.xml"},{type:d.RelationshipTypes.CustomProperties,target:"docProps/custom.xml"}];class c{constructor(){this.parts=[],this.partsMap={},this.contentTypes=[],this._snapshotAssetDataUrls=null,this._snapshotTextParts=null}static fromSnapshot(x,y){const w=new c;w._options=y,w.rels=x.rels??[],w.contentTypes=x.contentTypes??[],w.parts=[],w.partsMap={},w._snapshotAssetDataUrls=x.assetDataUrls??{},w._snapshotTextParts=x.textParts??{},w._package={load:N=>Promise.resolve(w._snapshotTextParts?.[h(N)]??null),parseXmlDocument:N=>(0,s.parseXmlString)(N,y?.trimXmlDeclaration??!0),get:N=>w._snapshotTextParts?.[h(N)]!=null?{}:null};for(const N of x.parts??[]){const $=w.restoreSnapshotPart(N);$&&(w.parts.push($),w.partsMap[$.path]=$)}return w}static async load(x,y,w){var N=new c;return N._options=w,N._parser=y,N._package=await T.OpenXmlPackage.load(x,w),N.rels=await N._package.loadRelationships(),N.contentTypes=await N._package.loadContentTypes(),await Promise.all(o.map($=>{const R=N.rels.find(X=>X.type===$.type)??$;return N.loadRelationshipPart(R.target,R.type)})),N}restoreSnapshotPart(x){const y={path:x.path,rels:x.rels??[]};switch(Object.assign(y,x.data??{}),x.kind){case"document":this.documentPart=y;break;case"fontTable":this.fontTablePart=y;break;case"numbering":this.numberingPart=y;break;case"styles":this.stylesPart=y;break;case"theme":this.themePart=y;break;case"footnotes":this.footnotesPart=y;break;case"endnotes":this.endnotesPart=y;break;case"coreProps":this.corePropsPart=y;break;case"extendedProps":this.extendedPropsPart=y;break;case"settings":this.settingsPart=y;break;case"comments":y.commentMap=(0,a.keyBy)(y.comments??[],w=>w.id),this.commentsPart=y;break;case"commentsExtended":y.commentMap=(0,a.keyBy)(y.comments??[],w=>w.paraId),this.commentsExtendedPart=y}return y}async createSnapshot(){const x={rels:this.rels??[],contentTypes:this.contentTypes??[],parts:this.parts.map(y=>this.snapshotPart(y)).filter(Boolean),assetDataUrls:{},textParts:{}};return await this.preloadSnapshotRelationshipTargets(x),x}snapshotPart(x){const y=x;let w="part",N={};if(x===this.documentPart)w="document",N={body:y.body};else if(x===this.fontTablePart)w="fontTable",N={fonts:y.fonts};else if(x===this.numberingPart)w="numbering",N={numberings:y.numberings,abstractNumberings:y.abstractNumberings,bulletPictures:y.bulletPictures,domNumberings:y.domNumberings};else if(x===this.stylesPart)w="styles",N={styles:y.styles};else if(x===this.themePart)w="theme",N={theme:y.theme};else if(x===this.footnotesPart)w="footnotes",N={notes:y.notes};else if(x===this.endnotesPart)w="endnotes",N={notes:y.notes};else if(x===this.corePropsPart)w="coreProps",N={props:y.props};else if(x===this.extendedPropsPart)w="extendedProps",N={props:y.props};else if(x===this.settingsPart)w="settings",N={settings:y.settings};else if(x===this.commentsPart)w="comments",N={comments:y.comments};else if(x===this.commentsExtendedPart)w="commentsExtended",N={comments:y.comments};else{if(!y.rootElement)return null;w=y.rootElement.type==="header"?"header":"footer",N={rootElement:y.rootElement}}return{kind:w,path:x.path,rels:x.rels??[],data:N}}async preloadSnapshotRelationshipTargets(x){const y=new Set,w=N=>{for(const $ of N?.rels??[]){if(!$||$.targetMode==="External")continue;const R=h(this.resolveRelationshipTarget(N,$));R&&!y.has(R)&&y.add(R)}};for(const N of this.parts)w(N);for(const N of y){if(this.partsMap[N])continue;const $=N.toLowerCase(),R=/\.(xml|rels|html?|txt)$/i.test($);try{if(R){const X=await this._package.load(N,"string");X!=null&&(x.textParts[N]=X)}else{const X=await this.loadPackageAssetDataUrl(N);X&&(x.assetDataUrls[N]=X)}}catch(X){this._options?.debug&&console.warn(`docx-preview: unable to preload relationship target ${N}`,X)}}}blobWithContentType(x,y){if(!x)return null;if(y){const w=this.contentTypes.find(N=>N.partName===y||N.extension&&y.endsWith(`.${N.extension}`));return w?new Blob([x],{type:w.contentType}):x}return x}save(x="blob"){return this._package.save(x)}async loadRelationshipPart(x,y){if(this.partsMap[x])return this.partsMap[x];if(!this._package.get(x))return null;let w=null;switch(y){case d.RelationshipTypes.OfficeDocument:this.documentPart=w=new k.DocumentPart(this._package,x,this._parser);break;case d.RelationshipTypes.FontTable:this.fontTablePart=w=new i.FontTablePart(this._package,x);break;case d.RelationshipTypes.Numbering:this.numberingPart=w=new C.NumberingPart(this._package,x,this._parser);break;case d.RelationshipTypes.Styles:this.stylesPart=w=new D.StylesPart(this._package,x,this._parser);break;case d.RelationshipTypes.Theme:this.themePart=w=new t.ThemePart(this._package,x);break;case d.RelationshipTypes.Footnotes:this.footnotesPart=w=new n.FootnotesPart(this._package,x,this._parser);break;case d.RelationshipTypes.Endnotes:this.endnotesPart=w=new n.EndnotesPart(this._package,x,this._parser);break;case d.RelationshipTypes.Footer:w=new M.FooterPart(this._package,x,this._parser);break;case d.RelationshipTypes.Header:w=new M.HeaderPart(this._package,x,this._parser);break;case d.RelationshipTypes.CoreProperties:this.corePropsPart=w=new e.CorePropsPart(this._package,x);break;case d.RelationshipTypes.ExtendedProperties:this.extendedPropsPart=w=new A.ExtendedPropsPart(this._package,x);break;case d.RelationshipTypes.CustomProperties:w=new u.CustomPropsPart(this._package,x);break;case d.RelationshipTypes.Settings:this.settingsPart=w=new l.SettingsPart(this._package,x);break;case d.RelationshipTypes.Comments:this.commentsPart=w=new p.CommentsPart(this._package,x,this._parser);break;case d.RelationshipTypes.CommentsExtended:this.commentsExtendedPart=w=new g.CommentsExtendedPart(this._package,x)}if(w==null)return Promise.resolve(null);if(this.partsMap[x]=w,this.parts.push(w),await w.load(),w.rels?.length>0){const[N]=(0,a.splitPath)(w.path);await Promise.all(w.rels.filter($=>$.targetMode!=="External").map($=>this.loadRelationshipPart((0,a.resolvePath)($.target,N),$.type)))}return w}async loadRelationshipXml(x,y){const w=y??this.documentPart,N=this.getRelById(w,x);if(!N||N.targetMode==="External")return null;const $=h(this.resolveRelationshipTarget(w,N)),R=$?this._snapshotTextParts?.[$]??await this._package.load($,"string"):null;return R?this._package.parseXmlDocument(R):null}async loadRelationshipText(x,y){const w=y??this.documentPart,N=this.getRelById(w,x);if(!N||N.targetMode==="External")return null;const $=h(this.resolveRelationshipTarget(w,N));return $?Promise.resolve(this._snapshotTextParts?.[$]??this._package.load($,"string")):Promise.resolve(null)}async loadRelationshipBlobUrl(x,y){const w=y??this.documentPart,N=this.getRelById(w,x);if(!N)return null;if(N.targetMode==="External")return N.target;const $=h(this.resolveRelationshipTarget(w,N));return $?this.loadPackageAssetUrl($):null}async loadDocumentImage(x,y){const w=y??this.documentPart,N=this.getRelById(w,x);if(!N)return null;if(N.targetMode==="External")return N.target;const $=h(this.resolveRelationshipTarget(w,N));return $?this.loadPackageAssetUrl($):null}async loadNumberingImage(x){const y=h(this.getPathById(this.numberingPart,x));return y?this.loadPackageAssetUrl(y):null}async loadFont(x,y){const w=h(this.getPathById(this.fontTablePart,x));if(!w)return null;if(this._snapshotAssetDataUrls?.[w])return this._snapshotAssetDataUrls[w];const N=await this._package.load(w,"uint8array");return N&&this.blobToURL(new Blob([m(N,y)]),w)}async loadAltChunk(x,y){const w=y??this.documentPart,N=this.getRelById(w,x);if(!N||N.targetMode==="External")return Promise.resolve(null);const $=h(this.resolveRelationshipTarget(w,N));return $?Promise.resolve(this._snapshotTextParts?.[$]??this._package.load($,"string")):Promise.resolve(null)}blobToURL(x,y){return x?(x=this.blobWithContentType(x,y),this._options.useBase64URL?(0,a.blobToBase64)(x):URL.createObjectURL(x)):null}async loadPackageAssetUrl(x){const y=h(x);if(!y)return null;if(this._snapshotAssetDataUrls?.[y])return this._snapshotAssetDataUrls[y];if(this.isEmfAsset(y)){const w=await this._package.load(y,"uint8array");return w?this.convertEmfAsset(w,y)||this.blobToURL(new Blob([w],{type:this.contentTypeForPath(y)||"image/x-emf"}),y):null}return this.blobToURL(await this._package.load(y,"blob"),y)}async loadPackageAssetDataUrl(x){const y=h(x);if(!y)return null;if(this.isEmfAsset(y)){const $=await this._package.load(y,"uint8array");if(!$)return null;const R=this.convertEmfAsset($,y);if(R)return R;const X=$?new Blob([$],{type:this.contentTypeForPath(y)||"image/x-emf"}):null;return X?(0,a.blobToBase64)(X):null}const w=await this._package.load(y,"blob"),N=this.blobWithContentType(w,y);return N?(0,a.blobToBase64)(N):null}convertEmfAsset(x,y){if(!x||!(0,r.isEmfBinary)(x))return null;try{return(0,r.convertEmfToSvgDataUrl)(x)}catch(w){return this._options?.debug&&console.warn(`docx-preview: unable to convert EMF asset ${y}`,w),null}}isEmfAsset(x){const y=this.contentTypeForPath(x).toLowerCase();return/\.emf$/i.test(x??"")||y=="image/x-emf"||y=="image/emf"}contentTypeForPath(x){const y=h(x??"").toLowerCase();for(const R of this.contentTypes??[])if(R.partName&&h(R.partName).toLowerCase()==y)return R.contentType??"";const w=/\.([^.\/]+)$/.exec(y),N=w?.[1]??"";return N?(this.contentTypes??[]).find(R=>R.extension?.toLowerCase()==N)?.contentType??"":""}findPartByRelId(x,y=null){var w=this.getRelById(y,x);const N=w&&w.targetMode!=="External"?this.resolveRelationshipTarget(y,w):null;return N?this.partsMap[N]:null}getRelById(x,y){return(x?.rels??this.rels??[]).find(w=>w.id==y)}getPathById(x,y){const w=this.getRelById(x,y);return w&&w.targetMode!=="External"?this.resolveRelationshipTarget(x,w):null}resolveRelationshipTarget(x,y){const[w]=x?(0,a.splitPath)(x.path):[""];return h((0,a.resolvePath)(y.target,w))}}function h(P){return P&&P.startsWith("/")?P.substring(1):P}function m(P,x){const y=x.replace(/{|}|-/g,""),w=new Array(16);for(let N=0;N<16;N++)w[16-N-1]=parseInt(y.substring(2*N,2*N+2),16);for(let N=0;N<32;N++)P[N]=P[N]^w[N%16];return P}f.WordDocument=c}},Ie={},(function E(H,f){var d=(function(T,k){if(T==="jszip")return"jszip";if(T[0]==="."){var a=(function(C){for(var D=C.split("/"),M=[],A=0;A<D.length;A++){var e=D[A];e&&e!=="."&&(e===".."?M.pop():M.push(e))}return"./"+M.join("/")})(k.substring(0,k.lastIndexOf("/")+1)+T);if($e[a])return a;if($e[a+"/index"])return a+"/index"}if($e[T])return T;throw new Error("Cannot resolve module "+T+" from "+k)})(H,f||"./docx-preview");if(d==="jszip")return Ue;if(Ie[d])return Ie[d].exports;var i={exports:{}};return Ie[d]=i,$e[d](function(T){return E(T,d)},i,i.exports),i.exports})("./docx-preview","./docx-preview"));var Ue,$e,Ie;const Ye=Pe.defaultOptions,qe=Pe.parseAsync,Ze=Pe.parseAsyncInWorker,Ke=Pe.renderDocument,Je=Pe.renderAsync,Qe=Pe.awaitRenderedLayout,et=Pe.collectLayoutSnapshot,tt=Pe.yieldToBrowser;export{Qe as awaitRenderedLayout,et as collectLayoutSnapshot,Pe as default,Ye as defaultOptions,qe as parseAsync,Ze as parseAsyncInWorker,Je as renderAsync,Ke as renderDocument,tt as yieldToBrowser};
+`),
+            [
+              this.h({ tagName: '#comment', children: ['docxjs library predefined styles'] }),
+              this.h({ tagName: 'style', children: [n] }),
+            ]
+          );
+        }
+        async renderNumbering(e) {
+          var t = '',
+            n = [];
+          const l = new Map(),
+            u = new Map(e.map((o) => [`${o.id}:${o.level}`, this.numFormatToCssValue(o.format)])),
+            p = (o, c) => {
+              const h = l.get(o) ?? [];
+              (h.push(c), l.set(o, h));
+            };
+          for (var g of e) {
+            var s = `p.${this.numberingClass(g.id, g.level)}`,
+              r = 'none';
+            if (g.bullet) {
+              let o = `--${this.className}-${g.bullet.src}`.toLowerCase();
+              t += this.styleToString(
+                `${s}:before`,
+                { content: "' '", display: 'inline-block', background: `var(${o})` },
+                g.bullet.style,
+              );
+              try {
+                const c = await this.document.loadNumberingImage(g.bullet.src);
+                t += `${this.rootSelector} { ${o}: url(${c}) }`;
+              } catch {
+                this.options.debug &&
+                  console.warn(`Can't load numbering image with src ${g.bullet.src}`);
+              }
+            } else if (g.levelText) {
+              let o = this.numberingCounter(g.id, g.level);
+              const c = o + ' ' + (g.start - 1),
+                h = this.numberingRestartLevel(g);
+              (h != null && p(`p.${this.numberingClass(g.id, h)}`, c), n.push(c));
+              const m = this.normalizeNumberingLevelText(g.levelText, g.format, g.rStyle),
+                P = this.numberingMarkerRunStyle(g.rStyle, m.normalized);
+              t += this.styleToString(`${s}:before`, {
+                content: this.levelTextToContent(
+                  m.text,
+                  g.suff,
+                  g.id,
+                  this.numFormatToCssValue(g.format),
+                  u,
+                ),
+                'counter-increment': o,
+                'font-family': 'var(--docx-marker-font-family, inherit)',
+                'font-size': 'var(--docx-marker-font-size, inherit)',
+                'font-style': 'var(--docx-marker-font-style, inherit)',
+                'font-weight': 'var(--docx-marker-font-weight, inherit)',
+                ...P,
+              });
+            } else r = this.numFormatToCssValue(g.format);
+            t += this.styleToString(s, {
+              display: 'list-item',
+              'list-style-position': 'inside',
+              'list-style-type': r,
+              ...g.pStyle,
+            });
+          }
+          for (const [o, c] of l) t += this.styleToString(o, { 'counter-set': c.join(' ') });
+          return (
+            n.length > 0 &&
+              (t += this.styleToString(this.rootSelector, { 'counter-reset': n.join(' ') })),
+            [
+              this.h({ tagName: '#comment', children: ['docxjs document numbering styles'] }),
+              this.h({ tagName: 'style', children: [t] }),
+            ]
+          );
+        }
+        renderStyles(e) {
+          var t = '';
+          const n = this.styleMap,
+            l = (0, i.keyBy)(
+              e.filter((s) => s.isDefault),
+              (s) => s.target,
+            );
+          for (const s of e) {
+            var u = s.styles;
+            if (s.linked) {
+              var p = s.linked && n[s.linked];
+              p
+                ? (u = u.concat(p.styles))
+                : this.options.debug && console.warn(`Can't find linked style ${s.linked}`);
+            }
+            for (const r of u) {
+              var g = `${s.target ?? ''}.${s.cssName}${r.mod ?? ''}`;
+              (s.target != r.target && (g += ` ${r.target}`),
+                l[s.target] == s && (g = `.${this.className} ${s.target}, ` + g),
+                (t += this.styleToString(g, r.values)));
+            }
+          }
+          return [
+            this.h({ tagName: '#comment', children: ['docxjs document styles'] }),
+            this.h({ tagName: 'style', children: [t] }),
+          ];
+        }
+        renderNotes(e, t, n) {
+          var l = e.map((u) => t[u]).filter((u) => u);
+          if (l.length > 0) {
+            const u = this.currentPart;
+            this.currentPart = n ?? u;
+            const p = this.renderElements(l);
+            return ((this.currentPart = u), this.h({ tagName: 'ol', children: p }));
+          }
+        }
+        renderElement(e) {
+          switch (e.type) {
+            case d.DomType.Paragraph:
+              return this.renderParagraph(e);
+            case d.DomType.BookmarkStart:
+              return this.renderBookmarkStart(e);
+            case d.DomType.BookmarkEnd:
+              return null;
+            case d.DomType.Run:
+              return this.renderRun(e);
+            case d.DomType.Table:
+              return this.renderTable(e);
+            case d.DomType.Row:
+              return this.renderTableRow(e);
+            case d.DomType.Cell:
+              return this.renderTableCell(e);
+            case d.DomType.Hyperlink:
+              return this.renderHyperlink(e);
+            case d.DomType.SmartTag:
+              return this.renderSmartTag(e);
+            case d.DomType.Drawing:
+              return this.renderDrawing(e);
+            case d.DomType.Image:
+              return this.renderImage(e);
+            case d.DomType.Shape:
+              return this.renderShape(e);
+            case d.DomType.Chart:
+              return this.renderChart(e);
+            case d.DomType.SmartArt:
+              return this.renderSmartArt(e);
+            case d.DomType.Ink:
+              return this.renderInk(e);
+            case d.DomType.SimpleField:
+              return this.renderSimpleField(e);
+            case d.DomType.Instruction:
+            case d.DomType.ComplexField:
+              return null;
+            case d.DomType.Text:
+              return this.renderText(e);
+            case d.DomType.DeletedText:
+              return this.renderDeletedText(e);
+            case d.DomType.Tab:
+              return this.renderTab(e);
+            case d.DomType.Symbol:
+              return this.renderSymbol(e);
+            case d.DomType.Break:
+              return this.renderBreak(e);
+            case d.DomType.Footer:
+              return this.renderContainer(e, 'footer');
+            case d.DomType.Header:
+              return this.renderContainer(e, 'header');
+            case d.DomType.Footnote:
+            case d.DomType.Endnote:
+              return this.renderContainer(e, 'li');
+            case d.DomType.FootnoteReference:
+              return this.renderFootnoteReference(e);
+            case d.DomType.EndnoteReference:
+              return this.renderEndnoteReference(e);
+            case d.DomType.NoBreakHyphen:
+              return this.h('‑');
+            case d.DomType.SoftHyphen:
+              return this.h('­');
+            case d.DomType.PositionalTab:
+              return this.renderTab(e);
+            case d.DomType.Ruby:
+              return this.renderRuby(e);
+            case d.DomType.RubyBase:
+              return this.renderContainer(e, 'span');
+            case d.DomType.RubyText:
+              return this.toHTML(e, a.ns.html, 'rt');
+            case d.DomType.VmlPicture:
+              return this.renderVmlPicture(e);
+            case d.DomType.VmlElement:
+              return this.renderVmlElement(e);
+            case d.DomType.MmlMath:
+              return this.renderContainerNS(e, a.ns.mathML, 'math', { xmlns: a.ns.mathML });
+            case d.DomType.MmlMathParagraph:
+              return this.renderMmlMathParagraph(e);
+            case d.DomType.MmlFraction:
+              return this.renderContainerNS(e, a.ns.mathML, 'mfrac');
+            case d.DomType.MmlBase:
+              return this.renderContainerNS(
+                e,
+                a.ns.mathML,
+                e.parent?.type == d.DomType.MmlMatrixRow ? 'mtd' : 'mrow',
+              );
+            case d.DomType.MmlNumerator:
+            case d.DomType.MmlDenominator:
+            case d.DomType.MmlFunction:
+            case d.DomType.MmlLimit:
+            case d.DomType.MmlBox:
+              return this.renderContainerNS(e, a.ns.mathML, 'mrow');
+            case d.DomType.MmlGroupChar:
+              return this.renderMmlGroupChar(e);
+            case d.DomType.MmlLimitLower:
+              return this.renderContainerNS(e, a.ns.mathML, 'munder');
+            case d.DomType.MmlLimitUpper:
+              return this.renderContainerNS(e, a.ns.mathML, 'mover');
+            case d.DomType.MmlSubSuperscript:
+              return this.renderContainerNS(e, a.ns.mathML, 'msubsup');
+            case d.DomType.MmlPhantom:
+              return this.renderMmlPhantom(e);
+            case d.DomType.MmlBorderBox:
+              return this.renderContainerNS(e, a.ns.mathML, 'menclose');
+            case d.DomType.MmlAccent:
+              return this.renderMmlAccent(e);
+            case d.DomType.MmlMatrix:
+              return this.renderContainerNS(e, a.ns.mathML, 'mtable');
+            case d.DomType.MmlMatrixRow:
+              return this.renderContainerNS(e, a.ns.mathML, 'mtr');
+            case d.DomType.MmlRadical:
+              return this.renderMmlRadical(e);
+            case d.DomType.MmlSuperscript:
+              return this.renderContainerNS(e, a.ns.mathML, 'msup');
+            case d.DomType.MmlSubscript:
+              return this.renderContainerNS(e, a.ns.mathML, 'msub');
+            case d.DomType.MmlDegree:
+            case d.DomType.MmlSuperArgument:
+            case d.DomType.MmlSubArgument:
+              return this.renderContainerNS(e, a.ns.mathML, 'mrow');
+            case d.DomType.MmlFunctionName:
+              return this.renderContainerNS(e, a.ns.mathML, 'mi');
+            case d.DomType.MmlDelimiter:
+              return this.renderMmlDelimiter(e);
+            case d.DomType.MmlRun:
+              return this.renderMmlRun(e);
+            case d.DomType.MmlNary:
+              return this.renderMmlNary(e);
+            case d.DomType.MmlPreSubSuper:
+              return this.renderMmlPreSubSuper(e);
+            case d.DomType.MmlBar:
+              return this.renderMmlBar(e);
+            case d.DomType.MmlEquationArray:
+              return this.renderMllList(e);
+            case d.DomType.Inserted:
+              return this.renderInserted(e);
+            case d.DomType.Deleted:
+              return this.renderDeleted(e);
+            case d.DomType.CommentRangeStart:
+              return this.renderCommentRangeStart(e);
+            case d.DomType.CommentRangeEnd:
+              return this.renderCommentRangeEnd(e);
+            case d.DomType.CommentReference:
+              return this.renderCommentReference(e);
+            case d.DomType.AltChunk:
+              return this.renderAltChunk(e);
+          }
+          return null;
+        }
+        renderElements(e, t) {
+          if (e == null) return null;
+          const n = [];
+          for (let l = 0; l < e.length; l++) {
+            const u = this.tryRenderComplexField(e, l);
+            u
+              ? (n.push(...(0, i.asArray)(u.node).filter((p) => p != null)), (l = u.nextIndex - 1))
+              : n.push(...(0, i.asArray)(this.renderElement(e[l])).filter((p) => p != null));
+          }
+          return (
+            t &&
+              n.forEach((l) => t.appendChild((0, i.isString)(l) ? document.createTextNode(l) : l)),
+            n
+          );
+        }
+        tryRenderComplexField(e, t) {
+          if (!this.hasFieldChar(e[t], 'begin')) return null;
+          let n = 0,
+            l = !1,
+            u = '';
+          const p = [];
+          for (let g = t; g < e.length; g++) {
+            const s = e[g],
+              r = s.type == d.DomType.Run ? { ...s, fieldRun: !1, children: [] } : null;
+            if (s.type == d.DomType.Run) {
+              for (const o of s.children ?? []) {
+                if (o.type == d.DomType.ComplexField) {
+                  const c = o;
+                  if (c.charType == 'begin') n++;
+                  else if (c.charType == 'separate' && n == 1) l = !0;
+                  else if (c.charType == 'end' && (n--, n == 0))
+                    return (
+                      r.children.length > 0 && p.push(r),
+                      {
+                        node: this.renderSimpleField({
+                          type: d.DomType.SimpleField,
+                          instruction: u,
+                          lock: !1,
+                          dirty: !1,
+                          children: p,
+                        }),
+                        nextIndex: g + 1,
+                      }
+                    );
+                  continue;
+                }
+                l || n != 1 || o.type != d.DomType.Instruction
+                  ? l && n > 0 && r.children.push(o)
+                  : (u += o.text ?? '');
+              }
+              r.children.length > 0 && p.push(r);
+            } else l && n > 0 && p.push(s);
+          }
+          return null;
+        }
+        hasFieldChar(e, t) {
+          return (
+            e.type == d.DomType.Run &&
+            e.children?.some((n) => n.type == d.DomType.ComplexField && n.charType == t)
+          );
+        }
+        renderContainer(e, t) {
+          return this.h({ tagName: t, children: this.renderElements(e.children) });
+        }
+        renderContainerNS(e, t, n, l) {
+          return this.h({ ns: t, tagName: n, children: this.renderElements(e.children), ...l });
+        }
+        effectiveParagraphTabs(e, t) {
+          if (!e?.length) return t;
+          if (!t?.length) return e;
+          const n = [...t];
+          for (const l of e) {
+            const u = this.parseCssLengthValue(l.position),
+              p = n.findIndex((g) => this.parseCssLengthValue(g.position) == u);
+            p >= 0 ? (n[p] = l) : n.push(l);
+          }
+          return n.sort(
+            (l, u) =>
+              (this.parseCssLengthValue(l.position) ?? 0) -
+              (this.parseCssLengthValue(u.position) ?? 0),
+          );
+        }
+        countParagraphTabs(e) {
+          let t = 0;
+          const n = (l) => {
+            (l.type != d.DomType.Tab && l.type != d.DomType.PositionalTab) || t++;
+            for (const u of l.children ?? []) n(u);
+          };
+          return (n(e), t);
+        }
+        isLeaderTabStop(e) {
+          return !!e?.leader && e.leader != 'none' && e.style != 'clear';
+        }
+        resolveRenderedTabStop(e, t, n) {
+          if (!e?.length) return null;
+          const l = e[Math.min(t, Math.max(e.length - 1, 0))],
+            u = [...e].reverse().find((s) => this.isLeaderTabStop(s)),
+            p = this.findStyle(this.currentParagraph?.styleName),
+            g =
+              !!u &&
+              !!(this.currentParagraph?.numbering ?? p?.paragraphProps?.numbering) &&
+              this.isTocParagraphStyle(this.currentParagraph?.styleName, p);
+          return u
+            ? n <= 1
+              ? g
+                ? u
+                : l
+              : t >= n - 1
+                ? u
+                : this.isLeaderTabStop(l)
+                  ? (e
+                      .slice(0, Math.min(t + 1, e.length))
+                      .reverse()
+                      .find((s) => !this.isLeaderTabStop(s) && s.style != 'clear') ??
+                    e.find((s) => !this.isLeaderTabStop(s) && s.style != 'clear') ??
+                    null)
+                  : l
+            : l;
+        }
+        renderParagraph(e) {
+          const t = this.findStyle(e.styleName);
+          e.tabs = this.effectiveParagraphTabs(e.tabs, t?.paragraphProps?.tabs);
+          const n = this.currentParagraph,
+            l = this.currentParagraphTabIndex,
+            u = this.currentParagraphTabCount;
+          ((this.currentParagraph = e),
+            (this.currentParagraphTabIndex = 0),
+            (this.currentParagraphTabCount = this.countParagraphTabs(e)));
+          const p = this.renderElements(e.children),
+            g = e.props?.deletedParagraphMark && !this.options.renderChanges;
+          if (g && !this.hasRenderedContent(p))
+            return (
+              (this.currentParagraph = n),
+              (this.currentParagraphTabIndex = l),
+              (this.currentParagraphTabCount = u),
+              null
+            );
+          if (g)
+            return (
+              (this.currentParagraph = n),
+              (this.currentParagraphTabIndex = l),
+              (this.currentParagraphTabCount = u),
+              p
+            );
+          var s = this.toHTML(e, a.ns.html, 'p', this.wrapTabLeaderChildren(p, !0));
+          ((this.currentParagraph = n),
+            (this.currentParagraphTabIndex = l),
+            (this.currentParagraphTabCount = u));
+          const r = e.numbering ?? t?.paragraphProps?.numbering;
+          r && s.classList.add(this.numberingClass(r.id, r.level));
+          const o = t?.paragraphProps;
+          ((e.pageBreakBefore ?? o?.pageBreakBefore) &&
+            ((s.style.breakBefore = 'page'), (s.dataset.docxPageBreakBefore = 'true')),
+            (e.keepLines ?? o?.keepLines) &&
+              ((s.style.breakInside = 'avoid'), (s.dataset.docxKeepLines = 'true')),
+            (e.keepNext ?? o?.keepNext) &&
+              ((s.style.breakAfter = 'avoid'), (s.dataset.docxKeepNext = 'true')),
+            (e.widowControl ?? o?.widowControl) &&
+              ((s.style.orphans = '2'),
+              (s.style.widows = '2'),
+              (s.dataset.docxWidowControl = 'true')),
+            this.applyDocumentGridLinePitch(e, t, s));
+          const c = e.tabs?.find((h) => this.isLeaderTabStop(h));
+          return (
+            c &&
+              (s.classList.add(`${this.className}-tab-leader-paragraph`),
+              (s.dataset.docxHasTabLeader = 'true'),
+              (s.dataset.docxTabLeader = c.leader),
+              (s.dataset.docxTabAlign = c.style)),
+            this.isTocParagraphStyle(e.styleName, t) &&
+              (s.classList.add(`${this.className}-toc-paragraph`),
+              (s.dataset.docxTocEntry = 'true')),
+            this.hasParagraphRelativeAnchor(e) &&
+              ((s.style.position && s.style.position != 'static') ||
+                (s.style.position = 'relative'),
+              (s.dataset.docxAnchorContext = 'paragraph')),
+            e.props?.anchorId &&
+              ((s.id = e.props.anchorId), s.setAttribute('id', e.props.anchorId)),
+            s
+          );
+        }
+        hasParagraphRelativeAnchor(e) {
+          for (const t of e.children ?? []) {
+            if (t.type == d.DomType.Drawing && t.cssStyle?.position == 'absolute') {
+              const n = t.props?.anchorPosition,
+                l = n?.vertical?.relative,
+                u = n?.horizontal?.relative;
+              if (l == 'paragraph' || l == 'line' || l == 'character' || u == 'character')
+                return !0;
+            }
+            if (this.hasParagraphRelativeAnchor(t)) return !0;
+          }
+          return !1;
+        }
+        renderHyperlink(e) {
+          const t = this.renderElements(e.children),
+            n = this.toH(e, a.ns.html, 'a', this.wrapTabLeaderChildren(t));
+          if (((n.href = ''), e.id)) {
+            const l = this.currentPart ?? this.document.documentPart,
+              u = l?.rels?.find((p) => p.id == e.id && p.targetMode === 'External');
+            n.href = u?.target ?? n.href;
+          }
+          return (!n.href && e.anchor && (n.href += `#${e.anchor}`), this.h(n));
+        }
+        wrapTabLeaderChildren(e, t = !1) {
+          if (
+            !e?.length ||
+            e.some((s) => this.hasCssClass(s, `${this.className}-tab-leader-title`))
+          )
+            return e;
+          let n = -1;
+          for (let s = e.length - 1; s >= 0; s--)
+            if (this.isTabLeaderNode(e[s])) {
+              n = s;
+              break;
+            }
+          if (n < 0) return e;
+          const l = e.slice(0, n),
+            u = e[n],
+            p = e.slice(n + 1);
+          this.addCssClass(u, `${this.className}-tab-leader-fill`);
+          const g = [
+            this.h({
+              tagName: 'span',
+              className: `${this.className}-tab-leader-title`,
+              children: l,
+            }),
+            u,
+            this.h({
+              tagName: 'span',
+              className: `${this.className}-tab-leader-page`,
+              children: p,
+            }),
+          ];
+          return t
+            ? [
+                this.h({
+                  tagName: 'span',
+                  className: `${this.className}-tab-leader-line`,
+                  children: g,
+                }),
+              ]
+            : g;
+        }
+        isTabLeaderNode(e) {
+          const t = this.nodeDatasetValue(e, 'docxTabLeader');
+          return this.hasCssClass(e, this.tabStopClass()) && !!t && t != 'none';
+        }
+        nodeDatasetValue(e, t) {
+          const n = e,
+            l = n?.dataset?.[t];
+          if (l != null) return String(l);
+          const u = 'data-' + t.replace(/[A-Z]/g, (p) => '-' + p.toLowerCase());
+          return typeof n?.getAttribute == 'function' ? n.getAttribute(u) : n?.attributes?.[u];
+        }
+        hasCssClass(e, t) {
+          const n = e;
+          return (
+            !(!n || !t) &&
+            (typeof n.classList?.contains == 'function'
+              ? n.classList.contains(t)
+              : this.nodeClassName(n).split(/\s+/).includes(t))
+          );
+        }
+        addCssClass(e, t) {
+          const n = e;
+          if (!n || !t || this.hasCssClass(e, t)) return;
+          if (typeof n.classList?.add == 'function') return void n.classList.add(t);
+          const l = (0, a.cx)(this.nodeClassName(n), t);
+          typeof n.setAttribute == 'function'
+            ? n.setAttribute('class', l)
+            : (n.attributes ?? (n.attributes = {}), (n.attributes.class = l));
+        }
+        nodeClassName(e) {
+          return typeof e?.className == 'string'
+            ? e.className
+            : typeof e?.className?.baseVal == 'string'
+              ? e.className.baseVal
+              : typeof e?.getAttribute == 'function'
+                ? (e.getAttribute('class') ?? '')
+                : (e?.attributes?.class ?? '');
+        }
+        renderSmartTag(e) {
+          return this.renderContainer(e, 'span');
+        }
+        renderCommentRangeStart(e) {
+          if (!this.options.renderComments) return null;
+          const t = new Range();
+          this.commentHighlight?.add(t);
+          const n = this.h({ tagName: '#comment', children: [`start of comment #${e.id}`] });
+          return (this.later(() => t.setStart(n, 0)), (this.commentMap[e.id] = t), n);
+        }
+        renderCommentRangeEnd(e) {
+          if (!this.options.renderComments) return null;
+          const t = this.commentMap[e.id],
+            n = this.h({ tagName: '#comment', children: [`end of comment #${e.id}`] });
+          return (this.later(() => t?.setEnd(n, 0)), n);
+        }
+        renderCommentReference(e) {
+          if (!this.options.renderComments) return null;
+          var t = this.document.commentsPart?.commentMap[e.id];
+          if (!t) return null;
+          const n = this.h({
+              tagName: 'span',
+              className: `${this.className}-comment-ref`,
+              children: ['💬'],
+            }),
+            l = this.h({
+              tagName: 'div',
+              className: `${this.className}-comment-popover`,
+              children: [
+                this.h({
+                  tagName: 'div',
+                  className: `${this.className}-comment-author`,
+                  children: [t.author],
+                }),
+                this.h({
+                  tagName: 'div',
+                  className: `${this.className}-comment-date`,
+                  children: [new Date(t.date).toLocaleString()],
+                }),
+                ...this.renderElements(t.children),
+              ],
+            });
+          return this.h({
+            tagName: '#fragment',
+            children: [
+              this.h({
+                tagName: '#comment',
+                children: [`comment #${t.id} by ${t.author} on ${t.date}`],
+              }),
+              n,
+              l,
+            ],
+          });
+        }
+        renderAltChunk(e) {
+          if (!this.options.renderAltChunks) return null;
+          var t = this.h({
+            tagName: 'iframe',
+            sandbox: '',
+            referrerPolicy: 'no-referrer',
+            loading: 'lazy',
+          });
+          return (
+            this.tasks.push(
+              this.document.loadAltChunk(e.id, this.currentPart).then((n) => {
+                t.srcdoc = n;
+              }),
+            ),
+            t
+          );
+        }
+        renderDrawing(e) {
+          e.cssStyle?.['shape-outside'] &&
+            (e.className = (0, a.cx)(e.className, `${this.className}-float-wrap`));
+          var t = this.toHTML(e, a.ns.html, 'div');
+          return (
+            (e.cssStyle?.float || e.cssStyle?.position == 'absolute') &&
+              (t.dataset.docxFloat = 'true'),
+            t.style.display || (t.style.display = 'inline-block'),
+            t.style.position || (t.style.position = 'relative'),
+            (t.style.textIndent = '0px'),
+            t
+          );
+        }
+        renderImage(e) {
+          let t = this.toHTML(e, a.ns.html, 'img', []),
+            n = e.cssStyle?.transform;
+          if (
+            (e.alt && (t.alt = e.alt),
+            e.title && (t.title = e.title),
+            e.srcRect && e.srcRect.some((s) => s != 0))
+          ) {
+            var [l, u, p, g] = e.srcRect;
+            ((n = `${n ?? ''} scale(${1 / (1 - l - p)}, ${1 / (1 - u - g)})`),
+              (t.style.clipPath = `inset(${(100 * u).toFixed(2)}% ${(100 * p).toFixed(2)}% ${(100 * g).toFixed(2)}% ${(100 * l).toFixed(2)}%)`),
+              (t.style.transformOrigin = 'top left'));
+          }
+          return (
+            e.rotation && (n = `rotate(${e.rotation}deg) ${n ?? ''}`),
+            (t.style.transform = n?.trim()),
+            this.document &&
+              e.src &&
+              this.tasks.push(
+                this.document.loadDocumentImage(e.src, this.currentPart).then((s) => {
+                  ((t.src = s), s && t.setAttribute('src', s));
+                }),
+              ),
+            t
+          );
+        }
+        renderShape(e) {
+          if (e.props?.dmlSvg) return this.renderDmlSvgShape(e);
+          const t = e.props?.dmlTextBox ? [this.renderDmlTextBox(e)] : null,
+            n = this.toHTML(e, a.ns.html, 'div', t);
+          return (
+            n.style.display || (n.style.display = 'inline-block'),
+            e.title && (n.title = e.title),
+            e.alt && (n.setAttribute('role', 'img'), n.setAttribute('aria-label', e.alt)),
+            n
+          );
+        }
+        renderDmlTextBox(e) {
+          return this.h({
+            tagName: 'div',
+            className: `${this.className}-shape-textbox`,
+            style: {
+              'box-sizing': 'border-box',
+              display: 'flex',
+              'flex-direction': 'column',
+              'justify-content': e.props?.textVerticalAlign ?? 'flex-start',
+              'align-items': 'stretch',
+              width: '100%',
+              height: '100%',
+              overflow: 'hidden',
+              ...(e.props?.textInsets ?? {}),
+            },
+            children: this.renderElements(e.children),
+          });
+        }
+        renderDmlSvgShape(e) {
+          const t = this.createSvgElement('svg', { style: e.cssStyle }),
+            n = e.props ?? {};
+          (t.setAttribute('viewBox', n.viewBox ?? '0 0 1 1'),
+            t.setAttribute('preserveAspectRatio', 'none'),
+            t.setAttribute('focusable', 'false'),
+            e.title && t.appendChild(this.createSvgElement('title', null, [e.title])),
+            e.alt && (t.setAttribute('role', 'img'), t.setAttribute('aria-label', e.alt)));
+          const l = this.createSvgElement('path');
+          return (
+            l.setAttribute('d', n.pathD ?? ''),
+            l.setAttribute('fill', n.fill ?? 'none'),
+            l.setAttribute('stroke', n.stroke ?? 'none'),
+            l.setAttribute('stroke-width', n.strokeWidth ?? '0'),
+            l.setAttribute('stroke-linejoin', 'round'),
+            l.setAttribute('stroke-linecap', 'round'),
+            n.strokeDasharray && l.setAttribute('stroke-dasharray', n.strokeDasharray),
+            t.appendChild(l),
+            t
+          );
+        }
+        renderChart(e) {
+          const t = this.toHTML(e, a.ns.html, 'div', []);
+          if (
+            ((t.className = (0, a.cx)(t.className, `${this.className}-chart`)),
+            e.title && (t.title = e.title),
+            e.alt && (t.setAttribute('role', 'img'), t.setAttribute('aria-label', e.alt)),
+            t.appendChild(this.renderGraphicLoading('Chart')),
+            e.id)
+          ) {
+            const n = this.currentPart;
+            this.tasks.push(
+              this.document
+                .loadRelationshipXml(e.id, n)
+                .then((l) => {
+                  ((t.textContent = ''),
+                    t.appendChild(l ? this.renderChartSvg(l) : this.renderGraphicLoading('Chart')));
+                })
+                .catch(() => {
+                  ((t.textContent = ''), t.appendChild(this.renderGraphicLoading('Chart')));
+                }),
+            );
+          }
+          return t;
+        }
+        renderSmartArt(e) {
+          const t = this.toHTML(e, a.ns.html, 'div', []);
+          if (
+            ((t.className = (0, a.cx)(t.className, `${this.className}-smartart`)),
+            e.title && (t.title = e.title),
+            e.alt && (t.setAttribute('role', 'img'), t.setAttribute('aria-label', e.alt)),
+            t.appendChild(this.renderGraphicLoading('SmartArt')),
+            e.dataId)
+          ) {
+            const n = this.currentPart;
+            this.tasks.push(
+              this.document
+                .loadRelationshipXml(e.dataId, n)
+                .then((l) => {
+                  ((t.textContent = ''),
+                    t.appendChild(
+                      l ? this.renderSmartArtSvg(l) : this.renderGraphicLoading('SmartArt'),
+                    ));
+                })
+                .catch(() => {
+                  ((t.textContent = ''), t.appendChild(this.renderGraphicLoading('SmartArt')));
+                }),
+            );
+          }
+          return t;
+        }
+        renderInk(e) {
+          const t = this.toHTML(e, a.ns.html, 'div', []);
+          if (
+            ((t.className = (0, a.cx)(t.className, `${this.className}-ink`)),
+            e.title && (t.title = e.title),
+            e.alt && (t.setAttribute('role', 'img'), t.setAttribute('aria-label', e.alt)),
+            t.appendChild(this.renderGraphicLoading('Ink')),
+            e.id)
+          ) {
+            const n = this.currentPart;
+            this.tasks.push(
+              this.document
+                .loadRelationshipText(e.id, n)
+                .then((l) => {
+                  if (((t.textContent = ''), l?.trim().startsWith('<')))
+                    try {
+                      return void t.appendChild(this.renderInkSvg((0, C.parseXmlString)(l, !0)));
+                    } catch {}
+                  return this.document.loadRelationshipBlobUrl(e.id, n).then((u) => {
+                    ((t.textContent = ''),
+                      u
+                        ? t.appendChild(
+                            this.h({
+                              tagName: 'img',
+                              src: u,
+                              alt: e.alt ?? 'Ink',
+                              style: { width: '100%', height: '100%', objectFit: 'contain' },
+                            }),
+                          )
+                        : t.appendChild(this.renderGraphicLoading('Ink')));
+                  });
+                })
+                .catch(() => {
+                  ((t.textContent = ''), t.appendChild(this.renderGraphicLoading('Ink')));
+                }),
+            );
+          }
+          return t;
+        }
+        renderGraphicLoading(e) {
+          return this.h({
+            tagName: 'span',
+            style: {
+              display: 'inline-flex',
+              'align-items': 'center',
+              'justify-content': 'center',
+              width: '100%',
+              height: '100%',
+              'min-width': '2in',
+              'min-height': '1in',
+              border: '1px solid currentColor',
+            },
+            children: [`[${e}]`],
+          });
+        }
+        renderChartSvg(e) {
+          const t = e.documentElement,
+            n = this.detectChartType(t),
+            l = this.parseChartSeries(t, n),
+            u = this.createSvgElement('svg', {
+              style: { width: '100%', height: '100%', display: 'block' },
+            });
+          (u.setAttribute('viewBox', '0 0 640 360'),
+            u.setAttribute('preserveAspectRatio', 'xMidYMid meet'));
+          const p = this.extractChartTitle(t);
+          if (
+            (p && u.appendChild(this.svgText(p, 320, 24, 'middle', '14px', 'bold')),
+            l.length == 0 || l.every((g) => g.values.length == 0))
+          )
+            return (u.appendChild(this.svgText('Chart', 320, 180, 'middle', '18px')), u);
+          switch (n) {
+            case 'pieChart':
+            case 'doughnutChart':
+              this.drawPieChart(u, l[0]);
+              break;
+            case 'lineChart':
+            case 'scatterChart':
+            case 'areaChart':
+              this.drawLineChart(u, l, n == 'areaChart');
+              break;
+            default:
+              this.drawBarChart(u, l);
+          }
+          return u;
+        }
+        detectChartType(e) {
+          return (
+            [
+              'barChart',
+              'bar3DChart',
+              'lineChart',
+              'pieChart',
+              'doughnutChart',
+              'areaChart',
+              'scatterChart',
+              'ofPieChart',
+              'radarChart',
+            ].find((t) => this.firstByLocal(e, t)) ?? 'barChart'
+          );
+        }
+        parseChartSeries(e, t) {
+          const n = this.firstByLocal(e, t) ?? e;
+          return this.elementsByLocal(n, 'ser').map((l, u) => {
+            const p = this.firstByLocal(l, 'tx'),
+              g = this.firstByLocal(l, 'cat') ?? this.firstByLocal(l, 'xVal'),
+              s = this.firstByLocal(l, 'val') ?? this.firstByLocal(l, 'yVal'),
+              r = this.chartCacheValues(g),
+              o = this.chartCacheValues(s)
+                .map((c) => parseFloat(c))
+                .filter((c) => !Number.isNaN(c));
+            return {
+              name: this.chartText(p) || `Series ${u + 1}`,
+              categories: r.length > 0 ? r : o.map((c, h) => `${h + 1}`),
+              values: o,
+            };
+          });
+        }
+        chartCacheValues(e) {
+          return e
+            ? this.elementsByLocal(e, 'pt')
+                .map((t) => ({
+                  index: parseInt(t.getAttribute('idx') ?? '0', 10),
+                  value: this.firstByLocal(t, 'v')?.textContent ?? '',
+                }))
+                .sort((t, n) => t.index - n.index)
+                .map((t) => t.value)
+            : [];
+        }
+        chartText(e) {
+          if (!e) return '';
+          const t = this.chartCacheValues(e);
+          return t.length > 0
+            ? t.join(' ')
+            : this.elementsByLocal(e, 't')
+                .map((n) => n.textContent)
+                .filter(Boolean)
+                .join(' ')
+                .trim();
+        }
+        extractChartTitle(e) {
+          const t = this.firstByLocal(e, 'title');
+          return this.chartText(t);
+        }
+        drawBarChart(e, t) {
+          const l = t[0]?.categories ?? [],
+            u = Math.max(1, ...t.flatMap((s) => s.values)),
+            p = 540 / Math.max(l.length, 1),
+            g = p / Math.max(t.length + 1, 2);
+          (e.appendChild(this.svgLine(60, 300, 600, 300)),
+            e.appendChild(this.svgLine(60, 300, 60, 70)),
+            t.forEach((s, r) => {
+              s.values.forEach((o, c) => {
+                const h = Math.max(0, (o / u) * 230),
+                  m = this.createSvgElement('rect');
+                (m.setAttribute('x', '' + (60 + c * p + r * g + 0.2 * g)),
+                  m.setAttribute('y', '' + (300 - h)),
+                  m.setAttribute('width', '' + 0.8 * g),
+                  m.setAttribute('height', `${h}`),
+                  (m.style.fill = this.chartColor(r)),
+                  e.appendChild(m));
+              });
+            }),
+            l.slice(0, 12).forEach((s, r) => {
+              e.appendChild(this.svgText(s, 60 + r * p + p / 2, 318, 'middle', '10px'));
+            }),
+            t.forEach((s, r) => this.drawLegend(e, s.name, r, 70 + 130 * r, 335)));
+        }
+        drawLineChart(e, t, n = !1) {
+          const u = Math.max(1, ...t.flatMap((s) => s.values)),
+            p = Math.max(...t.map((s) => s.values.length), 1),
+            g = 540 / Math.max(p - 1, 1);
+          (e.appendChild(this.svgLine(60, 300, 600, 300)),
+            e.appendChild(this.svgLine(60, 300, 60, 70)),
+            t.forEach((s, r) => {
+              const o = s.values.map((h, m) => [60 + m * g, 300 - (h / u) * 230]),
+                c = this.createSvgElement('path');
+              if (
+                (c.setAttribute(
+                  'd',
+                  o.map((h, m) => `${m == 0 ? 'M' : 'L'}${h[0]},${h[1]}`).join(' '),
+                ),
+                (c.style.stroke = this.chartColor(r)),
+                (c.style.strokeWidth = '2'),
+                (c.style.fill = 'none'),
+                e.appendChild(c),
+                n && o.length > 1)
+              ) {
+                const h = this.createSvgElement('path');
+                (h.setAttribute(
+                  'd',
+                  `${o.map((m, P) => `${P == 0 ? 'M' : 'L'}${m[0]},${m[1]}`).join(' ')} L${o[o.length - 1][0]},300 L${o[0][0]},300 Z`,
+                ),
+                  (h.style.fill = this.chartColor(r)),
+                  (h.style.opacity = '0.25'),
+                  e.appendChild(h));
+              }
+              for (const [h, m] of o) {
+                const P = this.createSvgElement('circle');
+                (P.setAttribute('cx', `${h}`),
+                  P.setAttribute('cy', `${m}`),
+                  P.setAttribute('r', '3'),
+                  (P.style.fill = this.chartColor(r)),
+                  e.appendChild(P));
+              }
+            }),
+            (t[0]?.categories ?? []).slice(0, 12).forEach((s, r) => {
+              e.appendChild(this.svgText(s, 60 + r * g, 318, 'middle', '10px'));
+            }),
+            t.forEach((s, r) => this.drawLegend(e, s.name, r, 70 + 130 * r, 335)));
+        }
+        drawPieChart(e, t) {
+          const n = t.values,
+            l = t.categories,
+            u = n.reduce((g, s) => g + Math.max(0, s), 0) || 1;
+          let p = -90;
+          n.forEach((g, s) => {
+            const r = (Math.max(0, g) / u) * 360,
+              o = this.createSvgElement('path');
+            (o.setAttribute('d', this.pieSlicePath(300, 180, 110, p, p + r)),
+              (o.style.fill = this.chartColor(s)),
+              e.appendChild(o),
+              this.drawLegend(e, l[s] ?? `${s + 1}`, s, 450, 90 + 22 * s),
+              (p += r));
+          });
+        }
+        pieSlicePath(e, t, n, l, u) {
+          const p = this.polar(e, t, n, u),
+            g = this.polar(e, t, n, l),
+            s = u - l <= 180 ? '0' : '1';
+          return `M${e},${t} L${p.x},${p.y} A${n},${n} 0 ${s},0 ${g.x},${g.y} Z`;
+        }
+        polar(e, t, n, l) {
+          const u = ((l - 90) * Math.PI) / 180;
+          return { x: e + n * Math.cos(u), y: t + n * Math.sin(u) };
+        }
+        drawLegend(e, t, n, l, u) {
+          const p = this.createSvgElement('rect');
+          (p.setAttribute('x', `${l}`),
+            p.setAttribute('y', '' + (u - 10)),
+            p.setAttribute('width', '10'),
+            p.setAttribute('height', '10'),
+            (p.style.fill = this.chartColor(n)),
+            e.appendChild(p),
+            e.appendChild(this.svgText(t, l + 14, u, 'start', '10px')));
+        }
+        chartColor(e) {
+          return `hsl(${(47 * e) % 360}, 65%, 48%)`;
+        }
+        renderSmartArtSvg(e) {
+          const t = e.documentElement,
+            n = this.elementsByLocal(t, 'pt')
+              .map((r) => ({
+                id: r.getAttribute('modelId'),
+                type: r.getAttribute('type'),
+                text: this.elementsByLocal(r, 't')
+                  .map((o) => o.textContent)
+                  .filter(Boolean)
+                  .join(' ')
+                  .trim(),
+              }))
+              .filter((r) => r.id && r.text && r.type != 'doc'),
+            l = this.elementsByLocal(t, 'cxn')
+              .map((r) => ({ src: r.getAttribute('srcId'), dst: r.getAttribute('destId') }))
+              .filter(
+                (r) =>
+                  r.src && r.dst && n.some((o) => o.id == r.src) && n.some((o) => o.id == r.dst),
+              ),
+            u = this.createSvgElement('svg', {
+              style: { width: '100%', height: '100%', display: 'block' },
+            });
+          if (
+            (u.setAttribute('viewBox', '0 0 640 360'),
+            u.setAttribute('preserveAspectRatio', 'xMidYMid meet'),
+            n.length == 0)
+          )
+            return (u.appendChild(this.svgText('SmartArt', 320, 180, 'middle', '18px')), u);
+          const p = this.layoutDiagramNodes(n, l),
+            g = {},
+            s = Math.min(90, 260 / Math.max(p.length, 1));
+          p.forEach((r, o) => {
+            const c = 55 + o * s,
+              h = 560 / Math.max(r.length, 1);
+            r.forEach((m, P) => {
+              g[m.id] = { x: 40 + h * P + Math.max(0, h - 140) / 2, y: c };
+            });
+          });
+          for (const r of l) {
+            const o = g[r.src],
+              c = g[r.dst];
+            o && c && u.appendChild(this.svgLine(o.x + 70, o.y + 44, c.x + 70, c.y));
+          }
+          return (
+            n.forEach((r, o) => {
+              const c = g[r.id];
+              if (!c) return;
+              const h = this.createSvgElement('rect');
+              (h.setAttribute('x', `${c.x}`),
+                h.setAttribute('y', `${c.y}`),
+                h.setAttribute('width', '140'),
+                h.setAttribute('height', '44'),
+                h.setAttribute('rx', '8'),
+                (h.style.fill = this.chartColor(o)),
+                (h.style.opacity = '0.18'),
+                (h.style.stroke = this.chartColor(o)),
+                u.appendChild(h),
+                u.appendChild(this.svgText(r.text, c.x + 70, c.y + 27, 'middle', '11px')));
+            }),
+            u
+          );
+        }
+        layoutDiagramNodes(e, t) {
+          const n = new Map(e.map((s) => [s.id, 0]));
+          t.forEach((s) => n.set(s.dst, (n.get(s.dst) ?? 0) + 1));
+          let l = e.filter((s) => (n.get(s.id) ?? 0) == 0);
+          const u = new Set(),
+            p = [];
+          for (l.length == 0 && (l = e.slice(0, 1)); l.length > 0; ) {
+            (p.push(l), l.forEach((r) => u.add(r.id)));
+            const s = t
+              .filter((r) => l.some((o) => o.id == r.src))
+              .map((r) => r.dst)
+              .filter((r) => !u.has(r));
+            l = [...new Set(s)].map((r) => e.find((o) => o.id == r)).filter(Boolean);
+          }
+          const g = e.filter((s) => !u.has(s.id));
+          return (g.length > 0 && p.push(g), p);
+        }
+        renderInkSvg(e) {
+          const t = this.createSvgElement('svg', {
+            style: { width: '100%', height: '100%', display: 'block' },
+          });
+          (t.setAttribute('viewBox', '0 0 640 360'),
+            t.setAttribute('preserveAspectRatio', 'xMidYMid meet'));
+          const n = this.elementsByLocal(e.documentElement, 'trace').map((m) =>
+              this.inkTraceToPoints(m.textContent),
+            ),
+            l = this.elementsByLocal(e.documentElement, 'path')
+              .map((m) => m.getAttribute('d'))
+              .filter(Boolean);
+          if (n.length == 0 && l.length == 0)
+            return (t.appendChild(this.svgText('Ink', 320, 180, 'middle', '18px')), t);
+          const u = n.flat(),
+            p = Math.min(...u.map((m) => m[0]), 0),
+            g = Math.min(...u.map((m) => m[1]), 0),
+            s = Math.max(...u.map((m) => m[0]), 640),
+            r = Math.max(...u.map((m) => m[1]), 360),
+            o = Math.min(600 / Math.max(s - p, 1), 320 / Math.max(r - g, 1)),
+            c = 20 - p * o,
+            h = 20 - g * o;
+          for (const m of n) {
+            if (m.length < 2) continue;
+            const P = this.createSvgElement('path');
+            (P.setAttribute(
+              'd',
+              m.map((x, y) => `${y == 0 ? 'M' : 'L'}${x[0] * o + c},${x[1] * o + h}`).join(' '),
+            ),
+              (P.style.fill = 'none'),
+              (P.style.stroke = 'currentColor'),
+              (P.style.strokeWidth = '2'),
+              (P.style.strokeLinecap = 'round'),
+              (P.style.strokeLinejoin = 'round'),
+              t.appendChild(P));
+          }
+          for (const m of l) {
+            const P = this.createSvgElement('path');
+            (P.setAttribute('d', m),
+              (P.style.fill = 'none'),
+              (P.style.stroke = 'currentColor'),
+              (P.style.strokeWidth = '2'),
+              t.appendChild(P));
+          }
+          return t;
+        }
+        inkTraceToPoints(e) {
+          const t = (e ?? '').match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [],
+            n = [];
+          for (let l = 0; l + 1 < t.length; l += 2) n.push([t[l], t[l + 1]]);
+          return n;
+        }
+        svgLine(e, t, n, l) {
+          const u = this.createSvgElement('line');
+          return (
+            u.setAttribute('x1', `${e}`),
+            u.setAttribute('y1', `${t}`),
+            u.setAttribute('x2', `${n}`),
+            u.setAttribute('y2', `${l}`),
+            (u.style.stroke = 'currentColor'),
+            (u.style.strokeWidth = '1'),
+            u
+          );
+        }
+        svgText(e, t, n, l = 'start', u = '12px', p = null) {
+          const g = this.createSvgElement('text');
+          return (
+            g.setAttribute('x', `${t}`),
+            g.setAttribute('y', `${n}`),
+            g.setAttribute('text-anchor', l),
+            (g.style.fill = 'currentColor'),
+            (g.style.fontSize = u),
+            p && (g.style.fontWeight = p),
+            g.appendChild(document.createTextNode(e)),
+            g
+          );
+        }
+        elementsByLocal(e, t) {
+          const n = e.documentElement ?? e;
+          return Array.from(n.getElementsByTagName('*')).filter((l) => l.localName == t);
+        }
+        firstByLocal(e, t) {
+          return this.elementsByLocal(e, t)[0] ?? null;
+        }
+        renderSimpleField(e) {
+          const t = this.evaluateFieldNode(e);
+          return t === void 0
+            ? this.renderElements(e.children ?? [])
+            : t == null
+              ? null
+              : (0, i.isString)(t)
+                ? this.renderFieldText(t, e.instruction)
+                : t;
+        }
+        renderFieldText(e, t) {
+          const n = this.h({
+            tagName: 'span',
+            className: `${this.className}-field`,
+            children: [e],
+          });
+          return (t && (n.dataset.docxFieldInstr = t), n);
+        }
+        evaluateFieldNode(e) {
+          const t = (e.instruction ?? '').replace(/\s+/g, ' ').trim();
+          if (!t) return;
+          if (t.startsWith('=')) {
+            const u = this.evaluateFormula(t.substring(1));
+            return u == null ? void 0 : this.applyFieldFormatting(`${u}`, t);
+          }
+          const n = this.tokenizeFieldInstruction(t),
+            l = n[0]?.replace(/^=/, '').toUpperCase();
+          if (!this.shouldPreserveStoredFieldResult(l, e))
+            switch (l) {
+              case 'PAGE':
+                return this.applyFieldFormatting(
+                  this.formatFieldNumber(
+                    this.currentPageNumber,
+                    this.currentSectionProps?.pageNumber?.format,
+                  ),
+                  t,
+                );
+              case 'NUMPAGES':
+                return this.applyFieldFormatting(
+                  this.formatFieldNumber(
+                    this.totalPages,
+                    this.currentSectionProps?.pageNumber?.format,
+                  ),
+                  t,
+                );
+              case 'SECTIONPAGES':
+                return this.applyFieldFormatting(
+                  this.formatFieldNumber(
+                    this.sectionPageCount,
+                    this.currentSectionProps?.pageNumber?.format,
+                  ),
+                  t,
+                );
+              case 'SECTION':
+                return this.applyFieldFormatting(
+                  this.formatFieldNumber(this.currentSectionNumber, 'decimal'),
+                  t,
+                );
+              case 'DATE':
+              case 'TIME':
+              case 'CREATEDATE':
+              case 'SAVEDATE':
+              case 'PRINTDATE':
+                return this.applyFieldFormatting(this.evaluateDateField(n, l), t);
+              case 'AUTHOR':
+                return this.applyFieldFormatting(
+                  this.document.corePropsPart?.props?.creator ?? '',
+                  t,
+                );
+              case 'TITLE':
+                return this.applyFieldFormatting(
+                  this.document.corePropsPart?.props?.title ?? '',
+                  t,
+                );
+              case 'SUBJECT':
+                return this.applyFieldFormatting(
+                  this.document.corePropsPart?.props?.subject ?? '',
+                  t,
+                );
+              case 'KEYWORDS':
+                return this.applyFieldFormatting(
+                  this.document.corePropsPart?.props?.keywords ?? '',
+                  t,
+                );
+              case 'NUMWORDS':
+                return this.applyFieldFormatting(
+                  `${this.document.extendedPropsPart?.props?.words ?? ''}`,
+                  t,
+                );
+              case 'NUMCHARS':
+                return this.applyFieldFormatting(
+                  `${this.document.extendedPropsPart?.props?.characters ?? ''}`,
+                  t,
+                );
+              case 'FILENAME':
+                return this.applyFieldFormatting(
+                  this.document.documentPart?.path?.split('/').pop() ?? '',
+                  t,
+                );
+              case 'DOCPROPERTY':
+                return this.applyFieldFormatting(this.evaluateDocPropertyField(n), t);
+              case 'DOCVARIABLE':
+                return this.applyFieldFormatting(this.evaluateDocVariableField(n), t);
+              case 'MERGEFIELD':
+                return;
+              case 'SET':
+                return (this.evaluateSetField(n), null);
+              case 'QUOTE':
+                return this.applyFieldFormatting(
+                  n
+                    .slice(1)
+                    .map((u) => this.resolveFieldValue(u))
+                    .join(''),
+                  t,
+                );
+              case 'HYPERLINK':
+                return this.renderHyperlinkField(n, e);
+              case 'IF':
+                return this.applyFieldFormatting(this.evaluateIfField(n), t);
+              case 'REF':
+              case 'STYLEREF':
+              case 'NOTEREF':
+                return this.applyFieldFormatting(this.evaluateRefField(n), t);
+              case 'PAGEREF':
+                return this.applyFieldFormatting(this.evaluatePageRefField(n), t);
+              case 'SEQ':
+                return this.applyFieldFormatting(this.evaluateSeqField(n), t);
+              case 'LISTNUM':
+                return this.applyFieldFormatting(this.evaluateListNumField(n), t);
+              case 'TC':
+              case 'XE':
+                return null;
+              case 'TOC':
+                return this.renderTocField(n);
+              case 'SYMBOL':
+                return this.evaluateSymbolField(n);
+            }
+        }
+        shouldPreserveStoredFieldResult(e, t) {
+          if (!this.options.preserveComplexFieldResults || !t.children?.length) return !1;
+          switch (e) {
+            case 'PAGE':
+            case 'NUMPAGES':
+            case 'SECTIONPAGES':
+            case 'SECTION':
+              return !1;
+            case 'PAGEREF':
+              return !this.options.updatePageReferences;
+            case 'TOC':
+            case 'REF':
+            case 'STYLEREF':
+            case 'NOTEREF':
+            case 'SEQ':
+            case 'LISTNUM':
+            case 'IF':
+            case 'DOCVARIABLE':
+            case 'MERGEFIELD':
+              return !0;
+          }
+          return !1;
+        }
+        tokenizeFieldInstruction(e) {
+          const t = [];
+          let n = '',
+            l = null,
+            u = !1;
+          for (const p of e)
+            u
+              ? ((n += p), (u = !1))
+              : p != '\\'
+                ? p != '"' && p != "'"
+                  ? !/\s/.test(p) || l
+                    ? (n += p)
+                    : n && (t.push(n), (n = ''))
+                  : l == p
+                    ? ((l = null), t.push(n), (n = ''))
+                    : l
+                      ? (n += p)
+                      : (n.trim() && t.push(n.trim()), (n = ''), (l = p))
+                : l
+                  ? (u = !0)
+                  : (n && (t.push(n), (n = '')), (n = '\\'));
+          return (n && t.push(n), t);
+        }
+        fieldSwitch(e, t) {
+          const n = t.toLowerCase(),
+            l = e.findIndex((u) => u.toLowerCase() == n);
+          return l >= 0 ? e[l + 1] : null;
+        }
+        hasFieldSwitch(e, t) {
+          const n = t.toLowerCase();
+          return e.some((l) => l.toLowerCase() == n);
+        }
+        firstFieldArgument(e, t = 1) {
+          for (let n = t; n < e.length; n++) {
+            if (!e[n]?.startsWith('\\')) return e[n];
+            n++;
+          }
+          return null;
+        }
+        evaluateDateField(e, t) {
+          const n = this.fieldSwitch(e, '\\@'),
+            l = new Date();
+          return n
+            ? this.formatFieldDate(l, n)
+            : t == 'TIME'
+              ? l.toLocaleTimeString()
+              : l.toLocaleDateString();
+        }
+        formatFieldDate(e, t) {
+          const n = (o, c = 2) => `${o}`.padStart(c, '0'),
+            l = [
+              'January',
+              'February',
+              'March',
+              'April',
+              'May',
+              'June',
+              'July',
+              'August',
+              'September',
+              'October',
+              'November',
+              'December',
+            ],
+            u = l.map((o) => o.substring(0, 3)),
+            p = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+            g = p.map((o) => o.substring(0, 3)),
+            s = [
+              [/yyyy/g, `${e.getFullYear()}`],
+              [/yy/g, n(e.getFullYear() % 100)],
+              [/MMMM/g, l[e.getMonth()]],
+              [/MMM/g, u[e.getMonth()]],
+              [/MM/g, n(e.getMonth() + 1)],
+              [/M/g, `${e.getMonth() + 1}`],
+              [/dddd/g, p[e.getDay()]],
+              [/ddd/g, g[e.getDay()]],
+              [/dd/g, n(e.getDate())],
+              [/d/g, `${e.getDate()}`],
+              [/HH/g, n(e.getHours())],
+              [/H/g, `${e.getHours()}`],
+              [/hh/g, n(((e.getHours() + 11) % 12) + 1)],
+              [/h/g, '' + (((e.getHours() + 11) % 12) + 1)],
+              [/mm/g, n(e.getMinutes())],
+              [/m/g, `${e.getMinutes()}`],
+              [/ss/g, n(e.getSeconds())],
+              [/s/g, `${e.getSeconds()}`],
+              [/AM\/PM/g, e.getHours() < 12 ? 'AM' : 'PM'],
+              [/am\/pm/g, e.getHours() < 12 ? 'am' : 'pm'],
+            ];
+          let r = t;
+          for (const [o, c] of s) r = r.replace(o, c);
+          return r;
+        }
+        evaluateDocPropertyField(e) {
+          const t = this.firstFieldArgument(e)?.toLowerCase();
+          if (!t) return '';
+          const n = {
+            ...(this.document.corePropsPart?.props ?? {}),
+            ...(this.document.extendedPropsPart?.props ?? {}),
+          };
+          for (const [l, u] of Object.entries(n))
+            if (l.toLowerCase() == t) return u == null ? '' : `${u}`;
+          return '';
+        }
+        evaluateSetField(e) {
+          const t = this.firstFieldArgument(e);
+          if (!t) return;
+          const n = e
+            .slice(e.indexOf(t) + 1)
+            .filter((l) => !l.startsWith('\\'))
+            .map((l) => this.resolveFieldValue(l))
+            .join(' ');
+          this.fieldSetValues[t] = n;
+        }
+        evaluateDocVariableField(e) {
+          const t = this.firstFieldArgument(e);
+          return t ? (this.fieldSetValues[t] ?? '') : '';
+        }
+        renderHyperlinkField(e, t) {
+          const n = this.fieldSwitch(e, '\\l'),
+            l = this.firstFieldArgument(e) ?? '',
+            u = n ? `${l}#${n}` : l,
+            p = this.h({ tagName: 'a', href: u, children: this.renderElements(t.children ?? []) });
+          return (p.textContent || (p.textContent = u || n), p);
+        }
+        evaluateIfField(e) {
+          const t = ['<>', '>=', '<=', '=', '>', '<'],
+            n = e.findIndex((x, y) => y > 0 && t.includes(x));
+          if (n < 0) return '';
+          const l = this.resolveFieldValue(e.slice(1, n).join(' ')),
+            u = e[n],
+            p = this.resolveFieldValue(e[n + 1] ?? ''),
+            g = e[n + 2] ?? '',
+            s = e[n + 3] ?? '',
+            r = parseFloat(l),
+            o = parseFloat(p),
+            c = !Number.isNaN(r) && !Number.isNaN(o),
+            h = c ? r : l,
+            m = c ? o : p;
+          let P = !1;
+          switch (u) {
+            case '=':
+              P = h == m;
+              break;
+            case '<>':
+              P = h != m;
+              break;
+            case '>':
+              P = h > m;
+              break;
+            case '<':
+              P = h < m;
+              break;
+            case '>=':
+              P = h >= m;
+              break;
+            case '<=':
+              P = h <= m;
+          }
+          return this.resolveFieldValue(P ? g : s);
+        }
+        resolveFieldValue(e) {
+          const t = (e ?? '').trim();
+          if (/^[-+]?\d+(?:\.\d+)?$/.test(t)) return t;
+          if (this.bookmarkTextMap.hasOwnProperty(t)) return this.bookmarkTextMap[t];
+          if (this.fieldSetValues.hasOwnProperty(t)) return this.fieldSetValues[t];
+          if (t.startsWith('=')) {
+            const l = this.evaluateFormula(t.substring(1));
+            return l == null ? '' : `${l}`;
+          }
+          const n = this.tokenizeFieldInstruction(t)[0]?.toUpperCase();
+          if (
+            [
+              'PAGE',
+              'NUMPAGES',
+              'SECTIONPAGES',
+              'SECTION',
+              'DATE',
+              'TIME',
+              'AUTHOR',
+              'TITLE',
+              'SUBJECT',
+              'KEYWORDS',
+              'REF',
+              'PAGEREF',
+              'SEQ',
+              'DOCPROPERTY',
+            ].includes(n)
+          ) {
+            const l = this.evaluateFieldNode({
+              type: d.DomType.SimpleField,
+              instruction: t,
+              lock: !1,
+              dirty: !1,
+              children: [],
+            });
+            if ((0, i.isString)(l)) return l;
+          }
+          return t;
+        }
+        evaluateRefField(e) {
+          const t = this.firstFieldArgument(e);
+          return t ? (this.bookmarkTextMap[t] ?? this.fieldSetValues[t] ?? '') : '';
+        }
+        evaluatePageRefField(e) {
+          const t = this.firstFieldArgument(e);
+          return t
+            ? `${this.bookmarkTextMap[t] != null ? Math.max(this.currentPageNumber, 1) : 1}`
+            : '';
+        }
+        evaluateSeqField(e) {
+          const t = this.firstFieldArgument(e);
+          if (!t || this.hasFieldSwitch(e, '\\h')) return '';
+          const n = this.fieldSwitch(e, '\\r'),
+            l = this.hasFieldSwitch(e, '\\c');
+          n != null
+            ? (this.fieldSeqCounters[t] = parseInt(n, 10) || 0)
+            : l || (this.fieldSeqCounters[t] = (this.fieldSeqCounters[t] ?? 0) + 1);
+          const u = this.fieldSwitch(e, '\\*') ?? 'decimal';
+          return this.formatFieldNumber(
+            this.fieldSeqCounters[t] ?? 0,
+            this.fieldFormatSwitchToNumFormat(u),
+          );
+        }
+        evaluateListNumField(e) {
+          const t = this.firstFieldArgument(e) ?? 'LISTNUM';
+          this.fieldSeqCounters[t] = (this.fieldSeqCounters[t] ?? 0) + 1;
+          const n = this.fieldSwitch(e, '*') ?? 'decimal';
+          return this.formatFieldNumber(
+            this.fieldSeqCounters[t],
+            this.fieldFormatSwitchToNumFormat(n),
+          );
+        }
+        renderTocField(e) {
+          let t = 1,
+            n = 9;
+          const l = this.fieldSwitch(e, '\\o');
+          if (l) {
+            const p = /(\d+)\s*-\s*(\d+)/.exec(l);
+            p && ((t = parseInt(p[1], 10)), (n = parseInt(p[2], 10)));
+          }
+          const u = this.tocEntries
+            .filter((p) => p.level >= t && p.level <= n)
+            .map((p) => {
+              const g = this.h({
+                tagName: 'span',
+                className: `${this.className}-toc-page`,
+                children: ['1'],
+              });
+              return (
+                (g.dataset.docxPageRef = p.id),
+                this.h({
+                  tagName: 'div',
+                  className: `${this.className}-toc-entry ${this.className}-toc-level-${p.level}`,
+                  children: [
+                    this.h({
+                      tagName: 'a',
+                      className: `${this.className}-toc-title`,
+                      href: `#${p.id}`,
+                      children: [p.text],
+                    }),
+                    g,
+                  ],
+                })
+              );
+            });
+          return this.h({ tagName: 'div', className: `${this.className}-toc`, children: u });
+        }
+        evaluateSymbolField(e) {
+          const t = parseInt(e[1], 10);
+          return Number.isFinite(t) ? String.fromCharCode(t) : '';
+        }
+        evaluateFormula(e) {
+          const t = e.replace(/,/g, '').trim();
+          if (!/^[0-9+\-*/().\s]+$/.test(t)) return null;
+          try {
+            const n = Function(`"use strict"; return (${t});`)();
+            return Number.isFinite(n) ? n : null;
+          } catch {
+            return null;
+          }
+        }
+        applyFieldFormatting(e, t) {
+          const n = this.tokenizeFieldInstruction(t);
+          let l = e ?? '';
+          const u = this.fieldSwitch(n, '\\*'),
+            p = u?.toUpperCase(),
+            g = this.fieldSwitch(n, '\\#');
+          if (g) {
+            const s = parseFloat(l);
+            Number.isNaN(s) || (l = this.formatNumberPicture(s, g));
+          }
+          switch (p) {
+            case 'UPPER':
+              l = l.toUpperCase();
+              break;
+            case 'LOWER':
+              l = l.toLowerCase();
+              break;
+            case 'FIRSTCAP':
+              l = l.substring(0, 1).toUpperCase() + l.substring(1).toLowerCase();
+              break;
+            case 'CAPS':
+              l = l.replace(/\b\w/g, (s) => s.toUpperCase());
+              break;
+            case 'ROMAN': {
+              const s = parseInt(l, 10);
+              Number.isNaN(s) ||
+                (l = u == 'roman' ? this.toRoman(s).toLowerCase() : this.toRoman(s).toUpperCase());
+              break;
+            }
+            case 'ALPHABETIC': {
+              const s = parseInt(l, 10);
+              Number.isNaN(s) ||
+                (l =
+                  u == 'alphabetic'
+                    ? this.toLetters(s).toLowerCase()
+                    : this.toLetters(s).toUpperCase());
+              break;
+            }
+          }
+          return l;
+        }
+        formatNumberPicture(e, t) {
+          const n = t.indexOf('.'),
+            l = n >= 0 ? t.length - n - 1 : 0;
+          let u = e.toFixed(l);
+          if (t.includes(',')) {
+            const [p, g] = u.split('.');
+            u = p.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (g != null ? `.${g}` : '');
+          }
+          return u;
+        }
+        fieldFormatSwitchToNumFormat(e) {
+          if (e == 'roman') return 'lowerRoman';
+          if (e == 'alphabetic') return 'lowerLetter';
+          switch (e?.toUpperCase()) {
+            case 'ROMAN':
+              return 'upperRoman';
+            case 'ALPHABETIC':
+              return 'upperLetter';
+            default:
+              return 'decimal';
+          }
+        }
+        formatFieldNumber(e, t) {
+          switch (t) {
+            case 'upperRoman':
+              return this.toRoman(e).toUpperCase();
+            case 'lowerRoman':
+              return this.toRoman(e).toLowerCase();
+            case 'upperLetter':
+              return this.toLetters(e).toUpperCase();
+            case 'lowerLetter':
+              return this.toLetters(e).toLowerCase();
+            case 'decimalZero':
+              return e < 10 ? `0${e}` : `${e}`;
+            default:
+              return `${e}`;
+          }
+        }
+        toRoman(e) {
+          const t = [
+            [1e3, 'M'],
+            [900, 'CM'],
+            [500, 'D'],
+            [400, 'CD'],
+            [100, 'C'],
+            [90, 'XC'],
+            [50, 'L'],
+            [40, 'XL'],
+            [10, 'X'],
+            [9, 'IX'],
+            [5, 'V'],
+            [4, 'IV'],
+            [1, 'I'],
+          ];
+          let n = Math.max(Math.floor(e), 0),
+            l = '';
+          for (const [u, p] of t) for (; n >= u; ) ((l += p), (n -= u));
+          return l || `${e}`;
+        }
+        toLetters(e) {
+          let t = Math.max(Math.floor(e), 1),
+            n = '';
+          for (; t > 0; )
+            (t--, (n = String.fromCharCode(65 + (t % 26)) + n), (t = Math.floor(t / 26)));
+          return n;
+        }
+        renderRuby(e) {
+          const t = e.children?.find((p) => p.type == d.DomType.RubyBase),
+            n = e.children?.find((p) => p.type == d.DomType.RubyText),
+            l = [
+              ...(t ? this.renderElements(t.children) : []),
+              ...(n ? (0, i.asArray)(this.renderElement(n)).filter((p) => p != null) : []),
+            ],
+            u = this.h({ tagName: 'ruby', children: l });
+          return (e.align && (u.style.rubyAlign = e.align), u);
+        }
+        hasRenderedContent(e) {
+          for (const t of e ?? []) {
+            if (!t) continue;
+            const n = t,
+              l = n.nodeType,
+              u = String(n.localName ?? n.tagName ?? n.nodeName ?? '').toLowerCase();
+            if (l == 3 || u == '#text') {
+              if ((n.textContent ?? n.text ?? n.data ?? '').length) return !0;
+              continue;
+            }
+            if (['br', 'img', 'svg', 'math', 'table'].includes(u) || (n.textContent ?? '').length)
+              return !0;
+            const p = Array.from(n.childNodes ?? n.children ?? []);
+            if (p.length && this.hasRenderedContent(p)) return !0;
+          }
+          return !1;
+        }
+        renderText(e) {
+          return this.h(this.applyCjkLineBreakGuards(e.text));
+        }
+        applyCjkLineBreakGuards(e) {
+          if (!e || !this.document.settingsPart?.settings?.kinsoku) return e;
+          const t =
+              this.document.settingsPart.settings.noLineBreaksBefore ??
+              `!),.:;?]}¢°·'"†‡›℃∶、。々〉》」』】〕〗〙〛〜゠ァィゥェォッャュョヮ・ー－？！％，．：；゛゜ヽヾゝゞー`,
+            n =
+              this.document.settingsPart.settings.noLineBreaksAfter ??
+              `([{$£¥'"“‘〈《「『【〔〖〘〚`;
+          let l = '';
+          for (const u of e) (t.includes(u) && (l += '⁠'), (l += u), n.includes(u) && (l += '⁠'));
+          return l;
+        }
+        renderDeletedText(e) {
+          return this.options.renderChanges ? this.renderText(e) : null;
+        }
+        renderBreak(e) {
+          switch (e.break) {
+            case 'textWrapping':
+            case 'line':
+              return this.h({ tagName: 'br' });
+            case 'column':
+              return this.h({ tagName: 'span', style: { breakAfter: 'column' } });
+            case 'page':
+              return this.options.breakPages
+                ? null
+                : this.h({ tagName: 'span', style: { breakAfter: 'page' } });
+            case 'lastRenderedPageBreak':
+              return this.options.breakPages || this.options.ignoreLastRenderedPageBreak
+                ? null
+                : this.h({ tagName: 'span', style: { breakAfter: 'page' } });
+          }
+          return null;
+        }
+        renderInserted(e) {
+          return this.options.renderChanges
+            ? this.renderContainer(e, 'ins')
+            : this.renderElements(e.children);
+        }
+        renderDeleted(e) {
+          return this.options.renderChanges ? this.renderContainer(e, 'del') : null;
+        }
+        renderSymbol(e) {
+          return this.h({
+            tagName: 'span',
+            children: [String.fromCharCode(e.char)],
+            style: { fontFamily: e.font },
+          });
+        }
+        renderFootnoteReference(e) {
+          return (
+            this.currentFootnoteIds.push(e.id),
+            this.h({ tagName: 'sup', children: [`${this.currentFootnoteIds.length}`] })
+          );
+        }
+        renderEndnoteReference(e) {
+          return (
+            this.currentEndnoteIds.push(e.id),
+            this.h({ tagName: 'sup', children: [`${this.currentEndnoteIds.length}`] })
+          );
+        }
+        renderTab(e) {
+          const t =
+              this.currentParagraph ??
+              (function (s, r) {
+                for (var o = s.parent; o != null && o.type != r; ) o = o.parent;
+                return o;
+              })(e, d.DomType.Paragraph),
+            n = t?.tabs ?? [],
+            l = n.filter((s) => s?.style != 'clear'),
+            u = this.currentParagraphTabIndex++,
+            p = this.resolveRenderedTabStop(l, u, this.currentParagraphTabCount);
+          var g = this.h({ tagName: 'span', className: this.tabStopClass(), children: [' '] });
+          return (
+            (g.dataset.docxTab = 'true'),
+            p &&
+              ((g.dataset.docxTabAlign = p.style ?? 'left'),
+              (g.dataset.docxTabLeader = p.leader ?? 'none'),
+              p.position && (g.dataset.docxTabPos = p.position)),
+            this.options.experimental && this.currentTabs.push({ stops: n, span: g }),
+            g
+          );
+        }
+        renderBookmarkStart(e) {
+          const t = this.h({ tagName: 'span' });
+          return (e.name && ((t.id = e.name), t.setAttribute('id', e.name)), t);
+        }
+        renderRun(e) {
+          const t = e.fieldRun
+            ? e.children?.filter(
+                (u) => u.type != d.DomType.Instruction && u.type != d.DomType.ComplexField,
+              )
+            : e.children;
+          if (e.fieldRun && (!t || t.length == 0)) return null;
+          let n = this.renderElements(t);
+          if (
+            (e.verticalAlign &&
+              (n = [this.h({ tagName: e.verticalAlign, children: this.renderElements(t) })]),
+            !e.verticalAlign &&
+              t?.length == 1 &&
+              (t[0].type == d.DomType.Tab || t[0].type == d.DomType.PositionalTab) &&
+              n?.length == 1)
+          ) {
+            const u = n[0];
+            return (
+              e.cssStyle && Object.assign(u.style, e.cssStyle),
+              e.className && u.classList.add(e.className),
+              u
+            );
+          }
+          const l = this.toHTML(e, a.ns.html, 'span', n);
+          return (e.id && (l.id = e.id), l);
+        }
+        renderTable(e) {
+          (e.columns?.length &&
+            !e.cssStyle?.['table-layout'] &&
+            (e.cssStyle ?? (e.cssStyle = {}), (e.cssStyle['table-layout'] = 'fixed')),
+            this.tableCellPositions.push(this.currentCellPosition),
+            this.tableVerticalMerges.push(this.currentVerticalMerge),
+            (this.currentVerticalMerge = {}),
+            (this.currentCellPosition = { col: 0, row: 0 }));
+          const t = [];
+          return (
+            e.columns && t.push(this.renderTableColumns(e.columns)),
+            t.push(...this.renderElements(e.children)),
+            (this.currentVerticalMerge = this.tableVerticalMerges.pop()),
+            (this.currentCellPosition = this.tableCellPositions.pop()),
+            this.toHTML(e, a.ns.html, 'table', t)
+          );
+        }
+        renderTableColumns(e) {
+          const t = e.map((n) => this.h({ tagName: 'col', style: { width: n.width } }));
+          return this.h({ tagName: 'colgroup', children: t });
+        }
+        renderTableRow(e) {
+          this.currentCellPosition.col = 0;
+          const t = [],
+            n = this.currentTableRow;
+          ((this.currentTableRow = e),
+            e.gridBefore && t.push(this.renderTableCellPlaceholder(e.gridBefore)),
+            t.push(...this.renderElements(e.children)),
+            e.gridAfter && t.push(this.renderTableCellPlaceholder(e.gridAfter)),
+            (this.currentTableRow = n),
+            this.currentCellPosition.row++);
+          const l = this.toHTML(e, a.ns.html, 'tr', t);
+          return (e.isHeader && (l.dataset.docxRepeatHeader = 'true'), l);
+        }
+        renderTableCellPlaceholder(e) {
+          return this.h({ tagName: 'td', colSpan: e, style: { border: 'none' } });
+        }
+        renderTableCell(e) {
+          const t = this.currentTableRow?.isHeader ? 'th' : 'td';
+          let n = this.toHTML(e, a.ns.html, t);
+          const l = this.currentCellPosition.col;
+          return (
+            e.verticalMerge
+              ? e.verticalMerge == 'restart'
+                ? ((this.currentVerticalMerge[l] = n), (n.rowSpan = 1))
+                : this.currentVerticalMerge[l] &&
+                  ((this.currentVerticalMerge[l].rowSpan += 1), (n.style.display = 'none'))
+              : (this.currentVerticalMerge[l] = null),
+            e.span && (n.colSpan = e.span),
+            (this.currentCellPosition.col += n.colSpan),
+            n
+          );
+        }
+        renderVmlPicture(e) {
+          return this.renderContainer(e, 'div');
+        }
+        renderVmlElement(e) {
+          var t = this.h({ ns: a.ns.svg, tagName: 'svg', style: e.cssStyleText });
+          const n = this.renderVmlChildElement(e);
+          (e.imageHref?.id &&
+            this.tasks.push(
+              this.document
+                ?.loadDocumentImage(e.imageHref.id, this.currentPart)
+                .then((u) => n.setAttribute('href', u)),
+            ),
+            t.appendChild(n));
+          const l = globalThis.requestAnimationFrame;
+          return (
+            (typeof l == 'function'
+              ? l.bind(globalThis)
+              : (u) => setTimeout(() => u(Date.now()), 0))(() => {
+              try {
+                const u = t.firstElementChild,
+                  p = typeof u?.getBBox == 'function' ? u.getBBox() : null;
+                p &&
+                  Number.isFinite(p.width) &&
+                  Number.isFinite(p.height) &&
+                  p.width > 0 &&
+                  p.height > 0 &&
+                  (t.setAttribute('width', `${Math.ceil(p.x + p.width)}`),
+                  t.setAttribute('height', `${Math.ceil(p.y + p.height)}`));
+              } catch {}
+            }),
+            t
+          );
+        }
+        renderVmlChildElement(e) {
+          const t = this.createSvgElement(e.tagName);
+          Object.entries(e.attrs).forEach(([n, l]) => t.setAttribute(n, l));
+          for (let n of e.children)
+            if (n.type == d.DomType.VmlElement) t.appendChild(this.renderVmlChildElement(n));
+            else
+              for (const l of (0, i.asArray)(this.renderElement(n)).filter((u) => u != null))
+                t.appendChild((0, i.isString)(l) ? document.createTextNode(l) : l);
+          return t;
+        }
+        renderMmlMathParagraph(e) {
+          const t = this.renderElements(e.children);
+          for (const n of t) n?.localName == 'math' && n.setAttribute('display', 'block');
+          return this.h({
+            tagName: 'div',
+            className: `${this.className}-math-paragraph`,
+            style: { textAlign: 'center' },
+            children: t,
+          });
+        }
+        renderMmlPhantom(e) {
+          return this.renderContainerNS(e, a.ns.mathML, 'mphantom');
+        }
+        renderMmlAccent(e) {
+          const t = e.children?.find((u) => u.type == d.DomType.MmlBase),
+            n = this.createMathMLElement('mo', null, [e.props?.char ?? '^']),
+            l = t ? (0, i.asArray)(this.renderElement(t)).filter((u) => u != null) : [];
+          return this.createMathMLElement('mover', null, [...l, n]);
+        }
+        renderMmlRadical(e) {
+          const t = e.children.find((l) => l.type == d.DomType.MmlBase);
+          if (e.props?.hideDegree)
+            return this.createMathMLElement('msqrt', null, this.renderElements([t]));
+          const n = e.children.find((l) => l.type == d.DomType.MmlDegree);
+          return this.createMathMLElement('mroot', null, this.renderElements([t, n]));
+        }
+        renderMmlDelimiter(e) {
+          const t = [],
+            n = e.props?.beginChar,
+            l = e.props?.endChar;
+          return (
+            n !== '' && t.push(this.createMathMLElement('mo', null, [n ?? '('])),
+            t.push(...this.renderElements(e.children)),
+            l !== '' && t.push(this.createMathMLElement('mo', null, [l ?? ')'])),
+            this.createMathMLElement('mrow', null, t)
+          );
+        }
+        renderMmlNary(e) {
+          const t = [],
+            n = (0, i.keyBy)(e.children, (r) => r.type),
+            l = n[d.DomType.MmlSuperArgument],
+            u = n[d.DomType.MmlSubArgument],
+            p = l ? this.createMathMLElement('mrow', null, this.renderElements(l.children)) : null,
+            g = u ? this.createMathMLElement('mrow', null, this.renderElements(u.children)) : null,
+            s = this.createMathMLElement('mo', null, [e.props?.char ?? '∫']);
+          return (
+            p && g
+              ? t.push(this.createMathMLElement('munderover', null, [s, g, p]))
+              : p
+                ? t.push(this.createMathMLElement('mover', null, [s, p]))
+                : g
+                  ? t.push(this.createMathMLElement('munder', null, [s, g]))
+                  : t.push(s),
+            n[d.DomType.MmlBase] && t.push(...this.renderElements(n[d.DomType.MmlBase].children)),
+            this.createMathMLElement('mrow', null, t)
+          );
+        }
+        renderMmlPreSubSuper(e) {
+          const t = [],
+            n = (0, i.keyBy)(e.children, (r) => r.type),
+            l = n[d.DomType.MmlSuperArgument],
+            u = n[d.DomType.MmlSubArgument],
+            p = this.createMathMLElement('mrow', null, l ? this.renderElements(l.children) : []),
+            g = this.createMathMLElement('mrow', null, u ? this.renderElements(u.children) : []),
+            s = this.createMathMLElement('mrow', null, []);
+          return (
+            t.push(this.createMathMLElement('msubsup', null, [s, g, p])),
+            n[d.DomType.MmlBase] && t.push(...this.renderElements(n[d.DomType.MmlBase].children)),
+            this.createMathMLElement('mrow', null, t)
+          );
+        }
+        renderMmlGroupChar(e) {
+          const t = e.props?.verticalJustification === 'bot' ? 'munder' : 'mover',
+            n = this.createMathMLElement('mrow', null, this.renderElements(e.children)),
+            l = this.createMathMLElement('mo', null, [e.props?.char ?? '⏞']);
+          return this.createMathMLElement(t, null, [n, l]);
+        }
+        renderMmlBar(e) {
+          const t = {};
+          switch (e.props.position) {
+            case 'top':
+              t.textDecoration = 'overline';
+              break;
+            case 'bottom':
+              t.textDecoration = 'underline';
+          }
+          return this.renderContainerNS(e, a.ns.mathML, 'mrow', { style: t });
+        }
+        renderMmlRun(e) {
+          const t = this.extractMathRunText(e);
+          if (t != null) {
+            const n = this.renderMathTextTokens(t, e.cssStyle);
+            return n.length ? n : null;
+          }
+          return this.renderContainerNS(e, a.ns.mathML, 'mrow');
+        }
+        extractMathRunText(e) {
+          let t = '';
+          for (const n of e.children ?? [])
+            switch (n.type) {
+              case d.DomType.Text:
+                t += n.text ?? '';
+                break;
+              case d.DomType.DeletedText:
+                this.options.renderChanges && (t += n.text ?? '');
+                break;
+              case d.DomType.Symbol:
+                t += String.fromCharCode(n.char);
+                break;
+              case d.DomType.Tab:
+                t += ' ';
+                break;
+              case d.DomType.NoBreakHyphen:
+                t += '‑';
+                break;
+              case d.DomType.SoftHyphen:
+                break;
+              default:
+                return null;
+            }
+          return t;
+        }
+        renderMathTextTokens(e, t) {
+          const n = [];
+          let l = 0;
+          for (; l < e.length; ) {
+            const u = e[l];
+            if (/\s/.test(u)) {
+              let p = l + 1;
+              for (; p < e.length && /\s/.test(e[p]); ) p++;
+              (n.push(
+                this.createMathMLElement('mspace', { width: 0.25 * Math.max(1, p - l) + 'em' }),
+              ),
+                (l = p));
+              continue;
+            }
+            if (D(u)) {
+              let p = l + 1;
+              for (; p < e.length && (D(e[p]) || e[p] == '.'); ) p++;
+              (n.push(this.createMathToken('mn', e.substring(l, p), t)), (l = p));
+              continue;
+            }
+            if (M(u)) {
+              let p = l + 1;
+              for (; p < e.length && M(e[p]); ) p++;
+              (n.push(this.createMathToken('mi', e.substring(l, p), t)), (l = p));
+              continue;
+            }
+            (A(u)
+              ? n.push(this.createMathToken('mo', u, t))
+              : n.push(this.createMathToken('mtext', u, t)),
+              l++);
+          }
+          return n;
+        }
+        createMathToken(e, t, n) {
+          return this.createMathMLElement(e, n ? { style: n } : null, [t]);
+        }
+        renderMllList(e) {
+          const t = this.renderElements(e.children).map((n) =>
+            this.createMathMLElement('mtr', null, [this.createMathMLElement('mtd', null, [n])]),
+          );
+          return this.toHTML(e, a.ns.mathML, 'mtable', t);
+        }
+        toH(e, t, n, l = null) {
+          const { $lang: u, ...p } = e.cssStyle ?? {};
+          return {
+            ns: t,
+            tagName: n,
+            className: (0, a.cx)(e.className, e.styleName && this.processStyleName(e.styleName)),
+            lang: u,
+            style: p,
+            children: l ?? this.renderElements(e.children),
+          };
+        }
+        toHTML(e, t, n, l = null) {
+          return this.h(this.toH(e, t, n, l));
+        }
+        findStyle(e) {
+          return e && this.styleMap?.[e];
+        }
+        isTocParagraphStyle(e, t) {
+          return [e, t?.id, t?.name, t?.cssName, ...(t?.aliases ?? [])]
+            .filter(Boolean)
+            .map((n) =>
+              String(n)
+                .replace(/[\s_-]+/g, '')
+                .toLowerCase(),
+            )
+            .some((n) => /^toc[1-9]$/.test(n));
+        }
+        numberingClass(e, t) {
+          return `${this.className}-num-${e}-${t}`;
+        }
+        tabStopClass() {
+          return `${this.className}-tab-stop`;
+        }
+        styleToString(e, t, n = null) {
+          let l = `${e} {\r
+`;
+          for (const u in t)
+            u.startsWith('$') ||
+              (l += `  ${u}: ${t[u]};\r
+`);
+          return (
+            n && (l += n),
+            l +
+              `}\r
+`
+          );
+        }
+        numberingCounter(e, t) {
+          return `${this.className}-num-${e}-${t}`;
+        }
+        numberingRestartLevel(e) {
+          if (e.level <= 0) return null;
+          if (e.restart == null) return e.level - 1;
+          if (e.restart == 0) return null;
+          const t = e.restart - 1;
+          return t >= 0 && t < e.level ? t : null;
+        }
+        numberingMarkerRunStyle(e, t) {
+          if (!e) return e;
+          const n = { ...e };
+          return (t && delete n['font-family'], n);
+        }
+        normalizeNumberingLevelText(e, t, n) {
+          if (t != 'bullet' || !e) return { text: e, normalized: !1 };
+          const l = (n?.['font-family'] ?? '').toLowerCase();
+          let u = !1,
+            p = null;
+          if (l.includes('wingdings')) p = this.wingdingsBulletMap();
+          else {
+            if (!l.includes('symbol')) return { text: e, normalized: !1 };
+            p = this.symbolBulletMap();
+          }
+          let g = '';
+          for (const s of e) {
+            const r = p[s.charCodeAt(0)];
+            r ? ((g += r), (u = !0)) : (g += s);
+          }
+          return { text: g, normalized: u };
+        }
+        symbolBulletMap() {
+          return { 183: '•', 8226: '•', 61623: '•' };
+        }
+        wingdingsBulletMap() {
+          return {
+            61548: '●',
+            61550: '■',
+            61557: '◆',
+            61598: '·',
+            61599: '•',
+            61600: '▪',
+            61601: '○',
+            61604: '◉',
+            61605: '◎',
+            61607: '▪',
+            61608: '◻',
+            61656: '➢',
+            61672: '➔',
+            61690: '▫',
+            61691: '✗',
+            61692: '✓',
+            61693: '☒',
+            61694: '☑',
+          };
+        }
+        levelTextToContent(e, t, n, l, u) {
+          const p = [];
+          let g = 0;
+          for (const o of e.matchAll(/%\d+/g)) {
+            o.index > g && p.push(`"${this.escapeCssString(e.substring(g, o.index))}"`);
+            let c = parseInt(o[0].substring(1), 10) - 1;
+            const h = u?.get(`${n}:${c}`) ?? l ?? 'decimal';
+            (p.push(`counter(${this.numberingCounter(n, c)}, ${h})`), (g = o.index + o[0].length));
+          }
+          const s = e.substring(g);
+          s && p.push(`"${this.escapeCssString(s)}"`);
+          const r = this.numberingSuffixToCssContent(t);
+          return (r && p.push(r), p.length > 0 ? p.join(' ') : '""');
+        }
+        numberingSuffixToCssContent(e) {
+          switch (e || 'tab') {
+            case 'nothing':
+              return '';
+            case 'space':
+              return '"\\000020"';
+            default:
+              return '"\\000009"';
+          }
+        }
+        escapeCssString(e) {
+          return e.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\r?\n/g, '\\A ');
+        }
+        numFormatToCssValue(e) {
+          return (
+            {
+              none: 'none',
+              bullet: 'disc',
+              decimal: 'decimal',
+              lowerLetter: 'lower-alpha',
+              upperLetter: 'upper-alpha',
+              lowerRoman: 'lower-roman',
+              upperRoman: 'upper-roman',
+              decimalZero: 'decimal-leading-zero',
+              aiueo: 'katakana',
+              aiueoFullWidth: 'katakana',
+              chineseCounting: 'simp-chinese-informal',
+              chineseCountingThousand: 'simp-chinese-informal',
+              chineseLegalSimplified: 'simp-chinese-formal',
+              chosung: 'hangul-consonant',
+              ideographDigital: 'cjk-ideographic',
+              ideographTraditional: 'cjk-heavenly-stem',
+              ideographLegalTraditional: 'trad-chinese-formal',
+              ideographZodiac: 'cjk-earthly-branch',
+              iroha: 'katakana-iroha',
+              irohaFullWidth: 'katakana-iroha',
+              japaneseCounting: 'japanese-informal',
+              japaneseDigitalTenThousand: 'cjk-decimal',
+              japaneseLegal: 'japanese-formal',
+              thaiNumbers: 'thai',
+              koreanCounting: 'korean-hangul-formal',
+              koreanDigital: 'korean-hangul-formal',
+              koreanDigital2: 'korean-hanja-informal',
+              hebrew1: 'hebrew',
+              hebrew2: 'hebrew',
+              hindiNumbers: 'devanagari',
+              ganada: 'hangul',
+              taiwaneseCounting: 'cjk-ideographic',
+              taiwaneseCountingThousand: 'cjk-ideographic',
+              taiwaneseDigital: 'cjk-decimal',
+            }[e] ??
+            e ??
+            'decimal'
+          );
+        }
+        refreshTabStops() {
+          this.options.experimental &&
+            setTimeout(() => {
+              const e = (0, T.computePixelToPoint)();
+              for (let t of this.currentTabs)
+                (0, T.updateTabStop)(t.span, t.stops, this.defaultTabSize, e);
+            }, 500);
+        }
+        createElementNS(e, t, n, l) {
+          return this.h({ ns: e, tagName: t, children: l, ...n });
+        }
+        createElement(e, t, n) {
+          return this.createElementNS(a.ns.html, e, t, n);
+        }
+        createMathMLElement(e, t, n) {
+          return this.createElementNS(a.ns.mathML, e, t, n);
+        }
+        createSvgElement(e, t, n) {
+          return this.createElementNS(a.ns.svg, e, t, n);
+        }
+        later(e) {
+          this.postRenderTasks.push(e);
+        }
+      };
+    },
+    './html': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.ns = void 0),
+        (f.h = function T(k) {
+          if ((0, d.isString)(k)) return document.createTextNode(k);
+          if (k instanceof Node) return k;
+          const { ns: a, tagName: C, className: D, style: M, children: A, ...e } = k;
+          if (C === '#fragment') return document.createDocumentFragment();
+          if (C === '#comment') return document.createComment(A[0]);
+          const t = a ? document.createElementNS(a, C) : document.createElement(C);
+          if (
+            (D && t.setAttribute('class', D),
+            M && ((0, d.isString)(M) ? t.setAttribute('style', M) : Object.assign(t.style, M)),
+            e)
+          )
+            for (const [n, l] of Object.entries(e)) l !== void 0 && (t[n] = l);
+          return (A && A.forEach((n) => t.appendChild(T(n))), t);
+        }),
+        (f.cx = function (...T) {
+          return T.filter(Boolean).join(' ');
+        }));
+      const d = E('./utils');
+      var i;
+      (function (T) {
+        ((T.html = 'http://www.w3.org/1999/xhtml'),
+          (T.svg = 'http://www.w3.org/2000/svg'),
+          (T.mathML = 'http://www.w3.org/1998/Math/MathML'));
+      })(i || (f.ns = i = {}));
+    },
+    './input-validation': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.EMPTY_DOCX_ERROR_MESSAGE = void 0),
+        (f.assertNonEmptyDocxInput = function (d) {
+          if (
+            (function (i) {
+              return i == null
+                ? 0
+                : typeof Blob < 'u' && i instanceof Blob
+                  ? i.size
+                  : typeof ArrayBuffer < 'u' && (i instanceof ArrayBuffer || ArrayBuffer.isView(i))
+                    ? i.byteLength
+                    : typeof i.size == 'number'
+                      ? i.size
+                      : typeof i.byteLength == 'number'
+                        ? i.byteLength
+                        : typeof i.length == 'number'
+                          ? i.length
+                          : null;
+            })(d) === 0
+          )
+            throw new Error(f.EMPTY_DOCX_ERROR_MESSAGE);
+        }),
+        (f.EMPTY_DOCX_ERROR_MESSAGE =
+          '文件为空或尚未保存，无法作为 Word 文档打开。请在 WPS/Word 中保存后重新上传。'));
+    },
+    './javascript': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.computePixelToPoint = function (a = document.body) {
+          const C = document.createElement('div');
+          ((C.style.width = '100pt'), a.appendChild(C));
+          const D = 100 / C.offsetWidth;
+          return (a.removeChild(C), D);
+        }),
+        (f.updateTabStop = function (a, C, D, M = 0.75) {
+          const A = a.closest('p');
+          if (!A) return;
+          const e = a.getBoundingClientRect(),
+            t = A.getBoundingClientRect(),
+            n = getComputedStyle(A),
+            l = T(n.marginInlineStart || n.marginLeft),
+            u = T(n.marginInlineEnd || n.marginRight),
+            p =
+              C?.length > 0
+                ? C.map((y) => ({ pos: k(y.position), leader: y.leader, style: y.style })).sort(
+                    (y, w) => y.pos - w.pos,
+                  )
+                : [d],
+            g = p[p.length - 1],
+            s = (t.width + l + u) * M,
+            r = Number.isFinite(k(D)) ? k(D) : 36;
+          let o = g.pos + r;
+          if (o < s) for (; o < s && p.length < i; o += r) p.push({ ...d, pos: o });
+          const c = t.left - l,
+            h = (e.left - c) * M,
+            m = p.find((y) => y.style != 'clear' && y.pos > h);
+          if (m == null) return;
+          let P = 1;
+          if (m.style == 'right' || m.style == 'center') {
+            const y = Array.from(A.querySelectorAll(`.${a.className}`)),
+              w = y.indexOf(a) + 1,
+              N = document.createRange();
+            (N.setStart(a, 1), w < y.length ? N.setEndBefore(y[w]) : N.setEndAfter(A));
+            const $ = m.style == 'center' ? 0.5 : 1,
+              R = N.getBoundingClientRect(),
+              X = R.left + $ * R.width - c;
+            P = m.pos - X * M;
+          } else P = m.pos - h;
+          const x = Math.max(Number.isFinite(P) ? P : 0, 0);
+          switch (
+            ((a.innerHTML = '&nbsp;'),
+            (a.style.display = 'inline-block'),
+            (a.style.width = `${x.toFixed(2)}pt`),
+            (a.style.minWidth = '0pt'),
+            (a.style.lineHeight = '1'),
+            (a.style.whiteSpace = 'nowrap'),
+            (a.style.wordSpacing = 'normal'),
+            (a.style.textDecoration = 'none'),
+            (a.style.borderBottom = ''),
+            (a.style.height = ''),
+            (a.style.transform = ''),
+            m.leader)
+          ) {
+            case 'dot':
+            case 'middleDot':
+              ((a.style.borderBottom = '1px dotted currentColor'),
+                (a.style.height = '.85em'),
+                (a.style.transform = 'translateY(-.18em)'));
+              break;
+            case 'hyphen':
+            case 'heavy':
+            case 'underscore':
+              ((a.style.borderBottom = '1px solid currentColor'),
+                (a.style.height = '.85em'),
+                (a.style.transform = 'translateY(-.18em)'));
+          }
+        }));
+      const d = { pos: 0, leader: 'none', style: 'left' },
+        i = 50;
+      function T(a) {
+        const C = parseFloat(a);
+        return Number.isFinite(C) ? C : 0;
+      }
+      function k(a) {
+        return parseFloat(a);
+      }
+    },
+    './length': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }), (f.Length = void 0));
+      const d = E('./utils');
+      class i {
+        constructor(k, a) {
+          ((this.value = k), (this.type = a));
+        }
+        static parse(k) {
+          const a = parseFloat(k),
+            C = /p[tx]$/i.exec(k)?.[0];
+          return new i(a, C);
+        }
+        static from(k) {
+          return (0, d.isString)(k) ? i.parse(k) : k instanceof i ? k : null;
+        }
+        add(k) {
+          if (k.type !== this.type) throw new Error("Can't do math on different types");
+          return new i(this.value + k.value, this.type);
+        }
+        mul(k) {
+          return new i(this.value * k, this.type);
+        }
+        valueOf() {
+          return this.value;
+        }
+        toString() {
+          return `${this.value.toFixed(2)}${this.type ?? ''}`;
+        }
+      }
+      f.Length = i;
+    },
+    './license-gate': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.assertViewerLicense = function (d, i) {}));
+    },
+    './metafile/emf-to-svg': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.isEmfBinary = k),
+        (f.convertEmfToSvgDataUrl = function (b, v) {
+          const S = a(b, v);
+          return S ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(S)}` : null;
+        }),
+        (f.convertEmfToSvg = a));
+      const d = {
+          HEADER: 1,
+          POLYBEZIER: 2,
+          POLYGON: 3,
+          POLYLINE: 4,
+          POLYBEZIERTO: 5,
+          POLYLINETO: 6,
+          POLYPOLYLINE: 7,
+          POLYPOLYGON: 8,
+          SETWINDOWEXTEX: 9,
+          SETWINDOWORGEX: 10,
+          SETVIEWPORTEXTEX: 11,
+          SETVIEWPORTORGEX: 12,
+          EOF: 14,
+          SETPIXELV: 15,
+          SETBKMODE: 18,
+          SETPOLYFILLMODE: 19,
+          SETTEXTALIGN: 22,
+          SETTEXTCOLOR: 24,
+          SETBKCOLOR: 25,
+          MOVETOEX: 27,
+          SCALEVIEWPORTEXTEX: 31,
+          SCALEWINDOWEXTEX: 32,
+          SAVEDC: 33,
+          RESTOREDC: 34,
+          SETWORLDTRANSFORM: 35,
+          MODIFYWORLDTRANSFORM: 36,
+          SELECTOBJECT: 37,
+          CREATEPEN: 38,
+          CREATEBRUSHINDIRECT: 39,
+          DELETEOBJECT: 40,
+          ELLIPSE: 42,
+          RECTANGLE: 43,
+          ROUNDRECT: 44,
+          ARC: 45,
+          CHORD: 46,
+          PIE: 47,
+          LINETO: 54,
+          ARCTO: 55,
+          POLYDRAW: 56,
+          BEGINPATH: 59,
+          ENDPATH: 60,
+          CLOSEFIGURE: 61,
+          FILLPATH: 62,
+          STROKEANDFILLPATH: 63,
+          STROKEPATH: 64,
+          BITBLT: 76,
+          STRETCHBLT: 77,
+          STRETCHDIBITS: 81,
+          EXTCREATEFONTINDIRECTW: 82,
+          EXTTEXTOUTA: 83,
+          EXTTEXTOUTW: 84,
+          POLYBEZIER16: 85,
+          POLYGON16: 86,
+          POLYLINE16: 87,
+          POLYBEZIERTO16: 88,
+          POLYLINETO16: 89,
+          POLYPOLYLINE16: 90,
+          POLYPOLYGON16: 91,
+          POLYDRAW16: 92,
+          EXTCREATEPEN: 95,
+          POLYTEXTOUTA: 96,
+          POLYTEXTOUTW: 97,
+          SMALLTEXTOUT: 108,
+          ALPHABLEND: 114,
+          TRANSPARENTBLT: 116,
+        },
+        i = {
+          0: { type: 'brush', color: '#ffffff' },
+          1: { type: 'brush', color: '#c0c0c0' },
+          2: { type: 'brush', color: '#808080' },
+          3: { type: 'brush', color: '#404040' },
+          4: { type: 'brush', color: '#000000' },
+          5: { type: 'brush', color: 'none', nullBrush: !0 },
+          6: { type: 'pen', color: '#ffffff', width: 1 },
+          7: { type: 'pen', color: '#000000', width: 1 },
+          8: { type: 'pen', color: 'none', width: 0, nullPen: !0 },
+          18: { type: 'brush', color: '#ffffff' },
+          19: { type: 'pen', color: '#000000', width: 1 },
+        },
+        T = { m11: 1, m12: 0, m21: 0, m22: 1, dx: 0, dy: 0 };
+      function k(b) {
+        if (!b || b.length < 48) return !1;
+        const v = e(b);
+        return v.getUint32(0, !0) == d.HEADER && v.getUint32(40, !0) == 1179469088;
+      }
+      function a(b, v = {}) {
+        if (!k(b)) return null;
+        const S = e(b),
+          B = S.getUint32(4, !0),
+          O = t(S, 8),
+          _ = t(S, 24),
+          V = S.byteLength >= 52 ? S.getUint32(48, !0) : 0,
+          I = Math.max(1, O.right - O.left),
+          z = Math.max(1, O.bottom - O.top),
+          q = Math.max(1, _.right - _.left) / 100,
+          U = Math.max(1, _.bottom - _.top) / 100,
+          L = {
+            world: A(T),
+            windowOrg: { x: 0, y: 0 },
+            windowExt: null,
+            viewportOrg: { x: 0, y: 0 },
+            viewportExt: null,
+            pen: { type: 'pen', color: '#000000', width: 1 },
+            brush: { type: 'brush', color: '#ffffff', nullBrush: !0 },
+            font: null,
+            textColor: '#000000',
+            bkColor: '#ffffff',
+            bkMode: 1,
+            polyFillMode: 1,
+            textAlign: 0,
+            currentPoint: { x: 0, y: 0 },
+          },
+          Y = [],
+          j = {},
+          ee = [];
+        let F = Math.max(8, B || 108),
+          se = 1,
+          ie = '',
+          re = !1,
+          be = 0;
+        const ge = v.maxRecords ?? Math.max(1e4, V + 100),
+          he = v.maxShapes ?? 5e4,
+          Z = (K) => {
+            !K || be >= he || (ee.push(K), be++);
+          },
+          oe = (K) => {
+            K && (ie += (ie ? ' ' : '') + K);
+          };
+        for (; F + 8 <= S.byteLength && se++ <= ge; ) {
+          const K = S.getUint32(F, !0),
+            ce = S.getUint32(F + 4, !0);
+          if (ce < 8 || F + ce > S.byteLength) break;
+          switch (K) {
+            case d.EOF:
+              ((F += ce), (se = ge + 1));
+              break;
+            case d.SETWINDOWEXTEX:
+              L.windowExt = l(S, F + 8);
+              break;
+            case d.SETWINDOWORGEX:
+              L.windowOrg = n(S, F + 8);
+              break;
+            case d.SETVIEWPORTEXTEX:
+              L.viewportExt = l(S, F + 8);
+              break;
+            case d.SETVIEWPORTORGEX:
+              L.viewportOrg = n(S, F + 8);
+              break;
+            case d.SCALEWINDOWEXTEX:
+              L.windowExt && (L.windowExt = o(S, F, L.windowExt));
+              break;
+            case d.SCALEVIEWPORTEXTEX:
+              L.viewportExt && (L.viewportExt = o(S, F, L.viewportExt));
+              break;
+            case d.SETWORLDTRANSFORM:
+              L.world = p(S, F + 8);
+              break;
+            case d.MODIFYWORLDTRANSFORM: {
+              const W = p(S, F + 8),
+                G = S.getUint32(F + 32, !0);
+              G == 1
+                ? (L.world = A(T))
+                : G == 2
+                  ? (L.world = g(W, L.world))
+                  : G == 3
+                    ? (L.world = g(L.world, W))
+                    : G == 4 && (L.world = W);
+              break;
+            }
+            case d.SAVEDC:
+              Y.push(C(L));
+              break;
+            case d.RESTOREDC: {
+              const W = S.getInt32(F + 8, !0);
+              if (W < 0) for (let G = 0; G < Math.min(-W, Y.length); G++) Object.assign(L, Y.pop());
+              else if (W > 0 && W <= Y.length) {
+                const G = Y[W - 1];
+                ((Y.length = W - 1), Object.assign(L, C(G)));
+              }
+              break;
+            }
+            case d.SETBKMODE:
+              L.bkMode = S.getUint32(F + 8, !0);
+              break;
+            case d.SETPOLYFILLMODE:
+              L.polyFillMode = S.getUint32(F + 8, !0);
+              break;
+            case d.SETTEXTALIGN:
+              L.textAlign = S.getUint32(F + 8, !0);
+              break;
+            case d.SETTEXTCOLOR:
+              L.textColor = c(S.getUint32(F + 8, !0));
+              break;
+            case d.SETBKCOLOR:
+              L.bkColor = c(S.getUint32(F + 8, !0));
+              break;
+            case d.CREATEPEN: {
+              const W = S.getUint32(F + 8, !0),
+                G = S.getUint32(F + 12, !0),
+                me = Math.abs(S.getInt32(F + 16, !0)),
+                Te = c(S.getUint32(F + 24, !0));
+              j[W] = { type: 'pen', color: Te, width: me || 1, nullPen: (15 & G) == 5 };
+              break;
+            }
+            case d.EXTCREATEPEN: {
+              const W = S.getUint32(F + 8, !0),
+                G = S.getUint32(F + 28, !0),
+                me = Math.abs(S.getInt32(F + 32, !0)),
+                Te = S.getUint32(F + 36, !0),
+                ye = c(S.getUint32(F + 40, !0));
+              j[W] = { type: 'pen', color: ye, width: me || 1, nullPen: (15 & G) == 5 || Te == 1 };
+              break;
+            }
+            case d.CREATEBRUSHINDIRECT: {
+              const W = S.getUint32(F + 8, !0),
+                G = S.getUint32(F + 12, !0),
+                me = c(S.getUint32(F + 16, !0));
+              j[W] = { type: 'brush', color: me, nullBrush: G == 1 };
+              break;
+            }
+            case d.EXTCREATEFONTINDIRECTW:
+              j[S.getUint32(F + 8, !0)] = Me(S, F + 12, ce - 12);
+              break;
+            case d.SELECTOBJECT: {
+              const W = S.getUint32(F + 8, !0),
+                G = 2147483648 & W ? i[2147483647 & W] : j[W];
+              G?.type == 'pen'
+                ? (L.pen = D(G))
+                : G?.type == 'brush'
+                  ? (L.brush = M(G))
+                  : G?.type == 'font' && (L.font = { ...G });
+              break;
+            }
+            case d.DELETEOBJECT:
+              delete j[S.getUint32(F + 8, !0)];
+              break;
+            case d.BEGINPATH:
+              ((re = !0), (ie = ''));
+              break;
+            case d.ENDPATH:
+              re = !1;
+              break;
+            case d.CLOSEFIGURE:
+              oe('Z');
+              break;
+            case d.MOVETOEX: {
+              const W = s(L, n(S, F + 8));
+              ((L.currentPoint = W), re && oe(`M ${m(W.x)} ${m(W.y)}`));
+              break;
+            }
+            case d.LINETO: {
+              const W = s(L, n(S, F + 8));
+              (re
+                ? oe(`L ${m(W.x)} ${m(W.y)}`)
+                : Z(
+                    `<path d="M ${m(L.currentPoint.x)} ${m(L.currentPoint.y)} L ${m(W.x)} ${m(W.y)}" ${x(L, !1, !0)}/>`,
+                  ),
+                (L.currentPoint = W));
+              break;
+            }
+            case d.POLYLINE:
+            case d.POLYGON:
+              N(S, F, K == d.POLYGON, !1, re, L, oe, Z);
+              break;
+            case d.POLYLINETO:
+              N(S, F, !1, !0, re, L, oe, Z);
+              break;
+            case d.POLYLINE16:
+            case d.POLYGON16:
+              w(S, F, K == d.POLYGON16, !1, re, L, oe, Z);
+              break;
+            case d.POLYLINETO16:
+              w(S, F, !1, !0, re, L, oe, Z);
+              break;
+            case d.POLYBEZIER:
+              R(S, F, !1, !1, re, L, oe, Z);
+              break;
+            case d.POLYBEZIERTO:
+              R(S, F, !1, !0, re, L, oe, Z);
+              break;
+            case d.POLYBEZIER16:
+              R(S, F, !0, !1, re, L, oe, Z);
+              break;
+            case d.POLYBEZIERTO16:
+              R(S, F, !0, !0, re, L, oe, Z);
+              break;
+            case d.POLYPOLYLINE:
+            case d.POLYPOLYGON:
+              X(S, F, K == d.POLYPOLYGON, !1, re, L, oe, Z);
+              break;
+            case d.POLYPOLYLINE16:
+            case d.POLYPOLYGON16:
+              X(S, F, K == d.POLYPOLYGON16, !0, re, L, oe, Z);
+              break;
+            case d.POLYDRAW:
+              Q(S, F, !1, re, L, oe, Z);
+              break;
+            case d.POLYDRAW16:
+              Q(S, F, !0, re, L, oe, Z);
+              break;
+            case d.RECTANGLE:
+              ue(S, F, L, Z, !1);
+              break;
+            case d.ELLIPSE:
+              ve(S, F, L, Z);
+              break;
+            case d.ROUNDRECT:
+              ue(S, F, L, Z, !0);
+              break;
+            case d.ARC:
+            case d.ARCTO:
+            case d.CHORD:
+            case d.PIE:
+              we(S, F, K, re, L, oe, Z);
+              break;
+            case d.FILLPATH:
+              (y(ie, L, Z, !0, !1), (ie = ''));
+              break;
+            case d.STROKEPATH:
+              (y(ie, L, Z, !1, !0), (ie = ''));
+              break;
+            case d.STROKEANDFILLPATH:
+              (y(ie, L, Z, !0, !0), (ie = ''));
+              break;
+            case d.EXTTEXTOUTA:
+            case d.EXTTEXTOUTW:
+              _e(S, F, ce, L, Z, K == d.EXTTEXTOUTW);
+              break;
+            case d.POLYTEXTOUTA:
+            case d.POLYTEXTOUTW:
+              Re(S, F, ce, L, Z, K == d.POLYTEXTOUTW);
+              break;
+            case d.SMALLTEXTOUT:
+              de(S, F, ce, L, Z);
+              break;
+            case d.SETPIXELV:
+              Fe(S, F, L, Z);
+              break;
+            case d.BITBLT:
+            case d.STRETCHBLT:
+            case d.STRETCHDIBITS:
+            case d.ALPHABLEND:
+            case d.TRANSPARENTBLT:
+              Be(S, F, ce, K, L, Z);
+          }
+          F += ce;
+        }
+        if ((ie && y(ie, L, Z, !0, !0), !ee.length)) {
+          const K = (function (ce, W) {
+            const G = (function (ye) {
+              const Ne = (function (J) {
+                const ne = [137, 80, 78, 71, 13, 10, 26, 10];
+                for (let ae = 0; ae + ne.length + 12 <= J.length; ae++) {
+                  if (!le(J, ne, ae)) continue;
+                  let ke = ae + 8;
+                  for (; ke + 12 <= J.length; ) {
+                    const He = Oe(J, ke),
+                      je = String.fromCharCode(J[ke + 4], J[ke + 5], J[ke + 6], J[ke + 7]);
+                    if (((ke += 12 + He), ke > J.length)) break;
+                    if (je == 'IEND') return J.subarray(ae, ke);
+                  }
+                }
+                return null;
+              })(ye);
+              if (Ne) return `data:image/png;base64,${Ee(Ne)}`;
+              const Se = (function (J) {
+                for (let ne = 0; ne + 4 < J.length; ne++)
+                  if (J[ne] == 255 && J[ne + 1] == 216 && J[ne + 2] == 255) {
+                    for (let ae = ne + 4; ae + 1 < J.length; ae++)
+                      if (J[ae] == 255 && J[ae + 1] == 217) return J.subarray(ne, ae + 2);
+                  }
+                return null;
+              })(ye);
+              if (Se) return `data:image/jpeg;base64,${Ee(Se)}`;
+              const Ae = (function (J) {
+                for (let ne = 0; ne + 14 < J.length; ne++) {
+                  if (J[ne] != 66 || J[ne + 1] != 77) continue;
+                  const ae = xe(J, ne + 2);
+                  if (ae > 14 && ne + ae <= J.length) return J.subarray(ne, ne + ae);
+                }
+                return null;
+              })(ye);
+              return Ae ? `data:image/bmp;base64,${Ee(Ae)}` : null;
+            })(ce);
+            if (!G) return [];
+            const me = Math.max(1, W.right - W.left),
+              Te = Math.max(1, W.bottom - W.top);
+            return [
+              `<image x="${m(W.left)}" y="${m(W.top)}" width="${m(me)}" height="${m(Te)}" href="${G}" preserveAspectRatio="xMidYMid meet"/>`,
+            ];
+          })(b, O);
+          K.length && ee.push(...K);
+        }
+        return ee.length
+          ? `<svg xmlns="http://www.w3.org/2000/svg" width="${m(q)}mm" height="${m(U)}mm" viewBox="${m(O.left)} ${m(O.top)} ${m(I)} ${m(z)}" preserveAspectRatio="xMidYMid meet" data-docx-metafile="emf">${ee.join('')}</svg>`
+          : (function (K, ce, W, G, me) {
+              return `<svg xmlns="http://www.w3.org/2000/svg" width="${m(G)}mm" height="${m(me)}mm" viewBox="${m(W.left)} ${m(W.top)} ${m(K)} ${m(ce)}" preserveAspectRatio="xMidYMid meet" data-docx-metafile="emf"><rect x="${m(W.left)}" y="${m(W.top)}" width="${m(K)}" height="${m(ce)}" fill="none" stroke="#999" stroke-width="1"/><text x="${m(W.left + K / 2)}" y="${m(W.top + ce / 2)}" text-anchor="middle" font-size="12" fill="#666">${P('Unsupported EMF image')}</text></svg>`;
+            })(I, z, O, q, U);
+      }
+      function C(b) {
+        return {
+          world: A(b.world),
+          windowOrg: { ...b.windowOrg },
+          windowExt: b.windowExt ? { ...b.windowExt } : null,
+          viewportOrg: { ...b.viewportOrg },
+          viewportExt: b.viewportExt ? { ...b.viewportExt } : null,
+          pen: D(b.pen),
+          brush: M(b.brush),
+          font: b.font ? { ...b.font } : null,
+          textColor: b.textColor,
+          bkColor: b.bkColor,
+          bkMode: b.bkMode,
+          polyFillMode: b.polyFillMode,
+          textAlign: b.textAlign,
+          currentPoint: { ...b.currentPoint },
+        };
+      }
+      function D(b) {
+        return { ...b };
+      }
+      function M(b) {
+        return { ...b };
+      }
+      function A(b) {
+        return { ...b };
+      }
+      function e(b) {
+        return new DataView(b.buffer, b.byteOffset, b.byteLength);
+      }
+      function t(b, v) {
+        return {
+          left: b.getInt32(v, !0),
+          top: b.getInt32(v + 4, !0),
+          right: b.getInt32(v + 8, !0),
+          bottom: b.getInt32(v + 12, !0),
+        };
+      }
+      function n(b, v) {
+        return { x: b.getInt32(v, !0), y: b.getInt32(v + 4, !0) };
+      }
+      function l(b, v) {
+        return n(b, v);
+      }
+      function u(b, v) {
+        return { x: b.getInt16(v, !0), y: b.getInt16(v + 2, !0) };
+      }
+      function p(b, v) {
+        return {
+          m11: b.getFloat32(v, !0),
+          m12: b.getFloat32(v + 4, !0),
+          m21: b.getFloat32(v + 8, !0),
+          m22: b.getFloat32(v + 12, !0),
+          dx: b.getFloat32(v + 16, !0),
+          dy: b.getFloat32(v + 20, !0),
+        };
+      }
+      function g(b, v) {
+        return {
+          m11: b.m11 * v.m11 + b.m12 * v.m21,
+          m12: b.m11 * v.m12 + b.m12 * v.m22,
+          m21: b.m21 * v.m11 + b.m22 * v.m21,
+          m22: b.m21 * v.m12 + b.m22 * v.m22,
+          dx: b.dx * v.m11 + b.dy * v.m21 + v.dx,
+          dy: b.dx * v.m12 + b.dy * v.m22 + v.dy,
+        };
+      }
+      function s(b, v) {
+        const S = b.world;
+        let B = v.x * S.m11 + v.y * S.m21 + S.dx,
+          O = v.x * S.m12 + v.y * S.m22 + S.dy;
+        return (
+          b.windowExt &&
+            b.viewportExt &&
+            b.windowExt.x &&
+            b.windowExt.y &&
+            ((B = ((B - b.windowOrg.x) * b.viewportExt.x) / b.windowExt.x + b.viewportOrg.x),
+            (O = ((O - b.windowOrg.y) * b.viewportExt.y) / b.windowExt.y + b.viewportOrg.y)),
+          { x: B, y: O }
+        );
+      }
+      function r(b) {
+        let v = Math.hypot(b.world.m11, b.world.m12),
+          S = Math.hypot(b.world.m21, b.world.m22);
+        b.windowExt &&
+          b.viewportExt &&
+          b.windowExt.x &&
+          b.windowExt.y &&
+          ((v *= Math.abs(b.viewportExt.x / b.windowExt.x)),
+          (S *= Math.abs(b.viewportExt.y / b.windowExt.y)));
+        const B = (v + S) / 2;
+        return Number.isFinite(B) && B > 0 ? B : 1;
+      }
+      function o(b, v, S) {
+        const B = b.getInt32(v + 8, !0),
+          O = b.getInt32(v + 12, !0),
+          _ = b.getInt32(v + 16, !0),
+          V = b.getInt32(v + 20, !0);
+        return { x: O ? (S.x * B) / O : S.x, y: V ? (S.y * _) / V : S.y };
+      }
+      function c(b) {
+        const v = (b >> 8) & 255,
+          S = (b >> 16) & 255;
+        return `#${h(255 & b)}${h(v)}${h(S)}`;
+      }
+      function h(b) {
+        return Math.max(0, Math.min(255, 0 | b))
+          .toString(16)
+          .padStart(2, '0');
+      }
+      function m(b) {
+        return Number.isFinite(b) ? '' + Math.round(1e3 * b) / 1e3 : '0';
+      }
+      function P(b) {
+        return `${b ?? ''}`
+          .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+      function x(b, v, S) {
+        const B = [];
+        if (
+          (v && !b.brush.nullBrush
+            ? (B.push(`fill="${b.brush.color}"`),
+              B.push(`fill-rule="${b.polyFillMode == 2 ? 'nonzero' : 'evenodd'}"`))
+            : B.push('fill="none"'),
+          S && !b.pen.nullPen)
+        ) {
+          const O = r(b),
+            _ = b.pen.width == 0 ? 1 : Math.max(0.35, b.pen.width * O);
+          (B.push(`stroke="${b.pen.color}"`),
+            B.push(`stroke-width="${m(_)}"`),
+            B.push('stroke-linecap="square"'),
+            B.push('stroke-linejoin="miter"'));
+        } else B.push('stroke="none"');
+        return B.join(' ');
+      }
+      function y(b, v, S, B, O) {
+        b && S(`<path d="${b}" ${x(v, B, O)}/>`);
+      }
+      function w(b, v, S, B, O, _, V, I) {
+        const z = b.getUint32(v + 24, !0);
+        if (!z || v + 28 + 4 * z > b.byteLength) return;
+        const q = [];
+        for (let U = 0; U < z; U++) q.push(s(_, u(b, v + 28 + 4 * U)));
+        $(q, S, B, O, _, V, I);
+      }
+      function N(b, v, S, B, O, _, V, I) {
+        const z = b.getUint32(v + 24, !0);
+        if (!z || v + 28 + 8 * z > b.byteLength) return;
+        const q = [];
+        for (let U = 0; U < z; U++) q.push(s(_, n(b, v + 28 + 8 * U)));
+        $(q, S, B, O, _, V, I);
+      }
+      function $(b, v, S, B, O, _, V) {
+        if (!b.length) return;
+        let I =
+          B && S
+            ? ''
+            : S
+              ? `M ${m(O.currentPoint.x)} ${m(O.currentPoint.y)}`
+              : `M ${m(b[0].x)} ${m(b[0].y)}`;
+        for (let z = S ? 0 : 1; z < b.length; z++) I += ` L ${m(b[z].x)} ${m(b[z].y)}`;
+        (v && (I += ' Z'),
+          (O.currentPoint = b[b.length - 1]),
+          B ? _(I.trim()) : V(`<path d="${I.trim()}" ${x(O, v, !0)}/>`));
+      }
+      function R(b, v, S, B, O, _, V, I) {
+        const z = b.getUint32(v + 24, !0),
+          q = S ? 4 : 8;
+        if (!z || v + 28 + z * q > b.byteLength) return;
+        const U = [];
+        for (let j = 0; j < z; j++) {
+          const ee = S ? u(b, v + 28 + j * q) : n(b, v + 28 + j * q);
+          U.push(s(_, ee));
+        }
+        let L =
+            O && B
+              ? ''
+              : B
+                ? `M ${m(_.currentPoint.x)} ${m(_.currentPoint.y)}`
+                : `M ${m(U[0].x)} ${m(U[0].y)}`,
+          Y = B ? _.currentPoint : U[0];
+        for (let j = B ? 0 : 1; j + 2 < U.length; j += 3) {
+          const ee = U[j],
+            F = U[j + 1],
+            se = U[j + 2];
+          ((L += ` C ${m(ee.x)} ${m(ee.y)} ${m(F.x)} ${m(F.y)} ${m(se.x)} ${m(se.y)}`), (Y = se));
+        }
+        ((_.currentPoint = Y), O ? V(L.trim()) : I(`<path d="${L.trim()}" ${x(_, !1, !0)}/>`));
+      }
+      function X(b, v, S, B, O, _, V, I) {
+        const z = b.getUint32(v + 24, !0),
+          q = b.getUint32(v + 28, !0),
+          U = v + 32,
+          L = U + 4 * z,
+          Y = B ? 4 : 8;
+        if (!z || !q || L + q * Y > b.byteLength) return;
+        let j = 0;
+        for (let ee = 0; ee < z; ee++) {
+          const F = b.getUint32(U + 4 * ee, !0);
+          if (!F || j + F > q) break;
+          const se = [];
+          for (let ie = 0; ie < F; ie++) {
+            const re = L + (j + ie) * Y,
+              be = B ? u(b, re) : n(b, re);
+            se.push(s(_, be));
+          }
+          ($(se, S, !1, O, _, V, I), (j += F));
+        }
+      }
+      function Q(b, v, S, B, O, _, V) {
+        const I = b.getUint32(v + 24, !0),
+          z = S ? 4 : 8,
+          q = v + 28,
+          U = q + I * z;
+        if (!I || U + I > b.byteLength) return;
+        const L = [];
+        for (let ee = 0; ee < I; ee++) {
+          const F = q + ee * z,
+            se = S ? u(b, F) : n(b, F);
+          L.push(s(O, se));
+        }
+        let Y = '',
+          j = 0;
+        for (; j < I; ) {
+          const ee = b.getUint8(U + j),
+            F = 6 & ee;
+          (F == 6
+            ? ((Y += ` M ${m(L[j].x)} ${m(L[j].y)}`), (O.currentPoint = L[j]), j++)
+            : F == 2
+              ? ((Y += ` L ${m(L[j].x)} ${m(L[j].y)}`), (O.currentPoint = L[j]), j++)
+              : F == 4 && j + 2 < I
+                ? ((Y += ` C ${m(L[j].x)} ${m(L[j].y)} ${m(L[j + 1].x)} ${m(L[j + 1].y)} ${m(L[j + 2].x)} ${m(L[j + 2].y)}`),
+                  (O.currentPoint = L[j + 2]),
+                  (j += 3))
+                : j++,
+            1 & ee && (Y += ' Z'));
+        }
+        ((Y = Y.trim()), Y && (B ? _(Y) : V(`<path d="${Y}" ${x(O, !1, !0)}/>`)));
+      }
+      function ue(b, v, S, B, O) {
+        const _ = t(b, v + 8),
+          V = s(S, { x: _.left, y: _.top }),
+          I = s(S, { x: _.right, y: _.bottom }),
+          z = Math.min(V.x, I.x),
+          q = Math.min(V.y, I.y),
+          U = Math.abs(I.x - V.x),
+          L = Math.abs(I.y - V.y),
+          Y = O ? ` rx="${m(Math.min(U, L) / 8)}" ry="${m(Math.min(U, L) / 8)}"` : '';
+        B(`<rect x="${m(z)}" y="${m(q)}" width="${m(U)}" height="${m(L)}"${Y} ${x(S, !0, !0)}/>`);
+      }
+      function ve(b, v, S, B) {
+        const O = t(b, v + 8),
+          _ = s(S, { x: O.left, y: O.top }),
+          V = s(S, { x: O.right, y: O.bottom }),
+          I = (_.x + V.x) / 2,
+          z = (_.y + V.y) / 2,
+          q = Math.abs(V.x - _.x) / 2,
+          U = Math.abs(V.y - _.y) / 2;
+        B(`<ellipse cx="${m(I)}" cy="${m(z)}" rx="${m(q)}" ry="${m(U)}" ${x(S, !0, !0)}/>`);
+      }
+      function we(b, v, S, B, O, _, V) {
+        const I = t(b, v + 8),
+          z = n(b, v + 24),
+          q = n(b, v + 32),
+          U = (I.left + I.right) / 2,
+          L = (I.top + I.bottom) / 2,
+          Y = Math.abs(I.right - I.left) / 2,
+          j = Math.abs(I.bottom - I.top) / 2;
+        if (!Y || !j) return;
+        const ee = Math.atan2(z.y - L, z.x - U);
+        let F = Math.atan2(q.y - L, q.x - U),
+          se = F - ee;
+        se <= 0 && (se += 2 * Math.PI);
+        const ie = se > Math.PI ? 1 : 0,
+          re = s(O, { x: U + Math.cos(ee) * Y, y: L + Math.sin(ee) * j }),
+          be = s(O, { x: U + Math.cos(F) * Y, y: L + Math.sin(F) * j }),
+          ge = s(O, { x: U, y: L }),
+          he = s(O, { x: U + Y, y: L }),
+          Z = s(O, { x: U, y: L + j }),
+          oe = Math.max(0.01, Math.abs(he.x - ge.x) || Math.abs(Z.x - ge.x)),
+          K = Math.max(0.01, Math.abs(Z.y - ge.y) || Math.abs(he.y - ge.y)),
+          ce = `A ${m(oe)} ${m(K)} 0 ${ie} 1 ${m(be.x)} ${m(be.y)}`;
+        let W = `M ${m(re.x)} ${m(re.y)} ${ce}`,
+          G = !1;
+        (S == d.CHORD
+          ? ((W += ' Z'), (G = !0))
+          : S == d.PIE && ((W += ` L ${m(ge.x)} ${m(ge.y)} Z`), (G = !0)),
+          S == d.ARCTO && (O.currentPoint = be),
+          B ? _(W) : V(`<path d="${W}" ${x(O, G, !0)}/>`));
+      }
+      function Me(b, v, S) {
+        const B = S >= 4 ? b.getInt32(v, !0) : 12,
+          O = S >= 20 ? b.getInt32(v + 16, !0) : 400,
+          _ = S >= 21 && b.getUint8(v + 20) != 0,
+          V = S >= 22 && b.getUint8(v + 21) != 0;
+        let I = '';
+        const z = v + 28,
+          q = Math.max(0, Math.min(64, S - 28));
+        for (let U = 0; U + 1 < q; U += 2) {
+          const L = b.getUint16(z + U, !0);
+          if (!L) break;
+          I += String.fromCharCode(L);
+        }
+        return {
+          type: 'font',
+          family: I,
+          size: Math.abs(B) || 12,
+          weight: O,
+          italic: _,
+          underline: V,
+        };
+      }
+      function _e(b, v, S, B, O, _) {
+        if (S < 76) return;
+        const V = s(B, n(b, v + 36)),
+          I = b.getUint32(v + 44, !0),
+          z = b.getUint32(v + 48, !0);
+        !I ||
+          z <= 0 ||
+          z + I * (_ ? 2 : 1) > S ||
+          te(_ ? fe(b, v + z, I) : Ce(new Uint8Array(b.buffer, b.byteOffset + v + z, I)), V, B, O);
+      }
+      function Re(b, v, S, B, O, _) {
+        if (S < 40) return;
+        const V = b.getUint32(v + 36, !0);
+        let I = v + 40;
+        for (let z = 0; z < V && I + 40 <= v + S; z++, I += 40) {
+          const q = s(B, n(b, I)),
+            U = b.getUint32(I + 8, !0),
+            L = b.getUint32(I + 12, !0);
+          !U ||
+            !L ||
+            L + U * (_ ? 2 : 1) > S ||
+            te(
+              _ ? fe(b, v + L, U) : Ce(new Uint8Array(b.buffer, b.byteOffset + v + L, U)),
+              q,
+              B,
+              O,
+            );
+        }
+      }
+      function de(b, v, S, B, O) {
+        if (S < 36) return;
+        const _ = s(B, n(b, v + 8)),
+          V = b.getUint32(v + 16, !0),
+          I = 512 & b.getUint32(v + 20, !0) ? 40 : 28;
+        !V || I + V > S || te(Ce(new Uint8Array(b.buffer, b.byteOffset + v + I, V)), _, B, O);
+      }
+      function fe(b, v, S) {
+        let B = '';
+        for (let O = 0; O < S; O++) {
+          const _ = b.getUint16(v + 2 * O, !0);
+          _ && (B += String.fromCharCode(_));
+        }
+        return B;
+      }
+      function Ce(b) {
+        if (!b.length) return '';
+        const v = globalThis.TextDecoder;
+        if (v)
+          try {
+            return new v('gb18030').decode(b).replace(/\0+$/g, '');
+          } catch {
+            try {
+              return new v('windows-1252').decode(b).replace(/\0+$/g, '');
+            } catch {}
+          }
+        let S = '';
+        for (const B of b) B && (S += String.fromCharCode(B));
+        return S;
+      }
+      function De(b) {
+        const v = 6 & b.textAlign;
+        return v == 6 ? 'text-anchor="middle"' : v == 2 ? 'text-anchor="end"' : '';
+      }
+      function Le(b) {
+        const v = 24 & b.textAlign;
+        return v == 0
+          ? 'dominant-baseline="text-before-edge"'
+          : v == 8
+            ? 'dominant-baseline="text-after-edge"'
+            : '';
+      }
+      function te(b, v, S, B) {
+        b &&
+          B(
+            `<text ${(function (O, _) {
+              const V = O.font,
+                I = Math.max(1, (V?.size ?? 12) * r(O));
+              return [
+                `x="${m(_.x)}"`,
+                `y="${m(_.y)}"`,
+                `fill="${O.textColor}"`,
+                `font-size="${m(I)}"`,
+                V?.family ? `font-family="${P(V.family)}"` : '',
+                V?.weight ? `font-weight="${V.weight >= 600 ? 'bold' : 'normal'}"` : '',
+                V?.italic ? 'font-style="italic"' : '',
+                V?.underline ? 'text-decoration="underline"' : '',
+                De(O),
+                Le(O),
+              ]
+                .filter(Boolean)
+                .join(' ');
+            })(S, v)}>${P(b)}</text>`,
+          );
+      }
+      function Fe(b, v, S, B) {
+        if (v + 20 > b.byteLength) return;
+        const O = s(S, n(b, v + 8)),
+          _ = c(b.getUint32(v + 16, !0));
+        B(`<rect x="${m(O.x)}" y="${m(O.y)}" width="1" height="1" fill="${_}" stroke="none"/>`);
+      }
+      function Be(b, v, S, B, O, _) {
+        let V = 0,
+          I = 0,
+          z = 0,
+          q = 0,
+          U = 0,
+          L = 0,
+          Y = 0,
+          j = 0;
+        if (B == d.STRETCHDIBITS) {
+          if (S < 80) return;
+          ((V = b.getInt32(v + 24, !0)),
+            (I = b.getInt32(v + 28, !0)),
+            (U = b.getUint32(v + 48, !0)),
+            (L = b.getUint32(v + 52, !0)),
+            (Y = b.getUint32(v + 56, !0)),
+            (j = b.getUint32(v + 60, !0)),
+            (z = b.getInt32(v + 72, !0)),
+            (q = b.getInt32(v + 76, !0)));
+        } else {
+          if (S < 100) return;
+          ((V = b.getInt32(v + 24, !0)),
+            (I = b.getInt32(v + 28, !0)),
+            (z = b.getInt32(v + 32, !0)),
+            (q = b.getInt32(v + 36, !0)),
+            (U = b.getUint32(v + 84, !0)),
+            (L = b.getUint32(v + 88, !0)),
+            (Y = b.getUint32(v + 92, !0)),
+            (j = b.getUint32(v + 96, !0)));
+        }
+        if (!U || !L || !Y || !j || U + L > S || Y + j > S) return;
+        const ee = (function (he, Z, oe, K, ce, W) {
+          const G = Z + oe,
+            me = Z + ce;
+          if (K < 4 || G + K > he.byteLength || me + W > he.byteLength) return null;
+          const Te = he.getUint32(G, !0) >= 40 && K >= 20 ? he.getUint32(G + 16, !0) : 0,
+            ye = new Uint8Array(he.buffer, he.byteOffset + me, W);
+          if (Te == 4) return `data:image/jpeg;base64,${Ee(ye)}`;
+          if (Te == 5) return `data:image/png;base64,${Ee(ye)}`;
+          const Ne = new Uint8Array(K + W);
+          return (
+            Ne.set(new Uint8Array(he.buffer, he.byteOffset + G, K), 0),
+            Ne.set(ye, K),
+            (function (Se, Ae) {
+              if (!Se?.length || Ae <= 0 || Ae > Se.length) return null;
+              const J = 14 + Se.length,
+                ne = 14 + Ae,
+                ae = new Uint8Array(J);
+              return (
+                (ae[0] = 66),
+                (ae[1] = 77),
+                pe(ae, 2, J),
+                pe(ae, 10, ne),
+                ae.set(Se, 14),
+                `data:image/bmp;base64,${Ee(ae)}`
+              );
+            })(Ne, K)
+          );
+        })(b, v, U, L, Y, j);
+        if (!ee) return;
+        const F = s(O, { x: V, y: I }),
+          se = s(O, { x: V + z, y: I + q }),
+          ie = Math.min(F.x, se.x),
+          re = Math.min(F.y, se.y),
+          be = Math.abs(se.x - F.x),
+          ge = Math.abs(se.y - F.y);
+        _(
+          `<image x="${m(ie)}" y="${m(re)}" width="${m(be)}" height="${m(ge)}" href="${ee}" preserveAspectRatio="none"/>`,
+        );
+      }
+      function le(b, v, S) {
+        for (let B = 0; B < v.length; B++) if (b[S + B] != v[B]) return !1;
+        return !0;
+      }
+      function Oe(b, v) {
+        return ((b[v] << 24) | (b[v + 1] << 16) | (b[v + 2] << 8) | b[v + 3]) >>> 0;
+      }
+      function xe(b, v) {
+        return (b[v] | (b[v + 1] << 8) | (b[v + 2] << 16) | (b[v + 3] << 24)) >>> 0;
+      }
+      function pe(b, v, S) {
+        ((b[v] = 255 & S),
+          (b[v + 1] = (S >> 8) & 255),
+          (b[v + 2] = (S >> 16) & 255),
+          (b[v + 3] = (S >> 24) & 255));
+      }
+      function Ee(b) {
+        let v = '';
+        for (let B = 0; B < b.length; B += 32768)
+          v += String.fromCharCode(...b.subarray(B, B + 32768));
+        if (typeof btoa == 'function') return btoa(v);
+        const S = globalThis.Buffer;
+        return S ? S.from(b).toString('base64') : v;
+      }
+    },
+    './notes/elements': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.WmlEndnote = f.WmlFootnote = f.WmlBaseNote = void 0));
+      const d = E('../document/dom');
+      class i {}
+      ((f.WmlBaseNote = i),
+        (f.WmlFootnote = class extends i {
+          constructor() {
+            (super(...arguments), (this.type = d.DomType.Footnote));
+          }
+        }),
+        (f.WmlEndnote = class extends i {
+          constructor() {
+            (super(...arguments), (this.type = d.DomType.Endnote));
+          }
+        }));
+    },
+    './notes/parts': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.EndnotesPart = f.FootnotesPart = f.BaseNotePart = void 0));
+      const d = E('../common/part'),
+        i = E('./elements');
+      class T extends d.Part {
+        constructor(a, C, D) {
+          (super(a, C), (this._documentParser = D));
+        }
+      }
+      ((f.BaseNotePart = T),
+        (f.FootnotesPart = class extends T {
+          constructor(k, a, C) {
+            super(k, a, C);
+          }
+          parseXml(k) {
+            this.notes = this._documentParser.parseNotes(k, 'footnote', i.WmlFootnote);
+          }
+        }),
+        (f.EndnotesPart = class extends T {
+          constructor(k, a, C) {
+            super(k, a, C);
+          }
+          parseXml(k) {
+            this.notes = this._documentParser.parseNotes(k, 'endnote', i.WmlEndnote);
+          }
+        }));
+    },
+    './numbering/numbering-part': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }), (f.NumberingPart = void 0));
+      const d = E('../common/part'),
+        i = E('./numbering');
+      class T extends d.Part {
+        constructor(a, C, D) {
+          (super(a, C), (this._documentParser = D));
+        }
+        parseXml(a) {
+          (Object.assign(this, (0, i.parseNumberingPart)(a, this._package.xmlParser)),
+            (this.domNumberings = this._documentParser.parseNumberingFile(a)));
+        }
+      }
+      f.NumberingPart = T;
+    },
+    './numbering/numbering': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.parseNumberingPart = function (A, e) {
+          let t = { numberings: [], abstractNumberings: [], bulletPictures: [] };
+          for (let n of e.elements(A))
+            switch (n.localName) {
+              case 'num':
+                t.numberings.push(T(n, e));
+                break;
+              case 'abstractNum':
+                t.abstractNumberings.push(k(n, e));
+                break;
+              case 'numPicBullet':
+                t.bulletPictures.push(D(n, e));
+            }
+          return t;
+        }),
+        (f.parseNumbering = T),
+        (f.parseAbstractNumbering = k),
+        (f.parseNumberingLevel = a),
+        (f.parseNumberingLevelOverrride = C),
+        (f.parseNumberingBulletPicture = D));
+      const d = E('../document/paragraph'),
+        i = E('../document/run');
+      function T(A, e) {
+        let t = { id: e.attr(A, 'numId'), overrides: [] };
+        for (let n of e.elements(A))
+          switch (n.localName) {
+            case 'abstractNumId':
+              t.abstractId = e.attr(n, 'val');
+              break;
+            case 'lvlOverride':
+              t.overrides.push(C(n, e));
+          }
+        return t;
+      }
+      function k(A, e) {
+        let t = { id: e.attr(A, 'abstractNumId'), levels: [] };
+        for (let n of e.elements(A))
+          switch (n.localName) {
+            case 'name':
+              t.name = e.attr(n, 'val');
+              break;
+            case 'multiLevelType':
+              t.multiLevelType = e.attr(n, 'val');
+              break;
+            case 'numStyleLink':
+              t.numberingStyleLink = e.attr(n, 'val');
+              break;
+            case 'styleLink':
+              t.styleLink = e.attr(n, 'val');
+              break;
+            case 'lvl':
+              t.levels.push(a(n, e));
+          }
+        return t;
+      }
+      function a(A, e) {
+        let t = { level: e.intAttr(A, 'ilvl') };
+        for (let n of e.elements(A))
+          switch (n.localName) {
+            case 'start':
+              t.start = e.attr(n, 'val');
+              break;
+            case 'lvlRestart':
+              t.restart = e.intAttr(n, 'val');
+              break;
+            case 'numFmt':
+              t.format = e.attr(n, 'val');
+              break;
+            case 'lvlText':
+              t.text = e.attr(n, 'val');
+              break;
+            case 'lvlJc':
+              t.justification = e.attr(n, 'val');
+              break;
+            case 'lvlPicBulletId':
+              t.bulletPictureId = e.attr(n, 'val');
+              break;
+            case 'pStyle':
+              t.paragraphStyle = e.attr(n, 'val');
+              break;
+            case 'pPr':
+              t.paragraphProps = (0, d.parseParagraphProperties)(n, e);
+              break;
+            case 'rPr':
+              t.runProps = (0, i.parseRunProperties)(n, e);
+          }
+        return t;
+      }
+      function C(A, e) {
+        let t = { level: e.intAttr(A, 'ilvl') };
+        for (let n of e.elements(A))
+          switch (n.localName) {
+            case 'startOverride':
+              t.start = e.intAttr(n, 'val');
+              break;
+            case 'lvl':
+              t.numberingLevel = a(n, e);
+          }
+        return t;
+      }
+      function D(A, e) {
+        var t = e.attr(A, 'numPicBulletId'),
+          n = e.element(A, 'pict'),
+          l = n && e.element(n, 'shape'),
+          u = l && e.element(l, 'imagedata');
+        if (u) return { id: t, referenceId: e.attr(u, 'id'), style: e.attr(l, 'style') };
+        var p = e.element(A, 'drawing'),
+          g = p && M(p, 'blip', e);
+        return g
+          ? { id: t, referenceId: e.attr(g, 'embed') ?? e.attr(g, 'link'), style: null }
+          : null;
+      }
+      function M(A, e, t) {
+        for (const n of t.elements(A)) {
+          if (n.localName == e) return n;
+          const l = M(n, e, t);
+          if (l) return l;
+        }
+        return null;
+      }
+    },
+    './parser/xml-parser': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.XmlParser = void 0),
+        (f.parseXmlString = function (k, a = !1) {
+          var C;
+          (a && (k = k.replace(/<[?].*[?]>/, '')),
+            (k = (C = k).charCodeAt(0) === 65279 ? C.substring(1) : C));
+          const D = new DOMParser().parseFromString(k, 'application/xml'),
+            M = ((A = D), A.getElementsByTagName('parsererror')[0]?.textContent);
+          var A;
+          if (M) throw new Error(M);
+          return D;
+        }),
+        (f.serializeXmlString = function (k) {
+          return new XMLSerializer().serializeToString(k);
+        }));
+      const d = E('../document/common');
+      class i {
+        elements(a, C = null) {
+          const D = [];
+          for (let M = 0, A = a.childNodes.length; M < A; M++) {
+            let e = a.childNodes.item(M);
+            e.nodeType != 1 || (C != null && e.localName != C) || D.push(e);
+          }
+          return D;
+        }
+        element(a, C) {
+          for (let D = 0, M = a.childNodes.length; D < M; D++) {
+            let A = a.childNodes.item(D);
+            if (A.nodeType == 1 && A.localName == C) return A;
+          }
+          return null;
+        }
+        elementAttr(a, C, D) {
+          var M = this.element(a, C);
+          return M ? this.attr(M, D) : void 0;
+        }
+        attrs(a) {
+          return Array.from(a.attributes);
+        }
+        attr(a, C) {
+          for (let D = 0, M = a.attributes.length; D < M; D++) {
+            let A = a.attributes.item(D);
+            if (A.localName == C) return A.value;
+          }
+          return null;
+        }
+        intAttr(a, C, D = null) {
+          var M = this.attr(a, C);
+          return M != null && M !== '' ? parseInt(M, 10) : D;
+        }
+        hexAttr(a, C, D = null) {
+          var M = this.attr(a, C);
+          return M != null && M !== '' ? parseInt(M, 16) : D;
+        }
+        floatAttr(a, C, D = null) {
+          var M = this.attr(a, C);
+          return M != null && M !== '' ? parseFloat(M) : D;
+        }
+        boolAttr(a, C, D = null) {
+          return (0, d.convertBoolean)(this.attr(a, C), D);
+        }
+        lengthAttr(a, C, D = d.LengthUsage.Dxa) {
+          return (0, d.convertLength)(this.attr(a, C), D);
+        }
+      }
+      f.XmlParser = i;
+      const T = new i();
+      f.default = T;
+    },
+    './settings/settings-part': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }), (f.SettingsPart = void 0));
+      const d = E('../common/part'),
+        i = E('./settings');
+      class T extends d.Part {
+        constructor(a, C) {
+          super(a, C);
+        }
+        parseXml(a) {
+          this.settings = (0, i.parseSettings)(a, this._package.xmlParser);
+        }
+      }
+      f.SettingsPart = T;
+    },
+    './settings/settings': function (E, H, f) {
+      function d(i, T) {
+        var k = { defaultNoteIds: [] };
+        for (let a of T.elements(i))
+          switch (a.localName) {
+            case 'numFmt':
+              k.nummeringFormat = T.attr(a, 'val');
+              break;
+            case 'footnote':
+            case 'endnote':
+              k.defaultNoteIds.push(T.attr(a, 'id'));
+          }
+        return k;
+      }
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.parseSettings = function (i, T) {
+          var k = {};
+          for (let a of T.elements(i))
+            switch (a.localName) {
+              case 'defaultTabStop':
+                k.defaultTabStop = T.lengthAttr(a, 'val');
+                break;
+              case 'footnotePr':
+                k.footnoteProps = d(a, T);
+                break;
+              case 'endnotePr':
+                k.endnoteProps = d(a, T);
+                break;
+              case 'autoHyphenation':
+                k.autoHyphenation = T.boolAttr(a, 'val');
+                break;
+              case 'kinsoku':
+                k.kinsoku = T.boolAttr(a, 'val', !0);
+                break;
+              case 'overflowPunct':
+                k.overflowPunctuation = T.boolAttr(a, 'val', !0);
+                break;
+              case 'topLinePunct':
+                k.topLinePunctuation = T.boolAttr(a, 'val', !0);
+                break;
+              case 'autoSpaceDE':
+                k.autoSpaceDE = T.boolAttr(a, 'val', !0);
+                break;
+              case 'autoSpaceDN':
+                k.autoSpaceDN = T.boolAttr(a, 'val', !0);
+                break;
+              case 'noLineBreaksAfter':
+                k.noLineBreaksAfter = T.attr(a, 'val') || a.textContent || '';
+                break;
+              case 'noLineBreaksBefore':
+                k.noLineBreaksBefore = T.attr(a, 'val') || a.textContent || '';
+                break;
+              case 'evenAndOddHeaders':
+                k.evenAndOddHeaders = T.boolAttr(a, 'val', !0);
+                break;
+              case 'splitPgBreakAndParaMark':
+                k.splitPageBreakAndParagraphMark = T.boolAttr(a, 'val', !0);
+                break;
+              case 'compat':
+                for (const C of T.elements(a))
+                  C.localName == 'adjustLineHeightInTable' &&
+                    (k.adjustLineHeightInTable = T.boolAttr(C, 'val', !0));
+            }
+          return k;
+        }),
+        (f.parseNoteProperties = d));
+    },
+    './styles/styles-part': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }), (f.StylesPart = void 0));
+      const d = E('../common/part');
+      class i extends d.Part {
+        constructor(k, a, C) {
+          (super(k, a), (this._documentParser = C));
+        }
+        parseXml(k) {
+          this.styles = this._documentParser.parseStylesFile(k);
+        }
+      }
+      f.StylesPart = i;
+    },
+    './theme/theme-part': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }), (f.ThemePart = void 0));
+      const d = E('../common/part'),
+        i = E('./theme');
+      class T extends d.Part {
+        constructor(a, C) {
+          super(a, C);
+        }
+        parseXml(a) {
+          this.theme = (0, i.parseTheme)(a, this._package.xmlParser);
+        }
+      }
+      f.ThemePart = T;
+    },
+    './theme/theme': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.DmlTheme = void 0),
+        (f.parseTheme = function (a, C) {
+          var D = new d(),
+            M = C.element(a, 'themeElements');
+          for (let A of C.elements(M))
+            switch (A.localName) {
+              case 'clrScheme':
+                D.colorScheme = i(A, C);
+                break;
+              case 'fontScheme':
+                D.fontScheme = T(A, C);
+            }
+          return D;
+        }),
+        (f.parseColorScheme = i),
+        (f.parseFontScheme = T),
+        (f.parseFontInfo = k));
+      class d {}
+      function i(a, C) {
+        var D = { name: C.attr(a, 'name'), colors: {} };
+        for (let e of C.elements(a)) {
+          var M = C.element(e, 'srgbClr'),
+            A = C.element(e, 'sysClr');
+          M
+            ? (D.colors[e.localName] = C.attr(M, 'val'))
+            : A && (D.colors[e.localName] = C.attr(A, 'lastClr'));
+        }
+        return D;
+      }
+      function T(a, C) {
+        var D = { name: C.attr(a, 'name') };
+        for (let M of C.elements(a))
+          switch (M.localName) {
+            case 'majorFont':
+              D.majorFont = k(M, C);
+              break;
+            case 'minorFont':
+              D.minorFont = k(M, C);
+          }
+        return D;
+      }
+      function k(a, C) {
+        return {
+          latinTypeface: C.elementAttr(a, 'latin', 'typeface'),
+          eaTypeface: C.elementAttr(a, 'ea', 'typeface'),
+          csTypeface: C.elementAttr(a, 'cs', 'typeface'),
+        };
+      }
+      f.DmlTheme = d;
+    },
+    './utils': function (E, H, f) {
+      function d(i) {
+        return i && typeof i == 'object' && !Array.isArray(i);
+      }
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.escapeClassName = function (i) {
+          return i?.replace(/[ .]+/g, '-').replace(/[&]+/g, 'and').toLowerCase();
+        }),
+        (f.encloseFontFamily = function (i) {
+          return /^[^"'].*\s.*[^"']$/.test(i) ? `'${i}'` : i;
+        }),
+        (f.splitPath = function (i) {
+          let T = i.lastIndexOf('/') + 1;
+          return [T == 0 ? '' : i.substring(0, T), T == 0 ? i : i.substring(T)];
+        }),
+        (f.resolvePath = function (i, T) {
+          try {
+            const k = 'http://docx/';
+            return new URL(i, k + T).toString().substring(k.length);
+          } catch {
+            return `${T}${i}`;
+          }
+        }),
+        (f.keyBy = function (i, T) {
+          return i.reduce((k, a) => ((k[T(a)] = a), k), {});
+        }),
+        (f.blobToBase64 = function (i) {
+          return new Promise((T, k) => {
+            const a = new FileReader();
+            ((a.onloadend = () => T(a.result)), (a.onerror = () => k()), a.readAsDataURL(i));
+          });
+        }),
+        (f.isObject = d),
+        (f.isString = function (i) {
+          return typeof i == 'string' || i instanceof String;
+        }),
+        (f.mergeDeep = function i(T, ...k) {
+          if (!k.length) return T;
+          const a = k.shift();
+          if (d(T) && d(a))
+            for (const C in a) d(a[C]) ? i(T[C] ?? (T[C] = {}), a[C]) : (T[C] = a[C]);
+          return i(T, ...k);
+        }),
+        (f.parseCssRules = function (i) {
+          const T = {};
+          for (const k of (i ?? '').split(';')) {
+            const a = k.indexOf(':');
+            if (a <= 0) continue;
+            const C = k.substring(0, a).trim(),
+              D = k.substring(a + 1).trim();
+            C && (T[C] = D);
+          }
+          return T;
+        }),
+        (f.formatCssRules = function (i) {
+          return Object.entries(i ?? {})
+            .map(([T, k]) => `${T}: ${k}`)
+            .join(';');
+        }),
+        (f.asArray = function (i) {
+          return Array.isArray(i) ? i : [i];
+        }),
+        (f.clamp = function (i, T, k) {
+          return T > i ? T : k < i ? k : i;
+        }));
+    },
+    './vml/vml': function (E, H, f) {
+      var d =
+        (this && this.__importDefault) ||
+        function (l) {
+          return l && l.__esModule ? l : { default: l };
+        };
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.VmlElement = void 0),
+        (f.parseVmlElement = function l(u, p) {
+          var g = new a();
+          switch (u.localName) {
+            case 'rect':
+              ((g.tagName = 'rect'), Object.assign(g.attrs, { width: '100%', height: '100%' }));
+              break;
+            case 'oval':
+              ((g.tagName = 'ellipse'),
+                Object.assign(g.attrs, { cx: '50%', cy: '50%', rx: '50%', ry: '50%' }));
+              break;
+            case 'line':
+              g.tagName = 'line';
+              break;
+            case 'shape':
+              g.tagName = 'g';
+              break;
+            case 'textbox':
+              ((g.tagName = 'foreignObject'),
+                Object.assign(g.attrs, { width: '100%', height: '100%' }));
+              break;
+            default:
+              return null;
+          }
+          for (const s of k.default.attrs(u))
+            switch (s.localName) {
+              case 'style':
+                g.cssStyleText = s.value;
+                break;
+              case 'fillcolor':
+                g.attrs.fill = s.value;
+                break;
+              case 'strokecolor':
+                g.attrs.stroke = s.value;
+                break;
+              case 'strokeweight':
+                g.attrs['stroke-width'] =
+                  (0, i.convertLength)(s.value, i.LengthUsage.Point) ?? s.value;
+                break;
+              case 'filled':
+                (s.value != 'f' && s.value != 'false') || (g.attrs.fill = 'none');
+                break;
+              case 'stroked':
+                (s.value != 'f' && s.value != 'false') || (g.attrs.stroke = 'none');
+                break;
+              case 'path':
+                ((g.tagName = 'path'), (g.attrs.d = n(s.value)));
+                break;
+              case 'from':
+                const [r, o] = t(s.value);
+                Object.assign(g.attrs, { x1: r, y1: o });
+                break;
+              case 'to':
+                const [c, h] = t(s.value);
+                Object.assign(g.attrs, { x2: c, y2: h });
+            }
+          for (const s of k.default.elements(u))
+            switch (s.localName) {
+              case 'stroke':
+                Object.assign(g.attrs, A(s));
+                break;
+              case 'fill':
+                Object.assign(g.attrs, e(s));
+                break;
+              case 'imagedata':
+                ((g.tagName = 'image'),
+                  Object.assign(g.attrs, C(s)),
+                  (g.imageHref = {
+                    id:
+                      k.default.attr(s, 'id') ??
+                      k.default.attr(s, 'relid') ??
+                      k.default.attr(s, 'pict'),
+                    title: k.default.attr(s, 'title'),
+                  }));
+                break;
+              case 'txbxContent':
+                g.children.push(...p.parseBodyElements(s));
+                break;
+              default:
+                const r = l(s, p);
+                r && g.children.push(r);
+            }
+          return g;
+        }));
+      const i = E('../document/common'),
+        T = E('../document/dom'),
+        k = d(E('../parser/xml-parser'));
+      class a extends T.OpenXmlElementBase {
+        constructor() {
+          (super(...arguments), (this.type = T.DomType.VmlElement), (this.attrs = {}));
+        }
+      }
+      function C(l) {
+        const u = D(k.default.attr(l, 'cropleft')),
+          p = D(k.default.attr(l, 'croptop')),
+          g = D(k.default.attr(l, 'cropright')),
+          s = D(k.default.attr(l, 'cropbottom')),
+          r = Math.max(1e-4, 1 - u - g),
+          o = Math.max(1e-4, 1 - p - s),
+          c = { x: M(-u / r), y: M(-p / o), width: M(1 / r), height: M(1 / o) };
+        return ((u || p || g || s) && (c.preserveAspectRatio = 'none'), c);
+      }
+      function D(l) {
+        if (!l) return 0;
+        const u = String(l).trim();
+        if (!u) return 0;
+        let p;
+        return (
+          (p = /^-?\d+(\.\d+)?f$/i.test(u)
+            ? parseFloat(u.slice(0, -1)) / 65536
+            : u.endsWith('%')
+              ? parseFloat(u) / 100
+              : parseFloat(u)),
+          Number.isFinite(p) ? Math.max(0, Math.min(0.9999, p)) : 0
+        );
+      }
+      function M(l) {
+        return Math.round(1e5 * l) / 1e3 + '%';
+      }
+      function A(l) {
+        const u = {},
+          p = k.default.attr(l, 'color'),
+          g = k.default.attr(l, 'weight'),
+          s = k.default.attr(l, 'on');
+        return (
+          s == 'f' || s == 'false' ? (u.stroke = 'none') : p && (u.stroke = p),
+          (u['stroke-width'] = g ? ((0, i.convertLength)(g, i.LengthUsage.Point) ?? g) : '1px'),
+          u
+        );
+      }
+      function e(l) {
+        const u = {},
+          p = k.default.attr(l, 'color') ?? k.default.attr(l, 'color2'),
+          g = k.default.attr(l, 'on'),
+          s = k.default.attr(l, 'opacity');
+        return (
+          g == 'f' || g == 'false' ? (u.fill = 'none') : p && (u.fill = p),
+          s && (u['fill-opacity'] = s.endsWith('%') ? '' + parseFloat(s) / 100 : s),
+          u
+        );
+      }
+      function t(l) {
+        return l.split(',');
+      }
+      function n(l) {
+        return l.replace(/([mlxe])|([-\d]+)|([,])/g, (u) =>
+          /[-\d]/.test(u)
+            ? (0, i.convertLength)(u, i.LengthUsage.VmlEmu)
+            : /[ml,]/.test(u)
+              ? u
+              : '',
+        );
+      }
+      f.VmlElement = a;
+    },
+    './word-document': function (E, H, f) {
+      (Object.defineProperty(f, '__esModule', { value: !0 }),
+        (f.WordDocument = void 0),
+        (f.deobfuscate = m));
+      const d = E('./common/relationship'),
+        i = E('./font-table/font-table'),
+        T = E('./common/open-xml-package'),
+        k = E('./document/document-part'),
+        a = E('./utils'),
+        C = E('./numbering/numbering-part'),
+        D = E('./styles/styles-part'),
+        M = E('./header-footer/parts'),
+        A = E('./document-props/extended-props-part'),
+        e = E('./document-props/core-props-part'),
+        t = E('./theme/theme-part'),
+        n = E('./notes/parts'),
+        l = E('./settings/settings-part'),
+        u = E('./document-props/custom-props-part'),
+        p = E('./comments/comments-part'),
+        g = E('./comments/comments-extended-part'),
+        s = E('./parser/xml-parser'),
+        r = E('./metafile/emf-to-svg'),
+        o = [
+          { type: d.RelationshipTypes.OfficeDocument, target: 'word/document.xml' },
+          { type: d.RelationshipTypes.ExtendedProperties, target: 'docProps/app.xml' },
+          { type: d.RelationshipTypes.CoreProperties, target: 'docProps/core.xml' },
+          { type: d.RelationshipTypes.CustomProperties, target: 'docProps/custom.xml' },
+        ];
+      class c {
+        constructor() {
+          ((this.parts = []),
+            (this.partsMap = {}),
+            (this.contentTypes = []),
+            (this._snapshotAssetDataUrls = null),
+            (this._snapshotTextParts = null));
+        }
+        static fromSnapshot(x, y) {
+          const w = new c();
+          ((w._options = y),
+            (w.rels = x.rels ?? []),
+            (w.contentTypes = x.contentTypes ?? []),
+            (w.parts = []),
+            (w.partsMap = {}),
+            (w._snapshotAssetDataUrls = x.assetDataUrls ?? {}),
+            (w._snapshotTextParts = x.textParts ?? {}),
+            (w._package = {
+              load: (N) => Promise.resolve(w._snapshotTextParts?.[h(N)] ?? null),
+              parseXmlDocument: (N) => (0, s.parseXmlString)(N, y?.trimXmlDeclaration ?? !0),
+              get: (N) => (w._snapshotTextParts?.[h(N)] != null ? {} : null),
+            }));
+          for (const N of x.parts ?? []) {
+            const $ = w.restoreSnapshotPart(N);
+            $ && (w.parts.push($), (w.partsMap[$.path] = $));
+          }
+          return w;
+        }
+        static async load(x, y, w) {
+          var N = new c();
+          return (
+            (N._options = w),
+            (N._parser = y),
+            (N._package = await T.OpenXmlPackage.load(x, w)),
+            (N.rels = await N._package.loadRelationships()),
+            (N.contentTypes = await N._package.loadContentTypes()),
+            await Promise.all(
+              o.map(($) => {
+                const R = N.rels.find((X) => X.type === $.type) ?? $;
+                return N.loadRelationshipPart(R.target, R.type);
+              }),
+            ),
+            N
+          );
+        }
+        restoreSnapshotPart(x) {
+          const y = { path: x.path, rels: x.rels ?? [] };
+          switch ((Object.assign(y, x.data ?? {}), x.kind)) {
+            case 'document':
+              this.documentPart = y;
+              break;
+            case 'fontTable':
+              this.fontTablePart = y;
+              break;
+            case 'numbering':
+              this.numberingPart = y;
+              break;
+            case 'styles':
+              this.stylesPart = y;
+              break;
+            case 'theme':
+              this.themePart = y;
+              break;
+            case 'footnotes':
+              this.footnotesPart = y;
+              break;
+            case 'endnotes':
+              this.endnotesPart = y;
+              break;
+            case 'coreProps':
+              this.corePropsPart = y;
+              break;
+            case 'extendedProps':
+              this.extendedPropsPart = y;
+              break;
+            case 'settings':
+              this.settingsPart = y;
+              break;
+            case 'comments':
+              ((y.commentMap = (0, a.keyBy)(y.comments ?? [], (w) => w.id)),
+                (this.commentsPart = y));
+              break;
+            case 'commentsExtended':
+              ((y.commentMap = (0, a.keyBy)(y.comments ?? [], (w) => w.paraId)),
+                (this.commentsExtendedPart = y));
+          }
+          return y;
+        }
+        async createSnapshot() {
+          const x = {
+            rels: this.rels ?? [],
+            contentTypes: this.contentTypes ?? [],
+            parts: this.parts.map((y) => this.snapshotPart(y)).filter(Boolean),
+            assetDataUrls: {},
+            textParts: {},
+          };
+          return (await this.preloadSnapshotRelationshipTargets(x), x);
+        }
+        snapshotPart(x) {
+          const y = x;
+          let w = 'part',
+            N = {};
+          if (x === this.documentPart) ((w = 'document'), (N = { body: y.body }));
+          else if (x === this.fontTablePart) ((w = 'fontTable'), (N = { fonts: y.fonts }));
+          else if (x === this.numberingPart)
+            ((w = 'numbering'),
+              (N = {
+                numberings: y.numberings,
+                abstractNumberings: y.abstractNumberings,
+                bulletPictures: y.bulletPictures,
+                domNumberings: y.domNumberings,
+              }));
+          else if (x === this.stylesPart) ((w = 'styles'), (N = { styles: y.styles }));
+          else if (x === this.themePart) ((w = 'theme'), (N = { theme: y.theme }));
+          else if (x === this.footnotesPart) ((w = 'footnotes'), (N = { notes: y.notes }));
+          else if (x === this.endnotesPart) ((w = 'endnotes'), (N = { notes: y.notes }));
+          else if (x === this.corePropsPart) ((w = 'coreProps'), (N = { props: y.props }));
+          else if (x === this.extendedPropsPart) ((w = 'extendedProps'), (N = { props: y.props }));
+          else if (x === this.settingsPart) ((w = 'settings'), (N = { settings: y.settings }));
+          else if (x === this.commentsPart) ((w = 'comments'), (N = { comments: y.comments }));
+          else if (x === this.commentsExtendedPart)
+            ((w = 'commentsExtended'), (N = { comments: y.comments }));
+          else {
+            if (!y.rootElement) return null;
+            ((w = y.rootElement.type === 'header' ? 'header' : 'footer'),
+              (N = { rootElement: y.rootElement }));
+          }
+          return { kind: w, path: x.path, rels: x.rels ?? [], data: N };
+        }
+        async preloadSnapshotRelationshipTargets(x) {
+          const y = new Set(),
+            w = (N) => {
+              for (const $ of N?.rels ?? []) {
+                if (!$ || $.targetMode === 'External') continue;
+                const R = h(this.resolveRelationshipTarget(N, $));
+                R && !y.has(R) && y.add(R);
+              }
+            };
+          for (const N of this.parts) w(N);
+          for (const N of y) {
+            if (this.partsMap[N]) continue;
+            const $ = N.toLowerCase(),
+              R = /\.(xml|rels|html?|txt)$/i.test($);
+            try {
+              if (R) {
+                const X = await this._package.load(N, 'string');
+                X != null && (x.textParts[N] = X);
+              } else {
+                const X = await this.loadPackageAssetDataUrl(N);
+                X && (x.assetDataUrls[N] = X);
+              }
+            } catch (X) {
+              this._options?.debug &&
+                console.warn(`docx-preview: unable to preload relationship target ${N}`, X);
+            }
+          }
+        }
+        blobWithContentType(x, y) {
+          if (!x) return null;
+          if (y) {
+            const w = this.contentTypes.find(
+              (N) => N.partName === y || (N.extension && y.endsWith(`.${N.extension}`)),
+            );
+            return w ? new Blob([x], { type: w.contentType }) : x;
+          }
+          return x;
+        }
+        save(x = 'blob') {
+          return this._package.save(x);
+        }
+        async loadRelationshipPart(x, y) {
+          if (this.partsMap[x]) return this.partsMap[x];
+          if (!this._package.get(x)) return null;
+          let w = null;
+          switch (y) {
+            case d.RelationshipTypes.OfficeDocument:
+              this.documentPart = w = new k.DocumentPart(this._package, x, this._parser);
+              break;
+            case d.RelationshipTypes.FontTable:
+              this.fontTablePart = w = new i.FontTablePart(this._package, x);
+              break;
+            case d.RelationshipTypes.Numbering:
+              this.numberingPart = w = new C.NumberingPart(this._package, x, this._parser);
+              break;
+            case d.RelationshipTypes.Styles:
+              this.stylesPart = w = new D.StylesPart(this._package, x, this._parser);
+              break;
+            case d.RelationshipTypes.Theme:
+              this.themePart = w = new t.ThemePart(this._package, x);
+              break;
+            case d.RelationshipTypes.Footnotes:
+              this.footnotesPart = w = new n.FootnotesPart(this._package, x, this._parser);
+              break;
+            case d.RelationshipTypes.Endnotes:
+              this.endnotesPart = w = new n.EndnotesPart(this._package, x, this._parser);
+              break;
+            case d.RelationshipTypes.Footer:
+              w = new M.FooterPart(this._package, x, this._parser);
+              break;
+            case d.RelationshipTypes.Header:
+              w = new M.HeaderPart(this._package, x, this._parser);
+              break;
+            case d.RelationshipTypes.CoreProperties:
+              this.corePropsPart = w = new e.CorePropsPart(this._package, x);
+              break;
+            case d.RelationshipTypes.ExtendedProperties:
+              this.extendedPropsPart = w = new A.ExtendedPropsPart(this._package, x);
+              break;
+            case d.RelationshipTypes.CustomProperties:
+              w = new u.CustomPropsPart(this._package, x);
+              break;
+            case d.RelationshipTypes.Settings:
+              this.settingsPart = w = new l.SettingsPart(this._package, x);
+              break;
+            case d.RelationshipTypes.Comments:
+              this.commentsPart = w = new p.CommentsPart(this._package, x, this._parser);
+              break;
+            case d.RelationshipTypes.CommentsExtended:
+              this.commentsExtendedPart = w = new g.CommentsExtendedPart(this._package, x);
+          }
+          if (w == null) return Promise.resolve(null);
+          if (((this.partsMap[x] = w), this.parts.push(w), await w.load(), w.rels?.length > 0)) {
+            const [N] = (0, a.splitPath)(w.path);
+            await Promise.all(
+              w.rels
+                .filter(($) => $.targetMode !== 'External')
+                .map(($) => this.loadRelationshipPart((0, a.resolvePath)($.target, N), $.type)),
+            );
+          }
+          return w;
+        }
+        async loadRelationshipXml(x, y) {
+          const w = y ?? this.documentPart,
+            N = this.getRelById(w, x);
+          if (!N || N.targetMode === 'External') return null;
+          const $ = h(this.resolveRelationshipTarget(w, N)),
+            R = $
+              ? (this._snapshotTextParts?.[$] ?? (await this._package.load($, 'string')))
+              : null;
+          return R ? this._package.parseXmlDocument(R) : null;
+        }
+        async loadRelationshipText(x, y) {
+          const w = y ?? this.documentPart,
+            N = this.getRelById(w, x);
+          if (!N || N.targetMode === 'External') return null;
+          const $ = h(this.resolveRelationshipTarget(w, N));
+          return $
+            ? Promise.resolve(this._snapshotTextParts?.[$] ?? this._package.load($, 'string'))
+            : Promise.resolve(null);
+        }
+        async loadRelationshipBlobUrl(x, y) {
+          const w = y ?? this.documentPart,
+            N = this.getRelById(w, x);
+          if (!N) return null;
+          if (N.targetMode === 'External') return N.target;
+          const $ = h(this.resolveRelationshipTarget(w, N));
+          return $ ? this.loadPackageAssetUrl($) : null;
+        }
+        async loadDocumentImage(x, y) {
+          const w = y ?? this.documentPart,
+            N = this.getRelById(w, x);
+          if (!N) return null;
+          if (N.targetMode === 'External') return N.target;
+          const $ = h(this.resolveRelationshipTarget(w, N));
+          return $ ? this.loadPackageAssetUrl($) : null;
+        }
+        async loadNumberingImage(x) {
+          const y = h(this.getPathById(this.numberingPart, x));
+          return y ? this.loadPackageAssetUrl(y) : null;
+        }
+        async loadFont(x, y) {
+          const w = h(this.getPathById(this.fontTablePart, x));
+          if (!w) return null;
+          if (this._snapshotAssetDataUrls?.[w]) return this._snapshotAssetDataUrls[w];
+          const N = await this._package.load(w, 'uint8array');
+          return N && this.blobToURL(new Blob([m(N, y)]), w);
+        }
+        async loadAltChunk(x, y) {
+          const w = y ?? this.documentPart,
+            N = this.getRelById(w, x);
+          if (!N || N.targetMode === 'External') return Promise.resolve(null);
+          const $ = h(this.resolveRelationshipTarget(w, N));
+          return $
+            ? Promise.resolve(this._snapshotTextParts?.[$] ?? this._package.load($, 'string'))
+            : Promise.resolve(null);
+        }
+        blobToURL(x, y) {
+          return x
+            ? ((x = this.blobWithContentType(x, y)),
+              this._options.useBase64URL ? (0, a.blobToBase64)(x) : URL.createObjectURL(x))
+            : null;
+        }
+        async loadPackageAssetUrl(x) {
+          const y = h(x);
+          if (!y) return null;
+          if (this._snapshotAssetDataUrls?.[y]) return this._snapshotAssetDataUrls[y];
+          if (this.isEmfAsset(y)) {
+            const w = await this._package.load(y, 'uint8array');
+            return w
+              ? this.convertEmfAsset(w, y) ||
+                  this.blobToURL(
+                    new Blob([w], { type: this.contentTypeForPath(y) || 'image/x-emf' }),
+                    y,
+                  )
+              : null;
+          }
+          return this.blobToURL(await this._package.load(y, 'blob'), y);
+        }
+        async loadPackageAssetDataUrl(x) {
+          const y = h(x);
+          if (!y) return null;
+          if (this.isEmfAsset(y)) {
+            const $ = await this._package.load(y, 'uint8array');
+            if (!$) return null;
+            const R = this.convertEmfAsset($, y);
+            if (R) return R;
+            const X = $
+              ? new Blob([$], { type: this.contentTypeForPath(y) || 'image/x-emf' })
+              : null;
+            return X ? (0, a.blobToBase64)(X) : null;
+          }
+          const w = await this._package.load(y, 'blob'),
+            N = this.blobWithContentType(w, y);
+          return N ? (0, a.blobToBase64)(N) : null;
+        }
+        convertEmfAsset(x, y) {
+          if (!x || !(0, r.isEmfBinary)(x)) return null;
+          try {
+            return (0, r.convertEmfToSvgDataUrl)(x);
+          } catch (w) {
+            return (
+              this._options?.debug &&
+                console.warn(`docx-preview: unable to convert EMF asset ${y}`, w),
+              null
+            );
+          }
+        }
+        isEmfAsset(x) {
+          const y = this.contentTypeForPath(x).toLowerCase();
+          return /\.emf$/i.test(x ?? '') || y == 'image/x-emf' || y == 'image/emf';
+        }
+        contentTypeForPath(x) {
+          const y = h(x ?? '').toLowerCase();
+          for (const R of this.contentTypes ?? [])
+            if (R.partName && h(R.partName).toLowerCase() == y) return R.contentType ?? '';
+          const w = /\.([^.\/]+)$/.exec(y),
+            N = w?.[1] ?? '';
+          return N
+            ? ((this.contentTypes ?? []).find((R) => R.extension?.toLowerCase() == N)
+                ?.contentType ?? '')
+            : '';
+        }
+        findPartByRelId(x, y = null) {
+          var w = this.getRelById(y, x);
+          const N = w && w.targetMode !== 'External' ? this.resolveRelationshipTarget(y, w) : null;
+          return N ? this.partsMap[N] : null;
+        }
+        getRelById(x, y) {
+          return (x?.rels ?? this.rels ?? []).find((w) => w.id == y);
+        }
+        getPathById(x, y) {
+          const w = this.getRelById(x, y);
+          return w && w.targetMode !== 'External' ? this.resolveRelationshipTarget(x, w) : null;
+        }
+        resolveRelationshipTarget(x, y) {
+          const [w] = x ? (0, a.splitPath)(x.path) : [''];
+          return h((0, a.resolvePath)(y.target, w));
+        }
+      }
+      function h(P) {
+        return P && P.startsWith('/') ? P.substring(1) : P;
+      }
+      function m(P, x) {
+        const y = x.replace(/{|}|-/g, ''),
+          w = new Array(16);
+        for (let N = 0; N < 16; N++) w[16 - N - 1] = parseInt(y.substring(2 * N, 2 * N + 2), 16);
+        for (let N = 0; N < 32; N++) P[N] = P[N] ^ w[N % 16];
+        return P;
+      }
+      f.WordDocument = c;
+    },
+  }),
+  (Ie = {}),
+  (function E(H, f) {
+    var d = (function (T, k) {
+      if (T === 'jszip') return 'jszip';
+      if (T[0] === '.') {
+        var a = (function (C) {
+          for (var D = C.split('/'), M = [], A = 0; A < D.length; A++) {
+            var e = D[A];
+            e && e !== '.' && (e === '..' ? M.pop() : M.push(e));
+          }
+          return './' + M.join('/');
+        })(k.substring(0, k.lastIndexOf('/') + 1) + T);
+        if ($e[a]) return a;
+        if ($e[a + '/index']) return a + '/index';
+      }
+      if ($e[T]) return T;
+      throw new Error('Cannot resolve module ' + T + ' from ' + k);
+    })(H, f || './docx-preview');
+    if (d === 'jszip') return Ue;
+    if (Ie[d]) return Ie[d].exports;
+    var i = { exports: {} };
+    return (
+      (Ie[d] = i),
+      $e[d](
+        function (T) {
+          return E(T, d);
+        },
+        i,
+        i.exports,
+      ),
+      i.exports
+    );
+  })('./docx-preview', './docx-preview'));
+var Ue, $e, Ie;
+const Ye = Pe.defaultOptions,
+  qe = Pe.parseAsync,
+  Ze = Pe.parseAsyncInWorker,
+  Ke = Pe.renderDocument,
+  Je = Pe.renderAsync,
+  Qe = Pe.awaitRenderedLayout,
+  et = Pe.collectLayoutSnapshot,
+  tt = Pe.yieldToBrowser;
+export {
+  Qe as awaitRenderedLayout,
+  et as collectLayoutSnapshot,
+  Pe as default,
+  Ye as defaultOptions,
+  qe as parseAsync,
+  Ze as parseAsyncInWorker,
+  Je as renderAsync,
+  Ke as renderDocument,
+  tt as yieldToBrowser,
+};

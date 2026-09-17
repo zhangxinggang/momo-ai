@@ -21,7 +21,8 @@ describe('CustomToolRuntimeService', () => {
     fs.mkdirSync(path.join(tempDirectory, 'backend'));
     meta = {
       kind: 'tool',
-      version: 2,
+      id: 'demo',
+      actions: [],
       entry: 'index.html',
       service: { runtime: 'none' },
       permissions: { mcp: ['demo__echo'], skills: [] },

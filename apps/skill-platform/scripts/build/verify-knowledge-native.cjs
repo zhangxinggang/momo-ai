@@ -16,6 +16,7 @@ function findFile(root, basename) {
 }
 
 module.exports = async function verifyKnowledgeNative(context) {
+  await require('./verify-harness-native.cjs')(context);
   const roots = [
     path.join(context.appOutDir, 'resources', 'app.asar.unpacked', 'node_modules'),
     path.join(context.appOutDir, 'resources', 'app', 'node_modules'),

@@ -1,4 +1,6 @@
-import{_ as e}from"./mermaid.core-Cs_8gTP_.js";var l=e(()=>`
+import { _ as e } from './mermaid.core-Cs_8gTP_.js';
+var l = e(
+  () => `
   /* Font Awesome icon styling - consolidated */
   .label-icon {
     display: inline-block;
@@ -12,4 +14,7 @@ import{_ as e}from"./mermaid.core-Cs_8gTP_.js";var l=e(()=>`
     stroke: revert;
     stroke-width: revert;
   }
-`,"getIconStyles");export{l as g};
+`,
+  'getIconStyles',
+);
+export { l as g };

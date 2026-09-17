@@ -99,6 +99,7 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
   const isTagsCollapsed = useSettingsStore((state) => state.isTagsSectionCollapsed);
   const setIsTagsCollapsed = useSettingsStore((state) => state.setIsTagsSectionCollapsed);
   const viewMode = useUIStore((state) => state.viewMode);
+  const workflowScreen = useUIStore((state) => state.workflowScreen);
   const setAppModule = useUIStore((state) => state.setAppModule);
   const isCollapsed = useUIStore((state) => state.isSidebarCollapsed);
   const skillProjects = useSettingsStore((state) => state.skillProjects);
@@ -340,7 +341,9 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
         active: viewMode === 'prompt',
         onClick: () => {
           void (async () => {
-            const canLeave = await confirmLeaveAllEditors();
+            const canLeave = await confirmLeaveAllEditors({
+              checkAiChat: currentPage === 'home' && viewMode !== 'prompt',
+            });
             if (!canLeave) {
               return;
             }
@@ -357,7 +360,9 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
         active: viewMode === 'skill',
         onClick: () => {
           void (async () => {
-            const canLeave = await confirmLeaveAllEditors();
+            const canLeave = await confirmLeaveAllEditors({
+              checkAiChat: currentPage === 'home' && viewMode !== 'skill',
+            });
             if (!canLeave) {
               return;
             }
@@ -369,33 +374,15 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
         },
       },
       {
-        key: 'workflow',
-        label: '工作流',
-        icon: <GitBranchIcon className='h-5 w-5' />,
-        active: viewMode === 'workflow',
-        onClick: () => {
-          void (async () => {
-            const canLeave = await confirmLeaveAllEditors();
-            if (!canLeave) {
-              return;
-            }
-            setAppModule('workflow');
-            selectWorkflow(null);
-            closeTagPopover();
-            if (currentPage !== 'home') {
-              onNavigate('home');
-            }
-          })();
-        },
-      },
-      {
         key: 'kb',
         label: '知识库',
         icon: <BookOpenIcon className='h-5 w-5' />,
         active: viewMode === 'kb',
         onClick: () => {
           void (async () => {
-            const canLeave = await confirmLeaveAllEditors();
+            const canLeave = await confirmLeaveAllEditors({
+              checkAiChat: currentPage === 'home' && viewMode !== 'kb',
+            });
             if (!canLeave) {
               return;
             }
@@ -414,11 +401,37 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
         active: viewMode === 'note',
         onClick: () => {
           void (async () => {
-            const canLeave = await confirmLeaveAllEditors();
+            const canLeave = await confirmLeaveAllEditors({
+              checkAiChat: currentPage === 'home' && viewMode !== 'note',
+            });
             if (!canLeave) return;
             setAppModule('note');
             closeTagPopover();
             if (currentPage !== 'home') onNavigate('home');
+          })();
+        },
+      },
+      {
+        key: 'workflow',
+        label: '工作流',
+        icon: <GitBranchIcon className='h-5 w-5' />,
+        active: viewMode === 'workflow',
+        onClick: () => {
+          void (async () => {
+            const canLeave = await confirmLeaveAllEditors({
+              checkAiChat:
+                currentPage === 'home' &&
+                (viewMode !== 'workflow' || workflowScreen === 'business-work'),
+            });
+            if (!canLeave) {
+              return;
+            }
+            setAppModule('workflow');
+            selectWorkflow(null);
+            closeTagPopover();
+            if (currentPage !== 'home') {
+              onNavigate('home');
+            }
           })();
         },
       },
@@ -429,7 +442,9 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
         active: viewMode === 'chat',
         onClick: () => {
           void (async () => {
-            const canLeave = await confirmLeaveAllEditors();
+            const canLeave = await confirmLeaveAllEditors({
+              checkAiChat: currentPage === 'home' && viewMode !== 'chat',
+            });
             if (!canLeave) {
               return;
             }
@@ -448,7 +463,9 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
         active: viewMode === 'toolbox',
         onClick: () => {
           void (async () => {
-            const canLeave = await confirmLeaveAllEditors();
+            const canLeave = await confirmLeaveAllEditors({
+              checkAiChat: currentPage === 'home' && viewMode !== 'toolbox',
+            });
             if (!canLeave) {
               return;
             }
@@ -464,12 +481,14 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
     return hasToolboxModule ? items : items.filter((item) => item.key !== 'toolbox');
   }, [
     viewMode,
+    workflowScreen,
     hasToolboxModule,
     confirmLeaveAllEditors,
     setAppModule,
     currentPage,
     onNavigate,
     selectSkill,
+    selectWorkflow,
   ]);
 
   // Skill tags section settings (mirrors prompt tags behavior)
@@ -666,7 +685,9 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
                     type='text'
                     title={'设置'}
                     onClick={async () => {
-                      if (!(await confirmLeaveAllEditors())) {
+                      if (
+                        !(await confirmLeaveAllEditors({ checkAiChat: currentPage === 'home' }))
+                      ) {
                         return;
                       }
                       onNavigate('settings');

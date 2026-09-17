@@ -1,6 +1,7 @@
 import { ChatProvider, type IAiChatServices } from '@momo/aichat';
 import type { ReactNode } from 'react';
 
+import { useAiChatGenerationReporter } from '@renderer/hooks/useAiChatGenerationActivity';
 import { ModalChatSessionBootstrap } from '../ModalChatSessionBootstrap';
 
 export interface IProps {
@@ -24,12 +25,15 @@ export function AiChatShell({
   className,
   children,
 }: IProps) {
+  const reportGeneration = useAiChatGenerationReporter('prompt');
+
   return (
     <ChatProvider
       key={sessionKey}
       services={services}
       bootstrapSessionId={bootstrapSessionId}
-      bootstrapSessionTitle={bootstrapSessionTitle}>
+      bootstrapSessionTitle={bootstrapSessionTitle}
+      onGenerationStateChange={reportGeneration}>
       {bootstrapSessionId ? <ModalChatSessionBootstrap sessionId={bootstrapSessionId} /> : null}
       <div className={className}>{children}</div>
     </ChatProvider>

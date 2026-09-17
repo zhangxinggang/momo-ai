@@ -1,1 +1,27 @@
-._tag-manage_sn8t1_1{display:flex;flex-direction:column;gap:16px}._tag-manage-select_sn8t1_6{width:100%}._tag-manage-hint_sn8t1_9{color:hsl(var(--muted-foreground));font-size:12px;line-height:1.5}._tag-manage-transfer_sn8t1_14{width:100%}._tag-manage-transfer_sn8t1_14 .ant-transfer{display:flex;width:100%;align-items:stretch}._tag-manage-transfer_sn8t1_14 .ant-transfer-list{flex:1 1 0;width:auto;height:360px;background:hsl(var(--background) / .72)}
+._tag-manage_sn8t1_1 {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+._tag-manage-select_sn8t1_6 {
+  width: 100%;
+}
+._tag-manage-hint_sn8t1_9 {
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  line-height: 1.5;
+}
+._tag-manage-transfer_sn8t1_14 {
+  width: 100%;
+}
+._tag-manage-transfer_sn8t1_14 .ant-transfer {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+}
+._tag-manage-transfer_sn8t1_14 .ant-transfer-list {
+  flex: 1 1 0;
+  width: auto;
+  height: 360px;
+  background: hsl(var(--background) / 0.72);
+}

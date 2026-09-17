@@ -1,5 +1,11 @@
 import fs from 'fs';
+import { spawnSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import path from 'path';
+import {
+  validateActionManifest,
+  validateCallableActionManifest,
+} from '../../agent-runtime/tools/manifest';
 
 import type {
   DCustomToolMeta,
@@ -11,8 +17,16 @@ import { getStaticDir, getToolsDir } from '../../runtime-paths';
 
 const TOOL_META_FILE = 'tool.json';
 const TOOL_ENTRY_FILE = 'index.html';
-const TOOL_META_VERSION = 2;
-const TOOL_SUBDIRECTORIES = ['assets', 'backend', 'scripts', 'mcp', 'skills', 'data'] as const;
+const TOOL_SUBDIRECTORIES = [
+  'assets',
+  'backend',
+  'scripts',
+  'actions',
+  'lib',
+  'mcp',
+  'skills',
+  'data',
+] as const;
 const MAX_GENERATED_FILE_BYTES = 2 * 1024 * 1024;
 const MAX_GENERATED_BUNDLE_BYTES = 20 * 1024 * 1024;
 const MAX_CONTEXT_FILE_BYTES = 96 * 1024;
@@ -97,14 +111,19 @@ function readToolMeta(dirAbs: string): DCustomToolMeta | null {
   }
   try {
     const raw = JSON.parse(fs.readFileSync(metaPath, 'utf-8')) as Partial<DCustomToolMeta>;
-    if (raw?.kind !== 'tool') {
+    if (raw?.kind !== 'tool' || 'version' in raw || 'packageVersion' in raw) {
       return null;
     }
+    validateActionManifest(raw);
     const service = raw.service;
     const runtime = service?.runtime;
     return {
       kind: 'tool',
-      version: typeof raw.version === 'number' ? raw.version : TOOL_META_VERSION,
+      id: raw.id!,
+      name: typeof raw.name === 'string' ? raw.name.trim() : undefined,
+      description: typeof raw.description === 'string' ? raw.description.trim() : undefined,
+      aliases: Array.isArray(raw.aliases) ? raw.aliases.map((item) => item.trim()) : undefined,
+      actions: raw.actions!,
       entry: typeof raw.entry === 'string' && raw.entry.trim() ? raw.entry : TOOL_ENTRY_FILE,
       service:
         runtime === 'node' || runtime === 'python'
@@ -158,10 +177,13 @@ function assertParentIsOrgFolder(parentAbs: string, parentRel: string): void {
   }
 }
 
-function writeToolMeta(dirAbs: string): void {
+function writeToolMeta(dirAbs: string, displayName: string): void {
   const meta: DCustomToolMeta = {
     kind: 'tool',
-    version: TOOL_META_VERSION,
+    id: randomUUID(),
+    name: displayName,
+    aliases: [displayName],
+    actions: [],
     entry: TOOL_ENTRY_FILE,
     service: { runtime: 'none' },
     permissions: { mcp: [], skills: [] },
@@ -268,7 +290,7 @@ export class CustomToolWorkspaceService {
     const finalName = uniqueDirName(parentAbs, baseName);
     const abs = path.join(parentAbs, finalName);
     fs.mkdirSync(abs, { recursive: true });
-    writeToolMeta(abs);
+    writeToolMeta(abs, finalName);
     for (const dirName of TOOL_SUBDIRECTORIES) {
       fs.mkdirSync(path.join(abs, dirName), { recursive: true });
     }
@@ -330,7 +352,11 @@ export class CustomToolWorkspaceService {
    * 写入 AI 生成的多文件产物。文件路径只允许位于当前工具包内，且限制单文件/总大小。
    * 未包含 index.html 时保留现有页面，避免异常模型输出清空工具。
    */
-  writeGeneratedFiles(relativePath: string, files: ICustomToolGeneratedFile[]): void {
+  writeGeneratedFiles(
+    relativePath: string,
+    files: ICustomToolGeneratedFile[],
+    options?: { requireCallable?: boolean },
+  ): void {
     const toolAbs = this.resolveToolDirectory(relativePath);
     const seen = new Set<string>();
     let totalBytes = 0;
@@ -362,14 +388,78 @@ export class CustomToolWorkspaceService {
       return { filePath, targetAbs, content: file.content };
     });
 
-    for (const file of normalizedFiles) {
-      fs.mkdirSync(path.dirname(file.targetAbs), { recursive: true });
-      fs.writeFileSync(file.targetAbs, file.content, 'utf-8');
+    const manifestFile = normalizedFiles.find((file) => file.filePath === 'tool.json');
+    const candidate = manifestFile ? JSON.parse(manifestFile.content) : readToolMeta(toolAbs);
+    if (!candidate || 'version' in candidate || 'packageVersion' in candidate)
+      throw new Error('工具规范不支持版本字段');
+    const manifest = options?.requireCallable
+      ? validateCallableActionManifest(candidate)
+      : validateActionManifest(candidate);
+    const previousMeta = readToolMeta(toolAbs);
+    if (previousMeta && previousMeta.id !== manifest.id) throw new Error('工具 id 必须保持稳定');
+    for (const action of manifest.actions) {
+      if (action.executor.runtime === 'http') continue;
+      const entry = action.executor.entry!;
+      const generated = normalizedFiles.find((file) => file.filePath === entry);
+      if (!generated && !fs.existsSync(path.join(toolAbs, entry)))
+        throw new Error('Action 入口不存在：' + entry);
     }
-
-    // tool.json 必须始终保持可识别；无效模型输出直接回退成静态 v2 manifest。
-    if (!readToolMeta(toolAbs)) {
-      writeToolMeta(toolAbs);
+    // Validate the complete proposal before publishing any generated file; the manifest is published last.
+    normalizedFiles.sort(
+      (a, b) => Number(a.filePath === 'tool.json') - Number(b.filePath === 'tool.json'),
+    );
+    for (const file of normalizedFiles) {
+      if (
+        /\.(mjs|cjs|js)$/.test(file.filePath) &&
+        /^(actions|backend|lib|scripts)\//.test(file.filePath)
+      ) {
+        const syntax = spawnSync(
+          process.execPath,
+          ['--check', '--input-type=' + (file.filePath.endsWith('.cjs') ? 'commonjs' : 'module')],
+          {
+            input: file.content,
+            encoding: 'utf8',
+            windowsHide: true,
+            timeout: 10000,
+            env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+          },
+        );
+        if (syntax.status !== 0) throw new Error('工具代码语法错误：' + file.filePath);
+      }
+      const parent = path.dirname(file.targetAbs);
+      let ancestor = parent;
+      while (!fs.existsSync(ancestor)) ancestor = path.dirname(ancestor);
+      const realRoot = fs.realpathSync(toolAbs);
+      const relativeParent = path.relative(realRoot, fs.realpathSync(ancestor));
+      if (
+        relativeParent.startsWith('..') ||
+        path.isAbsolute(relativeParent) ||
+        (fs.existsSync(file.targetAbs) && fs.lstatSync(file.targetAbs).isSymbolicLink())
+      )
+        throw new Error('工具路径包含外部链接');
+    }
+    const before = normalizedFiles.map((file) => ({
+      file,
+      bytes: fs.existsSync(file.targetAbs) ? fs.readFileSync(file.targetAbs) : null,
+    }));
+    const staged: string[] = [];
+    try {
+      for (const file of normalizedFiles) {
+        fs.mkdirSync(path.dirname(file.targetAbs), { recursive: true });
+        const temporary = file.targetAbs + '.harness-' + randomUUID();
+        staged.push(temporary);
+        fs.writeFileSync(temporary, file.content, 'utf8');
+      }
+      for (let i = 0; i < normalizedFiles.length; i++)
+        fs.renameSync(staged[i], normalizedFiles[i].targetAbs);
+    } catch (error) {
+      for (const old of before) {
+        if (old.bytes) fs.writeFileSync(old.file.targetAbs, old.bytes);
+        else if (fs.existsSync(old.file.targetAbs)) fs.unlinkSync(old.file.targetAbs);
+      }
+      throw error;
+    } finally {
+      for (const file of staged) if (fs.existsSync(file)) fs.unlinkSync(file);
     }
   }
 

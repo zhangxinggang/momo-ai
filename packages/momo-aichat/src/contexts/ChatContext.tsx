@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import type { IAiChatServices } from '../adapters/types';
 import { useChatSessions } from '../hooks/useChatSessions';
 import type { IChatContext } from '../types/chat';
@@ -15,6 +15,8 @@ export interface IProps {
   bootstrapSessionId?: string | null;
   /** bootstrap 会话标题；空会话不落库，首条消息时使用 */
   bootstrapSessionTitle?: string | null;
+  /** 任一会话开始或结束生成时通知宿主，用于离开页面保护等宿主级交互。 */
+  onGenerationStateChange?: (isGenerating: boolean) => void;
 }
 
 export const ChatProvider: React.FC<IProps> = ({
@@ -22,12 +24,14 @@ export const ChatProvider: React.FC<IProps> = ({
   services,
   bootstrapSessionId,
   bootstrapSessionTitle,
+  onGenerationStateChange,
 }) => {
   return (
     <AiChatConfigProvider services={services}>
       <ChatProviderInner
         bootstrapSessionId={bootstrapSessionId}
-        bootstrapSessionTitle={bootstrapSessionTitle}>
+        bootstrapSessionTitle={bootstrapSessionTitle}
+        onGenerationStateChange={onGenerationStateChange}>
         {children}
       </ChatProviderInner>
     </AiChatConfigProvider>
@@ -38,8 +42,18 @@ const ChatProviderInner: React.FC<{
   children: ReactNode;
   bootstrapSessionId?: string | null;
   bootstrapSessionTitle?: string | null;
-}> = ({ children, bootstrapSessionId, bootstrapSessionTitle }) => {
+  onGenerationStateChange?: (isGenerating: boolean) => void;
+}> = ({ children, bootstrapSessionId, bootstrapSessionTitle, onGenerationStateChange }) => {
   const chatState = useChatSessions({ bootstrapSessionId, bootstrapSessionTitle });
+  const isGenerating = chatState.sessions.some(
+    (session) => session.isLoading || session.messages.some((message) => message.isLoading),
+  );
+
+  useEffect(() => {
+    onGenerationStateChange?.(isGenerating);
+    return () => onGenerationStateChange?.(false);
+  }, [isGenerating, onGenerationStateChange]);
+
   return <ChatContext.Provider value={chatState}>{children}</ChatContext.Provider>;
 };
 

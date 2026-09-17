@@ -1,5 +1,25 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./ofd-CI17itdp.js","./jszip.min-DnpxAPiE.js","./ui-vendor-C-FKu2uc.js","./markdown-vendor-DldLOD9R.js","./markdown-it-vendor-DL4wSELR.js","./markdown-vendor-CmuYMs8x.css"])))=>i.map(i=>d[i]);
-import{_ as H}from"./markdown-vendor-DldLOD9R.js";import{aQ as V,b5 as I,ad as N}from"./index-C2avURFS.js";import"./ui-vendor-C-FKu2uc.js";import"./markdown-it-vendor-DL4wSELR.js";import"./icons-B5Lu0sqU.js";const k=.35,C=3,z=.1,$=`
+const __vite__mapDeps = (
+  i,
+  m = __vite__mapDeps,
+  d = m.f ||
+    (m.f = [
+      './ofd-CI17itdp.js',
+      './jszip.min-DnpxAPiE.js',
+      './ui-vendor-C-FKu2uc.js',
+      './markdown-vendor-DldLOD9R.js',
+      './markdown-it-vendor-DL4wSELR.js',
+      './markdown-vendor-CmuYMs8x.css',
+    ]),
+) => i.map((i) => d[i]);
+import './icons-B5Lu0sqU.js';
+import { b5 as I, ad as N, aQ as V } from './index-C2avURFS.js';
+import './markdown-it-vendor-DL4wSELR.js';
+import { _ as H } from './markdown-vendor-DldLOD9R.js';
+import './ui-vendor-C-FKu2uc.js';
+const k = 0.35,
+  C = 3,
+  z = 0.1,
+  $ = `
 .ofd-viewer{position:relative;box-sizing:border-box;min-height:100%;background:#e9edf2;color:#172033;font-family:Aptos,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif}
 .ofd-viewer *{box-sizing:border-box}
 .ofd-stage{min-height:100%;padding:18px 0 28px;overflow:auto;scrollbar-gutter:stable}
@@ -12,4 +32,197 @@ import{_ as H}from"./markdown-vendor-DldLOD9R.js";import{aQ as V,b5 as I,ad as N
 .file-viewer[data-viewer-theme='dark'] .ofd-state{background:rgba(15,23,42,.9);color:#cbd5e1}
 @media (prefers-color-scheme:dark){.file-viewer[data-viewer-theme='system'] .ofd-viewer{background:#172033;color:#e5eef8}.file-viewer[data-viewer-theme='system'] .ofd-state{background:rgba(15,23,42,.9);color:#cbd5e1}}
 @media print{.ofd-viewer{background:#fff!important}.ofd-stage{padding:0!important;overflow:visible!important}.ofd-page-frame{break-after:page;page-break-after:always;margin:0 auto!important}.ofd-page-frame:last-child{break-after:auto;page-break-after:auto}.ofd-page{box-shadow:none!important;transition:none!important}}
-`,q=(()=>{let e=null;return()=>(e||(e=H(()=>import("./ofd-CI17itdp.js"),__vite__mapDeps([0,1,2,3,4,5]),import.meta.url)),e)})(),J=e=>{const n=e.createElement("style");return n.textContent=$,n},M=(e,n,i,a)=>{const t=e.createElement(n);return i&&(t.className=i),a!==void 0&&(t.textContent=a),t},B=e=>{if(e instanceof Error)return e.message;if(typeof e=="string")return e;try{return JSON.stringify(e)}catch{return String(e||"OFD 文件解析失败")}},X=e=>Math.min(C,Math.max(k,Number(e.toFixed(2)))),L=e=>new Promise(n=>{if(e?.requestAnimationFrame){e.requestAnimationFrame(()=>n());return}globalThis.setTimeout(n,0)}),j=(e,n)=>new Promise((i,a)=>{e.parseOfdDocument({ofd:n,success:t=>i(t),fail:t=>a(t)})}),Q=(e,n,i)=>{const a=e.createDocumentFragment();i.forEach(t=>{const f=e.createElement("div");f.className="ofd-page-frame",t.classList.add("ofd-page"),f.appendChild(t),a.appendChild(f)}),n.appendChild(a)};async function te(e,n,i){const a=n.ownerDocument||document,t=a.defaultView||(typeof window<"u"?window:null),f=N();let g=!1,b=0,m=null,y=0,D=0,l="loading",O="",d=1,E=null;const T=J(a),c=M(a,"div","ofd-viewer");c.dataset.viewerZoomProvider="ofd";const p=M(a,"div","ofd-state","正在解析 OFD...");p.setAttribute("aria-live","polite");const v=M(a,"div","ofd-stage");c.append(p,v),n.replaceChildren(T,c);const x=()=>{v.replaceChildren()},F=()=>{p.hidden=l==="ready",p.classList.toggle("error",l==="error"),p.textContent=l==="error"?O:"正在解析 OFD..."},Z=async r=>(E||(E=j(r,e).then(s=>{const o=s[0];if(!o)throw new Error("OFD 文件中没有可渲染的文档");return o})),E),R=()=>{const r=c.getBoundingClientRect().width||v.getBoundingClientRect().width||0;return Math.max(Math.floor(r-48),240)},P=()=>({scale:d,label:`${Math.round(d*100)}%`,canZoomIn:d<C,canZoomOut:d>k,canReset:d!==1,minScale:k,maxScale:C}),S=()=>{const r=t?.HTMLElement||globalThis.HTMLElement;v.querySelectorAll(".ofd-page-frame").forEach(s=>{const o=s.firstElementChild;if(!r||!(o instanceof r))return;o.style.position="absolute",o.style.top="0",o.style.left="50%",o.style.transform=`translateX(-50%) scale(${d})`,o.style.transformOrigin="top center",o.style.marginLeft="0",o.style.marginRight="0";const h=o.offsetWidth,u=o.offsetHeight;!h||!u||(s.style.width=`${Math.ceil(h*d)}px`,s.style.height=`${Math.ceil(u*d)}px`)})},w=r=>(d=X(r),S(),f.emit(),P());V(c,{zoomIn:()=>w(d+z),zoomOut:()=>w(d-z),resetZoom:()=>w(1),setZoom:w,getState:P,subscribe:f.subscribe});const A=async r=>{const s=await q(),o=await Z(s);return g?[]:Promise.resolve(s.renderOfd(r,o))},_=async(r={})=>{var s;if(g)return;const o=R();if(!r.force&&l==="ready"&&Math.abs(o-D)<8)return;const h=++b;(r.showLoading||l!=="ready")&&(l="loading",x(),F()),O="";try{await L(t);const u=await A(o);if(g||h!==b)return;x(),Q(a,v,u),D=o,await L(t),S(),l="ready",F(),f.emit(),(s=i?.onProgressiveRender)===null||s===void 0||s.call(i)}catch(u){if(g||h!==b)return;console.error(u),l="error",O=B(u)||"OFD 文件解析失败",F()}},W=()=>{!t?.ResizeObserver||m||(m=new t.ResizeObserver(()=>{t.clearTimeout(y),y=t.setTimeout(()=>{_({showLoading:!1})},180)}),m.observe(c))};return _({force:!0,showLoading:!0}).finally(()=>{g||W()}),{$el:c,unmount(){var r;g=!0,b+=1,t?.clearTimeout(y),m?.disconnect(),m=null,I(c),x(),(r=i?.registerExportAdapter)===null||r===void 0||r.call(i,null)}}}export{te as default};
+`,
+  q = (() => {
+    let e = null;
+    return () => (
+      e ||
+        (e = H(
+          () => import('./ofd-CI17itdp.js'),
+          __vite__mapDeps([0, 1, 2, 3, 4, 5]),
+          import.meta.url,
+        )),
+      e
+    );
+  })(),
+  J = (e) => {
+    const n = e.createElement('style');
+    return ((n.textContent = $), n);
+  },
+  M = (e, n, i, a) => {
+    const t = e.createElement(n);
+    return (i && (t.className = i), a !== void 0 && (t.textContent = a), t);
+  },
+  B = (e) => {
+    if (e instanceof Error) return e.message;
+    if (typeof e == 'string') return e;
+    try {
+      return JSON.stringify(e);
+    } catch {
+      return String(e || 'OFD 文件解析失败');
+    }
+  },
+  X = (e) => Math.min(C, Math.max(k, Number(e.toFixed(2)))),
+  L = (e) =>
+    new Promise((n) => {
+      if (e?.requestAnimationFrame) {
+        e.requestAnimationFrame(() => n());
+        return;
+      }
+      globalThis.setTimeout(n, 0);
+    }),
+  j = (e, n) =>
+    new Promise((i, a) => {
+      e.parseOfdDocument({ ofd: n, success: (t) => i(t), fail: (t) => a(t) });
+    }),
+  Q = (e, n, i) => {
+    const a = e.createDocumentFragment();
+    (i.forEach((t) => {
+      const f = e.createElement('div');
+      ((f.className = 'ofd-page-frame'),
+        t.classList.add('ofd-page'),
+        f.appendChild(t),
+        a.appendChild(f));
+    }),
+      n.appendChild(a));
+  };
+async function te(e, n, i) {
+  const a = n.ownerDocument || document,
+    t = a.defaultView || (typeof window < 'u' ? window : null),
+    f = N();
+  let g = !1,
+    b = 0,
+    m = null,
+    y = 0,
+    D = 0,
+    l = 'loading',
+    O = '',
+    d = 1,
+    E = null;
+  const T = J(a),
+    c = M(a, 'div', 'ofd-viewer');
+  c.dataset.viewerZoomProvider = 'ofd';
+  const p = M(a, 'div', 'ofd-state', '正在解析 OFD...');
+  p.setAttribute('aria-live', 'polite');
+  const v = M(a, 'div', 'ofd-stage');
+  (c.append(p, v), n.replaceChildren(T, c));
+  const x = () => {
+      v.replaceChildren();
+    },
+    F = () => {
+      ((p.hidden = l === 'ready'),
+        p.classList.toggle('error', l === 'error'),
+        (p.textContent = l === 'error' ? O : '正在解析 OFD...'));
+    },
+    Z = async (r) => (
+      E ||
+        (E = j(r, e).then((s) => {
+          const o = s[0];
+          if (!o) throw new Error('OFD 文件中没有可渲染的文档');
+          return o;
+        })),
+      E
+    ),
+    R = () => {
+      const r = c.getBoundingClientRect().width || v.getBoundingClientRect().width || 0;
+      return Math.max(Math.floor(r - 48), 240);
+    },
+    P = () => ({
+      scale: d,
+      label: `${Math.round(d * 100)}%`,
+      canZoomIn: d < C,
+      canZoomOut: d > k,
+      canReset: d !== 1,
+      minScale: k,
+      maxScale: C,
+    }),
+    S = () => {
+      const r = t?.HTMLElement || globalThis.HTMLElement;
+      v.querySelectorAll('.ofd-page-frame').forEach((s) => {
+        const o = s.firstElementChild;
+        if (!r || !(o instanceof r)) return;
+        ((o.style.position = 'absolute'),
+          (o.style.top = '0'),
+          (o.style.left = '50%'),
+          (o.style.transform = `translateX(-50%) scale(${d})`),
+          (o.style.transformOrigin = 'top center'),
+          (o.style.marginLeft = '0'),
+          (o.style.marginRight = '0'));
+        const h = o.offsetWidth,
+          u = o.offsetHeight;
+        !h ||
+          !u ||
+          ((s.style.width = `${Math.ceil(h * d)}px`), (s.style.height = `${Math.ceil(u * d)}px`));
+      });
+    },
+    w = (r) => ((d = X(r)), S(), f.emit(), P());
+  V(c, {
+    zoomIn: () => w(d + z),
+    zoomOut: () => w(d - z),
+    resetZoom: () => w(1),
+    setZoom: w,
+    getState: P,
+    subscribe: f.subscribe,
+  });
+  const A = async (r) => {
+      const s = await q(),
+        o = await Z(s);
+      return g ? [] : Promise.resolve(s.renderOfd(r, o));
+    },
+    _ = async (r = {}) => {
+      var s;
+      if (g) return;
+      const o = R();
+      if (!r.force && l === 'ready' && Math.abs(o - D) < 8) return;
+      const h = ++b;
+      ((r.showLoading || l !== 'ready') && ((l = 'loading'), x(), F()), (O = ''));
+      try {
+        await L(t);
+        const u = await A(o);
+        if (g || h !== b) return;
+        (x(),
+          Q(a, v, u),
+          (D = o),
+          await L(t),
+          S(),
+          (l = 'ready'),
+          F(),
+          f.emit(),
+          (s = i?.onProgressiveRender) === null || s === void 0 || s.call(i));
+      } catch (u) {
+        if (g || h !== b) return;
+        (console.error(u), (l = 'error'), (O = B(u) || 'OFD 文件解析失败'), F());
+      }
+    },
+    W = () => {
+      !t?.ResizeObserver ||
+        m ||
+        ((m = new t.ResizeObserver(() => {
+          (t.clearTimeout(y),
+            (y = t.setTimeout(() => {
+              _({ showLoading: !1 });
+            }, 180)));
+        })),
+        m.observe(c));
+    };
+  return (
+    _({ force: !0, showLoading: !0 }).finally(() => {
+      g || W();
+    }),
+    {
+      $el: c,
+      unmount() {
+        var r;
+        ((g = !0),
+          (b += 1),
+          t?.clearTimeout(y),
+          m?.disconnect(),
+          (m = null),
+          I(c),
+          x(),
+          (r = i?.registerExportAdapter) === null || r === void 0 || r.call(i, null));
+      },
+    }
+  );
+}
+export { te as default };

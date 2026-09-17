@@ -1,18 +1,1188 @@
-import{q as e}from"./markdown-vendor-DldLOD9R.js";import{ci as _e,cj as Ce,ck as se,cl as Se,cm as ae,bp as re,cn as Ne,co as Ee,cp as Pe,cq as Ie,bL as ie,cr as Me,cs as Te,ct as ze,cu as Le,cv as Ae,cw as Oe,cx as De,cy as Re,cz as Fe,cA as Ke}from"./index-C2avURFS.js";import{i as Q,j as Ue,n as $e,P as Be,r as a,o as oe,e as O,p as le,C as ce,q as G,B as w,M as U,s as We,U as He,A as pe,t as de,u as me}from"./ui-vendor-C-FKu2uc.js";import{v as ue,w as qe,x as Ge,y as Ze,S as he,b as Je}from"./icons-B5Lu0sqU.js";import"./markdown-it-vendor-DL4wSELR.js";const Qe=/https?:\/\/[^\s]+/gi,Xe=/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;function Ve(s,n){let m=s;return n.normalizeWhitespace&&(m=m.replace(/[ \t]+/g," ").replace(/\n{3,}/g,`
+import { x as Ge, S as he, b as Je, w as qe, v as ue, y as Ze } from './icons-B5Lu0sqU.js';
+import {
+  ci as _e,
+  cm as ae,
+  cv as Ae,
+  cj as Ce,
+  cx as De,
+  co as Ee,
+  cz as Fe,
+  cq as Ie,
+  bL as ie,
+  cA as Ke,
+  cu as Le,
+  cr as Me,
+  cn as Ne,
+  cw as Oe,
+  cp as Pe,
+  bp as re,
+  cy as Re,
+  ck as se,
+  cl as Se,
+  cs as Te,
+  ct as ze,
+} from './index-C2avURFS.js';
+import './markdown-it-vendor-DL4wSELR.js';
+import { q as e } from './markdown-vendor-DldLOD9R.js';
+import {
+  n as $e,
+  r as a,
+  P as Be,
+  C as ce,
+  t as de,
+  q as G,
+  U as He,
+  p as le,
+  u as me,
+  e as O,
+  o as oe,
+  A as pe,
+  i as Q,
+  M as U,
+  j as Ue,
+  B as w,
+  s as We,
+} from './ui-vendor-C-FKu2uc.js';
+const Qe = /https?:\/\/[^\s]+/gi,
+  Xe = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+function Ve(s, n) {
+  let m = s;
+  return (
+    n.normalizeWhitespace &&
+      (m = m
+        .replace(/[ \t]+/g, ' ')
+        .replace(
+          /\n{3,}/g,
+          `
 
-`).replace(/\t/g," ")),n.removeUrlsAndEmails&&(m=m.replace(Qe,"").replace(Xe,"")),m.trim()}function Ye(s){const n=s==="\\n\\n"?`
+`,
+        )
+        .replace(/\t/g, ' ')),
+    n.removeUrlsAndEmails && (m = m.replace(Qe, '').replace(Xe, '')),
+    m.trim()
+  );
+}
+function Ye(s) {
+  const n =
+    s === '\\n\\n'
+      ? `
 
-`:s;return n?n===`
+`
+      : s;
+  return n
+    ? n ===
+      `
 
-`?[`
+`
+      ? [
+          `
 
-`,`
-`," ",""]:[n,`
+`,
+          `
+`,
+          ' ',
+          '',
+        ]
+      : [
+          n,
+          `
 
-`,`
-`," ",""]:[`
+`,
+          `
+`,
+          ' ',
+          '',
+        ]
+    : [
+        `
 
-`,`
-`," ",""]}function et(s,n){let m=0;return n.map((u,p)=>{const c=s.indexOf(u,m),r=c>=0?c:m,l=r+u.length;return m=l,{idx:p+1,content:u,tokens:Math.ceil(u.length/4),start_pos:r,end_pos:l}})}async function tt(s,n){const m=Ve(s,n.preprocess),u=Math.max(200,n.maxChunkLength),p=Math.min(n.chunkOverlap,Math.floor(u/2)),c=await _e(m,{chunkSize:u,chunkOverlap:p,separators:Ye(n.separator)});return et(m,c)}async function nt(s,n,m=5){return(await tt(s,n)).slice(0,m)}function st({documents:s,loading:n=!1,onRowClick:m,onSegmentSettings:u,onDelete:p}){const c={fixed:"固定",general:"通用"};return e.jsx(Q,{rowKey:"id",loading:n,dataSource:[...s].sort((r,l)=>l.uploadedAt-r.uploadedAt),pagination:{pageSize:10,showSizeChanger:!0},onRow:r=>({onClick:()=>m?.(r)}),columns:[{title:"名称",dataIndex:"name",ellipsis:!0},{title:"状态",dataIndex:"status",width:150,render:(r,l)=>e.jsx(Ue,{title:l.error,children:e.jsxs("span",{children:[e.jsx($e,{color:r==="ready"?"green":r==="failed"?"red":"blue",children:r}),["ready","failed","interrupted","manual_conflict"].includes(r)?null:e.jsx(Be,{percent:l.progress,size:"small",showInfo:!1})]})})},{title:"分段数",dataIndex:"chunkCount",width:88},{title:"分段模式",dataIndex:"segmentMode",render:r=>c[r]??r},{title:"上传时间",dataIndex:"uploadedAt",render:r=>new Date(r).toLocaleString(),defaultSortOrder:"descend",sorter:(r,l)=>l.uploadedAt-r.uploadedAt},{title:"操作",key:"actions",width:160,render:(r,l)=>e.jsxs("span",{className:"flex gap-2",onClick:x=>x.stopPropagation(),children:[u?e.jsx("button",{type:"button",onClick:x=>{x.stopPropagation(),u(l)},children:"分段设置"}):null,p?e.jsx("button",{type:"button",onClick:x=>{x.stopPropagation(),p(l)},children:"删除"}):null]})}]})}const at={separator:`
+`,
+        `
+`,
+        ' ',
+        '',
+      ];
+}
+function et(s, n) {
+  let m = 0;
+  return n.map((u, p) => {
+    const c = s.indexOf(u, m),
+      r = c >= 0 ? c : m,
+      l = r + u.length;
+    return (
+      (m = l),
+      { idx: p + 1, content: u, tokens: Math.ceil(u.length / 4), start_pos: r, end_pos: l }
+    );
+  });
+}
+async function tt(s, n) {
+  const m = Ve(s, n.preprocess),
+    u = Math.max(200, n.maxChunkLength),
+    p = Math.min(n.chunkOverlap, Math.floor(u / 2)),
+    c = await _e(m, { chunkSize: u, chunkOverlap: p, separators: Ye(n.separator) });
+  return et(m, c);
+}
+async function nt(s, n, m = 5) {
+  return (await tt(s, n)).slice(0, m);
+}
+function st({ documents: s, loading: n = !1, onRowClick: m, onSegmentSettings: u, onDelete: p }) {
+  const c = { fixed: '固定', general: '通用' };
+  return e.jsx(Q, {
+    rowKey: 'id',
+    loading: n,
+    dataSource: [...s].sort((r, l) => l.uploadedAt - r.uploadedAt),
+    pagination: { pageSize: 10, showSizeChanger: !0 },
+    onRow: (r) => ({ onClick: () => m?.(r) }),
+    columns: [
+      { title: '名称', dataIndex: 'name', ellipsis: !0 },
+      {
+        title: '状态',
+        dataIndex: 'status',
+        width: 150,
+        render: (r, l) =>
+          e.jsx(Ue, {
+            title: l.error,
+            children: e.jsxs('span', {
+              children: [
+                e.jsx($e, {
+                  color: r === 'ready' ? 'green' : r === 'failed' ? 'red' : 'blue',
+                  children: r,
+                }),
+                ['ready', 'failed', 'interrupted', 'manual_conflict'].includes(r)
+                  ? null
+                  : e.jsx(Be, { percent: l.progress, size: 'small', showInfo: !1 }),
+              ],
+            }),
+          }),
+      },
+      { title: '分段数', dataIndex: 'chunkCount', width: 88 },
+      { title: '分段模式', dataIndex: 'segmentMode', render: (r) => c[r] ?? r },
+      {
+        title: '上传时间',
+        dataIndex: 'uploadedAt',
+        render: (r) => new Date(r).toLocaleString(),
+        defaultSortOrder: 'descend',
+        sorter: (r, l) => l.uploadedAt - r.uploadedAt,
+      },
+      {
+        title: '操作',
+        key: 'actions',
+        width: 160,
+        render: (r, l) =>
+          e.jsxs('span', {
+            className: 'flex gap-2',
+            onClick: (x) => x.stopPropagation(),
+            children: [
+              u
+                ? e.jsx('button', {
+                    type: 'button',
+                    onClick: (x) => {
+                      (x.stopPropagation(), u(l));
+                    },
+                    children: '分段设置',
+                  })
+                : null,
+              p
+                ? e.jsx('button', {
+                    type: 'button',
+                    onClick: (x) => {
+                      (x.stopPropagation(), p(l));
+                    },
+                    children: '删除',
+                  })
+                : null,
+            ],
+          }),
+      },
+    ],
+  });
+}
+const at = {
+  separator: `
 
-`,maxChunkLength:500,chunkOverlap:100,preprocess:{normalizeWhitespace:!0,removeUrlsAndEmails:!1},splitMode:"code"};function rt({value:s,onChange:n,previewBlocks:m=[],onPreview:u,previewDisabled:p=!1}){const[c,r]=a.useState(!1),[l,x]=a.useState(!1),[v,j]=a.useState(m),g=d=>n({...s,...d}),S=async()=>{if(!u){r(!0),j(m);return}x(!0);try{const d=await u();j(d),r(!0)}finally{x(!1)}};return e.jsxs("div",{className:"space-y-4",children:[e.jsxs("div",{children:[e.jsx("div",{className:"mb-2 text-sm font-medium",children:"分段设置"}),e.jsxs(oe,{direction:"vertical",className:"w-full",size:"middle",children:[e.jsxs("div",{children:[e.jsx("div",{className:"text-muted-foreground mb-1 text-xs",children:"分段标识符"}),e.jsx(O,{value:s.separator,onChange:d=>g({separator:d.target.value}),placeholder:"\\n\\n"})]}),e.jsxs("div",{className:"flex flex-wrap gap-4",children:[e.jsxs("div",{children:[e.jsx("div",{className:"text-muted-foreground mb-1 text-xs",children:"分段最大长度（字符）"}),e.jsx(le,{min:200,max:8e3,value:s.maxChunkLength,onChange:d=>g({maxChunkLength:Number(d)||1024})})]}),e.jsxs("div",{children:[e.jsx("div",{className:"text-muted-foreground mb-1 text-xs",children:"分组重叠长度（字符）"}),e.jsx(le,{min:0,max:500,value:s.chunkOverlap,onChange:d=>g({chunkOverlap:Number(d)||0})})]})]})]})]}),e.jsxs("div",{children:[e.jsx("div",{className:"mb-2 text-sm font-medium",children:"文本预处理规则"}),e.jsxs(oe,{direction:"vertical",children:[e.jsx(ce,{checked:s.preprocess.normalizeWhitespace,onChange:d=>g({preprocess:{...s.preprocess,normalizeWhitespace:d.target.checked}}),children:"替换掉连续的空格、换行符和制表符"}),e.jsx(ce,{checked:s.preprocess.removeUrlsAndEmails,onChange:d=>g({preprocess:{...s.preprocess,removeUrlsAndEmails:d.target.checked}}),children:"删除所有的 URL 和电子邮件"})]})]}),e.jsxs("div",{children:[e.jsx("div",{className:"mb-2 text-sm font-medium",children:"切分设置"}),e.jsxs(G.Group,{value:s.splitMode,onChange:d=>g({splitMode:d.target.value}),children:[e.jsx(G,{value:"code",children:"代码切分"}),e.jsx(G,{value:"llm",children:"大语言模型切分"})]}),s.splitMode==="llm"?e.jsx("div",{className:"text-muted-foreground mt-2 text-xs",children:"将调用场景默认模型「文本切分」所配置的对话模型，按语义边界切分文本；失败时自动回退代码切分。"}):null]}),e.jsxs("div",{children:[e.jsx(w,{type:"default",loading:l,disabled:p,onClick:()=>{S()},children:"预览分段"}),c?e.jsx("div",{className:"mt-3 max-h-64 space-y-2 overflow-auto rounded border p-2 text-xs",children:v.length>0?v.map(d=>e.jsxs("div",{className:"rounded border border-dashed p-2",children:[e.jsxs("div",{className:"text-muted-foreground mb-1 font-medium",children:["块 ",d.idx]}),e.jsxs("pre",{className:"whitespace-pre-wrap break-words",children:[d.content.slice(0,400),d.content.length>400?"...":""]})]},d.idx)):e.jsx("div",{className:"text-muted-foreground py-4 text-center",children:"暂无预览内容"})}):null]})]})}const it=".pdf,.docx,.xlsx,.xls,.txt,.md,.markdown";function ot({open:s,onClose:n,onUploadAndIngest:m,initialSegmentSettings:u=at,onPreviewSegments:p}){const[c,r]=a.useState("datasource"),[l,x]=a.useState([]),[v,j]=a.useState(u),[g,S]=a.useState(!1),[d,N]=a.useState(""),P=v.splitMode==="llm"?"general":"fixed",[A,I]=a.useState([]);a.useEffect(()=>{if(!d.trim()){I([]);return}let k=!1;return nt(d,v,8).then(y=>{k||I(y.map(f=>({idx:f.idx,content:f.content})))}),()=>{k=!0}},[d,v]);const C=c==="datasource"?0:c==="segment"?1:2,E=()=>{r("datasource"),x([]),N(""),n()},T=async k=>{const y=k.name.split(".").pop()?.toLowerCase()??"";if(["txt","md","markdown"].includes(y)){N(await k.text());return}N("")},M=async()=>{const k=l[0];return k?p?p(k,v):A:[]};return e.jsxs(U,{open:s,title:"添加文档",width:880,onCancel:E,footer:null,destroyOnHidden:!0,children:[e.jsx(We,{current:C,className:"mb-6",items:[{title:"选择数据源"},{title:"文本分段与清洗"},{title:"处理并入库"}]}),c==="datasource"?e.jsx("div",{className:"space-y-4",children:e.jsx(He.Dragger,{multiple:!0,accept:it,beforeUpload:()=>!1,fileList:l.map((k,y)=>({uid:String(y),name:k.name,status:"done"})),onChange:k=>{const y=(k.fileList??[]).map(f=>f.originFileObj).filter(f=>!!f);x(y),y[0]?T(y[0]):N("")},children:e.jsx("p",{children:"点击或拖拽上传 PDF、DOCX、Excel、TXT、Markdown"})})}):null,c==="segment"?e.jsx(rt,{value:v,onChange:j,previewBlocks:A,previewDisabled:l.length===0,onPreview:M}):null,c==="ingest"?e.jsxs("p",{className:"text-sm",children:["将处理 ",l.length," 个文件，分段模式：",P==="general"?"通用（大语言模型切分）":"固定","，完成后可在列表中查看切块。"]}):null,e.jsxs("div",{className:"mt-6 flex justify-end gap-2",children:[e.jsx(w,{onClick:E,children:"取消"}),C>0?e.jsx(w,{onClick:()=>r(C===1?"datasource":"segment"),children:"上一步"}):null,C<2?e.jsx(w,{type:"primary",disabled:C===0&&l.length===0,onClick:()=>r(C===0?"segment":"ingest"),children:"下一步"}):e.jsx(w,{type:"primary",loading:g,disabled:l.length===0,onClick:()=>{S(!0),m(l,v,P).then(()=>E()).finally(()=>S(!1))},children:"确认入库"})]})]})}const Z={"kb-chunk-toolbar":"_kb-chunk-toolbar_kbbeo_1","kb-chunk-search-input":"_kb-chunk-search-input_kbbeo_12","kb-chunk-table":"_kb-chunk-table_kbbeo_16"};function lt({open:s,document:n,onClose:m,kbEmbeddingOptions:u,onRetryIngest:p}){const{message:c}=pe.useApp(),[r,l]=a.useState(1),[x,v]=a.useState(10),[j,g]=a.useState(""),[S,d]=a.useState([]),[N,P]=a.useState(0),[A,I]=a.useState(!1),[C,E]=a.useState([]),[T,M]=a.useState(null),[k,y]=a.useState(""),f=a.useCallback(async()=>{if(n?.docId){I(!0);try{const h=await Ce(n.docId,r,x,j);d(h.items),P(h.total)}catch(h){c.error(h?.message||"加载切块失败")}finally{I(!1)}}},[n?.docId,j,c,r,x]);a.useEffect(()=>{s&&f()},[f,s]);const $=async()=>{if(T)try{await Se(T,k,u),c.success("已保存"),M(null),await f()}catch(h){c.error(h?.message||"保存失败")}},D=async()=>{if(C.length)try{await se(C),c.success("已删除"),E([]),await f()}catch(h){c.error(h?.message||"删除失败")}};return e.jsxs(e.Fragment,{children:[e.jsxs(U,{open:s,title:n?`切块 · ${n.filename}`:"切块",width:920,onCancel:m,footer:null,destroyOnHidden:!0,children:[e.jsxs("div",{className:Z["kb-chunk-toolbar"],children:[e.jsx(O,{allowClear:!0,className:Z["kb-chunk-search-input"],placeholder:"分段搜索",value:j,onChange:h=>g(h.target.value),onPressEnter:()=>{l(1),f()}}),e.jsx(w,{onClick:()=>{f()},children:"搜索"}),["failed","interrupted"].includes(n?.status||"")&&p?e.jsx(w,{type:"primary",onClick:()=>p(n.docId),children:"重新入库"}):null,e.jsx(de,{title:"确认批量删除所选切块？",onConfirm:()=>{D()},children:e.jsx(w,{danger:!0,disabled:!C.length,children:"批量删除"})})]}),e.jsx("div",{className:Z["kb-chunk-table"],children:e.jsx(Q,{rowKey:"chunkId",loading:A,dataSource:S,rowSelection:{selectedRowKeys:C,onChange:h=>E(h.map(String))},pagination:{current:r,pageSize:x,total:N,showSizeChanger:!0,onChange:(h,z)=>{l(h),v(z)}},columns:[{title:"序号",dataIndex:"idx",width:72},{title:"内容",dataIndex:"content",ellipsis:!0,render:(h,z)=>e.jsxs(w,{type:"link",size:"small",onClick:()=>{M(z.chunkId),y(h)},children:[h.slice(0,80),h.length>80?"...":""]})},{title:"操作",width:100,render:(h,z)=>e.jsx(de,{title:"删除此切块？",onConfirm:async()=>{await se([z.chunkId]),await f()},children:e.jsx(w,{type:"link",size:"small",danger:!0,children:"删除"})})}]})})]}),e.jsx(U,{open:T!==null,title:"编辑切块",onCancel:()=>M(null),onOk:()=>{$()},okText:"保存",cancelText:"取消",width:720,destroyOnHidden:!0,children:e.jsx(O.TextArea,{value:k,onChange:h=>y(h.target.value),autoSize:{minRows:12}})})]})}const o={"kb-main":"_kb-main_1rwno_1","kb-main-header":"_kb-main-header_1rwno_77","kb-main-header-main":"_kb-main-header-main_1rwno_88","kb-main-header-icon":"_kb-main-header-icon_1rwno_95","kb-main-header-text":"_kb-main-header-text_1rwno_107","kb-main-title":"_kb-main-title_1rwno_111","kb-main-meta":"_kb-main-meta_1rwno_121","kb-main-embedding-status":"_kb-main-embedding-status_1rwno_126","kb-main-embedding-status--ready":"_kb-main-embedding-status--ready_1rwno_138","kb-main-embedding-status--missing":"_kb-main-embedding-status--missing_1rwno_143","kb-main-embedding-dot":"_kb-main-embedding-dot_1rwno_148","kb-main-toolbar":"_kb-main-toolbar_1rwno_155","kb-main-toolbar-btn":"_kb-main-toolbar-btn_1rwno_162","kb-main-toolbar-btn--primary":"_kb-main-toolbar-btn--primary_1rwno_186","kb-main-body":"_kb-main-body_1rwno_197","kb-main-body-inner":"_kb-main-body-inner_1rwno_208","kb-main-body-empty":"_kb-main-body-empty_1rwno_214","kb-main-loading":"_kb-main-loading_1rwno_224","kb-main-loading-inner":"_kb-main-loading-inner_1rwno_230","kb-main-loading-text":"_kb-main-loading-text_1rwno_236","kb-main-doc-table":"_kb-main-doc-table_1rwno_243","kb-main-paste-filename":"_kb-main-paste-filename_1rwno_288","kb-main-search":"_kb-main-search_1rwno_291","kb-main-search-bar":"_kb-main-search-bar_1rwno_296","kb-main-search-hint":"_kb-main-search-hint_1rwno_300","kb-main-search-results":"_kb-main-search-results_1rwno_305","kb-main-score":"_kb-main-score_1rwno_308"},J="kb:collections-updated";function pt(){const{message:s}=pe.useApp(),n=ae(t=>t.activeCollectionId),m=ae(t=>t.setActiveCollectionId),u=re(t=>t.aiModels),p=re(t=>t.scenarioModelDefaults),c=a.useMemo(()=>({aiModels:u,scenarioModelDefaults:p}),[u,p]),r=a.useMemo(()=>Ne(u,p),[u,p]),l=a.useMemo(()=>!!Ee(u,p),[u,p]),[x,v]=a.useState(""),[j,g]=a.useState([]),[S,d]=a.useState(!1),[N,P]=a.useState(!1),[A,I]=a.useState(!1),[C,E]=a.useState(""),[T,M]=a.useState(""),[k,y]=a.useState(!1),[f,$]=a.useState(!1),[D,h]=a.useState(""),[z,X]=a.useState([]),[be,V]=a.useState(!1),[xe,Y]=a.useState(!1),[ee,te]=a.useState(null),R=a.useRef({}),B=t=>{R.current[t]&&(clearInterval(R.current[t]),delete R.current[t])},L=a.useCallback(async t=>{d(!0);try{const i=await Pe(t);g(i)}catch(i){const b=i;!b?.message?.includes("404")&&!b?.message?.includes("未找到集合")&&s.error(b?.message||"加载文档失败"),g([])}finally{d(!1)}},[s]),W=a.useCallback(async()=>{if(!n){v(""),g([]);return}try{const t=await Ie(),i=t.find(b=>b.id===n);if(!i){v(""),g([]),m(t[0]?.id);return}v(i.name),await L(n)}catch(t){s.error(t?.message||"加载知识库失败")}},[n,s,L,m]);a.useEffect(()=>{W()},[W]),a.useEffect(()=>{const t=()=>{W()};return window.addEventListener(J,t),()=>window.removeEventListener(J,t)},[W]),a.useEffect(()=>()=>{Object.values(R.current).forEach(t=>clearInterval(t))},[]);const F=()=>{window.dispatchEvent(new CustomEvent(J))},H=(t,i)=>{B(t);const b=async()=>{try{const _=await Ke(t);if(!_)return;g(K=>K.map(q=>q.docId===t?{...q,status:_.status,progress:_.progress,error:_.error}:q)),["ready","failed","interrupted","manual_conflict"].includes(_.status)&&(B(t),await L(i))}catch(_){B(t),s.error(_ instanceof Error?_.message:String(_))}};b(),R.current[t]=setInterval(()=>{b()},1500)},ke=async(t,i,b)=>{if(n){P(!0);try{const _=await Ae(n,t,{...c,segmentSettings:{separator:i.separator,maxChunkLength:i.maxChunkLength,chunkOverlap:i.chunkOverlap,preprocess:i.preprocess,splitMode:i.splitMode},segmentMode:b});await L(n),_.forEach(K=>H(K.docId,n)),F()}catch(_){s.error(_?.message||"上传失败")}finally{P(!1)}}},ge=async()=>{if(n)try{const t=await Te();if(!t)return;P(!0);const i=await ze(n,t,{...c,recursive:!0});await L(n),i.forEach(b=>H(b.docId,n)),F()}catch(t){s.error(t instanceof Error?t.message:String(t))}finally{P(!1)}},fe=a.useMemo(()=>j.map(t=>({id:t.docId,name:t.filename,segmentMode:t.segmentMode,uploadedAt:t.createdAt,status:t.status,progress:t.progress,chunkCount:t.chunkCount,error:t.error})),[j]),we=async t=>{if(n)try{await Le(t),await L(n),s.success("已删除文件"),F()}catch(i){s.error(i?.message||"删除失败")}},ve=async t=>{if(n)try{const i=(await Oe(200)).find(b=>b.documentId===t&&["failed","interrupted","cancelled"].includes(b.status));if(!i)throw new Error("没有可手动重试的失败任务");await De(i.id,c),H(t,n),await L(n),F()}catch(i){B(t),s.error(i?.message||"入库失败")}},je=async()=>{if(!n)return;const t=T.trim();if(!t){s.warning("请输入文本");return}try{y(!0);const{docId:i}=await Re(n,t,C.trim()||void 0,c);I(!1),M(""),E(""),await L(n),H(i,n),F(),s.success("文本已入库")}catch(i){s.error(i?.message||"入库失败")}finally{y(!1)}},ne=async()=>{if(!n||!D.trim()){s.warning("请输入搜索问题");return}try{V(!0);const t=await Fe({query:D.trim(),collectionIds:[n],topK:10,contextTokenBudget:6e3,mode:"balanced",rerank:"off",trace:!0},c);X(t.evidence),t.status==="no_match"&&s.info("知识库中没有达到相关性要求的内容")}catch(t){s.error(t?.message||"搜索失败")}finally{V(!1)}};if(!n)return e.jsx("div",{className:o["kb-main"],children:e.jsx(ie,{centered:!0,icon:ue,title:"选择知识库",description:"在左侧创建或选择一个知识库，即可上传文档并构建检索索引"})});const ye=S&&j.length===0?"加载中…":`共 ${j.length} 个文档`;return e.jsxs("div",{className:o["kb-main"],children:[e.jsxs("div",{className:o["kb-main-header"],children:[e.jsxs("div",{className:o["kb-main-header-main"],children:[e.jsx("span",{className:o["kb-main-header-icon"],"aria-hidden":!0,children:e.jsx(ue,{size:22})}),e.jsxs("div",{className:o["kb-main-header-text"],children:[e.jsx("h2",{className:o["kb-main-title"],title:x,children:x||"知识库"}),e.jsx("p",{className:o["kb-main-meta"],children:ye}),e.jsxs("div",{className:`${o["kb-main-embedding-status"]} ${l?o["kb-main-embedding-status--ready"]:o["kb-main-embedding-status--missing"]}`,title:l?`知识库嵌入模型：${r?.model}`:r?"当前嵌入模型缺少 API Key、API 地址或模型名称":"文本切分模型只负责切段，入库还需要单独配置嵌入模型",children:[e.jsx("span",{className:o["kb-main-embedding-dot"],"aria-hidden":!0}),l?`嵌入模型：${r?.name?.trim()||r?.model}`:r?`嵌入模型配置不完整：${r.name?.trim()||r.model}`:"未配置嵌入模型（文本切分模型不能代替）"]})]})]}),e.jsxs("div",{className:o["kb-main-toolbar"],children:[e.jsxs(w,{className:`${o["kb-main-toolbar-btn"]} ${o["kb-main-toolbar-btn--primary"]}`,disabled:!n||N,onClick:()=>Y(!0),children:[N?e.jsx(me,{size:"small"}):e.jsx(qe,{size:16,"aria-hidden":!0}),"添加文档"]}),l?null:e.jsx(w,{className:o["kb-main-toolbar-btn"],onClick:()=>window.dispatchEvent(new CustomEvent("app:open-settings",{detail:{section:"ai"}})),children:"配置嵌入模型"}),e.jsxs(w,{className:o["kb-main-toolbar-btn"],disabled:!n||N,onClick:()=>{ge()},children:[e.jsx(Ge,{size:16,"aria-hidden":!0}),"导入目录"]}),e.jsxs(w,{className:o["kb-main-toolbar-btn"],onClick:()=>{E(""),M(""),I(!0)},children:[e.jsx(Ze,{size:16,"aria-hidden":!0}),"粘贴入库"]}),e.jsxs(w,{className:o["kb-main-toolbar-btn"],onClick:()=>{h(""),X([]),$(!0)},children:[e.jsx(he,{size:16,"aria-hidden":!0}),"搜索测试"]})]})]}),e.jsx("div",{className:o["kb-main-body"],children:e.jsx("div",{className:o["kb-main-body-inner"],children:S?e.jsx("div",{className:o["kb-main-loading"],children:e.jsxs("div",{className:o["kb-main-loading-inner"],children:[e.jsx(me,{size:"large"}),e.jsx("p",{className:o["kb-main-loading-text"],children:"加载文档…"})]})}):j.length===0?e.jsx("div",{className:o["kb-main-body-empty"],children:e.jsx(ie,{centered:!0,icon:Je,title:"暂无文档",description:"上传 PDF、Word、Markdown 等文件，或粘贴文本开始构建知识库"})}):e.jsx("div",{className:o["kb-main-doc-table"],children:e.jsx(st,{documents:fe,loading:S,onRowClick:t=>{const i=j.find(b=>b.docId===t.id);i&&te(i)},onDelete:t=>{we(t.id)}})})})}),e.jsx(ot,{open:xe,onClose:()=>Y(!1),onUploadAndIngest:ke,onPreviewSegments:async(t,i)=>(await Me(t,{...c,segmentSettings:{separator:i.separator,maxChunkLength:i.maxChunkLength,chunkOverlap:i.chunkOverlap,preprocess:i.preprocess,splitMode:i.splitMode}})).chunks.slice(0,12).map(({idx:_,content:K})=>({idx:_,content:K}))}),e.jsx(lt,{open:!!ee,document:ee,onClose:()=>te(null),kbEmbeddingOptions:c,onRetryIngest:t=>{ve(t)}}),e.jsxs(U,{title:"粘贴文本入库",open:A,onCancel:()=>I(!1),onOk:()=>{je()},okText:"入库",cancelText:"取消",confirmLoading:k,width:720,destroyOnHidden:!0,children:[e.jsx(O,{placeholder:"可选文件名",value:C,onChange:t=>E(t.target.value),className:o["kb-main-paste-filename"]}),e.jsx(O.TextArea,{placeholder:"粘贴要入库的文本",value:T,onChange:t=>M(t.target.value),autoSize:{minRows:8}})]}),e.jsx(U,{title:`搜索测试 · ${x}`,open:f,onCancel:()=>$(!1),footer:null,width:900,destroyOnHidden:!0,children:e.jsxs("div",{className:o["kb-main-search"],children:[e.jsx("p",{className:o["kb-main-search-hint"],children:"输入问题预览向量检索效果，分数越高表示相关性越强"}),e.jsxs("div",{className:o["kb-main-search-bar"],children:[e.jsx(O,{placeholder:"例如：产品退款政策是什么？",value:D,onChange:t=>h(t.target.value),onPressEnter:()=>{ne()},allowClear:!0}),e.jsx(w,{type:"primary",icon:e.jsx(he,{size:14}),onClick:()=>{ne()},loading:be,children:"搜索"})]}),z.length>0&&e.jsx("div",{className:o["kb-main-search-results"],children:e.jsx(Q,{dataSource:z,rowKey:"chunkId",pagination:!1,size:"small",scroll:{y:400},columns:[{title:"#",width:48,render:(t,i,b)=>b+1},{title:"文档",dataIndex:"docName",width:140,ellipsis:!0},{title:"块",dataIndex:"idx",width:64},{title:"预览",dataIndex:"content",ellipsis:!0,render:t=>t.slice(0,80)+(t.length>80?"...":"")},{title:"分数",dataIndex:"finalScore",width:88,render:t=>e.jsx("span",{className:o["kb-main-score"],children:t.toFixed(4)})}]})})]})})]})}export{pt as KnowledgeManager};
+`,
+  maxChunkLength: 500,
+  chunkOverlap: 100,
+  preprocess: { normalizeWhitespace: !0, removeUrlsAndEmails: !1 },
+  splitMode: 'code',
+};
+function rt({
+  value: s,
+  onChange: n,
+  previewBlocks: m = [],
+  onPreview: u,
+  previewDisabled: p = !1,
+}) {
+  const [c, r] = a.useState(!1),
+    [l, x] = a.useState(!1),
+    [v, j] = a.useState(m),
+    g = (d) => n({ ...s, ...d }),
+    S = async () => {
+      if (!u) {
+        (r(!0), j(m));
+        return;
+      }
+      x(!0);
+      try {
+        const d = await u();
+        (j(d), r(!0));
+      } finally {
+        x(!1);
+      }
+    };
+  return e.jsxs('div', {
+    className: 'space-y-4',
+    children: [
+      e.jsxs('div', {
+        children: [
+          e.jsx('div', { className: 'mb-2 text-sm font-medium', children: '分段设置' }),
+          e.jsxs(oe, {
+            direction: 'vertical',
+            className: 'w-full',
+            size: 'middle',
+            children: [
+              e.jsxs('div', {
+                children: [
+                  e.jsx('div', {
+                    className: 'text-muted-foreground mb-1 text-xs',
+                    children: '分段标识符',
+                  }),
+                  e.jsx(O, {
+                    value: s.separator,
+                    onChange: (d) => g({ separator: d.target.value }),
+                    placeholder: '\\n\\n',
+                  }),
+                ],
+              }),
+              e.jsxs('div', {
+                className: 'flex flex-wrap gap-4',
+                children: [
+                  e.jsxs('div', {
+                    children: [
+                      e.jsx('div', {
+                        className: 'text-muted-foreground mb-1 text-xs',
+                        children: '分段最大长度（字符）',
+                      }),
+                      e.jsx(le, {
+                        min: 200,
+                        max: 8e3,
+                        value: s.maxChunkLength,
+                        onChange: (d) => g({ maxChunkLength: Number(d) || 1024 }),
+                      }),
+                    ],
+                  }),
+                  e.jsxs('div', {
+                    children: [
+                      e.jsx('div', {
+                        className: 'text-muted-foreground mb-1 text-xs',
+                        children: '分组重叠长度（字符）',
+                      }),
+                      e.jsx(le, {
+                        min: 0,
+                        max: 500,
+                        value: s.chunkOverlap,
+                        onChange: (d) => g({ chunkOverlap: Number(d) || 0 }),
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+      e.jsxs('div', {
+        children: [
+          e.jsx('div', { className: 'mb-2 text-sm font-medium', children: '文本预处理规则' }),
+          e.jsxs(oe, {
+            direction: 'vertical',
+            children: [
+              e.jsx(ce, {
+                checked: s.preprocess.normalizeWhitespace,
+                onChange: (d) =>
+                  g({ preprocess: { ...s.preprocess, normalizeWhitespace: d.target.checked } }),
+                children: '替换掉连续的空格、换行符和制表符',
+              }),
+              e.jsx(ce, {
+                checked: s.preprocess.removeUrlsAndEmails,
+                onChange: (d) =>
+                  g({ preprocess: { ...s.preprocess, removeUrlsAndEmails: d.target.checked } }),
+                children: '删除所有的 URL 和电子邮件',
+              }),
+            ],
+          }),
+        ],
+      }),
+      e.jsxs('div', {
+        children: [
+          e.jsx('div', { className: 'mb-2 text-sm font-medium', children: '切分设置' }),
+          e.jsxs(G.Group, {
+            value: s.splitMode,
+            onChange: (d) => g({ splitMode: d.target.value }),
+            children: [
+              e.jsx(G, { value: 'code', children: '代码切分' }),
+              e.jsx(G, { value: 'llm', children: '大语言模型切分' }),
+            ],
+          }),
+          s.splitMode === 'llm'
+            ? e.jsx('div', {
+                className: 'text-muted-foreground mt-2 text-xs',
+                children:
+                  '将调用场景默认模型「文本切分」所配置的对话模型，按语义边界切分文本；失败时自动回退代码切分。',
+              })
+            : null,
+        ],
+      }),
+      e.jsxs('div', {
+        children: [
+          e.jsx(w, {
+            type: 'default',
+            loading: l,
+            disabled: p,
+            onClick: () => {
+              S();
+            },
+            children: '预览分段',
+          }),
+          c
+            ? e.jsx('div', {
+                className: 'mt-3 max-h-64 space-y-2 overflow-auto rounded border p-2 text-xs',
+                children:
+                  v.length > 0
+                    ? v.map((d) =>
+                        e.jsxs(
+                          'div',
+                          {
+                            className: 'rounded border border-dashed p-2',
+                            children: [
+                              e.jsxs('div', {
+                                className: 'text-muted-foreground mb-1 font-medium',
+                                children: ['块 ', d.idx],
+                              }),
+                              e.jsxs('pre', {
+                                className: 'whitespace-pre-wrap break-words',
+                                children: [
+                                  d.content.slice(0, 400),
+                                  d.content.length > 400 ? '...' : '',
+                                ],
+                              }),
+                            ],
+                          },
+                          d.idx,
+                        ),
+                      )
+                    : e.jsx('div', {
+                        className: 'text-muted-foreground py-4 text-center',
+                        children: '暂无预览内容',
+                      }),
+              })
+            : null,
+        ],
+      }),
+    ],
+  });
+}
+const it = '.pdf,.docx,.xlsx,.xls,.txt,.md,.markdown';
+function ot({
+  open: s,
+  onClose: n,
+  onUploadAndIngest: m,
+  initialSegmentSettings: u = at,
+  onPreviewSegments: p,
+}) {
+  const [c, r] = a.useState('datasource'),
+    [l, x] = a.useState([]),
+    [v, j] = a.useState(u),
+    [g, S] = a.useState(!1),
+    [d, N] = a.useState(''),
+    P = v.splitMode === 'llm' ? 'general' : 'fixed',
+    [A, I] = a.useState([]);
+  a.useEffect(() => {
+    if (!d.trim()) {
+      I([]);
+      return;
+    }
+    let k = !1;
+    return (
+      nt(d, v, 8).then((y) => {
+        k || I(y.map((f) => ({ idx: f.idx, content: f.content })));
+      }),
+      () => {
+        k = !0;
+      }
+    );
+  }, [d, v]);
+  const C = c === 'datasource' ? 0 : c === 'segment' ? 1 : 2,
+    E = () => {
+      (r('datasource'), x([]), N(''), n());
+    },
+    T = async (k) => {
+      const y = k.name.split('.').pop()?.toLowerCase() ?? '';
+      if (['txt', 'md', 'markdown'].includes(y)) {
+        N(await k.text());
+        return;
+      }
+      N('');
+    },
+    M = async () => {
+      const k = l[0];
+      return k ? (p ? p(k, v) : A) : [];
+    };
+  return e.jsxs(U, {
+    open: s,
+    title: '添加文档',
+    width: 880,
+    onCancel: E,
+    footer: null,
+    destroyOnHidden: !0,
+    children: [
+      e.jsx(We, {
+        current: C,
+        className: 'mb-6',
+        items: [{ title: '选择数据源' }, { title: '文本分段与清洗' }, { title: '处理并入库' }],
+      }),
+      c === 'datasource'
+        ? e.jsx('div', {
+            className: 'space-y-4',
+            children: e.jsx(He.Dragger, {
+              multiple: !0,
+              accept: it,
+              beforeUpload: () => !1,
+              fileList: l.map((k, y) => ({ uid: String(y), name: k.name, status: 'done' })),
+              onChange: (k) => {
+                const y = (k.fileList ?? []).map((f) => f.originFileObj).filter((f) => !!f);
+                (x(y), y[0] ? T(y[0]) : N(''));
+              },
+              children: e.jsx('p', { children: '点击或拖拽上传 PDF、DOCX、Excel、TXT、Markdown' }),
+            }),
+          })
+        : null,
+      c === 'segment'
+        ? e.jsx(rt, {
+            value: v,
+            onChange: j,
+            previewBlocks: A,
+            previewDisabled: l.length === 0,
+            onPreview: M,
+          })
+        : null,
+      c === 'ingest'
+        ? e.jsxs('p', {
+            className: 'text-sm',
+            children: [
+              '将处理 ',
+              l.length,
+              ' 个文件，分段模式：',
+              P === 'general' ? '通用（大语言模型切分）' : '固定',
+              '，完成后可在列表中查看切块。',
+            ],
+          })
+        : null,
+      e.jsxs('div', {
+        className: 'mt-6 flex justify-end gap-2',
+        children: [
+          e.jsx(w, { onClick: E, children: '取消' }),
+          C > 0
+            ? e.jsx(w, { onClick: () => r(C === 1 ? 'datasource' : 'segment'), children: '上一步' })
+            : null,
+          C < 2
+            ? e.jsx(w, {
+                type: 'primary',
+                disabled: C === 0 && l.length === 0,
+                onClick: () => r(C === 0 ? 'segment' : 'ingest'),
+                children: '下一步',
+              })
+            : e.jsx(w, {
+                type: 'primary',
+                loading: g,
+                disabled: l.length === 0,
+                onClick: () => {
+                  (S(!0),
+                    m(l, v, P)
+                      .then(() => E())
+                      .finally(() => S(!1)));
+                },
+                children: '确认入库',
+              }),
+        ],
+      }),
+    ],
+  });
+}
+const Z = {
+  'kb-chunk-toolbar': '_kb-chunk-toolbar_kbbeo_1',
+  'kb-chunk-search-input': '_kb-chunk-search-input_kbbeo_12',
+  'kb-chunk-table': '_kb-chunk-table_kbbeo_16',
+};
+function lt({ open: s, document: n, onClose: m, kbEmbeddingOptions: u, onRetryIngest: p }) {
+  const { message: c } = pe.useApp(),
+    [r, l] = a.useState(1),
+    [x, v] = a.useState(10),
+    [j, g] = a.useState(''),
+    [S, d] = a.useState([]),
+    [N, P] = a.useState(0),
+    [A, I] = a.useState(!1),
+    [C, E] = a.useState([]),
+    [T, M] = a.useState(null),
+    [k, y] = a.useState(''),
+    f = a.useCallback(async () => {
+      if (n?.docId) {
+        I(!0);
+        try {
+          const h = await Ce(n.docId, r, x, j);
+          (d(h.items), P(h.total));
+        } catch (h) {
+          c.error(h?.message || '加载切块失败');
+        } finally {
+          I(!1);
+        }
+      }
+    }, [n?.docId, j, c, r, x]);
+  a.useEffect(() => {
+    s && f();
+  }, [f, s]);
+  const $ = async () => {
+      if (T)
+        try {
+          (await Se(T, k, u), c.success('已保存'), M(null), await f());
+        } catch (h) {
+          c.error(h?.message || '保存失败');
+        }
+    },
+    D = async () => {
+      if (C.length)
+        try {
+          (await se(C), c.success('已删除'), E([]), await f());
+        } catch (h) {
+          c.error(h?.message || '删除失败');
+        }
+    };
+  return e.jsxs(e.Fragment, {
+    children: [
+      e.jsxs(U, {
+        open: s,
+        title: n ? `切块 · ${n.filename}` : '切块',
+        width: 920,
+        onCancel: m,
+        footer: null,
+        destroyOnHidden: !0,
+        children: [
+          e.jsxs('div', {
+            className: Z['kb-chunk-toolbar'],
+            children: [
+              e.jsx(O, {
+                allowClear: !0,
+                className: Z['kb-chunk-search-input'],
+                placeholder: '分段搜索',
+                value: j,
+                onChange: (h) => g(h.target.value),
+                onPressEnter: () => {
+                  (l(1), f());
+                },
+              }),
+              e.jsx(w, {
+                onClick: () => {
+                  f();
+                },
+                children: '搜索',
+              }),
+              ['failed', 'interrupted'].includes(n?.status || '') && p
+                ? e.jsx(w, { type: 'primary', onClick: () => p(n.docId), children: '重新入库' })
+                : null,
+              e.jsx(de, {
+                title: '确认批量删除所选切块？',
+                onConfirm: () => {
+                  D();
+                },
+                children: e.jsx(w, { danger: !0, disabled: !C.length, children: '批量删除' }),
+              }),
+            ],
+          }),
+          e.jsx('div', {
+            className: Z['kb-chunk-table'],
+            children: e.jsx(Q, {
+              rowKey: 'chunkId',
+              loading: A,
+              dataSource: S,
+              rowSelection: { selectedRowKeys: C, onChange: (h) => E(h.map(String)) },
+              pagination: {
+                current: r,
+                pageSize: x,
+                total: N,
+                showSizeChanger: !0,
+                onChange: (h, z) => {
+                  (l(h), v(z));
+                },
+              },
+              columns: [
+                { title: '序号', dataIndex: 'idx', width: 72 },
+                {
+                  title: '内容',
+                  dataIndex: 'content',
+                  ellipsis: !0,
+                  render: (h, z) =>
+                    e.jsxs(w, {
+                      type: 'link',
+                      size: 'small',
+                      onClick: () => {
+                        (M(z.chunkId), y(h));
+                      },
+                      children: [h.slice(0, 80), h.length > 80 ? '...' : ''],
+                    }),
+                },
+                {
+                  title: '操作',
+                  width: 100,
+                  render: (h, z) =>
+                    e.jsx(de, {
+                      title: '删除此切块？',
+                      onConfirm: async () => {
+                        (await se([z.chunkId]), await f());
+                      },
+                      children: e.jsx(w, {
+                        type: 'link',
+                        size: 'small',
+                        danger: !0,
+                        children: '删除',
+                      }),
+                    }),
+                },
+              ],
+            }),
+          }),
+        ],
+      }),
+      e.jsx(U, {
+        open: T !== null,
+        title: '编辑切块',
+        onCancel: () => M(null),
+        onOk: () => {
+          $();
+        },
+        okText: '保存',
+        cancelText: '取消',
+        width: 720,
+        destroyOnHidden: !0,
+        children: e.jsx(O.TextArea, {
+          value: k,
+          onChange: (h) => y(h.target.value),
+          autoSize: { minRows: 12 },
+        }),
+      }),
+    ],
+  });
+}
+const o = {
+    'kb-main': '_kb-main_1rwno_1',
+    'kb-main-header': '_kb-main-header_1rwno_77',
+    'kb-main-header-main': '_kb-main-header-main_1rwno_88',
+    'kb-main-header-icon': '_kb-main-header-icon_1rwno_95',
+    'kb-main-header-text': '_kb-main-header-text_1rwno_107',
+    'kb-main-title': '_kb-main-title_1rwno_111',
+    'kb-main-meta': '_kb-main-meta_1rwno_121',
+    'kb-main-embedding-status': '_kb-main-embedding-status_1rwno_126',
+    'kb-main-embedding-status--ready': '_kb-main-embedding-status--ready_1rwno_138',
+    'kb-main-embedding-status--missing': '_kb-main-embedding-status--missing_1rwno_143',
+    'kb-main-embedding-dot': '_kb-main-embedding-dot_1rwno_148',
+    'kb-main-toolbar': '_kb-main-toolbar_1rwno_155',
+    'kb-main-toolbar-btn': '_kb-main-toolbar-btn_1rwno_162',
+    'kb-main-toolbar-btn--primary': '_kb-main-toolbar-btn--primary_1rwno_186',
+    'kb-main-body': '_kb-main-body_1rwno_197',
+    'kb-main-body-inner': '_kb-main-body-inner_1rwno_208',
+    'kb-main-body-empty': '_kb-main-body-empty_1rwno_214',
+    'kb-main-loading': '_kb-main-loading_1rwno_224',
+    'kb-main-loading-inner': '_kb-main-loading-inner_1rwno_230',
+    'kb-main-loading-text': '_kb-main-loading-text_1rwno_236',
+    'kb-main-doc-table': '_kb-main-doc-table_1rwno_243',
+    'kb-main-paste-filename': '_kb-main-paste-filename_1rwno_288',
+    'kb-main-search': '_kb-main-search_1rwno_291',
+    'kb-main-search-bar': '_kb-main-search-bar_1rwno_296',
+    'kb-main-search-hint': '_kb-main-search-hint_1rwno_300',
+    'kb-main-search-results': '_kb-main-search-results_1rwno_305',
+    'kb-main-score': '_kb-main-score_1rwno_308',
+  },
+  J = 'kb:collections-updated';
+function pt() {
+  const { message: s } = pe.useApp(),
+    n = ae((t) => t.activeCollectionId),
+    m = ae((t) => t.setActiveCollectionId),
+    u = re((t) => t.aiModels),
+    p = re((t) => t.scenarioModelDefaults),
+    c = a.useMemo(() => ({ aiModels: u, scenarioModelDefaults: p }), [u, p]),
+    r = a.useMemo(() => Ne(u, p), [u, p]),
+    l = a.useMemo(() => !!Ee(u, p), [u, p]),
+    [x, v] = a.useState(''),
+    [j, g] = a.useState([]),
+    [S, d] = a.useState(!1),
+    [N, P] = a.useState(!1),
+    [A, I] = a.useState(!1),
+    [C, E] = a.useState(''),
+    [T, M] = a.useState(''),
+    [k, y] = a.useState(!1),
+    [f, $] = a.useState(!1),
+    [D, h] = a.useState(''),
+    [z, X] = a.useState([]),
+    [be, V] = a.useState(!1),
+    [xe, Y] = a.useState(!1),
+    [ee, te] = a.useState(null),
+    R = a.useRef({}),
+    B = (t) => {
+      R.current[t] && (clearInterval(R.current[t]), delete R.current[t]);
+    },
+    L = a.useCallback(
+      async (t) => {
+        d(!0);
+        try {
+          const i = await Pe(t);
+          g(i);
+        } catch (i) {
+          const b = i;
+          (!b?.message?.includes('404') &&
+            !b?.message?.includes('未找到集合') &&
+            s.error(b?.message || '加载文档失败'),
+            g([]));
+        } finally {
+          d(!1);
+        }
+      },
+      [s],
+    ),
+    W = a.useCallback(async () => {
+      if (!n) {
+        (v(''), g([]));
+        return;
+      }
+      try {
+        const t = await Ie(),
+          i = t.find((b) => b.id === n);
+        if (!i) {
+          (v(''), g([]), m(t[0]?.id));
+          return;
+        }
+        (v(i.name), await L(n));
+      } catch (t) {
+        s.error(t?.message || '加载知识库失败');
+      }
+    }, [n, s, L, m]);
+  (a.useEffect(() => {
+    W();
+  }, [W]),
+    a.useEffect(() => {
+      const t = () => {
+        W();
+      };
+      return (window.addEventListener(J, t), () => window.removeEventListener(J, t));
+    }, [W]),
+    a.useEffect(
+      () => () => {
+        Object.values(R.current).forEach((t) => clearInterval(t));
+      },
+      [],
+    ));
+  const F = () => {
+      window.dispatchEvent(new CustomEvent(J));
+    },
+    H = (t, i) => {
+      B(t);
+      const b = async () => {
+        try {
+          const _ = await Ke(t);
+          if (!_) return;
+          (g((K) =>
+            K.map((q) =>
+              q.docId === t ? { ...q, status: _.status, progress: _.progress, error: _.error } : q,
+            ),
+          ),
+            ['ready', 'failed', 'interrupted', 'manual_conflict'].includes(_.status) &&
+              (B(t), await L(i)));
+        } catch (_) {
+          (B(t), s.error(_ instanceof Error ? _.message : String(_)));
+        }
+      };
+      (b(),
+        (R.current[t] = setInterval(() => {
+          b();
+        }, 1500)));
+    },
+    ke = async (t, i, b) => {
+      if (n) {
+        P(!0);
+        try {
+          const _ = await Ae(n, t, {
+            ...c,
+            segmentSettings: {
+              separator: i.separator,
+              maxChunkLength: i.maxChunkLength,
+              chunkOverlap: i.chunkOverlap,
+              preprocess: i.preprocess,
+              splitMode: i.splitMode,
+            },
+            segmentMode: b,
+          });
+          (await L(n), _.forEach((K) => H(K.docId, n)), F());
+        } catch (_) {
+          s.error(_?.message || '上传失败');
+        } finally {
+          P(!1);
+        }
+      }
+    },
+    ge = async () => {
+      if (n)
+        try {
+          const t = await Te();
+          if (!t) return;
+          P(!0);
+          const i = await ze(n, t, { ...c, recursive: !0 });
+          (await L(n), i.forEach((b) => H(b.docId, n)), F());
+        } catch (t) {
+          s.error(t instanceof Error ? t.message : String(t));
+        } finally {
+          P(!1);
+        }
+    },
+    fe = a.useMemo(
+      () =>
+        j.map((t) => ({
+          id: t.docId,
+          name: t.filename,
+          segmentMode: t.segmentMode,
+          uploadedAt: t.createdAt,
+          status: t.status,
+          progress: t.progress,
+          chunkCount: t.chunkCount,
+          error: t.error,
+        })),
+      [j],
+    ),
+    we = async (t) => {
+      if (n)
+        try {
+          (await Le(t), await L(n), s.success('已删除文件'), F());
+        } catch (i) {
+          s.error(i?.message || '删除失败');
+        }
+    },
+    ve = async (t) => {
+      if (n)
+        try {
+          const i = (await Oe(200)).find(
+            (b) => b.documentId === t && ['failed', 'interrupted', 'cancelled'].includes(b.status),
+          );
+          if (!i) throw new Error('没有可手动重试的失败任务');
+          (await De(i.id, c), H(t, n), await L(n), F());
+        } catch (i) {
+          (B(t), s.error(i?.message || '入库失败'));
+        }
+    },
+    je = async () => {
+      if (!n) return;
+      const t = T.trim();
+      if (!t) {
+        s.warning('请输入文本');
+        return;
+      }
+      try {
+        y(!0);
+        const { docId: i } = await Re(n, t, C.trim() || void 0, c);
+        (I(!1), M(''), E(''), await L(n), H(i, n), F(), s.success('文本已入库'));
+      } catch (i) {
+        s.error(i?.message || '入库失败');
+      } finally {
+        y(!1);
+      }
+    },
+    ne = async () => {
+      if (!n || !D.trim()) {
+        s.warning('请输入搜索问题');
+        return;
+      }
+      try {
+        V(!0);
+        const t = await Fe(
+          {
+            query: D.trim(),
+            collectionIds: [n],
+            topK: 10,
+            contextTokenBudget: 6e3,
+            mode: 'balanced',
+            rerank: 'off',
+            trace: !0,
+          },
+          c,
+        );
+        (X(t.evidence), t.status === 'no_match' && s.info('知识库中没有达到相关性要求的内容'));
+      } catch (t) {
+        s.error(t?.message || '搜索失败');
+      } finally {
+        V(!1);
+      }
+    };
+  if (!n)
+    return e.jsx('div', {
+      className: o['kb-main'],
+      children: e.jsx(ie, {
+        centered: !0,
+        icon: ue,
+        title: '选择知识库',
+        description: '在左侧创建或选择一个知识库，即可上传文档并构建检索索引',
+      }),
+    });
+  const ye = S && j.length === 0 ? '加载中…' : `共 ${j.length} 个文档`;
+  return e.jsxs('div', {
+    className: o['kb-main'],
+    children: [
+      e.jsxs('div', {
+        className: o['kb-main-header'],
+        children: [
+          e.jsxs('div', {
+            className: o['kb-main-header-main'],
+            children: [
+              e.jsx('span', {
+                className: o['kb-main-header-icon'],
+                'aria-hidden': !0,
+                children: e.jsx(ue, { size: 22 }),
+              }),
+              e.jsxs('div', {
+                className: o['kb-main-header-text'],
+                children: [
+                  e.jsx('h2', { className: o['kb-main-title'], title: x, children: x || '知识库' }),
+                  e.jsx('p', { className: o['kb-main-meta'], children: ye }),
+                  e.jsxs('div', {
+                    className: `${o['kb-main-embedding-status']} ${l ? o['kb-main-embedding-status--ready'] : o['kb-main-embedding-status--missing']}`,
+                    title: l
+                      ? `知识库嵌入模型：${r?.model}`
+                      : r
+                        ? '当前嵌入模型缺少 API Key、API 地址或模型名称'
+                        : '文本切分模型只负责切段，入库还需要单独配置嵌入模型',
+                    children: [
+                      e.jsx('span', { className: o['kb-main-embedding-dot'], 'aria-hidden': !0 }),
+                      l
+                        ? `嵌入模型：${r?.name?.trim() || r?.model}`
+                        : r
+                          ? `嵌入模型配置不完整：${r.name?.trim() || r.model}`
+                          : '未配置嵌入模型（文本切分模型不能代替）',
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+          e.jsxs('div', {
+            className: o['kb-main-toolbar'],
+            children: [
+              e.jsxs(w, {
+                className: `${o['kb-main-toolbar-btn']} ${o['kb-main-toolbar-btn--primary']}`,
+                disabled: !n || N,
+                onClick: () => Y(!0),
+                children: [
+                  N ? e.jsx(me, { size: 'small' }) : e.jsx(qe, { size: 16, 'aria-hidden': !0 }),
+                  '添加文档',
+                ],
+              }),
+              l
+                ? null
+                : e.jsx(w, {
+                    className: o['kb-main-toolbar-btn'],
+                    onClick: () =>
+                      window.dispatchEvent(
+                        new CustomEvent('app:open-settings', { detail: { section: 'ai' } }),
+                      ),
+                    children: '配置嵌入模型',
+                  }),
+              e.jsxs(w, {
+                className: o['kb-main-toolbar-btn'],
+                disabled: !n || N,
+                onClick: () => {
+                  ge();
+                },
+                children: [e.jsx(Ge, { size: 16, 'aria-hidden': !0 }), '导入目录'],
+              }),
+              e.jsxs(w, {
+                className: o['kb-main-toolbar-btn'],
+                onClick: () => {
+                  (E(''), M(''), I(!0));
+                },
+                children: [e.jsx(Ze, { size: 16, 'aria-hidden': !0 }), '粘贴入库'],
+              }),
+              e.jsxs(w, {
+                className: o['kb-main-toolbar-btn'],
+                onClick: () => {
+                  (h(''), X([]), $(!0));
+                },
+                children: [e.jsx(he, { size: 16, 'aria-hidden': !0 }), '搜索测试'],
+              }),
+            ],
+          }),
+        ],
+      }),
+      e.jsx('div', {
+        className: o['kb-main-body'],
+        children: e.jsx('div', {
+          className: o['kb-main-body-inner'],
+          children: S
+            ? e.jsx('div', {
+                className: o['kb-main-loading'],
+                children: e.jsxs('div', {
+                  className: o['kb-main-loading-inner'],
+                  children: [
+                    e.jsx(me, { size: 'large' }),
+                    e.jsx('p', { className: o['kb-main-loading-text'], children: '加载文档…' }),
+                  ],
+                }),
+              })
+            : j.length === 0
+              ? e.jsx('div', {
+                  className: o['kb-main-body-empty'],
+                  children: e.jsx(ie, {
+                    centered: !0,
+                    icon: Je,
+                    title: '暂无文档',
+                    description: '上传 PDF、Word、Markdown 等文件，或粘贴文本开始构建知识库',
+                  }),
+                })
+              : e.jsx('div', {
+                  className: o['kb-main-doc-table'],
+                  children: e.jsx(st, {
+                    documents: fe,
+                    loading: S,
+                    onRowClick: (t) => {
+                      const i = j.find((b) => b.docId === t.id);
+                      i && te(i);
+                    },
+                    onDelete: (t) => {
+                      we(t.id);
+                    },
+                  }),
+                }),
+        }),
+      }),
+      e.jsx(ot, {
+        open: xe,
+        onClose: () => Y(!1),
+        onUploadAndIngest: ke,
+        onPreviewSegments: async (t, i) =>
+          (
+            await Me(t, {
+              ...c,
+              segmentSettings: {
+                separator: i.separator,
+                maxChunkLength: i.maxChunkLength,
+                chunkOverlap: i.chunkOverlap,
+                preprocess: i.preprocess,
+                splitMode: i.splitMode,
+              },
+            })
+          ).chunks
+            .slice(0, 12)
+            .map(({ idx: _, content: K }) => ({ idx: _, content: K })),
+      }),
+      e.jsx(lt, {
+        open: !!ee,
+        document: ee,
+        onClose: () => te(null),
+        kbEmbeddingOptions: c,
+        onRetryIngest: (t) => {
+          ve(t);
+        },
+      }),
+      e.jsxs(U, {
+        title: '粘贴文本入库',
+        open: A,
+        onCancel: () => I(!1),
+        onOk: () => {
+          je();
+        },
+        okText: '入库',
+        cancelText: '取消',
+        confirmLoading: k,
+        width: 720,
+        destroyOnHidden: !0,
+        children: [
+          e.jsx(O, {
+            placeholder: '可选文件名',
+            value: C,
+            onChange: (t) => E(t.target.value),
+            className: o['kb-main-paste-filename'],
+          }),
+          e.jsx(O.TextArea, {
+            placeholder: '粘贴要入库的文本',
+            value: T,
+            onChange: (t) => M(t.target.value),
+            autoSize: { minRows: 8 },
+          }),
+        ],
+      }),
+      e.jsx(U, {
+        title: `搜索测试 · ${x}`,
+        open: f,
+        onCancel: () => $(!1),
+        footer: null,
+        width: 900,
+        destroyOnHidden: !0,
+        children: e.jsxs('div', {
+          className: o['kb-main-search'],
+          children: [
+            e.jsx('p', {
+              className: o['kb-main-search-hint'],
+              children: '输入问题预览向量检索效果，分数越高表示相关性越强',
+            }),
+            e.jsxs('div', {
+              className: o['kb-main-search-bar'],
+              children: [
+                e.jsx(O, {
+                  placeholder: '例如：产品退款政策是什么？',
+                  value: D,
+                  onChange: (t) => h(t.target.value),
+                  onPressEnter: () => {
+                    ne();
+                  },
+                  allowClear: !0,
+                }),
+                e.jsx(w, {
+                  type: 'primary',
+                  icon: e.jsx(he, { size: 14 }),
+                  onClick: () => {
+                    ne();
+                  },
+                  loading: be,
+                  children: '搜索',
+                }),
+              ],
+            }),
+            z.length > 0 &&
+              e.jsx('div', {
+                className: o['kb-main-search-results'],
+                children: e.jsx(Q, {
+                  dataSource: z,
+                  rowKey: 'chunkId',
+                  pagination: !1,
+                  size: 'small',
+                  scroll: { y: 400 },
+                  columns: [
+                    { title: '#', width: 48, render: (t, i, b) => b + 1 },
+                    { title: '文档', dataIndex: 'docName', width: 140, ellipsis: !0 },
+                    { title: '块', dataIndex: 'idx', width: 64 },
+                    {
+                      title: '预览',
+                      dataIndex: 'content',
+                      ellipsis: !0,
+                      render: (t) => t.slice(0, 80) + (t.length > 80 ? '...' : ''),
+                    },
+                    {
+                      title: '分数',
+                      dataIndex: 'finalScore',
+                      width: 88,
+                      render: (t) =>
+                        e.jsx('span', { className: o['kb-main-score'], children: t.toFixed(4) }),
+                    },
+                  ],
+                }),
+              }),
+          ],
+        }),
+      }),
+    ],
+  });
+}
+export { pt as KnowledgeManager };

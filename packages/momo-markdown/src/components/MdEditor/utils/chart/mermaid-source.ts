@@ -170,7 +170,13 @@ function normalizeStateDiagramSource(source: string): string {
  * 规范化 Mermaid 源码，避免节点标签中的花括号导致解析失败
  */
 export function normalizeMermaidSource(source: string): string {
-  let code = source;
+  // Markdown 片段从聊天、文档等富文本来源复制时，节点方括号和 HTML 标签
+  // 常被转义。Mermaid 代码块内应恢复它们的原始语法，避免被当作 KaTeX 或
+  // 普通文本处理。
+  let code = source
+    .replace(/\\([\[\]])/g, '$1')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>');
 
   if (/^\s*wardley-beta/m.test(code)) {
     code = code.replace(/-->/g, '->');

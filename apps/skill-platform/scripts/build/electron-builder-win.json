@@ -16,7 +16,9 @@
     "!node_modules/typeorm/browser{,/**/*}",
     "!node_modules/better-sqlite3/{src,deps}{,/**/*}"
   ],
-  "electronLanguages": ["zh-CN"],
+  "electronLanguages": [
+    "zh-CN"
+  ],
   "extraFiles": [
     {
       "from": "dist/renderer",
@@ -39,10 +41,26 @@
     {
       "from": "../electron/src/main/database/native",
       "to": "native",
-      "filter": ["*.node"]
+      "filter": [
+        "*.node"
+      ]
+    },
+    {
+      "from": "../../packages/momo-harness-runner/dist",
+      "to": "harness-builtin"
+    },
+    {
+      "from": "../../packages/momo-harness-runner/dist/node_modules",
+      "to": "harness-builtin/node_modules"
     }
   ],
-  "asarUnpack": ["**/*.node", "**/*.dll", "**/*.dylib", "**/*.so", "**/*.wasm"],
+  "asarUnpack": [
+    "**/*.node",
+    "**/*.dll",
+    "**/*.dylib",
+    "**/*.so",
+    "**/*.wasm"
+  ],
   "directories": {
     "output": "out"
   },
@@ -55,7 +73,9 @@
     "target": [
       {
         "target": "nsis",
-        "arch": ["x64"]
+        "arch": [
+          "x64"
+        ]
       }
     ]
   },

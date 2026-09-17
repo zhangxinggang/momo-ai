@@ -3,10 +3,51 @@
  * 设置类型定义
  */
 
+import type { EAIProtocol } from './ai';
 import type { ISkillProject } from './skill';
+
+/** AI 模型类型 */
+export type EAIModelType = 'chat' | 'image' | 'embedding';
+
+/** 对话模型参数配置 */
+export interface IChatModelParams {
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  topK?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+  stream?: boolean;
+  enableThinking?: boolean;
+  customParams?: Record<string, string | number | boolean>;
+}
+
+/** 图像模型参数配置 */
+export interface IImageModelParams {
+  size?: string;
+  quality?: 'standard' | 'hd';
+  style?: 'vivid' | 'natural';
+  n?: number;
+}
+
+/** AI 模型配置 */
+export interface IAIModelConfig {
+  id: string;
+  type: EAIModelType;
+  name?: string;
+  provider: string;
+  apiProtocol?: EAIProtocol;
+  apiKey: string;
+  apiUrl: string;
+  model: string;
+  isDefault?: boolean;
+  chatParams?: IChatModelParams;
+  imageParams?: IImageModelParams;
+}
 
 export interface ISettings {
   theme: ETheme;
+  aiModels?: IAIModelConfig[];
   defaultFolderId?: string;
   backgroundImageFileName?: string;
   backgroundImageOpacity?: number;

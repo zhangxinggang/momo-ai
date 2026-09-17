@@ -220,7 +220,6 @@ export function WorkflowTreePanel() {
       adapter={adapter}
       emptyDescription='暂无工作流，请新建目录或工作流'
       expandedKeys={expandedKeys}
-      hideFileRename
       labels={{
         createFolder: '新建目录',
         createNote: '新建工作流',

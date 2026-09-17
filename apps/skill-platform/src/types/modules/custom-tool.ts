@@ -1,3 +1,4 @@
+import type { ToolAction } from '@momo/agent-contracts';
 /** 自定义工具树节点种类：组织目录或工具包 */
 export type ECustomToolNodeKind = 'folder' | 'tool';
 
@@ -39,7 +40,12 @@ export interface ICustomToolPermissions {
 /** 工具包元数据（tool.json）。v1 工具会按纯静态工具兼容读取。 */
 export interface DCustomToolMeta {
   kind: 'tool';
-  version: number;
+  id: string;
+  /** 展示名称和别名同时用于 AI 对话识别用户或 Skill 点名的工具。 */
+  name?: string;
+  description?: string;
+  aliases?: string[];
+  actions: ToolAction[];
   entry?: string;
   service?: ICustomToolServiceConfig;
   permissions?: ICustomToolPermissions;

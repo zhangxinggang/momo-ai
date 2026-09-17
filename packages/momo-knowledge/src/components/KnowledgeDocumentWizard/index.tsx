@@ -1,7 +1,6 @@
 import { Button, Modal, Steps, Upload } from 'antd';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
-import { previewChunks } from '../../chunker';
 import type { EDocumentSegmentMode, EKnowledgeIngestStep, ISegmentSettings } from '../../types';
 import { DEFAULT_SEGMENT_SETTINGS } from '../../types';
 import { SegmentSettingsPanel, type ISegmentPreviewBlock } from '../SegmentSettingsPanel';
@@ -17,7 +16,7 @@ export interface IProps {
     segmentMode: EDocumentSegmentMode,
   ) => Promise<void>;
   initialSegmentSettings?: ISegmentSettings;
-  onPreviewSegments?: (file: File, settings: ISegmentSettings) => Promise<ISegmentPreviewBlock[]>;
+  onPreviewSegments: (file: File, settings: ISegmentSettings) => Promise<ISegmentPreviewBlock[]>;
 }
 
 /** 新增文档三步向导：数据源 -> 分段与清洗 -> 入库 */
@@ -32,53 +31,16 @@ export function KnowledgeDocumentWizard({
   const [files, setFiles] = useState<File[]>([]);
   const [segmentSettings, setSegmentSettings] = useState<ISegmentSettings>(initialSegmentSettings);
   const [submitting, setSubmitting] = useState(false);
-  const [previewSource, setPreviewSource] = useState('');
 
   const segmentMode: EDocumentSegmentMode =
     segmentSettings.splitMode === 'llm' ? 'general' : 'fixed';
-
-  const [localPreviewBlocks, setLocalPreviewBlocks] = useState<ISegmentPreviewBlock[]>([]);
-
-  useEffect(() => {
-    if (!previewSource.trim()) {
-      setLocalPreviewBlocks([]);
-      return;
-    }
-
-    let cancelled = false;
-    void previewChunks(previewSource, segmentSettings, 8).then((items) => {
-      if (cancelled) {
-        return;
-      }
-      setLocalPreviewBlocks(
-        items.map((item) => ({
-          idx: item.idx,
-          content: item.content,
-        })),
-      );
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [previewSource, segmentSettings]);
 
   const stepIndex = step === 'datasource' ? 0 : step === 'segment' ? 1 : 2;
 
   const handleClose = () => {
     setStep('datasource');
     setFiles([]);
-    setPreviewSource('');
     onClose();
-  };
-
-  const loadPreviewFromFile = async (file: File) => {
-    const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
-    if (['txt', 'md', 'markdown'].includes(ext)) {
-      setPreviewSource(await file.text());
-      return;
-    }
-    setPreviewSource('');
   };
 
   const handlePreviewSegments = async (): Promise<ISegmentPreviewBlock[]> => {
@@ -87,11 +49,7 @@ export function KnowledgeDocumentWizard({
       return [];
     }
 
-    if (onPreviewSegments) {
-      return onPreviewSegments(file, segmentSettings);
-    }
-
-    return localPreviewBlocks;
+    return onPreviewSegments(file, segmentSettings);
   };
 
   return (
@@ -124,11 +82,6 @@ export function KnowledgeDocumentWizard({
                 .map((item) => item.originFileObj)
                 .filter((f): f is NonNullable<typeof f> => Boolean(f));
               setFiles(next);
-              if (next[0]) {
-                void loadPreviewFromFile(next[0]);
-              } else {
-                setPreviewSource('');
-              }
             }}>
             <p>点击或拖拽上传 PDF、DOCX、Excel、TXT、Markdown</p>
           </Upload.Dragger>
@@ -139,7 +92,6 @@ export function KnowledgeDocumentWizard({
         <SegmentSettingsPanel
           value={segmentSettings}
           onChange={setSegmentSettings}
-          previewBlocks={localPreviewBlocks}
           previewDisabled={files.length === 0}
           onPreview={handlePreviewSegments}
         />

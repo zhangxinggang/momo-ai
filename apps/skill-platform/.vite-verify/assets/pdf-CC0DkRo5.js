@@ -1,6 +1,131 @@
-import{_ as c}from"./markdown-vendor-DldLOD9R.js";import{bw as m}from"./index-C2avURFS.js";import"./ui-vendor-C-FKu2uc.js";import"./markdown-it-vendor-DL4wSELR.js";import"./icons-B5Lu0sqU.js";var g=class{};const P="pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js";var y=class extends g{blob;splitPages=!0;pdfjs;parsedItemSeparator;constructor(t,{splitPages:s=!0,pdfjs:n=h,parsedItemSeparator:r=""}={}){super(),this.blob=t,this.splitPages=s??this.splitPages,this.pdfjs=n,this.parsedItemSeparator=r}async load(){const t=new Uint8Array(await this.blob.arrayBuffer()),s=await this.pdfjs();if(s.isV2)return this.parseWithV2(t,s.PDFParse);const{getDocument:n,version:r}=s,e=await n({data:t,useWorkerFetch:!1,isEvalSupported:!1,useSystemFonts:!0}).promise,o=await e.getMetadata().catch(()=>null),a=[];for(let i=1;i<=e.numPages;i+=1){const l=await(await e.getPage(i)).getTextContent();if(l.items.length===0)continue;let f;const d=[];for(const p of l.items)"str"in p&&(f===p.transform[5]||!f?d.push(p.str):d.push(`
-${p.str}`),f=p.transform[5]);const u=d.join(this.parsedItemSeparator);a.push(new m({pageContent:u,metadata:{pdf:{version:r,info:o?.info,metadata:o?.metadata,totalPages:e.numPages},loc:{pageNumber:i}}}))}return this.splitPages?a:a.length===0?[]:[new m({pageContent:a.map(i=>i.pageContent).join(`
+import './icons-B5Lu0sqU.js';
+import { bw as m } from './index-C2avURFS.js';
+import './markdown-it-vendor-DL4wSELR.js';
+import { _ as c } from './markdown-vendor-DldLOD9R.js';
+import './ui-vendor-C-FKu2uc.js';
+var g = class {};
+const P = 'pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js';
+var y = class extends g {
+  blob;
+  splitPages = !0;
+  pdfjs;
+  parsedItemSeparator;
+  constructor(t, { splitPages: s = !0, pdfjs: n = h, parsedItemSeparator: r = '' } = {}) {
+    (super(),
+      (this.blob = t),
+      (this.splitPages = s ?? this.splitPages),
+      (this.pdfjs = n),
+      (this.parsedItemSeparator = r));
+  }
+  async load() {
+    const t = new Uint8Array(await this.blob.arrayBuffer()),
+      s = await this.pdfjs();
+    if (s.isV2) return this.parseWithV2(t, s.PDFParse);
+    const { getDocument: n, version: r } = s,
+      e = await n({ data: t, useWorkerFetch: !1, isEvalSupported: !1, useSystemFonts: !0 }).promise,
+      o = await e.getMetadata().catch(() => null),
+      a = [];
+    for (let i = 1; i <= e.numPages; i += 1) {
+      const l = await (await e.getPage(i)).getTextContent();
+      if (l.items.length === 0) continue;
+      let f;
+      const d = [];
+      for (const p of l.items)
+        'str' in p &&
+          (f === p.transform[5] || !f
+            ? d.push(p.str)
+            : d.push(`
+${p.str}`),
+          (f = p.transform[5]));
+      const u = d.join(this.parsedItemSeparator);
+      a.push(
+        new m({
+          pageContent: u,
+          metadata: {
+            pdf: { version: r, info: o?.info, metadata: o?.metadata, totalPages: e.numPages },
+            loc: { pageNumber: i },
+          },
+        }),
+      );
+    }
+    return this.splitPages
+      ? a
+      : a.length === 0
+        ? []
+        : [
+            new m({
+              pageContent: a.map((i) => i.pageContent).join(`
 
-`),metadata:{pdf:{version:r,info:o?.info,metadata:o?.metadata,totalPages:e.numPages}}})]}async parseWithV2(t,s){const n=new s({data:t});try{const r=await n.getText(),e=await n.getInfo(),o=[];for(const a of r.pages)!a.text||a.text.trim().length===0||o.push(new m({pageContent:a.text,metadata:{pdf:{version:e.metadata?.format||"unknown",info:e.info,metadata:e.metadata,totalPages:r.total},loc:{pageNumber:a.num}}}));return this.splitPages?o:o.length===0?[]:[new m({pageContent:o.map(a=>a.pageContent).join(`
+`),
+              metadata: {
+                pdf: { version: r, info: o?.info, metadata: o?.metadata, totalPages: e.numPages },
+              },
+            }),
+          ];
+  }
+  async parseWithV2(t, s) {
+    const n = new s({ data: t });
+    try {
+      const r = await n.getText(),
+        e = await n.getInfo(),
+        o = [];
+      for (const a of r.pages)
+        !a.text ||
+          a.text.trim().length === 0 ||
+          o.push(
+            new m({
+              pageContent: a.text,
+              metadata: {
+                pdf: {
+                  version: e.metadata?.format || 'unknown',
+                  info: e.info,
+                  metadata: e.metadata,
+                  totalPages: r.total,
+                },
+                loc: { pageNumber: a.num },
+              },
+            }),
+          );
+      return this.splitPages
+        ? o
+        : o.length === 0
+          ? []
+          : [
+              new m({
+                pageContent: o.map((a) => a.pageContent).join(`
 
-`),metadata:{pdf:{version:e.metadata?.format||"unknown",info:e.info,metadata:e.metadata,totalPages:r.total}}})]}finally{await n.destroy()}}};async function h(){try{const t=await c(()=>import("./pdf-parse.es-W1tnNXTQ.js"),[],import.meta.url);if("PDFParse"in t)return{isV2:!0,PDFParse:t.PDFParse}}catch{}try{const{default:t}=await import(P),{getDocument:s,version:n}=t;return{isV2:!1,getDocument:s,version:n}}catch(t){throw console.error(t),new Error("Failed to load pdf-parse. Please install pdf-parse v1 or v2, e.g. `npm install pdf-parse@^1` or `npm install pdf-parse@^2`.")}}export{y as WebPDFLoader};
+`),
+                metadata: {
+                  pdf: {
+                    version: e.metadata?.format || 'unknown',
+                    info: e.info,
+                    metadata: e.metadata,
+                    totalPages: r.total,
+                  },
+                },
+              }),
+            ];
+    } finally {
+      await n.destroy();
+    }
+  }
+};
+async function h() {
+  try {
+    const t = await c(() => import('./pdf-parse.es-W1tnNXTQ.js'), [], import.meta.url);
+    if ('PDFParse' in t) return { isV2: !0, PDFParse: t.PDFParse };
+  } catch {}
+  try {
+    const { default: t } = await import(P),
+      { getDocument: s, version: n } = t;
+    return { isV2: !1, getDocument: s, version: n };
+  } catch (t) {
+    throw (
+      console.error(t),
+      new Error(
+        'Failed to load pdf-parse. Please install pdf-parse v1 or v2, e.g. `npm install pdf-parse@^1` or `npm install pdf-parse@^2`.',
+      )
+    );
+  }
+}
+export { y as WebPDFLoader };

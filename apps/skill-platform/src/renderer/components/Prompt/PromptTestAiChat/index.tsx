@@ -1,6 +1,6 @@
 import { AiChatView, useChatContext, type IAiChatServices, type IChatMessage } from '@momo/aichat';
 import '@momo/markdown-styles';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { AiChatShell } from '@renderer/components/Chat/AiChatShell';
 import { useAiChatViewTheme } from '@renderer/hooks/useAiChatViewTheme';
@@ -18,6 +18,8 @@ export interface IProps {
   onLoadingChange?: (loading: boolean) => void;
   /** 用户从输入框发送消息后回调（如统计使用次数） */
   onAfterSend?: () => void;
+  /** Harness 完成一轮回复后回调 */
+  onResponseComplete?: (content: string) => void | Promise<void>;
   /** 助手消息操作区扩展 */
   renderAssistantMessageActions?: (message: IChatMessage) => React.ReactNode;
 }
@@ -27,6 +29,7 @@ function PromptTestAiChatBridge({
   userPrompt,
   onLoadingChange,
   onAfterSend,
+  onResponseComplete,
   renderAssistantMessageActions,
 }: Pick<
   IProps,
@@ -34,15 +37,40 @@ function PromptTestAiChatBridge({
   | 'userPrompt'
   | 'onLoadingChange'
   | 'onAfterSend'
+  | 'onResponseComplete'
   | 'renderAssistantMessageActions'
 >) {
-  const { isAILoading, currentSession, currentSessionId, addMessage, updateMessage } =
-    useChatContext();
+  const {
+    isAILoading,
+    currentSession,
+    currentSessionId,
+    addMessage,
+    updateMessage,
+    setSystemPrompt,
+  } = useChatContext();
   const chatTheme = useAiChatViewTheme();
+  const wasLoadingRef = useRef(false);
 
   useEffect(() => {
     onLoadingChange?.(isAILoading);
   }, [isAILoading, onLoadingChange]);
+
+  useEffect(() => {
+    if (wasLoadingRef.current && !isAILoading) {
+      const reply = currentSession?.messages
+        .slice()
+        .reverse()
+        .find(
+          (message) =>
+            message.role === 'assistant' &&
+            message.runStatus === 'completed' &&
+            !message.isError &&
+            Boolean(message.content.trim()),
+        );
+      if (reply) void onResponseComplete?.(reply.content);
+    }
+    wasLoadingRef.current = isAILoading;
+  }, [currentSession?.messages, isAILoading, onResponseComplete]);
 
   // 将系统提示词展示在对话历史中
   useEffect(() => {
@@ -66,6 +94,11 @@ function PromptTestAiChatBridge({
     addMessage(currentSessionId, { role: 'system', content: text });
   }, [systemPrompt, currentSessionId, currentSession, addMessage, updateMessage]);
 
+  // Harness 只读取结构化的 systemPrompt；历史中的 system 消息仅负责可见展示。
+  useEffect(() => {
+    setSystemPrompt(systemPrompt.trim());
+  }, [setSystemPrompt, systemPrompt]);
+
   return (
     <AiChatView
       {...chatTheme}
@@ -87,6 +120,7 @@ export function PromptTestAiChat({
   userPrompt,
   onLoadingChange,
   onAfterSend,
+  onResponseComplete,
   renderAssistantMessageActions,
 }: IProps) {
   return (
@@ -101,6 +135,7 @@ export function PromptTestAiChat({
         userPrompt={userPrompt}
         onLoadingChange={onLoadingChange}
         onAfterSend={onAfterSend}
+        onResponseComplete={onResponseComplete}
         renderAssistantMessageActions={renderAssistantMessageActions}
       />
     </AiChatShell>

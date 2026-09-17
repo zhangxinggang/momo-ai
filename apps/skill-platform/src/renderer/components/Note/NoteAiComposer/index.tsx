@@ -3,8 +3,10 @@ import {
   useAiChatConfig,
   useChatContext,
   type IChatAttachment,
+  type IChatSession,
 } from '@momo/aichat';
 import { useToast } from '@renderer/components/ui/Toast';
+import { useTrackAiChatGeneration } from '@renderer/hooks/useAiChatGenerationActivity';
 import { useNoteStore } from '@renderer/store';
 import { clsx } from 'clsx';
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
@@ -52,13 +54,16 @@ export function NoteAiComposer({ noteKey, onRewritingChange }: IProps) {
   const [attachments, setAttachments] = useState<IChatAttachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
+  const [exportSession, setExportSession] = useState<IChatSession | null>(null);
 
   const stoppedRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const generationIdRef = useRef(0);
   const onRewritingChangeRef = useRef(onRewritingChange);
   onRewritingChangeRef.current = onRewritingChange;
 
   const isRewriting = status === ERewriteStatus.ERewriting;
+  useTrackAiChatGeneration('note', isRewriting);
   const isCurrentImageModel = Boolean(currentModel && isImageModel?.(currentModel));
   const canUndo =
     undoSnapshot !== null &&
@@ -67,12 +72,17 @@ export function NoteAiComposer({ noteKey, onRewritingChange }: IProps) {
       status === ERewriteStatus.EError);
 
   useEffect(() => {
+    setExportSession(null);
+  }, [noteKey]);
+
+  useEffect(() => {
     onRewritingChangeRef.current(isRewriting);
   }, [isRewriting]);
 
   useEffect(() => {
     return () => {
       stoppedRef.current = true;
+      abortControllerRef.current?.abort();
       onRewritingChangeRef.current(false);
     };
   }, []);
@@ -112,6 +122,8 @@ export function NoteAiComposer({ noteKey, onRewritingChange }: IProps) {
   const handleStop = useCallback(() => {
     if (!stoppedRef.current && status === ERewriteStatus.ERewriting) {
       stoppedRef.current = true;
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
       const nextContent = useNoteStore.getState().editorContent;
       setAppliedContent(nextContent);
       setStatus(ERewriteStatus.EStopped);
@@ -211,8 +223,28 @@ export function NoteAiComposer({ noteKey, onRewritingChange }: IProps) {
 
     const snapshot = useNoteStore.getState().editorContent;
     const targetPath = noteKey;
+    const runtimeSessionId = `note-rewrite-${crypto.randomUUID()}`;
+    const startedAt = Date.now();
+    const userMessageId = crypto.randomUUID();
+    const assistantMessageId = crypto.randomUUID();
+    const initialExportSession: IChatSession = {
+      id: runtimeSessionId,
+      title: `笔记改写：${noteKey.split('/').pop() || noteKey}`,
+      createdAt: startedAt,
+      updatedAt: startedAt,
+      messages: [
+        {
+          id: userMessageId,
+          role: 'user',
+          content: instruction,
+          timestamp: startedAt,
+        },
+      ],
+    };
     const generationId = generationIdRef.current + 1;
+    const abortController = new AbortController();
     generationIdRef.current = generationId;
+    abortControllerRef.current = abortController;
     stoppedRef.current = false;
 
     setPrompt('');
@@ -222,6 +254,7 @@ export function NoteAiComposer({ noteKey, onRewritingChange }: IProps) {
     setAppliedContent(null);
     setErrorMessage('');
     setStatus(ERewriteStatus.ERewriting);
+    setExportSession(initialExportSession);
 
     const isCurrentGeneration = () =>
       generationIdRef.current === generationId && useNoteStore.getState().selectedId === targetPath;
@@ -253,8 +286,10 @@ export function NoteAiComposer({ noteKey, onRewritingChange }: IProps) {
           undefined,
           currentModel,
           {
+            sessionId: runtimeSessionId,
             temperature,
             top_p: topP,
+            abortController,
             user_system_prompt: superpowerParts.join('\n\n') || undefined,
             kb_enabled: isCurrentImageModel ? false : kbEnabled,
             kb_collection_id: kbCollectionId,
@@ -273,6 +308,20 @@ export function NoteAiComposer({ noteKey, onRewritingChange }: IProps) {
         }
 
         const nextContent = unwrapFullDocumentFence(acc);
+        const completedAt = Date.now();
+        setExportSession({
+          ...initialExportSession,
+          updatedAt: completedAt,
+          messages: [
+            ...initialExportSession.messages,
+            {
+              id: assistantMessageId,
+              role: 'assistant',
+              content: nextContent,
+              timestamp: completedAt,
+            },
+          ],
+        });
         setEditorContent(nextContent);
         setAppliedContent(nextContent);
         setStatus(ERewriteStatus.EDone);
@@ -282,6 +331,21 @@ export function NoteAiComposer({ noteKey, onRewritingChange }: IProps) {
           return;
         }
         const message = error instanceof Error ? error.message : String(error);
+        const failedAt = Date.now();
+        setExportSession({
+          ...initialExportSession,
+          updatedAt: failedAt,
+          messages: [
+            ...initialExportSession.messages,
+            {
+              id: assistantMessageId,
+              role: 'assistant',
+              content: acc ? `${acc}\n\n---\n改写失败：${message}` : `改写失败：${message}`,
+              timestamp: failedAt,
+              isError: true,
+            },
+          ],
+        });
         if (!acc) {
           setEditorContent(snapshot);
           setUndoSnapshot(null);
@@ -295,6 +359,10 @@ export function NoteAiComposer({ noteKey, onRewritingChange }: IProps) {
         setStatus(ERewriteStatus.EError);
         setErrorMessage(message);
         void saveCurrentFile();
+      } finally {
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null;
+        }
       }
     })();
   }, [
@@ -392,6 +460,8 @@ export function NoteAiComposer({ noteKey, onRewritingChange }: IProps) {
           progressMap={progressMap}
           onAttachFiles={handleAttachFiles}
           onRemoveAttachment={handleRemoveAttachment}
+          exportSession={exportSession}
+          showSessionCommands={false}
         />
       </div>
     </div>

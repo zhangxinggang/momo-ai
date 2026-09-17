@@ -37,7 +37,9 @@ export function SamplingFields({
         />
       </div>
       <div>
-        <label className='text-muted-foreground mb-1 block text-xs'>{'最大 Token 数'}</label>
+        <label className='text-muted-foreground mb-1 block text-xs'>
+          {'单次最大输出 Token 数'}
+        </label>
         <InputNumber
           min={1}
           step={1}
@@ -53,6 +55,9 @@ export function SamplingFields({
             }))
           }
         />
+        <p className='text-muted-foreground mt-1 text-xs'>
+          限制每次回答的输出量，不代表整个对话的上下文容量。
+        </p>
       </div>
       <div>
         <label className='text-muted-foreground mb-1 block text-xs'>{'Top P'}</label>
@@ -91,6 +96,9 @@ export function SamplingFields({
           }
           className={fieldClassName}
         />
+        <p className='text-muted-foreground mt-1 text-xs'>
+          限制每次回答的输出量，不代表整个对话的上下文容量。
+        </p>
       </div>
       <div>
         <label className='text-muted-foreground mb-1 block text-xs'>{'频率惩罚'}</label>

@@ -1,3 +1,4 @@
+import type { PermissionMode, RunEvent, RuntimeCommand, RuntimeGoal } from '@momo/agent-contracts';
 /**
  * 聊天相关的数据类型定义
  */
@@ -6,6 +7,19 @@ import type { IChatSourceRef } from './source';
 
 /** 智能体交互模式 */
 export type EAgentMode = 'ask' | 'plan';
+
+/** Harness 原生上下文占用；分类数值采用 Harness 的估算口径。 */
+export interface IChatContextUsage {
+  usedTokens: number;
+  /** 未确认模型容量时不提供分母；输出上限与上下文容量彼此独立。 */
+  contextWindow?: number;
+  contextWindowSource?: 'model' | 'estimate' | 'unknown';
+  maxOutputTokens?: number;
+  modelProfileId?: string;
+  systemTokens: number;
+  toolsTokens: number;
+  messageTokens: number;
+}
 
 export interface IChatRequestSnapshot {
   apiContent: string;
@@ -16,12 +30,20 @@ export interface IChatRequestSnapshot {
   kbEnabled: boolean;
   kbCollectionId?: string;
   agentMode: EAgentMode;
+  permissionMode?: PermissionMode;
+  runtimeCommand?: RuntimeCommand;
+  harnessAgentId?: string;
   sourceRefs?: IChatSourceRef[];
   createdAt: number;
 }
 
 // 消息类型定义 - 触发重新编译
 export interface IChatMessage {
+  runId?: string;
+  runStatus?: string;
+  runtimeEvents?: RunEvent[];
+  contextUsage?: IChatContextUsage;
+  goal?: RuntimeGoal | null;
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -80,6 +102,9 @@ export interface IChatSession {
   noteSnapshots?: Record<string, INoteSnapshot>;
   /** 所属对话项目 id */
   projectId?: string;
+  permissionMode?: PermissionMode;
+  /** 会话级模型选择；草稿首次发送后随会话持久化。 */
+  modelId?: string;
 }
 
 // 会话状态管理接口
@@ -132,6 +157,7 @@ export interface IChatContext {
       invocation?: ISlashInvocation;
       invocations?: ISlashInvocation[];
       requestSnapshot?: IChatRequestSnapshot;
+      runtimeCommand?: RuntimeCommand;
     },
   ) => Promise<boolean>;
   // 停止生成方法
@@ -159,6 +185,8 @@ export interface IChatContext {
   /** 智能体模式：ask 直接问答，plan 计划梳理 */
   agentMode: EAgentMode;
   setAgentMode: (mode: EAgentMode) => void;
+  permissionMode: PermissionMode;
+  setPermissionMode: (mode: PermissionMode) => Promise<void>;
 
   /** 从持久化存储重新加载会话（弹窗写入历史后刷新侧栏） */
   refreshSessionsFromStorage: () => void;
@@ -231,6 +259,7 @@ export const generateSessionTitle = (firstUserMessage: string): string => {
 
 // 上传附件类型定义
 export interface IChatAttachment {
+  sourceRef?: IChatSourceRef;
   id: string;
   name: string;
   size: number;

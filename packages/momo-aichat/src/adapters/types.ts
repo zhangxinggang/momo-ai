@@ -1,3 +1,4 @@
+import type { ChatRuntimePort } from '@momo/agent-contracts';
 import type { ReactNode } from 'react';
 import type { IChatStorageAdapter } from '../storage/chat-storage';
 import type { IChatAttachment, IChatAttachmentMeta, IChatSession } from '../types/chat';
@@ -34,6 +35,11 @@ export interface IChatStreamStats {
 }
 
 export interface IChatStreamOptions {
+  /**
+   * 调用方拥有的逻辑会话 id。单轮编辑器应为每次用户发起的任务分配新 id，
+   * 同一任务内的自动修复/续写复用该 id，避免运行日志与其他对话串线。
+   */
+  sessionId?: string;
   temperature?: number;
   top_p?: number;
   max_tokens?: number;
@@ -99,6 +105,21 @@ export interface IChatSyncAdapter {
 /** 宿主可注入的 AI 对话服务能力 */
 
 export interface IAiChatServices {
+  renderRuntimeArtifact?: (artifact: {
+    id: string;
+    name: string;
+    mimeType: string;
+    size: number;
+  }) => ReactNode;
+  runtime?: {
+    port: ChatRuntimePort;
+    getAgentId: () => string;
+    getResourceContext: (projectId?: string) => {
+      projectId: string;
+      folderPaths: string[];
+      resourceAgentAppId?: string;
+    };
+  };
   callAIChatStream: TCallAiChatStream;
   uploadFiles: TUploadFilesFn;
   validateLocalFiles: TValidateLocalFilesFn;
@@ -117,7 +138,7 @@ export interface IAiChatServices {
   defaultModel?: string;
   storageKeyPrefix?: string;
   /** 可选对话模型列表，供输入栏模型选择器使用 */
-  chatModels?: Array<{ id: string; label: string; group?: string }>;
+  chatModels?: Array<{ id: string; label: string; group?: string; maxOutputTokens?: number }>;
   /** 分组模型选项（对话 / 图像），优先于 chatModels 平铺列表 */
   chatModelOptionGroups?: Array<{
     label: string;

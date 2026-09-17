@@ -10,7 +10,10 @@
     "dev:skills": "pnpm --filter AIM electron:dev",
     "format": "prettier --write \"./apps/**/*.{js,ts,tsx,css,less,scss}\" \"./packages/**/*.{js,ts,tsx,css,less,scss}\"",
     "lint-staged": "lint-staged",
-    "prepare": "husky"
+    "prepare": "husky",
+    "harness:build": "node packages/momo-harness-runner/scripts/build.mjs",
+    "harness:test": "pnpm --filter AIM run test src/main/agent-runtime",
+    "harness:check": "node packages/momo-harness-runner/scripts/build.mjs --ensure"
   },
   "config": {
     "commitizen": {
@@ -38,7 +41,6 @@
   "pnpm": {
     "peerDependencyRules": {
       "allowedVersions": {
-        "@langchain/community>typeorm": "1",
         "openai>zod": "4",
         "stylelint-config-prettier>stylelint": ">=16",
         "tailwindcss-animate>tailwindcss": "3"

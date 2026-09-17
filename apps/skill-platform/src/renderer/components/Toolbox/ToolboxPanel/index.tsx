@@ -1,5 +1,6 @@
 import { CaretDownOutlined } from '@ant-design/icons';
 import { MomoTreeToolbar } from '@momo/tree';
+import { useConfirmLeaveAiChat } from '@renderer/hooks/useConfirmLeaveAiChat';
 import { useTreeRootCreate } from '@renderer/hooks/useTreeRootCreate';
 import { useCustomToolStore, useUIStore } from '@renderer/store';
 import { clsx } from 'clsx';
@@ -13,6 +14,7 @@ import styles from './index.module.less';
 
 /** 工具箱侧栏：上自定义工具 + 下系统工具 */
 export function ToolboxPanel() {
+  const confirmLeaveAiChat = useConfirmLeaveAiChat();
   const tools = useToolboxTools();
   const toolNodes = useMemo(() => mapToolsWithKeys(tools), [tools]);
 
@@ -87,7 +89,13 @@ export function ToolboxPanel() {
     }
   }, [activeToolboxToolKey, ensureToolboxToolExpanded, toolNodes]);
 
-  const handleSelectTool = (toolKey: string, mode: EToolboxToolMode) => {
+  const handleSelectTool = async (toolKey: string, mode: EToolboxToolMode) => {
+    if (!customSelectedId && activeToolboxToolKey === toolKey) {
+      return;
+    }
+    if (!(await confirmLeaveAiChat({ scope: 'toolbox' }))) {
+      return;
+    }
     clearCustomSelection();
     setActiveToolboxToolKey(toolKey);
     if (mode === EToolboxToolMode.TreeLeaf) {
@@ -100,13 +108,16 @@ export function ToolboxPanel() {
     toggleToolboxToolExpanded(toolKey);
   };
 
-  const handleSelectBranch = (toolKey: string, branchKey: string) => {
-    clearCustomSelection();
+  const handleSelectBranch = async (toolKey: string, branchKey: string) => {
     const { activeToolboxToolKey: currentToolKey, activeToolboxBranchKey: currentBranchKey } =
       useUIStore.getState();
-    if (currentToolKey === toolKey && currentBranchKey === branchKey) {
+    if (!customSelectedId && currentToolKey === toolKey && currentBranchKey === branchKey) {
       return;
     }
+    if (!(await confirmLeaveAiChat({ scope: 'toolbox' }))) {
+      return;
+    }
+    clearCustomSelection();
     ensureToolboxToolExpanded(toolKey);
     setActiveToolboxToolKey(toolKey);
     setActiveToolboxBranchKey(branchKey);
@@ -155,7 +166,7 @@ export function ToolboxPanel() {
                         styles['toolbox-menu-root'],
                         isToolActive && styles['toolbox-menu-root--active'],
                       )}
-                      onClick={() => handleSelectTool(tool.key, tool.mode)}>
+                      onClick={() => void handleSelectTool(tool.key, tool.mode)}>
                       <span
                         className={clsx(
                           styles['toolbox-menu-root-toggle'],
@@ -183,7 +194,7 @@ export function ToolboxPanel() {
                                 styles['toolbox-menu-branch'],
                                 isBranchActive && styles['toolbox-menu-branch--active'],
                               )}
-                              onClick={() => handleSelectBranch(tool.key, branch.key)}>
+                              onClick={() => void handleSelectBranch(tool.key, branch.key)}>
                               <ToolboxMenuIcon
                                 icon={branch.icon}
                                 className={styles['toolbox-menu-icon']}
@@ -208,7 +219,7 @@ export function ToolboxPanel() {
                     styles['toolbox-menu-root'],
                     isToolActive && styles['toolbox-menu-root--active'],
                   )}
-                  onClick={() => handleSelectTool(tool.key, tool.mode)}>
+                  onClick={() => void handleSelectTool(tool.key, tool.mode)}>
                   <span
                     className={clsx(
                       styles['toolbox-menu-root-toggle'],

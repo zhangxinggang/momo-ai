@@ -55,6 +55,11 @@ export function CreateSkillManualPanel({
 }: IProps) {
   return (
     <div className='space-y-5'>
+      <div className='border-primary/20 bg-primary/5 text-foreground rounded-lg border p-3 text-sm'>
+        {
+          '只需填写技能名称和一句自然语言指令。例如：“调用 a 工具，将天气转成 JSON 返回”。工具 ID、action、变量名和调用参数由系统处理。'
+        }
+      </div>
       <div>
         <label className='mb-2 block text-sm font-medium'>
           {'技能名称'} <span className='text-destructive'>*</span>
@@ -68,52 +73,6 @@ export function CreateSkillManualPanel({
           {'仅小写字母、数字和连字符，例如 my-skill-name'}
         </p>
       </div>
-
-      <div>
-        <label className='mb-2 block text-sm font-medium'>{'技能描述'}</label>
-        <Input
-          value={form.description}
-          onChange={(event) => onFieldChange('description', event.target.value)}
-          placeholder={'简短描述技能的功能'}
-        />
-      </div>
-
-      <SkillIconPicker
-        name={form.name}
-        iconUrl={form.iconUrl}
-        iconEmoji={form.iconEmoji}
-        iconBackground={form.iconBackground}
-        onChange={({ iconUrl, iconEmoji, iconBackground }) => {
-          onFieldChange('iconUrl', iconUrl);
-          onFieldChange('iconEmoji', iconEmoji);
-          onFieldChange('iconBackground', iconBackground);
-        }}
-      />
-
-      <div className='grid grid-cols-2 gap-4'>
-        <div>
-          <label className='mb-2 block text-sm font-medium'>{'版本'}</label>
-          <Input
-            value={form.version}
-            onChange={(event) => onFieldChange('version', event.target.value)}
-            placeholder='1.0.0'
-          />
-        </div>
-        <div>
-          <label className='mb-2 block text-sm font-medium'>{'作者'}</label>
-          <Input
-            value={form.author}
-            onChange={(event) => onFieldChange('author', event.target.value)}
-            placeholder={'作者名称'}
-          />
-        </div>
-      </div>
-
-      <SkillTagEditor
-        onChange={(tags) => onFieldChange('tags', tags)}
-        options={existingTags}
-        value={form.tags}
-      />
 
       <div>
         <div className='mb-2 flex flex-wrap items-center justify-between gap-2'>
@@ -168,9 +127,62 @@ export function CreateSkillManualPanel({
           />
         </div>
         <p className='text-muted-foreground mt-1.5 text-xs'>
-          {'支持 Markdown 格式，用于指导 AI 如何使用该技能'}
+          {'直接用自然语言说明要使用哪个工具、如何处理结果即可'}
         </p>
       </div>
+
+      <details className='border-border rounded-lg border p-4'>
+        <summary className='text-muted-foreground cursor-pointer text-sm font-medium'>
+          {'更多设置（可选）'}
+        </summary>
+        <div className='mt-5 space-y-5'>
+          <div>
+            <label className='mb-2 block text-sm font-medium'>{'技能描述'}</label>
+            <Input
+              value={form.description}
+              onChange={(event) => onFieldChange('description', event.target.value)}
+              placeholder={'简短描述技能的功能'}
+            />
+          </div>
+
+          <SkillIconPicker
+            name={form.name}
+            iconUrl={form.iconUrl}
+            iconEmoji={form.iconEmoji}
+            iconBackground={form.iconBackground}
+            onChange={({ iconUrl, iconEmoji, iconBackground }) => {
+              onFieldChange('iconUrl', iconUrl);
+              onFieldChange('iconEmoji', iconEmoji);
+              onFieldChange('iconBackground', iconBackground);
+            }}
+          />
+
+          <div className='grid grid-cols-2 gap-4'>
+            <div>
+              <label className='mb-2 block text-sm font-medium'>{'版本'}</label>
+              <Input
+                value={form.version}
+                onChange={(event) => onFieldChange('version', event.target.value)}
+                placeholder='1.0.0'
+              />
+            </div>
+            <div>
+              <label className='mb-2 block text-sm font-medium'>{'作者'}</label>
+              <Input
+                value={form.author}
+                onChange={(event) => onFieldChange('author', event.target.value)}
+                placeholder={'作者名称'}
+              />
+            </div>
+          </div>
+
+          <SkillTagEditor
+            onChange={(tags) => onFieldChange('tags', tags)}
+            options={existingTags}
+            value={form.tags}
+          />
+        </div>
+      </details>
     </div>
   );
 }

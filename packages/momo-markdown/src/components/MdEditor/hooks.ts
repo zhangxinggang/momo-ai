@@ -365,11 +365,23 @@ export const useConfig = (
 
   const [highlight, usedLanguageText] = useMdPreviewConfig(props);
 
-  const [setting, setSetting] = useState<ISettingType>({
-    fullscreen: false,
-    preview: preview,
-    htmlPreview: preview ? false : htmlPreview,
-    previewOnly: false,
+  const [setting, setSetting] = useState<ISettingType>(() => {
+    // 富文本本身就是所见即所得视图，初始时不应再让 Markdown 分屏预览按钮处于激活状态。
+    if (editorModeProp === 'richtext') {
+      return {
+        fullscreen: false,
+        preview: false,
+        htmlPreview: false,
+        previewOnly: false,
+      };
+    }
+
+    return {
+      fullscreen: false,
+      preview,
+      htmlPreview: preview ? false : htmlPreview,
+      previewOnly: false,
+    };
   });
 
   const [editorMode, setEditorMode] = useState<TEditorMode>(editorModeProp);

@@ -1,0 +1,10 @@
+{
+  "name": "@momo/harness-runner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "pnpm --filter AIM run test src/main/agent-runtime/supervisor/probe.integration.test.ts"
+  }
+}

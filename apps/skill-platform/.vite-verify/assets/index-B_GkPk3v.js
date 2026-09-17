@@ -1,1 +1,528 @@
-import{q as e}from"./markdown-vendor-DldLOD9R.js";import{bx as T,by as R,bz as q,bA as H,bB as K,br as O,bp as Y,bc as G,bd as J,be as Q}from"./index-C2avURFS.js";import{r as o,M as U,B as b}from"./ui-vendor-C-FKu2uc.js";import{L as V,e as W,f as X,A as Z,R as _,l as z}from"./icons-B5Lu0sqU.js";import"./markdown-it-vendor-DL4wSELR.js";function A(r){return r instanceof Error?r.message:String(r)}async function ee(r,i,y,u){if(r.length===0||i.length===0)return{successCount:0,totalCount:0,failures:[]};const m=r.length*i.length;let t=0,p=0;const x=[];for(const a of r){const g=await T(a.id,"skillmd");for(const h of i){t+=1,u?.({current:t,total:m,skillName:a.name,platformId:h});try{y==="symlink"?await R(a.name,g,h):await q(a.name,g,h),p+=1}catch(v){x.push({skillName:a.name,platformId:h,reason:A(v)})}}}return{successCount:p,totalCount:m,failures:x}}async function se(r,i,y){if(r.length===0||i.length===0)return{successCount:0,totalCount:0,failures:[]};const u=r.length*i.length;let m=0,t=0;const p=[];for(const x of r)for(const a of i){m+=1,y?.({current:m,total:u,skillName:x.name,platformId:a});try{await H(x.name,a),t+=1}catch(g){p.push({skillName:x.name,platformId:a,reason:A(g)})}}return{successCount:t,totalCount:u,failures:p}}function ne({skills:r,onClose:i,onComplete:y}){const u=K(),{showToast:m}=O(),[t,p]=o.useState("deploy"),x=Y(s=>s.skillInstallMethod),[a,g]=o.useState(x),[h,v]=o.useState([]),[k,I]=o.useState([]),[l,N]=o.useState(new Set),[S,C]=o.useState(!0),[j,$]=o.useState(!1),[P,M]=o.useState([]),[f,w]=o.useState(null),d=o.useMemo(()=>h.filter(s=>k.includes(s.id)),[k,h]),D=r.length*l.size;o.useEffect(()=>{d.length!==0&&N(s=>s.size>0?s:new Set(d.map(n=>n.id)))},[d]),o.useEffect(()=>{let s=!1;async function n(){C(!0);try{const[c,B]=await Promise.all([J(),Q()]);if(s)return;v(c),I(B)}catch(c){console.error("Failed to load skill platforms:",c)}finally{s||C(!1)}}return n(),()=>{s=!0}},[]);const F=s=>{N(n=>{const c=new Set(n);return c.has(s)?c.delete(s):c.add(s),c})},E=()=>{if(l.size===d.length){N(new Set);return}N(new Set(d.map(s=>s.id)))},L=async()=>{if(!(r.length===0||l.size===0)){$(!0),M([]);try{const s=t==="deploy"?await ee(r,Array.from(l),a,w):await se(r,Array.from(l),w);if(await y?.(),M(s.failures),s.successCount>0&&m(t==="deploy"?`已同步 ${s.successCount}/${s.totalCount} 个目标`:`已从 ${s.successCount}/${s.totalCount} 个目标卸载`,s.failures.length===0?"success":"warning"),s.failures.length>0){const n=s.failures.slice(0,2).map(c=>`${c.skillName} -> ${c.platformId}`).join(", ");m(`${s.failures.length} 个目标同步失败：${n}`,"error")}else i()}catch(s){console.error("Failed to batch deploy skills:",s),m(`更新失败: ${String(s)}`,"error")}finally{$(!1),w(null)}}};return e.jsx(U,{open:!0,zIndex:1050,onCancel:i,title:e.jsxs("div",{children:[e.jsxs("div",{className:"flex items-center gap-2",children:[e.jsx(z,{className:"text-primary h-5 w-5"}),e.jsx("span",{className:"text-lg font-semibold",children:"批量同步到平台"})]}),e.jsx("p",{className:"text-muted-foreground mt-1 text-xs",children:`将 ${r.length} 个 skill 同步到选定平台。`})]}),width:672,footer:e.jsxs("div",{className:"flex justify-end gap-3",children:[e.jsx(b,{onClick:i,disabled:j,children:"取消"}),e.jsx(b,{type:"primary",loading:j,disabled:j||S||l.size===0||d.length===0,icon:j?void 0:e.jsx(z,{className:"h-4 w-4"}),onClick:()=>{L()},children:j?"同步中":t==="deploy"?"批量同步到平台":"批量从平台卸载"})]}),styles:{body:{maxHeight:"min(85vh, 720px)",overflowY:"auto",padding:"24px"},mask:{backdropFilter:"blur(4px)"}},destroyOnHidden:!1,children:e.jsxs("div",{className:"space-y-4",children:[e.jsxs("section",{className:"border-border bg-background/60 rounded-2xl border p-4",children:[e.jsx("h3",{className:"text-sm font-semibold",children:"操作模式"}),e.jsx("div",{className:"mt-3 grid gap-2 sm:grid-cols-2",children:[["deploy","批量同步到平台"],["undeploy","批量从平台卸载"]].map(([s,n])=>e.jsx(b,{onClick:()=>p(s),className:`h-auto rounded-xl border px-4 py-3 text-left transition-colors ${t===s?"border-primary/40 bg-primary/5 text-primary":"border-border app-wallpaper-surface hover:border-primary/25"}`,children:e.jsx("div",{className:"text-sm font-medium",children:n})},s))})]}),e.jsxs("section",{className:"border-border bg-background/60 rounded-2xl border p-4",children:[e.jsx("h3",{className:"text-sm font-semibold",children:t==="deploy"?"安装方式":"操作"}),t==="deploy"?e.jsx("div",{className:"mt-3 grid gap-2 sm:grid-cols-2",children:["copy","symlink"].map(s=>e.jsxs(b,{onClick:()=>g(s),className:`h-auto whitespace-normal rounded-xl border px-4 py-3 text-left transition-colors ${a===s?"border-primary/40 bg-primary/5":"border-border app-wallpaper-surface hover:border-primary/25"}`,children:[e.jsx("div",{className:"text-sm font-medium",children:s==="symlink"?"软链接":"复制"}),e.jsx("div",{className:"text-muted-foreground mt-1 text-xs",children:s==="symlink"?"在平台目录中创建符号链接，后续更新更轻量。":"将 SKILL.md 复制到平台目录中，兼容性更好。"})]},s))}):e.jsx("div",{className:"border-border app-wallpaper-surface text-muted-foreground mt-3 rounded-xl border px-4 py-3 text-sm",children:`从选定平台目录移除对应 skill，不影响 ${u} 本地仓库。`})]}),e.jsxs("section",{className:"border-border bg-background/60 rounded-2xl border p-4",children:[e.jsxs("div",{className:"mb-3 flex flex-wrap items-center justify-between gap-2",children:[e.jsx("h3",{className:"text-sm font-semibold",children:"目标平台"}),e.jsxs("div",{className:"flex flex-wrap items-center gap-3",children:[d.length>0?e.jsx("span",{className:"bg-primary/10 text-primary rounded-full px-2.5 py-1 text-[11px] font-medium",children:`已选 ${l.size} 个`}):null,d.length>0?e.jsx(b,{type:"link",size:"small",onClick:E,className:"text-primary h-auto p-0 text-xs font-medium",children:l.size===d.length?"Deselect All":"Select All"}):null]})]}),S?e.jsxs("div",{className:"text-muted-foreground flex items-center gap-2 text-sm",children:[e.jsx(V,{className:"h-4 w-4 animate-spin"}),"加载中…"]}):d.length===0?e.jsx("div",{className:"border-border text-muted-foreground rounded-xl border border-dashed px-4 py-6 text-center text-sm",children:"没有检测到可同步的平台目录"}):e.jsxs(e.Fragment,{children:[e.jsx("div",{className:"border-primary/15 bg-primary/[0.04] text-muted-foreground mb-3 rounded-2xl border px-4 py-3 text-xs leading-6",children:t==="deploy"?"默认已选中当前检测到的平台。开始批量同步前请先确认目标平台。":`仅会从所选平台移除 ${u} 分发出去的 skill，不会删除本地仓库中的原始文件。`}),e.jsx("div",{className:"grid gap-3 sm:grid-cols-2",children:d.map(s=>{const n=l.has(s.id);return e.jsxs(b,{onClick:()=>F(s.id),className:`flex h-auto items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all ${n?"border-primary/40 bg-primary/5 shadow-primary/10 shadow-sm":"border-border app-wallpaper-surface hover:border-primary/25"}`,children:[e.jsx("div",{className:"bg-accent rounded-xl p-2",children:e.jsx(G,{platformId:s.id,size:20})}),e.jsxs("div",{className:"min-w-0 flex-1",children:[e.jsx("div",{className:"text-sm font-medium",children:s.name}),e.jsx("div",{className:"text-muted-foreground text-xs",children:s.id})]}),n?e.jsx(W,{className:"text-primary h-4 w-4"}):e.jsx(X,{className:"text-muted-foreground h-4 w-4"})]},s.id)})})]})]}),e.jsxs("section",{className:"border-border bg-background/60 rounded-2xl border p-4",children:[e.jsxs("div",{className:"mb-3 flex items-center justify-between",children:[e.jsx("h3",{className:"text-sm font-semibold",children:"已选技能"}),e.jsx("span",{className:"bg-primary/10 text-primary rounded-full px-2.5 py-1 text-xs font-medium",children:r.length})]}),e.jsx("div",{className:"max-h-56 space-y-2 overflow-y-auto pr-1",children:r.map(s=>e.jsxs("div",{className:"border-border app-wallpaper-surface flex items-center justify-between rounded-xl border px-3 py-2",children:[e.jsxs("div",{className:"min-w-0",children:[e.jsx("div",{className:"truncate text-sm font-medium",children:s.name}),s.description?e.jsx("div",{className:"text-muted-foreground truncate text-xs",children:s.description}):null]}),s.version?e.jsxs("span",{className:"bg-primary/10 text-primary ml-3 shrink-0 rounded-full px-2 py-0.5 text-[10px]",children:["v",s.version]}):null]},s.id))})]}),e.jsxs("section",{className:"border-border bg-background/60 rounded-2xl border p-4",children:[e.jsx("h3",{className:"text-sm font-semibold",children:"同步摘要"}),e.jsxs("div",{className:"mt-4 grid grid-cols-3 gap-2",children:[e.jsxs("div",{className:"border-border app-wallpaper-surface rounded-xl border px-3 py-2",children:[e.jsx("div",{className:"text-muted-foreground text-[10px] font-medium uppercase leading-tight tracking-wide",children:"已选技能"}),e.jsx("div",{className:"text-foreground mt-1 text-xl font-semibold",children:r.length})]}),e.jsxs("div",{className:"border-border app-wallpaper-surface rounded-xl border px-3 py-2",children:[e.jsx("div",{className:"text-muted-foreground text-[10px] font-medium uppercase leading-tight tracking-wide",children:"目标平台"}),e.jsx("div",{className:"text-foreground mt-1 text-xl font-semibold",children:l.size})]}),e.jsxs("div",{className:"border-border app-wallpaper-surface rounded-xl border px-3 py-2",children:[e.jsx("div",{className:"text-muted-foreground text-[10px] font-medium uppercase leading-tight tracking-wide",children:"目标总数"}),e.jsx("div",{className:"text-foreground mt-1 text-xl font-semibold",children:D})]})]}),e.jsxs("div",{className:"border-border app-wallpaper-surface mt-4 rounded-2xl border px-4 py-3",children:[e.jsx("div",{className:"text-muted-foreground text-[11px] font-medium uppercase tracking-wide",children:"执行计划"}),e.jsxs("div",{className:"text-foreground mt-2 flex items-center gap-2 text-sm",children:[e.jsx("span",{className:"bg-primary/10 text-primary rounded-full px-2.5 py-1 text-xs font-medium",children:t==="deploy"?"批量同步到平台":"批量从平台卸载"}),e.jsx(Z,{className:"text-muted-foreground h-4 w-4"}),e.jsx("span",{className:"truncate",children:l.size>0?d.filter(s=>l.has(s.id)).map(s=>s.name).join(", "):"尚未选择平台"})]})]}),f?e.jsxs("div",{className:"border-primary/20 bg-primary/5 mt-4 rounded-xl border p-3",children:[e.jsxs("div",{className:"text-foreground flex items-center gap-2 text-sm font-medium",children:[e.jsx(_,{className:"text-primary h-4 w-4 animate-spin"}),`正在同步 ${f.current}/${f.total}...`]}),e.jsxs("div",{className:"text-muted-foreground mt-1 text-xs",children:[f.skillName," ","->"," ",f.platformId]}),e.jsx("div",{className:"bg-primary/10 mt-3 h-2 overflow-hidden rounded-full",children:e.jsx("div",{className:"bg-primary h-full rounded-full transition-all",style:{width:`${Math.max(6,Math.round(f.current/f.total*100))}%`}})})]}):null,P.length>0?e.jsxs("div",{className:"border-destructive/20 bg-destructive/5 mt-4 rounded-xl border p-3",children:[e.jsx("div",{className:"text-foreground text-sm font-medium",children:"失败目标"}),e.jsx("div",{className:"text-muted-foreground mt-2 space-y-1 text-xs",children:P.slice(0,6).map(s=>e.jsxs("div",{children:[s.skillName," ","->"," ",s.platformId,": ",s.reason]},`${s.skillName}-${s.platformId}`))})]}):null]})]})})}export{ne as SkillBatchDeployDialog};
+import { L as V, e as W, f as X, A as Z, R as _, l as z } from './icons-B5Lu0sqU.js';
+import {
+  bc as G,
+  bA as H,
+  bd as J,
+  bB as K,
+  br as O,
+  be as Q,
+  by as R,
+  bx as T,
+  bp as Y,
+  bz as q,
+} from './index-C2avURFS.js';
+import './markdown-it-vendor-DL4wSELR.js';
+import { q as e } from './markdown-vendor-DldLOD9R.js';
+import { M as U, B as b, r as o } from './ui-vendor-C-FKu2uc.js';
+function A(r) {
+  return r instanceof Error ? r.message : String(r);
+}
+async function ee(r, i, y, u) {
+  if (r.length === 0 || i.length === 0) return { successCount: 0, totalCount: 0, failures: [] };
+  const m = r.length * i.length;
+  let t = 0,
+    p = 0;
+  const x = [];
+  for (const a of r) {
+    const g = await T(a.id, 'skillmd');
+    for (const h of i) {
+      ((t += 1), u?.({ current: t, total: m, skillName: a.name, platformId: h }));
+      try {
+        (y === 'symlink' ? await R(a.name, g, h) : await q(a.name, g, h), (p += 1));
+      } catch (v) {
+        x.push({ skillName: a.name, platformId: h, reason: A(v) });
+      }
+    }
+  }
+  return { successCount: p, totalCount: m, failures: x };
+}
+async function se(r, i, y) {
+  if (r.length === 0 || i.length === 0) return { successCount: 0, totalCount: 0, failures: [] };
+  const u = r.length * i.length;
+  let m = 0,
+    t = 0;
+  const p = [];
+  for (const x of r)
+    for (const a of i) {
+      ((m += 1), y?.({ current: m, total: u, skillName: x.name, platformId: a }));
+      try {
+        (await H(x.name, a), (t += 1));
+      } catch (g) {
+        p.push({ skillName: x.name, platformId: a, reason: A(g) });
+      }
+    }
+  return { successCount: t, totalCount: u, failures: p };
+}
+function ne({ skills: r, onClose: i, onComplete: y }) {
+  const u = K(),
+    { showToast: m } = O(),
+    [t, p] = o.useState('deploy'),
+    x = Y((s) => s.skillInstallMethod),
+    [a, g] = o.useState(x),
+    [h, v] = o.useState([]),
+    [k, I] = o.useState([]),
+    [l, N] = o.useState(new Set()),
+    [S, C] = o.useState(!0),
+    [j, $] = o.useState(!1),
+    [P, M] = o.useState([]),
+    [f, w] = o.useState(null),
+    d = o.useMemo(() => h.filter((s) => k.includes(s.id)), [k, h]),
+    D = r.length * l.size;
+  (o.useEffect(() => {
+    d.length !== 0 && N((s) => (s.size > 0 ? s : new Set(d.map((n) => n.id))));
+  }, [d]),
+    o.useEffect(() => {
+      let s = !1;
+      async function n() {
+        C(!0);
+        try {
+          const [c, B] = await Promise.all([J(), Q()]);
+          if (s) return;
+          (v(c), I(B));
+        } catch (c) {
+          console.error('Failed to load skill platforms:', c);
+        } finally {
+          s || C(!1);
+        }
+      }
+      return (
+        n(),
+        () => {
+          s = !0;
+        }
+      );
+    }, []));
+  const F = (s) => {
+      N((n) => {
+        const c = new Set(n);
+        return (c.has(s) ? c.delete(s) : c.add(s), c);
+      });
+    },
+    E = () => {
+      if (l.size === d.length) {
+        N(new Set());
+        return;
+      }
+      N(new Set(d.map((s) => s.id)));
+    },
+    L = async () => {
+      if (!(r.length === 0 || l.size === 0)) {
+        ($(!0), M([]));
+        try {
+          const s =
+            t === 'deploy' ? await ee(r, Array.from(l), a, w) : await se(r, Array.from(l), w);
+          if (
+            (await y?.(),
+            M(s.failures),
+            s.successCount > 0 &&
+              m(
+                t === 'deploy'
+                  ? `已同步 ${s.successCount}/${s.totalCount} 个目标`
+                  : `已从 ${s.successCount}/${s.totalCount} 个目标卸载`,
+                s.failures.length === 0 ? 'success' : 'warning',
+              ),
+            s.failures.length > 0)
+          ) {
+            const n = s.failures
+              .slice(0, 2)
+              .map((c) => `${c.skillName} -> ${c.platformId}`)
+              .join(', ');
+            m(`${s.failures.length} 个目标同步失败：${n}`, 'error');
+          } else i();
+        } catch (s) {
+          (console.error('Failed to batch deploy skills:', s),
+            m(`更新失败: ${String(s)}`, 'error'));
+        } finally {
+          ($(!1), w(null));
+        }
+      }
+    };
+  return e.jsx(U, {
+    open: !0,
+    zIndex: 1050,
+    onCancel: i,
+    title: e.jsxs('div', {
+      children: [
+        e.jsxs('div', {
+          className: 'flex items-center gap-2',
+          children: [
+            e.jsx(z, { className: 'text-primary h-5 w-5' }),
+            e.jsx('span', { className: 'text-lg font-semibold', children: '批量同步到平台' }),
+          ],
+        }),
+        e.jsx('p', {
+          className: 'text-muted-foreground mt-1 text-xs',
+          children: `将 ${r.length} 个 skill 同步到选定平台。`,
+        }),
+      ],
+    }),
+    width: 672,
+    footer: e.jsxs('div', {
+      className: 'flex justify-end gap-3',
+      children: [
+        e.jsx(b, { onClick: i, disabled: j, children: '取消' }),
+        e.jsx(b, {
+          type: 'primary',
+          loading: j,
+          disabled: j || S || l.size === 0 || d.length === 0,
+          icon: j ? void 0 : e.jsx(z, { className: 'h-4 w-4' }),
+          onClick: () => {
+            L();
+          },
+          children: j ? '同步中' : t === 'deploy' ? '批量同步到平台' : '批量从平台卸载',
+        }),
+      ],
+    }),
+    styles: {
+      body: { maxHeight: 'min(85vh, 720px)', overflowY: 'auto', padding: '24px' },
+      mask: { backdropFilter: 'blur(4px)' },
+    },
+    destroyOnHidden: !1,
+    children: e.jsxs('div', {
+      className: 'space-y-4',
+      children: [
+        e.jsxs('section', {
+          className: 'border-border bg-background/60 rounded-2xl border p-4',
+          children: [
+            e.jsx('h3', { className: 'text-sm font-semibold', children: '操作模式' }),
+            e.jsx('div', {
+              className: 'mt-3 grid gap-2 sm:grid-cols-2',
+              children: [
+                ['deploy', '批量同步到平台'],
+                ['undeploy', '批量从平台卸载'],
+              ].map(([s, n]) =>
+                e.jsx(
+                  b,
+                  {
+                    onClick: () => p(s),
+                    className: `h-auto rounded-xl border px-4 py-3 text-left transition-colors ${t === s ? 'border-primary/40 bg-primary/5 text-primary' : 'border-border app-wallpaper-surface hover:border-primary/25'}`,
+                    children: e.jsx('div', { className: 'text-sm font-medium', children: n }),
+                  },
+                  s,
+                ),
+              ),
+            }),
+          ],
+        }),
+        e.jsxs('section', {
+          className: 'border-border bg-background/60 rounded-2xl border p-4',
+          children: [
+            e.jsx('h3', {
+              className: 'text-sm font-semibold',
+              children: t === 'deploy' ? '安装方式' : '操作',
+            }),
+            t === 'deploy'
+              ? e.jsx('div', {
+                  className: 'mt-3 grid gap-2 sm:grid-cols-2',
+                  children: ['copy', 'symlink'].map((s) =>
+                    e.jsxs(
+                      b,
+                      {
+                        onClick: () => g(s),
+                        className: `h-auto whitespace-normal rounded-xl border px-4 py-3 text-left transition-colors ${a === s ? 'border-primary/40 bg-primary/5' : 'border-border app-wallpaper-surface hover:border-primary/25'}`,
+                        children: [
+                          e.jsx('div', {
+                            className: 'text-sm font-medium',
+                            children: s === 'symlink' ? '软链接' : '复制',
+                          }),
+                          e.jsx('div', {
+                            className: 'text-muted-foreground mt-1 text-xs',
+                            children:
+                              s === 'symlink'
+                                ? '在平台目录中创建符号链接，后续更新更轻量。'
+                                : '将 SKILL.md 复制到平台目录中，兼容性更好。',
+                          }),
+                        ],
+                      },
+                      s,
+                    ),
+                  ),
+                })
+              : e.jsx('div', {
+                  className:
+                    'border-border app-wallpaper-surface text-muted-foreground mt-3 rounded-xl border px-4 py-3 text-sm',
+                  children: `从选定平台目录移除对应 skill，不影响 ${u} 本地仓库。`,
+                }),
+          ],
+        }),
+        e.jsxs('section', {
+          className: 'border-border bg-background/60 rounded-2xl border p-4',
+          children: [
+            e.jsxs('div', {
+              className: 'mb-3 flex flex-wrap items-center justify-between gap-2',
+              children: [
+                e.jsx('h3', { className: 'text-sm font-semibold', children: '目标平台' }),
+                e.jsxs('div', {
+                  className: 'flex flex-wrap items-center gap-3',
+                  children: [
+                    d.length > 0
+                      ? e.jsx('span', {
+                          className:
+                            'bg-primary/10 text-primary rounded-full px-2.5 py-1 text-[11px] font-medium',
+                          children: `已选 ${l.size} 个`,
+                        })
+                      : null,
+                    d.length > 0
+                      ? e.jsx(b, {
+                          type: 'link',
+                          size: 'small',
+                          onClick: E,
+                          className: 'text-primary h-auto p-0 text-xs font-medium',
+                          children: l.size === d.length ? 'Deselect All' : 'Select All',
+                        })
+                      : null,
+                  ],
+                }),
+              ],
+            }),
+            S
+              ? e.jsxs('div', {
+                  className: 'text-muted-foreground flex items-center gap-2 text-sm',
+                  children: [e.jsx(V, { className: 'h-4 w-4 animate-spin' }), '加载中…'],
+                })
+              : d.length === 0
+                ? e.jsx('div', {
+                    className:
+                      'border-border text-muted-foreground rounded-xl border border-dashed px-4 py-6 text-center text-sm',
+                    children: '没有检测到可同步的平台目录',
+                  })
+                : e.jsxs(e.Fragment, {
+                    children: [
+                      e.jsx('div', {
+                        className:
+                          'border-primary/15 bg-primary/[0.04] text-muted-foreground mb-3 rounded-2xl border px-4 py-3 text-xs leading-6',
+                        children:
+                          t === 'deploy'
+                            ? '默认已选中当前检测到的平台。开始批量同步前请先确认目标平台。'
+                            : `仅会从所选平台移除 ${u} 分发出去的 skill，不会删除本地仓库中的原始文件。`,
+                      }),
+                      e.jsx('div', {
+                        className: 'grid gap-3 sm:grid-cols-2',
+                        children: d.map((s) => {
+                          const n = l.has(s.id);
+                          return e.jsxs(
+                            b,
+                            {
+                              onClick: () => F(s.id),
+                              className: `flex h-auto items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all ${n ? 'border-primary/40 bg-primary/5 shadow-primary/10 shadow-sm' : 'border-border app-wallpaper-surface hover:border-primary/25'}`,
+                              children: [
+                                e.jsx('div', {
+                                  className: 'bg-accent rounded-xl p-2',
+                                  children: e.jsx(G, { platformId: s.id, size: 20 }),
+                                }),
+                                e.jsxs('div', {
+                                  className: 'min-w-0 flex-1',
+                                  children: [
+                                    e.jsx('div', {
+                                      className: 'text-sm font-medium',
+                                      children: s.name,
+                                    }),
+                                    e.jsx('div', {
+                                      className: 'text-muted-foreground text-xs',
+                                      children: s.id,
+                                    }),
+                                  ],
+                                }),
+                                n
+                                  ? e.jsx(W, { className: 'text-primary h-4 w-4' })
+                                  : e.jsx(X, { className: 'text-muted-foreground h-4 w-4' }),
+                              ],
+                            },
+                            s.id,
+                          );
+                        }),
+                      }),
+                    ],
+                  }),
+          ],
+        }),
+        e.jsxs('section', {
+          className: 'border-border bg-background/60 rounded-2xl border p-4',
+          children: [
+            e.jsxs('div', {
+              className: 'mb-3 flex items-center justify-between',
+              children: [
+                e.jsx('h3', { className: 'text-sm font-semibold', children: '已选技能' }),
+                e.jsx('span', {
+                  className:
+                    'bg-primary/10 text-primary rounded-full px-2.5 py-1 text-xs font-medium',
+                  children: r.length,
+                }),
+              ],
+            }),
+            e.jsx('div', {
+              className: 'max-h-56 space-y-2 overflow-y-auto pr-1',
+              children: r.map((s) =>
+                e.jsxs(
+                  'div',
+                  {
+                    className:
+                      'border-border app-wallpaper-surface flex items-center justify-between rounded-xl border px-3 py-2',
+                    children: [
+                      e.jsxs('div', {
+                        className: 'min-w-0',
+                        children: [
+                          e.jsx('div', {
+                            className: 'truncate text-sm font-medium',
+                            children: s.name,
+                          }),
+                          s.description
+                            ? e.jsx('div', {
+                                className: 'text-muted-foreground truncate text-xs',
+                                children: s.description,
+                              })
+                            : null,
+                        ],
+                      }),
+                      s.version
+                        ? e.jsxs('span', {
+                            className:
+                              'bg-primary/10 text-primary ml-3 shrink-0 rounded-full px-2 py-0.5 text-[10px]',
+                            children: ['v', s.version],
+                          })
+                        : null,
+                    ],
+                  },
+                  s.id,
+                ),
+              ),
+            }),
+          ],
+        }),
+        e.jsxs('section', {
+          className: 'border-border bg-background/60 rounded-2xl border p-4',
+          children: [
+            e.jsx('h3', { className: 'text-sm font-semibold', children: '同步摘要' }),
+            e.jsxs('div', {
+              className: 'mt-4 grid grid-cols-3 gap-2',
+              children: [
+                e.jsxs('div', {
+                  className: 'border-border app-wallpaper-surface rounded-xl border px-3 py-2',
+                  children: [
+                    e.jsx('div', {
+                      className:
+                        'text-muted-foreground text-[10px] font-medium uppercase leading-tight tracking-wide',
+                      children: '已选技能',
+                    }),
+                    e.jsx('div', {
+                      className: 'text-foreground mt-1 text-xl font-semibold',
+                      children: r.length,
+                    }),
+                  ],
+                }),
+                e.jsxs('div', {
+                  className: 'border-border app-wallpaper-surface rounded-xl border px-3 py-2',
+                  children: [
+                    e.jsx('div', {
+                      className:
+                        'text-muted-foreground text-[10px] font-medium uppercase leading-tight tracking-wide',
+                      children: '目标平台',
+                    }),
+                    e.jsx('div', {
+                      className: 'text-foreground mt-1 text-xl font-semibold',
+                      children: l.size,
+                    }),
+                  ],
+                }),
+                e.jsxs('div', {
+                  className: 'border-border app-wallpaper-surface rounded-xl border px-3 py-2',
+                  children: [
+                    e.jsx('div', {
+                      className:
+                        'text-muted-foreground text-[10px] font-medium uppercase leading-tight tracking-wide',
+                      children: '目标总数',
+                    }),
+                    e.jsx('div', {
+                      className: 'text-foreground mt-1 text-xl font-semibold',
+                      children: D,
+                    }),
+                  ],
+                }),
+              ],
+            }),
+            e.jsxs('div', {
+              className: 'border-border app-wallpaper-surface mt-4 rounded-2xl border px-4 py-3',
+              children: [
+                e.jsx('div', {
+                  className:
+                    'text-muted-foreground text-[11px] font-medium uppercase tracking-wide',
+                  children: '执行计划',
+                }),
+                e.jsxs('div', {
+                  className: 'text-foreground mt-2 flex items-center gap-2 text-sm',
+                  children: [
+                    e.jsx('span', {
+                      className:
+                        'bg-primary/10 text-primary rounded-full px-2.5 py-1 text-xs font-medium',
+                      children: t === 'deploy' ? '批量同步到平台' : '批量从平台卸载',
+                    }),
+                    e.jsx(Z, { className: 'text-muted-foreground h-4 w-4' }),
+                    e.jsx('span', {
+                      className: 'truncate',
+                      children:
+                        l.size > 0
+                          ? d
+                              .filter((s) => l.has(s.id))
+                              .map((s) => s.name)
+                              .join(', ')
+                          : '尚未选择平台',
+                    }),
+                  ],
+                }),
+              ],
+            }),
+            f
+              ? e.jsxs('div', {
+                  className: 'border-primary/20 bg-primary/5 mt-4 rounded-xl border p-3',
+                  children: [
+                    e.jsxs('div', {
+                      className: 'text-foreground flex items-center gap-2 text-sm font-medium',
+                      children: [
+                        e.jsx(_, { className: 'text-primary h-4 w-4 animate-spin' }),
+                        `正在同步 ${f.current}/${f.total}...`,
+                      ],
+                    }),
+                    e.jsxs('div', {
+                      className: 'text-muted-foreground mt-1 text-xs',
+                      children: [f.skillName, ' ', '->', ' ', f.platformId],
+                    }),
+                    e.jsx('div', {
+                      className: 'bg-primary/10 mt-3 h-2 overflow-hidden rounded-full',
+                      children: e.jsx('div', {
+                        className: 'bg-primary h-full rounded-full transition-all',
+                        style: {
+                          width: `${Math.max(6, Math.round((f.current / f.total) * 100))}%`,
+                        },
+                      }),
+                    }),
+                  ],
+                })
+              : null,
+            P.length > 0
+              ? e.jsxs('div', {
+                  className: 'border-destructive/20 bg-destructive/5 mt-4 rounded-xl border p-3',
+                  children: [
+                    e.jsx('div', {
+                      className: 'text-foreground text-sm font-medium',
+                      children: '失败目标',
+                    }),
+                    e.jsx('div', {
+                      className: 'text-muted-foreground mt-2 space-y-1 text-xs',
+                      children: P.slice(0, 6).map((s) =>
+                        e.jsxs(
+                          'div',
+                          { children: [s.skillName, ' ', '->', ' ', s.platformId, ': ', s.reason] },
+                          `${s.skillName}-${s.platformId}`,
+                        ),
+                      ),
+                    }),
+                  ],
+                })
+              : null,
+          ],
+        }),
+      ],
+    }),
+  });
+}
+export { ne as SkillBatchDeployDialog };

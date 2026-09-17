@@ -1,0 +1,14 @@
+---
+description: Keep Mermaid architecture documentation synchronized with architectural changes.
+alwaysApply: true
+---
+
+# 系统架构文档
+
+每次完成修改后，判断是否产生系统架构变更。模块或包边界、依赖关系、跨进程或跨服务通信、数据流、持久化、外部集成、部署或运行时拓扑、对外接口契约的变化，均属于架构变更。
+
+- 如有架构变更，必须在当前项目的 `docs/architecture/` 下按受影响项目新增或更新文档，并在同一次修改中完成。
+- 架构图必须使用 Mermaid，以当前代码为准；每张图只保留必要节点、关系和简短说明。
+- 系统较大时，维护一个总览图，再按项目或关键链路拆分多个小图；文件名使用 kebab-case，例如 `system-overview.md`、`agent-runtime.md`。
+- 普通实现细节不需要更新架构图，避免制造无意义的文档噪声。
+- 提交前确认 Mermaid 图覆盖本次变更；最终答复说明更新了哪些架构文档。

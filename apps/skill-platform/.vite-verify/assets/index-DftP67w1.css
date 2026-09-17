@@ -1,1 +1,9 @@
-._preview_1t529_1{min-width:0}._preview_1t529_1 .md-editor{background:transparent!important}._preview_1t529_1 .md-editor-preview-wrapper{padding:0}
+._preview_1t529_1 {
+  min-width: 0;
+}
+._preview_1t529_1 .md-editor {
+  background: transparent !important;
+}
+._preview_1t529_1 .md-editor-preview-wrapper {
+  padding: 0;
+}

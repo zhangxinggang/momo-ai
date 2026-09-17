@@ -313,6 +313,8 @@ export const useCustomToolStore = create<ICustomToolState>((set, get) => ({
     }
     await get().loadTree();
     await get().selectFile(created.id);
+    // 新建后直接进入自然语言生成界面，用户无需再找一次“编辑”。
+    set({ isEditing: true });
   },
 
   renameNode: async (nodeId, newName) => {

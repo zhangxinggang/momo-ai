@@ -203,12 +203,6 @@ export interface IAITestResult {
   provider: string;
 }
 
-export interface IMultiModelCompareResult {
-  messages: IChatMessage[];
-  results: IAITestResult[];
-  totalTime: number;
-}
-
 export interface IModelInfo {
   id: string;
   name?: string;

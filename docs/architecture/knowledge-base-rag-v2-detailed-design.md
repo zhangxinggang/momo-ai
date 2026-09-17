@@ -21,7 +21,7 @@
 
 向量库唯一选择 LanceDB：它有正式 Node/TypeScript 接口、嵌入式部署、向量/全文/过滤能力，并已被 AnythingLLM 用作默认本地向量库。V2 不集成 `sqlite-vec`，也不保留第二套向量实现。
 
-全局错误策略为 **fail fast + 客户手动处理**：不自动切换解析器、模型、检索通道或索引实现，不自动重试，不自动修复。任一必需阶段失败即终止当前文档任务或对话检索，展示明确错误码、失败阶段、诊断信息和可执行的人工处理入口。
+全局错误策略为 **fail fast + 客户手动处理**：不自动切换解析器、模型、检索通道或索引实现，不自动重试，不自动修复。任一必需阶段失败即终止当前文档任务或对话检索，展示明确错误码、失败阶段、诊断信息和可执行的人工处理入口。唯一的对话边界例外是 `retrieveForChat` 收到 `INDEX_NOT_READY`：空库或首次索引尚未完成不会被当成运行故障，而是归一为 `no_match` 空证据；普通管理检索仍返回原错误。
 
 ## 2. 当前实现审计
 
@@ -29,7 +29,7 @@
 
 当前代码已经存在一条完整但简化的 RAG 链路：
 
-1. `packages/momo-knowledge` 提供文本清洗、递归字符切分和知识库 UI 组件。
+1. `packages/momo-knowledge` 只提供知识库 React 组件和 UI 类型；解析预览与切分统一调用 V2 Knowledge Worker。
 2. `apps/skill-platform/src/main/services/kb/file-parser.ts` 支持 TXT/Markdown/源码、PDF、DOCX 和 Excel 的基础文本提取。
 3. `kb-service.ts` 将原始文本保存为 `idx=-1` 的特殊 chunk，再执行切分、嵌入和入库。
 4. `kb_embeddings` 以 Float32 BLOB 保存向量。
@@ -85,7 +85,7 @@
 | [Docling](https://github.com/docling-project/docling) | 高质量 PDF 版面、阅读顺序、表格、公式、OCR、统一文档结构 | Python 运行时和模型部署不符合 Electron+Node 目标 | 不集成，仅借鉴统一文档结构设计 |
 | [LanceDB](https://github.com/lancedb/lancedb) | 本地嵌入式、Node/TS、向量搜索、全文搜索、SQL/metadata filter、版本化存储 | 原生依赖需做 Electron/平台打包验证；SQLite 与 Lance 双写需一致性协议 | V2 唯一向量索引，通过边界接口隔离基础设施细节 |
 | [sqlite-vec](https://github.com/asg017/sqlite-vec) | 极小、本地、Windows/Node、可与现有 SQLite 同库 | 官方仍标为 pre-v1；不满足本方案唯一生产数据面的稳定性要求 | 不集成 |
-| [LangChain.js](https://github.com/langchain-ai/langchainjs) | Document、splitter、embedding、retriever 的通用接口思想 | 大量高层链会加深框架耦合；本项目已有薄封装 | 只复用必要组件，领域接口放在 `@momo/knowledge-core` |
+| [LangChain.js](https://github.com/langchain-ai/langchainjs) | Document、splitter、embedding、retriever 的通用接口思想 | 大量高层链会加深框架耦合，且 V2 已有结构化 parser/chunker 与明确领域端口 | 仅借鉴接口思想，不集成依赖；领域能力由 Knowledge Worker 的正式 V2 实现承担 |
 | [LlamaIndex.TS](https://github.com/run-llama/LlamaIndexTS) | 历史上适合 TS RAG | 仓库已在 2026-04-30 归档并明确 deprecated | 不新增依赖，不作为架构基础 |
 
 ### 3.2 选型原则
@@ -229,6 +229,8 @@ apps/skill-platform/src/main/knowledge/
 ```
 
 V2 完成后直接删除现有 `apps/skill-platform/src/main/services/kb`、旧 IPC 和旧数据库入口。开发阶段可以使用短期 feature branch 集成，但发布产物中不得同时存在 V1/V2 两条路径。
+
+`momo-langchain` 不属于目标包结构。Renderer 的分块预览必须调用 Knowledge Worker，与正式入库使用同一 parser/chunker；不得保留前端本地递归切分兜底或第二套 PDF loader。
 
 ## 6. 核心领域接口
 
@@ -378,10 +380,10 @@ sequenceDiagram
 ```ts
 interface DirectorySourceConfig {
   rootPath: string;
-  include: string[];       // 默认支持格式的 **/*
-  exclude: string[];       // 默认 .git, node_modules, dist, build, out, cache
+  include: string[]; // 默认支持格式的 **/*
+  exclude: string[]; // 默认 .git, node_modules, dist, build, out, cache
   followSymlinks: boolean; // 默认 false
-  maxFileBytes: number;    // 默认 100 MiB，可配置
+  maxFileBytes: number; // 默认 100 MiB，可配置
   deletePolicy: 'disable' | 'remove'; // 默认 disable
   watch: boolean;
   parserProfileId: string;
@@ -646,14 +648,14 @@ RRF 避免将 cosine、BM25、trigram 等不同量纲通过每次查询的 min-m
 
 返回结果必须区分：
 
-- `no_match`：所有检索阶段执行成功，但没有达到阈值的内容；这是正常空结果。
-- `index_not_ready`：所选库没有 ready revision，阻止本次对话请求。
+- `no_match`：没有达到阈值的内容，或 `retrieveForChat` 所选库没有 ready revision；这是对话可处理的正常空结果。
+- `index_not_ready`：所选库没有 ready revision；普通检索返回该错误，对话检索边界将其归一为 `no_match`。
 - `embedding_unavailable`：终止检索，提示客户检查 embedding 配置后重试。
 - `rerank_timeout`：启用 rerank 时终止检索，提示客户重试或主动关闭 rerank。
 - `collection_search_failed`：任一选中知识库失败时终止整个检索，不返回部分结果。
 - `index_inconsistent`：一致性校验失败，提示客户执行“重新构建索引”。
 
-只有 ready、active、enabled 的 chunks 可以成为证据。除 `no_match` 外，任何错误都不得继续调用对话模型，也不得减少检索通道后继续回答。
+只有 ready、active、enabled 的 chunks 可以成为证据。`no_match` 可以继续调用对话模型，但必须注入“知识库没有足够信息、不得猜测”的明确约束；其他错误不得继续调用对话模型，也不得减少检索通道后继续回答。
 
 统一错误结构：
 
@@ -732,11 +734,16 @@ sequenceDiagram
     R->>R: dense + sparse + metadata recall
   end
   R->>R: RRF + configured rerank + parent expansion + budget
-  alt 检索成功
+  alt 检索成功且有证据
     R-->>C: evidence + citations + trace
     C->>M: policies + untrusted evidence + conversation
     M-->>C: streaming answer
     C-->>U: 答案 + 可点击引用 + 检索摘要
+  else 空库、首次索引未完成或没有匹配证据
+    R-->>C: no_match + empty evidence
+    C->>M: 无足够知识证据约束 + conversation
+    M-->>C: streaming answer
+    C-->>U: 明确说明知识库没有足够信息
   else 任一必需阶段失败
     R-->>C: KnowledgeError
     C-->>U: 错误详情 + 客户手动处理入口
@@ -1080,7 +1087,7 @@ V2 API 发布时同步删除旧 `KB_UPLOAD_FILES`、`KB_SEARCH`、numeric chunk 
 - 知识库开关支持多选，chip 显示 `自动` 或所选库数量。
 - 发送后在第一段模型文字出现前显示非阻塞状态：`正在改写问题` → `正在检索 3 个知识库` → `已找到 5 条依据`。
 - 回答底部显示引用列表和检索耗时；检索发生错误时不生成回答，直接展示错误详情和客户可执行操作。普通用户默认折叠技术 trace。
-- 如果没有 ready 文档，发送前就提示并提供“去知识库查看任务”，而不是等待模型请求报错。
+- 如果没有 ready 文档，`retrieveForChat` 返回 `no_match`，对话不显示远程调用失败，并明确告知知识库尚无足够信息。
 - image model 保持禁用 RAG 的现有行为。
 
 ## 19. 安全与隐私
@@ -1155,6 +1162,7 @@ V2 API 发布时同步删除旧 `KB_UPLOAD_FILES`、`KB_SEARCH`、numeric chunk 
 - embedding 不可用时终止对话检索并展示配置错误。
 - rerank 启用后超时会终止对话检索，不调用回答模型。
 - 无匹配证据时模型得到明确空证据状态。
+- 空知识库或首次索引未完成时，`retrieveForChat` 返回 `no_match`，普通检索仍返回 `INDEX_NOT_READY`。
 
 **打包测试**
 

@@ -68,14 +68,14 @@ function App() {
   const openSettingsPage = useCallback(
     (section = 'general') => {
       void (async () => {
-        const canLeave = await confirmLeaveAllEditors();
+        const canLeave = await confirmLeaveAllEditors({ checkAiChat: currentPage === 'home' });
         if (canLeave) {
           setSettingsInitialSection(section);
           setCurrentPage('settings');
         }
       })();
     },
-    [confirmLeaveAllEditors],
+    [confirmLeaveAllEditors, currentPage],
   );
 
   useEffect(() => {

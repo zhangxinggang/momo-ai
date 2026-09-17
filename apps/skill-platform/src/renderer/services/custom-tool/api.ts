@@ -103,7 +103,7 @@ export async function readSnapEditHtml(): Promise<string> {
 export async function writeCustomToolGeneratedFiles(
   toolPath: string,
   files: ICustomToolGeneratedFile[],
-  options?: { activate?: boolean },
+  options?: { activate?: boolean; requireCallable?: boolean },
 ): Promise<ICustomToolRuntimeInfo | null> {
   const api = getCustomToolApi();
   if (!api?.writeGeneratedFiles) {

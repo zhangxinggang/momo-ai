@@ -64,7 +64,7 @@ describe('custom tool background generation task', () => {
     expect(mocks.write).toHaveBeenCalledWith(
       'folder/tool',
       [{ path: 'index.html', content: '<p>done</p>' }],
-      { activate: false },
+      { activate: false, requireCallable: true },
     );
     expect(mocks.activate).not.toHaveBeenCalled();
     expect(useCustomToolStore.getState().generationTasks['folder/tool'].status).toBe('done');

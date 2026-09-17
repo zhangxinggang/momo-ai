@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from 'vitest';
+import { Editor } from '../../../../../../packages/momo-markdown/node_modules/@tiptap/core/dist/index.js';
 import { buildRichTextExtensions } from '../../../../../../packages/momo-markdown/src/components/MdEditor/layouts/Content/richtext/extensions';
+import { normalizeMermaidSource } from '../../../../../../packages/momo-markdown/src/components/MdEditor/utils/chart/mermaid-source';
 
 function getExtension(name: string) {
   const extension = buildRichTextExtensions('', true, 30).find((item) => item.name === name);
@@ -14,6 +16,46 @@ describe('rich-text editor parity', () => {
   it('copies rendered content instead of Markdown source', () => {
     expect(getExtension('markdown').options.transformCopiedText).toBe(false);
     expect(getExtension('markdown').options.breaks).toBe(true);
+  });
+
+  it('pastes fenced Mermaid as a diagram code block instead of inline KaTeX nodes', () => {
+    const editor = new Editor({
+      extensions: buildRichTextExtensions('', true, 30),
+      content: '',
+    });
+    const markdown = `# 系统架构总览
+
+\`\`\`mermaid
+flowchart LR
+  User\\[用户\\]
+\`\`\``;
+    const plugin = editor.state.plugins.find((item) => item.key.startsWith('momoMarkdownPaste'));
+    const handlePaste = plugin?.spec.props?.handlePaste as
+      | ((view: typeof editor.view, event: ClipboardEvent) => boolean)
+      | undefined;
+
+    expect(handlePaste).toBeDefined();
+    expect(
+      handlePaste?.(editor.view, {
+        clipboardData: {
+          getData: (type) => (type === 'text/plain' ? markdown : ''),
+        },
+      } as ClipboardEvent),
+    ).toBe(true);
+
+    const documentJson = editor.getJSON();
+    const mermaidBlock = documentJson.content?.find((node) => node.type === 'codeBlock');
+    expect(mermaidBlock).toMatchObject({ attrs: { language: 'mermaid' } });
+    expect(mermaidBlock?.content?.[0]).toMatchObject({ text: 'flowchart LR\n  User\\[用户\\]' });
+    expect(JSON.stringify(documentJson)).not.toContain('katex');
+
+    editor.destroy();
+  });
+
+  it('restores Mermaid syntax escaped by rich-text clipboard sources', () => {
+    expect(normalizeMermaidSource('User\\[用户\\]\nMain["A&lt;br/&gt;B"]')).toBe(
+      'User[用户]\nMain["A<br/>B"]',
+    );
   });
 
   it('uses the preview task-list hooks', () => {

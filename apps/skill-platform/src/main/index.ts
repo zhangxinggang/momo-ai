@@ -12,6 +12,7 @@ import type { Database } from 'better-sqlite3';
 import { app, dialog } from 'electron';
 import path from 'path';
 import 'reflect-metadata';
+import { disposeAgentRuntime } from './agent-runtime/ipc';
 import { runAppStartup } from './bootstrap/startup';
 import { closeDatabase, initDatabase } from './database';
 import { registerBootstrapIPC } from './ipc';
@@ -102,13 +103,31 @@ async function createWindow() {
 }
 createWindow();
 
-app.on('before-quit', () => {
+let shutdownFinished = false,
+  shutdownStarted = false;
+app.on('before-quit', (event) => {
   markAppQuitting();
+  if (shutdownFinished) return;
+  event.preventDefault();
+  if (shutdownStarted) return;
+  shutdownStarted = true;
   disposeSilentExternalSkillImport?.();
   disposeSilentExternalSkillImport = undefined;
-  void closeDatabase();
-  customToolRuntimeService.disposeNow();
-  knowledgeWorkerClient.dispose();
+  void (async () => {
+    try {
+      await disposeAgentRuntime();
+    } finally {
+      customToolRuntimeService.disposeNow();
+      knowledgeWorkerClient.dispose();
+      await closeDatabase();
+      shutdownFinished = true;
+      app.quit();
+    }
+  })().catch((error) => {
+    console.error('Shutdown failed', error);
+    shutdownFinished = true;
+    app.quit();
+  });
 });
 
 export { getMainWindow, setMainWindow };

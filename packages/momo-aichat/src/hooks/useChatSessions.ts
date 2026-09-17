@@ -1,6 +1,9 @@
+import type { PermissionMode, RuntimeCommand } from '@momo/agent-contracts';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { IChatStreamMessage } from '../adapters/types';
 import { useAiChatConfig } from '../contexts/AiChatConfigContext';
+import { executeRuntimeTurn } from '../runtime/execute';
+import { emptyProjection, reduceRunEvent } from '../runtime/projection';
 import {
   AI_CHAT_SESSIONS_UPDATED_EVENT,
   type IChatAttachmentMeta,
@@ -14,6 +17,7 @@ import {
   generateSessionTitle,
 } from '../types/chat';
 import type { ISlashInvocation } from '../types/slash-command';
+import { formatResponseTime, normalizeChatUsage } from '../utils/chat-stats';
 import {
   ensureNoteSnapshots,
   expandNoteMentionsWithSnapshots,
@@ -74,6 +78,21 @@ function hasBootstrapQaMessages(session: IChatSession): boolean {
   );
 }
 
+/** 兼容旧会话：从最近一次请求或回复统计中恢复会话使用的模型。 */
+function resolveSessionModelId(session: IChatSession | undefined): string | undefined {
+  if (!session) return undefined;
+  if (session.modelId?.trim()) return session.modelId;
+  for (let index = session.messages.length - 1; index >= 0; index -= 1) {
+    const modelId = session.messages[index].requestSnapshot?.modelId;
+    if (modelId?.trim()) return modelId;
+  }
+  for (let index = session.messages.length - 1; index >= 0; index -= 1) {
+    const modelId = session.messages[index].stats?.model;
+    if (modelId?.trim()) return modelId;
+  }
+  return undefined;
+}
+
 function mergeBootstrapSession(
   sessions: IChatSession[],
   bootstrapSessionId: string | null,
@@ -122,6 +141,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
   bootstrapSessionTitleRef.current = bootstrapSessionTitle;
   const {
     callAIChatStream,
+    runtime,
     superpowerPrompts,
     workspace,
     getIsAuthenticated,
@@ -137,6 +157,8 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
   const isAuthenticated = getIsAuthenticated?.() ?? false;
   const chatSync = useChatSync();
   const [sessions, setSessions] = useState<IChatSession[]>([]);
+  const sessionsRef = useRef<IChatSession[]>([]);
+  sessionsRef.current = sessions;
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [currentModel, setCurrentModel] = useState<string>(() => {
     const initial = defaultModel?.trim();
@@ -196,6 +218,10 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
 
   // 获取当前活跃会话
   const currentSession = sessions.find((session) => session.id === currentSessionId) || null;
+  const [draftPermission, setDraftPermission] = useState<PermissionMode>('workspace-write');
+  const permissionMode = currentSession
+    ? (currentSession.permissionMode ?? 'workspace-write')
+    : draftPermission;
 
   // 获取指定会话的生成状态
   const isSessionGenerating = useCallback(
@@ -284,9 +310,17 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     (sessionId: string) => {
       const abortController = abortControllersRef.current.get(sessionId);
       abortController?.abort();
+      if (!abortController && runtime) {
+        const run = sessions
+          .find((s) => s.id === sessionId)
+          ?.messages.slice()
+          .reverse()
+          .find((m) => m.runStatus === 'running' && m.runId);
+        if (run?.runId) void runtime.port.cancel({ runId: run.runId }).catch(console.error);
+      }
       clearSessionGeneratingState(sessionId, { appendStoppedMark: true });
     },
-    [clearSessionGeneratingState],
+    [clearSessionGeneratingState, runtime, sessions],
   );
 
   // 防抖保存到持久化存储（仅在游客模式下）
@@ -347,17 +381,42 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     [currentSessionId, debouncedSave],
   );
 
+  const setPermissionMode = useCallback(
+    async (mode: PermissionMode) => {
+      if (currentSessionId) {
+        await runtime?.port.setPermission?.(currentSessionId, mode);
+        updateSessionMeta(currentSessionId, { permissionMode: mode });
+      } else setDraftPermission(mode);
+    },
+    [currentSessionId, runtime, updateSessionMeta],
+  );
+
   // 设置当前模型并持久化
   const handleSetCurrentModel = useCallback(
     (modelId: string) => {
       setCurrentModel(modelId);
 
-      if (!isAuthenticated) {
-        debouncedSave(sessions, currentSessionId, modelId);
+      if (currentSessionId) {
+        setSessions((prev) => {
+          const updated = prev.map((session) =>
+            session.id === currentSessionId ? { ...session, modelId } : session,
+          );
+          debouncedSave(updated, currentSessionId, modelId);
+          return updated;
+        });
+      } else if (!isAuthenticated) {
+        debouncedSave(sessionsRef.current, null, modelId);
       }
     },
-    [currentSessionId, isAuthenticated, sessions, debouncedSave],
+    [currentSessionId, isAuthenticated, debouncedSave],
   );
+
+  useEffect(() => {
+    const sessionModel = resolveSessionModelId(currentSession ?? undefined);
+    if (sessionModel && sessionModel !== currentModel) {
+      setCurrentModel(sessionModel);
+    }
+  }, [currentModel, currentSession, currentSessionId]);
 
   // 设置指定会话的加载状态
   const setSessionLoading = useCallback(
@@ -449,7 +508,10 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
               ...rest,
               isLoading: false,
               messages: (rest.messages ?? [])
-                .filter((m) => !(m.isLoading && !m.content?.trim() && !m.thinkingContent?.trim()))
+                .filter(
+                  (m) =>
+                    !(m.isLoading && !m.runId && !m.content?.trim() && !m.thinkingContent?.trim()),
+                )
                 .map((m) => (m.isLoading ? { ...m, isLoading: false } : m)),
             };
           },
@@ -537,6 +599,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       messages: [],
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      modelId: currentModel || defaultModel || undefined,
     };
 
     console.log('🎯 创建新会话', {
@@ -555,7 +618,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
 
     setCurrentSessionId(newSession.id);
     return newSession;
-  }, [debouncedSave]);
+  }, [currentModel, debouncedSave, defaultModel]);
 
   /** 在指定项目下创建并选中会话 */
   const createSessionInProject = useCallback(
@@ -568,6 +631,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
         projectId: trimmedProjectId || undefined,
+        modelId: currentModel || defaultModel || undefined,
       };
 
       setSessions((prev) => {
@@ -580,7 +644,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       setCurrentSessionId(newSession.id);
       return newSession;
     },
-    [debouncedSave],
+    [currentModel, debouncedSave, defaultModel],
   );
 
   /** 删除某项目下全部会话 */
@@ -667,6 +731,8 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       pendingProjectIdRef.current = null;
       const targetSession = sessions.find((s) => s.id === sessionId);
       if (targetSession) {
+        const sessionModel = resolveSessionModelId(targetSession);
+        if (sessionModel) setCurrentModel(sessionModel);
         setCurrentSessionId(sessionId);
         debouncedSave(sessions, sessionId);
         return;
@@ -701,7 +767,10 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
             ...session,
             isLoading: false,
             messages: (session.messages ?? [])
-              .filter((m) => !(m.isLoading && !m.content?.trim() && !m.thinkingContent?.trim()))
+              .filter(
+                (m) =>
+                  !(!m.runId && m.isLoading && !m.content?.trim() && !m.thinkingContent?.trim()),
+              )
               .map((m) => (m.isLoading ? { ...m, isLoading: false } : m)),
           }),
         );
@@ -840,6 +909,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         invocation?: ISlashInvocation;
         invocations?: ISlashInvocation[];
         requestSnapshot?: IChatRequestSnapshot;
+        runtimeCommand?: RuntimeCommand;
       },
     ) => {
       const isRetry = Boolean(options?.retry);
@@ -857,7 +927,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           ? [options.invocation]
           : findSlashInvocationTokens(displayContent).map((match) => match.invocation));
 
-      if (beforeSubmitPrompt && !replaySnapshot) {
+      if (beforeSubmitPrompt && !replaySnapshot && !options?.runtimeCommand) {
         try {
           const gate = await beforeSubmitPrompt({
             content: apiContent,
@@ -900,6 +970,9 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         kbEnabled: kbEnabledRef.current,
         kbCollectionId: kbCollectionIdRef.current,
         agentMode: agentModeRef.current,
+        permissionMode,
+        runtimeCommand: options?.runtimeCommand,
+        harnessAgentId: runtime?.getAgentId(),
         sourceRefs,
         createdAt: Date.now(),
       };
@@ -914,9 +987,11 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         }
       }
 
+      let selectedProjectId = sessions.find((s) => s.id === currentSessionId)?.projectId;
       let activeSessionId = currentSessionId;
       if (!activeSessionId) {
         const draftProjectId = pendingProjectIdRef.current?.trim() || undefined;
+        selectedProjectId = draftProjectId;
         pendingProjectIdRef.current = null;
         const draftSession: IChatSession = {
           id: generateId(),
@@ -925,6 +1000,8 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           createdAt: Date.now(),
           updatedAt: Date.now(),
           projectId: draftProjectId,
+          permissionMode,
+          modelId: requestSnapshot.modelId,
         };
         setSessions((prev) => {
           const prevSessions = Array.isArray(prev) ? prev : [];
@@ -956,7 +1033,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       let sessionForSnapshots = sessions.find((s) => s.id === activeSessionId);
       let activeSnapshots: Record<string, INoteSnapshot> = sessionForSnapshots?.noteSnapshots ?? {};
 
-      if (noteReferences?.readContent) {
+      if (!runtime && noteReferences?.readContent) {
         const historyUserMessages = (sessionForSnapshots?.messages ?? []).filter(
           (m) => m.role === 'user' && m.content.trim(),
         );
@@ -1126,6 +1203,92 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           );
         if (hasNoteContext) {
           chatMessages = [{ role: 'system', content: NOTE_REFERENCE_SYSTEM_HINT }, ...chatMessages];
+        }
+
+        if (runtime) {
+          const runtimeStartedAt = Date.now();
+          const context = runtime.getResourceContext(selectedProjectId);
+          const turnId = crypto.randomUUID();
+          const result = await executeRuntimeTurn(
+            runtime.port,
+            {
+              ...context,
+              sessionId: activeSessionId,
+              turnId,
+              idempotencyKey: turnId,
+              modelProfileId: requestSnapshot.modelId,
+              agentId: requestSnapshot.harnessAgentId ?? runtime.getAgentId(),
+              permissionMode,
+              command: requestSnapshot.runtimeCommand,
+              modeId: requestSnapshot.agentMode,
+              rawIntent: slashTokensToPlainText(displayContent) || apiContent,
+              displayInput: displayContent,
+              invocations: resolvedInvocations,
+              sourceRefs: requestSnapshot.sourceRefs ?? [],
+              systemPrompt: requestSnapshot.systemPrompt,
+              kbEnabled: requestSnapshot.kbEnabled,
+              kbCollectionId: requestSnapshot.kbCollectionId,
+              temperature: requestSnapshot.temperature,
+              topP: requestSnapshot.topP,
+              history: chatMessages.filter((m) => typeof m.content === 'string') as Array<{
+                role: 'user' | 'assistant' | 'system';
+                content: string;
+              }>,
+            },
+            abortController.signal,
+            (projection) => {
+              const usage = normalizeChatUsage(projection.usage);
+              updateMessage(activeSessionId!, loadingMessage.id, {
+                runId: projection.runId,
+                runStatus: projection.status,
+                runtimeEvents: projection.events,
+                contextUsage: projection.contextUsage,
+                goal: projection.goal,
+                content: projection.content,
+                thinkingContent: projection.thinking || undefined,
+                isLoading: projection.status === 'running',
+                isError: projection.status === 'failed',
+                stats: {
+                  model: requestSnapshot.modelId,
+                  responseTime:
+                    projection.status === 'running'
+                      ? ''
+                      : formatResponseTime(Date.now() - runtimeStartedAt),
+                  ...usage,
+                  citations: projection.citations,
+                },
+              });
+            },
+          );
+          // Always settle stats from the returned projection. This does not rely on the renderer
+          // receiving a separate terminal event callback and guarantees model | time | tokens.
+          updateMessage(activeSessionId, loadingMessage.id, {
+            runId: result.runId,
+            runStatus: result.status,
+            runtimeEvents: result.events,
+            contextUsage: result.contextUsage,
+            goal: result.goal,
+            content: result.content,
+            thinkingContent: result.thinking || undefined,
+            isLoading: false,
+            isError: result.status === 'failed',
+            stats: {
+              model: requestSnapshot.modelId,
+              responseTime: formatResponseTime(Date.now() - runtimeStartedAt),
+              ...normalizeChatUsage(result.usage),
+              citations: result.citations,
+            },
+          });
+          if (result.status === 'failed' && !result.content)
+            updateMessage(activeSessionId, loadingMessage.id, {
+              content: result.error ?? 'Harness 执行失败',
+              isError: true,
+            });
+          if (result.status === 'completed' && isAuthenticated && result.content)
+            await chatSync
+              .saveMessage(activeSessionId, 'assistant', result.content)
+              .catch(console.error);
+          return true;
         }
 
         // 用于累积流式响应内容
@@ -1343,7 +1506,11 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
 
         // 更新错误消息（统一为友好提示）
         updateMessage(activeSessionId, loadingMessage.id, {
-          content: '🤖 AI 服务暂时不可用，请稍后重试。',
+          content: runtime
+            ? error instanceof Error
+              ? error.message
+              : 'Harness 启动失败'
+            : '🤖 AI 服务暂时不可用，请稍后重试。',
           isLoading: false,
           isError: true,
         });
@@ -1361,6 +1528,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       currentSessionId,
       isAILoading,
       sessions,
+      permissionMode,
       addMessage,
       updateSessionTitle,
       updateMessage,
@@ -1375,6 +1543,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       noteReferences,
       beforeSubmitPrompt,
       callAIChatStream,
+      runtime,
       debouncedSave,
       isImageModel,
       loadChatSources,
@@ -1470,6 +1639,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
 
   // 新建对话：仅进入草稿态，待用户首次发送后再落库
   const handleNewChat = useCallback(() => {
+    setDraftPermission('workspace-write');
     window.dispatchEvent(new CustomEvent('kb:close-manager'));
     pendingProjectIdRef.current = null;
     setCurrentSessionId(null);
@@ -1488,6 +1658,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       }
       window.dispatchEvent(new CustomEvent('kb:close-manager'));
       pendingProjectIdRef.current = trimmed;
+      setDraftPermission('workspace-write');
       setCurrentSessionId(null);
       if (!isAuthenticated) {
         debouncedSave(sessions, null);
@@ -1642,6 +1813,66 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     hasLoadedFromStorageRef.current = true;
   }, [isAuthenticated, loadFromStorage]);
 
+  const recoveredRunIds = useRef(new Set<string>());
+  const recoverTargets = useRef(new Map<string, { sessionId: string; messageId: string }>());
+  useEffect(() => {
+    if (!runtime) return;
+    for (const session of sessions)
+      for (const message of session.messages) {
+        if (
+          !message.runId ||
+          recoveredRunIds.current.has(message.runId) ||
+          abortControllersRef.current.has(session.id)
+        )
+          continue;
+        recoverTargets.current.set(message.runId, { sessionId: session.id, messageId: message.id });
+      }
+  }, [runtime, sessions]);
+  useEffect(() => {
+    if (!runtime) return;
+    let disposed = false,
+      polling = false;
+    const refresh = async () => {
+      if (polling) return;
+      polling = true;
+      try {
+        for (const [runId, target] of recoverTargets.current) {
+          if (abortControllersRef.current.has(target.sessionId)) continue;
+          try {
+            const events = await runtime.port.events(runId, 0);
+            if (disposed || !events.length) continue;
+            const projection = events.reduce(reduceRunEvent, emptyProjection());
+            updateMessage(target.sessionId, target.messageId, {
+              content: projection.content,
+              thinkingContent: projection.thinking,
+              runStatus: projection.status,
+              runtimeEvents: projection.events,
+              contextUsage: projection.contextUsage,
+              goal: projection.goal,
+              isLoading: projection.status === 'running',
+              isError: projection.status === 'failed',
+            });
+            setSessionLoading(target.sessionId, projection.status === 'running');
+            if (projection.status !== 'running') {
+              recoveredRunIds.current.add(runId);
+              recoverTargets.current.delete(runId);
+            }
+          } catch {
+            /* Keep pending: the next poll recovers transient IPC failures. */
+          }
+        }
+      } finally {
+        polling = false;
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 1500);
+    return () => {
+      disposed = true;
+      window.clearInterval(timer);
+    };
+  }, [runtime, updateMessage, setSessionLoading]);
+
   // 弹窗等外部写入持久化后刷新会话列表
   useEffect(() => {
     const handleExternalSessionsUpdate = () => {
@@ -1702,6 +1933,8 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     setKbCollectionId,
     agentMode,
     setAgentMode,
+    permissionMode,
+    setPermissionMode,
     refreshSessionsFromStorage: loadFromStorage,
   };
 };

@@ -3,7 +3,7 @@ import { isParallelGroupOutputReady } from '@momo/workflow';
 import { Popover, Tooltip } from 'antd';
 import { clsx } from 'clsx';
 import { ChevronRightIcon, CommandIcon, CuboidIcon, GitBranchIcon, GlobeIcon } from 'lucide-react';
-import { Fragment, useCallback } from 'react';
+import { Fragment, useCallback, type ReactNode } from 'react';
 
 import { SkillIcon } from '@renderer/components/Skill/SkillIcon';
 import {
@@ -30,6 +30,7 @@ interface IProps {
   nodeHasFiles?: Record<string, boolean>;
   onStepClick?: (macroIndex: number) => void;
   onParallelChildClick?: (macroIndex: number, childIndex: number) => void;
+  toolbarExtra?: ReactNode;
 }
 
 function isResourceOutputReady(
@@ -39,7 +40,7 @@ function isResourceOutputReady(
 ): boolean {
   const hasRunResult = !!runResults[nodeId]?.trim();
   const hasFiles = nodeHasFiles[nodeId] ?? false;
-  return hasRunResult && hasFiles;
+  return hasRunResult || hasFiles;
 }
 
 function isMacroStepOutputReady(
@@ -143,6 +144,7 @@ export function WorkflowStepsBar({
   nodeHasFiles = {},
   onStepClick,
   onParallelChildClick,
+  toolbarExtra,
 }: IProps) {
   const prompts = usePromptStore((s) => s.prompts);
   const skills = useSkillStore((s) => s.skills);
@@ -195,7 +197,7 @@ export function WorkflowStepsBar({
         disabled={isLocked}
         onClick={isInteractive ? () => handleMacroClick(index) : undefined}
         style={{ background: tagColor }}
-        title={isLocked ? '请先完成上一节点的运行结果与文件产出' : undefined}
+        title={isLocked ? '请先完成上一节点的运行结果或文件产出' : undefined}
         type='button'>
         <span aria-hidden className={styles['workflow-step-index']}>
           {index + 1}
@@ -296,7 +298,7 @@ export function WorkflowStepsBar({
         disabled={isLocked}
         onClick={isInteractive ? () => handleMacroClick(index) : undefined}
         style={{ background: WORKFLOW_PARALLEL_TAG_COLOR }}
-        title={isLocked ? '请先完成上一节点的运行结果与文件产出' : undefined}
+        title={isLocked ? '请先完成上一节点的运行结果或文件产出' : undefined}
         type='button'>
         <span aria-hidden className={styles['workflow-step-index']}>
           {index + 1}
@@ -337,7 +339,7 @@ export function WorkflowStepsBar({
     return renderResourceStepCard(step, index);
   };
 
-  if (steps.length === 0) {
+  if (steps.length === 0 && !toolbarExtra) {
     return null;
   }
 
@@ -360,6 +362,7 @@ export function WorkflowStepsBar({
           </Fragment>
         ))}
       </div>
+      {toolbarExtra ? <div className={styles['workflow-steps-extra']}>{toolbarExtra}</div> : null}
     </div>
   );
 }

@@ -11,6 +11,7 @@ import {
 } from '../../types/chat';
 import { ChatAttachmentIcon } from '../../utils/attachment-icon';
 import { downloadChatTurnExport } from '../../utils/chat-export';
+import { resolveResponseTime } from '../../utils/chat-stats';
 import { findSlashInvocationTokens } from '../../utils/slash-token';
 import { ChatContextBanner } from '../ChatContextBanner';
 import type { IChatInputPanelRef } from '../ChatInputPanel';
@@ -22,6 +23,7 @@ import MarkdownRenderer from '../MarkdownRenderer';
 import { MessageCopyAction } from '../MessageCopyAction';
 import { MessageUserActions } from '../MessageUserActions';
 import { NoteReferenceText } from '../NoteReferenceText';
+import { RunTimeline } from '../RunTimeline';
 
 export interface IProps {
   /** 外部同步的输入值（如 Prompt 测试预填用户提示词） */
@@ -52,8 +54,16 @@ export const AiChatView: React.FC<IProps> = ({
   renderAssistantMessageActions,
 }) => {
   const { message, modal } = App.useApp();
-  const { uploadFiles, validateLocalFiles, saveChatSources, isImageModel, getImageModelInputHint } =
-    useAiChatConfig();
+  const {
+    uploadFiles,
+    validateLocalFiles,
+    saveChatSources,
+    isImageModel,
+    getImageModelInputHint,
+    runtime,
+    renderRuntimeArtifact,
+    chatModels = [],
+  } = useAiChatConfig();
   // 用户输入内容
   const [inputValue, setInputValue] = useState(externalInputValue ?? '');
 
@@ -97,7 +107,8 @@ export const AiChatView: React.FC<IProps> = ({
 
   // 附件上传与拖拽状态
   const [attachments, setAttachments] = useState<IChatAttachment[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
+  const [uploadingAttachmentIds, setUploadingAttachmentIds] = useState<string[]>([]);
+  const isUploading = uploadingAttachmentIds.length > 0;
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
   const [isDragging, setIsDragging] = useState(false);
   // 拖拽进入/离开计数，避免子元素触发抖动
@@ -106,6 +117,7 @@ export const AiChatView: React.FC<IProps> = ({
   useEffect(() => {
     const onWindowDragOver = (e: DragEvent) => {
       if (e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files')) {
+        if (!e.defaultPrevented) e.dataTransfer.dropEffect = 'none';
         e.preventDefault();
       }
     };
@@ -133,15 +145,22 @@ export const AiChatView: React.FC<IProps> = ({
     return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
   };
 
-  const renderMessageStats = (message: any) => {
+  const renderMessageStats = (message: IChatMessage) => {
     if (!message?.stats) {
       return null;
     }
 
+    const modelLabel =
+      chatModels.find((model) => model.id === message.stats!.model)?.label || message.stats.model;
+    const responseTime = resolveResponseTime(message.stats.responseTime, message.runtimeEvents);
+    const statsParts = [modelLabel, responseTime, `${message.stats.totalTokens} tokens`].filter(
+      Boolean,
+    );
+
     return (
       <div className='mt-2 space-y-1'>
         <div className='font-mono text-xs text-gray-400 dark:text-gray-500'>
-          {message.stats.model} | {message.stats.responseTime} | {message.stats.totalTokens} tokens
+          {statsParts.join(' | ')}
         </div>
         {Array.isArray(message.stats?.citations) && message.stats.citations.length > 0 && (
           <div className='mt-1 flex flex-wrap gap-2'>
@@ -425,6 +444,7 @@ export const AiChatView: React.FC<IProps> = ({
     try {
       const sourceRefs = await saveChatSources(
         pendingAttachments.map((attachment) => ({
+          sourceRef: attachment.sourceRef,
           name: attachment.name,
           mimeType: attachment.mime || 'text/plain',
           encoding: attachment.imageBase64 ? ('base64' as const) : ('utf8' as const),
@@ -552,7 +572,7 @@ export const AiChatView: React.FC<IProps> = ({
       return;
     }
 
-    // 先添加临时项以显示解析中
+    // 先添加临时项以显示上传进度
     const tempItems: IChatAttachment[] = files.map((f) => {
       const ext = (f.name.split('.').pop() || '').toLowerCase();
       return {
@@ -567,7 +587,7 @@ export const AiChatView: React.FC<IProps> = ({
     });
 
     setAttachments((prev) => [...prev, ...tempItems]);
-    setIsUploading(true);
+    setUploadingAttachmentIds((prev) => [...prev, ...tempItems.map((item) => item.id)]);
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -580,13 +600,19 @@ export const AiChatView: React.FC<IProps> = ({
       } catch (e: any) {
         message.error(e?.message || `${file.name} 上传失败`);
         setAttachments((prev) => prev.filter((a) => a.id !== tempId));
+      } finally {
+        setUploadingAttachmentIds((prev) => prev.filter((id) => id !== tempId));
+        setProgressMap((prev) => {
+          const next = { ...prev };
+          delete next[tempId];
+          return next;
+        });
       }
     }
-
-    setIsUploading(false);
   };
 
   const handleRemoveAttachment = (id: string) => {
+    setUploadingAttachmentIds((prev) => prev.filter((pendingId) => pendingId !== id));
     setAttachments((prev) => prev.filter((a) => a.id !== id));
     setProgressMap((pm) => {
       const n = { ...pm } as any;
@@ -612,40 +638,8 @@ export const AiChatView: React.FC<IProps> = ({
         ref={messagesContainerRef}
         onScroll={handleScroll}
         onWheel={handleWheel}
-        onDragEnter={(e) => {
-          e.preventDefault();
-          // 仅处理文件拖拽
-          if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
-          dragCounterRef.current += 1;
-          setIsDragging(true);
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
-          // 明确设置 dropEffect，提升一致性
-          e.dataTransfer.dropEffect = 'copy';
-          setIsDragging(true);
-        }}
-        onDragLeave={(e) => {
-          e.preventDefault();
-          if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
-          // 只有当所有 dragenter 都离开后才隐藏覆盖层
-          dragCounterRef.current = Math.max(0, dragCounterRef.current - 1);
-          if (dragCounterRef.current === 0) {
-            setIsDragging(false);
-          }
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          const files = e.dataTransfer?.files ? Array.from(e.dataTransfer.files) : [];
-          dragCounterRef.current = 0;
-          setIsDragging(false);
-          if (files.length) handleAttachFiles(files as File[]);
-        }}
         className='relative flex-1 overflow-y-auto p-4'
         style={{ overflowAnchor: 'none' }}>
-        {/* 拖拽覆盖层（作用于聊天滚动容器区域） */}
-        <DropOverlay visible={isDragging} />
         {/* 视觉内容区：80% 宽度、居中 */}
         <div ref={messagesContentRef} className='mx-auto w-[80%] space-y-4'>
           {/* 欢迎消息 - 用户发送消息后仍保持显示 */}
@@ -672,6 +666,14 @@ export const AiChatView: React.FC<IProps> = ({
               ) : message.role === 'assistant' ? (
                 // AI消息 - 使用MarkdownRenderer渲染，支持流式渲染
                 <div className='text-foreground break-words text-left'>
+                  {runtime && message.runtimeEvents && (
+                    <RunTimeline
+                      renderArtifact={renderRuntimeArtifact}
+                      events={message.runtimeEvents}
+                      status={message.runStatus}
+                      respond={(value) => runtime.port.respond(value)}
+                    />
+                  )}
                   {message.thinkingContent?.trim() ? (
                     <CollapsibleThinking
                       content={message.thinkingContent}
@@ -774,7 +776,35 @@ export const AiChatView: React.FC<IProps> = ({
 
       {/* 输入区域：与消息区同宽，padding 1rem */}
       <div className='p-4'>
-        <div className='mx-auto w-[80%]'>
+        <div
+          className='relative mx-auto w-[80%]'
+          onDragEnter={(e) => {
+            if (!Array.from(e.dataTransfer.types || []).includes('Files')) return;
+            e.preventDefault();
+            dragCounterRef.current += 1;
+            setIsDragging(true);
+          }}
+          onDragOver={(e) => {
+            if (!Array.from(e.dataTransfer.types || []).includes('Files')) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            setIsDragging(true);
+          }}
+          onDragLeave={(e) => {
+            if (!Array.from(e.dataTransfer.types || []).includes('Files')) return;
+            e.preventDefault();
+            dragCounterRef.current = Math.max(0, dragCounterRef.current - 1);
+            if (dragCounterRef.current === 0) setIsDragging(false);
+          }}
+          onDrop={(e) => {
+            const files = Array.from(e.dataTransfer.files || []);
+            dragCounterRef.current = 0;
+            setIsDragging(false);
+            if (!files.length) return;
+            e.preventDefault();
+            void handleAttachFiles(files);
+          }}>
+          <DropOverlay visible={isDragging} />
           <ChatInputPanel
             ref={chatInputRef}
             value={inputValue}
@@ -792,7 +822,7 @@ export const AiChatView: React.FC<IProps> = ({
               mime: a.mime,
               ext: a.ext,
               snippet: a.snippet,
-              charCount: typeof a.text === 'string' ? a.text.length : undefined,
+              charCount: a.text ? a.text.length : undefined,
             }))}
             isUploading={isUploading}
             progressMap={progressMap}

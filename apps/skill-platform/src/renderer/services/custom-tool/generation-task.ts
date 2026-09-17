@@ -96,7 +96,10 @@ export async function completeCustomToolGeneration(
   }
 
   const entryContent = getEntryContent(files);
-  await writeCustomToolGeneratedFiles(toolPath, files, { activate: false });
+  await writeCustomToolGeneratedFiles(toolPath, files, {
+    activate: false,
+    requireCallable: true,
+  });
   if (!isCustomToolGenerationActive(toolPath, generationId)) {
     return false;
   }

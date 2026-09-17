@@ -18,6 +18,7 @@ import { clsx } from 'clsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { SidebarEmptyState } from '@renderer/components/ui/SidebarEmptyState';
+import { useConfirmLeaveAiChat } from '@renderer/hooks/useConfirmLeaveAiChat';
 import { useChatProjectStore, useUIStore } from '@renderer/store';
 import { ChatErrorBoundary } from '../ChatErrorBoundary';
 import { ChatProjectModal } from '../ChatProjectModal';
@@ -42,6 +43,7 @@ function ChatPanelContent({ collapsed = false }: IProps) {
   const [editingProjectId, setEditingProjectId] = useState<string | undefined>();
   const [removingProjectId, setRemovingProjectId] = useState<string | null>(null);
   const hasInitExpandRef = useRef(false);
+  const confirmLeaveAiChat = useConfirmLeaveAiChat();
 
   const {
     sessions,
@@ -105,6 +107,24 @@ function ChatPanelContent({ collapsed = false }: IProps) {
       }
       return next;
     });
+  };
+
+  const confirmCurrentSessionLeave = (nextSessionId?: string): Promise<boolean> => {
+    if (!currentSessionId || currentSessionId === nextSessionId) {
+      return Promise.resolve(true);
+    }
+    return confirmLeaveAiChat({
+      scope: 'chat',
+      isGenerating: isSessionGenerating(currentSessionId),
+    });
+  };
+
+  const handleCreateChat = async (projectId: string) => {
+    if (!(await confirmCurrentSessionLeave())) {
+      return;
+    }
+    handleNewChatInProject(projectId);
+    setExpandedIds((prev) => new Set(prev).add(projectId));
   };
 
   const handleDeleteSession = (sessionId: string) => {
@@ -268,10 +288,7 @@ function ChatPanelContent({ collapsed = false }: IProps) {
                       icon={<PlusOutlined />}
                       className={styles['chat-panel-action-btn']}
                       title='新建对话'
-                      onClick={() => {
-                        handleNewChatInProject(project.id);
-                        setExpandedIds((prev) => new Set(prev).add(project.id));
-                      }}
+                      onClick={() => void handleCreateChat(project.id)}
                     />
                   </div>
                 </div>
@@ -289,7 +306,11 @@ function ChatPanelContent({ collapsed = false }: IProps) {
                           })}
                           onClick={() => {
                             if (!isEditing) {
-                              switchToSession(session.id);
+                              void (async () => {
+                                if (await confirmCurrentSessionLeave(session.id)) {
+                                  switchToSession(session.id);
+                                }
+                              })();
                             }
                           }}
                           title={session.title}>
@@ -366,8 +387,7 @@ function ChatPanelContent({ collapsed = false }: IProps) {
         projectId={editingProjectId}
         onClose={() => setModalOpen(false)}
         onSuccess={(id) => {
-          setExpandedIds((prev) => new Set(prev).add(id));
-          handleNewChatInProject(id);
+          void handleCreateChat(id);
         }}
       />
 

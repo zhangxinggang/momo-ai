@@ -3,13 +3,18 @@ import {
   useAiChatConfig,
   useChatContext,
   type IChatAttachment,
+  type IChatSession,
 } from '@momo/aichat';
 import { useToast } from '@renderer/components/ui/Toast';
+import { useTrackAiChatGeneration } from '@renderer/hooks/useAiChatGenerationActivity';
 import { readCustomToolContextFiles } from '@renderer/services/custom-tool/api';
 import {
   buildToolBundleMessages,
+  buildToolBundleRepairMessages,
   extractStreamingHtml,
+  isRepairableToolBundleError,
   parseToolBundleOutput,
+  validateGeneratedToolBundle,
 } from '@renderer/services/custom-tool/generate-html';
 import {
   beginCustomToolGeneration,
@@ -23,7 +28,7 @@ import {
 } from '@renderer/services/custom-tool/generation-task';
 import { useCustomToolStore } from '@renderer/store';
 import { clsx } from 'clsx';
-import { useCallback, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useState, type KeyboardEvent } from 'react';
 
 import styles from './index.module.less';
 import { EGenerateStatus, type IProps } from './types';
@@ -64,10 +69,16 @@ export function CustomToolAiComposer(props: IProps) {
   const [attachments, setAttachments] = useState<IChatAttachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
+  const [exportSession, setExportSession] = useState<IChatSession | null>(null);
+
+  useEffect(() => {
+    setExportSession(null);
+  }, [toolKey]);
 
   const status = (generationTask?.status ?? EGenerateStatus.EIdle) as EGenerateStatus;
   const errorMessage = generationTask?.errorMessage ?? '';
   const isGenerating = status === EGenerateStatus.EGenerating;
+  useTrackAiChatGeneration('toolbox', isGenerating);
   const isCurrentImageModel = Boolean(currentModel && isImageModel?.(currentModel));
   const canUndo =
     generationTask !== undefined &&
@@ -185,6 +196,25 @@ export function CustomToolAiComposer(props: IProps) {
     }
 
     const targetPath = toolKey;
+    const runtimeSessionId = `tool-generation-${crypto.randomUUID()}`;
+    const startedAt = Date.now();
+    const userMessageId = crypto.randomUUID();
+    const assistantMessageId = crypto.randomUUID();
+    const exportTitle = `自定义工具：${toolKey.split('/').pop() || toolKey}`;
+    const initialExportSession: IChatSession = {
+      id: runtimeSessionId,
+      title: exportTitle,
+      createdAt: startedAt,
+      updatedAt: startedAt,
+      messages: [
+        {
+          id: userMessageId,
+          role: 'user',
+          content: instruction,
+          timestamp: startedAt,
+        },
+      ],
+    };
     const abortController = new AbortController();
     const initialHtml = useCustomToolStore.getState().editorContent;
     const generationId = beginCustomToolGeneration(
@@ -196,6 +226,7 @@ export function CustomToolAiComposer(props: IProps) {
     setPrompt('');
     setAttachments([]);
     setProgressMap({});
+    setExportSession(initialExportSession);
 
     const isCurrentGeneration = () => isCustomToolGenerationActive(targetPath, generationId);
 
@@ -208,10 +239,8 @@ export function CustomToolAiComposer(props: IProps) {
     }
 
     void (async () => {
-      let acc = '';
-      let streamError = '';
       let lastPublishedHtml = '';
-      let lastPublishedAt = 0;
+      let latestOutput = '';
       try {
         const [snapshot, contextFiles] = await Promise.all([
           getCurrentHtml(),
@@ -224,67 +253,137 @@ export function CustomToolAiComposer(props: IProps) {
         currentFiles.unshift({ path: 'index.html', content: snapshot });
         updateCustomToolGenerationSnapshot(targetPath, generationId, currentFiles);
 
-        const publishStreamingHtml = (force = false) => {
-          const now = performance.now();
-          if (!force && now - lastPublishedAt < 80) {
-            return;
-          }
-          const html = extractStreamingHtml(acc);
-          if (!html || html === lastPublishedHtml) {
-            return;
-          }
-          lastPublishedAt = now;
-          lastPublishedHtml = html;
-          publishCustomToolGenerationHtml(targetPath, generationId, html);
-        };
+        const visibleToolName = toolKey.split('/').pop() || toolKey;
+        let messages = buildToolBundleMessages(currentFiles, instruction, visibleToolName);
 
-        await callAIChatStream(
-          buildToolBundleMessages(currentFiles, instruction),
-          (chunk) => {
-            if (!isCurrentGeneration()) {
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          let acc = '';
+          let streamError = '';
+          let lastPublishedAt = 0;
+          const publishStreamingHtml = (force = false) => {
+            const now = performance.now();
+            if (!force && now - lastPublishedAt < 80) {
               return;
             }
-            acc += chunk;
-            publishStreamingHtml();
-          },
-          (error) => {
-            streamError = error;
-          },
-          undefined,
-          currentModel,
-          {
-            temperature,
-            top_p: topP,
-            abortController,
-            user_system_prompt: superpowerParts.join('\n\n') || undefined,
-            kb_enabled: isCurrentImageModel ? false : kbEnabled,
-            kb_collection_id: kbCollectionId,
-            kb_top_k: 6,
-            referenceImages:
-              isCurrentImageModel && referenceImages.length > 0 ? referenceImages : undefined,
-          },
-        );
+            const html = extractStreamingHtml(acc);
+            if (!html || html === lastPublishedHtml) {
+              return;
+            }
+            lastPublishedAt = now;
+            lastPublishedHtml = html;
+            publishCustomToolGenerationHtml(targetPath, generationId, html);
+          };
 
-        if (!isCurrentGeneration()) {
-          return;
-        }
+          await callAIChatStream(
+            messages,
+            (chunk) => {
+              if (!isCurrentGeneration()) {
+                return;
+              }
+              acc += chunk;
+              latestOutput = acc;
+              publishStreamingHtml();
+            },
+            (error) => {
+              streamError = error;
+            },
+            undefined,
+            currentModel,
+            {
+              sessionId: runtimeSessionId,
+              temperature,
+              top_p: topP,
+              abortController,
+              user_system_prompt: superpowerParts.join('\n\n') || undefined,
+              kb_enabled: isCurrentImageModel ? false : kbEnabled,
+              kb_collection_id: kbCollectionId,
+              kb_top_k: 6,
+              referenceImages:
+                isCurrentImageModel && referenceImages.length > 0 ? referenceImages : undefined,
+            },
+          );
 
-        if (streamError) {
-          throw new Error(streamError);
-        }
+          if (!isCurrentGeneration()) {
+            return;
+          }
+          if (streamError) {
+            throw new Error(streamError);
+          }
 
-        publishStreamingHtml(true);
-        const files = parseToolBundleOutput(acc);
-        const entryFile = files.find((file) => file.path === 'index.html');
-        if (!entryFile?.content.trim()) {
-          throw new Error('未生成有效 HTML');
+          publishStreamingHtml(true);
+          const files = parseToolBundleOutput(acc);
+          const validationError = validateGeneratedToolBundle(files, currentFiles);
+          if (validationError) {
+            if (attempt === 0) {
+              messages = buildToolBundleRepairMessages(
+                currentFiles,
+                instruction,
+                visibleToolName,
+                acc,
+                validationError,
+              );
+              continue;
+            }
+            throw new Error(`自动修复后仍未生成可调用工具：${validationError}`);
+          }
+
+          try {
+            await completeCustomToolGeneration(targetPath, generationId, files);
+            const completedAt = Date.now();
+            setExportSession({
+              ...initialExportSession,
+              updatedAt: completedAt,
+              messages: [
+                ...initialExportSession.messages,
+                {
+                  id: assistantMessageId,
+                  role: 'assistant',
+                  content: acc,
+                  timestamp: completedAt,
+                },
+              ],
+            });
+            return;
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            if (!isRepairableToolBundleError(message)) {
+              throw error;
+            }
+            if (attempt === 0) {
+              messages = buildToolBundleRepairMessages(
+                currentFiles,
+                instruction,
+                visibleToolName,
+                acc,
+                message,
+              );
+              continue;
+            }
+            throw new Error(`自动修复后仍未生成可调用工具：${message}`);
+          }
         }
-        await completeCustomToolGeneration(targetPath, generationId, files);
       } catch (error) {
         if (!isCurrentGeneration()) {
           return;
         }
         const message = error instanceof Error ? error.message : String(error);
+        const failedAt = Date.now();
+        setExportSession({
+          ...initialExportSession,
+          updatedAt: failedAt,
+          messages: [
+            ...initialExportSession.messages,
+            {
+              id: assistantMessageId,
+              role: 'assistant',
+              content: latestOutput
+                ? `${latestOutput}\n\n---\n生成失败：${message}`
+                : `生成失败：${message}`,
+              timestamp: failedAt,
+              isError: true,
+            },
+          ],
+        });
         if (failCustomToolGeneration(targetPath, generationId, message)) {
           showToast(message, 'error');
         }
@@ -363,8 +462,8 @@ export function CustomToolAiComposer(props: IProps) {
       <div className={styles['input-wrap']}>
         <p className={styles.hint}>
           {hasHtml
-            ? '基于当前工具继续修改，可同时更新页面、后台、脚本、MCP 或 Skill'
-            : '描述需求后发送，将生成完整工具并实时显示页面'}
+            ? '直接说想怎么改；工具 ID、action 和参数由系统维护'
+            : '只需描述想完成的事情；工具 ID、action、参数和返回结构会自动生成'}
         </p>
         <ChatInputPanel
           value={prompt}
@@ -372,11 +471,7 @@ export function CustomToolAiComposer(props: IProps) {
           onSend={handleSend}
           onStop={handleStop}
           onKeyDown={handleKeyDown}
-          placeholder={
-            hasHtml
-              ? '描述要如何修改当前工具…'
-              : '例如：做一个新闻爬虫工具，由 Python 后台抓取并在页面展示'
-          }
+          placeholder={hasHtml ? '描述要如何修改当前工具…' : '例如：请显示当前西安的实时天气'}
           loading={isGenerating}
           isGenerating={isGenerating}
           attachments={attachments.map((item) => ({
@@ -393,6 +488,8 @@ export function CustomToolAiComposer(props: IProps) {
           progressMap={progressMap}
           onAttachFiles={handleAttachFiles}
           onRemoveAttachment={handleRemoveAttachment}
+          exportSession={exportSession}
+          showSessionCommands={false}
         />
       </div>
     </div>

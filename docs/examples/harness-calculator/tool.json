@@ -1,0 +1,60 @@
+{
+  "kind": "tool",
+  "id": "harness-calculator",
+  "name": "共享求和示例",
+  "description": "页面与 Harness action 共用计算函数",
+  "aliases": ["计算器", "求和工具"],
+  "actions": [
+    {
+      "id": "sum",
+      "title": "求和",
+      "description": "计算两个有限数值的和",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "number"
+          },
+          "b": {
+            "type": "number"
+          }
+        },
+        "required": ["a", "b"],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": ["value"],
+        "additionalProperties": false
+      },
+      "executor": {
+        "runtime": "node",
+        "entry": "actions/sum.mjs",
+        "export": "execute"
+      },
+      "capabilities": [],
+      "effects": ["execute"],
+      "timeoutMs": 5000,
+      "retry": 0,
+      "parallelSafe": true,
+      "idempotent": true,
+      "examples": [
+        {
+          "input": {
+            "a": 2,
+            "b": 3
+          },
+          "output": {
+            "value": 5
+          }
+        }
+      ]
+    }
+  ],
+  "entry": "page/index.html"
+}

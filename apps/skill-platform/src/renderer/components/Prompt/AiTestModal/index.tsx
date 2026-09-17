@@ -2,19 +2,20 @@ import type { IPrompt } from '@/types/modules';
 import { FullscreenModal } from '@renderer/components/ui/FullscreenModal';
 import { MarkdownPreview } from '@renderer/components/ui/MarkdownPreview';
 import { useToast } from '@renderer/components/ui/Toast';
+import { useTrackAiChatGeneration } from '@renderer/hooks/useAiChatGenerationActivity';
 import { useChatWorkspaceBinding } from '@renderer/hooks/useChatWorkspaceBinding';
+import { useConfirmLeaveAiChat } from '@renderer/hooks/useConfirmLeaveAiChat';
 import { useRankedChatModelGroups } from '@renderer/hooks/useRankedChatModelGroups';
 import { useStableModelResolver } from '@renderer/hooks/useStableModelResolver';
+import { createHarnessChatOverrides } from '@renderer/services/agent-runtime/client';
 import {
   IAITestResult,
   buildMessagesFromPrompt,
   generateImage,
-  multiModelCompare,
   type IChatImageAttachment,
-  type IChatMessage,
 } from '@renderer/services/ai';
 import { getModelsByType, resolveScenarioModel } from '@renderer/services/ai/defaults';
-import { buildSharedAiChatServices, createPromptTestStream } from '@renderer/services/aichat';
+import { buildSharedAiChatServices } from '@renderer/services/aichat';
 import { allocateMainChatSessionId } from '@renderer/services/aichat/chat-history-bridge';
 import { downloadImage, readImageBase64, saveImageBase64 } from '@renderer/services/media';
 import { useSettingsStore } from '@renderer/store';
@@ -87,7 +88,11 @@ export function AiTestModal({
   // 分离单模型和多模型的 loading 状态
   const [isCompareLoading, setIsCompareLoading] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
-  const baseMessagesRef = useRef<IChatMessage[]>([]);
+  const confirmLeaveAiChat = useConfirmLeaveAiChat();
+  useTrackAiChatGeneration(
+    'prompt',
+    isOpen && ((mode === 'compare' && isCompareLoading) || (mode === 'image' && isImageLoading)),
+  );
   const [compareResults, setCompareResults] = useState<IAITestResult[] | null>(null);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedModelIds, setSelectedModelIds] = useState<string[]>([]);
@@ -136,6 +141,28 @@ export function AiTestModal({
     );
   }, [compareModels]);
 
+  const handleClose = useCallback(() => {
+    void (async () => {
+      if (await confirmLeaveAiChat({ scope: 'prompt' })) {
+        onClose();
+      }
+    })();
+  }, [confirmLeaveAiChat, onClose]);
+
+  const handleModeChange = useCallback(
+    (nextMode: 'single' | 'compare' | 'image') => {
+      if (nextMode === mode) {
+        return;
+      }
+      void (async () => {
+        if (await confirmLeaveAiChat({ scope: 'prompt' })) {
+          setMode(nextMode);
+        }
+      })();
+    },
+    [confirmLeaveAiChat, mode],
+  );
+
   useEffect(() => {
     if (!isOpen || !prompt) return;
     setMode(initialMode ?? 'single');
@@ -146,7 +173,7 @@ export function AiTestModal({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose();
+        handleClose();
       }
     };
 
@@ -158,7 +185,7 @@ export function AiTestModal({
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [isOpen, onClose]);
+  }, [handleClose, isOpen]);
 
   const flushCompareBuffers = useCallback(() => {
     setCompareResults((prev) => {
@@ -396,26 +423,6 @@ export function AiTestModal({
     return { type: outputFormat as 'json_object' | 'json_schema' };
   }, [jsonSchemaContent, jsonSchemaName, outputFormat]);
 
-  const refreshBaseMessages = useCallback(async () => {
-    if (mode === 'single') {
-      const msgs = buildMessagesFromPrompt(systemPrompt, '', variableValues);
-      baseMessagesRef.current = msgs.filter((m) => m.role === 'system');
-      return;
-    }
-    const imageAttachments = mode === 'image' ? await buildImageReferenceAttachments() : undefined;
-    baseMessagesRef.current = buildMessagesFromPrompt(
-      systemPrompt,
-      userPrompt,
-      variableValues,
-      imageAttachments,
-    );
-  }, [buildImageReferenceAttachments, mode, systemPrompt, userPrompt, variableValues]);
-
-  useEffect(() => {
-    if (!isOpen || !prompt) return;
-    void refreshBaseMessages();
-  }, [isOpen, prompt, refreshBaseMessages]);
-
   useEffect(() => {
     if (!isOpen || !prompt) {
       setChatBootstrap(null);
@@ -430,32 +437,38 @@ export function AiTestModal({
     });
   }, [isOpen, prompt?.id, prompt?.title]);
 
-  const promptIdRef = useRef(prompt?.id);
-  promptIdRef.current = prompt?.id;
+  const promptTestServices = useMemo(() => {
+    const harnessOverrides = createHarnessChatOverrides();
+    return buildSharedAiChatServices({
+      aiModels,
+      chatModelOptionGroups,
+      workspace,
+      enableSuperpower: false,
+      noAttachmentsMessage: '不是图片文件',
+      callAIChatStream: harnessOverrides.callAIChatStream!,
+      overrides: harnessOverrides,
+    });
+  }, [aiModels, chatModelOptionGroups, workspace]);
 
-  const promptTestServices = useMemo(
-    () =>
-      buildSharedAiChatServices({
-        aiModels,
-        chatModelOptionGroups,
-        workspace,
-        enableSuperpower: false,
-        noAttachmentsMessage: '不是图片文件',
-        callAIChatStream: createPromptTestStream({
-          getModelConfig: (modelKey) => modelResolverRef.current.getModelConfig(modelKey),
-          getDefaultConfig: () => modelResolverRef.current.getModelConfig(),
-          getBaseMessages: () => baseMessagesRef.current,
-          getResponseFormat,
-          onComplete: (text) => {
-            if (onSaveResponse && promptIdRef.current) {
-              onSaveResponse(promptIdRef.current, text);
-            }
-          },
-          onErrorToast: (msg) => showToast(msg, 'error'),
-          onNeedModel: () => showToast('请先在设置中配置 AI 对话模型', 'error'),
-        }),
-      }),
-    [aiModels, chatModelOptionGroups, getResponseFormat, onSaveResponse, showToast, workspace],
+  const harnessPromptMessages = useMemo(
+    () => buildMessagesFromPrompt(systemPrompt, userPrompt, variableValues),
+    [systemPrompt, userPrompt, variableValues],
+  );
+  const harnessResponseFormat = getResponseFormat();
+  const harnessFormatInstruction =
+    harnessResponseFormat?.type === 'json_schema'
+      ? `只输出符合以下 JSON Schema 的 JSON，不要输出解释或 Markdown 代码围栏：\n${JSON.stringify(harnessResponseFormat.jsonSchema?.schema ?? {})}`
+      : harnessResponseFormat?.type === 'json_object'
+        ? '只输出一个有效的 JSON 对象，不要输出解释或 Markdown 代码围栏。'
+        : '';
+  const harnessSystemPrompt = [
+    String(harnessPromptMessages.find((message) => message.role === 'system')?.content ?? ''),
+    harnessFormatInstruction,
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+  const harnessUserPrompt = String(
+    harnessPromptMessages.find((message) => message.role === 'user')?.content ?? '',
   );
 
   // 重置状态
@@ -563,25 +576,44 @@ export function AiTestModal({
         })),
       );
 
-      const streamCallbacksMap = new Map<string, any>();
-      for (const cfg of selectedConfigs) {
-        if (cfg.chatParams?.stream) {
-          streamCallbacksMap.set(cfg.id, {
-            onContent: (chunk: string) => {
-              const buffer = compareBuffersRef.current[cfg.id];
+      const runtimeMessages = messages
+        .filter((message) => message.role !== 'tool')
+        .map((message) => ({
+          role: message.role as 'system' | 'user' | 'assistant',
+          content: typeof message.content === 'string' ? message.content : '',
+        }));
+      const results = await Promise.all(
+        selectedConfigs.map(async (config): Promise<IAITestResult> => {
+          const startedAt = Date.now();
+          let runtimeError = '';
+          await promptTestServices.callAIChatStream(
+            runtimeMessages,
+            (chunk) => {
+              const buffer = compareBuffersRef.current[config.id];
               if (!buffer) return;
               buffer.response += chunk;
               scheduleCompareFlush();
             },
-          });
-        }
-      }
-
-      const result = await multiModelCompare(selectedConfigs as any, messages, {
-        streamCallbacksMap,
-      });
+            (error) => {
+              runtimeError = error;
+            },
+            undefined,
+            config.id,
+          );
+          const response = compareBuffersRef.current[config.id]?.response ?? '';
+          return {
+            id: config.id,
+            success: !runtimeError,
+            response: runtimeError ? undefined : response,
+            error: runtimeError || undefined,
+            latency: Date.now() - startedAt,
+            model: config.model,
+            provider: config.provider,
+          };
+        }),
+      );
       flushCompareBuffers();
-      setCompareResults(result.results);
+      setCompareResults(results);
     } catch (error) {
       // Handle error
     } finally {
@@ -714,7 +746,7 @@ export function AiTestModal({
           <div className='text-muted-foreground truncate text-xs'>{prompt.title}</div>
         </div>
       }
-      onClose={onClose}
+      onClose={handleClose}
       footer={null}
       showDefaultFooter={false}
       zIndex={9999}
@@ -730,14 +762,14 @@ export function AiTestModal({
               <>
                 <Button
                   type={mode === 'single' ? 'primary' : 'default'}
-                  onClick={() => setMode('single')}
+                  onClick={() => handleModeChange('single')}
                   className='flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium'
                   icon={<PlayIcon className='h-4 w-4' />}>
                   {'AI 测试'}
                 </Button>
                 <Button
                   type={mode === 'compare' ? 'primary' : 'default'}
-                  onClick={() => setMode('compare')}
+                  onClick={() => handleModeChange('compare')}
                   className='flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium'
                   icon={<GitCompareIcon className='h-4 w-4' />}>
                   {'多模型对比'}
@@ -745,7 +777,7 @@ export function AiTestModal({
               </>
               <Button
                 type={mode === 'image' ? 'primary' : 'default'}
-                onClick={() => setMode('image')}
+                onClick={() => handleModeChange('image')}
                 className='flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium'
                 icon={<ImageIcon className='h-4 w-4' />}>
                 {'测试生图'}
@@ -934,13 +966,16 @@ export function AiTestModal({
                       bootstrapSessionId={chatBootstrap.sessionId}
                       bootstrapSessionTitle={chatBootstrap.sessionTitle}
                       services={promptTestServices}
-                      systemPrompt={systemPrompt}
-                      userPrompt={userPrompt}
+                      systemPrompt={harnessSystemPrompt}
+                      userPrompt={harnessUserPrompt}
                       onAfterSend={() => {
                         if (onUsageIncrement) {
                           onUsageIncrement(prompt.id);
                         }
                       }}
+                      onResponseComplete={
+                        onSaveResponse ? (content) => onSaveResponse(prompt.id, content) : undefined
+                      }
                       renderAssistantMessageActions={
                         onSaveResponse
                           ? (message) => (

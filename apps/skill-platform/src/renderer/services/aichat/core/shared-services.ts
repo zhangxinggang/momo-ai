@@ -62,6 +62,7 @@ export function buildSharedAiChatServices(
   const chatModels = getModelsByType(options.aiModels, 'chat').map((model) => ({
     id: model.id,
     label: model.name?.trim() || model.model,
+    maxOutputTokens: model.chatParams?.maxTokens ?? 32768,
   }));
 
   const defaultModelId = chatModels[0]?.id;

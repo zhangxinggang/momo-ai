@@ -23,8 +23,11 @@ export function readWorkflowNodeDefaultValues(): IWorkflowNodeDefaultValues {
     }
     const advancedRaw = localStorage.getItem(keys.ADVANCED_SETTINGS);
     if (advancedRaw) {
-      const advanced = JSON.parse(advancedRaw) as { kbCollectionId?: string };
-      if (typeof advanced.kbCollectionId === 'string') {
+      const advanced = JSON.parse(advancedRaw) as {
+        kbEnabled?: boolean;
+        kbCollectionId?: string;
+      };
+      if (advanced.kbEnabled && typeof advanced.kbCollectionId === 'string') {
         kbCollectionId = advanced.kbCollectionId;
       }
     }

@@ -1,14 +1,442 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./index-JepaN3w0.js","./ui-vendor-C-FKu2uc.js","./markdown-vendor-DldLOD9R.js","./markdown-it-vendor-DL4wSELR.js","./markdown-vendor-CmuYMs8x.css"])))=>i.map(i=>d[i]);
-import{e as it}from"./jszip.min-DnpxAPiE.js";import{P as rt}from"./panzoom.es-DqQtegHv.js";import{_ as ot}from"./markdown-vendor-DldLOD9R.js";import{aQ as at,b5 as st,ad as lt}from"./index-C2avURFS.js";import"./ui-vendor-C-FKu2uc.js";import"./markdown-it-vendor-DL4wSELR.js";import"./icons-B5Lu0sqU.js";function ct(e){return e.replace(/\bxlink:href=/g,"href=").replace(/\bxhtml:src=/g,"src=").replace(/\bsvg:width=/g,"width=").replace(/\bsvg:height=/g,"height=").replace(/<xhtml:img\b/g,"<img").replace(/<\/xhtml:img>/g,"</img>")}async function He(e){if(typeof DOMParser<"u")return new DOMParser().parseFromString(e,"text/xml");try{const{DOMParser:i}=await ot(async()=>{const{DOMParser:o}=await import("./index-JepaN3w0.js").then(n=>n.i);return{DOMParser:o}},__vite__mapDeps([0,1,2,3,4]),import.meta.url);return new i().parseFromString(e,"text/xml")}catch{throw new Error("XML parsing requires @xmldom/xmldom in Node.js. Install it with: npm install @xmldom/xmldom")}}function H(e){return e?(e.textContent||e.nodeValue||"").trim():""}function y(e,i,l){return e&&e.getAttribute(i)||null}function N(e,i){if(!e||!e.childNodes)return[];const l=[];for(let o=0;o<e.childNodes.length;o++){const n=e.childNodes[o];if(n.nodeType===1){const r=n.localName||n.nodeName.replace(/^.*:/,"");(!i||r===i)&&l.push(n)}}return l}function z(e,i){return N(e,i)[0]||null}const Z={"priority-1":1,"priority-2":2,"priority-3":3,"priority-4":4,"priority-5":5,"priority-6":6,"priority-7":7,"priority-8":8,"priority-9":9},V={"task-start":1,"task-oct":2,"task-quarter":3,"task-3oct":4,"task-half":5,"task-5oct":6,"task-3quar":7,"task-7oct":8,"task-done":9,"task-pause":10};Object.fromEntries(Object.entries(Z).map(([e,i])=>[i,e]));Object.fromEntries(Object.entries(V).map(([e,i])=>[i,e]));const Be=()=>({root:{data:{text:""},children:[]},template:"default",theme:"fresh-blue",version:"1.4.43"});async function dt(e,i={}){const l=i.hideEmptyValue!==!1,o=ct(e),r=(await He(o)).documentElement,s=N(r,"sheet");if(s.length===0)throw new Error("XMind 8: No sheets found in content.xml");let a=null;i.commentsXml&&(a=await pt(i.commentsXml));const c=i.resources||null,h=[];for(const L of s){const v=Be();v.title=y(L,"name")||H(z(L,"title"))||"Sheet";const b=z(L,"topic");if(b&&(v.root=ue(b,a,l,c)),h.push(v),i.firstSheetOnly)break}return h}function mt(e,i){if(!i||!e)return e;const l=e.replace(/^xap:/,""),o=i[l];if(!o)return e;const n=l.split(".").pop().toLowerCase(),s={png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",webp:"image/webp",svg:"image/svg+xml",bmp:"image/bmp"}[n]||"image/png";let a="";for(let c=0;c<o.length;c++)a+=String.fromCharCode(o[c]);return`data:${s};base64,${btoa(a)}`}function ue(e,i,l,o=null){const n={data:{},children:[]},r=n.data,s=y(e,"id"),a=z(e,"title");r.text=H(a)||"";const c=y(e,"href");c&&(c.startsWith("xap:attachments")||c.startsWith("xap:resources")?(r.hyperlink=c,r.attachment=!0):c.startsWith("xmind:")||c.startsWith("#")?(r.hyperlink=c,r.internalLink=!0):r.hyperlink=c);const h=z(e,"notes");if(h){const m=z(h,"plain");m?r.note=H(m):r.note=ft(h)}const L=z(e,"labels");if(L){const m=N(L,"label");m.length>0&&(r.label=m.map(u=>H(u)).filter(Boolean))}const v=z(e,"marker-refs");if(v){const m=N(v,"marker-ref"),u=[];for(const k of m){const g=y(k,"marker-id");g&&(Z[g]!==void 0?r.priority=Z[g]:V[g]!==void 0?r.progress=V[g]:u.push(g))}u.length>0&&(r.markers=u)}const b=ht(e);b&&(r.image=mt(b.src,o),(b.width||b.height)&&(r.imageSize={},b.width&&(r.imageSize.width=b.width),b.height&&(r.imageSize.height=b.height)));const T=y(e,"style-id");T&&(r.style={"xmind-style-id":T}),y(e,"branch")==="folded"&&(r.expandState="collapse");const w=y(e,"structure-class");w&&(r["xmind-structure"]=w),i&&s&&i[s]&&(r.comment=i[s]);const P=z(e,"children");if(P){const m=N(P,"topics");for(const u of m){const k=y(u,"type");if(k==="attached"||k===null)for(const g of N(u,"topic"))n.children.push(ue(g,i,l,o));else if(k==="detached")for(const g of N(u,"topic")){const C=ue(g,i,l,o);C.data["xmind-detached"]=!0,n.children.push(C)}else if(k==="callout"){const g=N(u,"topic").map(C=>H(z(C,"title"))).filter(Boolean);if(g.length>0){const C=r.note?r.note+`
+const __vite__mapDeps = (
+  i,
+  m = __vite__mapDeps,
+  d = m.f ||
+    (m.f = [
+      './index-JepaN3w0.js',
+      './ui-vendor-C-FKu2uc.js',
+      './markdown-vendor-DldLOD9R.js',
+      './markdown-it-vendor-DL4wSELR.js',
+      './markdown-vendor-CmuYMs8x.css',
+    ]),
+) => i.map((i) => d[i]);
+import './icons-B5Lu0sqU.js';
+import { aQ as at, ad as lt, b5 as st } from './index-C2avURFS.js';
+import { e as it } from './jszip.min-DnpxAPiE.js';
+import './markdown-it-vendor-DL4wSELR.js';
+import { _ as ot } from './markdown-vendor-DldLOD9R.js';
+import { P as rt } from './panzoom.es-DqQtegHv.js';
+import './ui-vendor-C-FKu2uc.js';
+function ct(e) {
+  return e
+    .replace(/\bxlink:href=/g, 'href=')
+    .replace(/\bxhtml:src=/g, 'src=')
+    .replace(/\bsvg:width=/g, 'width=')
+    .replace(/\bsvg:height=/g, 'height=')
+    .replace(/<xhtml:img\b/g, '<img')
+    .replace(/<\/xhtml:img>/g, '</img>');
+}
+async function He(e) {
+  if (typeof DOMParser < 'u') return new DOMParser().parseFromString(e, 'text/xml');
+  try {
+    const { DOMParser: i } = await ot(
+      async () => {
+        const { DOMParser: o } = await import('./index-JepaN3w0.js').then((n) => n.i);
+        return { DOMParser: o };
+      },
+      __vite__mapDeps([0, 1, 2, 3, 4]),
+      import.meta.url,
+    );
+    return new i().parseFromString(e, 'text/xml');
+  } catch {
+    throw new Error(
+      'XML parsing requires @xmldom/xmldom in Node.js. Install it with: npm install @xmldom/xmldom',
+    );
+  }
+}
+function H(e) {
+  return e ? (e.textContent || e.nodeValue || '').trim() : '';
+}
+function y(e, i, l) {
+  return (e && e.getAttribute(i)) || null;
+}
+function N(e, i) {
+  if (!e || !e.childNodes) return [];
+  const l = [];
+  for (let o = 0; o < e.childNodes.length; o++) {
+    const n = e.childNodes[o];
+    if (n.nodeType === 1) {
+      const r = n.localName || n.nodeName.replace(/^.*:/, '');
+      (!i || r === i) && l.push(n);
+    }
+  }
+  return l;
+}
+function z(e, i) {
+  return N(e, i)[0] || null;
+}
+const Z = {
+    'priority-1': 1,
+    'priority-2': 2,
+    'priority-3': 3,
+    'priority-4': 4,
+    'priority-5': 5,
+    'priority-6': 6,
+    'priority-7': 7,
+    'priority-8': 8,
+    'priority-9': 9,
+  },
+  V = {
+    'task-start': 1,
+    'task-oct': 2,
+    'task-quarter': 3,
+    'task-3oct': 4,
+    'task-half': 5,
+    'task-5oct': 6,
+    'task-3quar': 7,
+    'task-7oct': 8,
+    'task-done': 9,
+    'task-pause': 10,
+  };
+Object.fromEntries(Object.entries(Z).map(([e, i]) => [i, e]));
+Object.fromEntries(Object.entries(V).map(([e, i]) => [i, e]));
+const Be = () => ({
+  root: { data: { text: '' }, children: [] },
+  template: 'default',
+  theme: 'fresh-blue',
+  version: '1.4.43',
+});
+async function dt(e, i = {}) {
+  const l = i.hideEmptyValue !== !1,
+    o = ct(e),
+    r = (await He(o)).documentElement,
+    s = N(r, 'sheet');
+  if (s.length === 0) throw new Error('XMind 8: No sheets found in content.xml');
+  let a = null;
+  i.commentsXml && (a = await pt(i.commentsXml));
+  const c = i.resources || null,
+    h = [];
+  for (const L of s) {
+    const v = Be();
+    v.title = y(L, 'name') || H(z(L, 'title')) || 'Sheet';
+    const b = z(L, 'topic');
+    if ((b && (v.root = ue(b, a, l, c)), h.push(v), i.firstSheetOnly)) break;
+  }
+  return h;
+}
+function mt(e, i) {
+  if (!i || !e) return e;
+  const l = e.replace(/^xap:/, ''),
+    o = i[l];
+  if (!o) return e;
+  const n = l.split('.').pop().toLowerCase(),
+    s =
+      {
+        png: 'image/png',
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        gif: 'image/gif',
+        webp: 'image/webp',
+        svg: 'image/svg+xml',
+        bmp: 'image/bmp',
+      }[n] || 'image/png';
+  let a = '';
+  for (let c = 0; c < o.length; c++) a += String.fromCharCode(o[c]);
+  return `data:${s};base64,${btoa(a)}`;
+}
+function ue(e, i, l, o = null) {
+  const n = { data: {}, children: [] },
+    r = n.data,
+    s = y(e, 'id'),
+    a = z(e, 'title');
+  r.text = H(a) || '';
+  const c = y(e, 'href');
+  c &&
+    (c.startsWith('xap:attachments') || c.startsWith('xap:resources')
+      ? ((r.hyperlink = c), (r.attachment = !0))
+      : c.startsWith('xmind:') || c.startsWith('#')
+        ? ((r.hyperlink = c), (r.internalLink = !0))
+        : (r.hyperlink = c));
+  const h = z(e, 'notes');
+  if (h) {
+    const m = z(h, 'plain');
+    m ? (r.note = H(m)) : (r.note = ft(h));
+  }
+  const L = z(e, 'labels');
+  if (L) {
+    const m = N(L, 'label');
+    m.length > 0 && (r.label = m.map((u) => H(u)).filter(Boolean));
+  }
+  const v = z(e, 'marker-refs');
+  if (v) {
+    const m = N(v, 'marker-ref'),
+      u = [];
+    for (const k of m) {
+      const g = y(k, 'marker-id');
+      g &&
+        (Z[g] !== void 0 ? (r.priority = Z[g]) : V[g] !== void 0 ? (r.progress = V[g]) : u.push(g));
+    }
+    u.length > 0 && (r.markers = u);
+  }
+  const b = ht(e);
+  b &&
+    ((r.image = mt(b.src, o)),
+    (b.width || b.height) &&
+      ((r.imageSize = {}),
+      b.width && (r.imageSize.width = b.width),
+      b.height && (r.imageSize.height = b.height)));
+  const T = y(e, 'style-id');
+  (T && (r.style = { 'xmind-style-id': T }),
+    y(e, 'branch') === 'folded' && (r.expandState = 'collapse'));
+  const w = y(e, 'structure-class');
+  (w && (r['xmind-structure'] = w), i && s && i[s] && (r.comment = i[s]));
+  const P = z(e, 'children');
+  if (P) {
+    const m = N(P, 'topics');
+    for (const u of m) {
+      const k = y(u, 'type');
+      if (k === 'attached' || k === null)
+        for (const g of N(u, 'topic')) n.children.push(ue(g, i, l, o));
+      else if (k === 'detached')
+        for (const g of N(u, 'topic')) {
+          const C = ue(g, i, l, o);
+          ((C.data['xmind-detached'] = !0), n.children.push(C));
+        }
+      else if (k === 'callout') {
+        const g = N(u, 'topic')
+          .map((C) => H(z(C, 'title')))
+          .filter(Boolean);
+        if (g.length > 0) {
+          const C = r.note
+            ? r.note +
+              `
 
-`:"";r.note=C+g.join(`
-`)}}}}if(l)for(const m of Object.keys(r)){if(m==="text")continue;const u=r[m];(u==null||u===""||Array.isArray(u)&&u.length===0)&&delete r[m]}return n}function ft(e){const i=[];function l(o){if(o){if(o.nodeType===3){const n=(o.nodeValue||"").trim();n&&i.push(n)}if(o.childNodes)for(let n=0;n<o.childNodes.length;n++)l(o.childNodes[n])}}return l(e),i.join(`
-`).trim()}function ht(e){for(const i of N(e)){const l=(i.localName||i.nodeName||"").replace(/^.*:/,"");if(l==="image"){const o=y(i,"href")||y(i,"src");if(!o)continue;const n=parseInt(y(i,"width")||"",10)||void 0,r=parseInt(y(i,"height")||"",10)||void 0;return{src:o,width:n,height:r}}if(l==="img"){const o=y(i,"src");if(!o)continue;const n=parseInt(y(i,"width")||"",10)||void 0,r=parseInt(y(i,"height")||"",10)||void 0;return{src:o,width:n,height:r}}}return null}async function pt(e){if(!e||!e.trim())return null;try{const l=(await He(e)).documentElement,o=N(l,"comment"),n={};for(const r of o){const s=y(r,"object-id");if(!s)continue;const a=y(r,"author")||"",c=z(r,"content"),h=H(c);n[s]||(n[s]=[]),n[s].push({author:a,content:h})}return n}catch{return null}}function ut(e,i={}){const l=typeof e=="string"?JSON.parse(e):e;if(!Array.isArray(l))throw new Error("XMind 2020: content.json must be an array of sheets");const o=i.hideEmptyValue!==!1,n=i.resources||null,r=[];for(const s of l){const a=Be();a.title=s.title||"Sheet";const c=s.rootTopic;if(c&&(a.root=oe(c,o,n)),r.push(a),i.firstSheetOnly)break}return r}function gt(e,i){if(!i||!e)return e;const l=e.replace(/^xap:/,""),o=i[l];if(!o)return e;const n=l.split(".").pop().toLowerCase(),s={png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",webp:"image/webp",svg:"image/svg+xml",bmp:"image/bmp"}[n]||"image/png";let a="";for(let h=0;h<o.length;h++)a+=String.fromCharCode(o[h]);const c=btoa(a);return`data:${s};base64,${c}`}function oe(e,i=!0,l=null){const o={data:{},children:[]},n=o.data;if(n.text=e.title||"",e.href&&(n.hyperlink=e.href),e.notes&&(e.notes.plain&&e.notes.plain.content?n.note=e.notes.plain.content:e.notes.realHTML&&e.notes.realHTML.content&&(n.note=xt(e.notes.realHTML.content))),Array.isArray(e.labels)&&e.labels.length>0&&(n.label=e.labels.filter(Boolean)),Array.isArray(e.markers)&&e.markers.length>0){const s=[];for(const a of e.markers){const c=a.markerId||a.id||"";c&&(Z[c]!==void 0?n.priority=Z[c]:V[c]!==void 0?n.progress=V[c]:s.push(c))}s.length>0&&(n.markers=s)}if(e.image){const s=e.image.src||e.image.url||"";if(s){n.image=gt(s,l);const a=e.image.width,c=e.image.height;n.imageSize={width:a||200,height:c||200}}}const r=e.styleId||e.style&&e.style.id;if(r&&(n.style={"xmind-style-id":r}),e.style&&e.style.properties){n.style||(n.style={});const s=e.style.properties;s["fo:color"]&&(n.style.color=s["fo:color"]),s["fo:background-color"]&&(n.style.background=s["fo:background-color"]),s["fo:font-size"]&&(n.style.fontSize=s["fo:font-size"]),s["fo:font-weight"]&&(n.style.fontWeight=s["fo:font-weight"]),s["fo:font-style"]&&(n.style.fontStyle=s["fo:font-style"]),s["line-color"]&&(n.style.lineColor=s["line-color"]),s["line-width"]&&(n.style.lineWidth=s["line-width"]),s["shape-class"]&&(n.style.shapeClass=s["shape-class"])}if(e.branch==="folded"&&(n.expandState="collapse"),e.structureClass&&(n["xmind-structure"]=e.structureClass),e.children){if(Array.isArray(e.children.attached))for(const s of e.children.attached)o.children.push(oe(s,i,l));if(Array.isArray(e.children.detached))for(const s of e.children.detached){const a=oe(s,i,l);a.data["xmind-detached"]=!0,o.children.push(a)}if(Array.isArray(e.children.summary))for(const s of e.children.summary){const a=oe(s,i,l);a.data["xmind-summary"]=!0,o.children.push(a)}if(Array.isArray(e.children.callout)&&e.children.callout.length>0){const s=e.children.callout.map(a=>(a.title||"").trim()).filter(Boolean);if(s.length>0){const a=n.note?n.note+`
+`
+            : '';
+          r.note =
+            C +
+            g.join(`
+`);
+        }
+      }
+    }
+  }
+  if (l)
+    for (const m of Object.keys(r)) {
+      if (m === 'text') continue;
+      const u = r[m];
+      (u == null || u === '' || (Array.isArray(u) && u.length === 0)) && delete r[m];
+    }
+  return n;
+}
+function ft(e) {
+  const i = [];
+  function l(o) {
+    if (o) {
+      if (o.nodeType === 3) {
+        const n = (o.nodeValue || '').trim();
+        n && i.push(n);
+      }
+      if (o.childNodes) for (let n = 0; n < o.childNodes.length; n++) l(o.childNodes[n]);
+    }
+  }
+  return (
+    l(e),
+    i
+      .join(
+        `
+`,
+      )
+      .trim()
+  );
+}
+function ht(e) {
+  for (const i of N(e)) {
+    const l = (i.localName || i.nodeName || '').replace(/^.*:/, '');
+    if (l === 'image') {
+      const o = y(i, 'href') || y(i, 'src');
+      if (!o) continue;
+      const n = parseInt(y(i, 'width') || '', 10) || void 0,
+        r = parseInt(y(i, 'height') || '', 10) || void 0;
+      return { src: o, width: n, height: r };
+    }
+    if (l === 'img') {
+      const o = y(i, 'src');
+      if (!o) continue;
+      const n = parseInt(y(i, 'width') || '', 10) || void 0,
+        r = parseInt(y(i, 'height') || '', 10) || void 0;
+      return { src: o, width: n, height: r };
+    }
+  }
+  return null;
+}
+async function pt(e) {
+  if (!e || !e.trim()) return null;
+  try {
+    const l = (await He(e)).documentElement,
+      o = N(l, 'comment'),
+      n = {};
+    for (const r of o) {
+      const s = y(r, 'object-id');
+      if (!s) continue;
+      const a = y(r, 'author') || '',
+        c = z(r, 'content'),
+        h = H(c);
+      (n[s] || (n[s] = []), n[s].push({ author: a, content: h }));
+    }
+    return n;
+  } catch {
+    return null;
+  }
+}
+function ut(e, i = {}) {
+  const l = typeof e == 'string' ? JSON.parse(e) : e;
+  if (!Array.isArray(l)) throw new Error('XMind 2020: content.json must be an array of sheets');
+  const o = i.hideEmptyValue !== !1,
+    n = i.resources || null,
+    r = [];
+  for (const s of l) {
+    const a = Be();
+    a.title = s.title || 'Sheet';
+    const c = s.rootTopic;
+    if ((c && (a.root = oe(c, o, n)), r.push(a), i.firstSheetOnly)) break;
+  }
+  return r;
+}
+function gt(e, i) {
+  if (!i || !e) return e;
+  const l = e.replace(/^xap:/, ''),
+    o = i[l];
+  if (!o) return e;
+  const n = l.split('.').pop().toLowerCase(),
+    s =
+      {
+        png: 'image/png',
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        gif: 'image/gif',
+        webp: 'image/webp',
+        svg: 'image/svg+xml',
+        bmp: 'image/bmp',
+      }[n] || 'image/png';
+  let a = '';
+  for (let h = 0; h < o.length; h++) a += String.fromCharCode(o[h]);
+  const c = btoa(a);
+  return `data:${s};base64,${c}`;
+}
+function oe(e, i = !0, l = null) {
+  const o = { data: {}, children: [] },
+    n = o.data;
+  if (
+    ((n.text = e.title || ''),
+    e.href && (n.hyperlink = e.href),
+    e.notes &&
+      (e.notes.plain && e.notes.plain.content
+        ? (n.note = e.notes.plain.content)
+        : e.notes.realHTML && e.notes.realHTML.content && (n.note = xt(e.notes.realHTML.content))),
+    Array.isArray(e.labels) && e.labels.length > 0 && (n.label = e.labels.filter(Boolean)),
+    Array.isArray(e.markers) && e.markers.length > 0)
+  ) {
+    const s = [];
+    for (const a of e.markers) {
+      const c = a.markerId || a.id || '';
+      c &&
+        (Z[c] !== void 0 ? (n.priority = Z[c]) : V[c] !== void 0 ? (n.progress = V[c]) : s.push(c));
+    }
+    s.length > 0 && (n.markers = s);
+  }
+  if (e.image) {
+    const s = e.image.src || e.image.url || '';
+    if (s) {
+      n.image = gt(s, l);
+      const a = e.image.width,
+        c = e.image.height;
+      n.imageSize = { width: a || 200, height: c || 200 };
+    }
+  }
+  const r = e.styleId || (e.style && e.style.id);
+  if ((r && (n.style = { 'xmind-style-id': r }), e.style && e.style.properties)) {
+    n.style || (n.style = {});
+    const s = e.style.properties;
+    (s['fo:color'] && (n.style.color = s['fo:color']),
+      s['fo:background-color'] && (n.style.background = s['fo:background-color']),
+      s['fo:font-size'] && (n.style.fontSize = s['fo:font-size']),
+      s['fo:font-weight'] && (n.style.fontWeight = s['fo:font-weight']),
+      s['fo:font-style'] && (n.style.fontStyle = s['fo:font-style']),
+      s['line-color'] && (n.style.lineColor = s['line-color']),
+      s['line-width'] && (n.style.lineWidth = s['line-width']),
+      s['shape-class'] && (n.style.shapeClass = s['shape-class']));
+  }
+  if (
+    (e.branch === 'folded' && (n.expandState = 'collapse'),
+    e.structureClass && (n['xmind-structure'] = e.structureClass),
+    e.children)
+  ) {
+    if (Array.isArray(e.children.attached))
+      for (const s of e.children.attached) o.children.push(oe(s, i, l));
+    if (Array.isArray(e.children.detached))
+      for (const s of e.children.detached) {
+        const a = oe(s, i, l);
+        ((a.data['xmind-detached'] = !0), o.children.push(a));
+      }
+    if (Array.isArray(e.children.summary))
+      for (const s of e.children.summary) {
+        const a = oe(s, i, l);
+        ((a.data['xmind-summary'] = !0), o.children.push(a));
+      }
+    if (Array.isArray(e.children.callout) && e.children.callout.length > 0) {
+      const s = e.children.callout.map((a) => (a.title || '').trim()).filter(Boolean);
+      if (s.length > 0) {
+        const a = n.note
+          ? n.note +
+            `
 
-`:"";n.note=a+s.join(`
-`)}}}if(i)for(const s of Object.keys(n)){if(s==="text")continue;const a=n[s];(a==null||a===""||Array.isArray(a)&&a.length===0)&&delete n[s]}return o}function xt(e){return e?e.replace(/<br\s*\/?>/gi,`
-`).replace(/<\/p>/gi,`
-`).replace(/<[^>]+>/g,"").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&nbsp;/g," ").trim():""}const We=236,bt=260,yt=112,ge=24,B=44,wt=1800,vt=5,kt=180,Et=.08,je=56,St=.12,Mt=42,At=96,Lt=120,Ze="xmind-pan-exclude",Pt=`
+`
+          : '';
+        n.note =
+          a +
+          s.join(`
+`);
+      }
+    }
+  }
+  if (i)
+    for (const s of Object.keys(n)) {
+      if (s === 'text') continue;
+      const a = n[s];
+      (a == null || a === '' || (Array.isArray(a) && a.length === 0)) && delete n[s];
+    }
+  return o;
+}
+function xt(e) {
+  return e
+    ? e
+        .replace(
+          /<br\s*\/?>/gi,
+          `
+`,
+        )
+        .replace(
+          /<\/p>/gi,
+          `
+`,
+        )
+        .replace(/<[^>]+>/g, '')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+        .trim()
+    : '';
+}
+const We = 236,
+  bt = 260,
+  yt = 112,
+  ge = 24,
+  B = 44,
+  wt = 1800,
+  vt = 5,
+  kt = 180,
+  Et = 0.08,
+  je = 56,
+  St = 0.12,
+  Mt = 42,
+  At = 96,
+  Lt = 120,
+  Ze = 'xmind-pan-exclude',
+  Pt = `
 .xmind-viewer{height:100%;min-height:0;display:flex;flex-direction:column;background:#eef3f7;color:#172033}
 .xmind-viewer *{box-sizing:border-box}
 .xmind-toolbar{min-height:62px;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 16px;border-bottom:1px solid rgba(23,32,51,.08);background:#fff}
@@ -38,4 +466,664 @@ import{e as it}from"./jszip.min-DnpxAPiE.js";import{P as rt}from"./panzoom.es-Dq
 .file-viewer[data-viewer-theme='dark'] .xmind-viewer{background:#111827;color:#e5eef8}.file-viewer[data-viewer-theme='dark'] .xmind-toolbar,.file-viewer[data-viewer-theme='dark'] .xmind-tabs,.file-viewer[data-viewer-theme='dark'] .xmind-sidebar{background:#fff;color:#172033}
 @media (prefers-color-scheme:dark){.file-viewer[data-viewer-theme='system'] .xmind-viewer{background:#111827;color:#e5eef8}.file-viewer[data-viewer-theme='system'] .xmind-toolbar,.file-viewer[data-viewer-theme='system'] .xmind-tabs,.file-viewer[data-viewer-theme='system'] .xmind-sidebar{background:#fff;color:#172033}}
 @media (max-width:860px){.xmind-body{grid-template-columns:1fr}.xmind-sidebar{display:none}.xmind-toolbar{align-items:flex-start;flex-direction:column}.xmind-actions{width:100%;justify-content:flex-end}}
-`,zt=()=>{const e=document.createElement("style");return e.textContent=Pt,e},p=(e,i,l)=>{const o=document.createElement(e);return i&&(o.className=i),l!==void 0&&(o.textContent=l),o},re=e=>Math.min(2.5,Math.max(.25,Number(e.toFixed(2)))),pe=e=>Array.isArray(e)?e:[],I=(e,i="")=>typeof e=="string"&&e.trim()?e.trim():i,Nt=(e,i=220)=>e.length>i?`${e.slice(0,i-1)}...`:e,Ct=e=>{let l=34+Math.max(1,Math.ceil(e.title.length/22))*18;return(e.labels.length||e.markers.length||e.priority||e.progress||e.collapsed||e.detached||e.summary||e.callout)&&(l+=28),e.note&&(l+=Math.min(60,18+Math.ceil(e.note.length/34)*16)),e.hyperlink&&(l+=24),e.image&&(l+=96),Math.max(58,l)},Ve=(e,i,l,o)=>{o.value+=1;const n=e.data||{},r=o.value>=wt?[]:pe(e.children).map((a,c)=>Ve(a,i+1,`${l}.${c+1}`,o)),s={id:`xmind-node-${l.replace(/[^a-z0-9]+/gi,"-")}`,title:I(n.text,i===0?"Central Topic":"Untitled Topic"),labels:pe(n.label).map(a=>String(a)).filter(Boolean),markers:pe(n.markers).map(a=>String(a)).filter(Boolean),note:I(n.note),hyperlink:I(n.hyperlink),image:I(n.image),priority:typeof n.priority=="number"?n.priority:void 0,progress:typeof n.progress=="number"?n.progress:void 0,structure:I(n["xmind-structure"]),collapsed:n.expandState==="collapse",detached:n["xmind-detached"]===!0,summary:n["xmind-summary"]===!0,callout:n["xmind-callout"]===!0,depth:i,children:r,x:0,y:0,width:i===0?bt:We,height:0,subtreeHeight:0};return s.height=Ct(s),s},ae=(e,i)=>{i(e),e.children.forEach(l=>ae(l,i))},Fe=e=>{if(!e.children.length)return e.subtreeHeight=e.height,e.subtreeHeight;const i=e.children.reduce((l,o,n)=>l+Fe(o)+(n>0?ge:0),0);return e.subtreeHeight=Math.max(e.height,i),e.subtreeHeight},Ke=(e,i)=>{if(e.x=B+e.depth*(We+yt),e.y=i+(e.subtreeHeight-e.height)/2,!e.children.length)return;const l=e.children.reduce((n,r,s)=>n+r.subtreeHeight+(s>0?ge:0),0);let o=i+(e.subtreeHeight-l)/2;e.children.forEach(n=>{Ke(n,o),o+=n.subtreeHeight+ge})},Dt=(e,i)=>{const l={value:0},o=Ve(e.root||{data:{text:e.title||`Sheet ${i+1}`}},0,String(i+1),l);Fe(o),Ke(o,B);let n=0,r=0,s=0;return ae(o,a=>{n=Math.max(n,a.depth),r=Math.max(r,a.x+a.width),s=Math.max(s,a.y+a.height)}),{title:I(e.title,`Sheet ${i+1}`),theme:I(e.theme,"-"),template:I(e.template,"-"),version:I(e.version,"-"),root:o,nodeCount:l.value,maxDepth:n,width:Math.max(840,r+B),height:Math.max(520,s+B)}},$t=async e=>{const i=await it.loadAsync(e),l={},o=[];i.forEach((a,c)=>{c.dir||!a.startsWith("resources/")&&!a.startsWith("attachments/")||o.push(c.async("uint8array").then(h=>{l[a]=h}))}),await Promise.all(o);const n={resources:Object.keys(l).length?l:null},r=i.file(/(^|\/)content\.json$/i)[0];if(r)return await ut(await r.async("text"),n);const s=i.file(/(^|\/)content\.xml$/i)[0];if(s){const a=i.file(/(^|\/)comments\.xml$/i)[0];return await dt(await s.async("text"),{...n,commentsXml:a?await a.async("text"):void 0})}throw new Error("无法识别 XMind 文件: ZIP 中未找到 content.json 或 content.xml")},It=e=>{const i=[];return e.priority&&i.push(`P${e.priority}`),e.progress&&i.push(e.progress===10?"暂停":`${Math.min(100,Math.round(e.progress/9*100))}%`),e.collapsed&&i.push("折叠"),e.detached&&i.push("浮动"),e.summary&&i.push("概要"),e.callout&&i.push("标注"),e.markers.slice(0,4).forEach(l=>i.push(l)),i},_t=(e,i)=>{const l=e.x+e.width,o=e.y+e.height/2,n=i.x,r=i.y+i.height/2,s=Math.max(48,(n-l)*.48);return`M${l} ${o} C${l+s} ${o}, ${n-s} ${r}, ${n} ${r}`},Ye=(e,i)=>{i.children.forEach(l=>{const o=document.createElementNS("http://www.w3.org/2000/svg","path");o.setAttribute("d",_t(i,l)),e.append(o),Ye(e,l)})},Ot=(e,i,l)=>{const o=p("article",["xmind-node",e.depth===0?"root":"",e.detached?"detached":"",e.summary?"summary":"",e.callout?"callout":""].filter(Boolean).join(" "));o.id=e.id,o.style.left=`${e.x}px`,o.style.top=`${e.y}px`,o.style.width=`${e.width}px`,o.style.minHeight=`${e.height}px`,o.append(p("h3",void 0,e.title));const n=It(e);if(n.length){const r=p("div","xmind-badges");n.forEach(s=>r.append(p("span",void 0,s))),o.append(r)}if(e.labels.length){const r=p("div","xmind-labels");e.labels.slice(0,8).forEach(s=>r.append(p("span",void 0,s))),o.append(r)}if(e.note&&o.append(p("p","xmind-note",Nt(e.note))),e.image)if(/^data:image\//i.test(e.image)||/^https?:\/\//i.test(e.image)){const r=document.createElement("img");r.className="xmind-image",r.alt=e.title,r.src=e.image,r.draggable=!1,o.append(r)}else o.append(p("p","xmind-note",`图片资源: ${e.image}`));if(e.hyperlink){const r=document.createElement("a");r.className=`xmind-link ${Ze}`,r.textContent=e.hyperlink,r.href=e.hyperlink.startsWith("http")?e.hyperlink:"#",r.target="_blank",r.rel="noreferrer",r.draggable=!1,o.append(r)}return o.addEventListener("click",r=>{if(l()){r.preventDefault(),r.stopPropagation();return}i(e)}),o};async function Zt(e,i,l="xmind",o){const n=lt();let r="loading",s="",a=1,c=0,h=0,L=!1,v=0,b=[],T=!1,se=!1,w=!1,P,m=null,u=!1,k=null;const g=p("section","xmind-viewer");g.dataset.viewerZoomProvider="xmind";const C=p("header","xmind-toolbar"),xe=p("div","xmind-title");xe.append(p("span",void 0,"XMIND MIND MAP"),p("strong",void 0,o?.filename||"XMind"));const be=p("div","xmind-actions"),F=p("button",void 0,"-"),le=p("span",void 0,"100%"),K=p("button",void 0,"+"),Y=p("button",void 0,"适合");[F,K,Y].forEach(t=>{t.type="button"}),F.title="缩小",K.title="放大",Y.title="适配画布",be.append(F,le,K,Y),C.append(xe,be);const ce=p("nav","xmind-tabs"),ye=p("div","xmind-body"),U=p("aside","xmind-sidebar"),f=p("main","xmind-stage"),q=i.ownerDocument||document,S=q.defaultView||window;f.tabIndex=0,f.setAttribute("role","application"),f.setAttribute("aria-label","XMind canvas. Drag to pan, pinch on touch screens to zoom, double click to fit, use Ctrl or Command with wheel to zoom."),f.setAttribute("aria-keyshortcuts","Space ArrowLeft ArrowRight ArrowUp ArrowDown Control+0 Meta+0");const A=p("div","xmind-zoom-box"),D=p("div","xmind-surface"),G=p("div","xmind-state","正在解析 XMind 脑图...");A.append(D),f.append(A,G),ye.append(U,f),g.append(C,ce,ye),i.replaceChildren(zt(),g);const X=()=>({scale:a,label:`${Math.round(a*100)}%`,canZoomIn:a<2.5,canZoomOut:a>.25,canReset:a!==1||c!==0||h!==0,minScale:.25,maxScale:2.5}),Ue=()=>{const t=b[v];if(!t)return;const d=Math.max(1,f.clientWidth),x=Math.max(1,f.clientHeight),E=t.width*a,M=t.height*a,_=(O,ie)=>{if(ie<=O){const Xe=(O-ie)/2,Re=Math.max(kt,O*.45);return{min:Xe-Re,max:Xe+Re}}const Te=Math.min(Math.max(je,O*Et),Math.max(je,ie*.35));return{min:Te-ie,max:O-Te}},W=_(d,E),ne=_(x,M);c=Math.min(W.max,Math.max(W.min,c)),h=Math.min(ne.max,Math.max(ne.min,h))},de=t=>{if(!m)return;const d=m.getPan();c=Number.isFinite(d.x)?d.x:c,h=Number.isFinite(d.y)?d.y:h,a=re(m.getScale()),le.textContent=`${Math.round(a*100)}%`,t&&(w=!0),n.emit()},J=t=>{u=!0;try{t()}finally{u=!1}de(!1)},$=()=>{const t=b[v];t&&(A.style.width=`${t.width}px`,A.style.height=`${t.height}px`,D.style.width=`${t.width}px`,D.style.height=`${t.height}px`),Ue(),D.style.transform="",m?J(()=>{m?.zoom(a,{animate:!1,force:!0}),m?.pan(c,h,{animate:!1,force:!0})}):A.style.transform=`translate3d(${c}px, ${h}px, 0) scale(${a})`,le.textContent=`${Math.round(a*100)}%`},qe=t=>(w=!0,a=re(t),$(),n.emit(),X()),we=(t,d,x)=>{const E=re(t);if(E===a)return X();if(w=!0,m)J(()=>{m?.zoomToPoint(E,{clientX:d,clientY:x},{animate:!1,force:!0})});else{const M=f.getBoundingClientRect(),_=d-M.left,W=x-M.top,ne=(_-c)/a,O=(W-h)/a;a=E,c=_-ne*a,h=W-O*a,$(),n.emit()}return X()},Q=t=>{const d=f.getBoundingClientRect();return we(t,d.left+d.width/2,d.top+d.height/2)},R=(t=!1)=>{const d=b[v];if(!d)return X();w=t?!1:w;const x=Math.max(1,f.clientWidth-B),E=Math.max(1,f.clientHeight-B),M=Math.min(1,x/d.width,E/d.height);return a=re(M),c=(f.clientWidth-d.width*a)/2,h=(f.clientHeight-d.height*a)/2,$(),n.emit(),X()},ve=t=>{w=!0,c=f.clientWidth/2-(t.x+t.width/2)*a,h=f.clientHeight/2-(t.y+t.height/2)*a,$(),n.emit()},Ge=t=>{U.replaceChildren();const d=p("div","xmind-stats");[["节点",t.nodeCount],["层级",t.maxDepth+1],["主题",t.theme],["模板",t.template]].forEach(([E,M])=>{const _=document.createElement("div");_.append(p("span",void 0,String(E)),p("strong",void 0,String(M))),d.append(_)}),U.append(d);const x=p("div","xmind-outline");ae(t.root,E=>{const M=p("button",void 0,`${"  ".repeat(E.depth)}${E.title}`);M.type="button",M.style.paddingLeft=`${8+E.depth*14}px`,M.addEventListener("click",()=>ve(E)),x.append(M)}),U.append(x)},ke=()=>{const t=b[v];if(!t)return;D.replaceChildren(),w=!1,D.style.width=`${t.width}px`,D.style.height=`${t.height}px`;const d=document.createElementNS("http://www.w3.org/2000/svg","svg");d.classList.add("xmind-edges"),d.setAttribute("width",String(t.width)),d.setAttribute("height",String(t.height)),d.setAttribute("viewBox",`0 0 ${t.width} ${t.height}`),Ye(d,t.root),D.append(d),ae(t.root,x=>{D.append(Ot(x,ve,()=>T))}),Ge(t),$(),requestAnimationFrame(()=>R())},Ee=()=>{ce.replaceChildren(),b.forEach((t,d)=>{const x=p("button",d===v?"active":"",t.title);x.type="button",x.title=t.title,x.addEventListener("click",()=>{v=d,Ee(),ke()}),ce.append(x)})},ee=()=>{G.hidden=r==="ready",G.classList.toggle("error",r==="error"),G.textContent=r==="error"?s:"正在解析 XMind 脑图..."},Je=async()=>{r="loading",s="",ee();try{const t=await $t(e);if(L)return;if(!Array.isArray(t)||!t.length)throw new Error("XMind 文件中没有可预览的画布");b=t.map(Dt),v=0,Ee(),ke(),r="ready",ee()}catch(t){if(L)return;console.error(t),s=t instanceof Error?t.message:String(t),r="error",ee()}};at(g,{zoomIn:()=>Q(a+.15),zoomOut:()=>Q(a-.15),resetZoom:()=>R(!0),setZoom:qe,getState:X,subscribe:n.subscribe});const Se=t=>{const d=S.Element||Element;return t instanceof d?t:null},Me=t=>{const d=Se(t);if(!d)return!1;if(d.closest(".xmind-toolbar,.xmind-tabs,.xmind-sidebar"))return!0;const x=d.closest('a,button,input,textarea,select,[contenteditable="true"]');return!!(x&&!x.closest(".xmind-node"))},Qe=t=>{const d=Se(t);return!d?.closest('a[href],button,input,textarea,select,[contenteditable="true"]')},me=t=>{se=t,f.classList.toggle("is-space-panning",t)},Ae=()=>{try{f.focus({preventScroll:!0})}catch{try{f.focus()}catch{}}},et=()=>{T=!0,S.setTimeout(()=>{T=!1},Lt)},Le=()=>{Ae(),k={x:c,y:h,scale:a},f.classList.add("is-panning")},Pe=()=>{de(!u)},ze=()=>{de(!u),f.classList.remove("is-panning"),k&&Math.abs(c-k.x)+Math.abs(h-k.y)+Math.abs(a-k.scale)*100>vt&&et(),k=null},tt=()=>{m=rt(A,{canvas:!0,cursor:"grab",minScale:.25,maxScale:2.5,step:.15,animate:!1,origin:"0 0",touchAction:"none",excludeClass:Ze,handleStartEvent:t=>{if(r!=="ready"||!se&&Me(t.target)){t.preventDefault(),t.stopPropagation();return}Qe(t.target)&&t.preventDefault(),t.stopPropagation(),Ae()}}),A.addEventListener("panzoomstart",Le),A.addEventListener("panzoomchange",Pe),A.addEventListener("panzoomend",ze),$()},Ne=t=>{if(r!=="ready")return;if(t.preventDefault(),!t.ctrlKey&&!t.metaKey){w=!0,m?J(()=>{m?.pan(-t.deltaX,-t.deltaY,{animate:!1,force:!0,relative:!0})}):(c-=t.deltaX,h-=t.deltaY,$(),n.emit());return}const d=t.deltaY>0?-1:1;we(a+d*St,t.clientX,t.clientY)},Ce=t=>{if(r!=="ready")return;const d=t.shiftKey?At:Mt;if(t.key===" "){me(!0),t.preventDefault();return}if(t.key==="ArrowLeft")w=!0,c+=d;else if(t.key==="ArrowRight")w=!0,c-=d;else if(t.key==="ArrowUp")w=!0,h+=d;else if(t.key==="ArrowDown")w=!0,h-=d;else if((t.key==="0"||t.key==="Home")&&(t.ctrlKey||t.metaKey)){R(!0),t.preventDefault();return}else return;m?J(()=>{m?.pan(c,h,{animate:!1,force:!0})}):($(),n.emit()),t.preventDefault()},te=t=>{t.key===" "&&(me(!1),t.preventDefault())},De=t=>{r!=="ready"||Me(t.target)||(R(!0),t.preventDefault())},$e=t=>{t.preventDefault()},Ie=t=>{f.classList.contains("is-panning")&&(t.preventDefault(),t.stopPropagation())},_e=t=>{f.classList.contains("is-panning")&&t.preventDefault()},fe=()=>{k=null,f.classList.remove("is-panning"),me(!1)},Oe=()=>{q.visibilityState==="hidden"&&fe()},nt=()=>{if(!(L||r!=="ready")){if(w){$(),n.emit();return}R()}},he=()=>{P!==void 0&&S.cancelAnimationFrame(P),P=S.requestAnimationFrame(()=>{P=void 0,nt()})},j=typeof S.ResizeObserver=="function"?new S.ResizeObserver(he):null;return j?.observe(f),S.addEventListener("resize",he),tt(),f.addEventListener("wheel",Ne,{passive:!1}),f.addEventListener("keydown",Ce),f.addEventListener("keyup",te),f.addEventListener("dblclick",De),f.addEventListener("dragstart",$e),f.addEventListener("contextmenu",Ie),f.addEventListener("selectstart",_e),S.addEventListener("keyup",te),S.addEventListener("blur",fe),q.addEventListener("visibilitychange",Oe),F.addEventListener("click",()=>Q(a-.15)),K.addEventListener("click",()=>Q(a+.15)),Y.addEventListener("click",()=>R(!0)),ee(),Je(),{$el:g,unmount(){L=!0,P!==void 0&&(S.cancelAnimationFrame(P),P=void 0),j?.disconnect(),st(g),A.removeEventListener("panzoomstart",Le),A.removeEventListener("panzoomchange",Pe),A.removeEventListener("panzoomend",ze),m?.destroy(),m=null,f.removeEventListener("wheel",Ne),f.removeEventListener("keydown",Ce),f.removeEventListener("keyup",te),f.removeEventListener("dblclick",De),f.removeEventListener("dragstart",$e),f.removeEventListener("contextmenu",Ie),f.removeEventListener("selectstart",_e),S.removeEventListener("keyup",te),S.removeEventListener("resize",he),S.removeEventListener("blur",fe),q.removeEventListener("visibilitychange",Oe),i.replaceChildren()}}}export{Zt as default};
+`,
+  zt = () => {
+    const e = document.createElement('style');
+    return ((e.textContent = Pt), e);
+  },
+  p = (e, i, l) => {
+    const o = document.createElement(e);
+    return (i && (o.className = i), l !== void 0 && (o.textContent = l), o);
+  },
+  re = (e) => Math.min(2.5, Math.max(0.25, Number(e.toFixed(2)))),
+  pe = (e) => (Array.isArray(e) ? e : []),
+  I = (e, i = '') => (typeof e == 'string' && e.trim() ? e.trim() : i),
+  Nt = (e, i = 220) => (e.length > i ? `${e.slice(0, i - 1)}...` : e),
+  Ct = (e) => {
+    let l = 34 + Math.max(1, Math.ceil(e.title.length / 22)) * 18;
+    return (
+      (e.labels.length ||
+        e.markers.length ||
+        e.priority ||
+        e.progress ||
+        e.collapsed ||
+        e.detached ||
+        e.summary ||
+        e.callout) &&
+        (l += 28),
+      e.note && (l += Math.min(60, 18 + Math.ceil(e.note.length / 34) * 16)),
+      e.hyperlink && (l += 24),
+      e.image && (l += 96),
+      Math.max(58, l)
+    );
+  },
+  Ve = (e, i, l, o) => {
+    o.value += 1;
+    const n = e.data || {},
+      r = o.value >= wt ? [] : pe(e.children).map((a, c) => Ve(a, i + 1, `${l}.${c + 1}`, o)),
+      s = {
+        id: `xmind-node-${l.replace(/[^a-z0-9]+/gi, '-')}`,
+        title: I(n.text, i === 0 ? 'Central Topic' : 'Untitled Topic'),
+        labels: pe(n.label)
+          .map((a) => String(a))
+          .filter(Boolean),
+        markers: pe(n.markers)
+          .map((a) => String(a))
+          .filter(Boolean),
+        note: I(n.note),
+        hyperlink: I(n.hyperlink),
+        image: I(n.image),
+        priority: typeof n.priority == 'number' ? n.priority : void 0,
+        progress: typeof n.progress == 'number' ? n.progress : void 0,
+        structure: I(n['xmind-structure']),
+        collapsed: n.expandState === 'collapse',
+        detached: n['xmind-detached'] === !0,
+        summary: n['xmind-summary'] === !0,
+        callout: n['xmind-callout'] === !0,
+        depth: i,
+        children: r,
+        x: 0,
+        y: 0,
+        width: i === 0 ? bt : We,
+        height: 0,
+        subtreeHeight: 0,
+      };
+    return ((s.height = Ct(s)), s);
+  },
+  ae = (e, i) => {
+    (i(e), e.children.forEach((l) => ae(l, i)));
+  },
+  Fe = (e) => {
+    if (!e.children.length) return ((e.subtreeHeight = e.height), e.subtreeHeight);
+    const i = e.children.reduce((l, o, n) => l + Fe(o) + (n > 0 ? ge : 0), 0);
+    return ((e.subtreeHeight = Math.max(e.height, i)), e.subtreeHeight);
+  },
+  Ke = (e, i) => {
+    if (
+      ((e.x = B + e.depth * (We + yt)),
+      (e.y = i + (e.subtreeHeight - e.height) / 2),
+      !e.children.length)
+    )
+      return;
+    const l = e.children.reduce((n, r, s) => n + r.subtreeHeight + (s > 0 ? ge : 0), 0);
+    let o = i + (e.subtreeHeight - l) / 2;
+    e.children.forEach((n) => {
+      (Ke(n, o), (o += n.subtreeHeight + ge));
+    });
+  },
+  Dt = (e, i) => {
+    const l = { value: 0 },
+      o = Ve(e.root || { data: { text: e.title || `Sheet ${i + 1}` } }, 0, String(i + 1), l);
+    (Fe(o), Ke(o, B));
+    let n = 0,
+      r = 0,
+      s = 0;
+    return (
+      ae(o, (a) => {
+        ((n = Math.max(n, a.depth)),
+          (r = Math.max(r, a.x + a.width)),
+          (s = Math.max(s, a.y + a.height)));
+      }),
+      {
+        title: I(e.title, `Sheet ${i + 1}`),
+        theme: I(e.theme, '-'),
+        template: I(e.template, '-'),
+        version: I(e.version, '-'),
+        root: o,
+        nodeCount: l.value,
+        maxDepth: n,
+        width: Math.max(840, r + B),
+        height: Math.max(520, s + B),
+      }
+    );
+  },
+  $t = async (e) => {
+    const i = await it.loadAsync(e),
+      l = {},
+      o = [];
+    (i.forEach((a, c) => {
+      c.dir ||
+        (!a.startsWith('resources/') && !a.startsWith('attachments/')) ||
+        o.push(
+          c.async('uint8array').then((h) => {
+            l[a] = h;
+          }),
+        );
+    }),
+      await Promise.all(o));
+    const n = { resources: Object.keys(l).length ? l : null },
+      r = i.file(/(^|\/)content\.json$/i)[0];
+    if (r) return await ut(await r.async('text'), n);
+    const s = i.file(/(^|\/)content\.xml$/i)[0];
+    if (s) {
+      const a = i.file(/(^|\/)comments\.xml$/i)[0];
+      return await dt(await s.async('text'), {
+        ...n,
+        commentsXml: a ? await a.async('text') : void 0,
+      });
+    }
+    throw new Error('无法识别 XMind 文件: ZIP 中未找到 content.json 或 content.xml');
+  },
+  It = (e) => {
+    const i = [];
+    return (
+      e.priority && i.push(`P${e.priority}`),
+      e.progress &&
+        i.push(
+          e.progress === 10 ? '暂停' : `${Math.min(100, Math.round((e.progress / 9) * 100))}%`,
+        ),
+      e.collapsed && i.push('折叠'),
+      e.detached && i.push('浮动'),
+      e.summary && i.push('概要'),
+      e.callout && i.push('标注'),
+      e.markers.slice(0, 4).forEach((l) => i.push(l)),
+      i
+    );
+  },
+  _t = (e, i) => {
+    const l = e.x + e.width,
+      o = e.y + e.height / 2,
+      n = i.x,
+      r = i.y + i.height / 2,
+      s = Math.max(48, (n - l) * 0.48);
+    return `M${l} ${o} C${l + s} ${o}, ${n - s} ${r}, ${n} ${r}`;
+  },
+  Ye = (e, i) => {
+    i.children.forEach((l) => {
+      const o = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      (o.setAttribute('d', _t(i, l)), e.append(o), Ye(e, l));
+    });
+  },
+  Ot = (e, i, l) => {
+    const o = p(
+      'article',
+      [
+        'xmind-node',
+        e.depth === 0 ? 'root' : '',
+        e.detached ? 'detached' : '',
+        e.summary ? 'summary' : '',
+        e.callout ? 'callout' : '',
+      ]
+        .filter(Boolean)
+        .join(' '),
+    );
+    ((o.id = e.id),
+      (o.style.left = `${e.x}px`),
+      (o.style.top = `${e.y}px`),
+      (o.style.width = `${e.width}px`),
+      (o.style.minHeight = `${e.height}px`),
+      o.append(p('h3', void 0, e.title)));
+    const n = It(e);
+    if (n.length) {
+      const r = p('div', 'xmind-badges');
+      (n.forEach((s) => r.append(p('span', void 0, s))), o.append(r));
+    }
+    if (e.labels.length) {
+      const r = p('div', 'xmind-labels');
+      (e.labels.slice(0, 8).forEach((s) => r.append(p('span', void 0, s))), o.append(r));
+    }
+    if ((e.note && o.append(p('p', 'xmind-note', Nt(e.note))), e.image))
+      if (/^data:image\//i.test(e.image) || /^https?:\/\//i.test(e.image)) {
+        const r = document.createElement('img');
+        ((r.className = 'xmind-image'),
+          (r.alt = e.title),
+          (r.src = e.image),
+          (r.draggable = !1),
+          o.append(r));
+      } else o.append(p('p', 'xmind-note', `图片资源: ${e.image}`));
+    if (e.hyperlink) {
+      const r = document.createElement('a');
+      ((r.className = `xmind-link ${Ze}`),
+        (r.textContent = e.hyperlink),
+        (r.href = e.hyperlink.startsWith('http') ? e.hyperlink : '#'),
+        (r.target = '_blank'),
+        (r.rel = 'noreferrer'),
+        (r.draggable = !1),
+        o.append(r));
+    }
+    return (
+      o.addEventListener('click', (r) => {
+        if (l()) {
+          (r.preventDefault(), r.stopPropagation());
+          return;
+        }
+        i(e);
+      }),
+      o
+    );
+  };
+async function Zt(e, i, l = 'xmind', o) {
+  const n = lt();
+  let r = 'loading',
+    s = '',
+    a = 1,
+    c = 0,
+    h = 0,
+    L = !1,
+    v = 0,
+    b = [],
+    T = !1,
+    se = !1,
+    w = !1,
+    P,
+    m = null,
+    u = !1,
+    k = null;
+  const g = p('section', 'xmind-viewer');
+  g.dataset.viewerZoomProvider = 'xmind';
+  const C = p('header', 'xmind-toolbar'),
+    xe = p('div', 'xmind-title');
+  xe.append(p('span', void 0, 'XMIND MIND MAP'), p('strong', void 0, o?.filename || 'XMind'));
+  const be = p('div', 'xmind-actions'),
+    F = p('button', void 0, '-'),
+    le = p('span', void 0, '100%'),
+    K = p('button', void 0, '+'),
+    Y = p('button', void 0, '适合');
+  ([F, K, Y].forEach((t) => {
+    t.type = 'button';
+  }),
+    (F.title = '缩小'),
+    (K.title = '放大'),
+    (Y.title = '适配画布'),
+    be.append(F, le, K, Y),
+    C.append(xe, be));
+  const ce = p('nav', 'xmind-tabs'),
+    ye = p('div', 'xmind-body'),
+    U = p('aside', 'xmind-sidebar'),
+    f = p('main', 'xmind-stage'),
+    q = i.ownerDocument || document,
+    S = q.defaultView || window;
+  ((f.tabIndex = 0),
+    f.setAttribute('role', 'application'),
+    f.setAttribute(
+      'aria-label',
+      'XMind canvas. Drag to pan, pinch on touch screens to zoom, double click to fit, use Ctrl or Command with wheel to zoom.',
+    ),
+    f.setAttribute(
+      'aria-keyshortcuts',
+      'Space ArrowLeft ArrowRight ArrowUp ArrowDown Control+0 Meta+0',
+    ));
+  const A = p('div', 'xmind-zoom-box'),
+    D = p('div', 'xmind-surface'),
+    G = p('div', 'xmind-state', '正在解析 XMind 脑图...');
+  (A.append(D), f.append(A, G), ye.append(U, f), g.append(C, ce, ye), i.replaceChildren(zt(), g));
+  const X = () => ({
+      scale: a,
+      label: `${Math.round(a * 100)}%`,
+      canZoomIn: a < 2.5,
+      canZoomOut: a > 0.25,
+      canReset: a !== 1 || c !== 0 || h !== 0,
+      minScale: 0.25,
+      maxScale: 2.5,
+    }),
+    Ue = () => {
+      const t = b[v];
+      if (!t) return;
+      const d = Math.max(1, f.clientWidth),
+        x = Math.max(1, f.clientHeight),
+        E = t.width * a,
+        M = t.height * a,
+        _ = (O, ie) => {
+          if (ie <= O) {
+            const Xe = (O - ie) / 2,
+              Re = Math.max(kt, O * 0.45);
+            return { min: Xe - Re, max: Xe + Re };
+          }
+          const Te = Math.min(Math.max(je, O * Et), Math.max(je, ie * 0.35));
+          return { min: Te - ie, max: O - Te };
+        },
+        W = _(d, E),
+        ne = _(x, M);
+      ((c = Math.min(W.max, Math.max(W.min, c))), (h = Math.min(ne.max, Math.max(ne.min, h))));
+    },
+    de = (t) => {
+      if (!m) return;
+      const d = m.getPan();
+      ((c = Number.isFinite(d.x) ? d.x : c),
+        (h = Number.isFinite(d.y) ? d.y : h),
+        (a = re(m.getScale())),
+        (le.textContent = `${Math.round(a * 100)}%`),
+        t && (w = !0),
+        n.emit());
+    },
+    J = (t) => {
+      u = !0;
+      try {
+        t();
+      } finally {
+        u = !1;
+      }
+      de(!1);
+    },
+    $ = () => {
+      const t = b[v];
+      (t &&
+        ((A.style.width = `${t.width}px`),
+        (A.style.height = `${t.height}px`),
+        (D.style.width = `${t.width}px`),
+        (D.style.height = `${t.height}px`)),
+        Ue(),
+        (D.style.transform = ''),
+        m
+          ? J(() => {
+              (m?.zoom(a, { animate: !1, force: !0 }), m?.pan(c, h, { animate: !1, force: !0 }));
+            })
+          : (A.style.transform = `translate3d(${c}px, ${h}px, 0) scale(${a})`),
+        (le.textContent = `${Math.round(a * 100)}%`));
+    },
+    qe = (t) => ((w = !0), (a = re(t)), $(), n.emit(), X()),
+    we = (t, d, x) => {
+      const E = re(t);
+      if (E === a) return X();
+      if (((w = !0), m))
+        J(() => {
+          m?.zoomToPoint(E, { clientX: d, clientY: x }, { animate: !1, force: !0 });
+        });
+      else {
+        const M = f.getBoundingClientRect(),
+          _ = d - M.left,
+          W = x - M.top,
+          ne = (_ - c) / a,
+          O = (W - h) / a;
+        ((a = E), (c = _ - ne * a), (h = W - O * a), $(), n.emit());
+      }
+      return X();
+    },
+    Q = (t) => {
+      const d = f.getBoundingClientRect();
+      return we(t, d.left + d.width / 2, d.top + d.height / 2);
+    },
+    R = (t = !1) => {
+      const d = b[v];
+      if (!d) return X();
+      w = t ? !1 : w;
+      const x = Math.max(1, f.clientWidth - B),
+        E = Math.max(1, f.clientHeight - B),
+        M = Math.min(1, x / d.width, E / d.height);
+      return (
+        (a = re(M)),
+        (c = (f.clientWidth - d.width * a) / 2),
+        (h = (f.clientHeight - d.height * a) / 2),
+        $(),
+        n.emit(),
+        X()
+      );
+    },
+    ve = (t) => {
+      ((w = !0),
+        (c = f.clientWidth / 2 - (t.x + t.width / 2) * a),
+        (h = f.clientHeight / 2 - (t.y + t.height / 2) * a),
+        $(),
+        n.emit());
+    },
+    Ge = (t) => {
+      U.replaceChildren();
+      const d = p('div', 'xmind-stats');
+      ([
+        ['节点', t.nodeCount],
+        ['层级', t.maxDepth + 1],
+        ['主题', t.theme],
+        ['模板', t.template],
+      ].forEach(([E, M]) => {
+        const _ = document.createElement('div');
+        (_.append(p('span', void 0, String(E)), p('strong', void 0, String(M))), d.append(_));
+      }),
+        U.append(d));
+      const x = p('div', 'xmind-outline');
+      (ae(t.root, (E) => {
+        const M = p('button', void 0, `${'  '.repeat(E.depth)}${E.title}`);
+        ((M.type = 'button'),
+          (M.style.paddingLeft = `${8 + E.depth * 14}px`),
+          M.addEventListener('click', () => ve(E)),
+          x.append(M));
+      }),
+        U.append(x));
+    },
+    ke = () => {
+      const t = b[v];
+      if (!t) return;
+      (D.replaceChildren(),
+        (w = !1),
+        (D.style.width = `${t.width}px`),
+        (D.style.height = `${t.height}px`));
+      const d = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      (d.classList.add('xmind-edges'),
+        d.setAttribute('width', String(t.width)),
+        d.setAttribute('height', String(t.height)),
+        d.setAttribute('viewBox', `0 0 ${t.width} ${t.height}`),
+        Ye(d, t.root),
+        D.append(d),
+        ae(t.root, (x) => {
+          D.append(Ot(x, ve, () => T));
+        }),
+        Ge(t),
+        $(),
+        requestAnimationFrame(() => R()));
+    },
+    Ee = () => {
+      (ce.replaceChildren(),
+        b.forEach((t, d) => {
+          const x = p('button', d === v ? 'active' : '', t.title);
+          ((x.type = 'button'),
+            (x.title = t.title),
+            x.addEventListener('click', () => {
+              ((v = d), Ee(), ke());
+            }),
+            ce.append(x));
+        }));
+    },
+    ee = () => {
+      ((G.hidden = r === 'ready'),
+        G.classList.toggle('error', r === 'error'),
+        (G.textContent = r === 'error' ? s : '正在解析 XMind 脑图...'));
+    },
+    Je = async () => {
+      ((r = 'loading'), (s = ''), ee());
+      try {
+        const t = await $t(e);
+        if (L) return;
+        if (!Array.isArray(t) || !t.length) throw new Error('XMind 文件中没有可预览的画布');
+        ((b = t.map(Dt)), (v = 0), Ee(), ke(), (r = 'ready'), ee());
+      } catch (t) {
+        if (L) return;
+        (console.error(t), (s = t instanceof Error ? t.message : String(t)), (r = 'error'), ee());
+      }
+    };
+  at(g, {
+    zoomIn: () => Q(a + 0.15),
+    zoomOut: () => Q(a - 0.15),
+    resetZoom: () => R(!0),
+    setZoom: qe,
+    getState: X,
+    subscribe: n.subscribe,
+  });
+  const Se = (t) => {
+      const d = S.Element || Element;
+      return t instanceof d ? t : null;
+    },
+    Me = (t) => {
+      const d = Se(t);
+      if (!d) return !1;
+      if (d.closest('.xmind-toolbar,.xmind-tabs,.xmind-sidebar')) return !0;
+      const x = d.closest('a,button,input,textarea,select,[contenteditable="true"]');
+      return !!(x && !x.closest('.xmind-node'));
+    },
+    Qe = (t) => {
+      const d = Se(t);
+      return !d?.closest('a[href],button,input,textarea,select,[contenteditable="true"]');
+    },
+    me = (t) => {
+      ((se = t), f.classList.toggle('is-space-panning', t));
+    },
+    Ae = () => {
+      try {
+        f.focus({ preventScroll: !0 });
+      } catch {
+        try {
+          f.focus();
+        } catch {}
+      }
+    },
+    et = () => {
+      ((T = !0),
+        S.setTimeout(() => {
+          T = !1;
+        }, Lt));
+    },
+    Le = () => {
+      (Ae(), (k = { x: c, y: h, scale: a }), f.classList.add('is-panning'));
+    },
+    Pe = () => {
+      de(!u);
+    },
+    ze = () => {
+      (de(!u),
+        f.classList.remove('is-panning'),
+        k && Math.abs(c - k.x) + Math.abs(h - k.y) + Math.abs(a - k.scale) * 100 > vt && et(),
+        (k = null));
+    },
+    tt = () => {
+      ((m = rt(A, {
+        canvas: !0,
+        cursor: 'grab',
+        minScale: 0.25,
+        maxScale: 2.5,
+        step: 0.15,
+        animate: !1,
+        origin: '0 0',
+        touchAction: 'none',
+        excludeClass: Ze,
+        handleStartEvent: (t) => {
+          if (r !== 'ready' || (!se && Me(t.target))) {
+            (t.preventDefault(), t.stopPropagation());
+            return;
+          }
+          (Qe(t.target) && t.preventDefault(), t.stopPropagation(), Ae());
+        },
+      })),
+        A.addEventListener('panzoomstart', Le),
+        A.addEventListener('panzoomchange', Pe),
+        A.addEventListener('panzoomend', ze),
+        $());
+    },
+    Ne = (t) => {
+      if (r !== 'ready') return;
+      if ((t.preventDefault(), !t.ctrlKey && !t.metaKey)) {
+        ((w = !0),
+          m
+            ? J(() => {
+                m?.pan(-t.deltaX, -t.deltaY, { animate: !1, force: !0, relative: !0 });
+              })
+            : ((c -= t.deltaX), (h -= t.deltaY), $(), n.emit()));
+        return;
+      }
+      const d = t.deltaY > 0 ? -1 : 1;
+      we(a + d * St, t.clientX, t.clientY);
+    },
+    Ce = (t) => {
+      if (r !== 'ready') return;
+      const d = t.shiftKey ? At : Mt;
+      if (t.key === ' ') {
+        (me(!0), t.preventDefault());
+        return;
+      }
+      if (t.key === 'ArrowLeft') ((w = !0), (c += d));
+      else if (t.key === 'ArrowRight') ((w = !0), (c -= d));
+      else if (t.key === 'ArrowUp') ((w = !0), (h += d));
+      else if (t.key === 'ArrowDown') ((w = !0), (h -= d));
+      else if ((t.key === '0' || t.key === 'Home') && (t.ctrlKey || t.metaKey)) {
+        (R(!0), t.preventDefault());
+        return;
+      } else return;
+      (m
+        ? J(() => {
+            m?.pan(c, h, { animate: !1, force: !0 });
+          })
+        : ($(), n.emit()),
+        t.preventDefault());
+    },
+    te = (t) => {
+      t.key === ' ' && (me(!1), t.preventDefault());
+    },
+    De = (t) => {
+      r !== 'ready' || Me(t.target) || (R(!0), t.preventDefault());
+    },
+    $e = (t) => {
+      t.preventDefault();
+    },
+    Ie = (t) => {
+      f.classList.contains('is-panning') && (t.preventDefault(), t.stopPropagation());
+    },
+    _e = (t) => {
+      f.classList.contains('is-panning') && t.preventDefault();
+    },
+    fe = () => {
+      ((k = null), f.classList.remove('is-panning'), me(!1));
+    },
+    Oe = () => {
+      q.visibilityState === 'hidden' && fe();
+    },
+    nt = () => {
+      if (!(L || r !== 'ready')) {
+        if (w) {
+          ($(), n.emit());
+          return;
+        }
+        R();
+      }
+    },
+    he = () => {
+      (P !== void 0 && S.cancelAnimationFrame(P),
+        (P = S.requestAnimationFrame(() => {
+          ((P = void 0), nt());
+        })));
+    },
+    j = typeof S.ResizeObserver == 'function' ? new S.ResizeObserver(he) : null;
+  return (
+    j?.observe(f),
+    S.addEventListener('resize', he),
+    tt(),
+    f.addEventListener('wheel', Ne, { passive: !1 }),
+    f.addEventListener('keydown', Ce),
+    f.addEventListener('keyup', te),
+    f.addEventListener('dblclick', De),
+    f.addEventListener('dragstart', $e),
+    f.addEventListener('contextmenu', Ie),
+    f.addEventListener('selectstart', _e),
+    S.addEventListener('keyup', te),
+    S.addEventListener('blur', fe),
+    q.addEventListener('visibilitychange', Oe),
+    F.addEventListener('click', () => Q(a - 0.15)),
+    K.addEventListener('click', () => Q(a + 0.15)),
+    Y.addEventListener('click', () => R(!0)),
+    ee(),
+    Je(),
+    {
+      $el: g,
+      unmount() {
+        ((L = !0),
+          P !== void 0 && (S.cancelAnimationFrame(P), (P = void 0)),
+          j?.disconnect(),
+          st(g),
+          A.removeEventListener('panzoomstart', Le),
+          A.removeEventListener('panzoomchange', Pe),
+          A.removeEventListener('panzoomend', ze),
+          m?.destroy(),
+          (m = null),
+          f.removeEventListener('wheel', Ne),
+          f.removeEventListener('keydown', Ce),
+          f.removeEventListener('keyup', te),
+          f.removeEventListener('dblclick', De),
+          f.removeEventListener('dragstart', $e),
+          f.removeEventListener('contextmenu', Ie),
+          f.removeEventListener('selectstart', _e),
+          S.removeEventListener('keyup', te),
+          S.removeEventListener('resize', he),
+          S.removeEventListener('blur', fe),
+          q.removeEventListener('visibilitychange', Oe),
+          i.replaceChildren());
+      },
+    }
+  );
+}
+export { Zt as default };

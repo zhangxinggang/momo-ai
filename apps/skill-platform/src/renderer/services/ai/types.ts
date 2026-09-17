@@ -17,7 +17,6 @@ export type {
   IImageReferenceAttachment,
   IImageTestResult,
   IModelInfo,
-  IMultiModelCompareResult,
   IStreamCallbacks,
   ITokenUsage,
   TChatMessageContent,

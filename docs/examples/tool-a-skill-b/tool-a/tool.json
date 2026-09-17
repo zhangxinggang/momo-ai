@@ -1,0 +1,78 @@
+{
+  "kind": "tool",
+  "id": "tool-a",
+  "name": "a",
+  "description": "查询当前西安的实时天气",
+  "aliases": ["a工具", "工具a", "西安实时天气"],
+  "actions": [
+    {
+      "id": "current-weather",
+      "title": "查询西安实时天气",
+      "description": "从 Open-Meteo 获取西安当前温度、体感温度、湿度、降水、天气代码和风速",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "city": { "type": "string", "const": "西安" },
+          "observedAt": { "type": "string" },
+          "timezone": { "type": "string" },
+          "temperatureC": { "type": "number" },
+          "apparentTemperatureC": { "type": "number" },
+          "humidityPercent": { "type": "number" },
+          "precipitationMm": { "type": "number" },
+          "weatherCode": { "type": "number" },
+          "windSpeedKmh": { "type": "number" },
+          "source": { "type": "string", "const": "Open-Meteo" }
+        },
+        "required": [
+          "city",
+          "observedAt",
+          "timezone",
+          "temperatureC",
+          "apparentTemperatureC",
+          "humidityPercent",
+          "precipitationMm",
+          "weatherCode",
+          "windSpeedKmh",
+          "source"
+        ],
+        "additionalProperties": false
+      },
+      "executor": {
+        "runtime": "node",
+        "entry": "actions/current-weather.mjs",
+        "export": "execute"
+      },
+      "capabilities": [],
+      "effects": ["network", "execute"],
+      "timeoutMs": 10000,
+      "retry": 0,
+      "parallelSafe": true,
+      "idempotent": true,
+      "examples": [
+        {
+          "input": {},
+          "output": {
+            "city": "西安",
+            "observedAt": "2026-09-19T21:30",
+            "timezone": "Asia/Shanghai",
+            "temperatureC": 24.1,
+            "apparentTemperatureC": 24.6,
+            "humidityPercent": 61,
+            "precipitationMm": 0,
+            "weatherCode": 1,
+            "windSpeedKmh": 8.4,
+            "source": "Open-Meteo"
+          }
+        }
+      ]
+    }
+  ],
+  "entry": "index.html",
+  "service": { "runtime": "none" },
+  "permissions": { "mcp": [], "skills": [] }
+}

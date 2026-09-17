@@ -1,4 +1,12 @@
-import{aQ as B,b5 as Z,ad as G}from"./index-C2avURFS.js";import{I as H}from"./pako.esm-D9qDZ2Eh.js";import"./markdown-vendor-DldLOD9R.js";import"./ui-vendor-C-FKu2uc.js";import"./markdown-it-vendor-DL4wSELR.js";import"./icons-B5Lu0sqU.js";const C=new TextDecoder("utf-8"),O=new TextDecoder("latin1"),W=`
+import './icons-B5Lu0sqU.js';
+import { aQ as B, ad as G, b5 as Z } from './index-C2avURFS.js';
+import './markdown-it-vendor-DL4wSELR.js';
+import './markdown-vendor-DldLOD9R.js';
+import { I as H } from './pako.esm-D9qDZ2Eh.js';
+import './ui-vendor-C-FKu2uc.js';
+const C = new TextDecoder('utf-8'),
+  O = new TextDecoder('latin1'),
+  W = `
 .git-bundle-viewer{display:grid;height:100%;min-height:420px;grid-template-rows:auto minmax(0,1fr);--bundle-bg:#f6f8fa;--bundle-surface:#fff;--bundle-border:rgba(31,35,40,.12);--bundle-text:#24292f;--bundle-muted:#57606a;--bundle-accent:#0f766e;--bundle-code:#0d1117;--bundle-code-text:#e6edf3;--bundle-font-size:13px;background:var(--bundle-bg);color:var(--bundle-text);box-sizing:border-box}
 .git-bundle-toolbar{position:sticky;top:0;z-index:2;display:flex;min-height:46px;align-items:center;justify-content:space-between;gap:12px;padding:8px 16px;border-bottom:1px solid var(--bundle-border);background:rgba(255,255,255,.92);backdrop-filter:blur(12px);box-sizing:border-box}
 .git-bundle-toolbar span,.git-bundle-toolbar strong{color:var(--bundle-muted);font-size:12px;font-weight:800;letter-spacing:0}
@@ -24,6 +32,471 @@ import{aQ as B,b5 as Z,ad as G}from"./index-C2avURFS.js";import{I as H}from"./pa
 .file-viewer[data-viewer-theme='dark'] .git-bundle-toolbar{background:rgba(13,17,23,.92)}
 @media (prefers-color-scheme:dark){.file-viewer[data-viewer-theme='system'] .git-bundle-viewer{--bundle-bg:#0d1117;--bundle-surface:#161b22;--bundle-border:rgba(139,148,158,.24);--bundle-text:#e6edf3;--bundle-muted:#8b949e;--bundle-code:#010409;--bundle-code-text:#e6edf3}.file-viewer[data-viewer-theme='system'] .git-bundle-toolbar{background:rgba(13,17,23,.92)}}
 @media (max-width:980px){.git-bundle-layout{grid-template-columns:1fr}.git-bundle-panel{min-height:240px}}
-`,c=(e,i,n,t)=>{const o=e.createElement(i);return n&&(o.className=n),typeof t=="string"&&(o.textContent=t),o},I=e=>{const i=e.createElement("style");return i.textContent=W,i},L=e=>Array.from(e,i=>i.toString(16).padStart(2,"0")).join(""),$=(e,i)=>(e[i]<<24|e[i+1]<<16|e[i+2]<<8|e[i+3])>>>0,T=e=>{const i=e.reduce((o,d)=>o+d.byteLength,0),n=new Uint8Array(i);let t=0;for(const o of e)n.set(o,t),t+=o.byteLength;return n},K=e=>{const i=[];let n=0;for(;n<e.length;){const l=e.indexOf(10,n);if(l<0)throw new Error("Git bundle header is incomplete.");const s=e.subarray(n,l),b=O.decode(s).replace(/\r$/,"");if(n=l+1,b==="")break;i.push(b)}const t=i.shift()||"";if(!t.startsWith("# v")||!t.includes("git bundle"))throw new Error("当前文件不是标准 Git bundle。");const o=[],d=[],r=[];let a="sha1";for(const l of i){if(l.startsWith("@")){o.push(l.slice(1));const u=l.match(/^@object-format=(sha1|sha256)$/);u&&(a=u[1]);continue}if(l.startsWith("-")){const[u="",...h]=l.slice(1).split(/\s+/);r.push({oid:u,subject:h.join(" ")});continue}const[s="",...b]=l.split(/\s+/);s&&d.push({oid:s,name:b.join(" ")||s})}return{signature:t,capabilities:o,refs:d,prerequisites:r,packOffset:n,objectFormat:a}},U=(e,i)=>{let n=i,t=e[n++];const o=t>>4&7;let d=t&15,r=4;for(;t&128;)t=e[n++],d|=(t&127)<<r,r+=7;return{typeCode:o,size:d,offset:n}},q=(e,i)=>{let n=i,t=e[n++]&127;for(;e[n-1]&128;)t+=1,t=(t<<7)+(e[n++]&127);return{value:t,offset:n}},N=(e,i)=>{const n=new H;let t=i;for(;!n.ended&&t<e.length;)if(n.push(e.subarray(t,t+1),!1),t+=1,n.err)throw new Error(n.msg||"Git pack object inflate failed.");if(!n.ended||!(n.result instanceof Uint8Array))throw new Error("Git pack object is incomplete.");return{content:n.result,nextOffset:t}},V=e=>e===1?"commit":e===2?"tree":e===3?"blob":e===4?"tag":e===6?"ofs-delta":e===7?"ref-delta":"unknown",D=async(e,i,n)=>{if(e==="unknown")return;const t=new TextEncoder().encode(`${i} ${n.byteLength}\0`),o=await globalThis.crypto.subtle.digest(e==="sha256"?"SHA-256":"SHA-1",T([t,n]));return L(new Uint8Array(o))},A=(e,i)=>{let n=i,t=0,o=0,d=0;do d=e[n++],t|=(d&127)<<o,o+=7;while(d&128);return{size:t,offset:n}},_=(e,i)=>{const n=A(i,0),t=A(i,n.offset);let o=t.offset;const d=[];if(n.size!==e.byteLength)throw new Error("Git delta base size does not match the resolved object.");for(;o<i.byteLength;){const a=i[o++];if(a&128){let l=0,s=0;a&1&&(l=i[o++]),a&2&&(l|=i[o++]<<8),a&4&&(l|=i[o++]<<16),a&8&&(l|=i[o++]<<24),a&16&&(s=i[o++]),a&32&&(s|=i[o++]<<8),a&64&&(s|=i[o++]<<16),s===0&&(s=65536),d.push(e.subarray(l,l+s))}else if(a)d.push(i.subarray(o,o+a)),o+=a;else throw new Error("Git delta contains a reserved opcode.")}const r=T(d);if(r.byteLength!==t.size)throw new Error("Git delta target size does not match decoded content.");return r},Q=async(e,i)=>{const n=new Map,t=new Map;e.forEach(o=>{n.set(o.offset,o),o.oid&&t.set(o.oid,o)});for(let o=0;o<e.length;o+=1){let d=0;for(const r of e){if(!r.deltaKind||r.oid||!r.content)continue;const a=typeof r.baseOffset=="number"?n.get(r.baseOffset):r.baseOid?t.get(r.baseOid):void 0;!a?.content||a.deltaKind||a.kind==="ofs-delta"||a.kind==="ref-delta"||(r.content=_(a.content,r.content),r.kind=a.kind,r.oid=await D(i,r.kind,r.content),r.oid&&t.set(r.oid,r),d+=1)}if(!d)break}},R=async(e,i)=>{const n=i.packOffset;if(O.decode(e.subarray(n,n+4))!=="PACK")throw new Error("Git bundle header 后未找到 PACK 数据。");const t=$(e,n+4),o=$(e,n+8),d=[];let r=n+12;const a=Math.min(o,2500);for(let l=0;l<a&&r<e.length;l+=1){const s=r,b=U(e,r);r=b.offset;const u=V(b.typeCode);let h,m;if(u==="ofs-delta"){const p=q(e,r);h=s-p.value,r=p.offset}else if(u==="ref-delta"){const p=i.objectFormat==="sha256"?32:20;m=L(e.subarray(r,r+p)),r+=p}const w=N(e,r);r=w.nextOffset;const y={kind:u,size:b.size,offset:s,content:w.content,baseOffset:h,baseOid:m,deltaKind:u==="ofs-delta"||u==="ref-delta"?u:void 0};u!=="ofs-delta"&&u!=="ref-delta"&&u!=="unknown"&&(y.oid=await D(i.objectFormat,u,w.content)),d.push(y)}return await Q(d,i.objectFormat),{version:t,declaredCount:o,objects:d,parsedCount:d.length}},J=(e,i)=>{if(e.kind!=="commit"||!e.oid||!e.content)return null;const n=C.decode(e.content),[t="",...o]=n.split(/\n\n/),d=[];let r,a,l;for(const s of t.split(/\n/))s.startsWith("tree ")?r=s.slice(5):s.startsWith("parent ")?d.push(s.slice(7)):s.startsWith("author ")?a=s.slice(7):s.startsWith("committer ")&&(l=s.slice(10));return{oid:e.oid,tree:r,parents:d,author:a,committer:l,message:o.join(`
+`,
+  c = (e, i, n, t) => {
+    const o = e.createElement(i);
+    return (n && (o.className = n), typeof t == 'string' && (o.textContent = t), o);
+  },
+  I = (e) => {
+    const i = e.createElement('style');
+    return ((i.textContent = W), i);
+  },
+  L = (e) => Array.from(e, (i) => i.toString(16).padStart(2, '0')).join(''),
+  $ = (e, i) => ((e[i] << 24) | (e[i + 1] << 16) | (e[i + 2] << 8) | e[i + 3]) >>> 0,
+  T = (e) => {
+    const i = e.reduce((o, d) => o + d.byteLength, 0),
+      n = new Uint8Array(i);
+    let t = 0;
+    for (const o of e) (n.set(o, t), (t += o.byteLength));
+    return n;
+  },
+  K = (e) => {
+    const i = [];
+    let n = 0;
+    for (; n < e.length; ) {
+      const l = e.indexOf(10, n);
+      if (l < 0) throw new Error('Git bundle header is incomplete.');
+      const s = e.subarray(n, l),
+        b = O.decode(s).replace(/\r$/, '');
+      if (((n = l + 1), b === '')) break;
+      i.push(b);
+    }
+    const t = i.shift() || '';
+    if (!t.startsWith('# v') || !t.includes('git bundle'))
+      throw new Error('当前文件不是标准 Git bundle。');
+    const o = [],
+      d = [],
+      r = [];
+    let a = 'sha1';
+    for (const l of i) {
+      if (l.startsWith('@')) {
+        o.push(l.slice(1));
+        const u = l.match(/^@object-format=(sha1|sha256)$/);
+        u && (a = u[1]);
+        continue;
+      }
+      if (l.startsWith('-')) {
+        const [u = '', ...h] = l.slice(1).split(/\s+/);
+        r.push({ oid: u, subject: h.join(' ') });
+        continue;
+      }
+      const [s = '', ...b] = l.split(/\s+/);
+      s && d.push({ oid: s, name: b.join(' ') || s });
+    }
+    return {
+      signature: t,
+      capabilities: o,
+      refs: d,
+      prerequisites: r,
+      packOffset: n,
+      objectFormat: a,
+    };
+  },
+  U = (e, i) => {
+    let n = i,
+      t = e[n++];
+    const o = (t >> 4) & 7;
+    let d = t & 15,
+      r = 4;
+    for (; t & 128; ) ((t = e[n++]), (d |= (t & 127) << r), (r += 7));
+    return { typeCode: o, size: d, offset: n };
+  },
+  q = (e, i) => {
+    let n = i,
+      t = e[n++] & 127;
+    for (; e[n - 1] & 128; ) ((t += 1), (t = (t << 7) + (e[n++] & 127)));
+    return { value: t, offset: n };
+  },
+  N = (e, i) => {
+    const n = new H();
+    let t = i;
+    for (; !n.ended && t < e.length; )
+      if ((n.push(e.subarray(t, t + 1), !1), (t += 1), n.err))
+        throw new Error(n.msg || 'Git pack object inflate failed.');
+    if (!n.ended || !(n.result instanceof Uint8Array))
+      throw new Error('Git pack object is incomplete.');
+    return { content: n.result, nextOffset: t };
+  },
+  V = (e) =>
+    e === 1
+      ? 'commit'
+      : e === 2
+        ? 'tree'
+        : e === 3
+          ? 'blob'
+          : e === 4
+            ? 'tag'
+            : e === 6
+              ? 'ofs-delta'
+              : e === 7
+                ? 'ref-delta'
+                : 'unknown',
+  D = async (e, i, n) => {
+    if (e === 'unknown') return;
+    const t = new TextEncoder().encode(`${i} ${n.byteLength}\0`),
+      o = await globalThis.crypto.subtle.digest(e === 'sha256' ? 'SHA-256' : 'SHA-1', T([t, n]));
+    return L(new Uint8Array(o));
+  },
+  A = (e, i) => {
+    let n = i,
+      t = 0,
+      o = 0,
+      d = 0;
+    do ((d = e[n++]), (t |= (d & 127) << o), (o += 7));
+    while (d & 128);
+    return { size: t, offset: n };
+  },
+  _ = (e, i) => {
+    const n = A(i, 0),
+      t = A(i, n.offset);
+    let o = t.offset;
+    const d = [];
+    if (n.size !== e.byteLength)
+      throw new Error('Git delta base size does not match the resolved object.');
+    for (; o < i.byteLength; ) {
+      const a = i[o++];
+      if (a & 128) {
+        let l = 0,
+          s = 0;
+        (a & 1 && (l = i[o++]),
+          a & 2 && (l |= i[o++] << 8),
+          a & 4 && (l |= i[o++] << 16),
+          a & 8 && (l |= i[o++] << 24),
+          a & 16 && (s = i[o++]),
+          a & 32 && (s |= i[o++] << 8),
+          a & 64 && (s |= i[o++] << 16),
+          s === 0 && (s = 65536),
+          d.push(e.subarray(l, l + s)));
+      } else if (a) (d.push(i.subarray(o, o + a)), (o += a));
+      else throw new Error('Git delta contains a reserved opcode.');
+    }
+    const r = T(d);
+    if (r.byteLength !== t.size)
+      throw new Error('Git delta target size does not match decoded content.');
+    return r;
+  },
+  Q = async (e, i) => {
+    const n = new Map(),
+      t = new Map();
+    e.forEach((o) => {
+      (n.set(o.offset, o), o.oid && t.set(o.oid, o));
+    });
+    for (let o = 0; o < e.length; o += 1) {
+      let d = 0;
+      for (const r of e) {
+        if (!r.deltaKind || r.oid || !r.content) continue;
+        const a =
+          typeof r.baseOffset == 'number'
+            ? n.get(r.baseOffset)
+            : r.baseOid
+              ? t.get(r.baseOid)
+              : void 0;
+        !a?.content ||
+          a.deltaKind ||
+          a.kind === 'ofs-delta' ||
+          a.kind === 'ref-delta' ||
+          ((r.content = _(a.content, r.content)),
+          (r.kind = a.kind),
+          (r.oid = await D(i, r.kind, r.content)),
+          r.oid && t.set(r.oid, r),
+          (d += 1));
+      }
+      if (!d) break;
+    }
+  },
+  R = async (e, i) => {
+    const n = i.packOffset;
+    if (O.decode(e.subarray(n, n + 4)) !== 'PACK')
+      throw new Error('Git bundle header 后未找到 PACK 数据。');
+    const t = $(e, n + 4),
+      o = $(e, n + 8),
+      d = [];
+    let r = n + 12;
+    const a = Math.min(o, 2500);
+    for (let l = 0; l < a && r < e.length; l += 1) {
+      const s = r,
+        b = U(e, r);
+      r = b.offset;
+      const u = V(b.typeCode);
+      let h, m;
+      if (u === 'ofs-delta') {
+        const p = q(e, r);
+        ((h = s - p.value), (r = p.offset));
+      } else if (u === 'ref-delta') {
+        const p = i.objectFormat === 'sha256' ? 32 : 20;
+        ((m = L(e.subarray(r, r + p))), (r += p));
+      }
+      const w = N(e, r);
+      r = w.nextOffset;
+      const y = {
+        kind: u,
+        size: b.size,
+        offset: s,
+        content: w.content,
+        baseOffset: h,
+        baseOid: m,
+        deltaKind: u === 'ofs-delta' || u === 'ref-delta' ? u : void 0,
+      };
+      (u !== 'ofs-delta' &&
+        u !== 'ref-delta' &&
+        u !== 'unknown' &&
+        (y.oid = await D(i.objectFormat, u, w.content)),
+        d.push(y));
+    }
+    return (
+      await Q(d, i.objectFormat),
+      { version: t, declaredCount: o, objects: d, parsedCount: d.length }
+    );
+  },
+  J = (e, i) => {
+    if (e.kind !== 'commit' || !e.oid || !e.content) return null;
+    const n = C.decode(e.content),
+      [t = '', ...o] = n.split(/\n\n/),
+      d = [];
+    let r, a, l;
+    for (const s of t.split(/\n/))
+      s.startsWith('tree ')
+        ? (r = s.slice(5))
+        : s.startsWith('parent ')
+          ? d.push(s.slice(7))
+          : s.startsWith('author ')
+            ? (a = s.slice(7))
+            : s.startsWith('committer ') && (l = s.slice(10));
+    return {
+      oid: e.oid,
+      tree: r,
+      parents: d,
+      author: a,
+      committer: l,
+      message:
+        o
+          .join(
+            `
 
-`).trim()||"(no message)",refs:i.get(e.oid)||[]}},X=e=>{const i=[];let n=0;for(;n<e.byteLength;){const t=e.indexOf(32,n);if(t<0)break;const o=e.indexOf(0,t+1);if(o<0||o+21>e.byteLength)break;i.push({mode:O.decode(e.subarray(n,t)),name:C.decode(e.subarray(t+1,o)),oid:L(e.subarray(o+1,o+21))}),n=o+21}return i},Y=e=>{const i=e.subarray(0,Math.min(e.byteLength,4096));if(!i.length)return!0;let n=0;for(const t of i)(t===9||t===10||t===13||t>=32&&t<127||t>=128)&&(n+=1);return n/i.length>.86},ee=e=>Y(e)?C.decode(e.subarray(0,Math.min(e.byteLength,12e3))):`[binary blob: ${e.byteLength} bytes]`,M=(e,i,n="",t=0)=>{if(!i||t>24)return{treeEntries:[],files:[]};const o=e.get(i);if(o?.kind!=="tree"||!o.content)return{treeEntries:[],files:[]};const d=[],r=[];for(const a of X(o.content)){const l=n?`${n}/${a.name}`:a.name;d.push({path:l,entry:a});const s=e.get(a.oid);if(s?.kind==="tree"){const b=M(e,a.oid,l,t+1);d.push(...b.treeEntries),r.push(...b.files)}else s?.kind==="blob"&&s.content&&r.push({path:l,oid:a.oid,size:s.content.byteLength,preview:ee(s.content)})}return{treeEntries:d,files:r}},te=async e=>{const i=new Uint8Array(e),n=K(i),t=await R(i,n),o=new Map(t.objects.flatMap(s=>s.oid?[[s.oid,s]]:[])),d=new Map;n.refs.forEach(s=>{d.set(s.oid,[...d.get(s.oid)||[],s.name])});const r=t.objects.map(s=>J(s,d)).filter(s=>!!s),a=n.refs.map(s=>d.has(s.oid)?r.find(b=>b.oid===s.oid):null).find(Boolean)||r[0],l=M(o,a?.tree);return{header:n,objects:t.objects,commits:r,files:l.files,treeEntries:l.treeEntries,deltaCount:t.objects.filter(s=>s.deltaKind).length}},F=e=>e?e.slice(0,12):"-",P=e=>e.message.split(/\r?\n/)[0]||"(no message)",ne=e=>Math.min(2.2,Math.max(.65,Number(e.toFixed(2)))),oe=(e,i,n)=>{const t=c(e,"div","git-bundle-meta"),o=new Map;n.objects.forEach(r=>{o.set(r.kind,(o.get(r.kind)||0)+1)}),[["Bundle",n.header.signature],["Refs",String(n.header.refs.length)],["Commits",String(n.commits.length)],["Objects",String(n.objects.length)],["Deltas",String(n.deltaCount)],["Object format",n.header.objectFormat],["Object types",Array.from(o).map(([r,a])=>`${r}:${a}`).join(" · ")||"-"]].forEach(([r,a])=>{const l=c(e,"div");l.append(c(e,"span",void 0,r),c(e,"strong",void 0,a)),t.appendChild(l)}),i.appendChild(t),n.deltaCount>0&&i.appendChild(c(e,"div","git-bundle-notice","当前 bundle 包含 delta 压缩对象。预览器已在浏览器端解析常规 OFS_DELTA / REF_DELTA；若仍有缺失文件，通常是包体过大、对象过多或依赖外部 prerequisite。"))};async function ce(e,i,n="bundle"){const t=i.ownerDocument||document,o=await te(e);let d=1;const r=G(),a=c(t,"div","git-bundle-viewer");a.dataset.viewerZoomProvider="git-bundle";const l=c(t,"div","git-bundle-toolbar");l.append(c(t,"span",void 0,n.toUpperCase()),c(t,"strong",void 0,`${o.commits.length} commits · ${o.files.length} files`));const s=c(t,"div","git-bundle-layout"),b=c(t,"section","git-bundle-panel");b.appendChild(c(t,"h3",void 0,"历史记录")),oe(t,b,o);const u=c(t,"ul","git-bundle-list");b.appendChild(u);const h=c(t,"section","git-bundle-panel");h.appendChild(c(t,"h3",void 0,"文件树"));const m=c(t,"div","git-bundle-tree");h.appendChild(m);const w=c(t,"section","git-bundle-panel git-bundle-file"),y=c(t,"div","git-bundle-file-header","选择文件查看内容"),p=c(t,"pre","git-bundle-code","");w.append(y,p),s.append(b,h,w),a.append(l,s),i.replaceChildren(I(t),a);const j=f=>{if(m.replaceChildren(),!f.length){m.appendChild(c(t,"div","git-bundle-notice","当前 bundle 的 tree/blob 可能被 delta 压缩，暂未解析到可展开文件。")),y.textContent="未解析到文件",p.textContent="";return}f.forEach((v,g)=>{const x=c(t,"button");x.type="button",x.textContent=`${v.path} · ${v.size} B`,x.addEventListener("click",()=>{m.querySelectorAll("button").forEach(E=>E.classList.remove("active")),x.classList.add("active"),y.textContent=`${v.path} · ${F(v.oid)}`,p.textContent=v.preview}),m.appendChild(x),g===0&&x.click()})};o.commits.forEach((f,v)=>{const g=c(t,"button");g.type="button",g.innerHTML="",g.append(t.createTextNode(f.refs[0]||P(f)),c(t,"small",void 0,`${F(f.oid)} · ${P(f)}`)),g.addEventListener("click",()=>{u.querySelectorAll("button").forEach(z=>z.classList.remove("active")),g.classList.add("active");const x=new Map(o.objects.flatMap(z=>z.oid?[[z.oid,z]]:[])),E=M(x,f.tree);j(E.files)}),u.appendChild(g),v===0&&g.click()}),o.commits.length||(u.appendChild(c(t,"li","git-bundle-notice","当前 bundle 未解析到 commit 对象，仅展示 refs 和 pack 摘要。")),j(o.files));const S=()=>({scale:d,label:`${Math.round(d*100)}%`,canZoomIn:d<2.2,canZoomOut:d>.65,canReset:d!==1,minScale:.65,maxScale:2.2}),k=f=>(d=ne(f),a.style.setProperty("--bundle-font-size",`${13*d}px`),r.emit(),S());return k(1),B(a,{zoomIn:()=>k(d+.1),zoomOut:()=>k(d-.1),resetZoom:()=>k(1),setZoom:k,getState:S,subscribe:r.subscribe}),{$el:a,unmount(){Z(a),i.replaceChildren()}}}export{ce as default};
+`,
+          )
+          .trim() || '(no message)',
+      refs: i.get(e.oid) || [],
+    };
+  },
+  X = (e) => {
+    const i = [];
+    let n = 0;
+    for (; n < e.byteLength; ) {
+      const t = e.indexOf(32, n);
+      if (t < 0) break;
+      const o = e.indexOf(0, t + 1);
+      if (o < 0 || o + 21 > e.byteLength) break;
+      (i.push({
+        mode: O.decode(e.subarray(n, t)),
+        name: C.decode(e.subarray(t + 1, o)),
+        oid: L(e.subarray(o + 1, o + 21)),
+      }),
+        (n = o + 21));
+    }
+    return i;
+  },
+  Y = (e) => {
+    const i = e.subarray(0, Math.min(e.byteLength, 4096));
+    if (!i.length) return !0;
+    let n = 0;
+    for (const t of i)
+      (t === 9 || t === 10 || t === 13 || (t >= 32 && t < 127) || t >= 128) && (n += 1);
+    return n / i.length > 0.86;
+  },
+  ee = (e) =>
+    Y(e)
+      ? C.decode(e.subarray(0, Math.min(e.byteLength, 12e3)))
+      : `[binary blob: ${e.byteLength} bytes]`,
+  M = (e, i, n = '', t = 0) => {
+    if (!i || t > 24) return { treeEntries: [], files: [] };
+    const o = e.get(i);
+    if (o?.kind !== 'tree' || !o.content) return { treeEntries: [], files: [] };
+    const d = [],
+      r = [];
+    for (const a of X(o.content)) {
+      const l = n ? `${n}/${a.name}` : a.name;
+      d.push({ path: l, entry: a });
+      const s = e.get(a.oid);
+      if (s?.kind === 'tree') {
+        const b = M(e, a.oid, l, t + 1);
+        (d.push(...b.treeEntries), r.push(...b.files));
+      } else
+        s?.kind === 'blob' &&
+          s.content &&
+          r.push({ path: l, oid: a.oid, size: s.content.byteLength, preview: ee(s.content) });
+    }
+    return { treeEntries: d, files: r };
+  },
+  te = async (e) => {
+    const i = new Uint8Array(e),
+      n = K(i),
+      t = await R(i, n),
+      o = new Map(t.objects.flatMap((s) => (s.oid ? [[s.oid, s]] : []))),
+      d = new Map();
+    n.refs.forEach((s) => {
+      d.set(s.oid, [...(d.get(s.oid) || []), s.name]);
+    });
+    const r = t.objects.map((s) => J(s, d)).filter((s) => !!s),
+      a =
+        n.refs.map((s) => (d.has(s.oid) ? r.find((b) => b.oid === s.oid) : null)).find(Boolean) ||
+        r[0],
+      l = M(o, a?.tree);
+    return {
+      header: n,
+      objects: t.objects,
+      commits: r,
+      files: l.files,
+      treeEntries: l.treeEntries,
+      deltaCount: t.objects.filter((s) => s.deltaKind).length,
+    };
+  },
+  F = (e) => (e ? e.slice(0, 12) : '-'),
+  P = (e) => e.message.split(/\r?\n/)[0] || '(no message)',
+  ne = (e) => Math.min(2.2, Math.max(0.65, Number(e.toFixed(2)))),
+  oe = (e, i, n) => {
+    const t = c(e, 'div', 'git-bundle-meta'),
+      o = new Map();
+    (n.objects.forEach((r) => {
+      o.set(r.kind, (o.get(r.kind) || 0) + 1);
+    }),
+      [
+        ['Bundle', n.header.signature],
+        ['Refs', String(n.header.refs.length)],
+        ['Commits', String(n.commits.length)],
+        ['Objects', String(n.objects.length)],
+        ['Deltas', String(n.deltaCount)],
+        ['Object format', n.header.objectFormat],
+        [
+          'Object types',
+          Array.from(o)
+            .map(([r, a]) => `${r}:${a}`)
+            .join(' · ') || '-',
+        ],
+      ].forEach(([r, a]) => {
+        const l = c(e, 'div');
+        (l.append(c(e, 'span', void 0, r), c(e, 'strong', void 0, a)), t.appendChild(l));
+      }),
+      i.appendChild(t),
+      n.deltaCount > 0 &&
+        i.appendChild(
+          c(
+            e,
+            'div',
+            'git-bundle-notice',
+            '当前 bundle 包含 delta 压缩对象。预览器已在浏览器端解析常规 OFS_DELTA / REF_DELTA；若仍有缺失文件，通常是包体过大、对象过多或依赖外部 prerequisite。',
+          ),
+        ));
+  };
+async function ce(e, i, n = 'bundle') {
+  const t = i.ownerDocument || document,
+    o = await te(e);
+  let d = 1;
+  const r = G(),
+    a = c(t, 'div', 'git-bundle-viewer');
+  a.dataset.viewerZoomProvider = 'git-bundle';
+  const l = c(t, 'div', 'git-bundle-toolbar');
+  l.append(
+    c(t, 'span', void 0, n.toUpperCase()),
+    c(t, 'strong', void 0, `${o.commits.length} commits · ${o.files.length} files`),
+  );
+  const s = c(t, 'div', 'git-bundle-layout'),
+    b = c(t, 'section', 'git-bundle-panel');
+  (b.appendChild(c(t, 'h3', void 0, '历史记录')), oe(t, b, o));
+  const u = c(t, 'ul', 'git-bundle-list');
+  b.appendChild(u);
+  const h = c(t, 'section', 'git-bundle-panel');
+  h.appendChild(c(t, 'h3', void 0, '文件树'));
+  const m = c(t, 'div', 'git-bundle-tree');
+  h.appendChild(m);
+  const w = c(t, 'section', 'git-bundle-panel git-bundle-file'),
+    y = c(t, 'div', 'git-bundle-file-header', '选择文件查看内容'),
+    p = c(t, 'pre', 'git-bundle-code', '');
+  (w.append(y, p), s.append(b, h, w), a.append(l, s), i.replaceChildren(I(t), a));
+  const j = (f) => {
+    if ((m.replaceChildren(), !f.length)) {
+      (m.appendChild(
+        c(
+          t,
+          'div',
+          'git-bundle-notice',
+          '当前 bundle 的 tree/blob 可能被 delta 压缩，暂未解析到可展开文件。',
+        ),
+      ),
+        (y.textContent = '未解析到文件'),
+        (p.textContent = ''));
+      return;
+    }
+    f.forEach((v, g) => {
+      const x = c(t, 'button');
+      ((x.type = 'button'),
+        (x.textContent = `${v.path} · ${v.size} B`),
+        x.addEventListener('click', () => {
+          (m.querySelectorAll('button').forEach((E) => E.classList.remove('active')),
+            x.classList.add('active'),
+            (y.textContent = `${v.path} · ${F(v.oid)}`),
+            (p.textContent = v.preview));
+        }),
+        m.appendChild(x),
+        g === 0 && x.click());
+    });
+  };
+  (o.commits.forEach((f, v) => {
+    const g = c(t, 'button');
+    ((g.type = 'button'),
+      (g.innerHTML = ''),
+      g.append(t.createTextNode(f.refs[0] || P(f)), c(t, 'small', void 0, `${F(f.oid)} · ${P(f)}`)),
+      g.addEventListener('click', () => {
+        (u.querySelectorAll('button').forEach((z) => z.classList.remove('active')),
+          g.classList.add('active'));
+        const x = new Map(o.objects.flatMap((z) => (z.oid ? [[z.oid, z]] : []))),
+          E = M(x, f.tree);
+        j(E.files);
+      }),
+      u.appendChild(g),
+      v === 0 && g.click());
+  }),
+    o.commits.length ||
+      (u.appendChild(
+        c(
+          t,
+          'li',
+          'git-bundle-notice',
+          '当前 bundle 未解析到 commit 对象，仅展示 refs 和 pack 摘要。',
+        ),
+      ),
+      j(o.files)));
+  const S = () => ({
+      scale: d,
+      label: `${Math.round(d * 100)}%`,
+      canZoomIn: d < 2.2,
+      canZoomOut: d > 0.65,
+      canReset: d !== 1,
+      minScale: 0.65,
+      maxScale: 2.2,
+    }),
+    k = (f) => (
+      (d = ne(f)),
+      a.style.setProperty('--bundle-font-size', `${13 * d}px`),
+      r.emit(),
+      S()
+    );
+  return (
+    k(1),
+    B(a, {
+      zoomIn: () => k(d + 0.1),
+      zoomOut: () => k(d - 0.1),
+      resetZoom: () => k(1),
+      setZoom: k,
+      getState: S,
+      subscribe: r.subscribe,
+    }),
+    {
+      $el: a,
+      unmount() {
+        (Z(a), i.replaceChildren());
+      },
+    }
+  );
+}
+export { ce as default };

@@ -1,7 +1,4476 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./index-CJ2lZtZM.js","./ui-vendor-C-FKu2uc.js","./markdown-vendor-DldLOD9R.js","./markdown-it-vendor-DL4wSELR.js","./markdown-vendor-CmuYMs8x.css"])))=>i.map(i=>d[i]);
-import{_ as ir}from"./markdown-vendor-DldLOD9R.js";import{l as Hn}from"./assets-Cqo46k_X.js";import{aQ as sr,b5 as rr,ad as or}from"./index-C2avURFS.js";import"./ui-vendor-C-FKu2uc.js";import"./markdown-it-vendor-DL4wSELR.js";import"./icons-B5Lu0sqU.js";function S(e,t,n,i){return i===void 0?{level:e,code:t,message:n}:{level:e,code:t,message:n,source:i}}function De(e){return(e??[]).filter(t=>t.level!=="info")}function ar(){return globalThis.DecompressionStream}class ns{async inflateRaw(t){const n=ar();if(!n)throw new Error("This browser does not expose DecompressionStream. Provide a custom InflateProvider, or pre-bundle a WASM/JS inflater.");try{return await Yn(t,"deflate-raw",n)}catch(i){try{return await Yn(t,"deflate",n)}catch{throw i instanceof Error?i:new Error(String(i))}}}}async function Yn(e,t,n){const s=new Blob([e]).stream().pipeThrough(new n(t)),o=await new Response(s).arrayBuffer();return new Uint8Array(o)}const cr=new TextDecoder("utf-8");new TextDecoder("ascii");function tt(e){return cr.decode(e)}function B(e){const t=[],n=e.replace(/\\/g,"/");for(const i of n.split("/"))!i||i==="."||(i===".."?t.pop():t.push(i));return t.join("/")}function hr(e){const t=B(e),n=t.lastIndexOf("/");return n<0?"":t.slice(0,n)}function Lt(e,t){if(!t)return B(e);if(t.startsWith("/"))return B(t.slice(1));const n=hr(e);return B((n?n+"/":"")+t)}function Be(e){const t=e.indexOf(":");return t>=0?e.slice(t+1):e}function k(e){return Be(e.localName||e.nodeName)}function v(e,t){return e.getAttribute(t)??e.getAttributeNS(null,t)??void 0}function U(e){return Array.from(e.childNodes).filter(t=>t.nodeType===1)}function G(e,t="document.xml"){const n=Vn(e);if(n)return n;const i=lr(e);if(i!==e){const s=Vn(i);if(s)return s}try{return fr(i)}catch(s){throw new Error(`XML parse error in ${t}: ${String(s)}`)}}function Vn(e){if(!(typeof DOMParser>"u"))try{const t=new DOMParser().parseFromString(e,"application/xml");return t.getElementsByTagName("parsererror")[0]?void 0:t}catch{return}}function lr(e){let t=e;return t=t.replace(/\s+xmlns:(?:schemaLocation|noNamespaceSchemaLocation)\s*=\s*("[^"]*"|'[^']*')/g,""),/\s+xsi:schemaLocation\s*=/.test(t)&&!/\s+xmlns:xsi\s*=/.test(t)&&(t=t.replace(/<([A-Za-z_][\w.:-]*)(?=\s|>|\/)/,'<$1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"')),t}class ht{constructor(t,n){this.nodeType=1,this.childNodes=[],this.nodeName=t,this.localName=Be(t),this.attributes=n}get textContent(){return this.childNodes.map(t=>t.textContent??"").join("")}get children(){return this.childNodes.filter(t=>t instanceof ht)}getAttribute(t){return this.attributes.find(n=>n.name===t||n.nodeName===t)?.value??null}getAttributeNS(t,n){return this.attributes.find(i=>i.localName===n)?.value??null}getElementsByTagName(t){const n=[],i=s=>{(t==="*"||s.nodeName===t||s.localName===t)&&n.push(s);for(const o of s.childNodes)o instanceof ht&&i(o)};for(const s of this.childNodes)s instanceof ht&&i(s);return n}}class dr{constructor(t){this.textContent=t,this.nodeType=3}}class ur{constructor(){this.nodeType=9,this.childNodes=[]}get textContent(){return this.childNodes.map(t=>t.textContent??"").join("")}get children(){return this.childNodes.filter(t=>t instanceof ht)}get documentElement(){return this.children[0]}getElementsByTagName(t){const n=[],i=s=>{(t==="*"||s.nodeName===t||s.localName===t)&&n.push(s);for(const o of s.childNodes)o instanceof ht&&i(o)};for(const s of this.childNodes)s instanceof ht&&i(s);return n}}function fr(e){const t=new ur,n=[t];let i=0;for(;i<e.length;){const s=e.indexOf("<",i);if(s<0){ze(n[n.length-1],e.slice(i));break}if(s>i&&ze(n[n.length-1],e.slice(i,s)),e.startsWith("<!--",s)){const f=e.indexOf("-->",s+4);if(f<0)throw new Error("Unclosed XML comment.");i=f+3;continue}if(e.startsWith("<![CDATA[",s)){const f=e.indexOf("]]>",s+9);if(f<0)throw new Error("Unclosed XML CDATA section.");ze(n[n.length-1],e.slice(s+9,f)),i=f+3;continue}if(e.startsWith("<?",s)){const f=e.indexOf("?>",s+2);if(f<0)throw new Error("Unclosed XML processing instruction.");i=f+2;continue}if(e.startsWith("<!",s)){const f=e.indexOf(">",s+2);if(f<0)throw new Error("Unclosed XML declaration.");i=f+1;continue}const o=mr(e,s+1);if(o<0)throw new Error("Unclosed XML tag.");let r=e.slice(s+1,o).trim();if(i=o+1,!r)continue;if(r[0]==="/"){const f=r.slice(1).trim().split(/\s+/)[0]??"";let m=n.pop();for(;m&&m instanceof ht&&m.nodeName!==f&&m.localName!==Be(f)&&n.length>0;)m=n.pop();n.length===0&&n.push(t);continue}const a=r.endsWith("/");a&&(r=r.slice(0,-1).trim());const c=r.search(/\s/),h=c<0?r:r.slice(0,c),l=c<0?"":r.slice(c+1),d=new ht(h,pr(l)),u=n[n.length-1];d.parentNode=u,u.childNodes.push(d),a||n.push(d)}return t}function ze(e,t){if(!t)return;const n=is(t);n.trim().length!==0&&e.childNodes.push(new dr(n))}function mr(e,t){let n="";for(let i=t;i<e.length;i++){const s=e[i];if(n)s===n&&(n="");else if(s==='"'||s==="'")n=s;else if(s===">")return i}return-1}function pr(e){const t=[],n=/([^\s=]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;let i;for(;i=n.exec(e);){const s=i[1],o=is(i[2]??i[3]??"");t.push({name:s,nodeName:s,localName:Be(s),value:o})}return t}function is(e){return e.replace(/&(#x[0-9a-fA-F]+|#\d+|amp|lt|gt|quot|apos);/g,(t,n)=>n==="amp"?"&":n==="lt"?"<":n==="gt"?">":n==="quot"?'"':n==="apos"?"'":n.startsWith("#x")?String.fromCodePoint(Number.parseInt(n.slice(2),16)):n.startsWith("#")?String.fromCodePoint(Number.parseInt(n.slice(1),10)):t)}function ss(e,t=2048){const n=Math.min(t,e.length);if(n===0)return!0;let i=0,s=0;for(let o=0;o<n;o++){const r=e[o];if(r===0)return!1;r===9||r===10||r===13||r>=32&&r<=126||r>=160?i++:s++}return i/n>.85&&s<20}function rs(e){const t=e.split(/[?#]/)[0]??e,n=t.lastIndexOf("/"),i=t.lastIndexOf(".");return i>n?t.slice(i+1).toLowerCase():""}function Mt(e){switch(rs(e)){case"png":return"image/png";case"jpg":case"jpeg":return"image/jpeg";case"gif":return"image/gif";case"bmp":return"image/bmp";case"tif":case"tiff":return"image/tiff";case"w2d":return"application/x-dwf-w2d";case"hsf":return"model/vnd.hsf";case"fpage":return"application/vnd.ms-package.xps-fixeddocumentsequence+xml";case"fdseq":return"application/vnd.ms-package.xps-fixeddocumentsequence+xml";case"fdoc":return"application/vnd.ms-package.xps-fixeddocument+xml";default:return}}async function mn(e,t){const n=new Blob([e],{type:t});return"createImageBitmap"in globalThis?await createImageBitmap(n):await new Promise((i,s)=>{const o=URL.createObjectURL(n),r=new Image;r.onload=()=>{URL.revokeObjectURL(o),i(r)},r.onerror=()=>{URL.revokeObjectURL(o),s(new Error("Failed to decode image"))},r.src=o})}function H(e){const t=e.match(/[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?/g);return t?t.map(Number).filter(Number.isFinite):[]}const gr=101010256,Ue=33639248,os=67324752;class Nn{constructor(t,n,i,s){this.entryMap=new Map,this.cache=new Map,this.bytes=t,this.entries=n,this.archiveBase=i,this.inflater=s??new ns;for(const o of n)this.entryMap.set(B(o.name),o)}static open(t,n){const i=new DataView(t.buffer,t.byteOffset,t.byteLength),s=as(i);if(s<0)throw new Error("ZIP end-of-central-directory record was not found. This is not a DWF 6+/DWFx ZIP package.");const o=K(i,s+4),r=K(i,s+6);if(o!==0||r!==0)throw new Error("Multi-disk ZIP archives are not supported.");const a=K(i,s+10),c=J(i,s+12),h=J(i,s+16);let l=0,d=h;if(J(i,d)!==Ue){const m=Math.max(0,s-c-1048576);let p=-1;for(let g=s-c;g>=m;g--)if(g>=0&&J(i,g)===Ue){p=g;break}if(p<0)throw new Error("ZIP central directory could not be located.");d=p,l=d-h}const u=[];let f=d;for(let m=0;m<a;m++){if(J(i,f)!==Ue)throw new Error(`Bad central directory signature at ${f}.`);const p=K(i,f+8),g=K(i,f+10),b=K(i,f+12),w=K(i,f+14),y=J(i,f+16),C=J(i,f+20),M=J(i,f+24),A=K(i,f+28),N=K(i,f+30),F=K(i,f+32),$=J(i,f+42),At=t.subarray(f+46,f+46+A),Vt=t.subarray(f+46+A+N,f+46+A+N+F),st=B(Gn(At,p)),rt=Gn(Vt,p);st.endsWith("/")||u.push({name:st,compressedSize:C,uncompressedSize:M,compressionMethod:g,crc32:y,localHeaderOffset:$,centralHeaderOffset:f-l,flags:p,lastModTime:b,lastModDate:w,comment:rt}),f+=46+A+N+F}return new Nn(t,u,l,n)}has(t){return this.entryMap.has(B(t))}get(t){return this.entryMap.get(B(t))}find(t){return this.entries.find(t)}findAll(t){return this.entries.filter(t)}async read(t){const n=typeof t=="string"?this.get(t):t;if(!n)throw new Error(`ZIP entry not found: ${t}`);const i=this.cache.get(n.name);if(i)return i;const s=new DataView(this.bytes.buffer,this.bytes.byteOffset,this.bytes.byteLength),o=this.archiveBase+n.localHeaderOffset;if(J(s,o)!==os)throw new Error(`Bad local header signature for ${n.name}.`);const r=K(s,o+26),a=K(s,o+28),c=o+30+r+a,h=this.bytes.subarray(c,c+n.compressedSize);let l;if(n.compressionMethod===0)l=h.slice();else if(n.compressionMethod===8)l=await this.inflater.inflateRaw(h);else throw new Error(`Unsupported ZIP compression method ${n.compressionMethod} for ${n.name}.`);if(n.uncompressedSize!==0&&l.byteLength!==n.uncompressedSize&&n.uncompressedSize<4294967295)throw new Error(`ZIP entry size mismatch for ${n.name}: expected ${n.uncompressedSize}, got ${l.byteLength}.`);return this.cache.set(n.name,l),l}}function wr(e){if(e.byteLength<22)return!1;const t=new DataView(e.buffer,e.byteOffset,e.byteLength);return J(t,0)===os?!0:as(t)>=0}function as(e){const t=Math.max(0,e.byteLength-65535-22);for(let n=e.byteLength-22;n>=t;n--)if(J(e,n)===gr)return n;return-1}function Gn(e,t){return(t&2048)!==0?tt(e):Array.from(e,n=>String.fromCharCode(n)).join("")}function K(e,t){return e.getUint16(t,!0)}function J(e,t){return e.getUint32(t,!0)}async function br(e){const t=new Map,n=new Map,i=[];if(e.has("[Content_Types].xml")){const r=G(tt(await e.read("[Content_Types].xml")),"[Content_Types].xml");for(const a of Array.from(r.documentElement.children)){const c=k(a);if(c==="Default"){const h=a.getAttribute("Extension")?.toLowerCase(),l=a.getAttribute("ContentType");h&&l&&n.set(h,l)}else if(c==="Override"){const h=B((a.getAttribute("PartName")??"").replace(/^\//,"")),l=a.getAttribute("ContentType");h&&l&&(t.set(h,l),i.push({partName:h,contentType:l}))}}}const s=new Map;return{zip:e,contentTypes:t,defaults:n,overrides:i,relationships:s,resources:e.entries.map(r=>({path:r.name,mediaType:jn(t,n,r.name),size:r.uncompressedSize})),readText:async r=>tt(await e.read(B(r))),readBytes:async r=>e.read(B(r)),getContentType:r=>jn(t,n,r),getRelationships:async(r="")=>{const a=B(r),c=s.get(a);if(c)return c;const h=yr(a);if(!e.has(h))return s.set(a,[]),[];const l=tt(await e.read(h)),d=G(l,h),u=[];for(const f of Array.from(d.documentElement.children)){if(k(f)!=="Relationship")continue;const m=f.getAttribute("Id")??"",p=f.getAttribute("Type")??"",g=f.getAttribute("Target")??"",b=f.getAttribute("TargetMode")??void 0;!m||!g||u.push({id:m,type:p,target:g,targetMode:b,source:a,resolvedTarget:b==="External"?g:Lt(a,g)})}return s.set(a,u),u}}}function yr(e){const t=B(e);if(!t)return"_rels/.rels";const n=t.lastIndexOf("/");return n<0?`_rels/${t}.rels`:`${t.slice(0,n)}/_rels/${t.slice(n+1)}.rels`}function jn(e,t,n){const i=B(n),s=e.get(i);if(s)return s;const o=i.lastIndexOf(".");if(o>=0)return t.get(i.slice(o+1).toLowerCase())}function Me(e,t,n,i){return{...e,pages:t.map(s=>({id:s.id,name:s.name,kind:s.kind,width:s.width,height:s.height,sourcePath:s.sourcePath,diagnostics:s.diagnostics})),pageData:t,zip:n,opc:i}}const qn=1,Zn=4,xr=16,vr=32,Cr=64,Pr=128,Mr=1,Sr=2,kr=4,Er=8,Ar=1,Kn=4,Nr=5,Tr=1,Ir=2,Fr=4,_r=8,Lr=16,Dr=32,Br=64,Rr=128,cs=0,hs=1,pn=2,ls=3,ds=4,Wr=5,Or=6,X=-2139062144,gn=-2139062145,us=-2139062146;async function $r(e,t={}){const n=[],i=await zr(e,n,t.sourcePath),s=[],o=new Set,r=t.maxMeshes??1e4,a=t.maxTriangles??1e7;let c=0,h=0;for(let d=0;d<i.length&&s.length<r&&h<a;d++)if(i[d]===83)try{const u=Xr(i,d,s.length+1);if(!u)continue;const f=`${u.sourceStart}:${u.sourceEnd}`;if(o.has(f))continue;o.add(f),s.push(u),h+=u.triangleCount,d=Math.max(d,u.sourceEnd-1)}catch(u){const f=String(u);/edgebreaker/i.test(f)&&c++}c>0&&n.push(S("warning","W3D_EDGEBREAKER_PARTIAL",`${c} connectivity-compressed shell candidate(s) were skipped.`,t.sourcePath)),s.length===0&&n.push(S("error","W3D_NO_MESHES","No renderable W3D shell meshes were decoded.",t.sourcePath));const l=eo(s);return{kind:"w3d-model",title:t.title??"3D Model",meshes:s,bounds:l,diagnostics:n,sourcePath:t.sourcePath,stats:{meshCount:s.length,vertexCount:s.reduce((d,u)=>d+u.vertexCount,0),triangleCount:s.reduce((d,u)=>d+u.triangleCount,0),decodedBytes:i.byteLength,edgeCount:s.reduce((d,u)=>d+Math.floor((u.edgeIndices?.length??0)/2),0),materialCount:0,textureCount:0,pmiCount:0,nodeCount:0}}}async function zr(e,t,n){const i=new ns;for(let s=0;s+6<e.length;s++){if(e[s]!==120)continue;const o=e[s+1];if(o!==1&&o!==94&&o!==156&&o!==218)continue;const r=e.subarray(s),a=Ur(r),c=[];a.length>6&&c.push({label:"raw-deflate-body",data:a.subarray(2,a.length-4)}),r.length>2&&c.push({label:"raw-deflate-body-with-trailer",data:r.subarray(2)}),c.push({label:"zlib-trimmed",data:a}),a.length!==r.length&&c.push({label:"zlib-with-padding",data:r});for(const h of c)try{return await i.inflateRaw(h.data)}catch{}}return e}function Ur(e){let t=e.length;for(;t>0&&e[t-1]===0;)t--;return t===e.length?e:e.subarray(0,t)}function Xr(e,t,n){const i=ms(e,t+1),s=Qt(i);let o=0;if((s&Pr)!==0&&(o=so(i)),(s&vr)!==0||((s&xr)===0&&W(i),Qt(i),(o&(Mr|Sr))!==0))return;const a=(s&(qn|Cr))!==0?Qt(i):Kn;let c,h,l;if(a===Nr){const m=W(i);if(m<=0||i.pos+m>e.length||m>1e8)throw new Error("Bad edgebreaker block length.");const p=e.subarray(i.pos,i.pos+m);i.pos+=m;const g=Hr(p);if((s&qn)===0){const b=g.pointCount*3;if(i.pos+b*4>e.length)throw new Error("Edgebreaker shell has no following full-resolution vertex array.");c=Jn(e,i.pos,b),i.pos+=b*4}else throw new Error("edgebreaker quantized-point reconstruction is not enabled for this shell.");if(h=ve(g.faces,g.pointCount),l=`edgebreaker-v${p[0]??0}`,h.length<3)throw new Error("Empty edgebreaker face list.")}else if(a===Kn){const m=W(i);if(m<=0||m>1e7)throw new Error("Bad uncompressed shell point count.");c=Jn(e,i.pos,m*3),i.pos+=m*3*4;const p=Qn(i,m,(s&Zn)!==0,!1);h=ve(p.indices,m),l="uncompressed"}else if(a===Ar){const m=W(i);if(m<=0||m>1e7)throw new Error("Bad compressed shell point count.");const p=(o&Er)===0?fs(i,6):[0,0,0,1,1,1],g=Qt(i),b=W(i);if(b<=0||i.pos+b>e.length)throw new Error("Bad compressed shell point payload length.");c=Kr(e.subarray(i.pos,i.pos+b),m,g,p),i.pos+=b;const w=Qn(i,m,(s&Zn)!==0,(o&kr)!==0);h=ve(w.indices,m),l=`quantized-${g}`}else throw new Error(`Unsupported W3D shell compression scheme ${a}.`);if(h.length<3||c.length<9)return;const d=Qr(c,h),u=Jr(c,h),f=no(c);return{id:`w3d-mesh-${n}`,name:`Mesh ${n}`,positions:c,normals:d,indices:h,edgeIndices:u,vertexCount:Math.floor(c.length/3),triangleCount:Math.floor(h.length/3),bounds:f,color:io(n),sourceStart:t,sourceEnd:i.pos,decodeKind:l}}function Hr(e){if(e.byteLength<24)throw new Error("Edgebreaker block is too short.");const t=new DataView(e.buffer,e.byteOffset,e.byteLength),n=e[0],i=e[1],s=e[2],o=e[3],r=t.getInt32(4,!0),a=t.getInt32(8,!0);t.getInt32(12,!0);const c=t.getInt32(16,!0);if(t.getInt32(20,!0),n<0||n>2||i!==0||s<0||s>3||o<0||o>3)throw new Error("Unsupported edgebreaker header.");if(r<=0||a<0||c<=0)throw new Error("Invalid edgebreaker sizes.");let h=n>=1?24:20;const l=e.subarray(h,h+r);if(h+=r+ti(h+r),h+a>e.length)throw new Error("Invalid edgebreaker MTable offset.");const d=Yr(e.subarray(h,h+a));h+=a+ti(h+a);const u=Vr(l,d),f=jr(u.opcodePointCount,d,u.faces),m=[];for(const w of f)m.push(w[1],w[2],w[3]);const p=m.reduce((w,y)=>Math.max(w,y),-1),g=m.reduce((w,y)=>Math.min(w,y),c);if(g<0||p>=c)throw new Error(`Edgebreaker face index range ${g}..${p} is outside point count ${c}.`);const b=[];return{pointCount:c,faces:m,triangleCount:m.length/3,diagnostics:b}}function Yr(e){const t=ms(e,0),n=W(t),i=(n&Tr)!==0?W(t):0,s=(n&Ir)!==0?W(t):0,o=(n&Fr)!==0?s:0,r=(n&_r)!==0?W(t):0,a=(n&Lr)!==0?W(t):0,c=Ge(t,i),h=Ge(t,s),l=Ge(t,o),d=[];let u=0;for(let w=0;w<r;w++)u+=W(t),d.push(u);const f=[],m=new Map;u=0;for(let w=0;w<a;w+=2){const y=W(t)+u;u=y;const C=W(t);f.push(y,C),m.set(y,C)}const p=(n&Dr)!==0?fs(t,6):void 0,g=(n&Br)!==0?[W(t),W(t),W(t)]:[11,11,11],b=(n&Rr)!==0?[W(t),W(t),W(t)]:[11,11,11];return{flags:n,mlengths:c,m2stackoffsets:h,m2gateoffsets:l,dummies:d,patches:f,patchMap:m,bounding:p,quantization:g,normalQuantization:b}}function Vr(e,t){const n=Array.from(e),i=[];let s=0,o=0;for(;o<n.length;){const{ecount:r,offsets:a}=Gr(n,o,t);if(r<=0)throw new Error(`Invalid edgebreaker boundary loop length ${r}.`);const c=[],h=[],l=[],d=[],u=[];for(let w=0;w<r;w++)h[w]=w-1,c[w]=w+1,l[w]=s++,d[w]=X;h[0]=r-1,c[r-1]=0;let f=0,m=0,p=r;const g=[],b=[];for(;;){for(b.length===0&&b.push(p++);p+2>=c.length;)c.push(0),h.push(0),l.push(0),d.push(X);const w=u.length;u.push({start:0,twin:X},{start:0,twin:X},{start:0,twin:X});const y=[3,l[f],l[c[f]],-1];d[f]!==X&&d[f]>=0&&d[f]<u.length&&(u[d[f]].twin=w),u[w].twin=d[f],u[w].start=l[f],u[w+1].start=l[c[f]];const C=n[o++];if(C===cs){y[3]=s,u[w+1].twin=X,u[w+2].twin=X,u[w+2].start=s;const M=b.pop();c[h[f]]=M,h[M]=h[f],c[M]=f,h[f]=M,l[M]=l[f],l[f]=s,d[f]=w+1,d[M]=w+2,s++}else if(C===hs)y[3]=l[h[f]],u[w+1].twin=X,u[w+2].twin=d[h[f]],d[h[f]]!==X&&d[h[f]]>=0&&d[h[f]]<u.length&&(u[d[h[f]]].twin=w+2),u[w+2].start=l[h[f]],l[f]=l[h[f]],b.push(h[f]),h[f]=h[h[f]],c[h[f]]=f,d[f]=w+1;else if(C===pn)if(y[3]=l[h[f]],u[w+1].twin=d[c[f]],d[c[f]]!==X&&d[c[f]]>=0&&d[c[f]]<u.length&&(u[d[c[f]]].twin=w+1),u[w+2].twin=d[h[f]],d[h[f]]!==X&&d[h[f]]>=0&&d[h[f]]<u.length&&(u[d[h[f]]].twin=w+2),u[w+2].start=l[h[f]],b.push(f,h[f],c[f]),wn(y)&&i.push(y),g.length>0)f=g.pop();else break;else if(C===ls)y[3]=l[c[c[f]]],u[w+1].twin=d[c[f]],d[c[f]]!==X&&d[c[f]]>=0&&d[c[f]]<u.length&&(u[d[c[f]]].twin=w+1),u[w+2].twin=X,u[w+2].start=l[c[c[f]]],b.push(c[f]),c[f]=c[c[f]],h[c[f]]=f,d[f]=w+2;else if(C===ds){let M=f;const A=(a[m]??0)+1;for(let F=0;F<A;F++)M=c[M];y[3]=l[c[M]],u[w+1].twin=X,u[w+2].twin=X,u[w+2].start=l[c[M]],m++;const N=b.pop();g.push(N),c[h[f]]=N,h[N]=h[f],c[N]=c[M],h[c[M]]=N,d[N]=w+2,l[N]=l[f],l[f]=l[c[M]],d[f]=w+1,h[f]=M,c[M]=f}else throw new Error(`Unsupported edgebreaker opcode ${C}.`);if(C!==pn)if(wn(y))i.push(y);else throw new Error("Invalid edgebreaker triangle.");if(o>=n.length)break}}return{faces:i,opcodePointCount:s}}function Gr(e,t,n){let i=0,s=0,o=0,r=0;const a=[],c=[],h=[];for(let l=t;l<e.length;l++){const d=e[l];if(d===cs)i-=1;else if(d===hs)i+=1;else if(d===pn)if(i+=3,a.length>0){const u=c.pop();h[u]=i-2-a.pop()}else break;else if(d===ls)i+=1;else if(d===ds)i-=1,c.push(s),a.push(i),h[s]=0,s++;else if(d===Wr){const u=n.mlengths[o++]??0;i-=u+1}else if(d===Or)n.mlengths[r],i-=1,r++;else throw new Error(`Bad edgebreaker opcode ${d}.`)}return{ecount:i,offsets:h}}function jr(e,t,n){const i=new Int32Array(e);for(const r of t.dummies)r>=0&&r<e&&(i[r]=gn);for(let r=0;r+1<t.patches.length;r+=2){const a=t.patches[r];a>=0&&a<e&&i[a]!==gn&&(i[a]=us)}let s=0;for(let r=0;r<e;r++)i[r]<0?s++:i[r]=s;const o=[];for(const r of n){const a=r[1],c=r[2],h=r[3];if(He(a,i)||He(c,i)||He(h,i))continue;const l=[3,Xe(a,i,t),Xe(c,i,t),Xe(h,i,t)];wn(l)&&o.push(l)}return o}function Xe(e,t,n){return t[e]===us?n.patchMap.get(e)??e:e-t[e]}function He(e,t){return e<0||e>=t.length||t[e]===gn}function wn(e){return e[1]!==e[2]&&e[2]!==e[3]&&e[3]!==e[1]&&e[1]>=0&&e[2]>=0&&e[3]>=0}function Qn(e,t,n,i){Qt(e);const s=W(e);if(s<=0||e.pos+s>e.bytes.length)throw new Error("Bad compressed face-list payload length.");const o=e.bytes.subarray(e.pos,e.pos+s);e.pos+=s;const r=qr(o,i);return{indices:Zr(r,t,n),values:r}}function qr(e,t){if(e.length<2)throw new Error("Face payload is too short.");const n=e[0],i=n/8;if(i!==1&&i!==2&&i!==4)throw new Error(`Unsupported face-list sample width ${n}.`);const s=[],o=new DataView(e.buffer,e.byteOffset,e.byteLength);for(let r=1;r+i<=e.length;r+=i)i===1?s.push(t?o.getInt8(r):o.getUint8(r)):i===2?s.push(t?o.getInt16(r,!0):o.getUint16(r,!0)):s.push(t?o.getInt32(r,!0):o.getUint32(r,!0));return s}function Zr(e,t,n){const i=[];let s=0;for(;s<e.length;){const o=e[s++],r=Math.abs(o);if(r<3||s+r>e.length)throw new Error("Invalid face list run.");const a=e.slice(s,s+r);if(s+=r,a.some(c=>c<0||c>=t))throw new Error("Face index out of range.");if(n)if(o>0)for(let c=2;c<a.length;c++)(c&1)===0?i.push(a[c-2],a[c-1],a[c]):i.push(a[c-1],a[c-2],a[c]);else for(let c=2;c<a.length;c++)i.push(a[0],a[c-1],a[c]);else if(o>0)for(let c=2;c<a.length;c++)i.push(a[0],a[c-1],a[c])}return i}function Kr(e,t,n,i){if(n===8){if(e.length<t*3)throw new Error("Short 8-bit quantized point payload.");const a=new Float32Array(t*3);for(let c=0;c<t;c++)for(let h=0;h<3;h++){const l=e[c*3+h],d=i[h],u=i[h+3];a[c*3+h]=l===255?u:d+(u-d)*(l/255)}return a}const s=new Float32Array(t*3);let o=0;const r=(1<<n)-1;for(let a=0;a<t*3;a++){let c=0;for(let u=0;u<n;u++){const f=e[o>>3]??0;c=c<<1|f>>7-(o&7)&1,o++}const h=a%3,l=i[h],d=i[h+3];s[a]=c===r?d:l+(d-l)*(c/r)}return s}function ve(e,t){return t<=65535?new Uint16Array(e):new Uint32Array(e)}function Qr(e,t){const n=new Float32Array(e.length);for(let i=0;i+2<t.length;i+=3){const s=t[i]*3,o=t[i+1]*3,r=t[i+2]*3,a=e[s],c=e[s+1],h=e[s+2],l=e[o],d=e[o+1],u=e[o+2],f=e[r],m=e[r+1],p=e[r+2],g=l-a,b=d-c,w=u-h,y=f-a,C=m-c,M=p-h,A=b*M-w*C,N=w*y-g*M,F=g*C-b*y;n[s]=(n[s]??0)+A,n[s+1]=(n[s+1]??0)+N,n[s+2]=(n[s+2]??0)+F,n[o]=(n[o]??0)+A,n[o+1]=(n[o+1]??0)+N,n[o+2]=(n[o+2]??0)+F,n[r]=(n[r]??0)+A,n[r+1]=(n[r+1]??0)+N,n[r+2]=(n[r+2]??0)+F}for(let i=0;i<n.length;i+=3){const s=n[i],o=n[i+1],r=n[i+2],a=Math.hypot(s,o,r)||1;n[i]=s/a,n[i+1]=o/a,n[i+2]=r/a}return n}function Jr(e,t,n=Math.PI/5){if(t.length<3)return;const i=[],s=new Map;for(let c=0,h=0;c+2<t.length;c+=3,h++){const l=t[c],d=t[c+1],u=t[c+2],f=to(e,l,d,u);i.push(f),Ye(s,l,d,h),Ye(s,d,u,h),Ye(s,u,l,h)}const o=Math.cos(n),r=[];for(const c of s.values())if(c.tris.length===1)r.push(c.a,c.b);else if(c.tris.length>=2){let h=!1;for(let l=0;l<c.tris.length&&!h;l++)for(let d=l+1;d<c.tris.length;d++){const u=i[c.tris[l]],f=i[c.tris[d]];if(u[0]*f[0]+u[1]*f[1]+u[2]*f[2]<o){h=!0;break}}h&&r.push(c.a,c.b)}if(r.length===0)return;const a=Math.floor(e.length/3);return ve(r,a)}function to(e,t,n,i){const s=t*3,o=n*3,r=i*3,a=e[s],c=e[s+1],h=e[s+2],l=e[o],d=e[o+1],u=e[o+2],f=e[r],m=e[r+1],p=e[r+2],g=l-a,b=d-c,w=u-h,y=f-a,C=m-c,M=p-h;let A=b*M-w*C,N=w*y-g*M,F=g*C-b*y;const $=Math.hypot(A,N,F)||1;return A/=$,N/=$,F/=$,[A,N,F]}function Ye(e,t,n,i){const s=Math.min(t,n),o=Math.max(t,n),r=`${s}:${o}`;let a=e.get(r);a||(a={a:s,b:o,tris:[]},e.set(r,a)),a.tris.push(i)}function eo(e){if(e.length===0)return{min:[0,0,0],max:[1,1,1],center:[.5,.5,.5],radius:1};const t=[1/0,1/0,1/0],n=[-1/0,-1/0,-1/0];for(const o of e)for(let r=0;r<3;r++)t[r]=Math.min(t[r],o.bounds.min[r]),n[r]=Math.max(n[r],o.bounds.max[r]);const i=[(t[0]+n[0])/2,(t[1]+n[1])/2,(t[2]+n[2])/2],s=Math.max(1e-6,Math.hypot(n[0]-i[0],n[1]-i[1],n[2]-i[2]));return{min:t,max:n,center:i,radius:s}}function no(e){const t=[1/0,1/0,1/0],n=[-1/0,-1/0,-1/0];for(let i=0;i<e.length;i+=3){const s=e[i],o=e[i+1],r=e[i+2];s<t[0]&&(t[0]=s),o<t[1]&&(t[1]=o),r<t[2]&&(t[2]=r),s>n[0]&&(n[0]=s),o>n[1]&&(n[1]=o),r>n[2]&&(n[2]=r)}return{min:t,max:n}}function io(e){const t=e*.61803398875%1,n=.34,i=.62,s=i+n-i*n,o=2*i-s;return[Ve(o,s,t+1/3),Ve(o,s,t),Ve(o,s,t-1/3)]}function Ve(e,t,n){return n<0&&(n+=1),n>1&&(n-=1),n<1/6?e+(t-e)*6*n:n<1/2?t:n<2/3?e+(t-e)*(2/3-n)*6:e}function Jn(e,t,n){if(t+n*4>e.length)throw new Error("Float array exceeds W3D stream length.");const i=new Float32Array(n),s=new DataView(e.buffer,e.byteOffset+t,n*4);for(let o=0;o<n;o++)i[o]=s.getFloat32(o*4,!0);return i}function fs(e,t){const n=[];for(let i=0;i<t;i++)n.push(ro(e));return n}function Ge(e,t){const n=[];for(let i=0;i<t;i++)n.push(W(e));return n}function ms(e,t=0){return{bytes:e,pos:t,view:new DataView(e.buffer,e.byteOffset,e.byteLength)}}function Qt(e){if(e.pos>=e.bytes.length)throw new Error("Unexpected end of W3D stream.");return e.bytes[e.pos++]}function so(e){const t=e.view.getUint16(e.pos,!0);return e.pos+=2,t}function W(e){const t=e.view.getInt32(e.pos,!0);return e.pos+=4,t}function ro(e){const t=e.view.getFloat32(e.pos,!0);return e.pos+=4,t}function ti(e){return 3-(e-1)%4}async function oo(e,t,n){const i=e.diagnostics;e.metadata??(e.metadata={}),e.materials??(e.materials=[]),e.textures??(e.textures=[]),e.sceneTree??(e.sceneTree=[]),e.pmi??(e.pmi=[]),e.views??(e.views=[]),e.animations??(e.animations=[]),await ao(e,t,n,i);const s=t.find(d=>/descriptor/i.test(d.role??"")||/descriptor\.xml$/i.test(d.path));if(s&&n.zip.has(s.path))try{co(e,tt(await n.readBytes(s.path)),s.path)}catch(d){i.push(S("warning","EMODEL_DESCRIPTOR_PARSE_FAILED",`Failed to parse eModel descriptor: ${String(d)}`,s.path))}const o=t.find(d=>/content\s+definition/i.test(d.role??"")),r=o&&n.zip.has(o.path)?lo(e,tt(await n.readBytes(o.path)),o.path,i):[],a=t.find(d=>/content\s+presentation/i.test(d.role??"")),c=new Map;let h=new Map;if(a&&n.zip.has(a.path))try{const{nodes:d,pmi:u,views:f,animations:m,materials:p}=uo(tt(await n.readBytes(a.path)),a.path,c);h=p,e.sceneTree=d,e.pmi=u,e.views=ws(e.views??[],f),e.animations=m;const g=new Map((e.materials??[]).map(b=>[b.id,b]));for(const b of p.values())g.set(b.id,mo(b,e.textures??[]));e.materials=Array.from(g.values())}catch(d){i.push(S("warning","EMODEL_PRESENTATION_PARSE_FAILED",`Failed to parse eModel presentation: ${String(d)}`,a.path))}po(e,r,c,h);const l=ys(e.sceneTree??[]);(e.views?.length??0)>0&&!e.initialView&&(e.initialView=e.views[0]),e.stats.materialCount=e.materials?.length??0,e.stats.textureCount=e.textures?.length??0,e.stats.pmiCount=e.pmi?.length??0,e.stats.nodeCount=l}async function ao(e,t,n,i){const s=[];for(const o of t.filter(r=>/texture/i.test(r.role??"")||/texture/i.test(r.title??""))){if(!n.zip.has(o.path))continue;let r,a;try{const c=xo(await n.readBytes(o.path));r=c?.width,a=c?.height}catch(c){i.push(S("warning","EMODEL_TEXTURE_SIZE_FAILED",`Failed to read texture size: ${String(c)}`,o.path))}s.push({id:o.path,name:xs(o.title)??yo(o.path),path:o.path,mediaType:o.mediaType,width:r,height:a,role:o.role})}if(e.textures=s,s.length>0){const o=s.find(r=>/thread/i.test(r.name??""))??s.find(r=>!/environment/i.test(r.name??""))??s[0];if(o){const r={id:"dwfx-default-textured",name:"DWFx default material",color:[.72,.74,.78],textureId:o.id,roughness:.6,metalness:.03,doubleSided:!0,source:o.path};e.materials=[r]}}}function co(e,t,n){const i=G(t,n),s=i.documentElement;if(s){const a=Array.from(s.getElementsByTagName("*")).find(h=>k(h)==="Units")?.getAttribute("type");a&&(e.metadata.units=a);const c=s.getAttribute("name");c&&(e.metadata.spaceName=c)}for(const r of Array.from(i.getElementsByTagName("*")).filter(a=>k(a)==="Property")){const a=r.getAttribute("name"),c=r.getAttribute("value");a&&c&&(e.metadata[a]=c)}const o=ho(e.metadata);o&&(e.views=ws(e.views??[],[o]),e.initialView=o)}function ho(e){const t=oe(e._ViewCubeHomeCameraPosition),n=oe(e._ViewCubeHomeCameraTarget),i=oe(e._ViewCubeHomeCameraUpVector),s=oe(e._ViewCubeHomeCameraField);if(!(!t&&!n&&!i))return{id:"descriptor-home-view",label:"Home",camera:{position:t,target:n,up:i,field:s,projection:e._ViewCubeHomeCameraProjection==="1"?"perspective":"orthographic"}}}function lo(e,t,n,i){try{const s=G(t,n),o=[];for(const r of Array.from(s.getElementsByTagName("*")).filter(a=>k(a)==="Instance")){const a=r.getAttribute("id")??"";a&&o.push({id:a,renderableRef:r.getAttribute("renderableRef")??void 0,node:r.getAttribute("node")??void 0,geometricVariation:r.getAttribute("geometricVariation")??void 0})}return e.metadata.contentInstanceCount=String(o.length),o}catch(s){return i.push(S("warning","EMODEL_CONTENTDEF_PARSE_FAILED",`Failed to parse eModel content definition: ${String(s)}`,n)),[]}}function uo(e,t,n){const i=G(e,t),s=Array.from(i.getElementsByTagName("*")).filter(l=>k(l)==="View"),o=[];for(const l of s){const d=ps(l);for(const u of d)o.push(bn(u,n))}if(o.length===0)for(const l of Array.from(i.getElementsByTagName("*")).filter(d=>k(d)==="ReferenceNode"&&!wo(d)))o.push(bn(l,n));const r=[];for(const l of Array.from(i.getElementsByTagName("*")).filter(d=>/ModelViewNode|View/i.test(k(d)))){const d=l.getAttribute("id")??`view-${r.length+1}`,u=l.getAttribute("label")??l.getAttribute("name")??d,f=Se(l).find(p=>k(p)==="Camera")??Array.from(l.getElementsByTagName("*")).find(p=>k(p)==="Camera"),m=f?go(f):void 0;(m||/ModelViewNode/i.test(k(l)))&&r.push({id:d,label:u,camera:m})}const a=[];for(const l of Array.from(i.getElementsByTagName("*"))){const d=k(l);/PMI|Markup|Dimension|Annotation|Callout|Leader|Note/i.test(d)&&a.push({id:l.getAttribute("id")??`pmi-${a.length+1}`,type:/Leader/i.test(d)?"leader":/Text|Note|Dimension/i.test(d)?"text":"markup",label:l.getAttribute("label")??l.getAttribute("name")??d,text:l.getAttribute("text")??l.textContent?.trim()??void 0,targetRef:l.getAttribute("contentElementRefs")??l.getAttribute("target")??void 0,properties:gs(l)})}const c=[];for(const l of Array.from(i.getElementsByTagName("*")).filter(d=>/Animation|Sequence|Timeline/i.test(k(d))))c.push({id:l.getAttribute("id")??`animation-${c.length+1}`,name:l.getAttribute("label")??l.getAttribute("name")??k(l),targetRef:l.getAttribute("target")??void 0});const h=fo(i);return{nodes:o,pmi:a,views:bs(r),animations:c,materials:h}}function fo(e){const t=new Map;for(const n of Array.from(e.getElementsByTagName("*")).filter(i=>k(i)==="InstanceAttributes")){const i=n.getAttribute("id");if(!i)continue;const s=Se(n).find(u=>k(u)==="Color")??Array.from(n.getElementsByTagName("*")).find(u=>k(u)==="Color");if(!s)continue;const o=Array.from(s.getElementsByTagName("*")).find(u=>k(u)==="Channel"&&/diffuse/i.test(u.getAttribute("type")??"")),r=Array.from(s.getElementsByTagName("*")).find(u=>k(u)==="Channel"&&/environment/i.test(u.getAttribute("type")??"")),a=Number(o?.getAttribute("red")),c=Number(o?.getAttribute("green")),h=Number(o?.getAttribute("blue"));if(![a,c,h].every(Number.isFinite))continue;const l=Number(s.getAttribute("gloss")),d=xs(r?.getAttribute("name")??void 0);t.set(i,{id:`material-${i}`,name:`Material ${i}`,color:[a,c,h],opacity:1,roughness:Number.isFinite(l)?Math.max(.12,Math.min(.92,1-l/128)):.58,metalness:.03,textureName:d,doubleSided:!0,source:"content-presentation"})}return t}function mo(e,t){if(e.textureId||!e.textureName)return e;const n=je(e.textureName),i=t.find(s=>je(s.name??"").includes(n)||n.includes(je(s.name??"")));return i?{...e,textureId:i.id}:e}function je(e){return e.replace(/&quot;/g,"").replace(/["{}]/g,"").toLowerCase()}function bn(e,t){const n=bo(e.getAttribute("contentElementRefs")??e.getAttribute("contentRefs")??""),i={id:e.getAttribute("id")??`node-${Math.random().toString(36).slice(2)}`,label:e.getAttribute("label")??e.getAttribute("name")??k(e),contentRefs:n,meshIds:[],children:[],properties:gs(e)};for(const s of n)t.set(s,i);for(const s of ps(e))i.children.push(bn(s,t));return i}function po(e,t,n,i){const s=new Map(n),o=t.length===e.meshes.length;t.forEach((r,a)=>{const c=e.meshes[a];if(!c)return;const h=[r.renderableRef,r.id].filter(Boolean);c.selectionRefs=h,c.nodeId=r.node;const l=i.get(r.id)??(r.renderableRef?i.get(r.renderableRef):void 0);l&&o&&(c.materialId=l.id,c.color=l.color);for(const d of h){const u=s.get(d);if(u){c.name=u.label||c.name,u.meshIds.push(c.id);break}}})}function go(e){const t=re(e,"positionX","positionY","positionZ"),n=re(e,"targetX","targetY","targetZ"),i=re(e,"upVectorX","upVectorY","upVectorZ"),s=re(e,"fieldWidth","fieldHeight","fieldDepth");return{position:t,target:n,up:i,field:s,projection:e.getAttribute("projectionType")??void 0}}function re(e,t,n,i){const s=[Number(e.getAttribute(t)),Number(e.getAttribute(n)),Number(e.getAttribute(i))];return s.every(Number.isFinite)?s:void 0}function oe(e){if(!e)return;const t=e.trim().split(/[\s,]+/).map(Number).filter(Number.isFinite);return t.length>=3?[t[0],t[1],t[2]]:void 0}function Se(e){return Array.from(e.children)}function ps(e){const t=[];for(const n of Se(e)){const i=k(n);if(i.endsWith("Node"))t.push(n);else if(i==="Nodes"||i==="Views")for(const s of Se(n))k(s).endsWith("Node")&&t.push(s)}return t}function wo(e){let t=ei(e);for(;t;){if(k(t)==="ReferenceNode")return!0;t=ei(t)}return!1}function ei(e){return(e.parentElement??e.parentNode)||void 0}function gs(e){const t={};for(const n of Array.from(e.attributes))t[n.localName||n.name]=n.value;return t}function bo(e){return e.trim().split(/[\s,]+/).filter(Boolean)}function ws(e,t){return bs([...e,...t])}function bs(e){const t=new Set,n=[];for(const i of e){const s=i.id||i.label;t.has(s)||(t.add(s),n.push(i))}return n}function ys(e){let t=0;for(const n of e)t+=1+ys(n.children);return t}function yo(e){const t=e.lastIndexOf("/");return t>=0?e.slice(t+1):e}function xs(e){if(e)return e.replace(/^"|"$/g,"").replace(/&quot;/g,'"')}function xo(e){if(e.length>=24&&e[0]===137&&e[1]===80&&e[2]===78&&e[3]===71)return{width:ni(e,16),height:ni(e,20)};if(e.length>=4&&e[0]===255&&e[1]===216){let t=2;for(;t+9<e.length;){if(e[t]!==255){t++;continue}const n=e[t+1];for(t+=2;e[t]===255;)t++;if(n===217||n===218||t+2>e.length)break;const i=e[t]<<8|e[t+1];if(i<2||t+i>e.length)break;if(n>=192&&n<=195||n>=197&&n<=199||n>=201&&n<=203||n>=205&&n<=207)return{width:e[t+5]<<8|e[t+6],height:e[t+3]<<8|e[t+4]};t+=i}}}function ni(e,t){return(e[t]<<24|e[t+1]<<16|e[t+2]<<8|e[t+3])>>>0}const vo=new Set(["http://schemas.microsoft.com/xps/2005/06/fixedrepresentation","http://schemas.openxps.org/oxps/v1.0/fixedrepresentation"]);async function ii(e){const t=await br(e),n=[],i=[],s=await Po(t,i,n);if(i.length===0){const r=await So(t,n);for(const a of r)try{const c=await t.readText(a),h=G(c,a),l=Array.from(h.getElementsByTagName("*")).filter(d=>k(d)==="DocumentReference");l.length===0&&n.push(S("warning","DWFX_NO_DOCREF",`No DocumentReference elements found in ${a}.`,a));for(const d of l){const u=d.getAttribute("Source");if(!u)continue;const f=Lt(a,u);await ko(t,f,i,n)}}catch(c){n.push(S("warning","DWFX_FDSEQ_READ_FAILED",`Failed to read fixed document sequence: ${String(c)}`,a))}}if(i.length===0){const r=e.entries.filter(a=>/\.fpage$/i.test(a.name));for(const[a,c]of r.entries()){const h=await Tn(t,c.name,n);i.push({id:`page-${a+1}`,name:c.name.split("/").pop()??`Page ${a+1}`,kind:"xps-fixed-page",sourcePath:c.name,width:h.width,height:h.height,diagnostics:[]})}}if(i.length===0){const r=e.entries.some(a=>/\.(w3d|hsf)$/i.test(a.name))||s.some(a=>/emodel/i.test(a.type));i.push({id:"unsupported-1",name:r?"Unsupported 3D DWFx package":"Unsupported DWFx package",kind:"unsupported",width:1e3,height:1e3,reason:r?"This DWFx package contains 3D eModel/W3D content but no supported 2D FixedPage or preview image resource was found.":"No XPS FixedPage parts or supported DWF manifest preview resources were found.",diagnostics:[S("error","DWFX_NO_PAGES","No supported renderable page was found in this DWFx package.")]})}const o={kind:"dwfx",pages:[],resources:t.resources,diagnostics:n,packageEntries:e.entries.map(r=>r.name)};return Me(o,i,e,t)}function Co(e){return e.has("[Content_Types].xml")&&(e.has("_rels/.rels")||e.entries.some(t=>/\.(fpage|dwfseq)$/i.test(t.name)))}async function Po(e,t,n){const i=await Mo(e,n),s=[];for(const o of i)try{const r=await e.readText(o),a=Eo(r,o);s.push(...a),n.push(S("info","DWFX_DWF_MANIFEST_FOUND",`Found DWFx DWF manifest with ${a.length} section(s).`,o))}catch(r){n.push(S("warning","DWFX_DWF_MANIFEST_PARSE_FAILED",`Failed to parse DWFx DWF manifest: ${String(r)}`,o))}for(const o of s.filter(r=>Ao(r))){const r=ri(o,/2d\s+streaming\s+graphics/i)??o.resources.find(h=>/\.fpage$/i.test(h.path));if(!r||!/\.fpage$/i.test(bt(r.path)))continue;const a=bt(r.path);if(!e.zip.has(a))continue;const c=await Tn(e,a,n);t.push({id:`page-${t.length+1}`,name:o.title||r.title||ae(a),kind:"xps-fixed-page",sourcePath:a,width:Number.isFinite(c.width)&&c.width>0?c.width:1e3,height:Number.isFinite(c.height)&&c.height>0?c.height:1e3,diagnostics:[]})}if(t.length>0)return s;for(const o of s.filter(r=>No(r))){const r=To(o,e.zip),a=ri(o,/3d\s+streaming\s+graphics/i)??o.resources.find(c=>/\.(w3d|hsf)$/i.test(c.path));if(a&&e.zip.has(a.path))try{const c=await $r(await e.zip.read(a.path),{title:o.title||a.title||ae(a.path),sourcePath:a.path});if(await oo(c,o.resources,e),c.meshes.length>0){t.push({id:`w3d-${t.length+1}`,name:o.title||a.title||ae(a.path),kind:"w3d-model",sourcePath:a.path,width:1e3,height:1e3,model:c,diagnostics:c.diagnostics});continue}t.push({id:`unsupported-3d-${t.length+1}`,name:o.title||"Unsupported 3D eModel",kind:"unsupported",width:1e3,height:1e3,sourcePath:a.path,reason:"A W3D/HSF 3D stream exists, but no renderable shell geometry was decoded.  The package is intentionally not shown as a thumbnail so this failure is visible during production validation.",diagnostics:[...c.diagnostics,S("warning","DWFX_3D_W3D_UNSUPPORTED","Detected a 3D W3D resource, but no renderable shell geometry was decoded.",a.path)]});continue}catch(c){t.push({id:`unsupported-3d-${t.length+1}`,name:o.title||"Unsupported 3D eModel",kind:"unsupported",width:1e3,height:1e3,sourcePath:a.path,reason:`A W3D/HSF 3D stream exists, but geometry parsing failed: ${String(c)}`,diagnostics:[S("warning","DWFX_W3D_PARSE_FAILED",`Failed to parse W3D geometry: ${String(c)}`,a.path)]});continue}if(r&&e.zip.has(r.path)){const c=await e.zip.read(r.path),h=Fo(c)??{width:1e3,height:1e3};t.push({id:`image-${t.length+1}`,name:o.title||r.title||ae(r.path),kind:"image",sourcePath:r.path,mediaType:r.mediaType??Mt(r.path)??"image/png",width:h.width,height:h.height,diagnostics:[S("info","DWFX_3D_PREVIEW_ONLY","No W3D/HSF geometry stream was declared; showing the embedded section preview image.",r.path)]})}}return s}async function Mo(e,t){const n=new Set,i=o=>{o&&n.add(B(bt(o)))},s=new Set;try{const o=await e.getRelationships("");for(const r of o)(/documentsequence/i.test(r.type)||/\.dwfseq$/i.test(r.resolvedTarget))&&s.add(B(r.resolvedTarget)),/document$/i.test(r.type)&&/manifest\.xml$/i.test(r.resolvedTarget)&&i(r.resolvedTarget)}catch(o){t.push(S("warning","DWFX_DWFSEQ_RELS_FAILED",`Failed to inspect DWFx package relationships: ${String(o)}`))}for(const o of e.zip.entries)/\.dwfseq$/i.test(o.name)&&s.add(o.name);for(const o of s)if(e.zip.has(o))try{const r=await e.readText(o),a=G(r,o),c=Array.from(a.getElementsByTagName("*")).filter(l=>k(l)==="ManifestReference");for(const l of c)i(l.getAttribute("Source")??l.getAttribute("source")??void 0);const h=await e.getRelationships(o).catch(()=>[]);for(const l of h)(/document/i.test(l.type)||/manifest\.xml$/i.test(l.resolvedTarget))&&i(l.resolvedTarget)}catch(r){t.push(S("warning","DWFX_DWFSEQ_READ_FAILED",`Failed to read DWFDocumentSequence ${o}: ${String(r)}`,o))}for(const o of e.zip.entries)/^dwf\/documents\/.*\/manifest\.xml$/i.test(o.name)&&i(o.name);return Array.from(n).filter(o=>e.zip.has(o))}async function So(e,t){const n=new Set;try{const i=await e.getRelationships("");for(const s of i)(vo.has(s.type)||/fixedrepresentation/i.test(s.type)||/\.fdseq$/i.test(s.resolvedTarget))&&n.add(B(s.resolvedTarget))}catch(i){t.push(S("warning","DWFX_ROOT_RELS_FAILED",`Failed to read package relationships: ${String(i)}`))}for(const i of e.overrides)(/fixeddocumentsequence/i.test(i.contentType)||/\.fdseq$/i.test(i.partName))&&n.add(i.partName);for(const i of e.zip.entries)/\.fdseq$/i.test(i.name)&&n.add(i.name);return Array.from(n)}async function ko(e,t,n,i){let s;try{s=await e.readText(t)}catch(a){i.push(S("warning","DWFX_FDOC_READ_FAILED",`Failed to read fixed document ${t}: ${String(a)}`,t));return}const o=G(s,t),r=Array.from(o.getElementsByTagName("*")).filter(a=>k(a)==="PageContent");for(const a of r){const c=a.getAttribute("Source");if(!c)continue;let h=Lt(t,bt(c));const l=c.startsWith("#")?c.slice(1):void 0;if(l){const g=(await e.getRelationships(t)).find(b=>b.id===l);g&&(h=g.resolvedTarget)}h=bt(h);const d=a.getAttribute("Width"),u=a.getAttribute("Height"),f=d&&u?{width:Number(d),height:Number(u)}:await Tn(e,h,i),m=n.length+1;n.push({id:`page-${m}`,name:`Page ${m}`,kind:"xps-fixed-page",sourcePath:h,width:Number.isFinite(f.width)&&f.width>0?f.width:1e3,height:Number.isFinite(f.height)&&f.height>0?f.height:1e3,diagnostics:[]})}}async function Tn(e,t,n){try{const i=bt(t),s=tt(await e.readBytes(i)),o=G(s,i),r=o.documentElement??Array.from(o.getElementsByTagName("*"))[0];return{width:Number(r?.getAttribute("Width")??1e3),height:Number(r?.getAttribute("Height")??1e3)}}catch(i){return n.push(S("warning","DWFX_PAGE_SIZE_FAILED",`Failed to read FixedPage size: ${String(i)}`,t)),{width:1e3,height:1e3}}}function Eo(e,t){const n=G(e,t);return Array.from(n.getElementsByTagName("*")).filter(s=>k(s)==="Section").map((s,o)=>{const r=pt(s,"name")??`section-${o+1}`,a=pt(s,"title")??r,c=pt(s,"type")??"",h=Array.from(s.getElementsByTagName("*")).filter(l=>k(l).endsWith("Resource")||k(l)==="Resource").map(l=>{const d=pt(l,"href")??"";return{path:B(bt(d)),role:pt(l,"role"),mediaType:pt(l,"mime"),title:pt(l,"title"),size:Io(l,"size")}}).filter(l=>l.path.length>0);return{type:c,name:r,title:a,resources:h}}).filter(s=>s.resources.length>0||s.type.length>0)}function Ao(e){return/(^|\.)ePlot$/i.test(e.type)||/com\.autodesk\.dwf\.ePlot$/i.test(e.type)}function No(e){return/(^|\.)eModel$/i.test(e.type)||/com\.autodesk\.dwf\.eModel$/i.test(e.type)}function To(e,t){const n=e.resources.filter(r=>/^(image\/|application\/octet-stream)/i.test(r.mediaType??"")||/\.(png|jpe?g|gif|bmp)$/i.test(r.path)),i=n.filter(r=>/thumbnail|preview/i.test(r.role??"")||/thumbnail|preview/i.test(r.title??"")),s=i.length>0?i:n.filter(r=>!/texture/i.test(r.role??""));return(s.length>0?s:n).filter(r=>t.has(r.path)).sort((r,a)=>si(a)-si(r))[0]}function si(e){let t=e.size??0;return/thumbnail/i.test(e.role??"")&&(t+=5e6),/preview/i.test(e.role??"")&&(t+=4e6),/icon/i.test(e.role??"")&&(t-=2e6),/texture/i.test(e.role??"")&&(t-=3e6),t}function pt(e,t){return e.getAttribute(t)??e.getAttribute(`dwf:${t}`)??e.getAttribute(`ePlot:${t}`)??e.getAttribute(`eModel:${t}`)??Array.from(e.attributes).find(n=>n.localName===t)?.value??void 0}function Io(e,t){const n=pt(e,t);if(n===void 0)return;const i=Number(n);return Number.isFinite(i)?i:void 0}function ri(e,t){return e.resources.find(n=>t.test(n.role??""))}function bt(e){return B((e.split(/[?#]/)[0]??e).replace(/^\//,""))}function ae(e){const t=bt(e),n=t.lastIndexOf("/");return n>=0?t.slice(n+1):t}function Fo(e){if(e.length>=24&&e[0]===137&&e[1]===80&&e[2]===78&&e[3]===71)return{width:oi(e,16),height:oi(e,20)};if(e.length>=4&&e[0]===255&&e[1]===216){let t=2;for(;t+9<e.length;){if(e[t]!==255){t++;continue}const n=e[t+1];for(t+=2;e[t]===255;)t++;if(n===217||n===218||t+2>e.length)break;const i=e[t]<<8|e[t+1];if(i<2||t+i>e.length)break;if(n>=192&&n<=195||n>=197&&n<=199||n>=201&&n<=203||n>=205&&n<=207)return{width:e[t+5]<<8|e[t+6],height:e[t+3]<<8|e[t+4]};t+=i}}}function oi(e,t){return(e[t]<<24|e[t+1]<<16|e[t+2]<<8|e[t+3])>>>0}function wt(e){const t=_o(e),n=[];let i=0,s="",o=0,r=0,a=0,c=0,h,l;const d=()=>i<t.length&&t[i]?.kind==="num",u=()=>{const m=t[i++];if(!m||m.kind!=="num")throw new Error(`Expected number in path data near token ${i}.`);return m.value},f=()=>u()!==0;for(;i<t.length;){const m=t[i];if(!m)break;if(m.kind==="cmd"){if(s=m.value,i++,s==="F"||s==="f"){d()&&u();continue}}else if(!s){i++;continue}const p=s===s.toLowerCase(),g=s.toUpperCase(),b=y=>p?o+y:y,w=y=>p?r+y:y;if(g==="M"){if(!d())continue;const y=b(u()),C=w(u());for(n.push({type:"M",x:y,y:C}),o=a=y,r=c=C,h=l=void 0;d();){const M=b(u()),A=w(u());n.push({type:"L",x:M,y:A}),o=M,r=A}}else if(g==="L")for(;d();){const y=b(u()),C=w(u());n.push({type:"L",x:y,y:C}),o=y,r=C,h=l=void 0}else if(g==="H")for(;d();){const y=b(u());n.push({type:"L",x:y,y:r}),o=y,h=l=void 0}else if(g==="V")for(;d();){const y=w(u());n.push({type:"L",x:o,y}),r=y,h=l=void 0}else if(g==="C")for(;d();){const y=b(u()),C=w(u()),M=b(u()),A=w(u()),N=b(u()),F=w(u());n.push({type:"C",x1:y,y1:C,x2:M,y2:A,x:N,y:F}),o=N,r=F,h={x:M,y:A},l=void 0}else if(g==="S")for(;d();){const y=h?{x:2*o-h.x,y:2*r-h.y}:{x:o,y:r},C=b(u()),M=w(u()),A=b(u()),N=w(u());n.push({type:"C",x1:y.x,y1:y.y,x2:C,y2:M,x:A,y:N}),o=A,r=N,h={x:C,y:M},l=void 0}else if(g==="Q")for(;d();){const y=b(u()),C=w(u()),M=b(u()),A=w(u());n.push({type:"Q",x1:y,y1:C,x:M,y:A}),o=M,r=A,l={x:y,y:C},h=void 0}else if(g==="T")for(;d();){const y=l?{x:2*o-l.x,y:2*r-l.y}:{x:o,y:r},C=b(u()),M=w(u());n.push({type:"Q",x1:y.x,y1:y.y,x:C,y:M}),o=C,r=M,l=y,h=void 0}else if(g==="A")for(;d();){const y=Math.abs(u()),C=Math.abs(u()),M=u(),A=f(),N=f(),F=b(u()),$=w(u());n.push({type:"A",rx:y,ry:C,rotation:M,largeArc:A,sweep:N,x:F,y:$}),o=F,r=$,h=l=void 0}else g==="Z"?(n.push({type:"Z"}),o=a,r=c,h=l=void 0):i++}return n}function Ce(e,t){let n=0,i=0,s=0,o=0;for(const r of t)switch(r.type){case"M":e.moveTo(r.x,r.y),n=s=r.x,i=o=r.y;break;case"L":e.lineTo(r.x,r.y),n=r.x,i=r.y;break;case"C":e.bezierCurveTo(r.x1,r.y1,r.x2,r.y2,r.x,r.y),n=r.x,i=r.y;break;case"Q":e.quadraticCurveTo(r.x1,r.y1,r.x,r.y),n=r.x,i=r.y;break;case"A":{const a=vs(n,i,r.rx,r.ry,r.rotation,r.largeArc,r.sweep,r.x,r.y,32);for(const[c,h]of a)e.lineTo(c,h);n=r.x,i=r.y;break}case"Z":e.closePath(),n=s,i=o;break}}function Re(e,t=.75){const n=[];let i,s=0,o=0,r=0,a=0;const c=()=>(i||(i={points:[],closed:!1},n.push(i)),i),h=(l,d)=>{const u=c(),f=u.points.length;f>=2&&Math.abs(u.points[f-2]-l)<1e-9&&Math.abs(u.points[f-1]-d)<1e-9||u.points.push(l,d)};for(const l of e)switch(l.type){case"M":i={points:[l.x,l.y],closed:!1},n.push(i),s=r=l.x,o=a=l.y;break;case"L":h(l.x,l.y),s=l.x,o=l.y;break;case"C":{const d=ai(s,o,l.x,l.y,t);for(let u=1;u<=d;u++){const f=u/d,m=ci(s,l.x1,l.x2,l.x,f),p=ci(o,l.y1,l.y2,l.y,f);h(m,p)}s=l.x,o=l.y;break}case"Q":{const d=ai(s,o,l.x,l.y,t);for(let u=1;u<=d;u++){const f=u/d,m=hi(s,l.x1,l.x,f),p=hi(o,l.y1,l.y,f);h(m,p)}s=l.x,o=l.y;break}case"A":{const d=vs(s,o,l.rx,l.ry,l.rotation,l.largeArc,l.sweep,l.x,l.y,Math.max(8,Math.ceil(24/Math.max(t,.1))));for(const[u,f]of d)h(u,f);s=l.x,o=l.y;break}case"Z":i&&(h(r,a),i.closed=!0),s=r,o=a;break}return n.filter(l=>l.points.length>=2)}function _o(e){const t=[],n=/([MmLlHhVvCcSsQqTtAaZzFf])|([-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?)/g;let i;for(;(i=n.exec(e))!==null;)i[1]?t.push({kind:"cmd",value:i[1]}):i[2]&&t.push({kind:"num",value:Number(i[2])});return t}function ai(e,t,n,i,s){const o=Math.hypot(n-e,i-t);return Math.max(4,Math.min(96,Math.ceil(o/Math.max(1.5,s*6))))}function ci(e,t,n,i,s){const o=1-s;return o*o*o*e+3*o*o*s*t+3*o*s*s*n+s*s*s*i}function hi(e,t,n,i){const s=1-i;return s*s*e+2*s*i*t+i*i*n}function vs(e,t,n,i,s,o,r,a,c,h){if(n===0||i===0||Math.abs(e-a)<1e-9&&Math.abs(t-c)<1e-9)return[[a,c]];const l=s*Math.PI/180,d=Math.cos(l),u=Math.sin(l),f=(e-a)/2,m=(t-c)/2;let p=d*f+u*m,g=-u*f+d*m;n=Math.abs(n),i=Math.abs(i);const b=p*p/(n*n)+g*g/(i*i);if(b>1){const at=Math.sqrt(b);n*=at,i*=at}const w=n*n,y=i*i,C=p*p,M=g*g;let A=(w*y-w*M-y*C)/(w*M+y*C);A=Math.max(0,A);const N=(o===r?-1:1)*Math.sqrt(A),F=N*(n*g/i),$=N*(-i*p/n),At=d*F-u*$+(e+a)/2,Vt=u*F+d*$+(t+c)/2,st=(p-F)/n,rt=(g-$)/i,yt=(-p-F)/n,Gt=(-g-$)/i;let ee=Math.atan2(rt,st),ot=Math.atan2(st*Gt-rt*yt,st*yt+rt*Gt);!r&&ot>0&&(ot-=2*Math.PI),r&&ot<0&&(ot+=2*Math.PI);const jt=Math.max(2,Math.min(h,Math.ceil(Math.abs(ot)/(Math.PI/16)))),xt=[];for(let at=1;at<=jt;at++){const nt=ee+ot*at/jt,ne=d*n*Math.cos(nt)-u*i*Math.sin(nt)+At,Oe=u*n*Math.cos(nt)+d*i*Math.sin(nt)+Vt;xt.push([ne,Oe])}return xt}function Cs(e,t){const n=tt(e),i=[],s=[];let o="#000000",r,a=1,c=0;if(/<svg[\s>]/i.test(n)){const d=n.matchAll(/<path\b[^>]*\bd=["']([^"']+)["'][^>]*>/gi);for(const f of d){const m=f[0],p=f[1];s.push({type:"path",commands:wt(p),stroke:It(m,"stroke")??o,fill:It(m,"fill")??void 0,lineWidth:Number(It(m,"stroke-width")??a)}),c++}const u=n.matchAll(/<(polyline|polygon)\b[^>]*\bpoints=["']([^"']+)["'][^>]*>/gi);for(const f of u){const m=f[0],p=H(f[2]);p.length>=4&&s.push({type:f[1].toLowerCase()==="polygon"?"polygon":"polyline",points:p,stroke:It(m,"stroke")??o,fill:It(m,"fill")??void 0,lineWidth:Number(It(m,"stroke-width")??a)}),c++}}const h=n.split(/\r?\n/);for(const d of h){const u=d.trim();if(!u||u.startsWith("#")||u.startsWith("//"))continue;const f=u.toLowerCase(),m=H(u);if(/^(color|stroke|pen|wt_color)\b/i.test(u)){o=di(u)??o,c++;continue}if(/^(fill|brush|wt_fill)\b/i.test(u)){r=di(u)??r??"#000000",c++;continue}if(/^(nofill|fillnone)\b/i.test(u)){r=void 0,c++;continue}if(/^(linewidth|lineweight|weight|wt_line_weight)\b/i.test(u)&&m.length>=1){a=Math.max(.2,m[0]),c++;continue}if((/^path\b/i.test(u)||/\bPath\s*Data\b/.test(u))&&/[MmLlCcQqAaZz]/.test(u)){const p=u.replace(/^path\b[:=]?/i,"").replace(/^.*?Data\s*=\s*/i,"").replace(/^['"]|['"]$/g,"");s.push({type:"path",commands:wt(p),stroke:o,fill:r,lineWidth:a}),c++;continue}if(/^(line|wt_line)\b/i.test(u)&&m.length>=4){s.push({type:"polyline",points:m.slice(0,4),stroke:o,lineWidth:a}),c++;continue}if((/^(polyline|wt_polyline|pline)\b/i.test(u)||/\bPolyline\b/i.test(u))&&m.length>=4){s.push({type:"polyline",points:li(m),stroke:o,lineWidth:a}),c++;continue}if((/^(polygon|wt_polygon)\b/i.test(u)||/\bPolygon\b/i.test(u))&&m.length>=6){s.push({type:"polygon",points:li(m),stroke:o,fill:r??"#000000",lineWidth:a}),c++;continue}if(/^(rect|rectangle|wt_rectangle)\b/i.test(u)&&m.length>=4){s.push({type:"rect",x:m[0],y:m[1],width:m[2],height:m[3],stroke:o,fill:r,lineWidth:a}),c++;continue}if(/^(circle|ellipse)\b/i.test(u)&&m.length>=3){const[p,g,b]=m,w=72,y=[];for(let C=0;C<=w;C++){const M=Math.PI*2*C/w;y.push(p+Math.cos(M)*b,g+Math.sin(M)*b)}s.push({type:"polygon",points:y,stroke:o,fill:r,lineWidth:a}),c++;continue}if(/^(text|wt_text)\b/i.test(u)&&m.length>=2){const p=m[0],g=m[1],b=m.length>=3?m[2]:12,y=u.match(/["']([^"']+)["']/)?.[1]??u.replace(/^(text|wt_text)\b/i,"").replace(/[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?/g,"").trim();s.push({type:"text",x:p,y:g,size:b,text:y||"Text",fill:o}),c++;continue}(f.includes("wt_")||f.includes("whip")||f.includes("dwf"))&&c++}const l=Lo(s);return s.length===0?i.push(S("warning","W2D_TEXT_NO_GEOMETRY",`Textual W2D parser did not find supported geometry commands in ${t}.`,t)):i.push(S("info","W2D_TEXT_PARSED",`Parsed ${s.length} supported vector primitives from ${t}.`,t)),c===0&&i.push(S("warning","W2D_TEXT_UNKNOWN_DIALECT","The file is textual, but does not look like the supported WHIP/W2D textual subset.",t)),{primitives:s,diagnostics:i,bounds:l}}function li(e){return e.length>=5&&Number.isInteger(e[0])&&e.length-1===e[0]*2?e.slice(1):e}function It(e,t){return e.match(new RegExp(`${t}=["']([^"']+)["']`,"i"))?.[1]}function di(e){const t=e.match(/#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})\b/i)?.[0];if(t)return t;const n=H(e);return n.length>=3?`rgb(${Math.max(0,Math.min(255,n[0]))}, ${Math.max(0,Math.min(255,n[1]))}, ${Math.max(0,Math.min(255,n[2]))})`:e.match(/\b(black|white|red|green|blue|yellow|cyan|magenta|gray|grey)\b/i)?.[1]}function Lo(e){let t=1/0,n=1/0,i=-1/0,s=-1/0;const o=(r,a)=>{t=Math.min(t,r),n=Math.min(n,a),i=Math.max(i,r),s=Math.max(s,a)};for(const r of e)if("points"in r)for(let a=0;a+1<r.points.length;a+=2)o(r.points[a],r.points[a+1]);else if(r.type==="rect")o(r.x,r.y),o(r.x+r.width,r.y+r.height);else if(r.type==="text")o(r.x,r.y),o(r.x+r.text.length*(r.size??12)*.6,r.y+(r.size??12));else if(r.type==="path")for(const a of r.commands)"x"in a&&"y"in a&&o(a.x,a.y),"x1"in a&&"y1"in a&&o(a.x1,a.y1),"x2"in a&&"y2"in a&&o(a.x2,a.y2);return Number.isFinite(t)?{minX:t,minY:n,maxX:i,maxY:s}:void 0}const Do=1,Bo=2,Ro=4,Wo=8,Oo=16,$o=32,zo=64,Uo=128,Xo=256,Ho=512,Yo=1024;function Vo(e,t){return new Go(e,t).parse()}class Go{constructor(t,n){this.bytes=t,this.sourcePath=n,this.pos=0,this.current={x:0,y:0},this.primitives=[],this.diagnostics=[],this.unsupportedOpcodes=[],this.opcodes=0,this.decimalRevision=600,this.state={stroke:"#000000",fill:void 0,fillOn:!1,visible:!0,lineWidth:1,fontHeight:120,fontRotation:0,fontName:"sans-serif"},this.view=new DataView(t.buffer,t.byteOffset,t.byteLength)}parse(){for(;this.pos<this.bytes.length&&(this.eatWhitespace(),!(this.pos>=this.bytes.length));){const t=this.pos,n=this.u8();this.opcodes++;try{if(n===40){this.pos=t,this.parseExtendedAscii(t);continue}if(n===123){if(!this.parseExtendedBinary(t))break;continue}if(this.parseSingleByteOpcode(n))continue;this.unsupportedOpcodes.push({offset:t,opcode:n,message:`Unsupported/unknown W2D single-byte opcode 0x${n.toString(16).padStart(2,"0")}.`});break}catch(i){this.unsupportedOpcodes.push({offset:t,opcode:n,message:`Failed while decoding W2D opcode 0x${n.toString(16)}: ${String(i)}`});break}}if(this.primitives.length>0?this.diagnostics.push(S("info","W2D_BINARY_PARSED",`Parsed ${this.primitives.length} vector primitives from binary WHIP!/W2D stream (${this.opcodes} opcodes).`,this.sourcePath)):this.diagnostics.push(S("warning","W2D_BINARY_NO_GEOMETRY","Binary WHIP!/W2D parser did not emit supported geometry.",this.sourcePath)),this.unsupportedOpcodes.length>0){const t=this.unsupportedOpcodes[0];this.diagnostics.push(S("warning","W2D_BINARY_PARTIAL",`${this.unsupportedOpcodes.length} unsupported opcode(s); first at byte ${t.offset}: ${t.message}`,this.sourcePath))}return{primitives:this.primitives,diagnostics:this.diagnostics,bounds:qo(this.primitives),opcodes:this.opcodes,unsupportedOpcodes:this.unsupportedOpcodes}}parseSingleByteOpcode(t){switch(t){case 0:return!0;case 3:{const i=this.u8(),s=this.u8(),o=this.u8(),r=this.u8();return this.state.stroke=Qo(i,s,o,r),this.state.fillOn&&(this.state.fill=this.state.stroke),!0}case 6:return this.readBinaryFont(),!0;case 12:{const i=[this.point16Relative(),this.point16Relative()];return this.polyline(i),!0}case 16:{const i=this.pointSet16Relative();return this.pointSetPrimitive(i),!0}case 18:{const i=this.point16Relative(),s=this.u16();return this.ellipsePrimitive(i,s,s,0,0,0),!0}case 20:return this.polytriangles(this.pointSet16Relative()),!0;case 23:return this.state.lineWidth=Math.max(.2,Math.abs(this.i32())),!0;case 24:{const i=this.point32Relative(),s=fi(this.readWhipString());return this.text(i,s),this.skipComplexTextOptions(),!0}case 146:{const i=this.point32Relative(),s=this.u32(),o=this.u16(),r=this.u16();return this.ellipsePrimitive(i,s,s,o,r,0,!1),!0}case 172:return this.readCount(),!0;case 204:return this.readCount(),!0;case 228:return this.readCount(),!0}switch(String.fromCharCode(t)){case"B":return this.polyline(this.pointSet32Relative()),!0;case"C":return this.state.stroke=pi(this.readAsciiInteger()),this.state.fillOn&&(this.state.fill=this.state.stroke),!0;case"c":return this.state.stroke=pi(this.u8()),this.state.fillOn&&(this.state.fill=this.state.stroke),!0;case"E":{const i=this.readAsciiPoint(),s=this.readAsciiPoint();return this.ellipsePrimitive(i,s.x,s.y,0,0,0),!0}case"e":{const i=this.point32Relative(),s=this.u32(),o=this.u32(),r=this.u16(),a=this.u16(),c=this.u16();return this.ellipsePrimitive(i,s,o,r,a,c),!0}case"F":return this.state.fillOn=!0,this.state.fill=this.state.stroke,!0;case"f":return this.state.fillOn=!1,this.state.fill=void 0,!0;case"L":{const i=[this.readAsciiPoint(),this.readAsciiPoint()];return this.polyline(i),!0}case"l":{const i=[this.point32Relative(),this.point32Relative()];return this.polyline(i),!0}case"N":return this.i32(),!0;case"n":return this.u16(),!0;case"O":return this.current={x:this.i32(),y:this.i32()},!0;case"P":return this.pointSetPrimitive(this.pointSetAscii()),!0;case"p":return this.pointSetPrimitive(this.pointSet32Relative()),!0;case"R":{const i=this.readAsciiPoint(),s=this.readAsciiInteger();return this.ellipsePrimitive(i,s,s,0,0,0),!0}case"r":{const i=this.point32Relative(),s=this.u32();return this.ellipsePrimitive(i,s,s,0,0,0),!0}case"T":return this.polytriangles(this.pointSetAscii()),!0;case"t":return this.polytriangles(this.pointSet32Relative()),!0;case"V":return this.state.visible=!0,!0;case"v":return this.state.visible=!1,!0;case"x":{const i=this.point32Relative(),s=fi(this.readWhipString());return this.text(i,s),!0}}return!1}parseExtendedAscii(t){const{token:n,expr:i}=this.readBalancedExpression(t);switch(n){case"(W2D":{const s=i.match(/V(\d+)\.(\d+)/i);s&&(this.decimalRevision=Number(s[1])*100+Number(s[2]));break}case"(Color":{const s=mi(i);s.length>=3&&(this.state.stroke=Ko(s[0],s[1],s[2]));break}case"(LineWeight":{const s=mi(i);s.length>=1&&(this.state.lineWidth=Math.max(.2,Math.abs(s[0])));break}case"(Font":{const s=i.match(/\(Height\s+(-?\d+)/i)?.[1],o=i.match(/\(Rotation\s+(-?\d+)/i)?.[1],r=i.match(/\(Name\s+(['"])(.*?)\1/i)?.[2];s&&(this.state.fontHeight=Math.max(1,Math.abs(Number(s)))),o&&(this.state.fontRotation=Number(o)||0),r&&(this.state.fontName=r);break}case"(EndOfDWF":this.pos=this.bytes.length;break}}parseExtendedBinary(t){if(this.remaining()<6)return!1;const n=this.u32(),i=this.u16();return i===17||i===16||i===291?(this.unsupportedOpcodes.push({offset:t,opcode:`{${i.toString(16)}}`,message:"Embedded compressed WHIP block detected. This build renders uncompressed binary W2D streams and manifest markup XML; compressed nested blocks are skipped."}),this.pos=n>0&&this.pos+n<=this.bytes.length?this.pos+n:this.bytes.length,!0):n>0&&this.pos+n<=this.bytes.length?(this.pos+=n,!0):(this.unsupportedOpcodes.push({offset:t,opcode:`{${i.toString(16)}}`,message:"Unsupported extended binary WHIP object with unknown payload size."}),!1)}readBinaryFont(){const t=this.u16();t&Do&&(this.state.fontName=this.readWhipString()||this.state.fontName),t&Bo&&this.u8(),t&Ro&&this.u8(),t&Wo&&this.u8(),t&Oo&&this.u8(),t&$o&&(this.state.fontHeight=Math.max(1,Math.abs(this.i32()))),t&zo&&(this.state.fontRotation=this.u16()),t&Uo&&this.u16(),t&Xo&&this.u16(),t&Ho&&this.u16(),t&Yo&&this.i32()}skipComplexTextOptions(){this.skipScoringOption(),this.skipScoringOption();for(let t=0;t<4;t++)this.i32(),this.i32();if(this.decimalRevision>=600&&this.pos<this.bytes.length){const t=Math.max(0,this.readCount()-1);for(let n=0;n<t;n++)this.readCount()}}skipScoringOption(){const t=Math.max(0,this.readCount()-1);for(let n=0;n<t;n++)this.readCount()}pointSetPrimitive(t){this.state.fillOn?this.polygon(t,this.state.fill??this.state.stroke,this.state.stroke):this.polyline(t)}polytriangles(t){if(!(!this.state.visible||t.length<3))for(let n=0;n+2<t.length;n++)this.polygon([t[n],t[n+1],t[n+2]],this.state.stroke,void 0)}polyline(t){!this.state.visible||t.length<2||this.primitives.push({type:"polyline",points:ui(t),stroke:this.state.stroke,lineWidth:this.state.lineWidth})}polygon(t,n,i){!this.state.visible||t.length<3||this.primitives.push({type:"polygon",points:ui(t),fill:n,stroke:i,lineWidth:this.state.lineWidth})}ellipsePrimitive(t,n,i,s,o,r,a=this.state.fillOn){const c=jo(t,n,i,s,o,r);a?this.polygon(c,this.state.fill??this.state.stroke,this.state.stroke):this.polyline(c)}text(t,n){!this.state.visible||!n.trim()||this.primitives.push({type:"text",x:t.x,y:t.y,text:n,size:Math.max(10,Math.abs(this.state.fontHeight)),fill:this.state.stroke})}pointSet32Relative(){const t=this.readCount(),n=[];for(let i=0;i<t;i++)n.push(this.point32Relative());return n}pointSet16Relative(){const t=this.readCount(),n=[];for(let i=0;i<t;i++)n.push(this.point16Relative());return n}pointSetAscii(){const t=this.readAsciiInteger(),n=[];for(let i=0;i<t;i++)n.push(this.readAsciiPoint());return n}point32Relative(){const t=this.i32(),n=this.i32();return this.current={x:this.current.x+t,y:this.current.y+n},{...this.current}}point16Relative(){const t=this.i16(),n=this.i16();return this.current={x:this.current.x+t,y:this.current.y+n},{...this.current}}readAsciiPoint(){const t=this.readAsciiInteger();this.peek()===44&&this.pos++;const n=this.readAsciiInteger();return{x:t,y:n}}readAsciiInteger(){this.eatWhitespace();const t=this.pos;for((this.peek()===43||this.peek()===45)&&this.pos++;this.pos<this.bytes.length&&Zo(this.bytes[this.pos]);)this.pos++;const n=ce(this.bytes.subarray(t,this.pos)),i=Number.parseInt(n,10);return Number.isFinite(i)?i:0}readWhipString(){this.eatWhitespace();const t=this.peek();if(t===123){this.pos++;const i=this.i32(),s=Math.max(0,i*2);if(this.pos+s>this.bytes.length)throw new Error("Truncated binary WHIP string.");const o=new TextDecoder("utf-16le").decode(this.bytes.subarray(this.pos,this.pos+s));return this.pos+=s,this.peek()===125&&this.pos++,o}if(t===34||t===39){const i=this.u8(),s=[];let o=!1;for(;this.pos<this.bytes.length;){const r=this.u8();if(o)s.push(r),o=!1;else if(r===92)s.push(r),o=!0;else{if(r===i)break;s.push(r)}}return ce(new Uint8Array(s))}const n=this.pos;for(;this.pos<this.bytes.length;){const i=this.bytes[this.pos];if(i===32||i===9||i===10||i===13||i===41)break;this.pos++}return ce(this.bytes.subarray(n,this.pos))}readBalancedExpression(t){this.pos=t;let n=0,i=0,s=!1;for(;this.pos<this.bytes.length;){const a=this.u8();if(i)s?s=!1:a===92?s=!0:a===i&&(i=0);else if(a===34||a===39)i=a;else if(a===40)n++;else if(a===41&&(n--,n<=0))break}const o=ce(this.bytes.subarray(t,this.pos));return{token:o.match(/^\([^\s()]+/)?.[0]??"(",expr:o}}readCount(){const t=this.u8();return t!==0?t:256+this.u16()}eatWhitespace(){for(;this.pos<this.bytes.length;){const t=this.bytes[this.pos];if(t===32||t===9||t===10||t===13)this.pos++;else break}}remaining(){return this.bytes.length-this.pos}peek(){return this.pos<this.bytes.length?this.bytes[this.pos]:void 0}u8(){if(this.remaining()<1)throw new Error("Unexpected EOF");return this.view.getUint8(this.pos++)}i16(){if(this.remaining()<2)throw new Error("Unexpected EOF");const t=this.view.getInt16(this.pos,!0);return this.pos+=2,t}u16(){if(this.remaining()<2)throw new Error("Unexpected EOF");const t=this.view.getUint16(this.pos,!0);return this.pos+=2,t}i32(){if(this.remaining()<4)throw new Error("Unexpected EOF");const t=this.view.getInt32(this.pos,!0);return this.pos+=4,t}u32(){if(this.remaining()<4)throw new Error("Unexpected EOF");const t=this.view.getUint32(this.pos,!0);return this.pos+=4,t}}function ui(e){const t=[];for(const n of e)t.push(n.x,n.y);return t}function jo(e,t,n,i,s,o){let r=i,a=s;r===0&&a===0?a=65536:a<=r&&(a+=65536);const c=a-r,h=Math.max(16,Math.min(144,Math.ceil(Math.abs(c)/65536*96))),l=o*Math.PI*2/65536,d=Math.cos(l),u=Math.sin(l),f=[];for(let m=0;m<=h;m++){const p=(r+c*m/h)*Math.PI*2/65536,g=Math.cos(p)*t,b=Math.sin(p)*n;f.push({x:e.x+g*d-b*u,y:e.y+g*u+b*d})}return f}function fi(e){return e.replace(/\\P/gi,`
-`).replace(/\\L|\\l/g,"").replace(/\\O|\\o/g,"").replace(/\\H[-+]?\d*\.?\d+x;/gi,"").replace(/\\S([^;]+);/gi,"$1").replace(/\\[A-Za-z][^;]*;/g,"").replace(/\\~/g," ").replace(/\\\\/g,"\\").trim()}function qo(e){let t=1/0,n=1/0,i=-1/0,s=-1/0;const o=(r,a)=>{t=Math.min(t,r),n=Math.min(n,a),i=Math.max(i,r),s=Math.max(s,a)};for(const r of e)if("points"in r)for(let a=0;a+1<r.points.length;a+=2)o(r.points[a],r.points[a+1]);else if(r.type==="rect")o(r.x,r.y),o(r.x+r.width,r.y+r.height);else if(r.type==="text"){const a=r.size??12;o(r.x,r.y),o(r.x,r.y+a)}else if(r.type==="path")for(const a of r.commands)"x"in a&&"y"in a&&o(a.x,a.y),"x1"in a&&"y1"in a&&o(a.x1,a.y1),"x2"in a&&"y2"in a&&o(a.x2,a.y2);return Number.isFinite(t)?{minX:t,minY:n,maxX:i,maxY:s}:void 0}function Zo(e){return e>=48&&e<=57}function ce(e){return Array.from(e,t=>String.fromCharCode(t)).join("")}function Ko(e,t,n){return`rgb(${Dt(e)}, ${Dt(t)}, ${Dt(n)})`}function Qo(e,t,n,i){return`rgba(${Dt(e)}, ${Dt(t)}, ${Dt(n)}, ${Math.max(0,Math.min(1,i/255))})`}function Dt(e){return Math.max(0,Math.min(255,Math.round(e)))}function mi(e){return(e.match(/[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?/g)??[]).map(Number).filter(Number.isFinite)}function pi(e){return["#000000","#ff0000","#ffff00","#00ff00","#00ffff","#0000ff","#ff00ff","#000000","#808080","#c0c0c0"][e]??"#000000"}function Jo(e){return e.entries.some(t=>/\.w2d$/i.test(t.name)||/manifest\.xml$/i.test(t.name)||/descriptor\.xml$/i.test(t.name)||/\.hsf$/i.test(t.name))}async function gi(e){const t=[],n=[],i=e.entries.map(c=>({path:c.name,mediaType:Mt(c.name),size:c.uncompressedSize})),s=e.entries.find(c=>/(^|\/)manifest\.xml$/i.test(c.name));let o=[];if(s)try{o=ea(tt(await e.read(s)),s.name),t.push(S("info","DWF_MANIFEST_FOUND",`Found DWF manifest with ${o.length} section(s).`,s.name))}catch(c){t.push(S("warning","DWF_MANIFEST_PARSE_FAILED",`Failed to parse DWF manifest: ${String(c)}`,s.name))}else t.push(S("info","DWF_NO_MANIFEST","No manifest.xml was found; falling back to resource discovery."));if(o.length>0)for(const c of o){const h=Ze(c,/2d\s+streaming\s+graphics/i)??c.resources.find(m=>/\.w2d$/i.test(m.path));if(!h)continue;const l=Ze(c,/^descriptor$/i)??{path:B(c.name+"/descriptor.xml")};let d={};if(l&&e.has(l.path))try{d=na(tt(await e.read(l.path)),h.path)}catch(m){t.push(S("warning","DWF_DESCRIPTOR_PARSE_FAILED",`Failed to parse descriptor for ${c.title}: ${String(m)}`,l.path))}const u=[],f=[];try{const m=await Ps(e,h.path);f.push(...m.primitives),u.push(...m.diagnostics)}catch(m){u.push(S("warning","DWF_W2D_READ_FAILED",`Failed to read or parse ${h.path}: ${String(m)}`,h.path))}for(const m of c.resources.filter(p=>/markup\s+private/i.test(p.role??"")&&/\.xml$/i.test(p.path)))if(e.has(m.path))try{const p=ia(tt(await e.read(m.path)),m.path,d.w2dTransform);f.push(...p.primitives),u.push(...p.diagnostics)}catch(p){u.push(S("warning","DWF_MARKUP_XML_PARSE_FAILED",`Failed to parse markup private XML: ${String(p)}`,m.path))}if(f.length>0){const m=sa(f),p=m?Math.max(1,m.maxX-m.minX):d.paperWidth??1e3,g=m?Math.max(1,m.maxY-m.minY):d.paperHeight??1e3;n.push({id:`page-${n.length+1}`,name:c.title||h.title||Pe(h.path),kind:"w2d-text",sourcePath:h.path,width:p,height:g,primitives:f,bounds:m,diagnostics:u})}else{const m=Ze(c,/thumbnail|preview/i)??c.resources.find(p=>/\.(png|jpe?g|gif|bmp)$/i.test(p.path));m&&e.has(m.path)&&n.push({id:`image-${n.length+1}`,name:c.title||Pe(m.path),kind:"image",sourcePath:m.path,mediaType:m.mediaType??Mt(m.path)??"image/png",width:1e3,height:1e3,diagnostics:[...u,S("warning","DWF_IMAGE_FALLBACK","Vector stream did not produce geometry; using section thumbnail as fallback.",m.path)]})}}n.length===0&&await ta(e,n,t);const r=e.entries.filter(c=>/\.hsf$/i.test(c.name));if(r.length>0&&(t.push(S("warning","DWF_3D_HSF_DETECTED",`Detected ${r.length} HSF/3D resource(s). This frontend build reports them but does not render 3D HSF.`,r[0]?.name)),n.length===0&&n.push({id:"unsupported-3d",name:"Unsupported 3D DWF",kind:"unsupported",width:1e3,height:1e3,sourcePath:r[0]?.name,reason:"3D HSF resource detected; not implemented in this pure frontend native renderer build.",diagnostics:[S("warning","DWF_3D_HSF_UNSUPPORTED","3D HSF rendering is not implemented in this build.",r[0]?.name)]})),n.length===0){const c=ra(e);c&&n.push({id:"image-1",name:Pe(c.name),kind:"image",sourcePath:c.name,mediaType:Mt(c.name)??"image/png",width:1e3,height:1e3,diagnostics:[S("info","DWF_IMAGE_FALLBACK","No supported vector page was found; using an embedded preview/image resource.",c.name)]})}n.length===0&&n.push({id:"unsupported-1",name:"Unsupported DWF package",kind:"unsupported",width:1e3,height:1e3,reason:"No supported W2D, XPS FixedPage, or preview image resource was found.",diagnostics:[S("error","DWF_NO_SUPPORTED_PAGE","No supported renderable DWF resource was found.")]});const a={kind:"dwf",pages:[],resources:i,diagnostics:t,packageEntries:e.entries.map(c=>c.name)};return Me(a,n,e,void 0)}async function ta(e,t,n){const i=e.entries.filter(s=>/\.w2d$/i.test(s.name));for(const s of i)try{const o=await Ps(e,s.name),r=o.bounds,a=r?Math.max(1,r.maxX-r.minX):1e3,c=r?Math.max(1,r.maxY-r.minY):1e3;o.primitives.length>0&&t.push({id:`page-${t.length+1}`,name:Pe(s.name),kind:"w2d-text",sourcePath:s.name,width:a,height:c,primitives:o.primitives,bounds:r,diagnostics:o.diagnostics})}catch(o){n.push(S("warning","DWF_W2D_READ_FAILED",`Failed to read ${s.name}: ${String(o)}`,s.name))}}async function Ps(e,t){const n=await e.read(t);return ss(n)?Cs(n,t):Vo(n,t)}function ea(e,t){const n=G(e,t);return Array.from(n.getElementsByTagName("*")).filter(s=>lt(s)==="Section").map((s,o)=>{const r=R(s,"name")??`section-${o+1}`,a=R(s,"title")??r,c=Array.from(s.getElementsByTagName("*")).filter(h=>lt(h).endsWith("Resource")||lt(h)==="Resource").map(h=>({path:B(R(h,"href")??""),role:R(h,"role"),mediaType:R(h,"mime"),title:R(h,"title")})).filter(h=>h.path.length>0);return{name:r,title:a,resources:c}}).filter(s=>s.resources.length>0)}function na(e,t){const n=G(e,"descriptor.xml"),i=Array.from(n.getElementsByTagName("*")).find(c=>lt(c)==="Paper"),s={};if(i){s.paperWidth=it(i,"width"),s.paperHeight=it(i,"height");const c=R(i,"clip");c&&(s.clip=H(c))}const o=Array.from(n.getElementsByTagName("*")).filter(c=>/GraphicResource$/i.test(lt(c))||lt(c)==="GraphicResource"),r=o.find(c=>B(R(c,"href")??"")===B(t))??o.find(c=>/2d\s+streaming\s+graphics/i.test(R(c,"role")??"")),a=r?H(R(r,"transform")??""):[];return a.length>=14&&(s.w2dTransform={sx:a[0]||1,sy:a[5]||a[0]||1,tx:a[12]||0,ty:a[13]||0}),s}function ia(e,t,n){const i=G(e,t),s=[],o=(c,h)=>n?{x:(c-n.tx)/n.sx,y:(h-n.ty)/n.sy}:{x:c,y:h},r=c=>H(R(c,"Points")??R(c,"points")??"");for(const c of Array.from(i.getElementsByTagName("*"))){const h=lt(c);if(h==="Polyline2D"||h==="Leader"){const l=r(c);if(l.length>=4){const d=[];for(let f=0;f+1<l.length;f+=2){const m=o(l[f],l[f+1]);d.push(m.x,m.y)}const u=qe(c);s.push({type:"polyline",points:d,stroke:u.stroke,lineWidth:u.lineWidth})}}else if(h==="Tag"||h==="Target"){const l=it(c,"CenterX"),d=it(c,"CenterY"),u=it(c,"Width"),f=it(c,"Height");if([l,d,u,f].every(m=>m!==void 0)){const m=o(l-u/2,d-f/2),p=o(l+u/2,d-f/2),g=o(l+u/2,d+f/2),b=o(l-u/2,d+f/2),w=qe(c);s.push({type:"polygon",points:[m.x,m.y,p.x,p.y,g.x,g.y,b.x,b.y],stroke:w.stroke,fill:w.fill,lineWidth:w.lineWidth})}}else if(h==="Text"){const l=it(c,"X"),d=it(c,"Y");if(l!==void 0&&d!==void 0){const u=Array.from(c.getElementsByTagName("*")).filter(m=>lt(m)==="TextPhrase"),f=u.map(m=>R(m,"String")??"").filter(Boolean).join(`
-`);if(f){const m=o(l,d),p=it(c,"Height"),g=u.length?it(u[0],"FontHeight"):void 0,b=n&&p?Math.max(10,Math.abs(p/n.sy)):g??12,w=u.length?R(u[0],"Color"):void 0;s.push({type:"text",x:m.x,y:m.y,text:f,size:b,fill:w?yn(w):qe(c).stroke})}}}}const a=[];return s.length>0&&a.push(S("info","DWF_MARKUP_XML_PARSED",`Parsed ${s.length} markup primitive(s) from markup private XML.`,t)),{primitives:s,diagnostics:a}}function qe(e){let t="#0000ff",n,i=1;const s=Array.from(e.getElementsByTagName("*")).filter(o=>lt(o)==="FormatProperty");for(const o of s){const r=(R(o,"Name")??"").toUpperCase(),a=(R(o,"Enabled")??"true").toLowerCase()!=="false",c=R(o,"ModifierUIntVal")??R(o,"UIntValue")??R(o,"DblValue")??R(o,"IntValue");!a||c===void 0||(r==="LINECOLOR"&&(t=yn(c)),r==="FILLCOLOR"&&(n=yn(c)),r==="LINEWEIGHT"&&(i=Math.max(1,Number(c)||i)),r==="NOFILL"&&/true/i.test(R(o,"BoolValue")??"")&&(n=void 0))}return{stroke:t,fill:n,lineWidth:i}}function yn(e){const t=Number(e);if(!Number.isFinite(t))return"#000000";const n=t>>>0,i=n>>>16&255,s=n>>>8&255,o=n&255;return`rgb(${i}, ${s}, ${o})`}function sa(e){let t=1/0,n=1/0,i=-1/0,s=-1/0;const o=(r,a)=>{t=Math.min(t,r),n=Math.min(n,a),i=Math.max(i,r),s=Math.max(s,a)};for(const r of e)if("points"in r)for(let a=0;a+1<r.points.length;a+=2)o(r.points[a],r.points[a+1]);else if(r.type==="rect")o(r.x,r.y),o(r.x+r.width,r.y+r.height);else if(r.type==="text"){const a=r.size??12;o(r.x,r.y),o(r.x,r.y+a)}else if(r.type==="path")for(const a of r.commands)"x"in a&&"y"in a&&o(a.x,a.y),"x1"in a&&"y1"in a&&o(a.x1,a.y1),"x2"in a&&"y2"in a&&o(a.x2,a.y2);return Number.isFinite(t)?{minX:t,minY:n,maxX:i,maxY:s}:void 0}function Ze(e,t){return e.resources.find(n=>t.test(n.role??""))}function R(e,t){return e.getAttribute(t)??e.getAttribute(`dwf:${t}`)??e.getAttribute(`ePlot:${t}`)??Array.from(e.attributes).find(n=>n.localName===t)?.value??void 0}function lt(e){const t=e.localName||e.nodeName,n=t.indexOf(":");return n>=0?t.slice(n+1):t}function it(e,t){const n=R(e,t);if(n===void 0)return;const i=Number(n);return Number.isFinite(i)?i:void 0}function Pe(e){const t=e.lastIndexOf("/");return t>=0?e.slice(t+1):e}function ra(e){const t=e.entries.filter(n=>/\.(png|jpe?g|gif|bmp)$/i.test(n.name));if(t.length!==0)return t.sort((n,i)=>wi(i.name,i.uncompressedSize)-wi(n.name,n.uncompressedSize))[0]}function wi(e,t){let n=Math.min(t,1e7)/1e3;return/thumbnail|preview/i.test(e)&&(n+=5e3),rs(e)==="png"&&(n+=100),n}async function Ms(e,t={}){const n=await oa(e),i=t.fileName??(e instanceof File?e.name:void 0)??"document.dwf";if(wr(n)){const r=Nn.open(n,t.inflater);return Co(r)?await ii(r):Jo(r)?await gi(r):r.entries.some(a=>/\.fpage$/i.test(a.name))?await ii(r):await gi(r)}if(ss(n)){const r=Cs(n,i),a=[{id:"page-1",name:i,kind:"w2d-text",width:r.bounds?Math.max(1,r.bounds.maxX-r.bounds.minX):1e3,height:r.bounds?Math.max(1,r.bounds.maxY-r.bounds.minY):1e3,sourcePath:i,primitives:r.primitives,bounds:r.bounds,diagnostics:r.diagnostics}],c={kind:"unknown",pages:[],resources:[{path:i,mediaType:"text/plain",size:n.byteLength}],diagnostics:[S("warning","RAW_TEXT_W2D_MODE","Input is not a DWF ZIP package; opened it as a textual W2D-like vector stream.",i)],packageEntries:[i]};return Me(c,a)}const s={id:"unsupported-raw",name:i,kind:"unsupported",width:1e3,height:1e3,sourcePath:i,reason:"Input is neither a ZIP-based DWF/DWFx package nor a supported textual W2D stream.",diagnostics:[S("error","UNSUPPORTED_RAW_FORMAT","Unsupported raw DWF input. DWF 6+/DWFx ZIP packages are required for this build.",i)]},o={kind:"unknown",pages:[],resources:[{path:i,size:n.byteLength}],diagnostics:s.diagnostics,packageEntries:[i]};return Me(o,[s])}async function oa(e){return e instanceof Uint8Array?e:e instanceof ArrayBuffer?new Uint8Array(e):new Uint8Array(await e.arrayBuffer())}const bi={a:1,b:0,c:0,d:1,e:0,f:0};function et(e,t){return{a:e.a*t.a+e.c*t.b,b:e.b*t.a+e.d*t.b,c:e.a*t.c+e.c*t.d,d:e.b*t.c+e.d*t.d,e:e.a*t.e+e.c*t.f+e.e,f:e.b*t.e+e.d*t.f+e.f}}function kt(e,t,n){return[e.a*t+e.c*n+e.e,e.b*t+e.d*n+e.f]}function ke(e){if(!e)return{...bi};const t=H(e);return t.length>=6?{a:t[0],b:t[1],c:t[2],d:t[3],e:t[4],f:t[5]}:{...bi}}function j(e,t=1){if(!e||e==="Transparent"||e==="{x:Null}")return;let n=e.trim();if(n.startsWith("{")||n.includes("Brush"))return;const i=Ss(n);if(i&&(n=i),n.startsWith("sc#")){const s=H(n);if(s.length>=3){const o=s.length>=4?1:0,r=s.length>=4?s[0]:1,a=Math.round((s[o]??0)*255),c=Math.round((s[o+1]??0)*255),h=Math.round((s[o+2]??0)*255);return he(a,c,h,r*t)}}if(n.startsWith("#")){const s=n.slice(1);if(s.length===3){const o=parseInt(s[0]+s[0],16),r=parseInt(s[1]+s[1],16),a=parseInt(s[2]+s[2],16);return he(o,r,a,t)}if(s.length===6)return he(parseInt(s.slice(0,2),16),parseInt(s.slice(2,4),16),parseInt(s.slice(4,6),16),t);if(s.length===8){const o=parseInt(s.slice(0,2),16)/255;return he(parseInt(s.slice(2,4),16),parseInt(s.slice(4,6),16),parseInt(s.slice(6,8),16),o*t)}}return/^rgba?\(/i.test(n),n}function Bt(e,t=4278190080){if(!e)return t;const n=e.trim(),i=n.match(/^rgba?\(([^)]+)\)/i);if(i){const o=i[1].split(",").map(l=>l.trim()),r=Number(o[0]??0),a=Number(o[1]??0),c=Number(o[2]??0),h=o[3]===void 0?1:Number(o[3]);return Ke(r,a,c,Math.round(h*255))}if(n.startsWith("#")){const o=n.slice(1);if(o.length===6)return Ke(parseInt(o.slice(0,2),16),parseInt(o.slice(2,4),16),parseInt(o.slice(4,6),16),255);if(o.length===8)return Ke(parseInt(o.slice(2,4),16),parseInt(o.slice(4,6),16),parseInt(o.slice(6,8),16),parseInt(o.slice(0,2),16))}const s=Ss(n);return s?Bt(s,t):t}function Ke(e,t,n,i){return e=Ct(e),t=Ct(t),n=Ct(n),i=Ct(i),e&255|(t&255)<<8|(n&255)<<16|(i&255)<<24}function he(e,t,n,i){return`rgba(${Ct(e)}, ${Ct(t)}, ${Ct(n)}, ${Math.max(0,Math.min(1,i))})`}function Ct(e){return Math.max(0,Math.min(255,Math.round(e)))}function Ss(e){switch(e.toLowerCase()){case"black":return"#000000";case"white":return"#ffffff";case"red":return"#ff0000";case"green":return"#008000";case"blue":return"#0000ff";case"yellow":return"#ffff00";case"cyan":return"#00ffff";case"magenta":return"#ff00ff";case"gray":case"grey":return"#808080";case"transparent":return"#00000000";default:return}}function Ee(e){const t=e.margin??24,n=Math.max(1,e.canvasWidth-t*2),i=Math.max(1,e.canvasHeight-t*2),o=Math.min(n/Math.max(1,e.pageWidth),i/Math.max(1,e.pageHeight))*(e.zoom??1),r=(e.canvasWidth-e.pageWidth*o)/2+(e.panX??0)-(e.sourceMinX??0)*o,a=(e.canvasHeight-e.pageHeight*o)/2+(e.panY??0)-(e.sourceMinY??0)*o;return{a:o,b:0,c:0,d:o,e:r,f:a}}function In(e,t,n,i=1,s=0,o=0){const r=e.bounds,a=r?.minX??0;r?.minY;const c=r?.maxY??e.height,h=r?Math.max(1,r.maxX-r.minX):e.width,l=r?Math.max(1,r.maxY-r.minY):e.height,d=24,u=Math.max(1,t-d*2),f=Math.max(1,n-d*2),m=Math.min(u/Math.max(1,h),f/Math.max(1,l))*i,p=(t-h*m)/2+s,g=(n-l*m)/2+o;return{a:m,b:0,c:0,d:-m,e:p-a*m,f:g+c*m}}function Ht(e){const t=Math.hypot(e.a,e.b),n=Math.hypot(e.c,e.d);return Math.max(1e-12,(t+n)*.5)}function We(e){const t=e.getBoundingClientRect?.(),n=t&&t.width>0?t.width:Number(e.style.width?.replace("px",""))||e.width;return Math.max(1,e.width/Math.max(1,n))}function Ut(e,t,n={},i){const s=Ht(t),o=Math.max(0,Math.abs(e||0)*s),r=n.lineWeightMode??"adaptive";if(r==="physical")return Math.max(1e-6,Math.abs(e||1));const a=Math.max(1,i.dpr||1),c=Math.max(.25,(n.minStrokeCssPx??.55)*a);if(r==="hairline")return c/s;const h=Math.max(.05,i.zoom??1),l=n.maxOverviewStrokeCssPx??1.15,d=h<=1?l:Math.min(24,l*(1+Math.log2(h)*1.6)),u=Math.max(c,d*a);return Math.max(c,Math.min(o,u))/s}function ks(e,t,n={},i){if((n.lineWeightMode??"adaptive")==="physical")return!0;const s=Math.max(1,i.dpr||1),o=n.minTextCssPx??3.5;return Math.abs(e*Ht(t))>=o*s}function Es(e,t,n={},i){if(!e||(n.lineWeightMode??"adaptive")==="physical")return!0;const s=Math.max(1,i.dpr||1),o=Math.max(0,n.minFilledAreaCssPx??.12)*s*s;if(o<=0)return!0;const r=le(t,e.minX,e.minY),a=le(t,e.maxX,e.minY),c=le(t,e.maxX,e.maxY),h=le(t,e.minX,e.maxY),l=[r[0],a[0],c[0],h[0]],d=[r[1],a[1],c[1],h[1]];return(Math.max(...l)-Math.min(...l))*(Math.max(...d)-Math.min(...d))>=o}function le(e,t,n){return[e.a*t+e.c*n+e.e,e.b*t+e.d*n+e.f]}class As{constructor(t={}){this.fbPtr=0,this.fbBytes=0,this.width=0,this.height=0,this.wasmUrl=t.wasmUrl??"./public/dwfv-render.wasm"}async init(){if(this.exports)return;const t=await fetch(this.wasmUrl);if(!t.ok)throw new Error(`Failed to load WASM raster backend: ${t.status} ${t.statusText}`);const n=await t.arrayBuffer(),i=await WebAssembly.instantiate(n,{});this.exports=i.instance.exports}begin(t,n,i="#ffffff"){const s=this.requireExports();this.width=Math.max(1,Math.floor(t)),this.height=Math.max(1,Math.floor(n)),this.fbBytes=this.width*this.height*4,s.dwfv_reset_heap(),this.fbPtr=s.dwfv_alloc(this.fbBytes),this.ensureMemory(this.fbPtr+this.fbBytes),s.dwfv_clear(this.fbPtr,this.width,this.height,Bt(i,4294967295))}drawPolyline(t,n,i,s=1){const o=this.requireExports();if(t.length<4||!i)return;const r=Math.floor(t.length/2),a=this.allocF32(r*2),c=new Float32Array(o.memory.buffer,a,r*2);for(let h=0;h<r;h++){const[l,d]=kt(n,t[h*2],t[h*2+1]);c[h*2]=l,c[h*2+1]=d}o.dwfv_draw_polyline(this.fbPtr,this.width,this.height,a,r,Bt(i,4278190080),Math.max(1,s))}drawPolygon(t,n,i){const s=this.requireExports();if(t.length<6||!i)return;const o=Math.floor(t.length/2),r=this.allocF32(o*2),a=new Float32Array(s.memory.buffer,r,o*2);for(let c=0;c<o;c++){const[h,l]=kt(n,t[c*2],t[c*2+1]);a[c*2]=h,a[c*2+1]=l}s.dwfv_draw_polygon(this.fbPtr,this.width,this.height,r,o,Bt(i,4278190080))}toImageData(){const t=this.requireExports(),n=new Uint8ClampedArray(t.memory.buffer,this.fbPtr,this.fbBytes);return new ImageData(new Uint8ClampedArray(n),this.width,this.height)}allocF32(t){const n=this.requireExports(),i=t*4,s=n.dwfv_alloc(i);return this.ensureMemory(s+i),s}ensureMemory(t){const n=this.requireExports(),i=65536,s=n.memory.buffer.byteLength;t>s&&n.memory.grow(Math.ceil((t-s)/i))}requireExports(){if(!this.exports)throw new Error("WASM backend is not initialized. Call init() first.");return this.exports}}const Ae=12,yi=128*1024*1024,aa=4,ca={a:1,b:0,c:0,d:1,e:0,f:0};class ha{constructor(t){this.scenes=new Map,this.gpuBytes=0,this.tick=0,this.canvas=t??document.createElement("canvas");const n=this.canvas.getContext("webgl",{alpha:!1,antialias:!0,depth:!1,stencil:!1,preserveDrawingBuffer:!0,powerPreference:"high-performance"});if(!n)throw new Error("WebGLRenderingContext is not available.");this.gl=n,this.program=Sa(n,ka,Ea),this.aPos=n.getAttribLocation(this.program,"a_pos"),this.aColor=n.getAttribLocation(this.program,"a_color");const i=n.getUniformLocation(this.program,"u_matrix"),s=n.getUniformLocation(this.program,"u_viewport");if(this.aPos<0||this.aColor<0||!i||!s)throw new Error("Failed to resolve WebGL shader locations.");this.uMatrix=i,this.uViewport=s}render(t,n,i,s={}){const o=[];if(i.width<=0||i.height<=0)return{commands:0,warnings:o,gpuBytes:this.gpuBytes,vertexCount:0,pathCount:0,cacheHit:!0};this.resize(i.width,i.height);const r=Ee({canvasWidth:this.canvas.width,canvasHeight:this.canvas.height,pageWidth:t.width,pageHeight:t.height,zoom:s.zoom,panX:s.panX,panY:s.panY}),a={dpr:We(i),zoom:s.zoom??1},c=wa(t,r,s);let h=this.scenes.get(c);const l=!!h;if(!h){const f=la(n);h=this.compileScene(t,c,f,r,s,a),this.scenes.set(c,h),this.gpuBytes+=h.gpuBytes,this.evictIfNeeded(s),h=this.scenes.get(c)??h}h.lastUsed=++this.tick;const d=this.gl,u=Ma(s.background??"#ffffff");if(d.viewport(0,0,this.canvas.width,this.canvas.height),d.disable(d.DEPTH_TEST),d.disable(d.CULL_FACE),d.enable(d.BLEND),d.blendFunc(d.SRC_ALPHA,d.ONE_MINUS_SRC_ALPHA),d.clearColor(u[0],u[1],u[2],u[3]),d.clear(d.COLOR_BUFFER_BIT),d.useProgram(this.program),d.bindBuffer(d.ARRAY_BUFFER,h.buffer),d.enableVertexAttribArray(this.aPos),d.vertexAttribPointer(this.aPos,2,d.FLOAT,!1,Ae,0),d.enableVertexAttribArray(this.aColor),d.vertexAttribPointer(this.aColor,4,d.UNSIGNED_BYTE,!0,Ae,8),d.uniform4f(this.uMatrix,r.a,r.b,r.c,r.d),d.uniform4f(this.uViewport,r.e,r.f,this.canvas.width,this.canvas.height),d.drawArrays(d.TRIANGLES,0,h.vertexCount),s.compositeToTarget??!0){const f=i.getContext("2d");if(!f)throw new Error("CanvasRenderingContext2D is not available for WebGL compositing.");f.save(),f.setTransform(1,0,0,1,0,0),f.clearRect(0,0,i.width,i.height),f.drawImage(this.canvas,0,0),f.restore()}return h.vertexCount===0&&o.push(S("warning","WEBGL_XPS_EMPTY_SCENE","WebGL XPS scene contained no drawable vector geometry; Canvas/WASM fallback may be required.",t.sourcePath)),{commands:h.pathCount,warnings:o,gpuBytes:this.gpuBytes,vertexCount:h.vertexCount,pathCount:h.pathCount,cacheHit:l}}dispose(){for(const t of this.scenes.values())this.gl.deleteBuffer(t.buffer);this.scenes.clear(),this.gpuBytes=0}resize(t,n){(this.canvas.width!==t||this.canvas.height!==n)&&(this.canvas.width=t,this.canvas.height=n)}compileScene(t,n,i,s,o,r){const a=new ua;let c=0;for(const m of i)c++,da(a,m,s,o,r);const h=a.byteLength,l=o.maxGpuCacheBytes??yi;if(h>l)throw new Error(`WebGL XPS scene buffer would require ${Ci(h)}, exceeding maxGpuCacheBytes=${Ci(l)}.`);const d=this.gl,u=d.createBuffer();if(!u)throw new Error("Failed to allocate WebGLBuffer.");d.bindBuffer(d.ARRAY_BUFFER,u),d.bufferData(d.ARRAY_BUFFER,a.toArrayBuffer(),d.STATIC_DRAW);const f=d.getError();if(f!==d.NO_ERROR)throw d.deleteBuffer(u),new Error(`WebGL XPS buffer upload failed: 0x${f.toString(16)} for ${t.sourcePath}.`);return{key:n,buffer:u,vertexCount:a.vertexCount,gpuBytes:h,pathCount:c,lastUsed:++this.tick}}evictIfNeeded(t){const n=t.maxGpuCacheBytes??yi,i=t.maxCachedScenes??aa;for(;this.scenes.size>Math.max(1,i)||this.gpuBytes>n;){let s;for(const o of this.scenes.values())(!s||o.lastUsed<s.lastUsed)&&(s=o);if(!s)break;this.scenes.delete(s.key),this.gl.deleteBuffer(s.buffer),this.gpuBytes-=s.gpuBytes}}}function la(e){const t=[];return Ns(e,ca,1,t),t}function Ns(e,t,n,i){const s=k(e),o=ba(e),r=et(t,o),a=n*Fs(v(e,"Opacity"));if(s==="Path"){const c=ya(e);if(c.length>0){const h=vi(e,"Fill",a),l=vi(e,"Stroke",a),d=Number(v(e,"StrokeThickness")??1);(h||l&&d>0)&&i.push({commands:c,matrix:r,opacity:a,fill:h,stroke:l,thickness:Number.isFinite(d)?d:1,lineStyle:Ca(e),fillRule:va(e),bounds:Pa(c)})}}for(const c of U(e))k(c).includes(".")||Ns(c,r,a,i)}function da(e,t,n,i,s){const o=et(n,t.matrix),r=Ht(t.matrix),a=Math.max(1e-6,t.thickness||1),c=Math.max(.01,Ut(a,o,i,s)*r),h=Re(t.commands,.5),l=t.fill?xn(t.fill):void 0,d=t.stroke?xn(t.stroke):void 0;if(l&&Es(t.bounds,o,i,s))for(const u of h)(u.closed||u.points.length>=6)&&fa(e,xi(u.points,t.matrix),l);if(d&&t.thickness>0)for(const u of h){const f=xi(u.points,t.matrix),m=u.closed?pa(f):f;t.lineStyle.dash.length>0?ma(e,m,c,t.lineStyle,d):Ts(e,m,c,d)}}let ua=class{constructor(){this.buffer=new ArrayBuffer(64*1024),this.view=new DataView(this.buffer),this.vertexCount=0}get byteLength(){return this.vertexCount*Ae}push(t,n,i){if(!Number.isFinite(t)||!Number.isFinite(n))return;const s=this.byteLength;this.ensure(Ae),this.view.setFloat32(s,t,!0),this.view.setFloat32(s+4,n,!0),this.view.setUint8(s+8,i.r),this.view.setUint8(s+9,i.g),this.view.setUint8(s+10,i.b),this.view.setUint8(s+11,i.a),this.vertexCount++}toArrayBuffer(){return this.buffer.slice(0,this.byteLength)}ensure(t){const n=this.byteLength+t;if(n<=this.buffer.byteLength)return;let i=this.buffer.byteLength;for(;i<n;)i*=2;const s=new ArrayBuffer(i);new Uint8Array(s).set(new Uint8Array(this.buffer,0,this.byteLength)),this.buffer=s,this.view=new DataView(this.buffer)}};function fa(e,t,n){if(t.length<3)return;const i=t[0];for(let s=1;s+1<t.length;s++){const o=t[s],r=t[s+1];ga(i,o,r)<1e-6||(e.push(i.x,i.y,n),e.push(o.x,o.y,n),e.push(r.x,r.y,n))}}function Ts(e,t,n,i){if(t.length<2)return;const s=Math.max(.05,n*.5);for(let o=0;o+1<t.length;o++)Is(e,t[o],t[o+1],s,i)}function ma(e,t,n,i,s){if(t.length<2||i.dash.length===0)return;const o=i.dash.map(d=>Math.max(.01,d*n)),r=o.reduce((d,u)=>d+u,0);if(r<=.01){Ts(e,t,n,s);return}let a=0,c=o[0],h=!0,l=(i.dashOffset*n%r+r)%r;for(;l>c;)l-=c,a=(a+1)%o.length,c=o[a],h=!h;c-=l;for(let d=0;d+1<t.length;d++){const u=t[d],f=t[d+1],m=f.x-u.x,p=f.y-u.y,g=Math.hypot(m,p);if(g<=1e-9)continue;let b=0;for(;b<g-1e-9;){const w=Math.min(c,g-b);if(h&&w>1e-9){const y=b/g,C=(b+w)/g;Is(e,{x:u.x+m*y,y:u.y+p*y},{x:u.x+m*C,y:u.y+p*C},Math.max(.05,n*.5),s)}b+=w,c-=w,c<=1e-9&&(a=(a+1)%o.length,c=o[a],h=!h)}}}function Is(e,t,n,i,s){const o=n.x-t.x,r=n.y-t.y,a=Math.hypot(o,r);if(a<=1e-9)return;const c=-r/a*i,h=o/a*i,l=t.x+c,d=t.y+h,u=t.x-c,f=t.y-h,m=n.x-c,p=n.y-h,g=n.x+c,b=n.y+h;e.push(l,d,s),e.push(u,f,s),e.push(m,p,s),e.push(l,d,s),e.push(m,p,s),e.push(g,b,s)}function xi(e,t){const n=[];for(let i=0;i+1<e.length;i+=2){const[s,o]=kt(t,e[i]??0,e[i+1]??0);n.push({x:s,y:o})}return n}function pa(e){if(e.length<2)return e;const t=e[0],n=e[e.length-1];return t.x===n.x&&t.y===n.y?e:[...e,{x:t.x,y:t.y}]}function ga(e,t,n){return Math.abs((t.x-e.x)*(n.y-e.y)-(t.y-e.y)*(n.x-e.x))}function wa(e,t,n){const i=n.lineWeightMode??"adaptive",s=i==="physical"?"physical":String(Math.round(Math.log2(Math.max(1e-12,Ht(t)))*8));return`${e.id}|${e.sourcePath}|${e.width}x${e.height}|lw:${i}:${s}`}function ba(e){let t=ke(v(e,"RenderTransform")??v(e,"Transform"));for(const s of U(e)){const o=k(s);if(o.endsWith(".RenderTransform")||o.endsWith(".Transform")){const r=U(s).find(a=>k(a)==="MatrixTransform");r&&(t=et(t,ke(v(r,"Matrix"))))}}const n=Number(v(e,"Canvas.Left")??0),i=Number(v(e,"Canvas.Top")??0);return(n||i)&&(t=et({a:1,b:0,c:0,d:1,e:n,f:i},t)),t}function ya(e){const t=v(e,"Data");if(t)return wt(t);for(const n of U(e))if(k(n)==="Path.Data")for(const i of U(n)){const s=v(i,"Figures");if(s)return wt(s)}return[]}function vi(e,t,n){const i=v(e,t);if(i)return j(i,n);const s=xa(e,t,"SolidColorBrush");if(s)return j(v(s,"Color"),n*Fs(v(s,"Opacity")))}function xa(e,t,n){const i=`${k(e)}.${t}`;for(const s of U(e))if(k(s)===i)return U(s).find(o=>k(o)===n)}function Fs(e){if(!e)return 1;const t=Number(e);return Number.isFinite(t)?Math.max(0,Math.min(1,t)):1}function va(e){const t=v(e,"Data")??"";return/F0/.test(t)?"nonzero":"evenodd"}function Ca(e){const t=(v(e,"StrokeStartLineCap")??"").toLowerCase(),n=(v(e,"StrokeEndLineCap")??"").toLowerCase(),i=(v(e,"StrokeDashCap")??"").toLowerCase(),s=t==="round"||n==="round"||i==="round"?"round":t==="square"||n==="square"||i==="square"?"square":"butt",o=(v(e,"StrokeLineJoin")??"").toLowerCase(),r=o==="round"?"round":o==="bevel"?"bevel":"miter",a=Number(v(e,"StrokeMiterLimit")??10);return{cap:s,join:r,miterLimit:Number.isFinite(a)&&a>0?a:10,dash:H(v(e,"StrokeDashArray")??"").filter(c=>Number.isFinite(c)&&c>0),dashOffset:Number(v(e,"StrokeDashOffset")??0)||0}}function Pa(e){let t=1/0,n=1/0,i=-1/0,s=-1/0;const o=(r,a)=>{!Number.isFinite(r)||!Number.isFinite(a)||(t=Math.min(t,r),n=Math.min(n,a),i=Math.max(i,r),s=Math.max(s,a))};for(const r of e)r.type==="M"||r.type==="L"?o(r.x,r.y):r.type==="C"?(o(r.x1,r.y1),o(r.x2,r.y2),o(r.x,r.y)):r.type==="Q"?(o(r.x1,r.y1),o(r.x,r.y)):r.type==="A"&&(o(r.x-r.rx,r.y-r.ry),o(r.x+r.rx,r.y+r.ry));return Number.isFinite(t)?{minX:t,minY:n,maxX:i,maxY:s}:void 0}function xn(e){const t=Bt(e,4278190080);return{r:t&255,g:t>>>8&255,b:t>>>16&255,a:t>>>24&255}}function Ma(e){const t=xn(e);return[t.r/255,t.g/255,t.b/255,t.a/255]}function Ci(e){return e<1024?`${e} B`:e<1024*1024?`${(e/1024).toFixed(1)} KiB`:`${(e/1024/1024).toFixed(1)} MiB`}function Sa(e,t,n){const i=Pi(e,e.VERTEX_SHADER,t),s=Pi(e,e.FRAGMENT_SHADER,n),o=e.createProgram();if(!o)throw new Error("Failed to create WebGLProgram.");if(e.attachShader(o,i),e.attachShader(o,s),e.linkProgram(o),e.deleteShader(i),e.deleteShader(s),!e.getProgramParameter(o,e.LINK_STATUS)){const r=e.getProgramInfoLog(o)??"unknown link error";throw e.deleteProgram(o),new Error(`WebGL program link failed: ${r}`)}return o}function Pi(e,t,n){const i=e.createShader(t);if(!i)throw new Error("Failed to create WebGLShader.");if(e.shaderSource(i,n),e.compileShader(i),!e.getShaderParameter(i,e.COMPILE_STATUS)){const s=e.getShaderInfoLog(i)??"unknown shader compile error";throw e.deleteShader(i),new Error(`WebGL shader compile failed: ${s}`)}return i}const ka=`
+const __vite__mapDeps = (
+  i,
+  m = __vite__mapDeps,
+  d = m.f ||
+    (m.f = [
+      './index-CJ2lZtZM.js',
+      './ui-vendor-C-FKu2uc.js',
+      './markdown-vendor-DldLOD9R.js',
+      './markdown-it-vendor-DL4wSELR.js',
+      './markdown-vendor-CmuYMs8x.css',
+    ]),
+) => i.map((i) => d[i]);
+import { l as Hn } from './assets-Cqo46k_X.js';
+import './icons-B5Lu0sqU.js';
+import { ad as or, b5 as rr, aQ as sr } from './index-C2avURFS.js';
+import './markdown-it-vendor-DL4wSELR.js';
+import { _ as ir } from './markdown-vendor-DldLOD9R.js';
+import './ui-vendor-C-FKu2uc.js';
+function S(e, t, n, i) {
+  return i === void 0
+    ? { level: e, code: t, message: n }
+    : { level: e, code: t, message: n, source: i };
+}
+function De(e) {
+  return (e ?? []).filter((t) => t.level !== 'info');
+}
+function ar() {
+  return globalThis.DecompressionStream;
+}
+class ns {
+  async inflateRaw(t) {
+    const n = ar();
+    if (!n)
+      throw new Error(
+        'This browser does not expose DecompressionStream. Provide a custom InflateProvider, or pre-bundle a WASM/JS inflater.',
+      );
+    try {
+      return await Yn(t, 'deflate-raw', n);
+    } catch (i) {
+      try {
+        return await Yn(t, 'deflate', n);
+      } catch {
+        throw i instanceof Error ? i : new Error(String(i));
+      }
+    }
+  }
+}
+async function Yn(e, t, n) {
+  const s = new Blob([e]).stream().pipeThrough(new n(t)),
+    o = await new Response(s).arrayBuffer();
+  return new Uint8Array(o);
+}
+const cr = new TextDecoder('utf-8');
+new TextDecoder('ascii');
+function tt(e) {
+  return cr.decode(e);
+}
+function B(e) {
+  const t = [],
+    n = e.replace(/\\/g, '/');
+  for (const i of n.split('/')) !i || i === '.' || (i === '..' ? t.pop() : t.push(i));
+  return t.join('/');
+}
+function hr(e) {
+  const t = B(e),
+    n = t.lastIndexOf('/');
+  return n < 0 ? '' : t.slice(0, n);
+}
+function Lt(e, t) {
+  if (!t) return B(e);
+  if (t.startsWith('/')) return B(t.slice(1));
+  const n = hr(e);
+  return B((n ? n + '/' : '') + t);
+}
+function Be(e) {
+  const t = e.indexOf(':');
+  return t >= 0 ? e.slice(t + 1) : e;
+}
+function k(e) {
+  return Be(e.localName || e.nodeName);
+}
+function v(e, t) {
+  return e.getAttribute(t) ?? e.getAttributeNS(null, t) ?? void 0;
+}
+function U(e) {
+  return Array.from(e.childNodes).filter((t) => t.nodeType === 1);
+}
+function G(e, t = 'document.xml') {
+  const n = Vn(e);
+  if (n) return n;
+  const i = lr(e);
+  if (i !== e) {
+    const s = Vn(i);
+    if (s) return s;
+  }
+  try {
+    return fr(i);
+  } catch (s) {
+    throw new Error(`XML parse error in ${t}: ${String(s)}`);
+  }
+}
+function Vn(e) {
+  if (!(typeof DOMParser > 'u'))
+    try {
+      const t = new DOMParser().parseFromString(e, 'application/xml');
+      return t.getElementsByTagName('parsererror')[0] ? void 0 : t;
+    } catch {
+      return;
+    }
+}
+function lr(e) {
+  let t = e;
+  return (
+    (t = t.replace(
+      /\s+xmlns:(?:schemaLocation|noNamespaceSchemaLocation)\s*=\s*("[^"]*"|'[^']*')/g,
+      '',
+    )),
+    /\s+xsi:schemaLocation\s*=/.test(t) &&
+      !/\s+xmlns:xsi\s*=/.test(t) &&
+      (t = t.replace(
+        /<([A-Za-z_][\w.:-]*)(?=\s|>|\/)/,
+        '<$1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
+      )),
+    t
+  );
+}
+class ht {
+  constructor(t, n) {
+    ((this.nodeType = 1),
+      (this.childNodes = []),
+      (this.nodeName = t),
+      (this.localName = Be(t)),
+      (this.attributes = n));
+  }
+  get textContent() {
+    return this.childNodes.map((t) => t.textContent ?? '').join('');
+  }
+  get children() {
+    return this.childNodes.filter((t) => t instanceof ht);
+  }
+  getAttribute(t) {
+    return this.attributes.find((n) => n.name === t || n.nodeName === t)?.value ?? null;
+  }
+  getAttributeNS(t, n) {
+    return this.attributes.find((i) => i.localName === n)?.value ?? null;
+  }
+  getElementsByTagName(t) {
+    const n = [],
+      i = (s) => {
+        (t === '*' || s.nodeName === t || s.localName === t) && n.push(s);
+        for (const o of s.childNodes) o instanceof ht && i(o);
+      };
+    for (const s of this.childNodes) s instanceof ht && i(s);
+    return n;
+  }
+}
+class dr {
+  constructor(t) {
+    ((this.textContent = t), (this.nodeType = 3));
+  }
+}
+class ur {
+  constructor() {
+    ((this.nodeType = 9), (this.childNodes = []));
+  }
+  get textContent() {
+    return this.childNodes.map((t) => t.textContent ?? '').join('');
+  }
+  get children() {
+    return this.childNodes.filter((t) => t instanceof ht);
+  }
+  get documentElement() {
+    return this.children[0];
+  }
+  getElementsByTagName(t) {
+    const n = [],
+      i = (s) => {
+        (t === '*' || s.nodeName === t || s.localName === t) && n.push(s);
+        for (const o of s.childNodes) o instanceof ht && i(o);
+      };
+    for (const s of this.childNodes) s instanceof ht && i(s);
+    return n;
+  }
+}
+function fr(e) {
+  const t = new ur(),
+    n = [t];
+  let i = 0;
+  for (; i < e.length; ) {
+    const s = e.indexOf('<', i);
+    if (s < 0) {
+      ze(n[n.length - 1], e.slice(i));
+      break;
+    }
+    if ((s > i && ze(n[n.length - 1], e.slice(i, s)), e.startsWith('<!--', s))) {
+      const f = e.indexOf('-->', s + 4);
+      if (f < 0) throw new Error('Unclosed XML comment.');
+      i = f + 3;
+      continue;
+    }
+    if (e.startsWith('<![CDATA[', s)) {
+      const f = e.indexOf(']]>', s + 9);
+      if (f < 0) throw new Error('Unclosed XML CDATA section.');
+      (ze(n[n.length - 1], e.slice(s + 9, f)), (i = f + 3));
+      continue;
+    }
+    if (e.startsWith('<?', s)) {
+      const f = e.indexOf('?>', s + 2);
+      if (f < 0) throw new Error('Unclosed XML processing instruction.');
+      i = f + 2;
+      continue;
+    }
+    if (e.startsWith('<!', s)) {
+      const f = e.indexOf('>', s + 2);
+      if (f < 0) throw new Error('Unclosed XML declaration.');
+      i = f + 1;
+      continue;
+    }
+    const o = mr(e, s + 1);
+    if (o < 0) throw new Error('Unclosed XML tag.');
+    let r = e.slice(s + 1, o).trim();
+    if (((i = o + 1), !r)) continue;
+    if (r[0] === '/') {
+      const f = r.slice(1).trim().split(/\s+/)[0] ?? '';
+      let m = n.pop();
+      for (; m && m instanceof ht && m.nodeName !== f && m.localName !== Be(f) && n.length > 0; )
+        m = n.pop();
+      n.length === 0 && n.push(t);
+      continue;
+    }
+    const a = r.endsWith('/');
+    a && (r = r.slice(0, -1).trim());
+    const c = r.search(/\s/),
+      h = c < 0 ? r : r.slice(0, c),
+      l = c < 0 ? '' : r.slice(c + 1),
+      d = new ht(h, pr(l)),
+      u = n[n.length - 1];
+    ((d.parentNode = u), u.childNodes.push(d), a || n.push(d));
+  }
+  return t;
+}
+function ze(e, t) {
+  if (!t) return;
+  const n = is(t);
+  n.trim().length !== 0 && e.childNodes.push(new dr(n));
+}
+function mr(e, t) {
+  let n = '';
+  for (let i = t; i < e.length; i++) {
+    const s = e[i];
+    if (n) s === n && (n = '');
+    else if (s === '"' || s === "'") n = s;
+    else if (s === '>') return i;
+  }
+  return -1;
+}
+function pr(e) {
+  const t = [],
+    n = /([^\s=]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
+  let i;
+  for (; (i = n.exec(e)); ) {
+    const s = i[1],
+      o = is(i[2] ?? i[3] ?? '');
+    t.push({ name: s, nodeName: s, localName: Be(s), value: o });
+  }
+  return t;
+}
+function is(e) {
+  return e.replace(/&(#x[0-9a-fA-F]+|#\d+|amp|lt|gt|quot|apos);/g, (t, n) =>
+    n === 'amp'
+      ? '&'
+      : n === 'lt'
+        ? '<'
+        : n === 'gt'
+          ? '>'
+          : n === 'quot'
+            ? '"'
+            : n === 'apos'
+              ? "'"
+              : n.startsWith('#x')
+                ? String.fromCodePoint(Number.parseInt(n.slice(2), 16))
+                : n.startsWith('#')
+                  ? String.fromCodePoint(Number.parseInt(n.slice(1), 10))
+                  : t,
+  );
+}
+function ss(e, t = 2048) {
+  const n = Math.min(t, e.length);
+  if (n === 0) return !0;
+  let i = 0,
+    s = 0;
+  for (let o = 0; o < n; o++) {
+    const r = e[o];
+    if (r === 0) return !1;
+    r === 9 || r === 10 || r === 13 || (r >= 32 && r <= 126) || r >= 160 ? i++ : s++;
+  }
+  return i / n > 0.85 && s < 20;
+}
+function rs(e) {
+  const t = e.split(/[?#]/)[0] ?? e,
+    n = t.lastIndexOf('/'),
+    i = t.lastIndexOf('.');
+  return i > n ? t.slice(i + 1).toLowerCase() : '';
+}
+function Mt(e) {
+  switch (rs(e)) {
+    case 'png':
+      return 'image/png';
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'gif':
+      return 'image/gif';
+    case 'bmp':
+      return 'image/bmp';
+    case 'tif':
+    case 'tiff':
+      return 'image/tiff';
+    case 'w2d':
+      return 'application/x-dwf-w2d';
+    case 'hsf':
+      return 'model/vnd.hsf';
+    case 'fpage':
+      return 'application/vnd.ms-package.xps-fixeddocumentsequence+xml';
+    case 'fdseq':
+      return 'application/vnd.ms-package.xps-fixeddocumentsequence+xml';
+    case 'fdoc':
+      return 'application/vnd.ms-package.xps-fixeddocument+xml';
+    default:
+      return;
+  }
+}
+async function mn(e, t) {
+  const n = new Blob([e], { type: t });
+  return 'createImageBitmap' in globalThis
+    ? await createImageBitmap(n)
+    : await new Promise((i, s) => {
+        const o = URL.createObjectURL(n),
+          r = new Image();
+        ((r.onload = () => {
+          (URL.revokeObjectURL(o), i(r));
+        }),
+          (r.onerror = () => {
+            (URL.revokeObjectURL(o), s(new Error('Failed to decode image')));
+          }),
+          (r.src = o));
+      });
+}
+function H(e) {
+  const t = e.match(/[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?/g);
+  return t ? t.map(Number).filter(Number.isFinite) : [];
+}
+const gr = 101010256,
+  Ue = 33639248,
+  os = 67324752;
+class Nn {
+  constructor(t, n, i, s) {
+    ((this.entryMap = new Map()),
+      (this.cache = new Map()),
+      (this.bytes = t),
+      (this.entries = n),
+      (this.archiveBase = i),
+      (this.inflater = s ?? new ns()));
+    for (const o of n) this.entryMap.set(B(o.name), o);
+  }
+  static open(t, n) {
+    const i = new DataView(t.buffer, t.byteOffset, t.byteLength),
+      s = as(i);
+    if (s < 0)
+      throw new Error(
+        'ZIP end-of-central-directory record was not found. This is not a DWF 6+/DWFx ZIP package.',
+      );
+    const o = K(i, s + 4),
+      r = K(i, s + 6);
+    if (o !== 0 || r !== 0) throw new Error('Multi-disk ZIP archives are not supported.');
+    const a = K(i, s + 10),
+      c = J(i, s + 12),
+      h = J(i, s + 16);
+    let l = 0,
+      d = h;
+    if (J(i, d) !== Ue) {
+      const m = Math.max(0, s - c - 1048576);
+      let p = -1;
+      for (let g = s - c; g >= m; g--)
+        if (g >= 0 && J(i, g) === Ue) {
+          p = g;
+          break;
+        }
+      if (p < 0) throw new Error('ZIP central directory could not be located.');
+      ((d = p), (l = d - h));
+    }
+    const u = [];
+    let f = d;
+    for (let m = 0; m < a; m++) {
+      if (J(i, f) !== Ue) throw new Error(`Bad central directory signature at ${f}.`);
+      const p = K(i, f + 8),
+        g = K(i, f + 10),
+        b = K(i, f + 12),
+        w = K(i, f + 14),
+        y = J(i, f + 16),
+        C = J(i, f + 20),
+        M = J(i, f + 24),
+        A = K(i, f + 28),
+        N = K(i, f + 30),
+        F = K(i, f + 32),
+        $ = J(i, f + 42),
+        At = t.subarray(f + 46, f + 46 + A),
+        Vt = t.subarray(f + 46 + A + N, f + 46 + A + N + F),
+        st = B(Gn(At, p)),
+        rt = Gn(Vt, p);
+      (st.endsWith('/') ||
+        u.push({
+          name: st,
+          compressedSize: C,
+          uncompressedSize: M,
+          compressionMethod: g,
+          crc32: y,
+          localHeaderOffset: $,
+          centralHeaderOffset: f - l,
+          flags: p,
+          lastModTime: b,
+          lastModDate: w,
+          comment: rt,
+        }),
+        (f += 46 + A + N + F));
+    }
+    return new Nn(t, u, l, n);
+  }
+  has(t) {
+    return this.entryMap.has(B(t));
+  }
+  get(t) {
+    return this.entryMap.get(B(t));
+  }
+  find(t) {
+    return this.entries.find(t);
+  }
+  findAll(t) {
+    return this.entries.filter(t);
+  }
+  async read(t) {
+    const n = typeof t == 'string' ? this.get(t) : t;
+    if (!n) throw new Error(`ZIP entry not found: ${t}`);
+    const i = this.cache.get(n.name);
+    if (i) return i;
+    const s = new DataView(this.bytes.buffer, this.bytes.byteOffset, this.bytes.byteLength),
+      o = this.archiveBase + n.localHeaderOffset;
+    if (J(s, o) !== os) throw new Error(`Bad local header signature for ${n.name}.`);
+    const r = K(s, o + 26),
+      a = K(s, o + 28),
+      c = o + 30 + r + a,
+      h = this.bytes.subarray(c, c + n.compressedSize);
+    let l;
+    if (n.compressionMethod === 0) l = h.slice();
+    else if (n.compressionMethod === 8) l = await this.inflater.inflateRaw(h);
+    else
+      throw new Error(`Unsupported ZIP compression method ${n.compressionMethod} for ${n.name}.`);
+    if (
+      n.uncompressedSize !== 0 &&
+      l.byteLength !== n.uncompressedSize &&
+      n.uncompressedSize < 4294967295
+    )
+      throw new Error(
+        `ZIP entry size mismatch for ${n.name}: expected ${n.uncompressedSize}, got ${l.byteLength}.`,
+      );
+    return (this.cache.set(n.name, l), l);
+  }
+}
+function wr(e) {
+  if (e.byteLength < 22) return !1;
+  const t = new DataView(e.buffer, e.byteOffset, e.byteLength);
+  return J(t, 0) === os ? !0 : as(t) >= 0;
+}
+function as(e) {
+  const t = Math.max(0, e.byteLength - 65535 - 22);
+  for (let n = e.byteLength - 22; n >= t; n--) if (J(e, n) === gr) return n;
+  return -1;
+}
+function Gn(e, t) {
+  return (t & 2048) !== 0 ? tt(e) : Array.from(e, (n) => String.fromCharCode(n)).join('');
+}
+function K(e, t) {
+  return e.getUint16(t, !0);
+}
+function J(e, t) {
+  return e.getUint32(t, !0);
+}
+async function br(e) {
+  const t = new Map(),
+    n = new Map(),
+    i = [];
+  if (e.has('[Content_Types].xml')) {
+    const r = G(tt(await e.read('[Content_Types].xml')), '[Content_Types].xml');
+    for (const a of Array.from(r.documentElement.children)) {
+      const c = k(a);
+      if (c === 'Default') {
+        const h = a.getAttribute('Extension')?.toLowerCase(),
+          l = a.getAttribute('ContentType');
+        h && l && n.set(h, l);
+      } else if (c === 'Override') {
+        const h = B((a.getAttribute('PartName') ?? '').replace(/^\//, '')),
+          l = a.getAttribute('ContentType');
+        h && l && (t.set(h, l), i.push({ partName: h, contentType: l }));
+      }
+    }
+  }
+  const s = new Map();
+  return {
+    zip: e,
+    contentTypes: t,
+    defaults: n,
+    overrides: i,
+    relationships: s,
+    resources: e.entries.map((r) => ({
+      path: r.name,
+      mediaType: jn(t, n, r.name),
+      size: r.uncompressedSize,
+    })),
+    readText: async (r) => tt(await e.read(B(r))),
+    readBytes: async (r) => e.read(B(r)),
+    getContentType: (r) => jn(t, n, r),
+    getRelationships: async (r = '') => {
+      const a = B(r),
+        c = s.get(a);
+      if (c) return c;
+      const h = yr(a);
+      if (!e.has(h)) return (s.set(a, []), []);
+      const l = tt(await e.read(h)),
+        d = G(l, h),
+        u = [];
+      for (const f of Array.from(d.documentElement.children)) {
+        if (k(f) !== 'Relationship') continue;
+        const m = f.getAttribute('Id') ?? '',
+          p = f.getAttribute('Type') ?? '',
+          g = f.getAttribute('Target') ?? '',
+          b = f.getAttribute('TargetMode') ?? void 0;
+        !m ||
+          !g ||
+          u.push({
+            id: m,
+            type: p,
+            target: g,
+            targetMode: b,
+            source: a,
+            resolvedTarget: b === 'External' ? g : Lt(a, g),
+          });
+      }
+      return (s.set(a, u), u);
+    },
+  };
+}
+function yr(e) {
+  const t = B(e);
+  if (!t) return '_rels/.rels';
+  const n = t.lastIndexOf('/');
+  return n < 0 ? `_rels/${t}.rels` : `${t.slice(0, n)}/_rels/${t.slice(n + 1)}.rels`;
+}
+function jn(e, t, n) {
+  const i = B(n),
+    s = e.get(i);
+  if (s) return s;
+  const o = i.lastIndexOf('.');
+  if (o >= 0) return t.get(i.slice(o + 1).toLowerCase());
+}
+function Me(e, t, n, i) {
+  return {
+    ...e,
+    pages: t.map((s) => ({
+      id: s.id,
+      name: s.name,
+      kind: s.kind,
+      width: s.width,
+      height: s.height,
+      sourcePath: s.sourcePath,
+      diagnostics: s.diagnostics,
+    })),
+    pageData: t,
+    zip: n,
+    opc: i,
+  };
+}
+const qn = 1,
+  Zn = 4,
+  xr = 16,
+  vr = 32,
+  Cr = 64,
+  Pr = 128,
+  Mr = 1,
+  Sr = 2,
+  kr = 4,
+  Er = 8,
+  Ar = 1,
+  Kn = 4,
+  Nr = 5,
+  Tr = 1,
+  Ir = 2,
+  Fr = 4,
+  _r = 8,
+  Lr = 16,
+  Dr = 32,
+  Br = 64,
+  Rr = 128,
+  cs = 0,
+  hs = 1,
+  pn = 2,
+  ls = 3,
+  ds = 4,
+  Wr = 5,
+  Or = 6,
+  X = -2139062144,
+  gn = -2139062145,
+  us = -2139062146;
+async function $r(e, t = {}) {
+  const n = [],
+    i = await zr(e, n, t.sourcePath),
+    s = [],
+    o = new Set(),
+    r = t.maxMeshes ?? 1e4,
+    a = t.maxTriangles ?? 1e7;
+  let c = 0,
+    h = 0;
+  for (let d = 0; d < i.length && s.length < r && h < a; d++)
+    if (i[d] === 83)
+      try {
+        const u = Xr(i, d, s.length + 1);
+        if (!u) continue;
+        const f = `${u.sourceStart}:${u.sourceEnd}`;
+        if (o.has(f)) continue;
+        (o.add(f), s.push(u), (h += u.triangleCount), (d = Math.max(d, u.sourceEnd - 1)));
+      } catch (u) {
+        const f = String(u);
+        /edgebreaker/i.test(f) && c++;
+      }
+  (c > 0 &&
+    n.push(
+      S(
+        'warning',
+        'W3D_EDGEBREAKER_PARTIAL',
+        `${c} connectivity-compressed shell candidate(s) were skipped.`,
+        t.sourcePath,
+      ),
+    ),
+    s.length === 0 &&
+      n.push(
+        S('error', 'W3D_NO_MESHES', 'No renderable W3D shell meshes were decoded.', t.sourcePath),
+      ));
+  const l = eo(s);
+  return {
+    kind: 'w3d-model',
+    title: t.title ?? '3D Model',
+    meshes: s,
+    bounds: l,
+    diagnostics: n,
+    sourcePath: t.sourcePath,
+    stats: {
+      meshCount: s.length,
+      vertexCount: s.reduce((d, u) => d + u.vertexCount, 0),
+      triangleCount: s.reduce((d, u) => d + u.triangleCount, 0),
+      decodedBytes: i.byteLength,
+      edgeCount: s.reduce((d, u) => d + Math.floor((u.edgeIndices?.length ?? 0) / 2), 0),
+      materialCount: 0,
+      textureCount: 0,
+      pmiCount: 0,
+      nodeCount: 0,
+    },
+  };
+}
+async function zr(e, t, n) {
+  const i = new ns();
+  for (let s = 0; s + 6 < e.length; s++) {
+    if (e[s] !== 120) continue;
+    const o = e[s + 1];
+    if (o !== 1 && o !== 94 && o !== 156 && o !== 218) continue;
+    const r = e.subarray(s),
+      a = Ur(r),
+      c = [];
+    (a.length > 6 && c.push({ label: 'raw-deflate-body', data: a.subarray(2, a.length - 4) }),
+      r.length > 2 && c.push({ label: 'raw-deflate-body-with-trailer', data: r.subarray(2) }),
+      c.push({ label: 'zlib-trimmed', data: a }),
+      a.length !== r.length && c.push({ label: 'zlib-with-padding', data: r }));
+    for (const h of c)
+      try {
+        return await i.inflateRaw(h.data);
+      } catch {}
+  }
+  return e;
+}
+function Ur(e) {
+  let t = e.length;
+  for (; t > 0 && e[t - 1] === 0; ) t--;
+  return t === e.length ? e : e.subarray(0, t);
+}
+function Xr(e, t, n) {
+  const i = ms(e, t + 1),
+    s = Qt(i);
+  let o = 0;
+  if (
+    ((s & Pr) !== 0 && (o = so(i)),
+    (s & vr) !== 0 || ((s & xr) === 0 && W(i), Qt(i), (o & (Mr | Sr)) !== 0))
+  )
+    return;
+  const a = (s & (qn | Cr)) !== 0 ? Qt(i) : Kn;
+  let c, h, l;
+  if (a === Nr) {
+    const m = W(i);
+    if (m <= 0 || i.pos + m > e.length || m > 1e8) throw new Error('Bad edgebreaker block length.');
+    const p = e.subarray(i.pos, i.pos + m);
+    i.pos += m;
+    const g = Hr(p);
+    if ((s & qn) === 0) {
+      const b = g.pointCount * 3;
+      if (i.pos + b * 4 > e.length)
+        throw new Error('Edgebreaker shell has no following full-resolution vertex array.');
+      ((c = Jn(e, i.pos, b)), (i.pos += b * 4));
+    } else
+      throw new Error('edgebreaker quantized-point reconstruction is not enabled for this shell.');
+    if (((h = ve(g.faces, g.pointCount)), (l = `edgebreaker-v${p[0] ?? 0}`), h.length < 3))
+      throw new Error('Empty edgebreaker face list.');
+  } else if (a === Kn) {
+    const m = W(i);
+    if (m <= 0 || m > 1e7) throw new Error('Bad uncompressed shell point count.');
+    ((c = Jn(e, i.pos, m * 3)), (i.pos += m * 3 * 4));
+    const p = Qn(i, m, (s & Zn) !== 0, !1);
+    ((h = ve(p.indices, m)), (l = 'uncompressed'));
+  } else if (a === Ar) {
+    const m = W(i);
+    if (m <= 0 || m > 1e7) throw new Error('Bad compressed shell point count.');
+    const p = (o & Er) === 0 ? fs(i, 6) : [0, 0, 0, 1, 1, 1],
+      g = Qt(i),
+      b = W(i);
+    if (b <= 0 || i.pos + b > e.length)
+      throw new Error('Bad compressed shell point payload length.');
+    ((c = Kr(e.subarray(i.pos, i.pos + b), m, g, p)), (i.pos += b));
+    const w = Qn(i, m, (s & Zn) !== 0, (o & kr) !== 0);
+    ((h = ve(w.indices, m)), (l = `quantized-${g}`));
+  } else throw new Error(`Unsupported W3D shell compression scheme ${a}.`);
+  if (h.length < 3 || c.length < 9) return;
+  const d = Qr(c, h),
+    u = Jr(c, h),
+    f = no(c);
+  return {
+    id: `w3d-mesh-${n}`,
+    name: `Mesh ${n}`,
+    positions: c,
+    normals: d,
+    indices: h,
+    edgeIndices: u,
+    vertexCount: Math.floor(c.length / 3),
+    triangleCount: Math.floor(h.length / 3),
+    bounds: f,
+    color: io(n),
+    sourceStart: t,
+    sourceEnd: i.pos,
+    decodeKind: l,
+  };
+}
+function Hr(e) {
+  if (e.byteLength < 24) throw new Error('Edgebreaker block is too short.');
+  const t = new DataView(e.buffer, e.byteOffset, e.byteLength),
+    n = e[0],
+    i = e[1],
+    s = e[2],
+    o = e[3],
+    r = t.getInt32(4, !0),
+    a = t.getInt32(8, !0);
+  t.getInt32(12, !0);
+  const c = t.getInt32(16, !0);
+  if ((t.getInt32(20, !0), n < 0 || n > 2 || i !== 0 || s < 0 || s > 3 || o < 0 || o > 3))
+    throw new Error('Unsupported edgebreaker header.');
+  if (r <= 0 || a < 0 || c <= 0) throw new Error('Invalid edgebreaker sizes.');
+  let h = n >= 1 ? 24 : 20;
+  const l = e.subarray(h, h + r);
+  if (((h += r + ti(h + r)), h + a > e.length))
+    throw new Error('Invalid edgebreaker MTable offset.');
+  const d = Yr(e.subarray(h, h + a));
+  h += a + ti(h + a);
+  const u = Vr(l, d),
+    f = jr(u.opcodePointCount, d, u.faces),
+    m = [];
+  for (const w of f) m.push(w[1], w[2], w[3]);
+  const p = m.reduce((w, y) => Math.max(w, y), -1),
+    g = m.reduce((w, y) => Math.min(w, y), c);
+  if (g < 0 || p >= c)
+    throw new Error(`Edgebreaker face index range ${g}..${p} is outside point count ${c}.`);
+  const b = [];
+  return { pointCount: c, faces: m, triangleCount: m.length / 3, diagnostics: b };
+}
+function Yr(e) {
+  const t = ms(e, 0),
+    n = W(t),
+    i = (n & Tr) !== 0 ? W(t) : 0,
+    s = (n & Ir) !== 0 ? W(t) : 0,
+    o = (n & Fr) !== 0 ? s : 0,
+    r = (n & _r) !== 0 ? W(t) : 0,
+    a = (n & Lr) !== 0 ? W(t) : 0,
+    c = Ge(t, i),
+    h = Ge(t, s),
+    l = Ge(t, o),
+    d = [];
+  let u = 0;
+  for (let w = 0; w < r; w++) ((u += W(t)), d.push(u));
+  const f = [],
+    m = new Map();
+  u = 0;
+  for (let w = 0; w < a; w += 2) {
+    const y = W(t) + u;
+    u = y;
+    const C = W(t);
+    (f.push(y, C), m.set(y, C));
+  }
+  const p = (n & Dr) !== 0 ? fs(t, 6) : void 0,
+    g = (n & Br) !== 0 ? [W(t), W(t), W(t)] : [11, 11, 11],
+    b = (n & Rr) !== 0 ? [W(t), W(t), W(t)] : [11, 11, 11];
+  return {
+    flags: n,
+    mlengths: c,
+    m2stackoffsets: h,
+    m2gateoffsets: l,
+    dummies: d,
+    patches: f,
+    patchMap: m,
+    bounding: p,
+    quantization: g,
+    normalQuantization: b,
+  };
+}
+function Vr(e, t) {
+  const n = Array.from(e),
+    i = [];
+  let s = 0,
+    o = 0;
+  for (; o < n.length; ) {
+    const { ecount: r, offsets: a } = Gr(n, o, t);
+    if (r <= 0) throw new Error(`Invalid edgebreaker boundary loop length ${r}.`);
+    const c = [],
+      h = [],
+      l = [],
+      d = [],
+      u = [];
+    for (let w = 0; w < r; w++) ((h[w] = w - 1), (c[w] = w + 1), (l[w] = s++), (d[w] = X));
+    ((h[0] = r - 1), (c[r - 1] = 0));
+    let f = 0,
+      m = 0,
+      p = r;
+    const g = [],
+      b = [];
+    for (;;) {
+      for (b.length === 0 && b.push(p++); p + 2 >= c.length; )
+        (c.push(0), h.push(0), l.push(0), d.push(X));
+      const w = u.length;
+      u.push({ start: 0, twin: X }, { start: 0, twin: X }, { start: 0, twin: X });
+      const y = [3, l[f], l[c[f]], -1];
+      (d[f] !== X && d[f] >= 0 && d[f] < u.length && (u[d[f]].twin = w),
+        (u[w].twin = d[f]),
+        (u[w].start = l[f]),
+        (u[w + 1].start = l[c[f]]));
+      const C = n[o++];
+      if (C === cs) {
+        ((y[3] = s), (u[w + 1].twin = X), (u[w + 2].twin = X), (u[w + 2].start = s));
+        const M = b.pop();
+        ((c[h[f]] = M),
+          (h[M] = h[f]),
+          (c[M] = f),
+          (h[f] = M),
+          (l[M] = l[f]),
+          (l[f] = s),
+          (d[f] = w + 1),
+          (d[M] = w + 2),
+          s++);
+      } else if (C === hs)
+        ((y[3] = l[h[f]]),
+          (u[w + 1].twin = X),
+          (u[w + 2].twin = d[h[f]]),
+          d[h[f]] !== X && d[h[f]] >= 0 && d[h[f]] < u.length && (u[d[h[f]]].twin = w + 2),
+          (u[w + 2].start = l[h[f]]),
+          (l[f] = l[h[f]]),
+          b.push(h[f]),
+          (h[f] = h[h[f]]),
+          (c[h[f]] = f),
+          (d[f] = w + 1));
+      else if (C === pn)
+        if (
+          ((y[3] = l[h[f]]),
+          (u[w + 1].twin = d[c[f]]),
+          d[c[f]] !== X && d[c[f]] >= 0 && d[c[f]] < u.length && (u[d[c[f]]].twin = w + 1),
+          (u[w + 2].twin = d[h[f]]),
+          d[h[f]] !== X && d[h[f]] >= 0 && d[h[f]] < u.length && (u[d[h[f]]].twin = w + 2),
+          (u[w + 2].start = l[h[f]]),
+          b.push(f, h[f], c[f]),
+          wn(y) && i.push(y),
+          g.length > 0)
+        )
+          f = g.pop();
+        else break;
+      else if (C === ls)
+        ((y[3] = l[c[c[f]]]),
+          (u[w + 1].twin = d[c[f]]),
+          d[c[f]] !== X && d[c[f]] >= 0 && d[c[f]] < u.length && (u[d[c[f]]].twin = w + 1),
+          (u[w + 2].twin = X),
+          (u[w + 2].start = l[c[c[f]]]),
+          b.push(c[f]),
+          (c[f] = c[c[f]]),
+          (h[c[f]] = f),
+          (d[f] = w + 2));
+      else if (C === ds) {
+        let M = f;
+        const A = (a[m] ?? 0) + 1;
+        for (let F = 0; F < A; F++) M = c[M];
+        ((y[3] = l[c[M]]),
+          (u[w + 1].twin = X),
+          (u[w + 2].twin = X),
+          (u[w + 2].start = l[c[M]]),
+          m++);
+        const N = b.pop();
+        (g.push(N),
+          (c[h[f]] = N),
+          (h[N] = h[f]),
+          (c[N] = c[M]),
+          (h[c[M]] = N),
+          (d[N] = w + 2),
+          (l[N] = l[f]),
+          (l[f] = l[c[M]]),
+          (d[f] = w + 1),
+          (h[f] = M),
+          (c[M] = f));
+      } else throw new Error(`Unsupported edgebreaker opcode ${C}.`);
+      if (C !== pn)
+        if (wn(y)) i.push(y);
+        else throw new Error('Invalid edgebreaker triangle.');
+      if (o >= n.length) break;
+    }
+  }
+  return { faces: i, opcodePointCount: s };
+}
+function Gr(e, t, n) {
+  let i = 0,
+    s = 0,
+    o = 0,
+    r = 0;
+  const a = [],
+    c = [],
+    h = [];
+  for (let l = t; l < e.length; l++) {
+    const d = e[l];
+    if (d === cs) i -= 1;
+    else if (d === hs) i += 1;
+    else if (d === pn)
+      if (((i += 3), a.length > 0)) {
+        const u = c.pop();
+        h[u] = i - 2 - a.pop();
+      } else break;
+    else if (d === ls) i += 1;
+    else if (d === ds) ((i -= 1), c.push(s), a.push(i), (h[s] = 0), s++);
+    else if (d === Wr) {
+      const u = n.mlengths[o++] ?? 0;
+      i -= u + 1;
+    } else if (d === Or) (n.mlengths[r], (i -= 1), r++);
+    else throw new Error(`Bad edgebreaker opcode ${d}.`);
+  }
+  return { ecount: i, offsets: h };
+}
+function jr(e, t, n) {
+  const i = new Int32Array(e);
+  for (const r of t.dummies) r >= 0 && r < e && (i[r] = gn);
+  for (let r = 0; r + 1 < t.patches.length; r += 2) {
+    const a = t.patches[r];
+    a >= 0 && a < e && i[a] !== gn && (i[a] = us);
+  }
+  let s = 0;
+  for (let r = 0; r < e; r++) i[r] < 0 ? s++ : (i[r] = s);
+  const o = [];
+  for (const r of n) {
+    const a = r[1],
+      c = r[2],
+      h = r[3];
+    if (He(a, i) || He(c, i) || He(h, i)) continue;
+    const l = [3, Xe(a, i, t), Xe(c, i, t), Xe(h, i, t)];
+    wn(l) && o.push(l);
+  }
+  return o;
+}
+function Xe(e, t, n) {
+  return t[e] === us ? (n.patchMap.get(e) ?? e) : e - t[e];
+}
+function He(e, t) {
+  return e < 0 || e >= t.length || t[e] === gn;
+}
+function wn(e) {
+  return e[1] !== e[2] && e[2] !== e[3] && e[3] !== e[1] && e[1] >= 0 && e[2] >= 0 && e[3] >= 0;
+}
+function Qn(e, t, n, i) {
+  Qt(e);
+  const s = W(e);
+  if (s <= 0 || e.pos + s > e.bytes.length)
+    throw new Error('Bad compressed face-list payload length.');
+  const o = e.bytes.subarray(e.pos, e.pos + s);
+  e.pos += s;
+  const r = qr(o, i);
+  return { indices: Zr(r, t, n), values: r };
+}
+function qr(e, t) {
+  if (e.length < 2) throw new Error('Face payload is too short.');
+  const n = e[0],
+    i = n / 8;
+  if (i !== 1 && i !== 2 && i !== 4) throw new Error(`Unsupported face-list sample width ${n}.`);
+  const s = [],
+    o = new DataView(e.buffer, e.byteOffset, e.byteLength);
+  for (let r = 1; r + i <= e.length; r += i)
+    i === 1
+      ? s.push(t ? o.getInt8(r) : o.getUint8(r))
+      : i === 2
+        ? s.push(t ? o.getInt16(r, !0) : o.getUint16(r, !0))
+        : s.push(t ? o.getInt32(r, !0) : o.getUint32(r, !0));
+  return s;
+}
+function Zr(e, t, n) {
+  const i = [];
+  let s = 0;
+  for (; s < e.length; ) {
+    const o = e[s++],
+      r = Math.abs(o);
+    if (r < 3 || s + r > e.length) throw new Error('Invalid face list run.');
+    const a = e.slice(s, s + r);
+    if (((s += r), a.some((c) => c < 0 || c >= t))) throw new Error('Face index out of range.');
+    if (n)
+      if (o > 0)
+        for (let c = 2; c < a.length; c++)
+          (c & 1) === 0 ? i.push(a[c - 2], a[c - 1], a[c]) : i.push(a[c - 1], a[c - 2], a[c]);
+      else for (let c = 2; c < a.length; c++) i.push(a[0], a[c - 1], a[c]);
+    else if (o > 0) for (let c = 2; c < a.length; c++) i.push(a[0], a[c - 1], a[c]);
+  }
+  return i;
+}
+function Kr(e, t, n, i) {
+  if (n === 8) {
+    if (e.length < t * 3) throw new Error('Short 8-bit quantized point payload.');
+    const a = new Float32Array(t * 3);
+    for (let c = 0; c < t; c++)
+      for (let h = 0; h < 3; h++) {
+        const l = e[c * 3 + h],
+          d = i[h],
+          u = i[h + 3];
+        a[c * 3 + h] = l === 255 ? u : d + (u - d) * (l / 255);
+      }
+    return a;
+  }
+  const s = new Float32Array(t * 3);
+  let o = 0;
+  const r = (1 << n) - 1;
+  for (let a = 0; a < t * 3; a++) {
+    let c = 0;
+    for (let u = 0; u < n; u++) {
+      const f = e[o >> 3] ?? 0;
+      ((c = (c << 1) | ((f >> (7 - (o & 7))) & 1)), o++);
+    }
+    const h = a % 3,
+      l = i[h],
+      d = i[h + 3];
+    s[a] = c === r ? d : l + (d - l) * (c / r);
+  }
+  return s;
+}
+function ve(e, t) {
+  return t <= 65535 ? new Uint16Array(e) : new Uint32Array(e);
+}
+function Qr(e, t) {
+  const n = new Float32Array(e.length);
+  for (let i = 0; i + 2 < t.length; i += 3) {
+    const s = t[i] * 3,
+      o = t[i + 1] * 3,
+      r = t[i + 2] * 3,
+      a = e[s],
+      c = e[s + 1],
+      h = e[s + 2],
+      l = e[o],
+      d = e[o + 1],
+      u = e[o + 2],
+      f = e[r],
+      m = e[r + 1],
+      p = e[r + 2],
+      g = l - a,
+      b = d - c,
+      w = u - h,
+      y = f - a,
+      C = m - c,
+      M = p - h,
+      A = b * M - w * C,
+      N = w * y - g * M,
+      F = g * C - b * y;
+    ((n[s] = (n[s] ?? 0) + A),
+      (n[s + 1] = (n[s + 1] ?? 0) + N),
+      (n[s + 2] = (n[s + 2] ?? 0) + F),
+      (n[o] = (n[o] ?? 0) + A),
+      (n[o + 1] = (n[o + 1] ?? 0) + N),
+      (n[o + 2] = (n[o + 2] ?? 0) + F),
+      (n[r] = (n[r] ?? 0) + A),
+      (n[r + 1] = (n[r + 1] ?? 0) + N),
+      (n[r + 2] = (n[r + 2] ?? 0) + F));
+  }
+  for (let i = 0; i < n.length; i += 3) {
+    const s = n[i],
+      o = n[i + 1],
+      r = n[i + 2],
+      a = Math.hypot(s, o, r) || 1;
+    ((n[i] = s / a), (n[i + 1] = o / a), (n[i + 2] = r / a));
+  }
+  return n;
+}
+function Jr(e, t, n = Math.PI / 5) {
+  if (t.length < 3) return;
+  const i = [],
+    s = new Map();
+  for (let c = 0, h = 0; c + 2 < t.length; c += 3, h++) {
+    const l = t[c],
+      d = t[c + 1],
+      u = t[c + 2],
+      f = to(e, l, d, u);
+    (i.push(f), Ye(s, l, d, h), Ye(s, d, u, h), Ye(s, u, l, h));
+  }
+  const o = Math.cos(n),
+    r = [];
+  for (const c of s.values())
+    if (c.tris.length === 1) r.push(c.a, c.b);
+    else if (c.tris.length >= 2) {
+      let h = !1;
+      for (let l = 0; l < c.tris.length && !h; l++)
+        for (let d = l + 1; d < c.tris.length; d++) {
+          const u = i[c.tris[l]],
+            f = i[c.tris[d]];
+          if (u[0] * f[0] + u[1] * f[1] + u[2] * f[2] < o) {
+            h = !0;
+            break;
+          }
+        }
+      h && r.push(c.a, c.b);
+    }
+  if (r.length === 0) return;
+  const a = Math.floor(e.length / 3);
+  return ve(r, a);
+}
+function to(e, t, n, i) {
+  const s = t * 3,
+    o = n * 3,
+    r = i * 3,
+    a = e[s],
+    c = e[s + 1],
+    h = e[s + 2],
+    l = e[o],
+    d = e[o + 1],
+    u = e[o + 2],
+    f = e[r],
+    m = e[r + 1],
+    p = e[r + 2],
+    g = l - a,
+    b = d - c,
+    w = u - h,
+    y = f - a,
+    C = m - c,
+    M = p - h;
+  let A = b * M - w * C,
+    N = w * y - g * M,
+    F = g * C - b * y;
+  const $ = Math.hypot(A, N, F) || 1;
+  return ((A /= $), (N /= $), (F /= $), [A, N, F]);
+}
+function Ye(e, t, n, i) {
+  const s = Math.min(t, n),
+    o = Math.max(t, n),
+    r = `${s}:${o}`;
+  let a = e.get(r);
+  (a || ((a = { a: s, b: o, tris: [] }), e.set(r, a)), a.tris.push(i));
+}
+function eo(e) {
+  if (e.length === 0) return { min: [0, 0, 0], max: [1, 1, 1], center: [0.5, 0.5, 0.5], radius: 1 };
+  const t = [1 / 0, 1 / 0, 1 / 0],
+    n = [-1 / 0, -1 / 0, -1 / 0];
+  for (const o of e)
+    for (let r = 0; r < 3; r++)
+      ((t[r] = Math.min(t[r], o.bounds.min[r])), (n[r] = Math.max(n[r], o.bounds.max[r])));
+  const i = [(t[0] + n[0]) / 2, (t[1] + n[1]) / 2, (t[2] + n[2]) / 2],
+    s = Math.max(1e-6, Math.hypot(n[0] - i[0], n[1] - i[1], n[2] - i[2]));
+  return { min: t, max: n, center: i, radius: s };
+}
+function no(e) {
+  const t = [1 / 0, 1 / 0, 1 / 0],
+    n = [-1 / 0, -1 / 0, -1 / 0];
+  for (let i = 0; i < e.length; i += 3) {
+    const s = e[i],
+      o = e[i + 1],
+      r = e[i + 2];
+    (s < t[0] && (t[0] = s),
+      o < t[1] && (t[1] = o),
+      r < t[2] && (t[2] = r),
+      s > n[0] && (n[0] = s),
+      o > n[1] && (n[1] = o),
+      r > n[2] && (n[2] = r));
+  }
+  return { min: t, max: n };
+}
+function io(e) {
+  const t = (e * 0.61803398875) % 1,
+    n = 0.34,
+    i = 0.62,
+    s = i + n - i * n,
+    o = 2 * i - s;
+  return [Ve(o, s, t + 1 / 3), Ve(o, s, t), Ve(o, s, t - 1 / 3)];
+}
+function Ve(e, t, n) {
+  return (
+    n < 0 && (n += 1),
+    n > 1 && (n -= 1),
+    n < 1 / 6 ? e + (t - e) * 6 * n : n < 1 / 2 ? t : n < 2 / 3 ? e + (t - e) * (2 / 3 - n) * 6 : e
+  );
+}
+function Jn(e, t, n) {
+  if (t + n * 4 > e.length) throw new Error('Float array exceeds W3D stream length.');
+  const i = new Float32Array(n),
+    s = new DataView(e.buffer, e.byteOffset + t, n * 4);
+  for (let o = 0; o < n; o++) i[o] = s.getFloat32(o * 4, !0);
+  return i;
+}
+function fs(e, t) {
+  const n = [];
+  for (let i = 0; i < t; i++) n.push(ro(e));
+  return n;
+}
+function Ge(e, t) {
+  const n = [];
+  for (let i = 0; i < t; i++) n.push(W(e));
+  return n;
+}
+function ms(e, t = 0) {
+  return { bytes: e, pos: t, view: new DataView(e.buffer, e.byteOffset, e.byteLength) };
+}
+function Qt(e) {
+  if (e.pos >= e.bytes.length) throw new Error('Unexpected end of W3D stream.');
+  return e.bytes[e.pos++];
+}
+function so(e) {
+  const t = e.view.getUint16(e.pos, !0);
+  return ((e.pos += 2), t);
+}
+function W(e) {
+  const t = e.view.getInt32(e.pos, !0);
+  return ((e.pos += 4), t);
+}
+function ro(e) {
+  const t = e.view.getFloat32(e.pos, !0);
+  return ((e.pos += 4), t);
+}
+function ti(e) {
+  return 3 - ((e - 1) % 4);
+}
+async function oo(e, t, n) {
+  const i = e.diagnostics;
+  (e.metadata ?? (e.metadata = {}),
+    e.materials ?? (e.materials = []),
+    e.textures ?? (e.textures = []),
+    e.sceneTree ?? (e.sceneTree = []),
+    e.pmi ?? (e.pmi = []),
+    e.views ?? (e.views = []),
+    e.animations ?? (e.animations = []),
+    await ao(e, t, n, i));
+  const s = t.find((d) => /descriptor/i.test(d.role ?? '') || /descriptor\.xml$/i.test(d.path));
+  if (s && n.zip.has(s.path))
+    try {
+      co(e, tt(await n.readBytes(s.path)), s.path);
+    } catch (d) {
+      i.push(
+        S(
+          'warning',
+          'EMODEL_DESCRIPTOR_PARSE_FAILED',
+          `Failed to parse eModel descriptor: ${String(d)}`,
+          s.path,
+        ),
+      );
+    }
+  const o = t.find((d) => /content\s+definition/i.test(d.role ?? '')),
+    r = o && n.zip.has(o.path) ? lo(e, tt(await n.readBytes(o.path)), o.path, i) : [],
+    a = t.find((d) => /content\s+presentation/i.test(d.role ?? '')),
+    c = new Map();
+  let h = new Map();
+  if (a && n.zip.has(a.path))
+    try {
+      const {
+        nodes: d,
+        pmi: u,
+        views: f,
+        animations: m,
+        materials: p,
+      } = uo(tt(await n.readBytes(a.path)), a.path, c);
+      ((h = p),
+        (e.sceneTree = d),
+        (e.pmi = u),
+        (e.views = ws(e.views ?? [], f)),
+        (e.animations = m));
+      const g = new Map((e.materials ?? []).map((b) => [b.id, b]));
+      for (const b of p.values()) g.set(b.id, mo(b, e.textures ?? []));
+      e.materials = Array.from(g.values());
+    } catch (d) {
+      i.push(
+        S(
+          'warning',
+          'EMODEL_PRESENTATION_PARSE_FAILED',
+          `Failed to parse eModel presentation: ${String(d)}`,
+          a.path,
+        ),
+      );
+    }
+  po(e, r, c, h);
+  const l = ys(e.sceneTree ?? []);
+  ((e.views?.length ?? 0) > 0 && !e.initialView && (e.initialView = e.views[0]),
+    (e.stats.materialCount = e.materials?.length ?? 0),
+    (e.stats.textureCount = e.textures?.length ?? 0),
+    (e.stats.pmiCount = e.pmi?.length ?? 0),
+    (e.stats.nodeCount = l));
+}
+async function ao(e, t, n, i) {
+  const s = [];
+  for (const o of t.filter(
+    (r) => /texture/i.test(r.role ?? '') || /texture/i.test(r.title ?? ''),
+  )) {
+    if (!n.zip.has(o.path)) continue;
+    let r, a;
+    try {
+      const c = xo(await n.readBytes(o.path));
+      ((r = c?.width), (a = c?.height));
+    } catch (c) {
+      i.push(
+        S(
+          'warning',
+          'EMODEL_TEXTURE_SIZE_FAILED',
+          `Failed to read texture size: ${String(c)}`,
+          o.path,
+        ),
+      );
+    }
+    s.push({
+      id: o.path,
+      name: xs(o.title) ?? yo(o.path),
+      path: o.path,
+      mediaType: o.mediaType,
+      width: r,
+      height: a,
+      role: o.role,
+    });
+  }
+  if (((e.textures = s), s.length > 0)) {
+    const o =
+      s.find((r) => /thread/i.test(r.name ?? '')) ??
+      s.find((r) => !/environment/i.test(r.name ?? '')) ??
+      s[0];
+    if (o) {
+      const r = {
+        id: 'dwfx-default-textured',
+        name: 'DWFx default material',
+        color: [0.72, 0.74, 0.78],
+        textureId: o.id,
+        roughness: 0.6,
+        metalness: 0.03,
+        doubleSided: !0,
+        source: o.path,
+      };
+      e.materials = [r];
+    }
+  }
+}
+function co(e, t, n) {
+  const i = G(t, n),
+    s = i.documentElement;
+  if (s) {
+    const a = Array.from(s.getElementsByTagName('*'))
+      .find((h) => k(h) === 'Units')
+      ?.getAttribute('type');
+    a && (e.metadata.units = a);
+    const c = s.getAttribute('name');
+    c && (e.metadata.spaceName = c);
+  }
+  for (const r of Array.from(i.getElementsByTagName('*')).filter((a) => k(a) === 'Property')) {
+    const a = r.getAttribute('name'),
+      c = r.getAttribute('value');
+    a && c && (e.metadata[a] = c);
+  }
+  const o = ho(e.metadata);
+  o && ((e.views = ws(e.views ?? [], [o])), (e.initialView = o));
+}
+function ho(e) {
+  const t = oe(e._ViewCubeHomeCameraPosition),
+    n = oe(e._ViewCubeHomeCameraTarget),
+    i = oe(e._ViewCubeHomeCameraUpVector),
+    s = oe(e._ViewCubeHomeCameraField);
+  if (!(!t && !n && !i))
+    return {
+      id: 'descriptor-home-view',
+      label: 'Home',
+      camera: {
+        position: t,
+        target: n,
+        up: i,
+        field: s,
+        projection: e._ViewCubeHomeCameraProjection === '1' ? 'perspective' : 'orthographic',
+      },
+    };
+}
+function lo(e, t, n, i) {
+  try {
+    const s = G(t, n),
+      o = [];
+    for (const r of Array.from(s.getElementsByTagName('*')).filter((a) => k(a) === 'Instance')) {
+      const a = r.getAttribute('id') ?? '';
+      a &&
+        o.push({
+          id: a,
+          renderableRef: r.getAttribute('renderableRef') ?? void 0,
+          node: r.getAttribute('node') ?? void 0,
+          geometricVariation: r.getAttribute('geometricVariation') ?? void 0,
+        });
+    }
+    return ((e.metadata.contentInstanceCount = String(o.length)), o);
+  } catch (s) {
+    return (
+      i.push(
+        S(
+          'warning',
+          'EMODEL_CONTENTDEF_PARSE_FAILED',
+          `Failed to parse eModel content definition: ${String(s)}`,
+          n,
+        ),
+      ),
+      []
+    );
+  }
+}
+function uo(e, t, n) {
+  const i = G(e, t),
+    s = Array.from(i.getElementsByTagName('*')).filter((l) => k(l) === 'View'),
+    o = [];
+  for (const l of s) {
+    const d = ps(l);
+    for (const u of d) o.push(bn(u, n));
+  }
+  if (o.length === 0)
+    for (const l of Array.from(i.getElementsByTagName('*')).filter(
+      (d) => k(d) === 'ReferenceNode' && !wo(d),
+    ))
+      o.push(bn(l, n));
+  const r = [];
+  for (const l of Array.from(i.getElementsByTagName('*')).filter((d) =>
+    /ModelViewNode|View/i.test(k(d)),
+  )) {
+    const d = l.getAttribute('id') ?? `view-${r.length + 1}`,
+      u = l.getAttribute('label') ?? l.getAttribute('name') ?? d,
+      f =
+        Se(l).find((p) => k(p) === 'Camera') ??
+        Array.from(l.getElementsByTagName('*')).find((p) => k(p) === 'Camera'),
+      m = f ? go(f) : void 0;
+    (m || /ModelViewNode/i.test(k(l))) && r.push({ id: d, label: u, camera: m });
+  }
+  const a = [];
+  for (const l of Array.from(i.getElementsByTagName('*'))) {
+    const d = k(l);
+    /PMI|Markup|Dimension|Annotation|Callout|Leader|Note/i.test(d) &&
+      a.push({
+        id: l.getAttribute('id') ?? `pmi-${a.length + 1}`,
+        type: /Leader/i.test(d) ? 'leader' : /Text|Note|Dimension/i.test(d) ? 'text' : 'markup',
+        label: l.getAttribute('label') ?? l.getAttribute('name') ?? d,
+        text: l.getAttribute('text') ?? l.textContent?.trim() ?? void 0,
+        targetRef: l.getAttribute('contentElementRefs') ?? l.getAttribute('target') ?? void 0,
+        properties: gs(l),
+      });
+  }
+  const c = [];
+  for (const l of Array.from(i.getElementsByTagName('*')).filter((d) =>
+    /Animation|Sequence|Timeline/i.test(k(d)),
+  ))
+    c.push({
+      id: l.getAttribute('id') ?? `animation-${c.length + 1}`,
+      name: l.getAttribute('label') ?? l.getAttribute('name') ?? k(l),
+      targetRef: l.getAttribute('target') ?? void 0,
+    });
+  const h = fo(i);
+  return { nodes: o, pmi: a, views: bs(r), animations: c, materials: h };
+}
+function fo(e) {
+  const t = new Map();
+  for (const n of Array.from(e.getElementsByTagName('*')).filter(
+    (i) => k(i) === 'InstanceAttributes',
+  )) {
+    const i = n.getAttribute('id');
+    if (!i) continue;
+    const s =
+      Se(n).find((u) => k(u) === 'Color') ??
+      Array.from(n.getElementsByTagName('*')).find((u) => k(u) === 'Color');
+    if (!s) continue;
+    const o = Array.from(s.getElementsByTagName('*')).find(
+        (u) => k(u) === 'Channel' && /diffuse/i.test(u.getAttribute('type') ?? ''),
+      ),
+      r = Array.from(s.getElementsByTagName('*')).find(
+        (u) => k(u) === 'Channel' && /environment/i.test(u.getAttribute('type') ?? ''),
+      ),
+      a = Number(o?.getAttribute('red')),
+      c = Number(o?.getAttribute('green')),
+      h = Number(o?.getAttribute('blue'));
+    if (![a, c, h].every(Number.isFinite)) continue;
+    const l = Number(s.getAttribute('gloss')),
+      d = xs(r?.getAttribute('name') ?? void 0);
+    t.set(i, {
+      id: `material-${i}`,
+      name: `Material ${i}`,
+      color: [a, c, h],
+      opacity: 1,
+      roughness: Number.isFinite(l) ? Math.max(0.12, Math.min(0.92, 1 - l / 128)) : 0.58,
+      metalness: 0.03,
+      textureName: d,
+      doubleSided: !0,
+      source: 'content-presentation',
+    });
+  }
+  return t;
+}
+function mo(e, t) {
+  if (e.textureId || !e.textureName) return e;
+  const n = je(e.textureName),
+    i = t.find((s) => je(s.name ?? '').includes(n) || n.includes(je(s.name ?? '')));
+  return i ? { ...e, textureId: i.id } : e;
+}
+function je(e) {
+  return e
+    .replace(/&quot;/g, '')
+    .replace(/["{}]/g, '')
+    .toLowerCase();
+}
+function bn(e, t) {
+  const n = bo(e.getAttribute('contentElementRefs') ?? e.getAttribute('contentRefs') ?? ''),
+    i = {
+      id: e.getAttribute('id') ?? `node-${Math.random().toString(36).slice(2)}`,
+      label: e.getAttribute('label') ?? e.getAttribute('name') ?? k(e),
+      contentRefs: n,
+      meshIds: [],
+      children: [],
+      properties: gs(e),
+    };
+  for (const s of n) t.set(s, i);
+  for (const s of ps(e)) i.children.push(bn(s, t));
+  return i;
+}
+function po(e, t, n, i) {
+  const s = new Map(n),
+    o = t.length === e.meshes.length;
+  t.forEach((r, a) => {
+    const c = e.meshes[a];
+    if (!c) return;
+    const h = [r.renderableRef, r.id].filter(Boolean);
+    ((c.selectionRefs = h), (c.nodeId = r.node));
+    const l = i.get(r.id) ?? (r.renderableRef ? i.get(r.renderableRef) : void 0);
+    l && o && ((c.materialId = l.id), (c.color = l.color));
+    for (const d of h) {
+      const u = s.get(d);
+      if (u) {
+        ((c.name = u.label || c.name), u.meshIds.push(c.id));
+        break;
+      }
+    }
+  });
+}
+function go(e) {
+  const t = re(e, 'positionX', 'positionY', 'positionZ'),
+    n = re(e, 'targetX', 'targetY', 'targetZ'),
+    i = re(e, 'upVectorX', 'upVectorY', 'upVectorZ'),
+    s = re(e, 'fieldWidth', 'fieldHeight', 'fieldDepth');
+  return {
+    position: t,
+    target: n,
+    up: i,
+    field: s,
+    projection: e.getAttribute('projectionType') ?? void 0,
+  };
+}
+function re(e, t, n, i) {
+  const s = [Number(e.getAttribute(t)), Number(e.getAttribute(n)), Number(e.getAttribute(i))];
+  return s.every(Number.isFinite) ? s : void 0;
+}
+function oe(e) {
+  if (!e) return;
+  const t = e
+    .trim()
+    .split(/[\s,]+/)
+    .map(Number)
+    .filter(Number.isFinite);
+  return t.length >= 3 ? [t[0], t[1], t[2]] : void 0;
+}
+function Se(e) {
+  return Array.from(e.children);
+}
+function ps(e) {
+  const t = [];
+  for (const n of Se(e)) {
+    const i = k(n);
+    if (i.endsWith('Node')) t.push(n);
+    else if (i === 'Nodes' || i === 'Views')
+      for (const s of Se(n)) k(s).endsWith('Node') && t.push(s);
+  }
+  return t;
+}
+function wo(e) {
+  let t = ei(e);
+  for (; t; ) {
+    if (k(t) === 'ReferenceNode') return !0;
+    t = ei(t);
+  }
+  return !1;
+}
+function ei(e) {
+  return (e.parentElement ?? e.parentNode) || void 0;
+}
+function gs(e) {
+  const t = {};
+  for (const n of Array.from(e.attributes)) t[n.localName || n.name] = n.value;
+  return t;
+}
+function bo(e) {
+  return e
+    .trim()
+    .split(/[\s,]+/)
+    .filter(Boolean);
+}
+function ws(e, t) {
+  return bs([...e, ...t]);
+}
+function bs(e) {
+  const t = new Set(),
+    n = [];
+  for (const i of e) {
+    const s = i.id || i.label;
+    t.has(s) || (t.add(s), n.push(i));
+  }
+  return n;
+}
+function ys(e) {
+  let t = 0;
+  for (const n of e) t += 1 + ys(n.children);
+  return t;
+}
+function yo(e) {
+  const t = e.lastIndexOf('/');
+  return t >= 0 ? e.slice(t + 1) : e;
+}
+function xs(e) {
+  if (e) return e.replace(/^"|"$/g, '').replace(/&quot;/g, '"');
+}
+function xo(e) {
+  if (e.length >= 24 && e[0] === 137 && e[1] === 80 && e[2] === 78 && e[3] === 71)
+    return { width: ni(e, 16), height: ni(e, 20) };
+  if (e.length >= 4 && e[0] === 255 && e[1] === 216) {
+    let t = 2;
+    for (; t + 9 < e.length; ) {
+      if (e[t] !== 255) {
+        t++;
+        continue;
+      }
+      const n = e[t + 1];
+      for (t += 2; e[t] === 255; ) t++;
+      if (n === 217 || n === 218 || t + 2 > e.length) break;
+      const i = (e[t] << 8) | e[t + 1];
+      if (i < 2 || t + i > e.length) break;
+      if (
+        (n >= 192 && n <= 195) ||
+        (n >= 197 && n <= 199) ||
+        (n >= 201 && n <= 203) ||
+        (n >= 205 && n <= 207)
+      )
+        return { width: (e[t + 5] << 8) | e[t + 6], height: (e[t + 3] << 8) | e[t + 4] };
+      t += i;
+    }
+  }
+}
+function ni(e, t) {
+  return ((e[t] << 24) | (e[t + 1] << 16) | (e[t + 2] << 8) | e[t + 3]) >>> 0;
+}
+const vo = new Set([
+  'http://schemas.microsoft.com/xps/2005/06/fixedrepresentation',
+  'http://schemas.openxps.org/oxps/v1.0/fixedrepresentation',
+]);
+async function ii(e) {
+  const t = await br(e),
+    n = [],
+    i = [],
+    s = await Po(t, i, n);
+  if (i.length === 0) {
+    const r = await So(t, n);
+    for (const a of r)
+      try {
+        const c = await t.readText(a),
+          h = G(c, a),
+          l = Array.from(h.getElementsByTagName('*')).filter((d) => k(d) === 'DocumentReference');
+        l.length === 0 &&
+          n.push(S('warning', 'DWFX_NO_DOCREF', `No DocumentReference elements found in ${a}.`, a));
+        for (const d of l) {
+          const u = d.getAttribute('Source');
+          if (!u) continue;
+          const f = Lt(a, u);
+          await ko(t, f, i, n);
+        }
+      } catch (c) {
+        n.push(
+          S(
+            'warning',
+            'DWFX_FDSEQ_READ_FAILED',
+            `Failed to read fixed document sequence: ${String(c)}`,
+            a,
+          ),
+        );
+      }
+  }
+  if (i.length === 0) {
+    const r = e.entries.filter((a) => /\.fpage$/i.test(a.name));
+    for (const [a, c] of r.entries()) {
+      const h = await Tn(t, c.name, n);
+      i.push({
+        id: `page-${a + 1}`,
+        name: c.name.split('/').pop() ?? `Page ${a + 1}`,
+        kind: 'xps-fixed-page',
+        sourcePath: c.name,
+        width: h.width,
+        height: h.height,
+        diagnostics: [],
+      });
+    }
+  }
+  if (i.length === 0) {
+    const r =
+      e.entries.some((a) => /\.(w3d|hsf)$/i.test(a.name)) || s.some((a) => /emodel/i.test(a.type));
+    i.push({
+      id: 'unsupported-1',
+      name: r ? 'Unsupported 3D DWFx package' : 'Unsupported DWFx package',
+      kind: 'unsupported',
+      width: 1e3,
+      height: 1e3,
+      reason: r
+        ? 'This DWFx package contains 3D eModel/W3D content but no supported 2D FixedPage or preview image resource was found.'
+        : 'No XPS FixedPage parts or supported DWF manifest preview resources were found.',
+      diagnostics: [
+        S('error', 'DWFX_NO_PAGES', 'No supported renderable page was found in this DWFx package.'),
+      ],
+    });
+  }
+  const o = {
+    kind: 'dwfx',
+    pages: [],
+    resources: t.resources,
+    diagnostics: n,
+    packageEntries: e.entries.map((r) => r.name),
+  };
+  return Me(o, i, e, t);
+}
+function Co(e) {
+  return (
+    e.has('[Content_Types].xml') &&
+    (e.has('_rels/.rels') || e.entries.some((t) => /\.(fpage|dwfseq)$/i.test(t.name)))
+  );
+}
+async function Po(e, t, n) {
+  const i = await Mo(e, n),
+    s = [];
+  for (const o of i)
+    try {
+      const r = await e.readText(o),
+        a = Eo(r, o);
+      (s.push(...a),
+        n.push(
+          S(
+            'info',
+            'DWFX_DWF_MANIFEST_FOUND',
+            `Found DWFx DWF manifest with ${a.length} section(s).`,
+            o,
+          ),
+        ));
+    } catch (r) {
+      n.push(
+        S(
+          'warning',
+          'DWFX_DWF_MANIFEST_PARSE_FAILED',
+          `Failed to parse DWFx DWF manifest: ${String(r)}`,
+          o,
+        ),
+      );
+    }
+  for (const o of s.filter((r) => Ao(r))) {
+    const r =
+      ri(o, /2d\s+streaming\s+graphics/i) ?? o.resources.find((h) => /\.fpage$/i.test(h.path));
+    if (!r || !/\.fpage$/i.test(bt(r.path))) continue;
+    const a = bt(r.path);
+    if (!e.zip.has(a)) continue;
+    const c = await Tn(e, a, n);
+    t.push({
+      id: `page-${t.length + 1}`,
+      name: o.title || r.title || ae(a),
+      kind: 'xps-fixed-page',
+      sourcePath: a,
+      width: Number.isFinite(c.width) && c.width > 0 ? c.width : 1e3,
+      height: Number.isFinite(c.height) && c.height > 0 ? c.height : 1e3,
+      diagnostics: [],
+    });
+  }
+  if (t.length > 0) return s;
+  for (const o of s.filter((r) => No(r))) {
+    const r = To(o, e.zip),
+      a =
+        ri(o, /3d\s+streaming\s+graphics/i) ??
+        o.resources.find((c) => /\.(w3d|hsf)$/i.test(c.path));
+    if (a && e.zip.has(a.path))
+      try {
+        const c = await $r(await e.zip.read(a.path), {
+          title: o.title || a.title || ae(a.path),
+          sourcePath: a.path,
+        });
+        if ((await oo(c, o.resources, e), c.meshes.length > 0)) {
+          t.push({
+            id: `w3d-${t.length + 1}`,
+            name: o.title || a.title || ae(a.path),
+            kind: 'w3d-model',
+            sourcePath: a.path,
+            width: 1e3,
+            height: 1e3,
+            model: c,
+            diagnostics: c.diagnostics,
+          });
+          continue;
+        }
+        t.push({
+          id: `unsupported-3d-${t.length + 1}`,
+          name: o.title || 'Unsupported 3D eModel',
+          kind: 'unsupported',
+          width: 1e3,
+          height: 1e3,
+          sourcePath: a.path,
+          reason:
+            'A W3D/HSF 3D stream exists, but no renderable shell geometry was decoded.  The package is intentionally not shown as a thumbnail so this failure is visible during production validation.',
+          diagnostics: [
+            ...c.diagnostics,
+            S(
+              'warning',
+              'DWFX_3D_W3D_UNSUPPORTED',
+              'Detected a 3D W3D resource, but no renderable shell geometry was decoded.',
+              a.path,
+            ),
+          ],
+        });
+        continue;
+      } catch (c) {
+        t.push({
+          id: `unsupported-3d-${t.length + 1}`,
+          name: o.title || 'Unsupported 3D eModel',
+          kind: 'unsupported',
+          width: 1e3,
+          height: 1e3,
+          sourcePath: a.path,
+          reason: `A W3D/HSF 3D stream exists, but geometry parsing failed: ${String(c)}`,
+          diagnostics: [
+            S(
+              'warning',
+              'DWFX_W3D_PARSE_FAILED',
+              `Failed to parse W3D geometry: ${String(c)}`,
+              a.path,
+            ),
+          ],
+        });
+        continue;
+      }
+    if (r && e.zip.has(r.path)) {
+      const c = await e.zip.read(r.path),
+        h = Fo(c) ?? { width: 1e3, height: 1e3 };
+      t.push({
+        id: `image-${t.length + 1}`,
+        name: o.title || r.title || ae(r.path),
+        kind: 'image',
+        sourcePath: r.path,
+        mediaType: r.mediaType ?? Mt(r.path) ?? 'image/png',
+        width: h.width,
+        height: h.height,
+        diagnostics: [
+          S(
+            'info',
+            'DWFX_3D_PREVIEW_ONLY',
+            'No W3D/HSF geometry stream was declared; showing the embedded section preview image.',
+            r.path,
+          ),
+        ],
+      });
+    }
+  }
+  return s;
+}
+async function Mo(e, t) {
+  const n = new Set(),
+    i = (o) => {
+      o && n.add(B(bt(o)));
+    },
+    s = new Set();
+  try {
+    const o = await e.getRelationships('');
+    for (const r of o)
+      ((/documentsequence/i.test(r.type) || /\.dwfseq$/i.test(r.resolvedTarget)) &&
+        s.add(B(r.resolvedTarget)),
+        /document$/i.test(r.type) &&
+          /manifest\.xml$/i.test(r.resolvedTarget) &&
+          i(r.resolvedTarget));
+  } catch (o) {
+    t.push(
+      S(
+        'warning',
+        'DWFX_DWFSEQ_RELS_FAILED',
+        `Failed to inspect DWFx package relationships: ${String(o)}`,
+      ),
+    );
+  }
+  for (const o of e.zip.entries) /\.dwfseq$/i.test(o.name) && s.add(o.name);
+  for (const o of s)
+    if (e.zip.has(o))
+      try {
+        const r = await e.readText(o),
+          a = G(r, o),
+          c = Array.from(a.getElementsByTagName('*')).filter((l) => k(l) === 'ManifestReference');
+        for (const l of c) i(l.getAttribute('Source') ?? l.getAttribute('source') ?? void 0);
+        const h = await e.getRelationships(o).catch(() => []);
+        for (const l of h)
+          (/document/i.test(l.type) || /manifest\.xml$/i.test(l.resolvedTarget)) &&
+            i(l.resolvedTarget);
+      } catch (r) {
+        t.push(
+          S(
+            'warning',
+            'DWFX_DWFSEQ_READ_FAILED',
+            `Failed to read DWFDocumentSequence ${o}: ${String(r)}`,
+            o,
+          ),
+        );
+      }
+  for (const o of e.zip.entries) /^dwf\/documents\/.*\/manifest\.xml$/i.test(o.name) && i(o.name);
+  return Array.from(n).filter((o) => e.zip.has(o));
+}
+async function So(e, t) {
+  const n = new Set();
+  try {
+    const i = await e.getRelationships('');
+    for (const s of i)
+      (vo.has(s.type) ||
+        /fixedrepresentation/i.test(s.type) ||
+        /\.fdseq$/i.test(s.resolvedTarget)) &&
+        n.add(B(s.resolvedTarget));
+  } catch (i) {
+    t.push(
+      S('warning', 'DWFX_ROOT_RELS_FAILED', `Failed to read package relationships: ${String(i)}`),
+    );
+  }
+  for (const i of e.overrides)
+    (/fixeddocumentsequence/i.test(i.contentType) || /\.fdseq$/i.test(i.partName)) &&
+      n.add(i.partName);
+  for (const i of e.zip.entries) /\.fdseq$/i.test(i.name) && n.add(i.name);
+  return Array.from(n);
+}
+async function ko(e, t, n, i) {
+  let s;
+  try {
+    s = await e.readText(t);
+  } catch (a) {
+    i.push(
+      S('warning', 'DWFX_FDOC_READ_FAILED', `Failed to read fixed document ${t}: ${String(a)}`, t),
+    );
+    return;
+  }
+  const o = G(s, t),
+    r = Array.from(o.getElementsByTagName('*')).filter((a) => k(a) === 'PageContent');
+  for (const a of r) {
+    const c = a.getAttribute('Source');
+    if (!c) continue;
+    let h = Lt(t, bt(c));
+    const l = c.startsWith('#') ? c.slice(1) : void 0;
+    if (l) {
+      const g = (await e.getRelationships(t)).find((b) => b.id === l);
+      g && (h = g.resolvedTarget);
+    }
+    h = bt(h);
+    const d = a.getAttribute('Width'),
+      u = a.getAttribute('Height'),
+      f = d && u ? { width: Number(d), height: Number(u) } : await Tn(e, h, i),
+      m = n.length + 1;
+    n.push({
+      id: `page-${m}`,
+      name: `Page ${m}`,
+      kind: 'xps-fixed-page',
+      sourcePath: h,
+      width: Number.isFinite(f.width) && f.width > 0 ? f.width : 1e3,
+      height: Number.isFinite(f.height) && f.height > 0 ? f.height : 1e3,
+      diagnostics: [],
+    });
+  }
+}
+async function Tn(e, t, n) {
+  try {
+    const i = bt(t),
+      s = tt(await e.readBytes(i)),
+      o = G(s, i),
+      r = o.documentElement ?? Array.from(o.getElementsByTagName('*'))[0];
+    return {
+      width: Number(r?.getAttribute('Width') ?? 1e3),
+      height: Number(r?.getAttribute('Height') ?? 1e3),
+    };
+  } catch (i) {
+    return (
+      n.push(
+        S('warning', 'DWFX_PAGE_SIZE_FAILED', `Failed to read FixedPage size: ${String(i)}`, t),
+      ),
+      { width: 1e3, height: 1e3 }
+    );
+  }
+}
+function Eo(e, t) {
+  const n = G(e, t);
+  return Array.from(n.getElementsByTagName('*'))
+    .filter((s) => k(s) === 'Section')
+    .map((s, o) => {
+      const r = pt(s, 'name') ?? `section-${o + 1}`,
+        a = pt(s, 'title') ?? r,
+        c = pt(s, 'type') ?? '',
+        h = Array.from(s.getElementsByTagName('*'))
+          .filter((l) => k(l).endsWith('Resource') || k(l) === 'Resource')
+          .map((l) => {
+            const d = pt(l, 'href') ?? '';
+            return {
+              path: B(bt(d)),
+              role: pt(l, 'role'),
+              mediaType: pt(l, 'mime'),
+              title: pt(l, 'title'),
+              size: Io(l, 'size'),
+            };
+          })
+          .filter((l) => l.path.length > 0);
+      return { type: c, name: r, title: a, resources: h };
+    })
+    .filter((s) => s.resources.length > 0 || s.type.length > 0);
+}
+function Ao(e) {
+  return /(^|\.)ePlot$/i.test(e.type) || /com\.autodesk\.dwf\.ePlot$/i.test(e.type);
+}
+function No(e) {
+  return /(^|\.)eModel$/i.test(e.type) || /com\.autodesk\.dwf\.eModel$/i.test(e.type);
+}
+function To(e, t) {
+  const n = e.resources.filter(
+      (r) =>
+        /^(image\/|application\/octet-stream)/i.test(r.mediaType ?? '') ||
+        /\.(png|jpe?g|gif|bmp)$/i.test(r.path),
+    ),
+    i = n.filter(
+      (r) => /thumbnail|preview/i.test(r.role ?? '') || /thumbnail|preview/i.test(r.title ?? ''),
+    ),
+    s = i.length > 0 ? i : n.filter((r) => !/texture/i.test(r.role ?? ''));
+  return (s.length > 0 ? s : n).filter((r) => t.has(r.path)).sort((r, a) => si(a) - si(r))[0];
+}
+function si(e) {
+  let t = e.size ?? 0;
+  return (
+    /thumbnail/i.test(e.role ?? '') && (t += 5e6),
+    /preview/i.test(e.role ?? '') && (t += 4e6),
+    /icon/i.test(e.role ?? '') && (t -= 2e6),
+    /texture/i.test(e.role ?? '') && (t -= 3e6),
+    t
+  );
+}
+function pt(e, t) {
+  return (
+    e.getAttribute(t) ??
+    e.getAttribute(`dwf:${t}`) ??
+    e.getAttribute(`ePlot:${t}`) ??
+    e.getAttribute(`eModel:${t}`) ??
+    Array.from(e.attributes).find((n) => n.localName === t)?.value ??
+    void 0
+  );
+}
+function Io(e, t) {
+  const n = pt(e, t);
+  if (n === void 0) return;
+  const i = Number(n);
+  return Number.isFinite(i) ? i : void 0;
+}
+function ri(e, t) {
+  return e.resources.find((n) => t.test(n.role ?? ''));
+}
+function bt(e) {
+  return B((e.split(/[?#]/)[0] ?? e).replace(/^\//, ''));
+}
+function ae(e) {
+  const t = bt(e),
+    n = t.lastIndexOf('/');
+  return n >= 0 ? t.slice(n + 1) : t;
+}
+function Fo(e) {
+  if (e.length >= 24 && e[0] === 137 && e[1] === 80 && e[2] === 78 && e[3] === 71)
+    return { width: oi(e, 16), height: oi(e, 20) };
+  if (e.length >= 4 && e[0] === 255 && e[1] === 216) {
+    let t = 2;
+    for (; t + 9 < e.length; ) {
+      if (e[t] !== 255) {
+        t++;
+        continue;
+      }
+      const n = e[t + 1];
+      for (t += 2; e[t] === 255; ) t++;
+      if (n === 217 || n === 218 || t + 2 > e.length) break;
+      const i = (e[t] << 8) | e[t + 1];
+      if (i < 2 || t + i > e.length) break;
+      if (
+        (n >= 192 && n <= 195) ||
+        (n >= 197 && n <= 199) ||
+        (n >= 201 && n <= 203) ||
+        (n >= 205 && n <= 207)
+      )
+        return { width: (e[t + 5] << 8) | e[t + 6], height: (e[t + 3] << 8) | e[t + 4] };
+      t += i;
+    }
+  }
+}
+function oi(e, t) {
+  return ((e[t] << 24) | (e[t + 1] << 16) | (e[t + 2] << 8) | e[t + 3]) >>> 0;
+}
+function wt(e) {
+  const t = _o(e),
+    n = [];
+  let i = 0,
+    s = '',
+    o = 0,
+    r = 0,
+    a = 0,
+    c = 0,
+    h,
+    l;
+  const d = () => i < t.length && t[i]?.kind === 'num',
+    u = () => {
+      const m = t[i++];
+      if (!m || m.kind !== 'num') throw new Error(`Expected number in path data near token ${i}.`);
+      return m.value;
+    },
+    f = () => u() !== 0;
+  for (; i < t.length; ) {
+    const m = t[i];
+    if (!m) break;
+    if (m.kind === 'cmd') {
+      if (((s = m.value), i++, s === 'F' || s === 'f')) {
+        d() && u();
+        continue;
+      }
+    } else if (!s) {
+      i++;
+      continue;
+    }
+    const p = s === s.toLowerCase(),
+      g = s.toUpperCase(),
+      b = (y) => (p ? o + y : y),
+      w = (y) => (p ? r + y : y);
+    if (g === 'M') {
+      if (!d()) continue;
+      const y = b(u()),
+        C = w(u());
+      for (n.push({ type: 'M', x: y, y: C }), o = a = y, r = c = C, h = l = void 0; d(); ) {
+        const M = b(u()),
+          A = w(u());
+        (n.push({ type: 'L', x: M, y: A }), (o = M), (r = A));
+      }
+    } else if (g === 'L')
+      for (; d(); ) {
+        const y = b(u()),
+          C = w(u());
+        (n.push({ type: 'L', x: y, y: C }), (o = y), (r = C), (h = l = void 0));
+      }
+    else if (g === 'H')
+      for (; d(); ) {
+        const y = b(u());
+        (n.push({ type: 'L', x: y, y: r }), (o = y), (h = l = void 0));
+      }
+    else if (g === 'V')
+      for (; d(); ) {
+        const y = w(u());
+        (n.push({ type: 'L', x: o, y }), (r = y), (h = l = void 0));
+      }
+    else if (g === 'C')
+      for (; d(); ) {
+        const y = b(u()),
+          C = w(u()),
+          M = b(u()),
+          A = w(u()),
+          N = b(u()),
+          F = w(u());
+        (n.push({ type: 'C', x1: y, y1: C, x2: M, y2: A, x: N, y: F }),
+          (o = N),
+          (r = F),
+          (h = { x: M, y: A }),
+          (l = void 0));
+      }
+    else if (g === 'S')
+      for (; d(); ) {
+        const y = h ? { x: 2 * o - h.x, y: 2 * r - h.y } : { x: o, y: r },
+          C = b(u()),
+          M = w(u()),
+          A = b(u()),
+          N = w(u());
+        (n.push({ type: 'C', x1: y.x, y1: y.y, x2: C, y2: M, x: A, y: N }),
+          (o = A),
+          (r = N),
+          (h = { x: C, y: M }),
+          (l = void 0));
+      }
+    else if (g === 'Q')
+      for (; d(); ) {
+        const y = b(u()),
+          C = w(u()),
+          M = b(u()),
+          A = w(u());
+        (n.push({ type: 'Q', x1: y, y1: C, x: M, y: A }),
+          (o = M),
+          (r = A),
+          (l = { x: y, y: C }),
+          (h = void 0));
+      }
+    else if (g === 'T')
+      for (; d(); ) {
+        const y = l ? { x: 2 * o - l.x, y: 2 * r - l.y } : { x: o, y: r },
+          C = b(u()),
+          M = w(u());
+        (n.push({ type: 'Q', x1: y.x, y1: y.y, x: C, y: M }),
+          (o = C),
+          (r = M),
+          (l = y),
+          (h = void 0));
+      }
+    else if (g === 'A')
+      for (; d(); ) {
+        const y = Math.abs(u()),
+          C = Math.abs(u()),
+          M = u(),
+          A = f(),
+          N = f(),
+          F = b(u()),
+          $ = w(u());
+        (n.push({ type: 'A', rx: y, ry: C, rotation: M, largeArc: A, sweep: N, x: F, y: $ }),
+          (o = F),
+          (r = $),
+          (h = l = void 0));
+      }
+    else g === 'Z' ? (n.push({ type: 'Z' }), (o = a), (r = c), (h = l = void 0)) : i++;
+  }
+  return n;
+}
+function Ce(e, t) {
+  let n = 0,
+    i = 0,
+    s = 0,
+    o = 0;
+  for (const r of t)
+    switch (r.type) {
+      case 'M':
+        (e.moveTo(r.x, r.y), (n = s = r.x), (i = o = r.y));
+        break;
+      case 'L':
+        (e.lineTo(r.x, r.y), (n = r.x), (i = r.y));
+        break;
+      case 'C':
+        (e.bezierCurveTo(r.x1, r.y1, r.x2, r.y2, r.x, r.y), (n = r.x), (i = r.y));
+        break;
+      case 'Q':
+        (e.quadraticCurveTo(r.x1, r.y1, r.x, r.y), (n = r.x), (i = r.y));
+        break;
+      case 'A': {
+        const a = vs(n, i, r.rx, r.ry, r.rotation, r.largeArc, r.sweep, r.x, r.y, 32);
+        for (const [c, h] of a) e.lineTo(c, h);
+        ((n = r.x), (i = r.y));
+        break;
+      }
+      case 'Z':
+        (e.closePath(), (n = s), (i = o));
+        break;
+    }
+}
+function Re(e, t = 0.75) {
+  const n = [];
+  let i,
+    s = 0,
+    o = 0,
+    r = 0,
+    a = 0;
+  const c = () => (i || ((i = { points: [], closed: !1 }), n.push(i)), i),
+    h = (l, d) => {
+      const u = c(),
+        f = u.points.length;
+      (f >= 2 && Math.abs(u.points[f - 2] - l) < 1e-9 && Math.abs(u.points[f - 1] - d) < 1e-9) ||
+        u.points.push(l, d);
+    };
+  for (const l of e)
+    switch (l.type) {
+      case 'M':
+        ((i = { points: [l.x, l.y], closed: !1 }), n.push(i), (s = r = l.x), (o = a = l.y));
+        break;
+      case 'L':
+        (h(l.x, l.y), (s = l.x), (o = l.y));
+        break;
+      case 'C': {
+        const d = ai(s, o, l.x, l.y, t);
+        for (let u = 1; u <= d; u++) {
+          const f = u / d,
+            m = ci(s, l.x1, l.x2, l.x, f),
+            p = ci(o, l.y1, l.y2, l.y, f);
+          h(m, p);
+        }
+        ((s = l.x), (o = l.y));
+        break;
+      }
+      case 'Q': {
+        const d = ai(s, o, l.x, l.y, t);
+        for (let u = 1; u <= d; u++) {
+          const f = u / d,
+            m = hi(s, l.x1, l.x, f),
+            p = hi(o, l.y1, l.y, f);
+          h(m, p);
+        }
+        ((s = l.x), (o = l.y));
+        break;
+      }
+      case 'A': {
+        const d = vs(
+          s,
+          o,
+          l.rx,
+          l.ry,
+          l.rotation,
+          l.largeArc,
+          l.sweep,
+          l.x,
+          l.y,
+          Math.max(8, Math.ceil(24 / Math.max(t, 0.1))),
+        );
+        for (const [u, f] of d) h(u, f);
+        ((s = l.x), (o = l.y));
+        break;
+      }
+      case 'Z':
+        (i && (h(r, a), (i.closed = !0)), (s = r), (o = a));
+        break;
+    }
+  return n.filter((l) => l.points.length >= 2);
+}
+function _o(e) {
+  const t = [],
+    n = /([MmLlHhVvCcSsQqTtAaZzFf])|([-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?)/g;
+  let i;
+  for (; (i = n.exec(e)) !== null; )
+    i[1]
+      ? t.push({ kind: 'cmd', value: i[1] })
+      : i[2] && t.push({ kind: 'num', value: Number(i[2]) });
+  return t;
+}
+function ai(e, t, n, i, s) {
+  const o = Math.hypot(n - e, i - t);
+  return Math.max(4, Math.min(96, Math.ceil(o / Math.max(1.5, s * 6))));
+}
+function ci(e, t, n, i, s) {
+  const o = 1 - s;
+  return o * o * o * e + 3 * o * o * s * t + 3 * o * s * s * n + s * s * s * i;
+}
+function hi(e, t, n, i) {
+  const s = 1 - i;
+  return s * s * e + 2 * s * i * t + i * i * n;
+}
+function vs(e, t, n, i, s, o, r, a, c, h) {
+  if (n === 0 || i === 0 || (Math.abs(e - a) < 1e-9 && Math.abs(t - c) < 1e-9)) return [[a, c]];
+  const l = (s * Math.PI) / 180,
+    d = Math.cos(l),
+    u = Math.sin(l),
+    f = (e - a) / 2,
+    m = (t - c) / 2;
+  let p = d * f + u * m,
+    g = -u * f + d * m;
+  ((n = Math.abs(n)), (i = Math.abs(i)));
+  const b = (p * p) / (n * n) + (g * g) / (i * i);
+  if (b > 1) {
+    const at = Math.sqrt(b);
+    ((n *= at), (i *= at));
+  }
+  const w = n * n,
+    y = i * i,
+    C = p * p,
+    M = g * g;
+  let A = (w * y - w * M - y * C) / (w * M + y * C);
+  A = Math.max(0, A);
+  const N = (o === r ? -1 : 1) * Math.sqrt(A),
+    F = N * ((n * g) / i),
+    $ = N * ((-i * p) / n),
+    At = d * F - u * $ + (e + a) / 2,
+    Vt = u * F + d * $ + (t + c) / 2,
+    st = (p - F) / n,
+    rt = (g - $) / i,
+    yt = (-p - F) / n,
+    Gt = (-g - $) / i;
+  let ee = Math.atan2(rt, st),
+    ot = Math.atan2(st * Gt - rt * yt, st * yt + rt * Gt);
+  (!r && ot > 0 && (ot -= 2 * Math.PI), r && ot < 0 && (ot += 2 * Math.PI));
+  const jt = Math.max(2, Math.min(h, Math.ceil(Math.abs(ot) / (Math.PI / 16)))),
+    xt = [];
+  for (let at = 1; at <= jt; at++) {
+    const nt = ee + (ot * at) / jt,
+      ne = d * n * Math.cos(nt) - u * i * Math.sin(nt) + At,
+      Oe = u * n * Math.cos(nt) + d * i * Math.sin(nt) + Vt;
+    xt.push([ne, Oe]);
+  }
+  return xt;
+}
+function Cs(e, t) {
+  const n = tt(e),
+    i = [],
+    s = [];
+  let o = '#000000',
+    r,
+    a = 1,
+    c = 0;
+  if (/<svg[\s>]/i.test(n)) {
+    const d = n.matchAll(/<path\b[^>]*\bd=["']([^"']+)["'][^>]*>/gi);
+    for (const f of d) {
+      const m = f[0],
+        p = f[1];
+      (s.push({
+        type: 'path',
+        commands: wt(p),
+        stroke: It(m, 'stroke') ?? o,
+        fill: It(m, 'fill') ?? void 0,
+        lineWidth: Number(It(m, 'stroke-width') ?? a),
+      }),
+        c++);
+    }
+    const u = n.matchAll(/<(polyline|polygon)\b[^>]*\bpoints=["']([^"']+)["'][^>]*>/gi);
+    for (const f of u) {
+      const m = f[0],
+        p = H(f[2]);
+      (p.length >= 4 &&
+        s.push({
+          type: f[1].toLowerCase() === 'polygon' ? 'polygon' : 'polyline',
+          points: p,
+          stroke: It(m, 'stroke') ?? o,
+          fill: It(m, 'fill') ?? void 0,
+          lineWidth: Number(It(m, 'stroke-width') ?? a),
+        }),
+        c++);
+    }
+  }
+  const h = n.split(/\r?\n/);
+  for (const d of h) {
+    const u = d.trim();
+    if (!u || u.startsWith('#') || u.startsWith('//')) continue;
+    const f = u.toLowerCase(),
+      m = H(u);
+    if (/^(color|stroke|pen|wt_color)\b/i.test(u)) {
+      ((o = di(u) ?? o), c++);
+      continue;
+    }
+    if (/^(fill|brush|wt_fill)\b/i.test(u)) {
+      ((r = di(u) ?? r ?? '#000000'), c++);
+      continue;
+    }
+    if (/^(nofill|fillnone)\b/i.test(u)) {
+      ((r = void 0), c++);
+      continue;
+    }
+    if (/^(linewidth|lineweight|weight|wt_line_weight)\b/i.test(u) && m.length >= 1) {
+      ((a = Math.max(0.2, m[0])), c++);
+      continue;
+    }
+    if ((/^path\b/i.test(u) || /\bPath\s*Data\b/.test(u)) && /[MmLlCcQqAaZz]/.test(u)) {
+      const p = u
+        .replace(/^path\b[:=]?/i, '')
+        .replace(/^.*?Data\s*=\s*/i, '')
+        .replace(/^['"]|['"]$/g, '');
+      (s.push({ type: 'path', commands: wt(p), stroke: o, fill: r, lineWidth: a }), c++);
+      continue;
+    }
+    if (/^(line|wt_line)\b/i.test(u) && m.length >= 4) {
+      (s.push({ type: 'polyline', points: m.slice(0, 4), stroke: o, lineWidth: a }), c++);
+      continue;
+    }
+    if ((/^(polyline|wt_polyline|pline)\b/i.test(u) || /\bPolyline\b/i.test(u)) && m.length >= 4) {
+      (s.push({ type: 'polyline', points: li(m), stroke: o, lineWidth: a }), c++);
+      continue;
+    }
+    if ((/^(polygon|wt_polygon)\b/i.test(u) || /\bPolygon\b/i.test(u)) && m.length >= 6) {
+      (s.push({ type: 'polygon', points: li(m), stroke: o, fill: r ?? '#000000', lineWidth: a }),
+        c++);
+      continue;
+    }
+    if (/^(rect|rectangle|wt_rectangle)\b/i.test(u) && m.length >= 4) {
+      (s.push({
+        type: 'rect',
+        x: m[0],
+        y: m[1],
+        width: m[2],
+        height: m[3],
+        stroke: o,
+        fill: r,
+        lineWidth: a,
+      }),
+        c++);
+      continue;
+    }
+    if (/^(circle|ellipse)\b/i.test(u) && m.length >= 3) {
+      const [p, g, b] = m,
+        w = 72,
+        y = [];
+      for (let C = 0; C <= w; C++) {
+        const M = (Math.PI * 2 * C) / w;
+        y.push(p + Math.cos(M) * b, g + Math.sin(M) * b);
+      }
+      (s.push({ type: 'polygon', points: y, stroke: o, fill: r, lineWidth: a }), c++);
+      continue;
+    }
+    if (/^(text|wt_text)\b/i.test(u) && m.length >= 2) {
+      const p = m[0],
+        g = m[1],
+        b = m.length >= 3 ? m[2] : 12,
+        y =
+          u.match(/["']([^"']+)["']/)?.[1] ??
+          u
+            .replace(/^(text|wt_text)\b/i, '')
+            .replace(/[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?/g, '')
+            .trim();
+      (s.push({ type: 'text', x: p, y: g, size: b, text: y || 'Text', fill: o }), c++);
+      continue;
+    }
+    (f.includes('wt_') || f.includes('whip') || f.includes('dwf')) && c++;
+  }
+  const l = Lo(s);
+  return (
+    s.length === 0
+      ? i.push(
+          S(
+            'warning',
+            'W2D_TEXT_NO_GEOMETRY',
+            `Textual W2D parser did not find supported geometry commands in ${t}.`,
+            t,
+          ),
+        )
+      : i.push(
+          S(
+            'info',
+            'W2D_TEXT_PARSED',
+            `Parsed ${s.length} supported vector primitives from ${t}.`,
+            t,
+          ),
+        ),
+    c === 0 &&
+      i.push(
+        S(
+          'warning',
+          'W2D_TEXT_UNKNOWN_DIALECT',
+          'The file is textual, but does not look like the supported WHIP/W2D textual subset.',
+          t,
+        ),
+      ),
+    { primitives: s, diagnostics: i, bounds: l }
+  );
+}
+function li(e) {
+  return e.length >= 5 && Number.isInteger(e[0]) && e.length - 1 === e[0] * 2 ? e.slice(1) : e;
+}
+function It(e, t) {
+  return e.match(new RegExp(`${t}=["']([^"']+)["']`, 'i'))?.[1];
+}
+function di(e) {
+  const t = e.match(/#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})\b/i)?.[0];
+  if (t) return t;
+  const n = H(e);
+  return n.length >= 3
+    ? `rgb(${Math.max(0, Math.min(255, n[0]))}, ${Math.max(0, Math.min(255, n[1]))}, ${Math.max(0, Math.min(255, n[2]))})`
+    : e.match(/\b(black|white|red|green|blue|yellow|cyan|magenta|gray|grey)\b/i)?.[1];
+}
+function Lo(e) {
+  let t = 1 / 0,
+    n = 1 / 0,
+    i = -1 / 0,
+    s = -1 / 0;
+  const o = (r, a) => {
+    ((t = Math.min(t, r)), (n = Math.min(n, a)), (i = Math.max(i, r)), (s = Math.max(s, a)));
+  };
+  for (const r of e)
+    if ('points' in r)
+      for (let a = 0; a + 1 < r.points.length; a += 2) o(r.points[a], r.points[a + 1]);
+    else if (r.type === 'rect') (o(r.x, r.y), o(r.x + r.width, r.y + r.height));
+    else if (r.type === 'text')
+      (o(r.x, r.y), o(r.x + r.text.length * (r.size ?? 12) * 0.6, r.y + (r.size ?? 12)));
+    else if (r.type === 'path')
+      for (const a of r.commands)
+        ('x' in a && 'y' in a && o(a.x, a.y),
+          'x1' in a && 'y1' in a && o(a.x1, a.y1),
+          'x2' in a && 'y2' in a && o(a.x2, a.y2));
+  return Number.isFinite(t) ? { minX: t, minY: n, maxX: i, maxY: s } : void 0;
+}
+const Do = 1,
+  Bo = 2,
+  Ro = 4,
+  Wo = 8,
+  Oo = 16,
+  $o = 32,
+  zo = 64,
+  Uo = 128,
+  Xo = 256,
+  Ho = 512,
+  Yo = 1024;
+function Vo(e, t) {
+  return new Go(e, t).parse();
+}
+class Go {
+  constructor(t, n) {
+    ((this.bytes = t),
+      (this.sourcePath = n),
+      (this.pos = 0),
+      (this.current = { x: 0, y: 0 }),
+      (this.primitives = []),
+      (this.diagnostics = []),
+      (this.unsupportedOpcodes = []),
+      (this.opcodes = 0),
+      (this.decimalRevision = 600),
+      (this.state = {
+        stroke: '#000000',
+        fill: void 0,
+        fillOn: !1,
+        visible: !0,
+        lineWidth: 1,
+        fontHeight: 120,
+        fontRotation: 0,
+        fontName: 'sans-serif',
+      }),
+      (this.view = new DataView(t.buffer, t.byteOffset, t.byteLength)));
+  }
+  parse() {
+    for (
+      ;
+      this.pos < this.bytes.length && (this.eatWhitespace(), !(this.pos >= this.bytes.length));
+    ) {
+      const t = this.pos,
+        n = this.u8();
+      this.opcodes++;
+      try {
+        if (n === 40) {
+          ((this.pos = t), this.parseExtendedAscii(t));
+          continue;
+        }
+        if (n === 123) {
+          if (!this.parseExtendedBinary(t)) break;
+          continue;
+        }
+        if (this.parseSingleByteOpcode(n)) continue;
+        this.unsupportedOpcodes.push({
+          offset: t,
+          opcode: n,
+          message: `Unsupported/unknown W2D single-byte opcode 0x${n.toString(16).padStart(2, '0')}.`,
+        });
+        break;
+      } catch (i) {
+        this.unsupportedOpcodes.push({
+          offset: t,
+          opcode: n,
+          message: `Failed while decoding W2D opcode 0x${n.toString(16)}: ${String(i)}`,
+        });
+        break;
+      }
+    }
+    if (
+      (this.primitives.length > 0
+        ? this.diagnostics.push(
+            S(
+              'info',
+              'W2D_BINARY_PARSED',
+              `Parsed ${this.primitives.length} vector primitives from binary WHIP!/W2D stream (${this.opcodes} opcodes).`,
+              this.sourcePath,
+            ),
+          )
+        : this.diagnostics.push(
+            S(
+              'warning',
+              'W2D_BINARY_NO_GEOMETRY',
+              'Binary WHIP!/W2D parser did not emit supported geometry.',
+              this.sourcePath,
+            ),
+          ),
+      this.unsupportedOpcodes.length > 0)
+    ) {
+      const t = this.unsupportedOpcodes[0];
+      this.diagnostics.push(
+        S(
+          'warning',
+          'W2D_BINARY_PARTIAL',
+          `${this.unsupportedOpcodes.length} unsupported opcode(s); first at byte ${t.offset}: ${t.message}`,
+          this.sourcePath,
+        ),
+      );
+    }
+    return {
+      primitives: this.primitives,
+      diagnostics: this.diagnostics,
+      bounds: qo(this.primitives),
+      opcodes: this.opcodes,
+      unsupportedOpcodes: this.unsupportedOpcodes,
+    };
+  }
+  parseSingleByteOpcode(t) {
+    switch (t) {
+      case 0:
+        return !0;
+      case 3: {
+        const i = this.u8(),
+          s = this.u8(),
+          o = this.u8(),
+          r = this.u8();
+        return (
+          (this.state.stroke = Qo(i, s, o, r)),
+          this.state.fillOn && (this.state.fill = this.state.stroke),
+          !0
+        );
+      }
+      case 6:
+        return (this.readBinaryFont(), !0);
+      case 12: {
+        const i = [this.point16Relative(), this.point16Relative()];
+        return (this.polyline(i), !0);
+      }
+      case 16: {
+        const i = this.pointSet16Relative();
+        return (this.pointSetPrimitive(i), !0);
+      }
+      case 18: {
+        const i = this.point16Relative(),
+          s = this.u16();
+        return (this.ellipsePrimitive(i, s, s, 0, 0, 0), !0);
+      }
+      case 20:
+        return (this.polytriangles(this.pointSet16Relative()), !0);
+      case 23:
+        return ((this.state.lineWidth = Math.max(0.2, Math.abs(this.i32()))), !0);
+      case 24: {
+        const i = this.point32Relative(),
+          s = fi(this.readWhipString());
+        return (this.text(i, s), this.skipComplexTextOptions(), !0);
+      }
+      case 146: {
+        const i = this.point32Relative(),
+          s = this.u32(),
+          o = this.u16(),
+          r = this.u16();
+        return (this.ellipsePrimitive(i, s, s, o, r, 0, !1), !0);
+      }
+      case 172:
+        return (this.readCount(), !0);
+      case 204:
+        return (this.readCount(), !0);
+      case 228:
+        return (this.readCount(), !0);
+    }
+    switch (String.fromCharCode(t)) {
+      case 'B':
+        return (this.polyline(this.pointSet32Relative()), !0);
+      case 'C':
+        return (
+          (this.state.stroke = pi(this.readAsciiInteger())),
+          this.state.fillOn && (this.state.fill = this.state.stroke),
+          !0
+        );
+      case 'c':
+        return (
+          (this.state.stroke = pi(this.u8())),
+          this.state.fillOn && (this.state.fill = this.state.stroke),
+          !0
+        );
+      case 'E': {
+        const i = this.readAsciiPoint(),
+          s = this.readAsciiPoint();
+        return (this.ellipsePrimitive(i, s.x, s.y, 0, 0, 0), !0);
+      }
+      case 'e': {
+        const i = this.point32Relative(),
+          s = this.u32(),
+          o = this.u32(),
+          r = this.u16(),
+          a = this.u16(),
+          c = this.u16();
+        return (this.ellipsePrimitive(i, s, o, r, a, c), !0);
+      }
+      case 'F':
+        return ((this.state.fillOn = !0), (this.state.fill = this.state.stroke), !0);
+      case 'f':
+        return ((this.state.fillOn = !1), (this.state.fill = void 0), !0);
+      case 'L': {
+        const i = [this.readAsciiPoint(), this.readAsciiPoint()];
+        return (this.polyline(i), !0);
+      }
+      case 'l': {
+        const i = [this.point32Relative(), this.point32Relative()];
+        return (this.polyline(i), !0);
+      }
+      case 'N':
+        return (this.i32(), !0);
+      case 'n':
+        return (this.u16(), !0);
+      case 'O':
+        return ((this.current = { x: this.i32(), y: this.i32() }), !0);
+      case 'P':
+        return (this.pointSetPrimitive(this.pointSetAscii()), !0);
+      case 'p':
+        return (this.pointSetPrimitive(this.pointSet32Relative()), !0);
+      case 'R': {
+        const i = this.readAsciiPoint(),
+          s = this.readAsciiInteger();
+        return (this.ellipsePrimitive(i, s, s, 0, 0, 0), !0);
+      }
+      case 'r': {
+        const i = this.point32Relative(),
+          s = this.u32();
+        return (this.ellipsePrimitive(i, s, s, 0, 0, 0), !0);
+      }
+      case 'T':
+        return (this.polytriangles(this.pointSetAscii()), !0);
+      case 't':
+        return (this.polytriangles(this.pointSet32Relative()), !0);
+      case 'V':
+        return ((this.state.visible = !0), !0);
+      case 'v':
+        return ((this.state.visible = !1), !0);
+      case 'x': {
+        const i = this.point32Relative(),
+          s = fi(this.readWhipString());
+        return (this.text(i, s), !0);
+      }
+    }
+    return !1;
+  }
+  parseExtendedAscii(t) {
+    const { token: n, expr: i } = this.readBalancedExpression(t);
+    switch (n) {
+      case '(W2D': {
+        const s = i.match(/V(\d+)\.(\d+)/i);
+        s && (this.decimalRevision = Number(s[1]) * 100 + Number(s[2]));
+        break;
+      }
+      case '(Color': {
+        const s = mi(i);
+        s.length >= 3 && (this.state.stroke = Ko(s[0], s[1], s[2]));
+        break;
+      }
+      case '(LineWeight': {
+        const s = mi(i);
+        s.length >= 1 && (this.state.lineWidth = Math.max(0.2, Math.abs(s[0])));
+        break;
+      }
+      case '(Font': {
+        const s = i.match(/\(Height\s+(-?\d+)/i)?.[1],
+          o = i.match(/\(Rotation\s+(-?\d+)/i)?.[1],
+          r = i.match(/\(Name\s+(['"])(.*?)\1/i)?.[2];
+        (s && (this.state.fontHeight = Math.max(1, Math.abs(Number(s)))),
+          o && (this.state.fontRotation = Number(o) || 0),
+          r && (this.state.fontName = r));
+        break;
+      }
+      case '(EndOfDWF':
+        this.pos = this.bytes.length;
+        break;
+    }
+  }
+  parseExtendedBinary(t) {
+    if (this.remaining() < 6) return !1;
+    const n = this.u32(),
+      i = this.u16();
+    return i === 17 || i === 16 || i === 291
+      ? (this.unsupportedOpcodes.push({
+          offset: t,
+          opcode: `{${i.toString(16)}}`,
+          message:
+            'Embedded compressed WHIP block detected. This build renders uncompressed binary W2D streams and manifest markup XML; compressed nested blocks are skipped.',
+        }),
+        (this.pos = n > 0 && this.pos + n <= this.bytes.length ? this.pos + n : this.bytes.length),
+        !0)
+      : n > 0 && this.pos + n <= this.bytes.length
+        ? ((this.pos += n), !0)
+        : (this.unsupportedOpcodes.push({
+            offset: t,
+            opcode: `{${i.toString(16)}}`,
+            message: 'Unsupported extended binary WHIP object with unknown payload size.',
+          }),
+          !1);
+  }
+  readBinaryFont() {
+    const t = this.u16();
+    (t & Do && (this.state.fontName = this.readWhipString() || this.state.fontName),
+      t & Bo && this.u8(),
+      t & Ro && this.u8(),
+      t & Wo && this.u8(),
+      t & Oo && this.u8(),
+      t & $o && (this.state.fontHeight = Math.max(1, Math.abs(this.i32()))),
+      t & zo && (this.state.fontRotation = this.u16()),
+      t & Uo && this.u16(),
+      t & Xo && this.u16(),
+      t & Ho && this.u16(),
+      t & Yo && this.i32());
+  }
+  skipComplexTextOptions() {
+    (this.skipScoringOption(), this.skipScoringOption());
+    for (let t = 0; t < 4; t++) (this.i32(), this.i32());
+    if (this.decimalRevision >= 600 && this.pos < this.bytes.length) {
+      const t = Math.max(0, this.readCount() - 1);
+      for (let n = 0; n < t; n++) this.readCount();
+    }
+  }
+  skipScoringOption() {
+    const t = Math.max(0, this.readCount() - 1);
+    for (let n = 0; n < t; n++) this.readCount();
+  }
+  pointSetPrimitive(t) {
+    this.state.fillOn
+      ? this.polygon(t, this.state.fill ?? this.state.stroke, this.state.stroke)
+      : this.polyline(t);
+  }
+  polytriangles(t) {
+    if (!(!this.state.visible || t.length < 3))
+      for (let n = 0; n + 2 < t.length; n++)
+        this.polygon([t[n], t[n + 1], t[n + 2]], this.state.stroke, void 0);
+  }
+  polyline(t) {
+    !this.state.visible ||
+      t.length < 2 ||
+      this.primitives.push({
+        type: 'polyline',
+        points: ui(t),
+        stroke: this.state.stroke,
+        lineWidth: this.state.lineWidth,
+      });
+  }
+  polygon(t, n, i) {
+    !this.state.visible ||
+      t.length < 3 ||
+      this.primitives.push({
+        type: 'polygon',
+        points: ui(t),
+        fill: n,
+        stroke: i,
+        lineWidth: this.state.lineWidth,
+      });
+  }
+  ellipsePrimitive(t, n, i, s, o, r, a = this.state.fillOn) {
+    const c = jo(t, n, i, s, o, r);
+    a ? this.polygon(c, this.state.fill ?? this.state.stroke, this.state.stroke) : this.polyline(c);
+  }
+  text(t, n) {
+    !this.state.visible ||
+      !n.trim() ||
+      this.primitives.push({
+        type: 'text',
+        x: t.x,
+        y: t.y,
+        text: n,
+        size: Math.max(10, Math.abs(this.state.fontHeight)),
+        fill: this.state.stroke,
+      });
+  }
+  pointSet32Relative() {
+    const t = this.readCount(),
+      n = [];
+    for (let i = 0; i < t; i++) n.push(this.point32Relative());
+    return n;
+  }
+  pointSet16Relative() {
+    const t = this.readCount(),
+      n = [];
+    for (let i = 0; i < t; i++) n.push(this.point16Relative());
+    return n;
+  }
+  pointSetAscii() {
+    const t = this.readAsciiInteger(),
+      n = [];
+    for (let i = 0; i < t; i++) n.push(this.readAsciiPoint());
+    return n;
+  }
+  point32Relative() {
+    const t = this.i32(),
+      n = this.i32();
+    return ((this.current = { x: this.current.x + t, y: this.current.y + n }), { ...this.current });
+  }
+  point16Relative() {
+    const t = this.i16(),
+      n = this.i16();
+    return ((this.current = { x: this.current.x + t, y: this.current.y + n }), { ...this.current });
+  }
+  readAsciiPoint() {
+    const t = this.readAsciiInteger();
+    this.peek() === 44 && this.pos++;
+    const n = this.readAsciiInteger();
+    return { x: t, y: n };
+  }
+  readAsciiInteger() {
+    this.eatWhitespace();
+    const t = this.pos;
+    for (
+      (this.peek() === 43 || this.peek() === 45) && this.pos++;
+      this.pos < this.bytes.length && Zo(this.bytes[this.pos]);
+    )
+      this.pos++;
+    const n = ce(this.bytes.subarray(t, this.pos)),
+      i = Number.parseInt(n, 10);
+    return Number.isFinite(i) ? i : 0;
+  }
+  readWhipString() {
+    this.eatWhitespace();
+    const t = this.peek();
+    if (t === 123) {
+      this.pos++;
+      const i = this.i32(),
+        s = Math.max(0, i * 2);
+      if (this.pos + s > this.bytes.length) throw new Error('Truncated binary WHIP string.');
+      const o = new TextDecoder('utf-16le').decode(this.bytes.subarray(this.pos, this.pos + s));
+      return ((this.pos += s), this.peek() === 125 && this.pos++, o);
+    }
+    if (t === 34 || t === 39) {
+      const i = this.u8(),
+        s = [];
+      let o = !1;
+      for (; this.pos < this.bytes.length; ) {
+        const r = this.u8();
+        if (o) (s.push(r), (o = !1));
+        else if (r === 92) (s.push(r), (o = !0));
+        else {
+          if (r === i) break;
+          s.push(r);
+        }
+      }
+      return ce(new Uint8Array(s));
+    }
+    const n = this.pos;
+    for (; this.pos < this.bytes.length; ) {
+      const i = this.bytes[this.pos];
+      if (i === 32 || i === 9 || i === 10 || i === 13 || i === 41) break;
+      this.pos++;
+    }
+    return ce(this.bytes.subarray(n, this.pos));
+  }
+  readBalancedExpression(t) {
+    this.pos = t;
+    let n = 0,
+      i = 0,
+      s = !1;
+    for (; this.pos < this.bytes.length; ) {
+      const a = this.u8();
+      if (i) s ? (s = !1) : a === 92 ? (s = !0) : a === i && (i = 0);
+      else if (a === 34 || a === 39) i = a;
+      else if (a === 40) n++;
+      else if (a === 41 && (n--, n <= 0)) break;
+    }
+    const o = ce(this.bytes.subarray(t, this.pos));
+    return { token: o.match(/^\([^\s()]+/)?.[0] ?? '(', expr: o };
+  }
+  readCount() {
+    const t = this.u8();
+    return t !== 0 ? t : 256 + this.u16();
+  }
+  eatWhitespace() {
+    for (; this.pos < this.bytes.length; ) {
+      const t = this.bytes[this.pos];
+      if (t === 32 || t === 9 || t === 10 || t === 13) this.pos++;
+      else break;
+    }
+  }
+  remaining() {
+    return this.bytes.length - this.pos;
+  }
+  peek() {
+    return this.pos < this.bytes.length ? this.bytes[this.pos] : void 0;
+  }
+  u8() {
+    if (this.remaining() < 1) throw new Error('Unexpected EOF');
+    return this.view.getUint8(this.pos++);
+  }
+  i16() {
+    if (this.remaining() < 2) throw new Error('Unexpected EOF');
+    const t = this.view.getInt16(this.pos, !0);
+    return ((this.pos += 2), t);
+  }
+  u16() {
+    if (this.remaining() < 2) throw new Error('Unexpected EOF');
+    const t = this.view.getUint16(this.pos, !0);
+    return ((this.pos += 2), t);
+  }
+  i32() {
+    if (this.remaining() < 4) throw new Error('Unexpected EOF');
+    const t = this.view.getInt32(this.pos, !0);
+    return ((this.pos += 4), t);
+  }
+  u32() {
+    if (this.remaining() < 4) throw new Error('Unexpected EOF');
+    const t = this.view.getUint32(this.pos, !0);
+    return ((this.pos += 4), t);
+  }
+}
+function ui(e) {
+  const t = [];
+  for (const n of e) t.push(n.x, n.y);
+  return t;
+}
+function jo(e, t, n, i, s, o) {
+  let r = i,
+    a = s;
+  r === 0 && a === 0 ? (a = 65536) : a <= r && (a += 65536);
+  const c = a - r,
+    h = Math.max(16, Math.min(144, Math.ceil((Math.abs(c) / 65536) * 96))),
+    l = (o * Math.PI * 2) / 65536,
+    d = Math.cos(l),
+    u = Math.sin(l),
+    f = [];
+  for (let m = 0; m <= h; m++) {
+    const p = ((r + (c * m) / h) * Math.PI * 2) / 65536,
+      g = Math.cos(p) * t,
+      b = Math.sin(p) * n;
+    f.push({ x: e.x + g * d - b * u, y: e.y + g * u + b * d });
+  }
+  return f;
+}
+function fi(e) {
+  return e
+    .replace(
+      /\\P/gi,
+      `
+`,
+    )
+    .replace(/\\L|\\l/g, '')
+    .replace(/\\O|\\o/g, '')
+    .replace(/\\H[-+]?\d*\.?\d+x;/gi, '')
+    .replace(/\\S([^;]+);/gi, '$1')
+    .replace(/\\[A-Za-z][^;]*;/g, '')
+    .replace(/\\~/g, ' ')
+    .replace(/\\\\/g, '\\')
+    .trim();
+}
+function qo(e) {
+  let t = 1 / 0,
+    n = 1 / 0,
+    i = -1 / 0,
+    s = -1 / 0;
+  const o = (r, a) => {
+    ((t = Math.min(t, r)), (n = Math.min(n, a)), (i = Math.max(i, r)), (s = Math.max(s, a)));
+  };
+  for (const r of e)
+    if ('points' in r)
+      for (let a = 0; a + 1 < r.points.length; a += 2) o(r.points[a], r.points[a + 1]);
+    else if (r.type === 'rect') (o(r.x, r.y), o(r.x + r.width, r.y + r.height));
+    else if (r.type === 'text') {
+      const a = r.size ?? 12;
+      (o(r.x, r.y), o(r.x, r.y + a));
+    } else if (r.type === 'path')
+      for (const a of r.commands)
+        ('x' in a && 'y' in a && o(a.x, a.y),
+          'x1' in a && 'y1' in a && o(a.x1, a.y1),
+          'x2' in a && 'y2' in a && o(a.x2, a.y2));
+  return Number.isFinite(t) ? { minX: t, minY: n, maxX: i, maxY: s } : void 0;
+}
+function Zo(e) {
+  return e >= 48 && e <= 57;
+}
+function ce(e) {
+  return Array.from(e, (t) => String.fromCharCode(t)).join('');
+}
+function Ko(e, t, n) {
+  return `rgb(${Dt(e)}, ${Dt(t)}, ${Dt(n)})`;
+}
+function Qo(e, t, n, i) {
+  return `rgba(${Dt(e)}, ${Dt(t)}, ${Dt(n)}, ${Math.max(0, Math.min(1, i / 255))})`;
+}
+function Dt(e) {
+  return Math.max(0, Math.min(255, Math.round(e)));
+}
+function mi(e) {
+  return (e.match(/[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?/g) ?? [])
+    .map(Number)
+    .filter(Number.isFinite);
+}
+function pi(e) {
+  return (
+    [
+      '#000000',
+      '#ff0000',
+      '#ffff00',
+      '#00ff00',
+      '#00ffff',
+      '#0000ff',
+      '#ff00ff',
+      '#000000',
+      '#808080',
+      '#c0c0c0',
+    ][e] ?? '#000000'
+  );
+}
+function Jo(e) {
+  return e.entries.some(
+    (t) =>
+      /\.w2d$/i.test(t.name) ||
+      /manifest\.xml$/i.test(t.name) ||
+      /descriptor\.xml$/i.test(t.name) ||
+      /\.hsf$/i.test(t.name),
+  );
+}
+async function gi(e) {
+  const t = [],
+    n = [],
+    i = e.entries.map((c) => ({ path: c.name, mediaType: Mt(c.name), size: c.uncompressedSize })),
+    s = e.entries.find((c) => /(^|\/)manifest\.xml$/i.test(c.name));
+  let o = [];
+  if (s)
+    try {
+      ((o = ea(tt(await e.read(s)), s.name)),
+        t.push(
+          S(
+            'info',
+            'DWF_MANIFEST_FOUND',
+            `Found DWF manifest with ${o.length} section(s).`,
+            s.name,
+          ),
+        ));
+    } catch (c) {
+      t.push(
+        S(
+          'warning',
+          'DWF_MANIFEST_PARSE_FAILED',
+          `Failed to parse DWF manifest: ${String(c)}`,
+          s.name,
+        ),
+      );
+    }
+  else
+    t.push(
+      S(
+        'info',
+        'DWF_NO_MANIFEST',
+        'No manifest.xml was found; falling back to resource discovery.',
+      ),
+    );
+  if (o.length > 0)
+    for (const c of o) {
+      const h =
+        Ze(c, /2d\s+streaming\s+graphics/i) ?? c.resources.find((m) => /\.w2d$/i.test(m.path));
+      if (!h) continue;
+      const l = Ze(c, /^descriptor$/i) ?? { path: B(c.name + '/descriptor.xml') };
+      let d = {};
+      if (l && e.has(l.path))
+        try {
+          d = na(tt(await e.read(l.path)), h.path);
+        } catch (m) {
+          t.push(
+            S(
+              'warning',
+              'DWF_DESCRIPTOR_PARSE_FAILED',
+              `Failed to parse descriptor for ${c.title}: ${String(m)}`,
+              l.path,
+            ),
+          );
+        }
+      const u = [],
+        f = [];
+      try {
+        const m = await Ps(e, h.path);
+        (f.push(...m.primitives), u.push(...m.diagnostics));
+      } catch (m) {
+        u.push(
+          S(
+            'warning',
+            'DWF_W2D_READ_FAILED',
+            `Failed to read or parse ${h.path}: ${String(m)}`,
+            h.path,
+          ),
+        );
+      }
+      for (const m of c.resources.filter(
+        (p) => /markup\s+private/i.test(p.role ?? '') && /\.xml$/i.test(p.path),
+      ))
+        if (e.has(m.path))
+          try {
+            const p = ia(tt(await e.read(m.path)), m.path, d.w2dTransform);
+            (f.push(...p.primitives), u.push(...p.diagnostics));
+          } catch (p) {
+            u.push(
+              S(
+                'warning',
+                'DWF_MARKUP_XML_PARSE_FAILED',
+                `Failed to parse markup private XML: ${String(p)}`,
+                m.path,
+              ),
+            );
+          }
+      if (f.length > 0) {
+        const m = sa(f),
+          p = m ? Math.max(1, m.maxX - m.minX) : (d.paperWidth ?? 1e3),
+          g = m ? Math.max(1, m.maxY - m.minY) : (d.paperHeight ?? 1e3);
+        n.push({
+          id: `page-${n.length + 1}`,
+          name: c.title || h.title || Pe(h.path),
+          kind: 'w2d-text',
+          sourcePath: h.path,
+          width: p,
+          height: g,
+          primitives: f,
+          bounds: m,
+          diagnostics: u,
+        });
+      } else {
+        const m =
+          Ze(c, /thumbnail|preview/i) ??
+          c.resources.find((p) => /\.(png|jpe?g|gif|bmp)$/i.test(p.path));
+        m &&
+          e.has(m.path) &&
+          n.push({
+            id: `image-${n.length + 1}`,
+            name: c.title || Pe(m.path),
+            kind: 'image',
+            sourcePath: m.path,
+            mediaType: m.mediaType ?? Mt(m.path) ?? 'image/png',
+            width: 1e3,
+            height: 1e3,
+            diagnostics: [
+              ...u,
+              S(
+                'warning',
+                'DWF_IMAGE_FALLBACK',
+                'Vector stream did not produce geometry; using section thumbnail as fallback.',
+                m.path,
+              ),
+            ],
+          });
+      }
+    }
+  n.length === 0 && (await ta(e, n, t));
+  const r = e.entries.filter((c) => /\.hsf$/i.test(c.name));
+  if (
+    (r.length > 0 &&
+      (t.push(
+        S(
+          'warning',
+          'DWF_3D_HSF_DETECTED',
+          `Detected ${r.length} HSF/3D resource(s). This frontend build reports them but does not render 3D HSF.`,
+          r[0]?.name,
+        ),
+      ),
+      n.length === 0 &&
+        n.push({
+          id: 'unsupported-3d',
+          name: 'Unsupported 3D DWF',
+          kind: 'unsupported',
+          width: 1e3,
+          height: 1e3,
+          sourcePath: r[0]?.name,
+          reason:
+            '3D HSF resource detected; not implemented in this pure frontend native renderer build.',
+          diagnostics: [
+            S(
+              'warning',
+              'DWF_3D_HSF_UNSUPPORTED',
+              '3D HSF rendering is not implemented in this build.',
+              r[0]?.name,
+            ),
+          ],
+        })),
+    n.length === 0)
+  ) {
+    const c = ra(e);
+    c &&
+      n.push({
+        id: 'image-1',
+        name: Pe(c.name),
+        kind: 'image',
+        sourcePath: c.name,
+        mediaType: Mt(c.name) ?? 'image/png',
+        width: 1e3,
+        height: 1e3,
+        diagnostics: [
+          S(
+            'info',
+            'DWF_IMAGE_FALLBACK',
+            'No supported vector page was found; using an embedded preview/image resource.',
+            c.name,
+          ),
+        ],
+      });
+  }
+  n.length === 0 &&
+    n.push({
+      id: 'unsupported-1',
+      name: 'Unsupported DWF package',
+      kind: 'unsupported',
+      width: 1e3,
+      height: 1e3,
+      reason: 'No supported W2D, XPS FixedPage, or preview image resource was found.',
+      diagnostics: [
+        S('error', 'DWF_NO_SUPPORTED_PAGE', 'No supported renderable DWF resource was found.'),
+      ],
+    });
+  const a = {
+    kind: 'dwf',
+    pages: [],
+    resources: i,
+    diagnostics: t,
+    packageEntries: e.entries.map((c) => c.name),
+  };
+  return Me(a, n, e, void 0);
+}
+async function ta(e, t, n) {
+  const i = e.entries.filter((s) => /\.w2d$/i.test(s.name));
+  for (const s of i)
+    try {
+      const o = await Ps(e, s.name),
+        r = o.bounds,
+        a = r ? Math.max(1, r.maxX - r.minX) : 1e3,
+        c = r ? Math.max(1, r.maxY - r.minY) : 1e3;
+      o.primitives.length > 0 &&
+        t.push({
+          id: `page-${t.length + 1}`,
+          name: Pe(s.name),
+          kind: 'w2d-text',
+          sourcePath: s.name,
+          width: a,
+          height: c,
+          primitives: o.primitives,
+          bounds: r,
+          diagnostics: o.diagnostics,
+        });
+    } catch (o) {
+      n.push(S('warning', 'DWF_W2D_READ_FAILED', `Failed to read ${s.name}: ${String(o)}`, s.name));
+    }
+}
+async function Ps(e, t) {
+  const n = await e.read(t);
+  return ss(n) ? Cs(n, t) : Vo(n, t);
+}
+function ea(e, t) {
+  const n = G(e, t);
+  return Array.from(n.getElementsByTagName('*'))
+    .filter((s) => lt(s) === 'Section')
+    .map((s, o) => {
+      const r = R(s, 'name') ?? `section-${o + 1}`,
+        a = R(s, 'title') ?? r,
+        c = Array.from(s.getElementsByTagName('*'))
+          .filter((h) => lt(h).endsWith('Resource') || lt(h) === 'Resource')
+          .map((h) => ({
+            path: B(R(h, 'href') ?? ''),
+            role: R(h, 'role'),
+            mediaType: R(h, 'mime'),
+            title: R(h, 'title'),
+          }))
+          .filter((h) => h.path.length > 0);
+      return { name: r, title: a, resources: c };
+    })
+    .filter((s) => s.resources.length > 0);
+}
+function na(e, t) {
+  const n = G(e, 'descriptor.xml'),
+    i = Array.from(n.getElementsByTagName('*')).find((c) => lt(c) === 'Paper'),
+    s = {};
+  if (i) {
+    ((s.paperWidth = it(i, 'width')), (s.paperHeight = it(i, 'height')));
+    const c = R(i, 'clip');
+    c && (s.clip = H(c));
+  }
+  const o = Array.from(n.getElementsByTagName('*')).filter(
+      (c) => /GraphicResource$/i.test(lt(c)) || lt(c) === 'GraphicResource',
+    ),
+    r =
+      o.find((c) => B(R(c, 'href') ?? '') === B(t)) ??
+      o.find((c) => /2d\s+streaming\s+graphics/i.test(R(c, 'role') ?? '')),
+    a = r ? H(R(r, 'transform') ?? '') : [];
+  return (
+    a.length >= 14 &&
+      (s.w2dTransform = { sx: a[0] || 1, sy: a[5] || a[0] || 1, tx: a[12] || 0, ty: a[13] || 0 }),
+    s
+  );
+}
+function ia(e, t, n) {
+  const i = G(e, t),
+    s = [],
+    o = (c, h) => (n ? { x: (c - n.tx) / n.sx, y: (h - n.ty) / n.sy } : { x: c, y: h }),
+    r = (c) => H(R(c, 'Points') ?? R(c, 'points') ?? '');
+  for (const c of Array.from(i.getElementsByTagName('*'))) {
+    const h = lt(c);
+    if (h === 'Polyline2D' || h === 'Leader') {
+      const l = r(c);
+      if (l.length >= 4) {
+        const d = [];
+        for (let f = 0; f + 1 < l.length; f += 2) {
+          const m = o(l[f], l[f + 1]);
+          d.push(m.x, m.y);
+        }
+        const u = qe(c);
+        s.push({ type: 'polyline', points: d, stroke: u.stroke, lineWidth: u.lineWidth });
+      }
+    } else if (h === 'Tag' || h === 'Target') {
+      const l = it(c, 'CenterX'),
+        d = it(c, 'CenterY'),
+        u = it(c, 'Width'),
+        f = it(c, 'Height');
+      if ([l, d, u, f].every((m) => m !== void 0)) {
+        const m = o(l - u / 2, d - f / 2),
+          p = o(l + u / 2, d - f / 2),
+          g = o(l + u / 2, d + f / 2),
+          b = o(l - u / 2, d + f / 2),
+          w = qe(c);
+        s.push({
+          type: 'polygon',
+          points: [m.x, m.y, p.x, p.y, g.x, g.y, b.x, b.y],
+          stroke: w.stroke,
+          fill: w.fill,
+          lineWidth: w.lineWidth,
+        });
+      }
+    } else if (h === 'Text') {
+      const l = it(c, 'X'),
+        d = it(c, 'Y');
+      if (l !== void 0 && d !== void 0) {
+        const u = Array.from(c.getElementsByTagName('*')).filter((m) => lt(m) === 'TextPhrase'),
+          f = u.map((m) => R(m, 'String') ?? '').filter(Boolean).join(`
+`);
+        if (f) {
+          const m = o(l, d),
+            p = it(c, 'Height'),
+            g = u.length ? it(u[0], 'FontHeight') : void 0,
+            b = n && p ? Math.max(10, Math.abs(p / n.sy)) : (g ?? 12),
+            w = u.length ? R(u[0], 'Color') : void 0;
+          s.push({
+            type: 'text',
+            x: m.x,
+            y: m.y,
+            text: f,
+            size: b,
+            fill: w ? yn(w) : qe(c).stroke,
+          });
+        }
+      }
+    }
+  }
+  const a = [];
+  return (
+    s.length > 0 &&
+      a.push(
+        S(
+          'info',
+          'DWF_MARKUP_XML_PARSED',
+          `Parsed ${s.length} markup primitive(s) from markup private XML.`,
+          t,
+        ),
+      ),
+    { primitives: s, diagnostics: a }
+  );
+}
+function qe(e) {
+  let t = '#0000ff',
+    n,
+    i = 1;
+  const s = Array.from(e.getElementsByTagName('*')).filter((o) => lt(o) === 'FormatProperty');
+  for (const o of s) {
+    const r = (R(o, 'Name') ?? '').toUpperCase(),
+      a = (R(o, 'Enabled') ?? 'true').toLowerCase() !== 'false',
+      c = R(o, 'ModifierUIntVal') ?? R(o, 'UIntValue') ?? R(o, 'DblValue') ?? R(o, 'IntValue');
+    !a ||
+      c === void 0 ||
+      (r === 'LINECOLOR' && (t = yn(c)),
+      r === 'FILLCOLOR' && (n = yn(c)),
+      r === 'LINEWEIGHT' && (i = Math.max(1, Number(c) || i)),
+      r === 'NOFILL' && /true/i.test(R(o, 'BoolValue') ?? '') && (n = void 0));
+  }
+  return { stroke: t, fill: n, lineWidth: i };
+}
+function yn(e) {
+  const t = Number(e);
+  if (!Number.isFinite(t)) return '#000000';
+  const n = t >>> 0,
+    i = (n >>> 16) & 255,
+    s = (n >>> 8) & 255,
+    o = n & 255;
+  return `rgb(${i}, ${s}, ${o})`;
+}
+function sa(e) {
+  let t = 1 / 0,
+    n = 1 / 0,
+    i = -1 / 0,
+    s = -1 / 0;
+  const o = (r, a) => {
+    ((t = Math.min(t, r)), (n = Math.min(n, a)), (i = Math.max(i, r)), (s = Math.max(s, a)));
+  };
+  for (const r of e)
+    if ('points' in r)
+      for (let a = 0; a + 1 < r.points.length; a += 2) o(r.points[a], r.points[a + 1]);
+    else if (r.type === 'rect') (o(r.x, r.y), o(r.x + r.width, r.y + r.height));
+    else if (r.type === 'text') {
+      const a = r.size ?? 12;
+      (o(r.x, r.y), o(r.x, r.y + a));
+    } else if (r.type === 'path')
+      for (const a of r.commands)
+        ('x' in a && 'y' in a && o(a.x, a.y),
+          'x1' in a && 'y1' in a && o(a.x1, a.y1),
+          'x2' in a && 'y2' in a && o(a.x2, a.y2));
+  return Number.isFinite(t) ? { minX: t, minY: n, maxX: i, maxY: s } : void 0;
+}
+function Ze(e, t) {
+  return e.resources.find((n) => t.test(n.role ?? ''));
+}
+function R(e, t) {
+  return (
+    e.getAttribute(t) ??
+    e.getAttribute(`dwf:${t}`) ??
+    e.getAttribute(`ePlot:${t}`) ??
+    Array.from(e.attributes).find((n) => n.localName === t)?.value ??
+    void 0
+  );
+}
+function lt(e) {
+  const t = e.localName || e.nodeName,
+    n = t.indexOf(':');
+  return n >= 0 ? t.slice(n + 1) : t;
+}
+function it(e, t) {
+  const n = R(e, t);
+  if (n === void 0) return;
+  const i = Number(n);
+  return Number.isFinite(i) ? i : void 0;
+}
+function Pe(e) {
+  const t = e.lastIndexOf('/');
+  return t >= 0 ? e.slice(t + 1) : e;
+}
+function ra(e) {
+  const t = e.entries.filter((n) => /\.(png|jpe?g|gif|bmp)$/i.test(n.name));
+  if (t.length !== 0)
+    return t.sort((n, i) => wi(i.name, i.uncompressedSize) - wi(n.name, n.uncompressedSize))[0];
+}
+function wi(e, t) {
+  let n = Math.min(t, 1e7) / 1e3;
+  return (/thumbnail|preview/i.test(e) && (n += 5e3), rs(e) === 'png' && (n += 100), n);
+}
+async function Ms(e, t = {}) {
+  const n = await oa(e),
+    i = t.fileName ?? (e instanceof File ? e.name : void 0) ?? 'document.dwf';
+  if (wr(n)) {
+    const r = Nn.open(n, t.inflater);
+    return Co(r)
+      ? await ii(r)
+      : Jo(r)
+        ? await gi(r)
+        : r.entries.some((a) => /\.fpage$/i.test(a.name))
+          ? await ii(r)
+          : await gi(r);
+  }
+  if (ss(n)) {
+    const r = Cs(n, i),
+      a = [
+        {
+          id: 'page-1',
+          name: i,
+          kind: 'w2d-text',
+          width: r.bounds ? Math.max(1, r.bounds.maxX - r.bounds.minX) : 1e3,
+          height: r.bounds ? Math.max(1, r.bounds.maxY - r.bounds.minY) : 1e3,
+          sourcePath: i,
+          primitives: r.primitives,
+          bounds: r.bounds,
+          diagnostics: r.diagnostics,
+        },
+      ],
+      c = {
+        kind: 'unknown',
+        pages: [],
+        resources: [{ path: i, mediaType: 'text/plain', size: n.byteLength }],
+        diagnostics: [
+          S(
+            'warning',
+            'RAW_TEXT_W2D_MODE',
+            'Input is not a DWF ZIP package; opened it as a textual W2D-like vector stream.',
+            i,
+          ),
+        ],
+        packageEntries: [i],
+      };
+    return Me(c, a);
+  }
+  const s = {
+      id: 'unsupported-raw',
+      name: i,
+      kind: 'unsupported',
+      width: 1e3,
+      height: 1e3,
+      sourcePath: i,
+      reason: 'Input is neither a ZIP-based DWF/DWFx package nor a supported textual W2D stream.',
+      diagnostics: [
+        S(
+          'error',
+          'UNSUPPORTED_RAW_FORMAT',
+          'Unsupported raw DWF input. DWF 6+/DWFx ZIP packages are required for this build.',
+          i,
+        ),
+      ],
+    },
+    o = {
+      kind: 'unknown',
+      pages: [],
+      resources: [{ path: i, size: n.byteLength }],
+      diagnostics: s.diagnostics,
+      packageEntries: [i],
+    };
+  return Me(o, [s]);
+}
+async function oa(e) {
+  return e instanceof Uint8Array
+    ? e
+    : e instanceof ArrayBuffer
+      ? new Uint8Array(e)
+      : new Uint8Array(await e.arrayBuffer());
+}
+const bi = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+function et(e, t) {
+  return {
+    a: e.a * t.a + e.c * t.b,
+    b: e.b * t.a + e.d * t.b,
+    c: e.a * t.c + e.c * t.d,
+    d: e.b * t.c + e.d * t.d,
+    e: e.a * t.e + e.c * t.f + e.e,
+    f: e.b * t.e + e.d * t.f + e.f,
+  };
+}
+function kt(e, t, n) {
+  return [e.a * t + e.c * n + e.e, e.b * t + e.d * n + e.f];
+}
+function ke(e) {
+  if (!e) return { ...bi };
+  const t = H(e);
+  return t.length >= 6 ? { a: t[0], b: t[1], c: t[2], d: t[3], e: t[4], f: t[5] } : { ...bi };
+}
+function j(e, t = 1) {
+  if (!e || e === 'Transparent' || e === '{x:Null}') return;
+  let n = e.trim();
+  if (n.startsWith('{') || n.includes('Brush')) return;
+  const i = Ss(n);
+  if ((i && (n = i), n.startsWith('sc#'))) {
+    const s = H(n);
+    if (s.length >= 3) {
+      const o = s.length >= 4 ? 1 : 0,
+        r = s.length >= 4 ? s[0] : 1,
+        a = Math.round((s[o] ?? 0) * 255),
+        c = Math.round((s[o + 1] ?? 0) * 255),
+        h = Math.round((s[o + 2] ?? 0) * 255);
+      return he(a, c, h, r * t);
+    }
+  }
+  if (n.startsWith('#')) {
+    const s = n.slice(1);
+    if (s.length === 3) {
+      const o = parseInt(s[0] + s[0], 16),
+        r = parseInt(s[1] + s[1], 16),
+        a = parseInt(s[2] + s[2], 16);
+      return he(o, r, a, t);
+    }
+    if (s.length === 6)
+      return he(
+        parseInt(s.slice(0, 2), 16),
+        parseInt(s.slice(2, 4), 16),
+        parseInt(s.slice(4, 6), 16),
+        t,
+      );
+    if (s.length === 8) {
+      const o = parseInt(s.slice(0, 2), 16) / 255;
+      return he(
+        parseInt(s.slice(2, 4), 16),
+        parseInt(s.slice(4, 6), 16),
+        parseInt(s.slice(6, 8), 16),
+        o * t,
+      );
+    }
+  }
+  return (/^rgba?\(/i.test(n), n);
+}
+function Bt(e, t = 4278190080) {
+  if (!e) return t;
+  const n = e.trim(),
+    i = n.match(/^rgba?\(([^)]+)\)/i);
+  if (i) {
+    const o = i[1].split(',').map((l) => l.trim()),
+      r = Number(o[0] ?? 0),
+      a = Number(o[1] ?? 0),
+      c = Number(o[2] ?? 0),
+      h = o[3] === void 0 ? 1 : Number(o[3]);
+    return Ke(r, a, c, Math.round(h * 255));
+  }
+  if (n.startsWith('#')) {
+    const o = n.slice(1);
+    if (o.length === 6)
+      return Ke(
+        parseInt(o.slice(0, 2), 16),
+        parseInt(o.slice(2, 4), 16),
+        parseInt(o.slice(4, 6), 16),
+        255,
+      );
+    if (o.length === 8)
+      return Ke(
+        parseInt(o.slice(2, 4), 16),
+        parseInt(o.slice(4, 6), 16),
+        parseInt(o.slice(6, 8), 16),
+        parseInt(o.slice(0, 2), 16),
+      );
+  }
+  const s = Ss(n);
+  return s ? Bt(s, t) : t;
+}
+function Ke(e, t, n, i) {
+  return (
+    (e = Ct(e)),
+    (t = Ct(t)),
+    (n = Ct(n)),
+    (i = Ct(i)),
+    (e & 255) | ((t & 255) << 8) | ((n & 255) << 16) | ((i & 255) << 24)
+  );
+}
+function he(e, t, n, i) {
+  return `rgba(${Ct(e)}, ${Ct(t)}, ${Ct(n)}, ${Math.max(0, Math.min(1, i))})`;
+}
+function Ct(e) {
+  return Math.max(0, Math.min(255, Math.round(e)));
+}
+function Ss(e) {
+  switch (e.toLowerCase()) {
+    case 'black':
+      return '#000000';
+    case 'white':
+      return '#ffffff';
+    case 'red':
+      return '#ff0000';
+    case 'green':
+      return '#008000';
+    case 'blue':
+      return '#0000ff';
+    case 'yellow':
+      return '#ffff00';
+    case 'cyan':
+      return '#00ffff';
+    case 'magenta':
+      return '#ff00ff';
+    case 'gray':
+    case 'grey':
+      return '#808080';
+    case 'transparent':
+      return '#00000000';
+    default:
+      return;
+  }
+}
+function Ee(e) {
+  const t = e.margin ?? 24,
+    n = Math.max(1, e.canvasWidth - t * 2),
+    i = Math.max(1, e.canvasHeight - t * 2),
+    o = Math.min(n / Math.max(1, e.pageWidth), i / Math.max(1, e.pageHeight)) * (e.zoom ?? 1),
+    r = (e.canvasWidth - e.pageWidth * o) / 2 + (e.panX ?? 0) - (e.sourceMinX ?? 0) * o,
+    a = (e.canvasHeight - e.pageHeight * o) / 2 + (e.panY ?? 0) - (e.sourceMinY ?? 0) * o;
+  return { a: o, b: 0, c: 0, d: o, e: r, f: a };
+}
+function In(e, t, n, i = 1, s = 0, o = 0) {
+  const r = e.bounds,
+    a = r?.minX ?? 0;
+  r?.minY;
+  const c = r?.maxY ?? e.height,
+    h = r ? Math.max(1, r.maxX - r.minX) : e.width,
+    l = r ? Math.max(1, r.maxY - r.minY) : e.height,
+    d = 24,
+    u = Math.max(1, t - d * 2),
+    f = Math.max(1, n - d * 2),
+    m = Math.min(u / Math.max(1, h), f / Math.max(1, l)) * i,
+    p = (t - h * m) / 2 + s,
+    g = (n - l * m) / 2 + o;
+  return { a: m, b: 0, c: 0, d: -m, e: p - a * m, f: g + c * m };
+}
+function Ht(e) {
+  const t = Math.hypot(e.a, e.b),
+    n = Math.hypot(e.c, e.d);
+  return Math.max(1e-12, (t + n) * 0.5);
+}
+function We(e) {
+  const t = e.getBoundingClientRect?.(),
+    n = t && t.width > 0 ? t.width : Number(e.style.width?.replace('px', '')) || e.width;
+  return Math.max(1, e.width / Math.max(1, n));
+}
+function Ut(e, t, n = {}, i) {
+  const s = Ht(t),
+    o = Math.max(0, Math.abs(e || 0) * s),
+    r = n.lineWeightMode ?? 'adaptive';
+  if (r === 'physical') return Math.max(1e-6, Math.abs(e || 1));
+  const a = Math.max(1, i.dpr || 1),
+    c = Math.max(0.25, (n.minStrokeCssPx ?? 0.55) * a);
+  if (r === 'hairline') return c / s;
+  const h = Math.max(0.05, i.zoom ?? 1),
+    l = n.maxOverviewStrokeCssPx ?? 1.15,
+    d = h <= 1 ? l : Math.min(24, l * (1 + Math.log2(h) * 1.6)),
+    u = Math.max(c, d * a);
+  return Math.max(c, Math.min(o, u)) / s;
+}
+function ks(e, t, n = {}, i) {
+  if ((n.lineWeightMode ?? 'adaptive') === 'physical') return !0;
+  const s = Math.max(1, i.dpr || 1),
+    o = n.minTextCssPx ?? 3.5;
+  return Math.abs(e * Ht(t)) >= o * s;
+}
+function Es(e, t, n = {}, i) {
+  if (!e || (n.lineWeightMode ?? 'adaptive') === 'physical') return !0;
+  const s = Math.max(1, i.dpr || 1),
+    o = Math.max(0, n.minFilledAreaCssPx ?? 0.12) * s * s;
+  if (o <= 0) return !0;
+  const r = le(t, e.minX, e.minY),
+    a = le(t, e.maxX, e.minY),
+    c = le(t, e.maxX, e.maxY),
+    h = le(t, e.minX, e.maxY),
+    l = [r[0], a[0], c[0], h[0]],
+    d = [r[1], a[1], c[1], h[1]];
+  return (Math.max(...l) - Math.min(...l)) * (Math.max(...d) - Math.min(...d)) >= o;
+}
+function le(e, t, n) {
+  return [e.a * t + e.c * n + e.e, e.b * t + e.d * n + e.f];
+}
+class As {
+  constructor(t = {}) {
+    ((this.fbPtr = 0),
+      (this.fbBytes = 0),
+      (this.width = 0),
+      (this.height = 0),
+      (this.wasmUrl = t.wasmUrl ?? './public/dwfv-render.wasm'));
+  }
+  async init() {
+    if (this.exports) return;
+    const t = await fetch(this.wasmUrl);
+    if (!t.ok) throw new Error(`Failed to load WASM raster backend: ${t.status} ${t.statusText}`);
+    const n = await t.arrayBuffer(),
+      i = await WebAssembly.instantiate(n, {});
+    this.exports = i.instance.exports;
+  }
+  begin(t, n, i = '#ffffff') {
+    const s = this.requireExports();
+    ((this.width = Math.max(1, Math.floor(t))),
+      (this.height = Math.max(1, Math.floor(n))),
+      (this.fbBytes = this.width * this.height * 4),
+      s.dwfv_reset_heap(),
+      (this.fbPtr = s.dwfv_alloc(this.fbBytes)),
+      this.ensureMemory(this.fbPtr + this.fbBytes),
+      s.dwfv_clear(this.fbPtr, this.width, this.height, Bt(i, 4294967295)));
+  }
+  drawPolyline(t, n, i, s = 1) {
+    const o = this.requireExports();
+    if (t.length < 4 || !i) return;
+    const r = Math.floor(t.length / 2),
+      a = this.allocF32(r * 2),
+      c = new Float32Array(o.memory.buffer, a, r * 2);
+    for (let h = 0; h < r; h++) {
+      const [l, d] = kt(n, t[h * 2], t[h * 2 + 1]);
+      ((c[h * 2] = l), (c[h * 2 + 1] = d));
+    }
+    o.dwfv_draw_polyline(
+      this.fbPtr,
+      this.width,
+      this.height,
+      a,
+      r,
+      Bt(i, 4278190080),
+      Math.max(1, s),
+    );
+  }
+  drawPolygon(t, n, i) {
+    const s = this.requireExports();
+    if (t.length < 6 || !i) return;
+    const o = Math.floor(t.length / 2),
+      r = this.allocF32(o * 2),
+      a = new Float32Array(s.memory.buffer, r, o * 2);
+    for (let c = 0; c < o; c++) {
+      const [h, l] = kt(n, t[c * 2], t[c * 2 + 1]);
+      ((a[c * 2] = h), (a[c * 2 + 1] = l));
+    }
+    s.dwfv_draw_polygon(this.fbPtr, this.width, this.height, r, o, Bt(i, 4278190080));
+  }
+  toImageData() {
+    const t = this.requireExports(),
+      n = new Uint8ClampedArray(t.memory.buffer, this.fbPtr, this.fbBytes);
+    return new ImageData(new Uint8ClampedArray(n), this.width, this.height);
+  }
+  allocF32(t) {
+    const n = this.requireExports(),
+      i = t * 4,
+      s = n.dwfv_alloc(i);
+    return (this.ensureMemory(s + i), s);
+  }
+  ensureMemory(t) {
+    const n = this.requireExports(),
+      i = 65536,
+      s = n.memory.buffer.byteLength;
+    t > s && n.memory.grow(Math.ceil((t - s) / i));
+  }
+  requireExports() {
+    if (!this.exports) throw new Error('WASM backend is not initialized. Call init() first.');
+    return this.exports;
+  }
+}
+const Ae = 12,
+  yi = 128 * 1024 * 1024,
+  aa = 4,
+  ca = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+class ha {
+  constructor(t) {
+    ((this.scenes = new Map()),
+      (this.gpuBytes = 0),
+      (this.tick = 0),
+      (this.canvas = t ?? document.createElement('canvas')));
+    const n = this.canvas.getContext('webgl', {
+      alpha: !1,
+      antialias: !0,
+      depth: !1,
+      stencil: !1,
+      preserveDrawingBuffer: !0,
+      powerPreference: 'high-performance',
+    });
+    if (!n) throw new Error('WebGLRenderingContext is not available.');
+    ((this.gl = n),
+      (this.program = Sa(n, ka, Ea)),
+      (this.aPos = n.getAttribLocation(this.program, 'a_pos')),
+      (this.aColor = n.getAttribLocation(this.program, 'a_color')));
+    const i = n.getUniformLocation(this.program, 'u_matrix'),
+      s = n.getUniformLocation(this.program, 'u_viewport');
+    if (this.aPos < 0 || this.aColor < 0 || !i || !s)
+      throw new Error('Failed to resolve WebGL shader locations.');
+    ((this.uMatrix = i), (this.uViewport = s));
+  }
+  render(t, n, i, s = {}) {
+    const o = [];
+    if (i.width <= 0 || i.height <= 0)
+      return {
+        commands: 0,
+        warnings: o,
+        gpuBytes: this.gpuBytes,
+        vertexCount: 0,
+        pathCount: 0,
+        cacheHit: !0,
+      };
+    this.resize(i.width, i.height);
+    const r = Ee({
+        canvasWidth: this.canvas.width,
+        canvasHeight: this.canvas.height,
+        pageWidth: t.width,
+        pageHeight: t.height,
+        zoom: s.zoom,
+        panX: s.panX,
+        panY: s.panY,
+      }),
+      a = { dpr: We(i), zoom: s.zoom ?? 1 },
+      c = wa(t, r, s);
+    let h = this.scenes.get(c);
+    const l = !!h;
+    if (!h) {
+      const f = la(n);
+      ((h = this.compileScene(t, c, f, r, s, a)),
+        this.scenes.set(c, h),
+        (this.gpuBytes += h.gpuBytes),
+        this.evictIfNeeded(s),
+        (h = this.scenes.get(c) ?? h));
+    }
+    h.lastUsed = ++this.tick;
+    const d = this.gl,
+      u = Ma(s.background ?? '#ffffff');
+    if (
+      (d.viewport(0, 0, this.canvas.width, this.canvas.height),
+      d.disable(d.DEPTH_TEST),
+      d.disable(d.CULL_FACE),
+      d.enable(d.BLEND),
+      d.blendFunc(d.SRC_ALPHA, d.ONE_MINUS_SRC_ALPHA),
+      d.clearColor(u[0], u[1], u[2], u[3]),
+      d.clear(d.COLOR_BUFFER_BIT),
+      d.useProgram(this.program),
+      d.bindBuffer(d.ARRAY_BUFFER, h.buffer),
+      d.enableVertexAttribArray(this.aPos),
+      d.vertexAttribPointer(this.aPos, 2, d.FLOAT, !1, Ae, 0),
+      d.enableVertexAttribArray(this.aColor),
+      d.vertexAttribPointer(this.aColor, 4, d.UNSIGNED_BYTE, !0, Ae, 8),
+      d.uniform4f(this.uMatrix, r.a, r.b, r.c, r.d),
+      d.uniform4f(this.uViewport, r.e, r.f, this.canvas.width, this.canvas.height),
+      d.drawArrays(d.TRIANGLES, 0, h.vertexCount),
+      s.compositeToTarget ?? !0)
+    ) {
+      const f = i.getContext('2d');
+      if (!f) throw new Error('CanvasRenderingContext2D is not available for WebGL compositing.');
+      (f.save(),
+        f.setTransform(1, 0, 0, 1, 0, 0),
+        f.clearRect(0, 0, i.width, i.height),
+        f.drawImage(this.canvas, 0, 0),
+        f.restore());
+    }
+    return (
+      h.vertexCount === 0 &&
+        o.push(
+          S(
+            'warning',
+            'WEBGL_XPS_EMPTY_SCENE',
+            'WebGL XPS scene contained no drawable vector geometry; Canvas/WASM fallback may be required.',
+            t.sourcePath,
+          ),
+        ),
+      {
+        commands: h.pathCount,
+        warnings: o,
+        gpuBytes: this.gpuBytes,
+        vertexCount: h.vertexCount,
+        pathCount: h.pathCount,
+        cacheHit: l,
+      }
+    );
+  }
+  dispose() {
+    for (const t of this.scenes.values()) this.gl.deleteBuffer(t.buffer);
+    (this.scenes.clear(), (this.gpuBytes = 0));
+  }
+  resize(t, n) {
+    (this.canvas.width !== t || this.canvas.height !== n) &&
+      ((this.canvas.width = t), (this.canvas.height = n));
+  }
+  compileScene(t, n, i, s, o, r) {
+    const a = new ua();
+    let c = 0;
+    for (const m of i) (c++, da(a, m, s, o, r));
+    const h = a.byteLength,
+      l = o.maxGpuCacheBytes ?? yi;
+    if (h > l)
+      throw new Error(
+        `WebGL XPS scene buffer would require ${Ci(h)}, exceeding maxGpuCacheBytes=${Ci(l)}.`,
+      );
+    const d = this.gl,
+      u = d.createBuffer();
+    if (!u) throw new Error('Failed to allocate WebGLBuffer.');
+    (d.bindBuffer(d.ARRAY_BUFFER, u),
+      d.bufferData(d.ARRAY_BUFFER, a.toArrayBuffer(), d.STATIC_DRAW));
+    const f = d.getError();
+    if (f !== d.NO_ERROR)
+      throw (
+        d.deleteBuffer(u),
+        new Error(`WebGL XPS buffer upload failed: 0x${f.toString(16)} for ${t.sourcePath}.`)
+      );
+    return {
+      key: n,
+      buffer: u,
+      vertexCount: a.vertexCount,
+      gpuBytes: h,
+      pathCount: c,
+      lastUsed: ++this.tick,
+    };
+  }
+  evictIfNeeded(t) {
+    const n = t.maxGpuCacheBytes ?? yi,
+      i = t.maxCachedScenes ?? aa;
+    for (; this.scenes.size > Math.max(1, i) || this.gpuBytes > n; ) {
+      let s;
+      for (const o of this.scenes.values()) (!s || o.lastUsed < s.lastUsed) && (s = o);
+      if (!s) break;
+      (this.scenes.delete(s.key), this.gl.deleteBuffer(s.buffer), (this.gpuBytes -= s.gpuBytes));
+    }
+  }
+}
+function la(e) {
+  const t = [];
+  return (Ns(e, ca, 1, t), t);
+}
+function Ns(e, t, n, i) {
+  const s = k(e),
+    o = ba(e),
+    r = et(t, o),
+    a = n * Fs(v(e, 'Opacity'));
+  if (s === 'Path') {
+    const c = ya(e);
+    if (c.length > 0) {
+      const h = vi(e, 'Fill', a),
+        l = vi(e, 'Stroke', a),
+        d = Number(v(e, 'StrokeThickness') ?? 1);
+      (h || (l && d > 0)) &&
+        i.push({
+          commands: c,
+          matrix: r,
+          opacity: a,
+          fill: h,
+          stroke: l,
+          thickness: Number.isFinite(d) ? d : 1,
+          lineStyle: Ca(e),
+          fillRule: va(e),
+          bounds: Pa(c),
+        });
+    }
+  }
+  for (const c of U(e)) k(c).includes('.') || Ns(c, r, a, i);
+}
+function da(e, t, n, i, s) {
+  const o = et(n, t.matrix),
+    r = Ht(t.matrix),
+    a = Math.max(1e-6, t.thickness || 1),
+    c = Math.max(0.01, Ut(a, o, i, s) * r),
+    h = Re(t.commands, 0.5),
+    l = t.fill ? xn(t.fill) : void 0,
+    d = t.stroke ? xn(t.stroke) : void 0;
+  if (l && Es(t.bounds, o, i, s))
+    for (const u of h) (u.closed || u.points.length >= 6) && fa(e, xi(u.points, t.matrix), l);
+  if (d && t.thickness > 0)
+    for (const u of h) {
+      const f = xi(u.points, t.matrix),
+        m = u.closed ? pa(f) : f;
+      t.lineStyle.dash.length > 0 ? ma(e, m, c, t.lineStyle, d) : Ts(e, m, c, d);
+    }
+}
+let ua = class {
+  constructor() {
+    ((this.buffer = new ArrayBuffer(64 * 1024)),
+      (this.view = new DataView(this.buffer)),
+      (this.vertexCount = 0));
+  }
+  get byteLength() {
+    return this.vertexCount * Ae;
+  }
+  push(t, n, i) {
+    if (!Number.isFinite(t) || !Number.isFinite(n)) return;
+    const s = this.byteLength;
+    (this.ensure(Ae),
+      this.view.setFloat32(s, t, !0),
+      this.view.setFloat32(s + 4, n, !0),
+      this.view.setUint8(s + 8, i.r),
+      this.view.setUint8(s + 9, i.g),
+      this.view.setUint8(s + 10, i.b),
+      this.view.setUint8(s + 11, i.a),
+      this.vertexCount++);
+  }
+  toArrayBuffer() {
+    return this.buffer.slice(0, this.byteLength);
+  }
+  ensure(t) {
+    const n = this.byteLength + t;
+    if (n <= this.buffer.byteLength) return;
+    let i = this.buffer.byteLength;
+    for (; i < n; ) i *= 2;
+    const s = new ArrayBuffer(i);
+    (new Uint8Array(s).set(new Uint8Array(this.buffer, 0, this.byteLength)),
+      (this.buffer = s),
+      (this.view = new DataView(this.buffer)));
+  }
+};
+function fa(e, t, n) {
+  if (t.length < 3) return;
+  const i = t[0];
+  for (let s = 1; s + 1 < t.length; s++) {
+    const o = t[s],
+      r = t[s + 1];
+    ga(i, o, r) < 1e-6 || (e.push(i.x, i.y, n), e.push(o.x, o.y, n), e.push(r.x, r.y, n));
+  }
+}
+function Ts(e, t, n, i) {
+  if (t.length < 2) return;
+  const s = Math.max(0.05, n * 0.5);
+  for (let o = 0; o + 1 < t.length; o++) Is(e, t[o], t[o + 1], s, i);
+}
+function ma(e, t, n, i, s) {
+  if (t.length < 2 || i.dash.length === 0) return;
+  const o = i.dash.map((d) => Math.max(0.01, d * n)),
+    r = o.reduce((d, u) => d + u, 0);
+  if (r <= 0.01) {
+    Ts(e, t, n, s);
+    return;
+  }
+  let a = 0,
+    c = o[0],
+    h = !0,
+    l = (((i.dashOffset * n) % r) + r) % r;
+  for (; l > c; ) ((l -= c), (a = (a + 1) % o.length), (c = o[a]), (h = !h));
+  c -= l;
+  for (let d = 0; d + 1 < t.length; d++) {
+    const u = t[d],
+      f = t[d + 1],
+      m = f.x - u.x,
+      p = f.y - u.y,
+      g = Math.hypot(m, p);
+    if (g <= 1e-9) continue;
+    let b = 0;
+    for (; b < g - 1e-9; ) {
+      const w = Math.min(c, g - b);
+      if (h && w > 1e-9) {
+        const y = b / g,
+          C = (b + w) / g;
+        Is(
+          e,
+          { x: u.x + m * y, y: u.y + p * y },
+          { x: u.x + m * C, y: u.y + p * C },
+          Math.max(0.05, n * 0.5),
+          s,
+        );
+      }
+      ((b += w), (c -= w), c <= 1e-9 && ((a = (a + 1) % o.length), (c = o[a]), (h = !h)));
+    }
+  }
+}
+function Is(e, t, n, i, s) {
+  const o = n.x - t.x,
+    r = n.y - t.y,
+    a = Math.hypot(o, r);
+  if (a <= 1e-9) return;
+  const c = (-r / a) * i,
+    h = (o / a) * i,
+    l = t.x + c,
+    d = t.y + h,
+    u = t.x - c,
+    f = t.y - h,
+    m = n.x - c,
+    p = n.y - h,
+    g = n.x + c,
+    b = n.y + h;
+  (e.push(l, d, s),
+    e.push(u, f, s),
+    e.push(m, p, s),
+    e.push(l, d, s),
+    e.push(m, p, s),
+    e.push(g, b, s));
+}
+function xi(e, t) {
+  const n = [];
+  for (let i = 0; i + 1 < e.length; i += 2) {
+    const [s, o] = kt(t, e[i] ?? 0, e[i + 1] ?? 0);
+    n.push({ x: s, y: o });
+  }
+  return n;
+}
+function pa(e) {
+  if (e.length < 2) return e;
+  const t = e[0],
+    n = e[e.length - 1];
+  return t.x === n.x && t.y === n.y ? e : [...e, { x: t.x, y: t.y }];
+}
+function ga(e, t, n) {
+  return Math.abs((t.x - e.x) * (n.y - e.y) - (t.y - e.y) * (n.x - e.x));
+}
+function wa(e, t, n) {
+  const i = n.lineWeightMode ?? 'adaptive',
+    s = i === 'physical' ? 'physical' : String(Math.round(Math.log2(Math.max(1e-12, Ht(t))) * 8));
+  return `${e.id}|${e.sourcePath}|${e.width}x${e.height}|lw:${i}:${s}`;
+}
+function ba(e) {
+  let t = ke(v(e, 'RenderTransform') ?? v(e, 'Transform'));
+  for (const s of U(e)) {
+    const o = k(s);
+    if (o.endsWith('.RenderTransform') || o.endsWith('.Transform')) {
+      const r = U(s).find((a) => k(a) === 'MatrixTransform');
+      r && (t = et(t, ke(v(r, 'Matrix'))));
+    }
+  }
+  const n = Number(v(e, 'Canvas.Left') ?? 0),
+    i = Number(v(e, 'Canvas.Top') ?? 0);
+  return ((n || i) && (t = et({ a: 1, b: 0, c: 0, d: 1, e: n, f: i }, t)), t);
+}
+function ya(e) {
+  const t = v(e, 'Data');
+  if (t) return wt(t);
+  for (const n of U(e))
+    if (k(n) === 'Path.Data')
+      for (const i of U(n)) {
+        const s = v(i, 'Figures');
+        if (s) return wt(s);
+      }
+  return [];
+}
+function vi(e, t, n) {
+  const i = v(e, t);
+  if (i) return j(i, n);
+  const s = xa(e, t, 'SolidColorBrush');
+  if (s) return j(v(s, 'Color'), n * Fs(v(s, 'Opacity')));
+}
+function xa(e, t, n) {
+  const i = `${k(e)}.${t}`;
+  for (const s of U(e)) if (k(s) === i) return U(s).find((o) => k(o) === n);
+}
+function Fs(e) {
+  if (!e) return 1;
+  const t = Number(e);
+  return Number.isFinite(t) ? Math.max(0, Math.min(1, t)) : 1;
+}
+function va(e) {
+  const t = v(e, 'Data') ?? '';
+  return /F0/.test(t) ? 'nonzero' : 'evenodd';
+}
+function Ca(e) {
+  const t = (v(e, 'StrokeStartLineCap') ?? '').toLowerCase(),
+    n = (v(e, 'StrokeEndLineCap') ?? '').toLowerCase(),
+    i = (v(e, 'StrokeDashCap') ?? '').toLowerCase(),
+    s =
+      t === 'round' || n === 'round' || i === 'round'
+        ? 'round'
+        : t === 'square' || n === 'square' || i === 'square'
+          ? 'square'
+          : 'butt',
+    o = (v(e, 'StrokeLineJoin') ?? '').toLowerCase(),
+    r = o === 'round' ? 'round' : o === 'bevel' ? 'bevel' : 'miter',
+    a = Number(v(e, 'StrokeMiterLimit') ?? 10);
+  return {
+    cap: s,
+    join: r,
+    miterLimit: Number.isFinite(a) && a > 0 ? a : 10,
+    dash: H(v(e, 'StrokeDashArray') ?? '').filter((c) => Number.isFinite(c) && c > 0),
+    dashOffset: Number(v(e, 'StrokeDashOffset') ?? 0) || 0,
+  };
+}
+function Pa(e) {
+  let t = 1 / 0,
+    n = 1 / 0,
+    i = -1 / 0,
+    s = -1 / 0;
+  const o = (r, a) => {
+    !Number.isFinite(r) ||
+      !Number.isFinite(a) ||
+      ((t = Math.min(t, r)), (n = Math.min(n, a)), (i = Math.max(i, r)), (s = Math.max(s, a)));
+  };
+  for (const r of e)
+    r.type === 'M' || r.type === 'L'
+      ? o(r.x, r.y)
+      : r.type === 'C'
+        ? (o(r.x1, r.y1), o(r.x2, r.y2), o(r.x, r.y))
+        : r.type === 'Q'
+          ? (o(r.x1, r.y1), o(r.x, r.y))
+          : r.type === 'A' && (o(r.x - r.rx, r.y - r.ry), o(r.x + r.rx, r.y + r.ry));
+  return Number.isFinite(t) ? { minX: t, minY: n, maxX: i, maxY: s } : void 0;
+}
+function xn(e) {
+  const t = Bt(e, 4278190080);
+  return { r: t & 255, g: (t >>> 8) & 255, b: (t >>> 16) & 255, a: (t >>> 24) & 255 };
+}
+function Ma(e) {
+  const t = xn(e);
+  return [t.r / 255, t.g / 255, t.b / 255, t.a / 255];
+}
+function Ci(e) {
+  return e < 1024
+    ? `${e} B`
+    : e < 1024 * 1024
+      ? `${(e / 1024).toFixed(1)} KiB`
+      : `${(e / 1024 / 1024).toFixed(1)} MiB`;
+}
+function Sa(e, t, n) {
+  const i = Pi(e, e.VERTEX_SHADER, t),
+    s = Pi(e, e.FRAGMENT_SHADER, n),
+    o = e.createProgram();
+  if (!o) throw new Error('Failed to create WebGLProgram.');
+  if (
+    (e.attachShader(o, i),
+    e.attachShader(o, s),
+    e.linkProgram(o),
+    e.deleteShader(i),
+    e.deleteShader(s),
+    !e.getProgramParameter(o, e.LINK_STATUS))
+  ) {
+    const r = e.getProgramInfoLog(o) ?? 'unknown link error';
+    throw (e.deleteProgram(o), new Error(`WebGL program link failed: ${r}`));
+  }
+  return o;
+}
+function Pi(e, t, n) {
+  const i = e.createShader(t);
+  if (!i) throw new Error('Failed to create WebGLShader.');
+  if ((e.shaderSource(i, n), e.compileShader(i), !e.getShaderParameter(i, e.COMPILE_STATUS))) {
+    const s = e.getShaderInfoLog(i) ?? 'unknown shader compile error';
+    throw (e.deleteShader(i), new Error(`WebGL shader compile failed: ${s}`));
+  }
+  return i;
+}
+const ka = `
 attribute vec2 a_pos;
 attribute vec4 a_color;
 uniform vec4 u_matrix;
@@ -14,13 +4483,846 @@ void main() {
   gl_Position = vec4(clip, 0.0, 1.0);
   v_color = a_color;
 }
-`,Ea=`
+`,
+  Ea = `
 precision mediump float;
 varying vec4 v_color;
 void main() {
   gl_FragColor = v_color;
 }
-`;class Aa{constructor(t){this.document=t,this.fontCache=new Map,this.xmlCache=new Map}async render(t,n,i={}){if(!this.document.opc)throw new Error("XPS page requires an OPC package view.");const o=De(t.diagnostics),a=(await this.getXmlDocument(t.sourcePath)).documentElement,c=n.getContext("2d");if(!c)throw new Error("CanvasRenderingContext2D is not available.");const h=i.background??"#ffffff",l={dpr:We(n),zoom:i.zoom??1},d=Ee({canvasWidth:n.width,canvasHeight:n.height,pageWidth:t.width,pageHeight:t.height,zoom:i.zoom,panX:i.panX,panY:i.panY});let u=0;if(i.preferWebgl??!0)try{const f=this.getWebGlBackend(i.webglCanvas);i.webglCanvas&&(i.webglCanvas.style.visibility="visible");const m=f.render(t,a,n,{...i,compositeToTarget:!i.webglCanvas});return c.save(),c.setTransform(1,0,0,1,0,0),c.clearRect(0,0,n.width,n.height),c.restore(),u+=m.commands,u+=await this.renderElementToCanvas(a,c,t.sourcePath,d,1,o,{vectors:!1,overlays:!0},i,l),o.push(...m.warnings),{backend:"webgl-xps",commands:u,warnings:o}}catch(f){i.webglCanvas&&(i.webglCanvas.style.visibility="hidden"),o.push(S("warning","WEBGL_XPS_BACKEND_FALLBACK",`WebGL XPS vector path failed, falling back to ${i.preferWasm?"WASM raster":"Canvas2D"}: ${String(f)}`,t.sourcePath))}if(i.webglCanvas&&(i.webglCanvas.style.visibility="hidden"),i.preferWasm)try{return this.wasm??(this.wasm=new As({wasmUrl:i.wasmUrl})),await this.wasm.init(),this.wasm.begin(n.width,n.height,h),u+=this.renderElementToWasm(a,d,1,o,i,l),c.setTransform(1,0,0,1,0,0),c.putImageData(this.wasm.toImageData(),0,0),u+=await this.renderElementToCanvas(a,c,t.sourcePath,d,1,o,{vectors:!1,overlays:!0},i,l),{backend:"wasm-raster",commands:u,warnings:o}}catch(f){o.push(S("warning","WASM_BACKEND_FALLBACK",`WASM raster path failed, falling back to Canvas2D: ${String(f)}`))}return c.save(),c.setTransform(1,0,0,1,0,0),c.fillStyle=h,c.fillRect(0,0,n.width,n.height),c.restore(),u+=await this.renderElementToCanvas(a,c,t.sourcePath,d,1,o,{vectors:!0,overlays:!0},i,l),{backend:"canvas2d",commands:u,warnings:o}}getWebGlBackend(t){return(!this.webgl||this.webglCanvas!==t)&&(this.webgl?.dispose(),this.webgl=new ha(t),this.webglCanvas=t),this.webgl}getXmlDocument(t){let n=this.xmlCache.get(t);return n||(n=this.document.opc.readText(t).then(s=>G(s,t)),this.xmlCache.set(t,n)),n}dispose(){this.webgl?.dispose(),this.webgl=void 0,this.webglCanvas=void 0,this.xmlCache.clear(),this.fontCache.clear()}async renderElementToCanvas(t,n,i,s,o,r,a,c,h){const l=k(t),d=Si(t),u=et(s,d),f=o*vn(v(t,"Opacity"));let m=0;if(l==="Path"&&a.vectors){const p=Qe(t);if(p.length>0){n.save(),n.setTransform(u.a,u.b,u.c,u.d,u.e,u.f),n.globalAlpha=f;const g=v(t,"Clip");g&&(n.beginPath(),Ce(n,wt(g)),n.clip()),n.beginPath(),Ce(n,p);const b=qt(t,"Fill",f),w=qt(t,"Stroke",f),y=Number(v(t,"StrokeThickness")??1),C=Ta(p);b&&Es(C,u,c,h)&&(n.fillStyle=b,n.fill(Ba(t))),w&&y>0&&(n.strokeStyle=w,n.lineWidth=Ut(y,u,c,h),Na(n,t,n.lineWidth),n.stroke()),n.restore(),m++}}else if(l==="Glyphs"&&a.overlays)m+=await this.drawGlyphs(n,i,t,u,f,r,c,h);else if(l==="Image"&&a.overlays){const p=v(t,"Source")??v(t,"ImageSource");if(p)try{await this.drawImageResource(n,i,p,u,f,t),m++}catch(g){r.push(S("warning","XPS_IMAGE_DRAW_FAILED",`Failed to draw image ${p}: ${String(g)}`,i))}}else l==="Canvas"||l==="FixedPage"||l.endsWith(".RenderTransform")||l.endsWith(".Resources");if(l==="Path"&&a.overlays){const p=_s(t,"Fill","ImageBrush"),g=p?v(p,"ImageSource"):void 0;if(p&&g)try{await this.drawImageBrush(n,i,g,u,f,t,p),m++}catch(b){r.push(S("warning","XPS_IMAGEBRUSH_FAILED",`Failed to draw ImageBrush ${g}: ${String(b)}`,i))}}for(const p of U(t))k(p).includes(".")||(m+=await this.renderElementToCanvas(p,n,i,u,f,r,a,c,h));return m}renderElementToWasm(t,n,i,s,o,r){if(!this.wasm)return 0;const a=k(t),c=Si(t),h=et(n,c),l=i*vn(v(t,"Opacity"));let d=0;if(a==="Path"){const u=Qe(t);if(u.length>0){const f=qt(t,"Fill",l),m=qt(t,"Stroke",l),p=Number(v(t,"StrokeThickness")??1),g=Ut(p,h,o,r)*Math.max(1e-12,Math.hypot(h.a,h.b)),b=Re(u,.5);if(f)for(const w of b)(w.closed||w.points.length>=6)&&this.wasm.drawPolygon(w.points,h,f);if(m&&p>0)for(const w of b)this.wasm.drawPolyline(w.points,h,m,g);d++}}for(const u of U(t))k(u).includes(".")||(d+=this.renderElementToWasm(u,h,l,s,o,r));return d}async drawGlyphs(t,n,i,s,o,r,a,c){const h=v(i,"UnicodeString")??"";if(!h)return 0;const l=Number(v(i,"OriginX")??0),d=Number(v(i,"OriginY")??0),u=Number(v(i,"FontRenderingEmSize")??12);if(!ks(u,s,a,c))return 0;const f=qt(i,"Fill",o)??"#000000",m=await this.fontFamilyForGlyphs(n,i,r)??"sans-serif";t.save(),t.setTransform(s.a,s.b,s.c,s.d,s.e,s.f),t.globalAlpha=o,t.fillStyle=f,t.font=`${u}px "${m}"`,t.textBaseline="alphabetic";const p=v(i,"Indices");return p?Ia(t,h,p,l,d,u):t.fillText(h,l,d),t.restore(),1}async fontFamilyForGlyphs(t,n,i){const s=v(n,"FontUri");if(!s)return;const o=Lt(t,s.replace(/^\//,""));let r=this.fontCache.get(o);return r||(r=this.loadFontFace(o).catch(a=>{i.push(S("warning","XPS_FONT_LOAD_FAILED",`Failed to load embedded XPS font ${o}: ${String(a)}`,t))}),this.fontCache.set(o,r)),r}async loadFontFace(t){const n=globalThis.FontFace,i=document.fonts;if(!n||!i)return;let s=await this.document.opc.readBytes(t),o=Mt(t)??"font/ttf";/\.odttf$/i.test(t)&&(s=Fa(t,s),o="font/ttf");const r=`dwfv_xps_${La(t)}`,a=new Blob([s],{type:o}),c=URL.createObjectURL(a),h=new n(r,`url("${c}")`);try{return await h.load(),i.add(h),URL.revokeObjectURL(c),r}catch(l){throw URL.revokeObjectURL(c),l}}async drawImageResource(t,n,i,s,o,r){const a=this.document.opc,c=Lt(n,i.replace(/^\//,"")),h=await a.readBytes(c),l=await mn(h,a.getContentType(c)??Mt(c)??"image/png"),d=Number(v(r,"Width")??("width"in l?l.width:0)),u=Number(v(r,"Height")??("height"in l?l.height:0)),f=Number(v(r,"Canvas.Left")??v(r,"X")??0),m=Number(v(r,"Canvas.Top")??v(r,"Y")??0);t.save(),t.setTransform(s.a,s.b,s.c,s.d,s.e,s.f),t.globalAlpha=o,t.drawImage(l,f,m,d||l.width,u||l.height),t.restore()}async drawImageBrush(t,n,i,s,o,r,a){const c=this.document.opc,h=Lt(n,i.replace(/^\//,"")),l=await c.readBytes(h),d=await mn(l,c.getContentType(h)??Mt(h)??"image/png"),u=ki(v(a,"Viewport"))??ki(v(a,"Viewbox"))??[0,0,Number(d.width??1),Number(d.height??1)],f=Qe(r);t.save(),t.setTransform(s.a,s.b,s.c,s.d,s.e,s.f),t.globalAlpha=o,f.length>0&&(t.beginPath(),Ce(t,f),t.clip()),t.drawImage(d,u[0],u[1],u[2],u[3]),t.restore()}}function Na(e,t,n){const i=(v(t,"StrokeStartLineCap")??"").toLowerCase(),s=(v(t,"StrokeEndLineCap")??"").toLowerCase(),o=(v(t,"StrokeDashCap")??"").toLowerCase();i==="round"||s==="round"||o==="round"?e.lineCap="round":i==="square"||s==="square"||o==="square"?e.lineCap="square":e.lineCap="butt";const r=(v(t,"StrokeLineJoin")??"").toLowerCase();e.lineJoin=r==="round"?"round":r==="bevel"?"bevel":"miter";const a=Number(v(t,"StrokeMiterLimit")??10);Number.isFinite(a)&&a>0&&(e.miterLimit=a);const c=H(v(t,"StrokeDashArray")??"");if(c.length>0){const h=Number(v(t,"StrokeDashOffset")??0);e.setLineDash(c.map(l=>Math.max(0,l*n))),e.lineDashOffset=Number.isFinite(h)?h*n:0}else e.setLineDash([]),e.lineDashOffset=0}function Ta(e){let t=1/0,n=1/0,i=-1/0,s=-1/0;const o=(r,a)=>{!Number.isFinite(r)||!Number.isFinite(a)||(t=Math.min(t,r),n=Math.min(n,a),i=Math.max(i,r),s=Math.max(s,a))};for(const r of e)r.type==="M"||r.type==="L"?o(r.x,r.y):r.type==="C"?(o(r.x1,r.y1),o(r.x2,r.y2),o(r.x,r.y)):r.type==="Q"?(o(r.x1,r.y1),o(r.x,r.y)):r.type==="A"&&(o(r.x-r.rx,r.y-r.ry),o(r.x+r.rx,r.y+r.ry));return Number.isFinite(t)?{minX:t,minY:n,maxX:i,maxY:s}:void 0}function Ia(e,t,n,i,s,o){const r=n.split(";");let a=i,c=0;for(const h of r){const l=h.trim();if(!l)continue;const d=l.split(","),u=Number(d[1]??""),f=Number(d[3]??0),m=Number(d[4]??0),p=t[c++]??"";p&&e.fillText(p,a+(Number.isFinite(f)?f:0),s+(Number.isFinite(m)?m:0)),Number.isFinite(u)&&u>0?a+=u*o/100:a+=e.measureText(p||" ").width}c<t.length&&e.fillText(t.slice(c),a,s)}function Fa(e,t){const i=(e.split("/").pop()??"").replace(/\.odttf$/i,"").replace(/[^0-9a-fA-F]/g,"");if(i.length!==32||t.length<32)return t;const s=new Uint8Array(16);for(let r=0;r<16;r++)s[r]=parseInt(i.slice(r*2,r*2+2),16);const o=new Uint8Array(t);for(let r=0;r<Math.min(32,o.length);r++)o[r]=(o[r]??0)^s[15-r%16];if(!Mi(o)){const r=_a(i),a=new Uint8Array(t);for(let c=0;c<Math.min(32,a.length);c++)a[c]=(a[c]??0)^r[15-c%16];if(Mi(a))return a}return o}function _a(e){const t=new Uint8Array(16),n=new Uint8Array(16);for(let i=0;i<16;i++)n[i]=parseInt(e.slice(i*2,i*2+2),16);t[0]=n[3],t[1]=n[2],t[2]=n[1],t[3]=n[0],t[4]=n[5],t[5]=n[4],t[6]=n[7],t[7]=n[6];for(let i=8;i<16;i++)t[i]=n[i];return t}function Mi(e){if(e.length<4)return!1;const t=String.fromCharCode(e[0],e[1],e[2],e[3]);return t==="OTTO"||t==="true"||t==="typ1"||t==="ttcf"||e[0]===0&&e[1]===1&&e[2]===0&&e[3]===0}function La(e){let t=2166136261;for(let n=0;n<e.length;n++)t^=e.charCodeAt(n),t=Math.imul(t,16777619);return(t>>>0).toString(36)}function Si(e){let t=ke(v(e,"RenderTransform")??v(e,"Transform"));for(const s of U(e)){const o=k(s);if(o.endsWith(".RenderTransform")||o.endsWith(".Transform")){const r=U(s).find(a=>k(a)==="MatrixTransform");r&&(t=et(t,ke(v(r,"Matrix"))))}}const n=Number(v(e,"Canvas.Left")??0),i=Number(v(e,"Canvas.Top")??0);return(n||i)&&(t=et({a:1,b:0,c:0,d:1,e:n,f:i},t)),t}function Qe(e){const t=v(e,"Data");if(t)return wt(t);for(const n of U(e))if(k(n)==="Path.Data")for(const i of U(n)){const s=v(i,"Figures");if(s)return wt(s);if(k(i)==="PathGeometry"){const o=Da(i);if(o)return wt(o)}}return[]}function Da(e){const t=[];for(const n of U(e).filter(i=>k(i)==="PathFigure")){const i=H(v(n,"StartPoint")??"");i.length>=2&&t.push(`M ${i[0]} ${i[1]}`);for(const s of U(n)){const o=k(s);if(o==="LineSegment"){const r=H(v(s,"Point")??"");r.length>=2&&t.push(`L ${r[0]} ${r[1]}`)}else if(o==="PolyLineSegment"){const r=H(v(s,"Points")??"");for(let a=0;a+1<r.length;a+=2)t.push(`L ${r[a]} ${r[a+1]}`)}else if(o==="BezierSegment"){const r=H(v(s,"Point1")+" "+v(s,"Point2")+" "+v(s,"Point3"));r.length>=6&&t.push(`C ${r.slice(0,6).join(" ")}`)}else if(o==="PolyBezierSegment"){const r=H(v(s,"Points")??"");for(let a=0;a+5<r.length;a+=6)t.push(`C ${r.slice(a,a+6).join(" ")}`)}}v(n,"IsClosed")==="true"&&t.push("Z")}return t.length?t.join(" "):void 0}function qt(e,t,n){const i=v(e,t);if(i)return j(i,n);const s=_s(e,t,"SolidColorBrush");if(s)return j(v(s,"Color"),n*vn(v(s,"Opacity")))}function _s(e,t,n){const i=`${k(e)}.${t}`;for(const s of U(e))if(k(s)===i)return U(s).find(o=>k(o)===n)}function vn(e){if(!e)return 1;const t=Number(e);return Number.isFinite(t)?Math.max(0,Math.min(1,t)):1}function Ba(e){const t=v(e,"Data")??"";return/F0/.test(t)?"nonzero":"evenodd"}function ki(e){if(!e)return;const t=H(e);if(t.length>=4)return[t[0],t[1],t[2],t[3]]}const Ne=12,Ei=96*1024*1024,Ra=3;class Wa{constructor(t){this.scenes=new Map,this.gpuBytes=0,this.tick=0,this.canvas=t??document.createElement("canvas");const n=this.canvas.getContext("webgl",{alpha:!1,antialias:!0,depth:!1,stencil:!1,preserveDrawingBuffer:!0,powerPreference:"high-performance"});if(!n)throw new Error("WebGLRenderingContext is not available.");this.gl=n,this.program=Ya(n,Va,Ga),this.aPos=n.getAttribLocation(this.program,"a_pos"),this.aColor=n.getAttribLocation(this.program,"a_color");const i=n.getUniformLocation(this.program,"u_matrix"),s=n.getUniformLocation(this.program,"u_viewport");if(this.aPos<0||this.aColor<0||!i||!s)throw new Error("Failed to resolve WebGL shader locations.");this.uMatrix=i,this.uViewport=s}render(t,n,i={}){const s=[];if(n.width<=0||n.height<=0)return{commands:0,warnings:s,gpuBytes:this.gpuBytes,vertexCount:0,textCount:0,cacheHit:!0};this.resize(n.width,n.height);const o=In(t,this.canvas.width,this.canvas.height,i.zoom,i.panX,i.panY),r={dpr:We(n),zoom:i.zoom??1},a=Oa(t,o,i);let c=this.scenes.get(a);const h=!!c;c||(c=this.compileScene(t,a,i,o,r),this.scenes.set(a,c),this.gpuBytes+=c.gpuBytes,this.evictIfNeeded(i),c=this.scenes.get(a)??c),c.lastUsed=++this.tick;const l=this.gl,d=Ha(i.background??"#ffffff");l.viewport(0,0,this.canvas.width,this.canvas.height),l.disable(l.DEPTH_TEST),l.disable(l.CULL_FACE),l.enable(l.BLEND),l.blendFunc(l.SRC_ALPHA,l.ONE_MINUS_SRC_ALPHA),l.clearColor(d[0],d[1],d[2],d[3]),l.clear(l.COLOR_BUFFER_BIT),l.useProgram(this.program),l.bindBuffer(l.ARRAY_BUFFER,c.buffer),l.enableVertexAttribArray(this.aPos),l.vertexAttribPointer(this.aPos,2,l.FLOAT,!1,Ne,0),l.enableVertexAttribArray(this.aColor),l.vertexAttribPointer(this.aColor,4,l.UNSIGNED_BYTE,!0,Ne,8),l.uniform4f(this.uMatrix,o.a,o.b,o.c,o.d),l.uniform4f(this.uViewport,o.e,o.f,this.canvas.width,this.canvas.height),l.drawArrays(l.TRIANGLES,0,c.vertexCount);const u=n.getContext("2d");if(!u)throw new Error("CanvasRenderingContext2D is not available for WebGL text overlay.");return u.save(),u.setTransform(1,0,0,1,0,0),u.clearRect(0,0,n.width,n.height),(i.compositeToTarget??!0)&&u.drawImage(this.canvas,0,0),this.drawTextOverlay(u,t,o),u.restore(),c.vertexCount===0&&t.primitives.some(f=>f.type!=="text")&&s.push(S("warning","WEBGL_EMPTY_SCENE","WebGL scene contained no drawable geometry; Canvas/WASM fallback may be required.",t.sourcePath)),{commands:c.primitiveCount,warnings:s,gpuBytes:this.gpuBytes,vertexCount:c.vertexCount,textCount:c.textCount,cacheHit:h}}dispose(){for(const t of this.scenes.values())this.gl.deleteBuffer(t.buffer);this.scenes.clear(),this.gpuBytes=0}resize(t,n){(this.canvas.width!==t||this.canvas.height!==n)&&(this.canvas.width=t,this.canvas.height=n)}compileScene(t,n,i,s,o){const r=new $a;let a=0,c=0;for(const m of t.primitives){if(m.type==="text"){c++;continue}a++,za(r,m,s,i,o)}const h=r.byteLength,l=i.maxGpuCacheBytes??Ei;if(h>l)throw new Error(`WebGL scene buffer would require ${Ni(h)}, exceeding maxGpuCacheBytes=${Ni(l)}.`);const d=this.gl,u=d.createBuffer();if(!u)throw new Error("Failed to allocate WebGLBuffer.");d.bindBuffer(d.ARRAY_BUFFER,u),d.bufferData(d.ARRAY_BUFFER,r.toArrayBuffer(),d.STATIC_DRAW);const f=d.getError();if(f!==d.NO_ERROR)throw d.deleteBuffer(u),new Error(`WebGL buffer upload failed: 0x${f.toString(16)}.`);return{key:n,buffer:u,vertexCount:r.vertexCount,gpuBytes:h,primitiveCount:a,textCount:c,lastUsed:++this.tick}}evictIfNeeded(t){const n=t.maxGpuCacheBytes??Ei,i=t.maxCachedScenes??Ra;for(;this.scenes.size>Math.max(1,i)||this.gpuBytes>n;){let s;for(const o of this.scenes.values())(!s||o.lastUsed<s.lastUsed)&&(s=o);if(!s)break;this.scenes.delete(s.key),this.gl.deleteBuffer(s.buffer),this.gpuBytes-=s.gpuBytes}}drawTextOverlay(t,n,i){const s=this.canvas.width,o=this.canvas.height;for(const r of n.primitives){if(r.type!=="text")continue;const a=et(i,r.matrix??Ls),[c,h]=kt(a,r.x,r.y),l=Ds(a),d=Math.max(2,Math.min(768,Math.abs((r.size??12)*l)));if(d<2.5)continue;const u=r.text.split(/\n/),f=u.reduce((g,b)=>Math.max(g,b.length),0),m=Math.max(24,f*d*.65),p=Math.max(d,u.length*d*1.15);if(!(c+m<-64||c>s+64||h+p<-64||h-p>o+64)){t.save(),t.setTransform(1,0,0,1,0,0),t.fillStyle=r.fill??r.stroke??"#000000",t.font=`${d}px sans-serif`,t.textBaseline="alphabetic";for(let g=0;g<u.length;g++)t.fillText(u[g]??"",c,h+g*d*1.15);t.restore()}}}}const Ls={a:1,b:0,c:0,d:1,e:0,f:0};function Oa(e,t,n){const i=n.lineWeightMode??"adaptive",s=i==="physical"?"physical":String(Math.round(Math.log2(Math.max(1e-12,Ht(t)))*8));return`${e.id}|${e.sourcePath}|${e.primitives.length}|lw:${i}:${s}`}class $a{constructor(){this.buffer=new ArrayBuffer(64*1024),this.view=new DataView(this.buffer),this.vertexCount=0}get byteLength(){return this.vertexCount*Ne}push(t,n,i){if(!Number.isFinite(t)||!Number.isFinite(n))return;const s=this.byteLength;this.ensure(Ne),this.view.setFloat32(s,t,!0),this.view.setFloat32(s+4,n,!0),this.view.setUint8(s+8,i.r),this.view.setUint8(s+9,i.g),this.view.setUint8(s+10,i.b),this.view.setUint8(s+11,i.a),this.vertexCount++}toArrayBuffer(){return this.buffer.slice(0,this.byteLength)}ensure(t){const n=this.byteLength+t;if(n<=this.buffer.byteLength)return;let i=this.buffer.byteLength;for(;i<n;)i*=2;const s=new ArrayBuffer(i);new Uint8Array(s).set(new Uint8Array(this.buffer,0,this.byteLength)),this.buffer=s,this.view=new DataView(this.buffer)}}function za(e,t,n,i,s){const o=t.matrix??Ls,r=Ds(o),a=et(n,o),c=Math.max(.01,Ut(t.lineWidth??1,a,i,s)*r);if(t.type==="polyline"){const h=gt(t.stroke??"#000000");ue(e,de(t.points,o),c,h)}else if(t.type==="polygon"){const h=de(t.points,o);t.fill&&Je(e,h,gt(t.fill)),t.stroke&&ue(e,Ai(h),c,gt(t.stroke))}else if(t.type==="rect"){const h=de([t.x,t.y,t.x+t.width,t.y,t.x+t.width,t.y+t.height,t.x,t.y+t.height],o);t.fill&&Je(e,h,gt(t.fill)),t.stroke&&ue(e,Ai(h),c,gt(t.stroke))}else if(t.type==="path"){const h=Re(t.commands,.5),l=t.fill?gt(t.fill):void 0,d=t.stroke?gt(t.stroke):void 0;for(const u of h){const f=de(u.points,o);l&&(u.closed||f.length>=6)&&Je(e,f,l),d&&ue(e,f,c,d)}}}function de(e,t){const n=[];for(let i=0;i+1<e.length;i+=2){const[s,o]=kt(t,e[i]??0,e[i+1]??0);n.push({x:s,y:o})}return n}function Je(e,t,n){if(t.length<3)return;const i=t[0];for(let s=1;s+1<t.length;s++){const o=t[s],r=t[s+1];Xa(i,o,r)<1e-6||(e.push(i.x,i.y,n),e.push(o.x,o.y,n),e.push(r.x,r.y,n))}}function ue(e,t,n,i){if(t.length<2)return;const s=Math.max(.05,n*.5);for(let o=0;o+1<t.length;o++)Ua(e,t[o],t[o+1],s,i)}function Ua(e,t,n,i,s){const o=n.x-t.x,r=n.y-t.y,a=Math.hypot(o,r);if(a<=1e-9)return;const c=-r/a*i,h=o/a*i,l=t.x+c,d=t.y+h,u=t.x-c,f=t.y-h,m=n.x-c,p=n.y-h,g=n.x+c,b=n.y+h;e.push(l,d,s),e.push(u,f,s),e.push(m,p,s),e.push(l,d,s),e.push(m,p,s),e.push(g,b,s)}function Ai(e){if(e.length<2)return e;const t=e[0],n=e[e.length-1];return t.x===n.x&&t.y===n.y?e:[...e,{x:t.x,y:t.y}]}function Xa(e,t,n){return Math.abs((t.x-e.x)*(n.y-e.y)-(t.y-e.y)*(n.x-e.x))}function Ds(e){const t=Math.hypot(e.a,e.b),n=Math.hypot(e.c,e.d);return Math.max(1e-9,(t+n)*.5)}function gt(e){const t=Bt(e,4278190080);return{r:t&255,g:t>>>8&255,b:t>>>16&255,a:t>>>24&255}}function Ha(e){const t=gt(e);return[t.r/255,t.g/255,t.b/255,t.a/255]}function Ni(e){return e<1024?`${e} B`:e<1024*1024?`${(e/1024).toFixed(1)} KiB`:`${(e/1024/1024).toFixed(1)} MiB`}function Ya(e,t,n){const i=Ti(e,e.VERTEX_SHADER,t),s=Ti(e,e.FRAGMENT_SHADER,n),o=e.createProgram();if(!o)throw new Error("Failed to create WebGLProgram.");if(e.attachShader(o,i),e.attachShader(o,s),e.linkProgram(o),e.deleteShader(i),e.deleteShader(s),!e.getProgramParameter(o,e.LINK_STATUS)){const r=e.getProgramInfoLog(o)??"unknown link error";throw e.deleteProgram(o),new Error(`WebGL program link failed: ${r}`)}return o}function Ti(e,t,n){const i=e.createShader(t);if(!i)throw new Error("Failed to create WebGLShader.");if(e.shaderSource(i,n),e.compileShader(i),!e.getShaderParameter(i,e.COMPILE_STATUS)){const s=e.getShaderInfoLog(i)??"unknown shader compile error";throw e.deleteShader(i),new Error(`WebGL shader compile failed: ${s}`)}return i}const Va=`
+`;
+class Aa {
+  constructor(t) {
+    ((this.document = t), (this.fontCache = new Map()), (this.xmlCache = new Map()));
+  }
+  async render(t, n, i = {}) {
+    if (!this.document.opc) throw new Error('XPS page requires an OPC package view.');
+    const o = De(t.diagnostics),
+      a = (await this.getXmlDocument(t.sourcePath)).documentElement,
+      c = n.getContext('2d');
+    if (!c) throw new Error('CanvasRenderingContext2D is not available.');
+    const h = i.background ?? '#ffffff',
+      l = { dpr: We(n), zoom: i.zoom ?? 1 },
+      d = Ee({
+        canvasWidth: n.width,
+        canvasHeight: n.height,
+        pageWidth: t.width,
+        pageHeight: t.height,
+        zoom: i.zoom,
+        panX: i.panX,
+        panY: i.panY,
+      });
+    let u = 0;
+    if (i.preferWebgl ?? !0)
+      try {
+        const f = this.getWebGlBackend(i.webglCanvas);
+        i.webglCanvas && (i.webglCanvas.style.visibility = 'visible');
+        const m = f.render(t, a, n, { ...i, compositeToTarget: !i.webglCanvas });
+        return (
+          c.save(),
+          c.setTransform(1, 0, 0, 1, 0, 0),
+          c.clearRect(0, 0, n.width, n.height),
+          c.restore(),
+          (u += m.commands),
+          (u += await this.renderElementToCanvas(
+            a,
+            c,
+            t.sourcePath,
+            d,
+            1,
+            o,
+            { vectors: !1, overlays: !0 },
+            i,
+            l,
+          )),
+          o.push(...m.warnings),
+          { backend: 'webgl-xps', commands: u, warnings: o }
+        );
+      } catch (f) {
+        (i.webglCanvas && (i.webglCanvas.style.visibility = 'hidden'),
+          o.push(
+            S(
+              'warning',
+              'WEBGL_XPS_BACKEND_FALLBACK',
+              `WebGL XPS vector path failed, falling back to ${i.preferWasm ? 'WASM raster' : 'Canvas2D'}: ${String(f)}`,
+              t.sourcePath,
+            ),
+          ));
+      }
+    if ((i.webglCanvas && (i.webglCanvas.style.visibility = 'hidden'), i.preferWasm))
+      try {
+        return (
+          this.wasm ?? (this.wasm = new As({ wasmUrl: i.wasmUrl })),
+          await this.wasm.init(),
+          this.wasm.begin(n.width, n.height, h),
+          (u += this.renderElementToWasm(a, d, 1, o, i, l)),
+          c.setTransform(1, 0, 0, 1, 0, 0),
+          c.putImageData(this.wasm.toImageData(), 0, 0),
+          (u += await this.renderElementToCanvas(
+            a,
+            c,
+            t.sourcePath,
+            d,
+            1,
+            o,
+            { vectors: !1, overlays: !0 },
+            i,
+            l,
+          )),
+          { backend: 'wasm-raster', commands: u, warnings: o }
+        );
+      } catch (f) {
+        o.push(
+          S(
+            'warning',
+            'WASM_BACKEND_FALLBACK',
+            `WASM raster path failed, falling back to Canvas2D: ${String(f)}`,
+          ),
+        );
+      }
+    return (
+      c.save(),
+      c.setTransform(1, 0, 0, 1, 0, 0),
+      (c.fillStyle = h),
+      c.fillRect(0, 0, n.width, n.height),
+      c.restore(),
+      (u += await this.renderElementToCanvas(
+        a,
+        c,
+        t.sourcePath,
+        d,
+        1,
+        o,
+        { vectors: !0, overlays: !0 },
+        i,
+        l,
+      )),
+      { backend: 'canvas2d', commands: u, warnings: o }
+    );
+  }
+  getWebGlBackend(t) {
+    return (
+      (!this.webgl || this.webglCanvas !== t) &&
+        (this.webgl?.dispose(), (this.webgl = new ha(t)), (this.webglCanvas = t)),
+      this.webgl
+    );
+  }
+  getXmlDocument(t) {
+    let n = this.xmlCache.get(t);
+    return (
+      n || ((n = this.document.opc.readText(t).then((s) => G(s, t))), this.xmlCache.set(t, n)),
+      n
+    );
+  }
+  dispose() {
+    (this.webgl?.dispose(),
+      (this.webgl = void 0),
+      (this.webglCanvas = void 0),
+      this.xmlCache.clear(),
+      this.fontCache.clear());
+  }
+  async renderElementToCanvas(t, n, i, s, o, r, a, c, h) {
+    const l = k(t),
+      d = Si(t),
+      u = et(s, d),
+      f = o * vn(v(t, 'Opacity'));
+    let m = 0;
+    if (l === 'Path' && a.vectors) {
+      const p = Qe(t);
+      if (p.length > 0) {
+        (n.save(), n.setTransform(u.a, u.b, u.c, u.d, u.e, u.f), (n.globalAlpha = f));
+        const g = v(t, 'Clip');
+        (g && (n.beginPath(), Ce(n, wt(g)), n.clip()), n.beginPath(), Ce(n, p));
+        const b = qt(t, 'Fill', f),
+          w = qt(t, 'Stroke', f),
+          y = Number(v(t, 'StrokeThickness') ?? 1),
+          C = Ta(p);
+        (b && Es(C, u, c, h) && ((n.fillStyle = b), n.fill(Ba(t))),
+          w &&
+            y > 0 &&
+            ((n.strokeStyle = w),
+            (n.lineWidth = Ut(y, u, c, h)),
+            Na(n, t, n.lineWidth),
+            n.stroke()),
+          n.restore(),
+          m++);
+      }
+    } else if (l === 'Glyphs' && a.overlays) m += await this.drawGlyphs(n, i, t, u, f, r, c, h);
+    else if (l === 'Image' && a.overlays) {
+      const p = v(t, 'Source') ?? v(t, 'ImageSource');
+      if (p)
+        try {
+          (await this.drawImageResource(n, i, p, u, f, t), m++);
+        } catch (g) {
+          r.push(
+            S('warning', 'XPS_IMAGE_DRAW_FAILED', `Failed to draw image ${p}: ${String(g)}`, i),
+          );
+        }
+    } else
+      l === 'Canvas' ||
+        l === 'FixedPage' ||
+        l.endsWith('.RenderTransform') ||
+        l.endsWith('.Resources');
+    if (l === 'Path' && a.overlays) {
+      const p = _s(t, 'Fill', 'ImageBrush'),
+        g = p ? v(p, 'ImageSource') : void 0;
+      if (p && g)
+        try {
+          (await this.drawImageBrush(n, i, g, u, f, t, p), m++);
+        } catch (b) {
+          r.push(
+            S(
+              'warning',
+              'XPS_IMAGEBRUSH_FAILED',
+              `Failed to draw ImageBrush ${g}: ${String(b)}`,
+              i,
+            ),
+          );
+        }
+    }
+    for (const p of U(t))
+      k(p).includes('.') || (m += await this.renderElementToCanvas(p, n, i, u, f, r, a, c, h));
+    return m;
+  }
+  renderElementToWasm(t, n, i, s, o, r) {
+    if (!this.wasm) return 0;
+    const a = k(t),
+      c = Si(t),
+      h = et(n, c),
+      l = i * vn(v(t, 'Opacity'));
+    let d = 0;
+    if (a === 'Path') {
+      const u = Qe(t);
+      if (u.length > 0) {
+        const f = qt(t, 'Fill', l),
+          m = qt(t, 'Stroke', l),
+          p = Number(v(t, 'StrokeThickness') ?? 1),
+          g = Ut(p, h, o, r) * Math.max(1e-12, Math.hypot(h.a, h.b)),
+          b = Re(u, 0.5);
+        if (f)
+          for (const w of b)
+            (w.closed || w.points.length >= 6) && this.wasm.drawPolygon(w.points, h, f);
+        if (m && p > 0) for (const w of b) this.wasm.drawPolyline(w.points, h, m, g);
+        d++;
+      }
+    }
+    for (const u of U(t)) k(u).includes('.') || (d += this.renderElementToWasm(u, h, l, s, o, r));
+    return d;
+  }
+  async drawGlyphs(t, n, i, s, o, r, a, c) {
+    const h = v(i, 'UnicodeString') ?? '';
+    if (!h) return 0;
+    const l = Number(v(i, 'OriginX') ?? 0),
+      d = Number(v(i, 'OriginY') ?? 0),
+      u = Number(v(i, 'FontRenderingEmSize') ?? 12);
+    if (!ks(u, s, a, c)) return 0;
+    const f = qt(i, 'Fill', o) ?? '#000000',
+      m = (await this.fontFamilyForGlyphs(n, i, r)) ?? 'sans-serif';
+    (t.save(),
+      t.setTransform(s.a, s.b, s.c, s.d, s.e, s.f),
+      (t.globalAlpha = o),
+      (t.fillStyle = f),
+      (t.font = `${u}px "${m}"`),
+      (t.textBaseline = 'alphabetic'));
+    const p = v(i, 'Indices');
+    return (p ? Ia(t, h, p, l, d, u) : t.fillText(h, l, d), t.restore(), 1);
+  }
+  async fontFamilyForGlyphs(t, n, i) {
+    const s = v(n, 'FontUri');
+    if (!s) return;
+    const o = Lt(t, s.replace(/^\//, ''));
+    let r = this.fontCache.get(o);
+    return (
+      r ||
+        ((r = this.loadFontFace(o).catch((a) => {
+          i.push(
+            S(
+              'warning',
+              'XPS_FONT_LOAD_FAILED',
+              `Failed to load embedded XPS font ${o}: ${String(a)}`,
+              t,
+            ),
+          );
+        })),
+        this.fontCache.set(o, r)),
+      r
+    );
+  }
+  async loadFontFace(t) {
+    const n = globalThis.FontFace,
+      i = document.fonts;
+    if (!n || !i) return;
+    let s = await this.document.opc.readBytes(t),
+      o = Mt(t) ?? 'font/ttf';
+    /\.odttf$/i.test(t) && ((s = Fa(t, s)), (o = 'font/ttf'));
+    const r = `dwfv_xps_${La(t)}`,
+      a = new Blob([s], { type: o }),
+      c = URL.createObjectURL(a),
+      h = new n(r, `url("${c}")`);
+    try {
+      return (await h.load(), i.add(h), URL.revokeObjectURL(c), r);
+    } catch (l) {
+      throw (URL.revokeObjectURL(c), l);
+    }
+  }
+  async drawImageResource(t, n, i, s, o, r) {
+    const a = this.document.opc,
+      c = Lt(n, i.replace(/^\//, '')),
+      h = await a.readBytes(c),
+      l = await mn(h, a.getContentType(c) ?? Mt(c) ?? 'image/png'),
+      d = Number(v(r, 'Width') ?? ('width' in l ? l.width : 0)),
+      u = Number(v(r, 'Height') ?? ('height' in l ? l.height : 0)),
+      f = Number(v(r, 'Canvas.Left') ?? v(r, 'X') ?? 0),
+      m = Number(v(r, 'Canvas.Top') ?? v(r, 'Y') ?? 0);
+    (t.save(),
+      t.setTransform(s.a, s.b, s.c, s.d, s.e, s.f),
+      (t.globalAlpha = o),
+      t.drawImage(l, f, m, d || l.width, u || l.height),
+      t.restore());
+  }
+  async drawImageBrush(t, n, i, s, o, r, a) {
+    const c = this.document.opc,
+      h = Lt(n, i.replace(/^\//, '')),
+      l = await c.readBytes(h),
+      d = await mn(l, c.getContentType(h) ?? Mt(h) ?? 'image/png'),
+      u = ki(v(a, 'Viewport')) ??
+        ki(v(a, 'Viewbox')) ?? [0, 0, Number(d.width ?? 1), Number(d.height ?? 1)],
+      f = Qe(r);
+    (t.save(),
+      t.setTransform(s.a, s.b, s.c, s.d, s.e, s.f),
+      (t.globalAlpha = o),
+      f.length > 0 && (t.beginPath(), Ce(t, f), t.clip()),
+      t.drawImage(d, u[0], u[1], u[2], u[3]),
+      t.restore());
+  }
+}
+function Na(e, t, n) {
+  const i = (v(t, 'StrokeStartLineCap') ?? '').toLowerCase(),
+    s = (v(t, 'StrokeEndLineCap') ?? '').toLowerCase(),
+    o = (v(t, 'StrokeDashCap') ?? '').toLowerCase();
+  i === 'round' || s === 'round' || o === 'round'
+    ? (e.lineCap = 'round')
+    : i === 'square' || s === 'square' || o === 'square'
+      ? (e.lineCap = 'square')
+      : (e.lineCap = 'butt');
+  const r = (v(t, 'StrokeLineJoin') ?? '').toLowerCase();
+  e.lineJoin = r === 'round' ? 'round' : r === 'bevel' ? 'bevel' : 'miter';
+  const a = Number(v(t, 'StrokeMiterLimit') ?? 10);
+  Number.isFinite(a) && a > 0 && (e.miterLimit = a);
+  const c = H(v(t, 'StrokeDashArray') ?? '');
+  if (c.length > 0) {
+    const h = Number(v(t, 'StrokeDashOffset') ?? 0);
+    (e.setLineDash(c.map((l) => Math.max(0, l * n))),
+      (e.lineDashOffset = Number.isFinite(h) ? h * n : 0));
+  } else (e.setLineDash([]), (e.lineDashOffset = 0));
+}
+function Ta(e) {
+  let t = 1 / 0,
+    n = 1 / 0,
+    i = -1 / 0,
+    s = -1 / 0;
+  const o = (r, a) => {
+    !Number.isFinite(r) ||
+      !Number.isFinite(a) ||
+      ((t = Math.min(t, r)), (n = Math.min(n, a)), (i = Math.max(i, r)), (s = Math.max(s, a)));
+  };
+  for (const r of e)
+    r.type === 'M' || r.type === 'L'
+      ? o(r.x, r.y)
+      : r.type === 'C'
+        ? (o(r.x1, r.y1), o(r.x2, r.y2), o(r.x, r.y))
+        : r.type === 'Q'
+          ? (o(r.x1, r.y1), o(r.x, r.y))
+          : r.type === 'A' && (o(r.x - r.rx, r.y - r.ry), o(r.x + r.rx, r.y + r.ry));
+  return Number.isFinite(t) ? { minX: t, minY: n, maxX: i, maxY: s } : void 0;
+}
+function Ia(e, t, n, i, s, o) {
+  const r = n.split(';');
+  let a = i,
+    c = 0;
+  for (const h of r) {
+    const l = h.trim();
+    if (!l) continue;
+    const d = l.split(','),
+      u = Number(d[1] ?? ''),
+      f = Number(d[3] ?? 0),
+      m = Number(d[4] ?? 0),
+      p = t[c++] ?? '';
+    (p && e.fillText(p, a + (Number.isFinite(f) ? f : 0), s + (Number.isFinite(m) ? m : 0)),
+      Number.isFinite(u) && u > 0 ? (a += (u * o) / 100) : (a += e.measureText(p || ' ').width));
+  }
+  c < t.length && e.fillText(t.slice(c), a, s);
+}
+function Fa(e, t) {
+  const i = (e.split('/').pop() ?? '').replace(/\.odttf$/i, '').replace(/[^0-9a-fA-F]/g, '');
+  if (i.length !== 32 || t.length < 32) return t;
+  const s = new Uint8Array(16);
+  for (let r = 0; r < 16; r++) s[r] = parseInt(i.slice(r * 2, r * 2 + 2), 16);
+  const o = new Uint8Array(t);
+  for (let r = 0; r < Math.min(32, o.length); r++) o[r] = (o[r] ?? 0) ^ s[15 - (r % 16)];
+  if (!Mi(o)) {
+    const r = _a(i),
+      a = new Uint8Array(t);
+    for (let c = 0; c < Math.min(32, a.length); c++) a[c] = (a[c] ?? 0) ^ r[15 - (c % 16)];
+    if (Mi(a)) return a;
+  }
+  return o;
+}
+function _a(e) {
+  const t = new Uint8Array(16),
+    n = new Uint8Array(16);
+  for (let i = 0; i < 16; i++) n[i] = parseInt(e.slice(i * 2, i * 2 + 2), 16);
+  ((t[0] = n[3]),
+    (t[1] = n[2]),
+    (t[2] = n[1]),
+    (t[3] = n[0]),
+    (t[4] = n[5]),
+    (t[5] = n[4]),
+    (t[6] = n[7]),
+    (t[7] = n[6]));
+  for (let i = 8; i < 16; i++) t[i] = n[i];
+  return t;
+}
+function Mi(e) {
+  if (e.length < 4) return !1;
+  const t = String.fromCharCode(e[0], e[1], e[2], e[3]);
+  return (
+    t === 'OTTO' ||
+    t === 'true' ||
+    t === 'typ1' ||
+    t === 'ttcf' ||
+    (e[0] === 0 && e[1] === 1 && e[2] === 0 && e[3] === 0)
+  );
+}
+function La(e) {
+  let t = 2166136261;
+  for (let n = 0; n < e.length; n++) ((t ^= e.charCodeAt(n)), (t = Math.imul(t, 16777619)));
+  return (t >>> 0).toString(36);
+}
+function Si(e) {
+  let t = ke(v(e, 'RenderTransform') ?? v(e, 'Transform'));
+  for (const s of U(e)) {
+    const o = k(s);
+    if (o.endsWith('.RenderTransform') || o.endsWith('.Transform')) {
+      const r = U(s).find((a) => k(a) === 'MatrixTransform');
+      r && (t = et(t, ke(v(r, 'Matrix'))));
+    }
+  }
+  const n = Number(v(e, 'Canvas.Left') ?? 0),
+    i = Number(v(e, 'Canvas.Top') ?? 0);
+  return ((n || i) && (t = et({ a: 1, b: 0, c: 0, d: 1, e: n, f: i }, t)), t);
+}
+function Qe(e) {
+  const t = v(e, 'Data');
+  if (t) return wt(t);
+  for (const n of U(e))
+    if (k(n) === 'Path.Data')
+      for (const i of U(n)) {
+        const s = v(i, 'Figures');
+        if (s) return wt(s);
+        if (k(i) === 'PathGeometry') {
+          const o = Da(i);
+          if (o) return wt(o);
+        }
+      }
+  return [];
+}
+function Da(e) {
+  const t = [];
+  for (const n of U(e).filter((i) => k(i) === 'PathFigure')) {
+    const i = H(v(n, 'StartPoint') ?? '');
+    i.length >= 2 && t.push(`M ${i[0]} ${i[1]}`);
+    for (const s of U(n)) {
+      const o = k(s);
+      if (o === 'LineSegment') {
+        const r = H(v(s, 'Point') ?? '');
+        r.length >= 2 && t.push(`L ${r[0]} ${r[1]}`);
+      } else if (o === 'PolyLineSegment') {
+        const r = H(v(s, 'Points') ?? '');
+        for (let a = 0; a + 1 < r.length; a += 2) t.push(`L ${r[a]} ${r[a + 1]}`);
+      } else if (o === 'BezierSegment') {
+        const r = H(v(s, 'Point1') + ' ' + v(s, 'Point2') + ' ' + v(s, 'Point3'));
+        r.length >= 6 && t.push(`C ${r.slice(0, 6).join(' ')}`);
+      } else if (o === 'PolyBezierSegment') {
+        const r = H(v(s, 'Points') ?? '');
+        for (let a = 0; a + 5 < r.length; a += 6) t.push(`C ${r.slice(a, a + 6).join(' ')}`);
+      }
+    }
+    v(n, 'IsClosed') === 'true' && t.push('Z');
+  }
+  return t.length ? t.join(' ') : void 0;
+}
+function qt(e, t, n) {
+  const i = v(e, t);
+  if (i) return j(i, n);
+  const s = _s(e, t, 'SolidColorBrush');
+  if (s) return j(v(s, 'Color'), n * vn(v(s, 'Opacity')));
+}
+function _s(e, t, n) {
+  const i = `${k(e)}.${t}`;
+  for (const s of U(e)) if (k(s) === i) return U(s).find((o) => k(o) === n);
+}
+function vn(e) {
+  if (!e) return 1;
+  const t = Number(e);
+  return Number.isFinite(t) ? Math.max(0, Math.min(1, t)) : 1;
+}
+function Ba(e) {
+  const t = v(e, 'Data') ?? '';
+  return /F0/.test(t) ? 'nonzero' : 'evenodd';
+}
+function ki(e) {
+  if (!e) return;
+  const t = H(e);
+  if (t.length >= 4) return [t[0], t[1], t[2], t[3]];
+}
+const Ne = 12,
+  Ei = 96 * 1024 * 1024,
+  Ra = 3;
+class Wa {
+  constructor(t) {
+    ((this.scenes = new Map()),
+      (this.gpuBytes = 0),
+      (this.tick = 0),
+      (this.canvas = t ?? document.createElement('canvas')));
+    const n = this.canvas.getContext('webgl', {
+      alpha: !1,
+      antialias: !0,
+      depth: !1,
+      stencil: !1,
+      preserveDrawingBuffer: !0,
+      powerPreference: 'high-performance',
+    });
+    if (!n) throw new Error('WebGLRenderingContext is not available.');
+    ((this.gl = n),
+      (this.program = Ya(n, Va, Ga)),
+      (this.aPos = n.getAttribLocation(this.program, 'a_pos')),
+      (this.aColor = n.getAttribLocation(this.program, 'a_color')));
+    const i = n.getUniformLocation(this.program, 'u_matrix'),
+      s = n.getUniformLocation(this.program, 'u_viewport');
+    if (this.aPos < 0 || this.aColor < 0 || !i || !s)
+      throw new Error('Failed to resolve WebGL shader locations.');
+    ((this.uMatrix = i), (this.uViewport = s));
+  }
+  render(t, n, i = {}) {
+    const s = [];
+    if (n.width <= 0 || n.height <= 0)
+      return {
+        commands: 0,
+        warnings: s,
+        gpuBytes: this.gpuBytes,
+        vertexCount: 0,
+        textCount: 0,
+        cacheHit: !0,
+      };
+    this.resize(n.width, n.height);
+    const o = In(t, this.canvas.width, this.canvas.height, i.zoom, i.panX, i.panY),
+      r = { dpr: We(n), zoom: i.zoom ?? 1 },
+      a = Oa(t, o, i);
+    let c = this.scenes.get(a);
+    const h = !!c;
+    (c ||
+      ((c = this.compileScene(t, a, i, o, r)),
+      this.scenes.set(a, c),
+      (this.gpuBytes += c.gpuBytes),
+      this.evictIfNeeded(i),
+      (c = this.scenes.get(a) ?? c)),
+      (c.lastUsed = ++this.tick));
+    const l = this.gl,
+      d = Ha(i.background ?? '#ffffff');
+    (l.viewport(0, 0, this.canvas.width, this.canvas.height),
+      l.disable(l.DEPTH_TEST),
+      l.disable(l.CULL_FACE),
+      l.enable(l.BLEND),
+      l.blendFunc(l.SRC_ALPHA, l.ONE_MINUS_SRC_ALPHA),
+      l.clearColor(d[0], d[1], d[2], d[3]),
+      l.clear(l.COLOR_BUFFER_BIT),
+      l.useProgram(this.program),
+      l.bindBuffer(l.ARRAY_BUFFER, c.buffer),
+      l.enableVertexAttribArray(this.aPos),
+      l.vertexAttribPointer(this.aPos, 2, l.FLOAT, !1, Ne, 0),
+      l.enableVertexAttribArray(this.aColor),
+      l.vertexAttribPointer(this.aColor, 4, l.UNSIGNED_BYTE, !0, Ne, 8),
+      l.uniform4f(this.uMatrix, o.a, o.b, o.c, o.d),
+      l.uniform4f(this.uViewport, o.e, o.f, this.canvas.width, this.canvas.height),
+      l.drawArrays(l.TRIANGLES, 0, c.vertexCount));
+    const u = n.getContext('2d');
+    if (!u) throw new Error('CanvasRenderingContext2D is not available for WebGL text overlay.');
+    return (
+      u.save(),
+      u.setTransform(1, 0, 0, 1, 0, 0),
+      u.clearRect(0, 0, n.width, n.height),
+      (i.compositeToTarget ?? !0) && u.drawImage(this.canvas, 0, 0),
+      this.drawTextOverlay(u, t, o),
+      u.restore(),
+      c.vertexCount === 0 &&
+        t.primitives.some((f) => f.type !== 'text') &&
+        s.push(
+          S(
+            'warning',
+            'WEBGL_EMPTY_SCENE',
+            'WebGL scene contained no drawable geometry; Canvas/WASM fallback may be required.',
+            t.sourcePath,
+          ),
+        ),
+      {
+        commands: c.primitiveCount,
+        warnings: s,
+        gpuBytes: this.gpuBytes,
+        vertexCount: c.vertexCount,
+        textCount: c.textCount,
+        cacheHit: h,
+      }
+    );
+  }
+  dispose() {
+    for (const t of this.scenes.values()) this.gl.deleteBuffer(t.buffer);
+    (this.scenes.clear(), (this.gpuBytes = 0));
+  }
+  resize(t, n) {
+    (this.canvas.width !== t || this.canvas.height !== n) &&
+      ((this.canvas.width = t), (this.canvas.height = n));
+  }
+  compileScene(t, n, i, s, o) {
+    const r = new $a();
+    let a = 0,
+      c = 0;
+    for (const m of t.primitives) {
+      if (m.type === 'text') {
+        c++;
+        continue;
+      }
+      (a++, za(r, m, s, i, o));
+    }
+    const h = r.byteLength,
+      l = i.maxGpuCacheBytes ?? Ei;
+    if (h > l)
+      throw new Error(
+        `WebGL scene buffer would require ${Ni(h)}, exceeding maxGpuCacheBytes=${Ni(l)}.`,
+      );
+    const d = this.gl,
+      u = d.createBuffer();
+    if (!u) throw new Error('Failed to allocate WebGLBuffer.');
+    (d.bindBuffer(d.ARRAY_BUFFER, u),
+      d.bufferData(d.ARRAY_BUFFER, r.toArrayBuffer(), d.STATIC_DRAW));
+    const f = d.getError();
+    if (f !== d.NO_ERROR)
+      throw (d.deleteBuffer(u), new Error(`WebGL buffer upload failed: 0x${f.toString(16)}.`));
+    return {
+      key: n,
+      buffer: u,
+      vertexCount: r.vertexCount,
+      gpuBytes: h,
+      primitiveCount: a,
+      textCount: c,
+      lastUsed: ++this.tick,
+    };
+  }
+  evictIfNeeded(t) {
+    const n = t.maxGpuCacheBytes ?? Ei,
+      i = t.maxCachedScenes ?? Ra;
+    for (; this.scenes.size > Math.max(1, i) || this.gpuBytes > n; ) {
+      let s;
+      for (const o of this.scenes.values()) (!s || o.lastUsed < s.lastUsed) && (s = o);
+      if (!s) break;
+      (this.scenes.delete(s.key), this.gl.deleteBuffer(s.buffer), (this.gpuBytes -= s.gpuBytes));
+    }
+  }
+  drawTextOverlay(t, n, i) {
+    const s = this.canvas.width,
+      o = this.canvas.height;
+    for (const r of n.primitives) {
+      if (r.type !== 'text') continue;
+      const a = et(i, r.matrix ?? Ls),
+        [c, h] = kt(a, r.x, r.y),
+        l = Ds(a),
+        d = Math.max(2, Math.min(768, Math.abs((r.size ?? 12) * l)));
+      if (d < 2.5) continue;
+      const u = r.text.split(/\n/),
+        f = u.reduce((g, b) => Math.max(g, b.length), 0),
+        m = Math.max(24, f * d * 0.65),
+        p = Math.max(d, u.length * d * 1.15);
+      if (!(c + m < -64 || c > s + 64 || h + p < -64 || h - p > o + 64)) {
+        (t.save(),
+          t.setTransform(1, 0, 0, 1, 0, 0),
+          (t.fillStyle = r.fill ?? r.stroke ?? '#000000'),
+          (t.font = `${d}px sans-serif`),
+          (t.textBaseline = 'alphabetic'));
+        for (let g = 0; g < u.length; g++) t.fillText(u[g] ?? '', c, h + g * d * 1.15);
+        t.restore();
+      }
+    }
+  }
+}
+const Ls = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+function Oa(e, t, n) {
+  const i = n.lineWeightMode ?? 'adaptive',
+    s = i === 'physical' ? 'physical' : String(Math.round(Math.log2(Math.max(1e-12, Ht(t))) * 8));
+  return `${e.id}|${e.sourcePath}|${e.primitives.length}|lw:${i}:${s}`;
+}
+class $a {
+  constructor() {
+    ((this.buffer = new ArrayBuffer(64 * 1024)),
+      (this.view = new DataView(this.buffer)),
+      (this.vertexCount = 0));
+  }
+  get byteLength() {
+    return this.vertexCount * Ne;
+  }
+  push(t, n, i) {
+    if (!Number.isFinite(t) || !Number.isFinite(n)) return;
+    const s = this.byteLength;
+    (this.ensure(Ne),
+      this.view.setFloat32(s, t, !0),
+      this.view.setFloat32(s + 4, n, !0),
+      this.view.setUint8(s + 8, i.r),
+      this.view.setUint8(s + 9, i.g),
+      this.view.setUint8(s + 10, i.b),
+      this.view.setUint8(s + 11, i.a),
+      this.vertexCount++);
+  }
+  toArrayBuffer() {
+    return this.buffer.slice(0, this.byteLength);
+  }
+  ensure(t) {
+    const n = this.byteLength + t;
+    if (n <= this.buffer.byteLength) return;
+    let i = this.buffer.byteLength;
+    for (; i < n; ) i *= 2;
+    const s = new ArrayBuffer(i);
+    (new Uint8Array(s).set(new Uint8Array(this.buffer, 0, this.byteLength)),
+      (this.buffer = s),
+      (this.view = new DataView(this.buffer)));
+  }
+}
+function za(e, t, n, i, s) {
+  const o = t.matrix ?? Ls,
+    r = Ds(o),
+    a = et(n, o),
+    c = Math.max(0.01, Ut(t.lineWidth ?? 1, a, i, s) * r);
+  if (t.type === 'polyline') {
+    const h = gt(t.stroke ?? '#000000');
+    ue(e, de(t.points, o), c, h);
+  } else if (t.type === 'polygon') {
+    const h = de(t.points, o);
+    (t.fill && Je(e, h, gt(t.fill)), t.stroke && ue(e, Ai(h), c, gt(t.stroke)));
+  } else if (t.type === 'rect') {
+    const h = de(
+      [t.x, t.y, t.x + t.width, t.y, t.x + t.width, t.y + t.height, t.x, t.y + t.height],
+      o,
+    );
+    (t.fill && Je(e, h, gt(t.fill)), t.stroke && ue(e, Ai(h), c, gt(t.stroke)));
+  } else if (t.type === 'path') {
+    const h = Re(t.commands, 0.5),
+      l = t.fill ? gt(t.fill) : void 0,
+      d = t.stroke ? gt(t.stroke) : void 0;
+    for (const u of h) {
+      const f = de(u.points, o);
+      (l && (u.closed || f.length >= 6) && Je(e, f, l), d && ue(e, f, c, d));
+    }
+  }
+}
+function de(e, t) {
+  const n = [];
+  for (let i = 0; i + 1 < e.length; i += 2) {
+    const [s, o] = kt(t, e[i] ?? 0, e[i + 1] ?? 0);
+    n.push({ x: s, y: o });
+  }
+  return n;
+}
+function Je(e, t, n) {
+  if (t.length < 3) return;
+  const i = t[0];
+  for (let s = 1; s + 1 < t.length; s++) {
+    const o = t[s],
+      r = t[s + 1];
+    Xa(i, o, r) < 1e-6 || (e.push(i.x, i.y, n), e.push(o.x, o.y, n), e.push(r.x, r.y, n));
+  }
+}
+function ue(e, t, n, i) {
+  if (t.length < 2) return;
+  const s = Math.max(0.05, n * 0.5);
+  for (let o = 0; o + 1 < t.length; o++) Ua(e, t[o], t[o + 1], s, i);
+}
+function Ua(e, t, n, i, s) {
+  const o = n.x - t.x,
+    r = n.y - t.y,
+    a = Math.hypot(o, r);
+  if (a <= 1e-9) return;
+  const c = (-r / a) * i,
+    h = (o / a) * i,
+    l = t.x + c,
+    d = t.y + h,
+    u = t.x - c,
+    f = t.y - h,
+    m = n.x - c,
+    p = n.y - h,
+    g = n.x + c,
+    b = n.y + h;
+  (e.push(l, d, s),
+    e.push(u, f, s),
+    e.push(m, p, s),
+    e.push(l, d, s),
+    e.push(m, p, s),
+    e.push(g, b, s));
+}
+function Ai(e) {
+  if (e.length < 2) return e;
+  const t = e[0],
+    n = e[e.length - 1];
+  return t.x === n.x && t.y === n.y ? e : [...e, { x: t.x, y: t.y }];
+}
+function Xa(e, t, n) {
+  return Math.abs((t.x - e.x) * (n.y - e.y) - (t.y - e.y) * (n.x - e.x));
+}
+function Ds(e) {
+  const t = Math.hypot(e.a, e.b),
+    n = Math.hypot(e.c, e.d);
+  return Math.max(1e-9, (t + n) * 0.5);
+}
+function gt(e) {
+  const t = Bt(e, 4278190080);
+  return { r: t & 255, g: (t >>> 8) & 255, b: (t >>> 16) & 255, a: (t >>> 24) & 255 };
+}
+function Ha(e) {
+  const t = gt(e);
+  return [t.r / 255, t.g / 255, t.b / 255, t.a / 255];
+}
+function Ni(e) {
+  return e < 1024
+    ? `${e} B`
+    : e < 1024 * 1024
+      ? `${(e / 1024).toFixed(1)} KiB`
+      : `${(e / 1024 / 1024).toFixed(1)} MiB`;
+}
+function Ya(e, t, n) {
+  const i = Ti(e, e.VERTEX_SHADER, t),
+    s = Ti(e, e.FRAGMENT_SHADER, n),
+    o = e.createProgram();
+  if (!o) throw new Error('Failed to create WebGLProgram.');
+  if (
+    (e.attachShader(o, i),
+    e.attachShader(o, s),
+    e.linkProgram(o),
+    e.deleteShader(i),
+    e.deleteShader(s),
+    !e.getProgramParameter(o, e.LINK_STATUS))
+  ) {
+    const r = e.getProgramInfoLog(o) ?? 'unknown link error';
+    throw (e.deleteProgram(o), new Error(`WebGL program link failed: ${r}`));
+  }
+  return o;
+}
+function Ti(e, t, n) {
+  const i = e.createShader(t);
+  if (!i) throw new Error('Failed to create WebGLShader.');
+  if ((e.shaderSource(i, n), e.compileShader(i), !e.getShaderParameter(i, e.COMPILE_STATUS))) {
+    const s = e.getShaderInfoLog(i) ?? 'unknown shader compile error';
+    throw (e.deleteShader(i), new Error(`WebGL shader compile failed: ${s}`));
+  }
+  return i;
+}
+const Va = `
 attribute vec2 a_pos;
 attribute vec4 a_color;
 uniform vec4 u_matrix;
@@ -33,13 +5335,278 @@ void main() {
   gl_Position = vec4(clip, 0.0, 1.0);
   v_color = a_color;
 }
-`,Ga=`
+`,
+  Ga = `
 precision mediump float;
 varying vec4 v_color;
 void main() {
   gl_FragColor = v_color;
 }
-`;class ja{async render(t,n,i={}){const s=De(t.diagnostics),o=i.background??"#ffffff";if(i.preferWebgl??!0)try{const l=this.getWebGlBackend(i.webglCanvas);i.webglCanvas&&(i.webglCanvas.style.visibility="visible");const d=l.render(t,n,{...i,compositeToTarget:!i.webglCanvas}),u=Ka(d.gpuBytes),f=d.cacheHit?"cache hit":"cache upload";return s.push(S("info","WEBGL_W2D_RENDERED",`WebGL rendered ${d.vertexCount} vertices, ${d.textCount} text item(s), GPU cache ${u}, ${f}.`,t.sourcePath)),s.push(...d.warnings),{backend:"webgl",commands:d.commands,warnings:s}}catch(l){s.push(S("warning","WEBGL_BACKEND_FALLBACK",`WebGL vector path failed, falling back to ${i.preferWasm?"WASM raster":"Canvas2D"}: ${String(l)}`,t.sourcePath))}i.webglCanvas&&(i.webglCanvas.style.visibility="hidden");const r=n.getContext("2d");if(!r)throw new Error("CanvasRenderingContext2D is not available.");const a=In(t,n.width,n.height,i.zoom,i.panX,i.panY),c={dpr:We(n),zoom:i.zoom??1};let h=0;if(i.preferWasm)try{this.wasm??(this.wasm=new As({wasmUrl:i.wasmUrl})),await this.wasm.init(),this.wasm.begin(n.width,n.height,o);for(const l of t.primitives)h+=this.drawPrimitiveWasm(l,a,i,c);r.setTransform(1,0,0,1,0,0),r.putImageData(this.wasm.toImageData(),0,0);for(const l of t.primitives.filter(d=>d.type==="text"))h+=this.drawPrimitiveCanvas(r,l,a,i,c);return{backend:"wasm-raster",commands:h,warnings:s}}catch(l){s.push(S("warning","WASM_BACKEND_FALLBACK",`WASM raster path failed, falling back to Canvas2D: ${String(l)}`,t.sourcePath))}r.save(),r.setTransform(1,0,0,1,0,0),r.fillStyle=o,r.fillRect(0,0,n.width,n.height),r.restore();for(const l of t.primitives)h+=this.drawPrimitiveCanvas(r,l,a,i,c);return{backend:"canvas2d",commands:h,warnings:s}}dispose(){this.webgl?.dispose(),this.webgl=void 0,this.webglCanvas=void 0}getWebGlBackend(t){return(!this.webgl||this.webglCanvas!==t)&&(this.webgl?.dispose(),this.webgl=new Wa(t),this.webglCanvas=t),this.webgl}drawPrimitiveCanvas(t,n,i,s,o){const r=et(i,n.matrix??{a:1,b:0,c:0,d:1,e:0,f:0}),a=j(n.stroke??"#000000")??"#000000",c=j(n.fill);if(n.type==="text"){const[h,l]=kt(r,n.x,n.y),d=Math.max(1,Math.abs((n.size??12)*Za(r)));if(!ks(n.size??12,r,s,o)||h>t.canvas.width+64||l>t.canvas.height+64||h<-t.canvas.width||l<-t.canvas.height)return 0;t.save(),t.setTransform(1,0,0,1,0,0),t.fillStyle=c??a,t.font=`${Math.min(768,d)}px sans-serif`,t.textBaseline="alphabetic";for(const[u,f]of n.text.split(/\n/).entries())t.fillText(f,h,l+u*d*1.15);return t.restore(),1}if(t.save(),t.setTransform(r.a,r.b,r.c,r.d,r.e,r.f),t.lineWidth=Ut(n.lineWidth??1,r,s,o),n.type==="polyline"){if(n.points.length>=4){t.beginPath(),t.moveTo(n.points[0],n.points[1]);for(let h=2;h+1<n.points.length;h+=2)t.lineTo(n.points[h],n.points[h+1]);t.strokeStyle=a,t.stroke()}}else if(n.type==="polygon"){if(n.points.length>=6){t.beginPath(),t.moveTo(n.points[0],n.points[1]);for(let h=2;h+1<n.points.length;h+=2)t.lineTo(n.points[h],n.points[h+1]);t.closePath(),c&&(t.fillStyle=c,t.fill()),n.stroke&&(t.strokeStyle=a,t.stroke())}}else n.type==="rect"?(c&&(t.fillStyle=c,t.fillRect(n.x,n.y,n.width,n.height)),n.stroke&&(t.strokeStyle=a,t.strokeRect(n.x,n.y,n.width,n.height))):n.type==="path"&&(t.beginPath(),Ce(t,n.commands),c&&(t.fillStyle=c,t.fill()),n.stroke&&(t.strokeStyle=a,t.stroke()));return t.restore(),1}drawPrimitiveWasm(t,n,i,s){if(!this.wasm||t.type==="text")return 0;const o=et(n,t.matrix??{a:1,b:0,c:0,d:1,e:0,f:0}),r=Ht(o),a=c=>Ut(c??1,o,i,s)*r;if(t.type==="polyline")this.wasm.drawPolyline(t.points,o,j(t.stroke??"#000000"),a(t.lineWidth));else if(t.type==="polygon")this.wasm.drawPolygon(t.points,o,j(t.fill)),t.stroke&&this.wasm.drawPolyline(qa(t.points),o,j(t.stroke),a(t.lineWidth));else if(t.type==="rect"){const c=[t.x,t.y,t.x+t.width,t.y,t.x+t.width,t.y+t.height,t.x,t.y+t.height,t.x,t.y];t.fill&&this.wasm.drawPolygon(c,o,j(t.fill)),t.stroke&&this.wasm.drawPolyline(c,o,j(t.stroke),a(t.lineWidth))}else if(t.type==="path"){const c=Re(t.commands,.5),h=j(t.fill),l=j(t.stroke);if(h)for(const d of c)(d.closed||d.points.length>=6)&&this.wasm.drawPolygon(d.points,o,h);if(l)for(const d of c)this.wasm.drawPolyline(d.points,o,l,a(t.lineWidth))}return 1}}function qa(e){if(e.length<4)return e;const t=e[0],n=e[1],i=e[e.length-2],s=e[e.length-1];return t===i&&n===s?e:[...e,t,n]}function Za(e){return Math.max(1e-9,(Math.hypot(e.a,e.b)+Math.hypot(e.c,e.d))*.5)}function Ka(e){return e<1024?`${e} B`:e<1024*1024?`${(e/1024).toFixed(1)} KiB`:`${(e/1024/1024).toFixed(1)} MiB`}class Qa{constructor(){this.cache=new Map}async render(t,n,i={}){const s=i.webglCanvas??n;i.webglCanvas&&(i.webglCanvas.style.visibility="visible"),Ja(n);const o=this.ensureContext(s),r=this.ensureProgram(o),a=this.ensureEdgeProgram(o),c=this.ensureScene(o,t);this.evictScenes(o,i.maxCachedScenes??2,i.maxGpuCacheBytes??160*1024*1024),o.viewport(0,0,s.width,s.height),o.enable(o.DEPTH_TEST),o.disable(o.CULL_FACE),o.clearColor(.97,.98,1,1),o.clear(o.COLOR_BUFFER_BIT|o.DEPTH_BUFFER_BIT),o.useProgram(r.program);const h=tc(t,s,i);o.uniformMatrix4fv(r.uMvp,!1,h.mvp),o.uniformMatrix4fv(r.uModel,!1,ec()),o.uniform3f(r.uLight0,.35,.65,.68),o.uniform3f(r.uLight1,-.75,.4,-.5),o.uniform1f(r.uAmbient,.28);let l=0;o.enable(o.POLYGON_OFFSET_FILL),o.polygonOffset(1,1);for(const d of c.meshes){const u=d.mesh.color??[.72,.74,.78];o.uniform3f(r.uColor,u[0],u[1],u[2]),d.vao&&"bindVertexArray"in o?o.bindVertexArray(d.vao):Ii(o,r,d),o.bindBuffer(o.ELEMENT_ARRAY_BUFFER,d.index),o.drawElements(o.TRIANGLES,d.indexCount,d.indexType,0),l++}o.disable(o.POLYGON_OFFSET_FILL),Cn(o)&&o.bindVertexArray(null),o.useProgram(a.program),o.uniformMatrix4fv(a.uMvp,!1,h.mvp),o.uniform3f(a.uColor,.035,.04,.045),o.enable(o.DEPTH_TEST);for(const d of c.meshes)!d.edgeIndex||!d.edgeIndexCount||(o.bindBuffer(o.ARRAY_BUFFER,d.pos),o.enableVertexAttribArray(a.aPosition),o.vertexAttribPointer(a.aPosition,3,o.FLOAT,!1,0,0),o.bindBuffer(o.ELEMENT_ARRAY_BUFFER,d.edgeIndex),o.drawElements(o.LINES,d.edgeIndexCount,d.edgeIndexType??d.indexType,0),l++);return{backend:"threejs-webgl",commands:l,warnings:De(t.diagnostics)}}dispose(){if(this.gl)for(const t of this.cache.values())tn(this.gl,t);this.cache.clear(),this.program=void 0,this.edgeProgram=void 0}ensureContext(t){if(this.gl&&this.currentCanvas===t)return this.gl;const n=t.getContext("webgl2",{antialias:!0,alpha:!1})??t.getContext("webgl",{antialias:!0,alpha:!1});if(!n)throw new Error("WebGL is not available for 3D W3D rendering.");if(this.gl&&this.currentCanvas!==t){for(const i of this.cache.values())tn(this.gl,i);this.cache.clear()}return this.gl=n,this.currentCanvas=t,this.program=void 0,this.edgeProgram=void 0,n}ensureProgram(t){if(this.program)return this.program;const n=me(t,t.VERTEX_SHADER,`
+`;
+class ja {
+  async render(t, n, i = {}) {
+    const s = De(t.diagnostics),
+      o = i.background ?? '#ffffff';
+    if (i.preferWebgl ?? !0)
+      try {
+        const l = this.getWebGlBackend(i.webglCanvas);
+        i.webglCanvas && (i.webglCanvas.style.visibility = 'visible');
+        const d = l.render(t, n, { ...i, compositeToTarget: !i.webglCanvas }),
+          u = Ka(d.gpuBytes),
+          f = d.cacheHit ? 'cache hit' : 'cache upload';
+        return (
+          s.push(
+            S(
+              'info',
+              'WEBGL_W2D_RENDERED',
+              `WebGL rendered ${d.vertexCount} vertices, ${d.textCount} text item(s), GPU cache ${u}, ${f}.`,
+              t.sourcePath,
+            ),
+          ),
+          s.push(...d.warnings),
+          { backend: 'webgl', commands: d.commands, warnings: s }
+        );
+      } catch (l) {
+        s.push(
+          S(
+            'warning',
+            'WEBGL_BACKEND_FALLBACK',
+            `WebGL vector path failed, falling back to ${i.preferWasm ? 'WASM raster' : 'Canvas2D'}: ${String(l)}`,
+            t.sourcePath,
+          ),
+        );
+      }
+    i.webglCanvas && (i.webglCanvas.style.visibility = 'hidden');
+    const r = n.getContext('2d');
+    if (!r) throw new Error('CanvasRenderingContext2D is not available.');
+    const a = In(t, n.width, n.height, i.zoom, i.panX, i.panY),
+      c = { dpr: We(n), zoom: i.zoom ?? 1 };
+    let h = 0;
+    if (i.preferWasm)
+      try {
+        (this.wasm ?? (this.wasm = new As({ wasmUrl: i.wasmUrl })),
+          await this.wasm.init(),
+          this.wasm.begin(n.width, n.height, o));
+        for (const l of t.primitives) h += this.drawPrimitiveWasm(l, a, i, c);
+        (r.setTransform(1, 0, 0, 1, 0, 0), r.putImageData(this.wasm.toImageData(), 0, 0));
+        for (const l of t.primitives.filter((d) => d.type === 'text'))
+          h += this.drawPrimitiveCanvas(r, l, a, i, c);
+        return { backend: 'wasm-raster', commands: h, warnings: s };
+      } catch (l) {
+        s.push(
+          S(
+            'warning',
+            'WASM_BACKEND_FALLBACK',
+            `WASM raster path failed, falling back to Canvas2D: ${String(l)}`,
+            t.sourcePath,
+          ),
+        );
+      }
+    (r.save(),
+      r.setTransform(1, 0, 0, 1, 0, 0),
+      (r.fillStyle = o),
+      r.fillRect(0, 0, n.width, n.height),
+      r.restore());
+    for (const l of t.primitives) h += this.drawPrimitiveCanvas(r, l, a, i, c);
+    return { backend: 'canvas2d', commands: h, warnings: s };
+  }
+  dispose() {
+    (this.webgl?.dispose(), (this.webgl = void 0), (this.webglCanvas = void 0));
+  }
+  getWebGlBackend(t) {
+    return (
+      (!this.webgl || this.webglCanvas !== t) &&
+        (this.webgl?.dispose(), (this.webgl = new Wa(t)), (this.webglCanvas = t)),
+      this.webgl
+    );
+  }
+  drawPrimitiveCanvas(t, n, i, s, o) {
+    const r = et(i, n.matrix ?? { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }),
+      a = j(n.stroke ?? '#000000') ?? '#000000',
+      c = j(n.fill);
+    if (n.type === 'text') {
+      const [h, l] = kt(r, n.x, n.y),
+        d = Math.max(1, Math.abs((n.size ?? 12) * Za(r)));
+      if (
+        !ks(n.size ?? 12, r, s, o) ||
+        h > t.canvas.width + 64 ||
+        l > t.canvas.height + 64 ||
+        h < -t.canvas.width ||
+        l < -t.canvas.height
+      )
+        return 0;
+      (t.save(),
+        t.setTransform(1, 0, 0, 1, 0, 0),
+        (t.fillStyle = c ?? a),
+        (t.font = `${Math.min(768, d)}px sans-serif`),
+        (t.textBaseline = 'alphabetic'));
+      for (const [u, f] of n.text.split(/\n/).entries()) t.fillText(f, h, l + u * d * 1.15);
+      return (t.restore(), 1);
+    }
+    if (
+      (t.save(),
+      t.setTransform(r.a, r.b, r.c, r.d, r.e, r.f),
+      (t.lineWidth = Ut(n.lineWidth ?? 1, r, s, o)),
+      n.type === 'polyline')
+    ) {
+      if (n.points.length >= 4) {
+        (t.beginPath(), t.moveTo(n.points[0], n.points[1]));
+        for (let h = 2; h + 1 < n.points.length; h += 2) t.lineTo(n.points[h], n.points[h + 1]);
+        ((t.strokeStyle = a), t.stroke());
+      }
+    } else if (n.type === 'polygon') {
+      if (n.points.length >= 6) {
+        (t.beginPath(), t.moveTo(n.points[0], n.points[1]));
+        for (let h = 2; h + 1 < n.points.length; h += 2) t.lineTo(n.points[h], n.points[h + 1]);
+        (t.closePath(),
+          c && ((t.fillStyle = c), t.fill()),
+          n.stroke && ((t.strokeStyle = a), t.stroke()));
+      }
+    } else
+      n.type === 'rect'
+        ? (c && ((t.fillStyle = c), t.fillRect(n.x, n.y, n.width, n.height)),
+          n.stroke && ((t.strokeStyle = a), t.strokeRect(n.x, n.y, n.width, n.height)))
+        : n.type === 'path' &&
+          (t.beginPath(),
+          Ce(t, n.commands),
+          c && ((t.fillStyle = c), t.fill()),
+          n.stroke && ((t.strokeStyle = a), t.stroke()));
+    return (t.restore(), 1);
+  }
+  drawPrimitiveWasm(t, n, i, s) {
+    if (!this.wasm || t.type === 'text') return 0;
+    const o = et(n, t.matrix ?? { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }),
+      r = Ht(o),
+      a = (c) => Ut(c ?? 1, o, i, s) * r;
+    if (t.type === 'polyline')
+      this.wasm.drawPolyline(t.points, o, j(t.stroke ?? '#000000'), a(t.lineWidth));
+    else if (t.type === 'polygon')
+      (this.wasm.drawPolygon(t.points, o, j(t.fill)),
+        t.stroke && this.wasm.drawPolyline(qa(t.points), o, j(t.stroke), a(t.lineWidth)));
+    else if (t.type === 'rect') {
+      const c = [
+        t.x,
+        t.y,
+        t.x + t.width,
+        t.y,
+        t.x + t.width,
+        t.y + t.height,
+        t.x,
+        t.y + t.height,
+        t.x,
+        t.y,
+      ];
+      (t.fill && this.wasm.drawPolygon(c, o, j(t.fill)),
+        t.stroke && this.wasm.drawPolyline(c, o, j(t.stroke), a(t.lineWidth)));
+    } else if (t.type === 'path') {
+      const c = Re(t.commands, 0.5),
+        h = j(t.fill),
+        l = j(t.stroke);
+      if (h)
+        for (const d of c)
+          (d.closed || d.points.length >= 6) && this.wasm.drawPolygon(d.points, o, h);
+      if (l) for (const d of c) this.wasm.drawPolyline(d.points, o, l, a(t.lineWidth));
+    }
+    return 1;
+  }
+}
+function qa(e) {
+  if (e.length < 4) return e;
+  const t = e[0],
+    n = e[1],
+    i = e[e.length - 2],
+    s = e[e.length - 1];
+  return t === i && n === s ? e : [...e, t, n];
+}
+function Za(e) {
+  return Math.max(1e-9, (Math.hypot(e.a, e.b) + Math.hypot(e.c, e.d)) * 0.5);
+}
+function Ka(e) {
+  return e < 1024
+    ? `${e} B`
+    : e < 1024 * 1024
+      ? `${(e / 1024).toFixed(1)} KiB`
+      : `${(e / 1024 / 1024).toFixed(1)} MiB`;
+}
+class Qa {
+  constructor() {
+    this.cache = new Map();
+  }
+  async render(t, n, i = {}) {
+    const s = i.webglCanvas ?? n;
+    (i.webglCanvas && (i.webglCanvas.style.visibility = 'visible'), Ja(n));
+    const o = this.ensureContext(s),
+      r = this.ensureProgram(o),
+      a = this.ensureEdgeProgram(o),
+      c = this.ensureScene(o, t);
+    (this.evictScenes(o, i.maxCachedScenes ?? 2, i.maxGpuCacheBytes ?? 160 * 1024 * 1024),
+      o.viewport(0, 0, s.width, s.height),
+      o.enable(o.DEPTH_TEST),
+      o.disable(o.CULL_FACE),
+      o.clearColor(0.97, 0.98, 1, 1),
+      o.clear(o.COLOR_BUFFER_BIT | o.DEPTH_BUFFER_BIT),
+      o.useProgram(r.program));
+    const h = tc(t, s, i);
+    (o.uniformMatrix4fv(r.uMvp, !1, h.mvp),
+      o.uniformMatrix4fv(r.uModel, !1, ec()),
+      o.uniform3f(r.uLight0, 0.35, 0.65, 0.68),
+      o.uniform3f(r.uLight1, -0.75, 0.4, -0.5),
+      o.uniform1f(r.uAmbient, 0.28));
+    let l = 0;
+    (o.enable(o.POLYGON_OFFSET_FILL), o.polygonOffset(1, 1));
+    for (const d of c.meshes) {
+      const u = d.mesh.color ?? [0.72, 0.74, 0.78];
+      (o.uniform3f(r.uColor, u[0], u[1], u[2]),
+        d.vao && 'bindVertexArray' in o ? o.bindVertexArray(d.vao) : Ii(o, r, d),
+        o.bindBuffer(o.ELEMENT_ARRAY_BUFFER, d.index),
+        o.drawElements(o.TRIANGLES, d.indexCount, d.indexType, 0),
+        l++);
+    }
+    (o.disable(o.POLYGON_OFFSET_FILL),
+      Cn(o) && o.bindVertexArray(null),
+      o.useProgram(a.program),
+      o.uniformMatrix4fv(a.uMvp, !1, h.mvp),
+      o.uniform3f(a.uColor, 0.035, 0.04, 0.045),
+      o.enable(o.DEPTH_TEST));
+    for (const d of c.meshes)
+      !d.edgeIndex ||
+        !d.edgeIndexCount ||
+        (o.bindBuffer(o.ARRAY_BUFFER, d.pos),
+        o.enableVertexAttribArray(a.aPosition),
+        o.vertexAttribPointer(a.aPosition, 3, o.FLOAT, !1, 0, 0),
+        o.bindBuffer(o.ELEMENT_ARRAY_BUFFER, d.edgeIndex),
+        o.drawElements(o.LINES, d.edgeIndexCount, d.edgeIndexType ?? d.indexType, 0),
+        l++);
+    return { backend: 'threejs-webgl', commands: l, warnings: De(t.diagnostics) };
+  }
+  dispose() {
+    if (this.gl) for (const t of this.cache.values()) tn(this.gl, t);
+    (this.cache.clear(), (this.program = void 0), (this.edgeProgram = void 0));
+  }
+  ensureContext(t) {
+    if (this.gl && this.currentCanvas === t) return this.gl;
+    const n =
+      t.getContext('webgl2', { antialias: !0, alpha: !1 }) ??
+      t.getContext('webgl', { antialias: !0, alpha: !1 });
+    if (!n) throw new Error('WebGL is not available for 3D W3D rendering.');
+    if (this.gl && this.currentCanvas !== t) {
+      for (const i of this.cache.values()) tn(this.gl, i);
+      this.cache.clear();
+    }
+    return (
+      (this.gl = n),
+      (this.currentCanvas = t),
+      (this.program = void 0),
+      (this.edgeProgram = void 0),
+      n
+    );
+  }
+  ensureProgram(t) {
+    if (this.program) return this.program;
+    const n = me(
+        t,
+        t.VERTEX_SHADER,
+        `
       attribute vec3 a_position;
       attribute vec3 a_normal;
       uniform mat4 u_mvp;
@@ -49,7 +5616,12 @@ void main() {
         v_normal = normalize((u_model * vec4(a_normal, 0.0)).xyz);
         gl_Position = u_mvp * vec4(a_position, 1.0);
       }
-    `),i=me(t,t.FRAGMENT_SHADER,`
+    `,
+      ),
+      i = me(
+        t,
+        t.FRAGMENT_SHADER,
+        `
       precision mediump float;
       varying vec3 v_normal;
       uniform vec3 u_color;
@@ -63,27 +5635,4160 @@ void main() {
         vec3 color = u_color * (u_ambient + d0 * 0.78 + d1);
         gl_FragColor = vec4(color, 1.0);
       }
-    `),s=Fi(t,n,i),o={program:s,aPosition:t.getAttribLocation(s,"a_position"),aNormal:t.getAttribLocation(s,"a_normal"),uMvp:mt(t,s,"u_mvp"),uModel:mt(t,s,"u_model"),uColor:mt(t,s,"u_color"),uLight0:mt(t,s,"u_light0"),uLight1:mt(t,s,"u_light1"),uAmbient:mt(t,s,"u_ambient")};return this.program=o,o}ensureEdgeProgram(t){if(this.edgeProgram)return this.edgeProgram;const n=me(t,t.VERTEX_SHADER,`
+    `,
+      ),
+      s = Fi(t, n, i),
+      o = {
+        program: s,
+        aPosition: t.getAttribLocation(s, 'a_position'),
+        aNormal: t.getAttribLocation(s, 'a_normal'),
+        uMvp: mt(t, s, 'u_mvp'),
+        uModel: mt(t, s, 'u_model'),
+        uColor: mt(t, s, 'u_color'),
+        uLight0: mt(t, s, 'u_light0'),
+        uLight1: mt(t, s, 'u_light1'),
+        uAmbient: mt(t, s, 'u_ambient'),
+      };
+    return ((this.program = o), o);
+  }
+  ensureEdgeProgram(t) {
+    if (this.edgeProgram) return this.edgeProgram;
+    const n = me(
+        t,
+        t.VERTEX_SHADER,
+        `
       attribute vec3 a_position;
       uniform mat4 u_mvp;
       void main() {
         gl_Position = u_mvp * vec4(a_position, 1.0);
       }
-    `),i=me(t,t.FRAGMENT_SHADER,`
+    `,
+      ),
+      i = me(
+        t,
+        t.FRAGMENT_SHADER,
+        `
       precision mediump float;
       uniform vec3 u_color;
       void main() {
         gl_FragColor = vec4(u_color, 0.9);
       }
-    `),s=Fi(t,n,i);return this.edgeProgram={program:s,aPosition:t.getAttribLocation(s,"a_position"),uMvp:mt(t,s,"u_mvp"),uColor:mt(t,s,"u_color")},this.edgeProgram}evictScenes(t,n,i){let s=Array.from(this.cache.values()).reduce((o,r)=>o+r.bytes,0);for(;this.cache.size>Math.max(1,n)||s>i;){const o=this.cache.entries().next().value;if(!o)break;this.cache.delete(o[0]),tn(t,o[1]),s-=o[1].bytes}}ensureScene(t,n){const i=this.cache.get(n);if(i)return i;const s=[];let o=0;const r=this.ensureProgram(t),a=typeof t.createVertexArray=="function";for(const h of n.model.meshes){const l=fe(t,t.ARRAY_BUFFER,h.positions),d=h.normals??new Float32Array(h.positions.length),u=fe(t,t.ARRAY_BUFFER,d),f=fe(t,t.ELEMENT_ARRAY_BUFFER,h.indices),m=h.edgeIndices?fe(t,t.ELEMENT_ARRAY_BUFFER,h.edgeIndices):void 0,p={mesh:h,pos:l,normal:u,index:f,edgeIndex:m,indexType:h.indices instanceof Uint32Array?t.UNSIGNED_INT:t.UNSIGNED_SHORT,edgeIndexType:h.edgeIndices instanceof Uint32Array?t.UNSIGNED_INT:t.UNSIGNED_SHORT,indexCount:h.indices.length,edgeIndexCount:h.edgeIndices?.length,bytes:h.positions.byteLength+d.byteLength+h.indices.byteLength+(h.edgeIndices?.byteLength??0)};if((h.indices instanceof Uint32Array||h.edgeIndices instanceof Uint32Array)&&!Cn(t)&&!t.getExtension("OES_element_index_uint"))throw new Error("This WebGL implementation does not support 32-bit element indices.");if(a){const g=t,b=g.createVertexArray();g.bindVertexArray(b),Ii(t,r,p),g.bindVertexArray(null),p.vao=b}s.push(p),o+=p.bytes}const c={page:n,meshes:s,bytes:o};return this.cache.set(n,c),c}}function tn(e,t){for(const n of t.meshes)e.deleteBuffer(n.pos),e.deleteBuffer(n.normal),e.deleteBuffer(n.index),n.edgeIndex&&e.deleteBuffer(n.edgeIndex),n.vao&&Cn(e)&&e.deleteVertexArray(n.vao)}function fe(e,t,n){const i=e.createBuffer();if(!i)throw new Error("Failed to create WebGL buffer.");return e.bindBuffer(t,i),e.bufferData(t,n,e.STATIC_DRAW),i}function Ii(e,t,n){e.bindBuffer(e.ARRAY_BUFFER,n.pos),e.enableVertexAttribArray(t.aPosition),e.vertexAttribPointer(t.aPosition,3,e.FLOAT,!1,0,0),e.bindBuffer(e.ARRAY_BUFFER,n.normal),e.enableVertexAttribArray(t.aNormal),e.vertexAttribPointer(t.aNormal,3,e.FLOAT,!1,0,0)}function Ja(e){const t=e.getContext("2d");t&&(t.setTransform(1,0,0,1,0,0),t.clearRect(0,0,e.width,e.height))}function me(e,t,n){const i=e.createShader(t);if(!i)throw new Error("Failed to create WebGL shader.");if(e.shaderSource(i,n),e.compileShader(i),!e.getShaderParameter(i,e.COMPILE_STATUS)){const s=e.getShaderInfoLog(i)??"unknown shader error";throw e.deleteShader(i),new Error(s)}return i}function Fi(e,t,n){const i=e.createProgram();if(!i)throw new Error("Failed to create WebGL program.");if(e.attachShader(i,t),e.attachShader(i,n),e.linkProgram(i),!e.getProgramParameter(i,e.LINK_STATUS)){const s=e.getProgramInfoLog(i)??"unknown program link error";throw e.deleteProgram(i),new Error(s)}return i}function mt(e,t,n){const i=e.getUniformLocation(t,n);if(!i)throw new Error(`Missing shader uniform ${n}.`);return i}function tc(e,t,n){const i=e.model.bounds,s=Math.max(1e-6,t.width/Math.max(1,t.height)),o=n.yaw??-.78,r=rc(n.pitch??.55,-1.45,1.45),a=Math.max(.05,Math.min(100,n.zoom??1)),c=Math.max(1e-4,i.radius),h=c*2.55/a,l=Math.cos(r),d=[Math.sin(o)*l,Math.sin(r),Math.cos(o)*l],u=i.center,f=[Math.cos(o),0,-Math.sin(o)],m=[f[1]*d[2]-f[2]*d[1],f[2]*d[0]-f[0]*d[2],f[0]*d[1]-f[1]*d[0]],p=c*2/Math.max(1,Math.min(t.width,t.height))/Math.max(.1,a),g=(n.panX??0)*p,b=(n.panY??0)*p,w=[u[0]-f[0]*g+m[0]*b,u[1]-f[1]*g+m[1]*b,u[2]-f[2]*g+m[2]*b],y=[w[0]+d[0]*h,w[1]+d[1]*h,w[2]+d[2]*h],C=ic(y,w,[0,1,0]),M=nc(Math.PI/4,s,Math.max(.001,h-c*2.2),h+c*3.2);return{mvp:sc(M,C)}}function ec(){return new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1])}function nc(e,t,n,i){const s=1/Math.tan(e/2),o=1/(n-i);return new Float32Array([s/t,0,0,0,0,s,0,0,0,0,(i+n)*o,-1,0,0,2*i*n*o,0])}function ic(e,t,n){let i=e[0]-t[0],s=e[1]-t[1],o=e[2]-t[2],r=Math.hypot(i,s,o)||1;i/=r,s/=r,o/=r;let a=n[1]*o-n[2]*s,c=n[2]*i-n[0]*o,h=n[0]*s-n[1]*i;r=Math.hypot(a,c,h)||1,a/=r,c/=r,h/=r;const l=s*h-o*c,d=o*a-i*h,u=i*c-s*a;return new Float32Array([a,l,i,0,c,d,s,0,h,u,o,0,-(a*e[0]+c*e[1]+h*e[2]),-(l*e[0]+d*e[1]+u*e[2]),-(i*e[0]+s*e[1]+o*e[2]),1])}function sc(e,t){const n=new Float32Array(16);for(let i=0;i<4;i++)for(let s=0;s<4;s++)n[i*4+s]=e[0+s]*t[i*4+0]+e[4+s]*t[i*4+1]+e[8+s]*t[i*4+2]+e[12+s]*t[i*4+3];return n}function rc(e,t,n){return Math.max(t,Math.min(n,e))}function Cn(e){return typeof WebGL2RenderingContext<"u"&&e instanceof WebGL2RenderingContext}class oc{constructor(t){this.document=t}async render(t,n,i={}){const s=this.document.pageData[t];if(!s)throw new Error(`Page index out of range: ${t}`);return s.kind!=="w2d-text"&&s.kind!=="w3d-model"&&i.webglCanvas&&(i.webglCanvas.style.visibility="hidden"),s.kind==="xps-fixed-page"?(this.xps??(this.xps=new Aa(this.document)),await this.xps.render(s,n,i)):s.kind==="w2d-text"?(this.w2d??(this.w2d=new ja),await this.w2d.render(s,n,i)):s.kind==="w3d-model"?(this.w3d??(this.w3d=new Qa),await this.w3d.render(s,n,i)):s.kind==="image"?await this.renderImage(s,n,i):this.renderUnsupported(s,n,i)}dispose(){this.xps?.dispose(),this.w2d?.dispose(),this.w3d?.dispose()}async renderImage(t,n,i){const s=this.document.zip;if(!s)throw new Error("Image page requires a ZIP package.");const o=n.getContext("2d");if(!o)throw new Error("CanvasRenderingContext2D is not available.");o.save(),o.setTransform(1,0,0,1,0,0),o.fillStyle=i.background??"#ffffff",o.fillRect(0,0,n.width,n.height),o.restore();const r=await mn(await s.read(t.sourcePath),t.mediaType),a="width"in r?r.width:r.naturalWidth,c="height"in r?r.height:r.naturalHeight,h=Math.min(n.width/Math.max(1,a),n.height/Math.max(1,c))*(i.zoom??1),l=a*h,d=c*h,u=(n.width-l)/2+(i.panX??0),f=(n.height-d)/2+(i.panY??0);return o.drawImage(r,u,f,l,d),{backend:"image",commands:1,warnings:De(t.diagnostics)}}renderUnsupported(t,n,i){const s=n.getContext("2d");if(!s)throw new Error("CanvasRenderingContext2D is not available.");return s.save(),s.setTransform(1,0,0,1,0,0),s.fillStyle=i.background??"#ffffff",s.fillRect(0,0,n.width,n.height),s.fillStyle="#111827",s.font="16px sans-serif",_i(s,t.name,32,48,n.width-64,24),s.font="13px sans-serif",s.fillStyle="#92400e",_i(s,t.reason,32,88,n.width-64,20),s.restore(),{backend:"unsupported",commands:0,warnings:[...t.diagnostics,S("warning","PAGE_UNSUPPORTED",t.reason,t.sourcePath)]}}}function _i(e,t,n,i,s,o){const r=t.split(/\s+/);let a="";for(const c of r){const h=a?`${a} ${c}`:c;e.measureText(h).width>s&&a?(e.fillText(a,n,i),a=c,i+=o):a=h}a&&e.fillText(a,n,i)}class ac{constructor(t,n={}){this.pageIndex=0,this.zoom=1,this.panX=0,this.panY=0,this.yaw=-.78,this.pitch=.55,this.rendering=!1,this.renderAgain=!1,this.renderRaf=0,this.renderSeq=0,this.currentDpr=1,this.preferWebgl=n.preferWebgl??!0,this.preferWasm=n.preferWasm??!0,this.wasmUrl=n.wasmUrl,this.background=n.background??"#ffffff",this.maxDevicePixelRatio=n.maxDevicePixelRatio??2,this.maxCanvasPixels=n.maxCanvasPixels??16777216,this.maxGpuCacheBytes=n.maxGpuCacheBytes,this.maxCachedScenes=n.maxCachedScenes,this.lineWeightMode=n.lineWeightMode??"adaptive",this.minStrokeCssPx=n.minStrokeCssPx,this.maxOverviewStrokeCssPx=n.maxOverviewStrokeCssPx,this.minTextCssPx=n.minTextCssPx,this.minFilledAreaCssPx=n.minFilledAreaCssPx,this.root=document.createElement("div"),this.root.className="dwfv-root";const i=document.createElement("div");i.className="dwfv-toolbar",this.pageSelect=document.createElement("select"),this.zoomOutButton=en("−"),this.zoomInButton=en("+"),this.resetButton=en("适应"),this.status=document.createElement("span"),this.status.className="dwfv-status",i.append("页: ",this.pageSelect,this.zoomOutButton,this.zoomInButton,this.resetButton,this.status);const s=document.createElement("div");s.className="dwfv-workspace",this.treePanel=document.createElement("div"),this.treePanel.className="dwfv-tree",this.treePanel.style.display="none";const o=document.createElement("div");o.className="dwfv-stage",this.webglCanvas=document.createElement("canvas"),this.webglCanvas.className="dwfv-canvas dwfv-webgl-canvas",this.webglCanvas.style.visibility="hidden",this.canvas=document.createElement("canvas"),this.canvas.className="dwfv-canvas dwfv-overlay-canvas",this.canvas.style.touchAction="none",o.append(this.webglCanvas,this.canvas),s.append(this.treePanel,o),this.root.append(i,s),t.replaceChildren(this.root),this.pageSelect.addEventListener("change",()=>{this.pageIndex=this.pageSelect.selectedIndex,this.resetView(),this.populateModelTree(),this.requestRender()}),this.zoomOutButton.addEventListener("click",()=>{this.zoomAtCenter(.8),this.requestRender()}),this.zoomInButton.addEventListener("click",()=>{this.zoomAtCenter(1.25),this.requestRender()}),this.resetButton.addEventListener("click",()=>{this.resetView(),this.requestRender()}),this.canvas.addEventListener("wheel",r=>this.onWheel(r),{passive:!1}),this.canvas.addEventListener("pointerdown",r=>this.onPointerDown(r)),window.addEventListener("pointermove",r=>this.onPointerMove(r)),window.addEventListener("pointerup",()=>{this.drag=void 0}),this.canvas.addEventListener("contextmenu",r=>r.preventDefault()),new ResizeObserver(()=>this.requestRender()).observe(o),this.setStatus("选择 .dwf/.dwfx 文件")}setPreferWebgl(t){this.preferWebgl=t,this.requestRender()}setPreferWasm(t){this.preferWasm=t,this.requestRender()}setLineWeightMode(t){this.lineWeightMode=t,this.renderer?.dispose(),this.requestRender()}async load(t,n={}){this.setStatus("解析文件中…"),this.renderer?.dispose(),this.doc=await Ms(t,{fileName:n.fileName}),this.renderer=new oc(this.doc),this.pageIndex=n.pageIndex??0,this.zoom=1,this.panX=this.panY=0,this.yaw=-.78,this.pitch=.55,this.preferWebgl=n.preferWebgl??this.preferWebgl,this.preferWasm=n.preferWasm??this.preferWasm,this.wasmUrl=n.wasmUrl??this.wasmUrl,this.background=n.background??this.background,this.maxGpuCacheBytes=n.maxGpuCacheBytes??this.maxGpuCacheBytes,this.maxCachedScenes=n.maxCachedScenes??this.maxCachedScenes,this.lineWeightMode=n.lineWeightMode??this.lineWeightMode,this.minStrokeCssPx=n.minStrokeCssPx??this.minStrokeCssPx,this.maxOverviewStrokeCssPx=n.maxOverviewStrokeCssPx??this.maxOverviewStrokeCssPx,this.minTextCssPx=n.minTextCssPx??this.minTextCssPx,this.minFilledAreaCssPx=n.minFilledAreaCssPx??this.minFilledAreaCssPx,this.populatePages(),this.populateModelTree(),await this.render()}async render(){if(!(!this.renderer||!this.doc)){if(this.rendering)return this.renderAgain=!0,this.pendingRender;this.rendering=!0;try{this.resizeCanvasToDisplaySize();const t=this.doc.pageData[this.pageIndex];if(!t)return;const n=++this.renderSeq,i=this.renderer.render(this.pageIndex,this.canvas,{zoom:this.zoom,panX:this.panX,panY:this.panY,preferWebgl:this.preferWebgl,preferWasm:this.preferWasm,wasmUrl:this.wasmUrl,background:this.background,maxGpuCacheBytes:this.maxGpuCacheBytes,maxCachedScenes:this.maxCachedScenes,webglCanvas:this.webglCanvas,yaw:this.yaw,pitch:this.pitch,lineWeightMode:this.lineWeightMode,minStrokeCssPx:this.minStrokeCssPx,maxOverviewStrokeCssPx:this.maxOverviewStrokeCssPx,minTextCssPx:this.minTextCssPx,minFilledAreaCssPx:this.minFilledAreaCssPx});this.pendingRender=i;try{const s=await i;if(this.pendingRender===i&&n===this.renderSeq){const o=s.warnings.filter(a=>a.level!=="info").length,r=this.currentDpr>1?` · DPR ${this.currentDpr.toFixed(2)}`:"";this.setStatus(`${this.doc.kind.toUpperCase()} · ${t.kind} · ${s.backend} · ${s.commands} ops${r}${o?` · ${o} 警告`:""}`,o>0)}return s}catch(s){throw n===this.renderSeq&&this.setStatus(`渲染失败：${String(s)}`,!0),s}}finally{this.rendering=!1,this.renderAgain&&(this.renderAgain=!1,this.requestRender())}}}getDocument(){return this.doc}fit(){this.resetView(),this.requestRender()}dispose(){this.renderRaf&&cancelAnimationFrame(this.renderRaf),this.renderRaf=0,this.renderer?.dispose(),this.renderer=void 0,this.doc=void 0,this.root.replaceChildren()}requestRender(){this.renderRaf||(this.renderRaf=requestAnimationFrame(()=>{this.renderRaf=0,this.render()}))}populatePages(){this.pageSelect.replaceChildren();const t=this.doc?.pageData??[];for(const[n,i]of t.entries()){const s=document.createElement("option");s.value=String(n),s.textContent=`${n+1}. ${i.name} (${i.kind})`,this.pageSelect.append(s)}this.pageSelect.selectedIndex=Math.max(0,Math.min(this.pageIndex,t.length-1))}populateModelTree(){const t=this.doc?.pageData[this.pageIndex];if(!t||t.kind!=="w3d-model"||!t.model.sceneTree?.length){this.treePanel.style.display="none",this.treePanel.replaceChildren();return}this.treePanel.style.display="";const n=document.createElement("div");n.className="dwfv-tree-header",n.textContent=`模型结构 · ${t.model.stats.nodeCount??0} 节点`;const i=document.createElement("div");i.className="dwfv-tree-stats",i.textContent=`${t.model.stats.meshCount} meshes · ${t.model.stats.triangleCount} triangles · ${t.model.stats.textureCount??0} textures`;const s=document.createElement("div");s.className="dwfv-tree-content";for(const o of t.model.sceneTree)s.append(Bs(o));this.treePanel.replaceChildren(n,i,s)}resizeCanvasToDisplaySize(){const t=this.canvas.getBoundingClientRect(),n=Math.max(1,t.width),i=Math.max(1,t.height);let s=Math.max(1,Math.min(this.maxDevicePixelRatio,window.devicePixelRatio||1));const o=n*i*s*s;o>this.maxCanvasPixels&&(s*=Math.sqrt(this.maxCanvasPixels/o)),this.currentDpr=s;const r=Math.max(1,Math.floor(n*s)),a=Math.max(1,Math.floor(i*s));(this.canvas.width!==r||this.canvas.height!==a)&&(this.canvas.width=r,this.canvas.height=a),(this.webglCanvas.width!==r||this.webglCanvas.height!==a)&&(this.webglCanvas.width=r,this.webglCanvas.height=a)}resetView(){this.zoom=1,this.panX=0,this.panY=0,this.yaw=-.78,this.pitch=.55;const t=this.doc?.pageData[this.pageIndex];if(t?.kind==="w3d-model"){const n=t.model.initialView?.camera,i=n?.position,s=n?.target;if(i&&s){const o=i[0]-s[0],r=i[1]-s[1],a=i[2]-s[2],c=Math.hypot(o,r,a);if(c>1e-6){this.pitch=Math.max(-1.45,Math.min(1.45,Math.asin(r/c))),this.yaw=Math.atan2(o,a);const h=Math.max(1e-6,t.model.bounds.radius);this.zoom=Math.max(.05,Math.min(100,h*2.55/c))}}}}zoomAtCenter(t){if(this.resizeCanvasToDisplaySize(),this.is3dPage()){this.zoom=Math.max(.05,Math.min(100,this.zoom*t));return}const n=this.canvas.width/2,i=this.canvas.height/2;this.zoomAroundPoint(t,n,i)}zoomAroundPoint(t,n,i){const s=this.zoom,o=Math.max(.05,Math.min(64,s*t));if(o===s)return;const r=this.pagePointAtCanvasPoint(n,i,s,this.panX,this.panY);if(r){const c=this.pageMatrixAt(o,0,0);if(c){const[h,l]=kt(c,r.x,r.y);this.panX=n-h,this.panY=i-l,this.zoom=o;return}}const a=o/s;this.panX=n-(n-this.panX)*a,this.panY=i-(i-this.panY)*a,this.zoom=o}onWheel(t){if(!this.doc)return;t.preventDefault(),this.resizeCanvasToDisplaySize();const n=this.canvas.getBoundingClientRect(),i=(t.clientX-n.left)*this.currentDpr,s=(t.clientY-n.top)*this.currentDpr,o=t.deltaMode===WheelEvent.DOM_DELTA_LINE?t.deltaY*16:t.deltaMode===WheelEvent.DOM_DELTA_PAGE?t.deltaY*Math.max(1,n.height):t.deltaY,r=Math.exp(-o*.0015);this.is3dPage()?this.zoom=Math.max(.05,Math.min(100,this.zoom*r)):this.zoomAroundPoint(r,i,s),this.requestRender()}onPointerDown(t){this.canvas.setPointerCapture?.(t.pointerId),this.is3dPage()&&t.preventDefault();const n=this.is3dPage()?t.button===2||t.shiftKey?"pan3d":"rotate3d":"pan2d";this.drag={x:t.clientX,y:t.clientY,panX:this.panX,panY:this.panY,yaw:this.yaw,pitch:this.pitch,mode:n}}onPointerMove(t){if(!this.drag)return;const n=t.clientX-this.drag.x,i=t.clientY-this.drag.y;this.drag.mode==="rotate3d"?(this.yaw=this.drag.yaw+n*.008,this.pitch=Math.max(-1.45,Math.min(1.45,this.drag.pitch+i*.008))):(this.panX=this.drag.panX+n*this.currentDpr,this.panY=this.drag.panY+i*this.currentDpr),this.requestRender()}is3dPage(){return this.doc?.pageData[this.pageIndex]?.kind==="w3d-model"}pagePointAtCanvasPoint(t,n,i,s,o){const r=this.pageMatrixAt(i,s,o);if(!r)return;const a=r.a*r.d-r.b*r.c;if(!Number.isFinite(a)||Math.abs(a)<1e-12)return;const c=t-r.e,h=n-r.f;return{x:(r.d*c-r.c*h)/a,y:(-r.b*c+r.a*h)/a}}pageMatrixAt(t,n,i){const s=this.doc?.pageData[this.pageIndex];if(!s)return;const o=Math.max(1,this.canvas.width),r=Math.max(1,this.canvas.height);if(s.kind==="w2d-text")return In(s,o,r,t,n,i);if(s.kind==="xps-fixed-page")return Ee({canvasWidth:o,canvasHeight:r,pageWidth:Math.max(1,s.width),pageHeight:Math.max(1,s.height),zoom:t,panX:n,panY:i});if(s.kind==="image")return Ee({canvasWidth:o,canvasHeight:r,pageWidth:Math.max(1,s.width),pageHeight:Math.max(1,s.height),zoom:t,panX:n,panY:i,margin:0})}setStatus(t,n=!1){this.status.textContent=t,this.status.classList.toggle("dwfv-warn",n)}}function en(e){const t=document.createElement("button");return t.type="button",t.textContent=e,t}function Bs(e){const t=document.createElement("details");t.open=e.children.length>0&&e.children.length<20;const n=document.createElement("summary");if(n.textContent=e.label||e.id,e.meshIds.length>0&&(n.title=`${e.meshIds.length} mesh(es)`),t.append(n),e.contentRefs.length>0){const i=document.createElement("div");i.className="dwfv-tree-meta",i.textContent=e.contentRefs.slice(0,3).join(", "),t.append(i)}for(const i of e.children)t.append(Bs(i));return t}var cc=Object.defineProperty,hc=(e,t,n)=>t in e?cc(e,t,{enumerable:!0,configurable:!0,writable:!0,value:n}):e[t]=n,x=(e,t,n)=>hc(e,typeof t!="symbol"?t+"":t,n);async function Jt(e){if(e.buffer instanceof Uint8Array)return e.buffer;if(e.buffer instanceof ArrayBuffer)return new Uint8Array(e.buffer);if(e.file)return new Uint8Array(await e.file.arrayBuffer());throw new Error("CadLoadInput requires a File, ArrayBuffer, or Uint8Array.")}function lc(e){return e.byteOffset===0&&e.byteLength===e.buffer.byteLength?e.buffer:e.slice().buffer}function Rt(e){var t;const n=e.fileName??((t=e.file)==null?void 0:t.name)??"",i=n.lastIndexOf(".");return i>=0?n.slice(i+1).toLowerCase():""}function Wt(e,t){const n=Rt(e);if(n==="dwg")return"dwg";if(n==="dxf")return"dxf";if(n==="dwfx")return"dwfx";if(n==="xps")return"xps";if(n==="dwf")return"dwf";if(t&&t.byteLength>=6){const i=Li(t.slice(0,6));if(/^AC10/.test(i))return"dwg";if(t[0]===80&&t[1]===75)return"dwfx";const s=Li(t.slice(0,Math.min(t.byteLength,2048))).toUpperCase();if(s.includes("SECTION")&&s.includes("ENTITIES"))return"dxf";if(s.includes("DWF"))return"dwf"}return"unknown"}function Li(e){return Array.from(e,t=>t>=32&&t<=126?String.fromCharCode(t):" ").join("")}class dc{constructor(t=[]){x(this,"loaders",[]);for(const n of t)this.register(n)}register(t){const n=this.loaders.findIndex(i=>i.id===t.id);return n>=0?this.loaders.splice(n,1,t):this.loaders.push(t),this}unregister(t){const n=this.loaders.findIndex(i=>i.id===t);return n>=0&&this.loaders.splice(n,1),this}list(){return[...this.loaders]}async detect(t){const n=await Jt(t),i=Wt(t,n),s=this.loaders.find(r=>r.formats.includes(i)&&r.accepts(t,n));if(s)return{loader:s,bytes:n,format:i};const o=this.loaders.find(r=>r.accepts(t,n));if(o)return{loader:o,bytes:n,format:i};throw new Error(`No CAD loader registered for ${i==="unknown"?"this file":i.toUpperCase()}.`)}async load(t,n={}){const{loader:i,bytes:s}=await this.detect(t);return i.load({...t,buffer:s},n)}}const uc="wasm/dwg-worker.js";class fc{constructor(){x(this,"worker"),x(this,"sequence",0),x(this,"pending",new Map)}load(t,n,i={}){var s,o;if(!Pn())throw new Error("Web Worker is not available in this runtime.");const r=this.ensureWorker(i),a=++this.sequence,c=Math.max(0,Number(i.workerTimeoutMs??0)),h=i.fileName??n.fileName??((s=n.file)==null?void 0:s.name),l=pc(t,n,i);return(o=i.onProgress)==null||o.call(i,{phase:"worker-start",format:"dwg",message:"Dispatching DWG parse to worker…",total:t.byteLength}),new Promise((d,u)=>{var f;if((f=i.signal)!=null&&f.aborted){u(ge());return}const m={resolve:d,reject:u,onProgress:i.onProgress,signal:i.signal};c>0&&(m.timer=setTimeout(()=>{this.pending.delete(a),this.resetWorker(),u(new Error(`DWG worker timed out after ${c} ms.`))},c)),i.signal&&(m.abortHandler=()=>{this.pending.delete(a),this.resetWorker(),u(ge())},i.signal.addEventListener("abort",m.abortHandler,{once:!0})),this.pending.set(a,m);try{r.postMessage({type:"load",requestId:a,bytes:l,fileName:h,options:Di(i)},[l])}catch(p){this.pending.delete(a),pe(m),u(p instanceof Error?p:new Error(String(p)))}})}preload(t={}){var n;if(!Pn())return Promise.reject(new Error("Web Worker is not available in this runtime."));const i=this.ensureWorker(t),s=++this.sequence,o=Math.max(0,Number(t.workerTimeoutMs??0));return(n=t.onProgress)==null||n.call(t,{phase:"worker-start",format:"dwg",message:"Starting DWG worker warmup…"}),new Promise((r,a)=>{var c;if((c=t.signal)!=null&&c.aborted){a(ge());return}const h={resolve:()=>r(),reject:a,onProgress:t.onProgress,signal:t.signal};o>0&&(h.timer=setTimeout(()=>{this.pending.delete(s),this.resetWorker(),a(new Error(`DWG worker warmup timed out after ${o} ms.`))},o)),t.signal&&(h.abortHandler=()=>{this.pending.delete(s),this.resetWorker(),a(ge())},t.signal.addEventListener("abort",h.abortHandler,{once:!0})),this.pending.set(s,h);try{i.postMessage({type:"warmup",requestId:s,options:Di(t)})}catch(l){this.pending.delete(s),pe(h),a(l instanceof Error?l:new Error(String(l)))}})}terminate(){this.resetWorker()}ensureWorker(t){return this.worker||(this.worker=mc(t),this.worker.onmessage=n=>this.handleMessage(n.data),this.worker.onerror=n=>{const i=n.message||"DWG worker failed.";this.rejectAll(new Error(i)),this.resetWorker(!1)},this.worker.onmessageerror=()=>{this.rejectAll(new Error("DWG worker returned a message that could not be cloned.")),this.resetWorker(!1)}),this.worker}handleMessage(t){var n,i;if(t.type==="ready")return;const s=this.pending.get(t.requestId);if(!s)return;if(t.type==="progress"){(n=s.onProgress)==null||n.call(s,t.progress);return}if(this.pending.delete(t.requestId),pe(s),t.type==="result"){s.resolve(t.result);return}if(t.type==="warmup-result"){(i=s.onProgress)==null||i.call(s,{phase:"worker-ready",format:"dwg",message:"DWG worker warmup complete.",percent:100,elapsedMs:t.elapsedMs}),s.resolve(void 0);return}const o=new Error(t.error.message);o.name=t.error.name||"DwgWorkerError",t.error.stack&&(o.stack=t.error.stack),s.reject(o)}rejectAll(t){for(const[,n]of this.pending)pe(n),n.reject(t);this.pending.clear()}resetWorker(t=!0){var n;t&&this.rejectAll(new Error("DWG worker was terminated.")),(n=this.worker)==null||n.terminate(),this.worker=void 0}}function Pn(){return typeof Worker<"u"&&typeof URL<"u"}function mc(e){return e.workerFactory?e.workerFactory():new Worker(wc(e.workerUrl),{type:"module",name:"lightweight-cad-dwg-loader"})}function Di(e){return{wasmPath:gc(e.wasmPath),includePaperSpace:e.includePaperSpace,maxInsertDepth:e.maxInsertDepth,keepRaw:!!e.keepRaw}}function pc(e,t,n){return t.file||n.transferInputBuffer===!0?lc(e):e.slice().buffer}function pe(e){e.timer&&clearTimeout(e.timer),e.signal&&e.abortHandler&&e.signal.removeEventListener("abort",e.abortHandler)}function ge(){if(typeof DOMException<"u")return new DOMException("DWG loading was aborted.","AbortError");const e=new Error("DWG loading was aborted.");return e.name="AbortError",e}function gc(e){const t=(e?.trim()||"/wasm").replace(/\/+$/,"");return t===""?Bi():Rs(t)?t:t.startsWith("/")?`${Bi()}${t}`:new URL(t,Fn()).href.replace(/\/+$/,"")}function wc(e){if(e instanceof URL)return e;const t=e?.trim()||uc;return Rs(t)?t:new URL(t,Fn()).href}function Fn(){return typeof document<"u"&&document.baseURI?document.baseURI:typeof location<"u"&&location.href?location.href:"http://localhost/"}function Bi(){return typeof location<"u"&&location.origin?location.origin:new URL(Fn()).origin}function Rs(e){return/^[a-z][a-z0-9+.-]*:/i.test(e)}class bc{constructor(t={}){x(this,"id","dwg"),x(this,"label","DWG / LibreDWG WebAssembly"),x(this,"formats",["dwg"]),x(this,"defaults"),x(this,"workerClient",new fc),this.defaults={useWorker:!0,...t}}accepts(t,n){return Rt(t)==="dwg"?!0:Wt(t,n)==="dwg"}async load(t,n={}){var i,s;const o={...this.defaults,...n};(i=o.onProgress)==null||i.call(o,{phase:"read",format:"dwg",message:"Reading DWG bytes…"});const r=await Jt(t),a=t.fileName??((s=t.file)==null?void 0:s.name);if(o.useWorker===!1)throw new Error("DWG main-thread parsing is intentionally not bundled by the default viewer. Keep useWorker enabled, or register a custom DWG loader for non-browser runtimes.");if(!Pn())throw new Error("DWG loading requires Web Worker support in this build. Provide a custom loader for this runtime.");try{return await this.workerClient.load(r,t,{...o,fileName:a})}catch(c){throw yc(c)?c:xc(c)}}terminateWorker(){this.workerClient.terminate()}preload(t={}){const n={...this.defaults,...t};return n.useWorker===!1?Promise.reject(new Error("DWG preload requires worker mode in the default viewer.")):this.workerClient.preload(n)}}function yc(e){return e instanceof Error&&e.name==="AbortError"}function xc(e){const t=e instanceof Error?e.message:String(e);return new Error(`${t} If the worker asset cannot be resolved by your bundler/CDN, pass workerUrl or workerFactory to CadViewer.`)}function Ws(e){return{format:e.format,sourceName:e.sourceName,units:e.units,header:e.header??{},layers:e.layers??{},blocks:e.blocks??{},entities:e.entities??[],pages:e.pages,metadata:e.metadata??{},warnings:e.warnings??[],raw:e.raw}}function Xt(e){switch(String(e??"").toUpperCase()){case"LINE":return"line";case"CIRCLE":return"circle";case"ARC":return"arc";case"LWPOLYLINE":case"POLYLINE":case"POLYLINE_2D":case"POLYLINE2D":case"POLYLINE_3D":case"POLYLINE3D":case"LEADER":case"MULTILEADER":return"polyline";case"ELLIPSE":return"ellipse";case"TEXT":case"MTEXT":case"ATTRIB":case"ATTDEF":case"DIMENSION":return"text";case"POINT":return"point";case"INSERT":return"insert";case"SOLID":case"TRACE":case"3DFACE":return"solid";case"HATCH":return"hatch";case"SPLINE":return"spline";case"PATH":case"XPS_PATH":case"DWF_PATH":return"path";case"IMAGE":case"RASTER_IMAGE":case"DWF_IMAGE":return"image";case"VIEWPORT":return"viewport";default:return"unsupported"}}function vc(e,t,n={}){const i=t??String(e.type??e.entityType??e.objectName??"UNKNOWN").toUpperCase(),s=n.includeUnknownProperties===!1?{type:i,kind:Xt(i)}:{...e,type:i,kind:Xt(i)};n.keepRaw&&(s.raw=e),s.handle=q(e.handle??e.id),s.layer=q(e.layer??e.layerName),s.lineType=q(e.lineType??e.linetype);const o=n.numericColorMode??"auto",r=D(e.color),a=D(e.colorIndex??e.colorNumber??e.aci??e.aciColor??e.color_index);s.colorIndex=a??(o!=="rgb"&&r!==void 0&&Math.abs(r)<=257?r:void 0);const c=e.trueColor??e.true_color??e.truecolor??e.colorRGB??e.colorRgb??e.rgbColor??e.rgb,h=r!==void 0&&r>=0&&r<=16777215&&(o==="rgb"||o==="auto"&&Math.abs(r)>257);s.trueColor=c??(h?r:void 0),(typeof e.color=="string"||typeof e.color=="number")&&(s.color=e.color),s.colorNumber=D(e.colorNumber)??s.colorNumber,s.colorName=q(e.colorName??e.color_name)??s.colorName,s.fillColor=e.fillColor??e.fill_color,s.fillColorIndex=D(e.fillColorIndex??e.fill_color_index??e.fillColorNumber)??s.fillColorIndex,s.opacity=D(e.opacity??e.alpha)??s.opacity,s.lineweight=D(e.lineweight??e.lineWeight),s.isVisible=!(e.isVisible===!1||e.visible===!1),s.startPoint=Z(e.startPoint??e.start??e.p0??e.from)??s.startPoint,s.endPoint=Z(e.endPoint??e.end??e.p1??e.to)??s.endPoint,s.center=Z(e.center??e.centerPoint)??s.center,s.insertionPoint=Z(e.insertionPoint??e.position??e.location??e.point??e.basePoint)??s.insertionPoint,s.radius=D(e.radius)??s.radius,s.startAngle=D(e.startAngle??e.start_angle)??s.startAngle,s.endAngle=D(e.endAngle??e.end_angle)??s.endAngle,s.majorAxisEndPoint=Z(e.majorAxisEndPoint??e.majorAxis??e.major)??s.majorAxisEndPoint,s.axisRatio=D(e.axisRatio??e.ratio)??s.axisRatio,s.height=D(e.height??e.textHeight)??s.height,s.textHeight=D(e.textHeight??e.height)??s.textHeight,s.rotation=D(e.rotation??e.angle)??s.rotation,s.text=q(e.text??e.value??e.string??e.contents)??s.text,s.name=q(e.name??e.blockName)??s.name,s.blockName=q(e.blockName??e.name)??s.blockName;const l=nn(e.vertices??e.points);l.length>0&&(s.vertices=l);const d=nn(e.controlPoints??e.control_points);d.length>0&&(s.controlPoints=d);const u=nn(e.fitPoints??e.fit_points);return u.length>0&&(s.fitPoints=u),s}function Z(e){if(!e||typeof e!="object")return;const t=e,n=Number(t.x??t.X??t[0]),i=Number(t.y??t.Y??t[1]),s=t.z??t.Z??t[2],o=s===void 0?void 0:Number(s);if(!(!Number.isFinite(n)||!Number.isFinite(i)))return Number.isFinite(o)?{x:n,y:i,z:o}:{x:n,y:i}}function nn(e){if(!Array.isArray(e))return[];const t=[];for(const n of e){const i=Z(n);if(!i)continue;const s=n,o=i,r=D(s.bulge);r!==void 0&&(o.bulge=r);const a=D(s.startWidth??s.start_width);a!==void 0&&(o.startWidth=a);const c=D(s.endWidth??s.end_width);c!==void 0&&(o.endWidth=c),t.push(o)}return t}function we(e){var t;const n={};for(const i of e.entities){const s=String(i.type??"UNKNOWN").toUpperCase();n[s]=(n[s]??0)+1}return{format:e.format,sourceName:e.sourceName,entityCount:e.entities.length,layerCount:Object.keys(e.layers).length,blockCount:Object.keys(e.blocks).length,pageCount:((t=e.pages)==null?void 0:t.length)??0,byType:n,warnings:[...e.warnings]}}function Ri(e,t){t.name&&(e[t.name]=t,e[t.name.toLowerCase()]=t)}function Cc(e,t){t.name&&(e[t.name]=t,e[t.name.toLowerCase()]=t)}function Pc(e){return e!=null&&e.length?e.flatMap(t=>t.entities.map(n=>({...n,pageIndex:t.index}))):[]}function D(e){const t=Number(e);return Number.isFinite(t)?t:void 0}function q(e){if(typeof e!="string"&&typeof e!="number")return;const t=String(e);return t.length>0?t:void 0}function dt(){return{minX:1/0,minY:1/0,maxX:-1/0,maxY:-1/0}}function Yt(e){return Number.isFinite(e.minX)&&Number.isFinite(e.minY)&&Number.isFinite(e.maxX)&&Number.isFinite(e.maxY)&&e.maxX>=e.minX&&e.maxY>=e.minY}function L(e,t){P(t)&&(e.minX=Math.min(e.minX,t.x),e.minY=Math.min(e.minY,t.y),e.maxX=Math.max(e.maxX,t.x),e.maxY=Math.max(e.maxY,t.y))}function Os(e,t,n){if(!P(t)||!Number.isFinite(n))return;const i=Math.abs(n);L(e,{x:t.x-i,y:t.y-i}),L(e,{x:t.x+i,y:t.y+i})}function $s(e,t=.02,n=1e-6){if(!Yt(e))return{minX:-10,minY:-10,maxX:10,maxY:10};const i=Math.max((e.maxX-e.minX)*t,n),s=Math.max((e.maxY-e.minY)*t,n);return{minX:e.minX-i,minY:e.minY-s,maxX:e.maxX+i,maxY:e.maxY+s}}function P(e){return!!e&&typeof e=="object"&&Number.isFinite(e.x)&&Number.isFinite(e.y)}function O(e){return{x:e.x,y:e.y}}function Et(e){return e*Math.PI/180}function Te(e,t,n,i,s=!0,o=64){if(!P(e)||!Number.isFinite(t))return[];let r=n,a=i;if(!Number.isFinite(r)||!Number.isFinite(a))return[];(Math.abs(r)>Math.PI*2+1e-6||Math.abs(a)>Math.PI*2+1e-6)&&(r=Et(r),a=Et(a)),s&&a<r&&(a+=Math.PI*2),!s&&r<a&&(r+=Math.PI*2);const c=a-r,h=Math.max(8,Math.min(256,Math.ceil(Math.abs(c)/(Math.PI*2)*o))),l=[];for(let d=0;d<=h;d++){const u=r+c*(d/h);l.push({x:e.x+Math.cos(u)*t,y:e.y+Math.sin(u)*t})}return l}function Ie(e,t,n=1,i=0,s=Math.PI*2,o=96){if(!P(e)||!P(t))return[];const r=Math.hypot(t.x,t.y);if(!Number.isFinite(r)||r<=0)return[];const a=r*(Number.isFinite(n)&&n>0?n:1),c=Math.atan2(t.y,t.x);let h=Number.isFinite(i)?i:0,l=Number.isFinite(s)?s:Math.PI*2;(Math.abs(h)>Math.PI*2+1e-6||Math.abs(l)>Math.PI*2+1e-6)&&(h=Et(h),l=Et(l)),l<h&&(l+=Math.PI*2);const d=Math.max(12,Math.min(256,Math.ceil(Math.abs(l-h)/(Math.PI*2)*o))),u=[],f=Math.cos(c),m=Math.sin(c);for(let p=0;p<=d;p++){const g=h+(l-h)*(p/d),b=Math.cos(g)*r,w=Math.sin(g)*a;u.push({x:e.x+b*f-w*m,y:e.y+b*m+w*f})}return u}function zs(e,t,n=0,i=16){if(!Number.isFinite(n)||Math.abs(n)<1e-12)return[O(e),O(t)];const s=Math.hypot(t.x-e.x,t.y-e.y);if(s<=1e-12)return[O(e),O(t)];const o=4*Math.atan(n),r=Math.abs(s/(2*Math.sin(o/2))),a={x:(e.x+t.x)/2,y:(e.y+t.y)/2},c=(t.x-e.x)/s,h=(t.y-e.y)/s,l=n>=0?1:-1,d=Math.sqrt(Math.max(r*r-(s/2)**2,0)),u={x:a.x-l*h*d,y:a.y+l*c*d},f=Math.atan2(e.y-u.y,e.x-u.x),m=Math.atan2(t.y-u.y,t.x-u.x);return Te(u,r,f,m,n>=0,i)}function Us(e){return e.replace(/\\P/g,`
-`).replace(/\\~|\\ /g," ").replace(/\\[A-Za-z][^;]*;/g,"").replace(/[{}]/g,"").replace(/\\[A-Za-z]/g,"").trim()}function _t(e,t,n){return Math.min(n,Math.max(t,e))}class Mc{constructor(t={}){x(this,"id","dxf"),x(this,"label","DXF / JavaScript parser"),x(this,"formats",["dxf"]),x(this,"defaults"),this.defaults=t}accepts(t,n){return Rt(t)==="dxf"||Wt(t,n)==="dxf"}async load(t,n={}){var i;const s={...this.defaults,...n},o=performance.now(),r=await Jt(t),a=Fc(r,s.dxfEncoding),c=[];let h;try{h=await Sc(a)}catch(u){c.push(`dxf-parser failed, using built-in fallback parser: ${u instanceof Error?u.message:String(u)}`),h=Wc(a)}const l=kc(h,t.fileName??((i=t.file)==null?void 0:i.name),c),d=performance.now()-o;return{document:l,raw:h,bytes:r.byteLength,elapsedMs:d,format:"dxf",warnings:l.warnings}}}async function Sc(e){const t=await ir(()=>import("./index-CJ2lZtZM.js"),__vite__mapDeps([0,1,2,3,4]),import.meta.url),n=t.default??t.DxfParser;if(!n)throw new Error("dxf-parser did not expose a parser constructor.");return new n().parseSync(e)}function kc(e,t,n=[]){const i=e&&typeof e=="object"?e:{},s=Ec(i),o=Ac(i),r=(Array.isArray(i.entities)?i.entities:[]).filter(c=>!!c&&typeof c=="object").map(c=>_n(c)),a=Ws({format:"dxf",sourceName:t,header:i.header&&typeof i.header=="object"?i.header:{},layers:s,blocks:o,entities:r,metadata:{parser:"dxf-parser + cad-viewer normalizer"},warnings:n,raw:e});return r.length===0&&a.warnings.push("DXF file did not expose any ENTITIES."),a}function _n(e){const t=String(e.type??e.entityType??"UNKNOWN").toUpperCase(),n=vc(e,t),i=D(e.colorIndex??e.colorNumber??e.aci),s=D(e.color);if(n.colorIndex=i??(s!==void 0&&Math.abs(s)<=257?s:void 0),n.trueColor=e.trueColor??e.true_color??e.colorRGB??e.trueColorValue??(s!==void 0&&Math.abs(s)>257?s:void 0),n.layer=q(e.layer??e.layerName)??"0",n.isClosed=!!(e.shape??e.closed??e.isClosed)||(Number(e.flag??e.flags??0)&1)===1,t==="LINE"&&(n.startPoint=Z(e.startPoint??{x:e.x1??e.x,y:e.y1??e.y,z:e.z1??e.z})??n.startPoint,n.endPoint=Z(e.endPoint??{x:e.x2,y:e.y2,z:e.z2})??n.endPoint),(t==="TEXT"||t==="MTEXT"||t==="ATTRIB"||t==="ATTDEF")&&(n.insertionPoint=Z(e.startPoint??e.position??e.insertionPoint)??n.insertionPoint,n.text=Rc(e.text??e.string??e.value)??n.text,n.textHeight=D(e.textHeight??e.height)??n.textHeight,n.rotation=Oi(e.rotation??e.angle)),(t==="ARC"||t==="ELLIPSE")&&(n.startAngle=$i(e.startAngle??e.start_angle),n.endAngle=$i(e.endAngle??e.end_angle)),t==="INSERT"){n.blockName=q(e.name??e.blockName)??n.blockName,n.insertionPoint=Z(e.position??e.insertionPoint??e.point)??n.insertionPoint;const o=D(e.xScale??e.scaleX??e.xscale),r=D(e.yScale??e.scaleY??e.yscale),a=D(e.zScale??e.scaleZ??e.zscale);(o!==void 0||r!==void 0||a!==void 0)&&(n.scale={x:o??1,y:r??o??1,z:a??1}),n.rotation=Oi(e.rotation??e.angle)}if(t==="SPLINE"){const o=Fe(e.controlPoints??e.control_points??e.points);o.length&&(n.controlPoints=o);const r=Fe(e.fitPoints??e.fit_points);r.length&&(n.fitPoints=r)}return t==="HATCH"&&(n.loops=Ic(e),n.fillColorIndex=n.colorIndex),(t==="SOLID"||t==="TRACE"||t==="3DFACE")&&(n.vertices=Tc(e),n.fillColorIndex=n.colorIndex),n}function Ec(e){const t={},n=e.tables,i=e.layers??n?.layer??n?.LAYER??n?.layers,s=Nc(i);for(const o of s){const r=o,a=q(r.name??r.layerName);a&&Ri(t,{name:a,color:r.color??r.colorNumber??r.colorIndex,colorIndex:D(r.colorNumber??r.colorIndex??r.color),lineType:q(r.lineType??r.linetype),isVisible:Number(r.colorNumber??r.colorIndex??r.color??1)>=0,isFrozen:!!r.frozen,isLocked:!!r.locked,raw:r})}return t[0]||Ri(t,{name:"0",colorIndex:7,isVisible:!0}),t}function Ac(e){const t={},n=e.blocks;if(!n||typeof n!="object")return t;if(Array.isArray(n))for(const i of n)Wi(t,i);else for(const[i,s]of Object.entries(n))Wi(t,s,i);return t}function Wi(e,t,n){if(!t||typeof t!="object")return;const i=t,s=q(i.name??i.blockName??n);if(!s)return;const o=(Array.isArray(i.entities)?i.entities:[]).filter(r=>!!r&&typeof r=="object").map(r=>_n(r));Cc(e,{name:s,basePoint:Z(i.basePoint??i.position)??{x:0,y:0},entities:o,raw:i})}function Nc(e){if(!e)return[];if(Array.isArray(e))return e;if(typeof e!="object")return[];const t=e;return Array.isArray(t.entries)?t.entries:Array.isArray(t.records)?t.records:Array.isArray(t.layers)?t.layers:Object.values(t).filter(n=>n&&typeof n=="object")}function Fe(e){return Array.isArray(e)?e.map(Z).filter(t=>!!t):[]}function Tc(e){const t=Fe(e.vertices??e.points);if(t.length)return t;const n=[];for(let i=0;i<4;i++){const s=Z({x:e[`x${i}`]??e[`x${i+1}`],y:e[`y${i}`]??e[`y${i+1}`],z:e[`z${i}`]??e[`z${i+1}`]});s&&n.push(s)}return n}function Ic(e){const t=e.boundaryLoops??e.loops??e.paths;if(Array.isArray(t))return t.map(n=>{const i=n;return{vertices:Fe(i.vertices??i.points),isClosed:!0}}).filter(n=>n.vertices&&n.vertices.length>0)}function Oi(e){const t=D(e);if(t!==void 0)return Math.abs(t)>Math.PI*2+1e-6?Et(t):t}function $i(e){const t=D(e);if(t!==void 0)return Math.abs(t)>Math.PI*2+1e-6?Et(t):t}function Fc(e,t){const n=Mn(t);if(n)return Pt(e,n);const i=_c(e);if(i)return Pt(e,i);const s=Mn(Lc(e));if(s)return Pt(e,s);const o=Pt(e,"utf-8");return o.includes("�")?Dc(e):o}const zi={ANSI_874:"windows-874",ANSI_932:"shift_jis",ANSI_936:"gb18030",ANSI_949:"euc-kr",ANSI_950:"big5",ANSI_1250:"windows-1250",ANSI_1251:"windows-1251",ANSI_1252:"windows-1252",ANSI_1253:"windows-1253",ANSI_1254:"windows-1254",ANSI_1255:"windows-1255",ANSI_1256:"windows-1256",ANSI_1257:"windows-1257",ANSI_1258:"windows-1258",BIG5:"big5",CP874:"windows-874",CP932:"shift_jis",CP936:"gb18030",CP949:"euc-kr",CP950:"big5",CP1250:"windows-1250",CP1251:"windows-1251",CP1252:"windows-1252",CP1253:"windows-1253",CP1254:"windows-1254",CP1255:"windows-1255",CP1256:"windows-1256",CP1257:"windows-1257",CP1258:"windows-1258",GB18030:"gb18030",GB2312:"gb18030",GBK:"gb18030",SHIFT_JIS:"shift_jis",SHIFTJIS:"shift_jis",SJIS:"shift_jis",UTF8:"utf-8",UTF_8:"utf-8",UTF16:"utf-16le",UTF_16:"utf-16le",UTF16LE:"utf-16le",UTF_16LE:"utf-16le",UTF16BE:"utf-16be",UTF_16BE:"utf-16be"};function _c(e){if(e.length>=3&&e[0]===239&&e[1]===187&&e[2]===191)return"utf-8";if(e.length>=2&&e[0]===255&&e[1]===254)return"utf-16le";if(e.length>=2&&e[0]===254&&e[1]===255)return"utf-16be"}function Lc(e){var t,n,i,s;const o=Pt(e.subarray(0,Math.min(e.byteLength,131072)),"iso-8859-1").replace(/\r\n/g,`
-`).replace(/\r/g,`
-`).split(`
-`);for(let r=0;r<o.length-3;r++)if(!(((t=o[r])==null?void 0:t.trim())!=="9"||((n=o[r+1])==null?void 0:n.trim().toUpperCase())!=="$DWGCODEPAGE"))for(let a=r+2;a<Math.min(r+10,o.length-1);a+=2){const c=(i=o[a])==null?void 0:i.trim(),h=(s=o[a+1])==null?void 0:s.trim();if(c==="3"&&h)return h}}function Mn(e){const t=e?.trim();if(!t)return;const n=t.replace(/[-\s]+/g,"_").toUpperCase();if(zi[n])return zi[n];const i=/^ANSI_(\d{3,4})$/.exec(n);if(i)return Mn(`cp${i[1]}`);const s=/^CP(\d{3,4})$/.exec(n);return s?s[1]==="936"?"gb18030":s[1]==="950"?"big5":s[1]==="932"?"shift_jis":s[1]==="949"?"euc-kr":`windows-${s[1]}`:t}function Pt(e,t){try{return new TextDecoder(t,{fatal:!1}).decode(e)}catch{return new TextDecoder("utf-8",{fatal:!1}).decode(e)}}function Dc(e){const t=["windows-1252","gb18030","big5","shift_jis","euc-kr","iso-8859-1"];let n="",i=Number.POSITIVE_INFINITY;for(const s of t){const o=Pt(e,s),r=Bc(o,s);r<i&&(i=r,n=o)}return n||Pt(e,"utf-8")}function Bc(e,t){const n=sn(e,/\uFFFD/g),i=sn(e,/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g),s=sn(e,/[\u3400-\u9FFF\uF900-\uFAFF]/g),o=e.includes("SECTION")&&(e.includes("ENTITIES")||e.includes("HEADER"));let r=n*1e4+i*1e3;return o&&(r-=500),t==="windows-1252"&&(r-=2),t==="gb18030"&&s>=2&&(r-=50+Math.min(s,200)*2),r}function sn(e,t){var n;return((n=e.match(t))==null?void 0:n.length)??0}function Rc(e){const t=q(e);if(t!==void 0)return t.replace(/\\U\+([0-9a-fA-F]{4,6})/g,(n,i)=>{const s=Number.parseInt(i,16);return Number.isFinite(s)&&s>=0&&s<=1114111?String.fromCodePoint(s):n}).replace(/%%[cC]/g,"∅").replace(/%%[dD]/g,"°").replace(/%%[pP]/g,"±").replace(/\\P/g,`
-`)}function Wc(e){var t,n;const i=e.replace(/\r\n/g,`
-`).replace(/\r/g,`
-`).split(`
-`),s=[];for(let d=0;d<i.length-1;d+=2){const u=Number((t=i[d])==null?void 0:t.trim()),f=i[d+1]??"";Number.isFinite(u)&&s.push({code:u,value:f.trimEnd()})}const o=[],r={};let a="",c=[],h;for(let d=0;d<s.length;d++){const u=s[d];if(u.code===0&&u.value==="SECTION"){a=((n=s[d+1])==null?void 0:n.code)===2?s[d+1].value.toUpperCase():"",d++;continue}if(u.code===0&&u.value==="ENDSEC"){l(),a="";continue}a==="ENTITIES"&&(u.code===0?(l(),c=[u]):c.push(u))}return l(),{header:{},tables:{},entities:o,blocks:r};function l(){var d;if(!c.length)return;const u=(d=c[0])==null?void 0:d.value.toUpperCase();if(u==="VERTEX"&&h){const m=V(c,10,20,30);m&&(h.vertices??(h.vertices=[])).push({...m,bulge:_(c,42)}),c=[];return}if(u==="SEQEND"){h&&o.push(h),h=void 0,c=[];return}if(h&&(o.push(h),h=void 0),!u||u==="EOF"){c=[];return}const f=Oc(u,c);u==="POLYLINE"?h=f:o.push(f),c=[]}}function Oc(e,t){const n={type:e,handle:Zt(t,5),layer:Zt(t,8)??"0",colorIndex:_(t,62),trueColor:_(t,420),lineType:Zt(t,6),lineweight:_(t,370)};switch(e){case"LINE":Object.assign(n,{startPoint:V(t,10,20,30),endPoint:V(t,11,21,31)});break;case"CIRCLE":Object.assign(n,{center:V(t,10,20,30),radius:_(t,40)});break;case"ARC":Object.assign(n,{center:V(t,10,20,30),radius:_(t,40),startAngle:be(_(t,50)),endAngle:be(_(t,51))});break;case"POINT":Object.assign(n,{point:V(t,10,20,30)});break;case"TEXT":case"MTEXT":Object.assign(n,{insertionPoint:V(t,10,20,30),text:Uc(t),textHeight:_(t,40),rotation:be(_(t,50))});break;case"LWPOLYLINE":Object.assign(n,{vertices:zc(t),flag:_(t,70),isClosed:(Number(_(t,70)??0)&1)===1});break;case"POLYLINE":Object.assign(n,{vertices:[],flag:_(t,70),isClosed:(Number(_(t,70)??0)&1)===1});break;case"ELLIPSE":Object.assign(n,{center:V(t,10,20,30),majorAxisEndPoint:V(t,11,21,31),axisRatio:_(t,40),startAngle:_(t,41),endAngle:_(t,42)});break;case"SPLINE":Object.assign(n,{controlPoints:$c(t,10,20,30),degree:_(t,71),isClosed:(Number(_(t,70)??0)&1)===1});break;case"INSERT":Object.assign(n,{name:Zt(t,2),blockName:Zt(t,2),insertionPoint:V(t,10,20,30),rotation:be(_(t,50)),scale:{x:_(t,41)??1,y:_(t,42)??_(t,41)??1,z:_(t,43)??1}});break;case"SOLID":case"TRACE":case"3DFACE":Object.assign(n,{vertices:[V(t,10,20,30),V(t,11,21,31),V(t,12,22,32),V(t,13,23,33)].filter(Boolean)});break}return _n(n)}function _(e,t){var n;const i=(n=e.find(o=>o.code===t))==null?void 0:n.value,s=Number(i);return Number.isFinite(s)?s:void 0}function Zt(e,t){var n;const i=(n=e.find(s=>s.code===t))==null?void 0:n.value;return i&&i.length>0?i:void 0}function V(e,t,n,i){const s=_(e,t),o=_(e,n),r=_(e,i);if(!(s===void 0||o===void 0))return r===void 0?{x:s,y:o}:{x:s,y:o,z:r}}function $c(e,t,n,i){const s=[];for(let o=0;o<e.length;o++){if(e[o].code!==t)continue;const r=Number(e[o].value),a=e.slice(o+1).find(d=>d.code===n),c=e.slice(o+1).find(d=>d.code===i),h=Number(a?.value),l=Number(c?.value);Number.isFinite(r)&&Number.isFinite(h)&&s.push(Number.isFinite(l)?{x:r,y:h,z:l}:{x:r,y:h})}return s}function zc(e){const t=[];for(let n=0;n<e.length;n++){if(e[n].code!==10)continue;const i=Number(e[n].value);let s,o;for(let r=n+1;r<e.length&&e[r].code!==10;r++)e[r].code===20&&(s=Number(e[r].value)),e[r].code===42&&(o=Number(e[r].value));Number.isFinite(i)&&Number.isFinite(s)&&t.push({x:i,y:s,bulge:Number.isFinite(o)?o:void 0})}return t}function Uc(e){const t=e.filter(n=>n.code===1||n.code===3).map(n=>n.value);return t.length?t.join(""):void 0}function be(e){return typeof e=="number"&&Number.isFinite(e)?Et(e):void 0}class Xc{constructor(t={}){x(this,"id","dwf"),x(this,"label","DWF/DWFx native viewer powered by dwf-viewer"),x(this,"formats",["dwf","dwfx","xps"]),x(this,"nativeRenderer",!0),x(this,"defaults"),x(this,"native"),x(this,"host"),x(this,"lastStats"),this.defaults=t}accepts(t,n){const i=Rt(t);if(i==="dwf"||i==="dwfx"||i==="xps")return!0;const s=Wt(t,n);return s==="dwf"||s==="dwfx"||s==="xps"}async load(t,n={}){var i,s,o,r;const a={...this.defaults,...n},c=performance.now(),h=t.fileName??((i=t.file)==null?void 0:i.name),l=await Jt(t),d=Hi(Wt(t,l),Rt(t));(s=a.onProgress)==null||s.call(a,{phase:"parse",format:d,message:"Opening DWF/DWFx with dwf-viewer…",percent:48});const u=await Ms(l,{fileName:h});(o=a.onProgress)==null||o.call(a,{phase:"normalize",format:d,message:"Reading DWF pages, sheets and model metadata…",percent:76});const f=Ui(u,h,d,a.keepRaw===!0),m=performance.now()-c;return(r=a.onProgress)==null||r.call(a,{phase:"done",format:f.format,message:"DWF/DWFx document ready.",percent:100,elapsedMs:m}),{document:f,raw:a.keepRaw?u:void 0,bytes:l.byteLength,elapsedMs:m,format:f.format,warnings:f.warnings}}async mount(t,n,i={}){var s,o,r,a,c;const h={...this.defaults,...i},l=performance.now(),d=t.fileName??((s=t.file)==null?void 0:s.name),u=await Jt(t),f=Hi(Wt(t,u),Rt(t)),m=jc(h),p=Yi(h),g=qc(h,m,p),b=Xs(h,m,p);(o=h.onProgress)==null||o.call(h,{phase:"native-render",format:f,message:"Mounting native DWF renderer…",percent:28}),this.unmount(),this.host=n,n.replaceChildren(),this.native=new ac(n,g),(r=h.onProgress)==null||r.call(h,{phase:"parse",format:f,message:"Parsing DWF package and page streams…",percent:58}),await this.native.load(u,{fileName:d,...b}),(a=h.onProgress)==null||a.call(h,{phase:"render",format:f,message:"Rendering DWF/DWFx with dwf-viewer…",percent:88}),this.lastStats=await this.native.render();const w=this.native.getDocument(),y=Ui(w,d,f,h.keepRaw===!0);y.metadata.loaderMode="Native DWF",y.metadata.nativeRenderer="dwf-viewer",y.metadata.nativeRenderStats=this.lastStats?{...this.lastStats,warnings:this.lastStats.warnings.length}:void 0;const C=performance.now()-l;return(c=h.onProgress)==null||c.call(h,{phase:"done",format:y.format,message:"DWF/DWFx rendered.",percent:100,elapsedMs:C}),{document:y,raw:h.keepRaw?w:void 0,bytes:u.byteLength,elapsedMs:C,format:y.format,warnings:y.warnings}}unmount(){var t;(t=this.native)==null||t.dispose(),this.native=void 0,this.lastStats=void 0,this.host&&this.host.replaceChildren()}fit(){var t;(t=this.native)==null||t.fit()}zoomIn(){var t;const n=(t=this.native)==null?void 0:t.zoomInButton;n?.click()}zoomOut(){var t;const n=(t=this.native)==null?void 0:t.zoomOutButton;n?.click()}resize(){var t;(t=this.native)==null||t.render()}setNativeOptions(t){var n,i,s,o;const r=this.native;if(r){if(typeof t.dwfBackground=="string")r.background=t.dwfBackground;else{const a=Yi(t);a&&(r.background=a)}typeof t.dwfPreferWebgl=="boolean"&&((n=r.setPreferWebgl)==null||n.call(r,t.dwfPreferWebgl)),typeof t.dwfPreferWasm=="boolean"&&((i=r.setPreferWasm)==null||i.call(r,t.dwfPreferWasm)),t.dwfLineWeightMode&&((s=r.setLineWeightMode)==null||s.call(r,t.dwfLineWeightMode)),ye(r,"minStrokeCssPx",t.dwfMinStrokeCssPx),ye(r,"maxOverviewStrokeCssPx",t.dwfMaxOverviewStrokeCssPx),ye(r,"minTextCssPx",t.dwfMinTextCssPx),ye(r,"minFilledAreaCssPx",t.dwfMinFilledAreaCssPx),(o=r.render)==null||o.call(r)}}getLastNativeStats(){return this.lastStats}}function Ui(e,t,n,i){var s,o;const r=Xi(e?.diagnostics??[]),a=(e?.pageData??[]).map((h,l)=>Hc(h,l));for(const h of e?.pageData??[])r.push(...Xi(h.diagnostics));const c={parser:"dwf-viewer",nativeRenderer:"dwf-viewer",dwfKind:e?.kind,packageEntries:((s=e?.packageEntries)==null?void 0:s.length)??0,resources:((o=e?.resources)==null?void 0:o.length)??0,pageKinds:Qc((e?.pageData??[]).map(h=>h.kind)),pageNames:(e?.pages??[]).map(h=>h.name)};return Ws({format:n,sourceName:t,layers:{},blocks:{},pages:a,entities:Pc(a),metadata:c,warnings:Jc(r),raw:i?e:void 0})}function Hc(e,t){const n=Yc(e,t);return{index:t,name:e.name||e.sourcePath||`${t+1}`,width:e.width||1e3,height:e.height||1e3,entities:n}}function Yc(e,t){return e.kind==="w2d-text"?e.primitives.flatMap((n,i)=>Vc(n,t,i)):e.kind==="image"?[{type:"DWF_IMAGE_PAGE",kind:"image",pageIndex:t,width:e.width,height:e.height,imageSource:e.sourcePath}]:e.kind==="w3d-model"?e.model.meshes.map((n,i)=>({id:n.id,type:"W3D_MESH",kind:"solid",pageIndex:t,color:n.color?Kc(n.color):void 0,name:n.name||`mesh-${i+1}`,raw:{vertexCount:n.vertexCount,triangleCount:n.triangleCount,materialId:n.materialId}})):e.kind==="xps-fixed-page"?[{type:"XPS_FIXED_PAGE",kind:"viewport",pageIndex:t,width:e.width,height:e.height,raw:{sourcePath:e.sourcePath}}]:[{type:"DWF_PAGE",kind:"viewport",pageIndex:t,width:e.width,height:e.height,raw:{sourcePath:e.sourcePath}}]}function Vc(e,t,n){const i={id:`dwf-${t}-${n}`,pageIndex:t,color:e.stroke,fillColor:e.fill,lineweight:e.lineWidth,raw:{matrix:e.matrix}};if(e.type==="polyline"||e.type==="polygon")return[{...i,type:e.type==="polygon"?"DWF_POLYGON":"DWF_POLYLINE",kind:"polyline",vertices:Gc(e.points),isClosed:e.type==="polygon"}];if(e.type==="path")return[{...i,type:"DWF_PATH",kind:"path",commands:e.commands}];if(e.type==="text")return[{...i,type:"DWF_TEXT",kind:"text",insertionPoint:{x:e.x,y:e.y,z:0},text:e.text,textHeight:e.size}];if(e.type==="rect"){const s=e.x,o=e.y,r=e.width,a=e.height;return[{...i,type:"DWF_RECT",kind:"polyline",isClosed:!0,vertices:[{x:s,y:o,z:0},{x:s+r,y:o,z:0},{x:s+r,y:o+a,z:0},{x:s,y:o+a,z:0}]}]}return[]}function Gc(e){const t=[];for(let n=0;n+1<e.length;n+=2)t.push({x:e[n],y:e[n+1],z:0});return t}function Xi(e){return e.filter(t=>t.level!=="info").map(t=>`${t.code}: ${t.message}${t.source?` (${t.source})`:""}`)}function Hi(e,t){return t==="dwf"||t==="dwfx"||t==="xps"?t:e==="dwf"||e==="dwfx"||e==="xps"?e:"dwf"}function jc(e){if(e.dwfWasmUrl)return e.dwfWasmUrl;if(typeof document>"u")return;const t=e.wasmPath?new URL(Zc(e.wasmPath),document.baseURI).href:new URL("wasm/",document.baseURI).href;return new URL("dwfv-render.wasm",t).href}function Yi(e){if(e.dwfBackground)return e.dwfBackground;const t=e.canvasOptions;return t?.background??"#05070d"}function qc(e,t,n){return{...Xs(e,t,n),maxDevicePixelRatio:e.dwfMaxDevicePixelRatio??2,maxCanvasPixels:e.dwfMaxCanvasPixels??16777216}}function Xs(e,t,n){return{wasmUrl:t,preferWebgl:e.dwfPreferWebgl??!0,preferWasm:e.dwfPreferWasm??!0,background:n,maxGpuCacheBytes:e.dwfMaxGpuCacheBytes??160*1024*1024,maxCachedScenes:e.dwfMaxCachedScenes??2,lineWeightMode:e.dwfLineWeightMode??"adaptive",minStrokeCssPx:e.dwfMinStrokeCssPx,maxOverviewStrokeCssPx:e.dwfMaxOverviewStrokeCssPx,minTextCssPx:e.dwfMinTextCssPx,minFilledAreaCssPx:e.dwfMinFilledAreaCssPx}}function ye(e,t,n){typeof n=="number"&&Number.isFinite(n)&&(e[t]=n)}function Zc(e){return e.endsWith("/")?e:`${e}/`}function Kc(e){const[t,n,i]=e.map(s=>Math.max(0,Math.min(255,Math.round(s*255))));return`#${rn(t)}${rn(n)}${rn(i)}`}function rn(e){return e.toString(16).padStart(2,"0")}function Qc(e){const t={};for(const n of e)t[n]=(t[n]??0)+1;return t}function Jc(e){return Array.from(new Set(e))}function th(e={}){return new dc([new bc(e),new Mc(e),new Xc(e)])}function eh(e){const t=e;return t.nativeRenderer===!0&&typeof t.mount=="function"}const nh={1:"#ff0000",2:"#ffff00",3:"#00ff00",4:"#00ffff",5:"#0000ff",6:"#ff00ff",8:"#808080",9:"#c0c0c0",10:"#ff0000",11:"#ff7f7f",12:"#a50000",13:"#a55252",14:"#7f0000",15:"#7f3f3f",16:"#4c0000",17:"#4c2626",18:"#260000",19:"#261313",20:"#ff3f00",21:"#ff9f7f",22:"#a52900",23:"#a56752",24:"#7f1f00",25:"#7f4f3f",26:"#4c1300",27:"#4c2f26",28:"#260900",29:"#261713",30:"#ff7f00",31:"#ffbf7f",32:"#a55200",33:"#a57c52",34:"#7f3f00",35:"#7f5f3f",36:"#4c2600",37:"#4c3926",38:"#261300",39:"#261c13",40:"#ffbf00",41:"#ffdf7f",42:"#a57c00",43:"#a59152",44:"#7f5f00",45:"#7f6f3f",46:"#4c3900",47:"#4c4226",48:"#261c00",49:"#262113",50:"#ffff00",51:"#ffff7f",52:"#a5a500",53:"#a5a552",54:"#7f7f00",55:"#7f7f3f",56:"#4c4c00",57:"#4c4c26",58:"#262600",59:"#262613",60:"#bfff00",61:"#dfff7f",62:"#7ca500",63:"#91a552",64:"#5f7f00",65:"#6f7f3f",66:"#394c00",67:"#424c26",68:"#1c2600",69:"#212613",70:"#7fff00",71:"#bfff7f",72:"#52a500",73:"#7ca552",74:"#3f7f00",75:"#5f7f3f",76:"#264c00",77:"#394c26",78:"#132600",79:"#1c2613",80:"#3fff00",81:"#9fff7f",82:"#29a500",83:"#67a552",84:"#1f7f00",85:"#4f7f3f",86:"#134c00",87:"#2f4c26",88:"#092600",89:"#172613",90:"#00ff00",91:"#7fff7f",92:"#00a500",93:"#52a552",94:"#007f00",95:"#3f7f3f",96:"#004c00",97:"#264c26",98:"#002600",99:"#132613",100:"#00ff3f",101:"#7fff9f",102:"#00a529",103:"#52a567",104:"#007f1f",105:"#3f7f4f",106:"#004c13",107:"#264c2f",108:"#002609",109:"#132617",110:"#00ff7f",111:"#7fffbf",112:"#00a552",113:"#52a57c",114:"#007f3f",115:"#3f7f5f",116:"#004c26",117:"#264c39",118:"#002613",119:"#13261c",120:"#00ffbf",121:"#7fffdf",122:"#00a57c",123:"#52a591",124:"#007f5f",125:"#3f7f6f",126:"#004c39",127:"#264c42",128:"#00261c",129:"#132621",130:"#00ffff",131:"#7fffff",132:"#00a5a5",133:"#52a5a5",134:"#007f7f",135:"#3f7f7f",136:"#004c4c",137:"#264c4c",138:"#002626",139:"#132626",140:"#00bfff",141:"#7fdfff",142:"#007ca5",143:"#5291a5",144:"#005f7f",145:"#3f6f7f",146:"#00394c",147:"#26424c",148:"#001c26",149:"#132126",150:"#007fff",151:"#7fbfff",152:"#0052a5",153:"#527ca5",154:"#003f7f",155:"#3f5f7f",156:"#00264c",157:"#26394c",158:"#001326",159:"#131c26",160:"#003fff",161:"#7f9fff",162:"#0029a5",163:"#5267a5",164:"#001f7f",165:"#3f4f7f",166:"#00134c",167:"#262f4c",168:"#000926",169:"#131726",170:"#0000ff",171:"#7f7fff",172:"#0000a5",173:"#5252a5",174:"#00007f",175:"#3f3f7f",176:"#00004c",177:"#26264c",178:"#000026",179:"#131326",180:"#3f00ff",181:"#9f7fff",182:"#2900a5",183:"#6752a5",184:"#1f007f",185:"#4f3f7f",186:"#13004c",187:"#2f264c",188:"#090026",189:"#171326",190:"#7f00ff",191:"#bf7fff",192:"#5200a5",193:"#7c52a5",194:"#3f007f",195:"#5f3f7f",196:"#26004c",197:"#39264c",198:"#130026",199:"#1c1326",200:"#bf00ff",201:"#df7fff",202:"#7c00a5",203:"#9152a5",204:"#5f007f",205:"#6f3f7f",206:"#39004c",207:"#42264c",208:"#1c0026",209:"#211326",210:"#ff00ff",211:"#ff7fff",212:"#a500a5",213:"#a552a5",214:"#7f007f",215:"#7f3f7f",216:"#4c004c",217:"#4c264c",218:"#260026",219:"#261326",220:"#ff00bf",221:"#ff7fdf",222:"#a5007c",223:"#a55291",224:"#7f005f",225:"#7f3f6f",226:"#4c0039",227:"#4c2642",228:"#26001c",229:"#261321",230:"#ff007f",231:"#ff7fbf",232:"#a50052",233:"#a5527c",234:"#7f003f",235:"#7f3f5f",236:"#4c0026",237:"#4c2639",238:"#260013",239:"#26131c",240:"#ff003f",241:"#ff7f9f",242:"#a50029",243:"#a55267",244:"#7f001f",245:"#7f3f4f",246:"#4c0013",247:"#4c262f",248:"#260009",249:"#261317",250:"#333333",251:"#505050",252:"#696969",253:"#828282",254:"#bebebe",255:"#ffffff"};function St(e,t="#ffffff",n=t){if(typeof e!="number"||Number.isNaN(e))return t;const i=Math.abs(Math.trunc(e));return i===0||i===256||i===257?t:i===7?n:nh[i]??t}function te(e,t="rgb"){const n=Math.max(0,Math.trunc(e))&16777215,i=n>>16&255,s=n>>8&255,o=n&255;return`rgb(${t==="rgb"?i:o}, ${s}, ${t==="rgb"?o:i})`}function Ot(e){if(typeof e=="string"){const t=e.trim();return t?/^(#|rgb\(|rgba\(|hsl\(|hsla\()/i.test(t)?ih(t)??t:{red:"#ff0000",yellow:"#ffff00",green:"#00ff00",cyan:"#00ffff",blue:"#0000ff",magenta:"#ff00ff",white:"#ffffff",black:"#000000",grey:"#808080",gray:"#808080"}[t.toLowerCase()]:void 0}if(e&&typeof e=="object"){const t=e,n=Number(t.r??t.red),i=Number(t.g??t.green),s=Number(t.b??t.blue),o=Number(t.a??t.alpha??1);if([n,i,s].every(Number.isFinite))return Number.isFinite(o)&&o>=0&&o<1?`rgba(${n}, ${i}, ${s}, ${o})`:`rgb(${n}, ${i}, ${s})`}}function ih(e){if(!e)return;const t=e.trim();if(/^#[0-9a-f]{8}$/i.test(t)){const n=parseInt(t.slice(1,3),16)/255,i=parseInt(t.slice(3,5),16),s=parseInt(t.slice(5,7),16),o=parseInt(t.slice(7,9),16);return n>=.999?`rgb(${i}, ${s}, ${o})`:`rgba(${i}, ${s}, ${o}, ${En(n)})`}if(/^#[0-9a-f]{6}$/i.test(t)||/^#[0-9a-f]{3}$/i.test(t))return t;if(/^sc#/i.test(t)){const n=t.slice(3).split(",").map(a=>Number(a.trim())),[i,s,o,r]=n.length===4?n:[1,...n];if([i,s,o,r].every(Number.isFinite))return`rgba(${Math.round(s*255)}, ${Math.round(o*255)}, ${Math.round(r*255)}, ${En(i)})`}}function $t(e,t,n={}){const i=n.foreground??"#ffffff",s=i;let o;const r=Ot(e.trueColor)??Ot(e.color)??Ot(e.colorName);if(r&&(o=r),!o){const a=hh(e,["trueColor","true_color","truecolor","colorRGB","colorRgb","rgbColor","rgb"]);typeof a=="number"&&a>=0&&a<=16777215&&(o=te(a,n.trueColorByteOrder??"rgb"))}if(!o){const a=Gs(e.colorIndex,e.colorNumber,e.aci);typeof a=="number"&&Math.abs(a)<=257&&a!==256&&a!==0&&a!==257&&(o=St(a,s,i))}if(!o&&typeof e.color=="number"){const a=Number(e.color);Math.abs(a)<=257?a!==0&&a!==256&&a!==257&&(o=St(a,s,i)):o=te(a,n.trueColorByteOrder??"rgb")}if(!o){const a=ch(t,e.layer);o=rh(a,n)}return Hs(o??s,n)}function Sn(e,t,n={}){let i;const s=Ot(e.fillColor);if(s&&(i=s),!i&&typeof e.fillColor=="number"){const o=e.fillColor;i=Math.abs(o)<=257?St(o,n.foreground??"#ffffff",n.foreground??"#ffffff"):te(o,n.trueColorByteOrder??"rgb")}return!i&&typeof e.fillColorIndex=="number"&&(i=St(e.fillColorIndex,n.foreground??"#ffffff",n.foreground??"#ffffff")),i?Hs(i,n):void 0}function Hs(e,t={}){if(t.contrastMode!=="adaptive")return e;const n=t.background??"#0b1020",i=t.foreground??"#ffffff";return sh(e,n,i,t.minColorContrast??2.4)}function sh(e,t,n,i=2.4){const s=on(n)??{r:255,g:255,b:255,a:1},o=on(t)??{r:11,g:16,b:32,a:1},r=on(e);if(!r)return e;const a=Vi(r,o);if(an(a,o)>=i)return e;const c=kn(o),h=c<.5?{r:255,g:255,b:255,a:r.a}:{r:0,g:0,b:0,a:r.a};for(const l of[.25,.4,.55,.7,.85,1]){const d=lh(r,h,l);if(an(Vi(d,o),o)>=i)return Gi(d)}return an(s,o)>=i?Gi(s):c<.5?"#ffffff":"#000000"}function Ys(e){return e?e.isVisible!==!1&&e.isFrozen!==!0:!0}function rh(e,t){if(!e)return;const n=t.foreground??"#ffffff",i=Ot(e.trueColor);if(i)return i;if(typeof e.trueColor=="number"&&e.trueColor>=0&&e.trueColor<=16777215)return te(e.trueColor,t.trueColorByteOrder??"rgb");const s=Ot(e.color);if(s)return s;if(ah(e.colorIndex))return St(e.colorIndex,n,n);if(typeof e.color=="number"){const o=Number(e.color);return Math.abs(o)<=257?St(o,n,n):te(o,t.trueColorByteOrder??"rgb")}if(typeof e.colorIndex=="number")return St(e.colorIndex,n,n)}function oh(e){return Gs(e.colorIndex,e.colorNumber,e.aci)===0?!0:e.trueColor===void 0&&e.color===0}function Vs(e,t,n,i={}){if(!oh(e))return e;const s=$t(t,n,i);return{...e,color:s,trueColor:void 0,colorIndex:void 0,colorNumber:void 0}}function ah(e){return typeof e=="number"&&Number.isFinite(e)&&Math.abs(Math.trunc(e))>=1&&Math.abs(Math.trunc(e))<=255}function ch(e,t){if(!(!e||!t))return e.layers[t]??e.layers[t.toLowerCase()]??Object.values(e.layers).find(n=>n.name.toLowerCase()===t.toLowerCase())}function Gs(...e){for(const t of e)if(typeof t=="number"&&Number.isFinite(t))return t}function hh(e,t){const n=e;for(const i of t){const s=n[i];if(typeof s=="number"&&Number.isFinite(s))return s}}function on(e){const t=e.trim().toLowerCase();if(/^#[0-9a-f]{3}$/i.test(t))return{r:parseInt(t[1]+t[1],16),g:parseInt(t[2]+t[2],16),b:parseInt(t[3]+t[3],16),a:1};if(/^#[0-9a-f]{6}$/i.test(t))return{r:parseInt(t.slice(1,3),16),g:parseInt(t.slice(3,5),16),b:parseInt(t.slice(5,7),16),a:1};const n=t.match(/^rgba?\(([^)]+)\)$/i);if(n){const i=n[1].split(/[,\s/]+/).filter(Boolean).map(s=>Number(s.replace("%","")));if(i.length>=3&&i.slice(0,3).every(Number.isFinite)){const s=/%/.test(n[1]);return{r:zt(s?i[0]*2.55:i[0]),g:zt(s?i[1]*2.55:i[1]),b:zt(s?i[2]*2.55:i[2]),a:Number.isFinite(i[3])?Math.max(0,Math.min(1,i[3])):1}}}}function Vi(e,t){const n=e.a+t.a*(1-e.a);return n<=0?{r:0,g:0,b:0,a:0}:{r:(e.r*e.a+t.r*t.a*(1-e.a))/n,g:(e.g*e.a+t.g*t.a*(1-e.a))/n,b:(e.b*e.a+t.b*t.a*(1-e.a))/n,a:n}}function lh(e,t,n){const i=Math.max(0,Math.min(1,n));return{r:e.r+(t.r-e.r)*i,g:e.g+(t.g-e.g)*i,b:e.b+(t.b-e.b)*i,a:e.a}}function kn(e){const t=[e.r,e.g,e.b].map(n=>{const i=n/255;return i<=.03928?i/12.92:((i+.055)/1.055)**2.4});return .2126*t[0]+.7152*t[1]+.0722*t[2]}function an(e,t){const n=kn(e),i=kn(t),s=Math.max(n,i),o=Math.min(n,i);return(s+.05)/(o+.05)}function Gi(e){const t=zt(e.r),n=zt(e.g),i=zt(e.b);return e.a<.999?`rgba(${t}, ${n}, ${i}, ${En(e.a)})`:`rgb(${t}, ${n}, ${i})`}function zt(e){return Math.max(0,Math.min(255,Math.round(e)))}function En(e){return Math.round(e*1e3)/1e3}function cn(e,t){return{a:e.a*t.a+e.c*t.b,b:e.b*t.a+e.d*t.b,c:e.a*t.c+e.c*t.d,d:e.b*t.c+e.d*t.d,e:e.a*t.e+e.c*t.f+e.e,f:e.b*t.e+e.d*t.f+e.f}}function ji(e,t){return{a:1,b:0,c:0,d:1,e,f:t}}function dh(e){const t=Math.cos(e),n=Math.sin(e);return{a:t,b:n,c:-n,d:t,e:0,f:0}}function uh(e,t=e){return{a:e,b:0,c:0,d:t,e:0,f:0}}function Q(e,t){return{x:e.x*t.a+e.y*t.c+t.e,y:e.x*t.b+e.y*t.d+t.f,z:"z"in e?e.z:void 0}}function qi(e,t){if(e)return e.map(n=>({cmd:n.cmd,points:n.points.map(i=>Q(i,t))}))}function _e(e,t={x:0,y:0}){const n=e.insertionPoint??{x:0,y:0},i=e.scale,s=Number(typeof i=="object"&&i?i.x??1:e.scaleX??1),o=Number(typeof i=="object"&&i?i.y??s:e.scaleY??s),r=Number(e.rotation??0);let a=ji(n.x,n.y);return a=cn(a,dh(Number.isFinite(r)?r:0)),a=cn(a,uh(Number.isFinite(s)?s:1,Number.isFinite(o)?o:1)),a=cn(a,ji(-t.x,-t.y)),a}function Le(e,t){const n={...e,raw:e.raw??e};if(e.startPoint&&(n.startPoint=Q(e.startPoint,t)),e.endPoint&&(n.endPoint=Q(e.endPoint,t)),e.center&&(n.center=Q(e.center,t)),e.insertionPoint&&(n.insertionPoint=Q(e.insertionPoint,t)),e.majorAxisEndPoint){const s=Q({x:0,y:0},t),o=Q(e.majorAxisEndPoint,t);n.majorAxisEndPoint={x:o.x-s.x,y:o.y-s.y,z:o.z}}e.vertices&&(n.vertices=e.vertices.map(s=>({...Q(s,t),bulge:s.bulge,startWidth:s.startWidth,endWidth:s.endWidth}))),e.points&&(n.points=e.points.map(s=>Q(s,t))),e.controlPoints&&(n.controlPoints=e.controlPoints.map(s=>Q(s,t))),e.fitPoints&&(n.fitPoints=e.fitPoints.map(s=>Q(s,t))),e.commands&&(n.commands=qi(e.commands,t)),e.loops&&(n.loops=e.loops.map(s=>{var o;return{...s,vertices:(o=s.vertices)==null?void 0:o.map(r=>Q(r,t)),commands:qi(s.commands,t)}}));const i=Math.sqrt(Math.abs(t.a*t.d-t.b*t.c));return typeof e.radius=="number"&&Number.isFinite(i)&&(n.radius=e.radius*i),n}const fh={background:"#0b1020",foreground:"#ffffff",showUnsupportedMarkers:!1,showImagePlaceholders:!0,showPageBounds:!0,minScale:1e-9,maxScale:1e9,wheelZoomFactor:1.14,trueColorByteOrder:"rgb",maxInsertDepth:16,contrastMode:"adaptive",minColorContrast:2.4,maxCurveSegments:96,spatialIndexCellCount:72,maxVerticesPerBatch:65536,textMinPixelHeight:4,maxVisibleTextLabels:2500,powerPreference:"high-performance",antialias:!0,preserveDrawingBuffer:!1,enableSpatialIndex:!0};class Zi{constructor(t,n={}){x(this,"canvas"),x(this,"ctx"),x(this,"opts"),x(this,"document"),x(this,"bounds",dt()),x(this,"view",{centerX:0,centerY:0,scale:1}),x(this,"fitScale",1),x(this,"dpr",1),x(this,"isDragging",!1),x(this,"lastPointer"),x(this,"resizeObserver"),x(this,"imageCache",new Map),x(this,"stats",{total:0,drawn:0,skipped:0,byType:{},unsupported:{},renderElapsedMs:0,backend:"canvas2d"}),x(this,"onStats"),x(this,"onViewChange");const i=t.getContext("2d");if(!i)throw new Error("Canvas 2D context is not available.");this.canvas=t,this.ctx=i,this.opts={...fh,...n},this.canvas.classList.add("cad-viewer-canvas"),this.bindEvents(),typeof ResizeObserver<"u"&&(this.resizeObserver=new ResizeObserver(()=>this.resize()),this.resizeObserver.observe(t)),this.resize()}destroy(){var t;(t=this.resizeObserver)==null||t.disconnect()}clear(){this.document=void 0,this.bounds=dt(),this.view={centerX:0,centerY:0,scale:1},this.fitScale=1,this.render(),this.emitViewChange()}setDocument(t){this.document=t,this.bounds=this.computeBounds(t),this.fitToView()}getDocument(){return this.document}setOptions(t){Object.assign(this.opts,t),this.render(),this.emitViewChange()}getOptions(){return{...this.opts}}fitToView(t=.92){if(!Yt(this.bounds)){this.view={centerX:0,centerY:0,scale:1},this.fitScale=1,this.render(),this.emitViewChange();return}const n=Math.max(1,this.cssWidth),i=Math.max(1,this.cssHeight),s=Math.max(this.bounds.maxX-this.bounds.minX,1e-9),o=Math.max(this.bounds.maxY-this.bounds.minY,1e-9),r=this.clampScale(Math.min(n/s,i/o)*t);this.fitScale=r,this.view={centerX:(this.bounds.minX+this.bounds.maxX)/2,centerY:(this.bounds.minY+this.bounds.maxY)/2,scale:r},this.render(),this.emitViewChange()}resize(){this.dpr=Math.max(1,window.devicePixelRatio||1);const t=Math.max(1,Math.floor(this.cssWidth*this.dpr)),n=Math.max(1,Math.floor(this.cssHeight*this.dpr));(this.canvas.width!==t||this.canvas.height!==n)&&(this.canvas.width=t,this.canvas.height=n),this.render(),this.emitViewChange()}zoom(t,n){if(!Number.isFinite(t)||t<=0)return;const i=n??{x:this.cssWidth/2,y:this.cssHeight/2},s=this.screenToWorld(i);this.view.scale=this.clampScale(this.view.scale*t);const o=this.screenToWorld(i);this.view.centerX+=s.x-o.x,this.view.centerY+=s.y-o.y,this.render(),this.emitViewChange()}zoomIn(){this.zoom(this.opts.wheelZoomFactor)}zoomOut(){this.zoom(1/this.opts.wheelZoomFactor)}panByScreenDelta(t,n){!Number.isFinite(t)||!Number.isFinite(n)||(this.view.centerX-=t/this.view.scale,this.view.centerY+=n/this.view.scale,this.render(),this.emitViewChange())}setViewState(t){if(![t.centerX,t.centerY,t.scale].every(Number.isFinite))throw new Error("Invalid view state.");this.view={...t,scale:this.clampScale(t.scale)},this.render(),this.emitViewChange()}getViewState(){return{...this.view}}getBounds(){return{...this.bounds}}getStats(){return mh(this.stats)}getZoomRatio(){return Math.abs(this.fitScale)<1e-12?1:this.view.scale/this.fitScale}getZoomPercent(){return this.getZoomRatio()*100}worldToScreen(t){return{x:this.cssWidth/2+(t.x-this.view.centerX)*this.view.scale,y:this.cssHeight/2-(t.y-this.view.centerY)*this.view.scale}}screenToWorld(t){return{x:this.view.centerX+(t.x-this.cssWidth/2)/this.view.scale,y:this.view.centerY-(t.y-this.cssHeight/2)/this.view.scale}}render(){var t,n;const i=performance.now();if(this.stats={total:0,drawn:0,skipped:0,byType:{},unsupported:{},renderElapsedMs:0,backend:"canvas2d"},this.clearCanvas(),this.document){this.opts.showPageBounds&&(t=this.document.pages)!=null&&t.length&&this.drawPageBounds(this.document);for(const s of this.document.entities)this.drawEntityTracked(s,0)}return this.stats.renderElapsedMs=performance.now()-i,(n=this.onStats)==null||n.call(this,this.getStats()),this.getStats()}get cssWidth(){return this.canvas.clientWidth||1}get cssHeight(){return this.canvas.clientHeight||1}bindEvents(){this.canvas.addEventListener("wheel",n=>{n.preventDefault();const i=n.deltaY<0?this.opts.wheelZoomFactor:1/this.opts.wheelZoomFactor;this.zoom(i,{x:n.offsetX,y:n.offsetY})},{passive:!1}),this.canvas.addEventListener("pointerdown",n=>{this.canvas.setPointerCapture(n.pointerId),this.isDragging=!0,this.lastPointer={x:n.clientX,y:n.clientY},this.canvas.classList.add("is-dragging")}),this.canvas.addEventListener("pointermove",n=>{!this.isDragging||!this.lastPointer||(this.panByScreenDelta(n.clientX-this.lastPointer.x,n.clientY-this.lastPointer.y),this.lastPointer={x:n.clientX,y:n.clientY})});const t=n=>{n&&this.canvas.hasPointerCapture(n.pointerId)&&this.canvas.releasePointerCapture(n.pointerId),this.isDragging=!1,this.lastPointer=void 0,this.canvas.classList.remove("is-dragging")};this.canvas.addEventListener("pointerup",t),this.canvas.addEventListener("pointercancel",()=>t())}clearCanvas(){const t=this.ctx;t.save(),t.setTransform(this.dpr,0,0,this.dpr,0,0),t.clearRect(0,0,this.cssWidth,this.cssHeight),t.fillStyle=this.opts.background,t.fillRect(0,0,this.cssWidth,this.cssHeight),t.restore()}drawPageBounds(t){const n=this.ctx;n.save(),n.setTransform(this.dpr,0,0,this.dpr,0,0),n.strokeStyle="rgba(148, 163, 184, 0.35)",n.lineWidth=1,n.setLineDash([8,6]);for(const i of t.pages??[]){const s=this.worldToScreen({x:0,y:0}),o=this.worldToScreen({x:i.width,y:i.height});n.strokeRect(Math.min(s.x,o.x),Math.min(s.y,o.y),Math.abs(o.x-s.x),Math.abs(o.y-s.y))}n.restore()}drawEntityTracked(t,n){this.stats.total++;const i=String(t.type??"UNKNOWN").toUpperCase();this.stats.byType[i]=(this.stats.byType[i]??0)+1;const s=this.lookupLayer(t.layer);if(t.isVisible===!1||!Ys(s)){this.stats.skipped++;return}this.drawEntity(t,i,n)}drawEntity(t,n,i){switch(t.kind??Xt(n)){case"line":return this.drawLine(t);case"circle":return this.drawCircle(t);case"arc":return this.drawArc(t);case"polyline":return this.drawPolyline(t);case"ellipse":return this.drawEllipse(t);case"text":return this.drawText(t);case"point":return this.drawPoint(t);case"insert":return this.drawInsert(t,i);case"solid":return this.drawSolid(t);case"hatch":return this.drawHatch(t);case"spline":return this.drawSpline(t);case"path":return this.drawPath(t);case"image":return this.drawImage(t);case"viewport":return this.markSkipped(n);default:this.stats.unsupported[n]=(this.stats.unsupported[n]??0)+1,this.stats.skipped++,this.opts.showUnsupportedMarkers&&this.drawUnsupportedMarker(t)}}beginStyledPath(t,n=!1){const i=this.ctx;i.save(),i.setTransform(this.dpr,0,0,this.dpr,0,0);const s=$t(t,this.document,{foreground:this.opts.foreground,background:this.opts.background,trueColorByteOrder:this.opts.trueColorByteOrder,contrastMode:this.opts.contrastMode,minColorContrast:this.opts.minColorContrast}),o=Sn(t,this.document,{foreground:this.opts.foreground,background:this.opts.background,trueColorByteOrder:this.opts.trueColorByteOrder,contrastMode:this.opts.contrastMode,minColorContrast:this.opts.minColorContrast})??s;i.strokeStyle=s,i.fillStyle=n?o:s,i.globalAlpha=_t(Number(t.opacity??1),0,1),i.lineCap="round",i.lineJoin="round";const r=typeof t.lineweight=="number"&&t.lineweight>0?t.lineweight:0;i.lineWidth=Math.max(1,Math.min(12,r>0?r/30:1)),i.beginPath()}finishStroke(){this.ctx.stroke(),this.ctx.restore(),this.stats.drawn++}finishFillStroke(t=!1){t&&this.ctx.fill(),this.ctx.stroke(),this.ctx.restore(),this.stats.drawn++}drawLine(t){const n=t.startPoint,i=t.endPoint;if(!P(n)||!P(i))return this.markSkipped("LINE");const s=this.worldToScreen(n),o=this.worldToScreen(i);this.beginStyledPath(t),this.ctx.moveTo(s.x,s.y),this.ctx.lineTo(o.x,o.y),this.finishStroke()}drawCircle(t){const n=t.center,i=Number(t.radius);if(!P(n)||!Number.isFinite(i))return this.markSkipped("CIRCLE");const s=this.worldToScreen(n);this.beginStyledPath(t),this.ctx.arc(s.x,s.y,Math.abs(i)*this.view.scale,0,Math.PI*2),this.finishStroke()}drawArc(t){const n=t.center,i=Number(t.radius),s=Number(t.startAngle),o=Number(t.endAngle);if(!P(n)||!Number.isFinite(i)||!Number.isFinite(s)||!Number.isFinite(o))return this.markSkipped("ARC");this.strokeWorldPolyline(t,Te(O(n),i,s,o,!0),!1)}drawPolyline(t){const n=t.vertices??t.points;if(!Array.isArray(n)||n.length<2)return this.markSkipped(String(t.type));const i=!!t.isClosed||(Number(t.flag)&1)===1,s=[],o=i?n.length:n.length-1;for(let r=0;r<o;r++){const a=n[r],c=n[(r+1)%n.length];if(!P(a)||!P(c))continue;const h=zs(a,c,Number(a.bulge??0));s.length>0&&h.shift(),s.push(...h)}this.strokeWorldPolyline(t,s,i)}drawEllipse(t){const n=t.center,i=t.majorAxisEndPoint,s=Number(t.axisRatio??1);if(!P(n)||!P(i))return this.markSkipped("ELLIPSE");const o=Ie(n,i,s,Number(t.startAngle??0),Number(t.endAngle??Math.PI*2)),r=Math.abs(Number(t.endAngle??Math.PI*2)-Number(t.startAngle??0))>=Math.PI*2-1e-6;this.strokeWorldPolyline(t,o,r)}drawPoint(t){const n=t.point??t.location??t.center??t.insertionPoint;if(!P(n))return this.markSkipped("POINT");const i=this.worldToScreen(n);this.beginStyledPath(t),this.ctx.moveTo(i.x-3,i.y),this.ctx.lineTo(i.x+3,i.y),this.ctx.moveTo(i.x,i.y-3),this.ctx.lineTo(i.x,i.y+3),this.finishStroke()}drawText(t){const n=t.insertionPoint??t.startPoint??t.center,i=Us(String(t.text??t.value??"")),s=Number(t.textHeight??t.height??1);if(!P(n)||!i)return this.markSkipped(String(t.type));this.drawTextAt(t,n,i,s,Number(t.rotation??0))}drawInsert(t,n){const i=this.lookupBlock(t.blockName??t.name);if(i&&n<this.opts.maxInsertDepth){const a=_e(t,i.basePoint??{x:0,y:0});for(const c of i.entities){const h=Vs(c,t,this.document,{foreground:this.opts.foreground,background:this.opts.background,trueColorByteOrder:this.opts.trueColorByteOrder,contrastMode:this.opts.contrastMode,minColorContrast:this.opts.minColorContrast});this.drawEntityTracked(Le(h,a),n+1)}return}const s=t.insertionPoint;if(!P(s))return this.markSkipped("INSERT");const o=this.worldToScreen(s);this.beginStyledPath(t);const r=5;if(this.ctx.rect(o.x-r,o.y-r,r*2,r*2),this.finishStroke(),Array.isArray(t.attribs))for(const a of t.attribs)this.drawText(a)}drawSolid(t){const n=t.vertices??t.points;if(!Array.isArray(n)||n.length<3)return this.markSkipped(String(t.type));this.beginStyledPath(t,!0);const i=this.worldToScreen(n[0]);this.ctx.moveTo(i.x,i.y);for(const s of n.slice(1)){if(!P(s))continue;const o=this.worldToScreen(s);this.ctx.lineTo(o.x,o.y)}this.ctx.closePath(),this.finishFillStroke(!0)}drawHatch(t){var n,i;const s=t.loops;if(!Array.isArray(s)||s.length===0)return this.markSkipped("HATCH");this.beginStyledPath(t,!0);for(const o of s)if((n=o.commands)!=null&&n.length)this.addPathCommands(o.commands);else if((i=o.vertices)!=null&&i.length){const r=this.worldToScreen(o.vertices[0]);this.ctx.moveTo(r.x,r.y);for(const a of o.vertices.slice(1)){const c=this.worldToScreen(a);this.ctx.lineTo(c.x,c.y)}this.ctx.closePath()}this.finishFillStroke(!!Sn(t,this.document,{foreground:this.opts.foreground,background:this.opts.background,trueColorByteOrder:this.opts.trueColorByteOrder,contrastMode:this.opts.contrastMode,minColorContrast:this.opts.minColorContrast}))}drawSpline(t){var n;const i=(n=t.fitPoints)!=null&&n.length?t.fitPoints:t.controlPoints;if(!i||i.length<2)return this.markSkipped("SPLINE");this.strokeWorldPolyline(t,i,!!t.isClosed)}drawPath(t){var n;if(!((n=t.commands)!=null&&n.length))return this.markSkipped(String(t.type));this.beginStyledPath(t,!!t.fillColor),this.addPathCommands(t.commands),this.finishFillStroke(!!t.fillColor)}addPathCommands(t){for(const n of t)if(n.cmd==="M"){const i=this.worldToScreen(n.points[0]);this.ctx.moveTo(i.x,i.y)}else if(n.cmd==="L"){const i=this.worldToScreen(n.points[0]);this.ctx.lineTo(i.x,i.y)}else if(n.cmd==="C"){const[i,s,o]=n.points.map(r=>this.worldToScreen(r));this.ctx.bezierCurveTo(i.x,i.y,s.x,s.y,o.x,o.y)}else if(n.cmd==="Q"){const[i,s]=n.points.map(o=>this.worldToScreen(o));this.ctx.quadraticCurveTo(i.x,i.y,s.x,s.y)}else n.cmd==="Z"&&this.ctx.closePath()}drawImage(t){const n=t.insertionPoint;if(!P(n))return this.markSkipped(String(t.type));const i=Number(t.width??32),s=Number(t.height??32),o=this.worldToScreen(n),r=this.worldToScreen({x:n.x+i,y:n.y-s}),a=Math.min(o.x,r.x),c=Math.min(o.y,r.y),h=Math.abs(r.x-o.x),l=Math.abs(r.y-o.y),d=t.imageDataUrl;if(d){const u=this.getImage(d);if(u.complete&&u.naturalWidth>0){this.ctx.save(),this.ctx.setTransform(this.dpr,0,0,this.dpr,0,0),this.ctx.drawImage(u,a,c,h,l),this.ctx.restore(),this.stats.drawn++;return}u.onload=()=>this.render()}if(!this.opts.showImagePlaceholders)return this.markSkipped(String(t.type));this.beginStyledPath(t),this.ctx.rect(a,c,h,l),this.ctx.moveTo(a,c),this.ctx.lineTo(a+h,c+l),this.ctx.moveTo(a+h,c),this.ctx.lineTo(a,c+l),this.finishStroke()}getImage(t){let n=this.imageCache.get(t);return n||(n=new Image,n.src=t,this.imageCache.set(t,n)),n}drawUnsupportedMarker(t){const n=this.entityAnchor(t);if(!n)return;const i=this.worldToScreen(n);this.beginStyledPath(t),this.ctx.moveTo(i.x-4,i.y-4),this.ctx.lineTo(i.x+4,i.y+4),this.ctx.moveTo(i.x+4,i.y-4),this.ctx.lineTo(i.x-4,i.y+4),this.finishStroke()}drawTextAt(t,n,i,s,o){const r=this.ctx,a=this.worldToScreen(n);r.save(),r.setTransform(this.dpr,0,0,this.dpr,0,0),r.translate(a.x,a.y),r.rotate(-o);const c=Math.max(4,Math.min(256,Math.abs(s)*this.view.scale));r.font=`${c}px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`,r.fillStyle=$t(t,this.document,{foreground:this.opts.foreground,background:this.opts.background,trueColorByteOrder:this.opts.trueColorByteOrder,contrastMode:this.opts.contrastMode,minColorContrast:this.opts.minColorContrast}),r.globalAlpha=_t(Number(t.opacity??1),0,1),r.textBaseline="alphabetic";for(const[h,l]of i.split(/\r?\n/g).entries())r.fillText(l,0,h*c*1.22);r.restore(),this.stats.drawn++}strokeWorldPolyline(t,n,i){const s=n.filter(P);if(s.length<2)return this.markSkipped(String(t.type));this.beginStyledPath(t);const o=this.worldToScreen(s[0]);this.ctx.moveTo(o.x,o.y);for(const r of s.slice(1)){const a=this.worldToScreen(r);this.ctx.lineTo(a.x,a.y)}i&&this.ctx.closePath(),this.finishStroke()}markSkipped(t){this.stats.skipped++,this.stats.unsupported[t]=this.stats.unsupported[t]??0}entityAnchor(t){for(const n of["startPoint","insertionPoint","center","point","location"]){const i=t[n];if(P(i))return O(i)}if(Array.isArray(t.vertices)&&P(t.vertices[0]))return O(t.vertices[0]);if(Array.isArray(t.commands)&&t.commands.length){const n=t.commands.find(i=>i.points.length>0);if(n)return O(n.points[0])}}computeBounds(t){var n;const i=dt();if((n=t.pages)!=null&&n.length)for(const s of t.pages)L(i,{x:0,y:0}),L(i,{x:s.width,y:s.height});for(const s of t.entities)this.includeEntityBounds(i,s,0);return $s(i)}includeEntityBounds(t,n,i){const s=String(n.type??"").toUpperCase(),o=n.kind??Xt(s);if(o==="insert"){const r=this.lookupBlock(n.blockName??n.name);if(r&&i<this.opts.maxInsertDepth){const a=_e(n,r.basePoint??{x:0,y:0});for(const c of r.entities)this.includeEntityBounds(t,Le(c,a),i+1);return}}if(o==="line")P(n.startPoint)&&L(t,n.startPoint),P(n.endPoint)&&L(t,n.endPoint);else if(o==="circle"||o==="arc")P(n.center)&&Number.isFinite(n.radius)&&Os(t,n.center,Number(n.radius));else if(o==="polyline"||o==="solid"||o==="spline")for(const r of[...n.vertices??[],...n.points??[],...n.controlPoints??[],...n.fitPoints??[]])P(r)&&L(t,r);else if(o==="ellipse")P(n.center)&&P(n.majorAxisEndPoint)&&Ie(n.center,n.majorAxisEndPoint,Number(n.axisRatio??1),Number(n.startAngle??0),Number(n.endAngle??Math.PI*2)).forEach(r=>L(t,r));else if(o==="path")for(const r of n.commands??[])for(const a of r.points)L(t,a);else if(o==="hatch")for(const r of n.loops??[]){for(const a of r.vertices??[])L(t,a);for(const a of r.commands??[])for(const c of a.points)L(t,c)}else{const r=this.entityAnchor(n);r&&L(t,r)}}lookupLayer(t){if(!(!this.document||!t))return this.document.layers[t]??this.document.layers[t.toLowerCase()]??Object.values(this.document.layers).find(n=>n.name.toLowerCase()===t.toLowerCase())}lookupBlock(t){if(!(!this.document||!t))return this.document.blocks[t]??this.document.blocks[t.toLowerCase()]??Object.values(this.document.blocks).find(n=>n.name.toLowerCase()===t.toLowerCase())}clampScale(t){return Math.min(this.opts.maxScale,Math.max(this.opts.minScale,t))}emitViewChange(){var t;(t=this.onViewChange)==null||t.call(this,{view:this.getViewState(),fitScale:this.fitScale,zoomRatio:this.getZoomRatio(),zoomPercent:this.getZoomPercent(),bounds:this.getBounds()})}}function mh(e){return{total:e.total,drawn:e.drawn,skipped:e.skipped,byType:{...e.byType},unsupported:{...e.unsupported},renderElapsedMs:e.renderElapsedMs,backend:e.backend,primitiveCount:e.primitiveCount,visiblePrimitiveCount:e.visiblePrimitiveCount,culledPrimitiveCount:e.culledPrimitiveCount,gpuMemoryBytes:e.gpuMemoryBytes,buildElapsedMs:e.buildElapsedMs}}const ph={background:"#0b1020",foreground:"#ffffff",showUnsupportedMarkers:!1,showImagePlaceholders:!0,showPageBounds:!0,minScale:1e-9,maxScale:1e9,wheelZoomFactor:1.14,trueColorByteOrder:"rgb",maxInsertDepth:16,contrastMode:"adaptive",minColorContrast:2.4,maxCurveSegments:96,spatialIndexCellCount:72,maxVerticesPerBatch:65536,textMinPixelHeight:4,maxVisibleTextLabels:2500,powerPreference:"high-performance",antialias:!0,preserveDrawingBuffer:!1,enableSpatialIndex:!0};class Ki{constructor(t,n={}){x(this,"canvas"),x(this,"backend","webgl"),x(this,"gl"),x(this,"program"),x(this,"eventController",new AbortController),x(this,"imageCache",new Map),x(this,"opts"),x(this,"document"),x(this,"bounds",dt()),x(this,"view",{centerX:0,centerY:0,scale:1}),x(this,"fitScale",1),x(this,"dpr",1),x(this,"isDragging",!1),x(this,"lastPointer"),x(this,"resizeObserver"),x(this,"overlayCanvas"),x(this,"overlayCtx"),x(this,"scene"),x(this,"stats",{total:0,drawn:0,skipped:0,byType:{},unsupported:{},renderElapsedMs:0,backend:"webgl",primitiveCount:0,visiblePrimitiveCount:0,culledPrimitiveCount:0,gpuMemoryBytes:0,buildElapsedMs:0}),x(this,"rafHandle",0),x(this,"onStats"),x(this,"onViewChange");const i=gh(t,n);if(!i)throw new Error('WebGL is not available. Use renderer: "canvas2d" to force the Canvas2D fallback.');this.canvas=t,this.gl=i,this.program=wh(i),this.opts={...ph,...n},this.canvas.classList.add("cad-viewer-canvas","cad-viewer-webgl-canvas"),this.createOverlayCanvas(),this.bindEvents(),typeof ResizeObserver<"u"&&(this.resizeObserver=new ResizeObserver(()=>this.resize()),this.resizeObserver.observe(t)),this.resize()}static isSupported(){return js()}destroy(){var t,n;this.eventController.abort(),(t=this.resizeObserver)==null||t.disconnect(),this.cancelScheduledRender(),this.disposeScene(),(n=this.overlayCanvas)==null||n.remove()}clear(){this.document=void 0,this.bounds=dt(),this.view={centerX:0,centerY:0,scale:1},this.fitScale=1,this.disposeScene(),this.render(),this.emitViewChange()}setDocument(t){this.document=t,this.bounds=Ph(t,this.opts),this.disposeScene();const n=yh(t,this.opts,this.bounds);this.scene=bh(this.gl,n),this.stats=kh(this.scene,0),this.fitToView()}getDocument(){return this.document}setOptions(t){const n=Sh(this.opts,t);if(this.opts={...this.opts,...t},n&&this.document){this.setDocument(this.document);return}this.render(),this.emitViewChange()}getOptions(){return{...this.opts}}fitToView(t=.92){if(!Yt(this.bounds)){this.view={centerX:0,centerY:0,scale:1},this.fitScale=1,this.render(),this.emitViewChange();return}const n=Math.max(1,this.cssWidth),i=Math.max(1,this.cssHeight),s=Math.max(this.bounds.maxX-this.bounds.minX,1e-9),o=Math.max(this.bounds.maxY-this.bounds.minY,1e-9),r=this.clampScale(Math.min(n/s,i/o)*t);this.fitScale=r,this.view={centerX:(this.bounds.minX+this.bounds.maxX)/2,centerY:(this.bounds.minY+this.bounds.maxY)/2,scale:r},this.render(),this.emitViewChange()}resize(){this.dpr=Math.max(1,window.devicePixelRatio||1);const t=Math.max(1,Math.floor(this.cssWidth*this.dpr)),n=Math.max(1,Math.floor(this.cssHeight*this.dpr));(this.canvas.width!==t||this.canvas.height!==n)&&(this.canvas.width=t,this.canvas.height=n),this.resizeOverlay(t,n),this.render(),this.emitViewChange()}zoom(t,n){if(!Number.isFinite(t)||t<=0)return;const i=n??{x:this.cssWidth/2,y:this.cssHeight/2},s=this.screenToWorld(i);this.view.scale=this.clampScale(this.view.scale*t);const o=this.screenToWorld(i);this.view.centerX+=s.x-o.x,this.view.centerY+=s.y-o.y,this.scheduleRender(),this.emitViewChange()}zoomIn(){this.zoom(this.opts.wheelZoomFactor)}zoomOut(){this.zoom(1/this.opts.wheelZoomFactor)}panByScreenDelta(t,n){!Number.isFinite(t)||!Number.isFinite(n)||(this.view.centerX-=t/this.view.scale,this.view.centerY+=n/this.view.scale,this.scheduleRender(),this.emitViewChange())}setViewState(t){if(![t.centerX,t.centerY,t.scale].every(Number.isFinite))throw new Error("Invalid view state.");this.view={...t,scale:this.clampScale(t.scale)},this.render(),this.emitViewChange()}getViewState(){return{...this.view}}getBounds(){return{...this.bounds}}getStats(){return Eh(this.stats)}getZoomRatio(){return Math.abs(this.fitScale)<1e-12?1:this.view.scale/this.fitScale}getZoomPercent(){return this.getZoomRatio()*100}worldToScreen(t){return{x:this.cssWidth/2+(t.x-this.view.centerX)*this.view.scale,y:this.cssHeight/2-(t.y-this.view.centerY)*this.view.scale}}screenToWorld(t){return{x:this.view.centerX+(t.x-this.cssWidth/2)/this.view.scale,y:this.view.centerY-(t.y-this.cssHeight/2)/this.view.scale}}render(){return this.cancelScheduledRender(),this.renderNow()}renderNow(){var t;const n=performance.now(),i=this.gl;i.viewport(0,0,this.canvas.width,this.canvas.height);const s=An(this.opts.background,[11,16,32,255]);i.clearColor(s[0]/255,s[1]/255,s[2]/255,s[3]/255),i.clear(i.COLOR_BUFFER_BIT),i.disable(i.DEPTH_TEST),i.enable(i.BLEND),i.blendFunc(i.SRC_ALPHA,i.ONE_MINUS_SRC_ALPHA);let o=0,r=0;const a=this.scene,c=this.visibleWorldBounds();if(a){i.useProgram(this.program.program),i.uniform2f(this.program.uViewCenter,this.view.centerX-a.origin.x,this.view.centerY-a.origin.y),i.uniform1f(this.program.uScale,this.view.scale*this.dpr),i.uniform2f(this.program.uViewport,this.canvas.width,this.canvas.height),i.uniform1f(this.program.uPointSize,Math.max(2,Math.min(12,4*this.dpr)));const l=this.drawBatches(a.lineBatches,i.LINES,c);o+=l.visible,r+=l.culled;const d=this.drawBatches(a.triangleBatches,i.TRIANGLES,c);o+=d.visible,r+=d.culled;const u=this.drawBatches(a.pointBatches,i.POINTS,c);o+=u.visible,r+=u.culled}this.renderOverlay(c);const h=performance.now()-n;return this.stats=a?{...a.stats,renderElapsedMs:h,backend:"webgl",primitiveCount:a.primitiveCount,visiblePrimitiveCount:o,culledPrimitiveCount:r,gpuMemoryBytes:a.gpuMemoryBytes,buildElapsedMs:a.buildElapsedMs}:{total:0,drawn:0,skipped:0,byType:{},unsupported:{},renderElapsedMs:h,backend:"webgl",primitiveCount:0,visiblePrimitiveCount:0,culledPrimitiveCount:0,gpuMemoryBytes:0,buildElapsedMs:0},(t=this.onStats)==null||t.call(this,this.getStats()),this.getStats()}drawBatches(t,n,i){const s=this.gl;let o=0,r=0;for(const a of t){if(!dn(a.bounds,i)){r+=a.primitiveCount;continue}s.bindBuffer(s.ARRAY_BUFFER,a.positionBuffer),s.enableVertexAttribArray(this.program.aPosition),s.vertexAttribPointer(this.program.aPosition,2,s.FLOAT,!1,0,0),s.bindBuffer(s.ARRAY_BUFFER,a.colorBuffer),s.enableVertexAttribArray(this.program.aColor),s.vertexAttribPointer(this.program.aColor,4,s.UNSIGNED_BYTE,!0,0,0),s.drawArrays(n,0,a.vertexCount),o+=a.primitiveCount}return{visible:o,culled:r}}scheduleRender(){this.rafHandle||(this.rafHandle=window.requestAnimationFrame(()=>{this.rafHandle=0,this.renderNow()}))}cancelScheduledRender(){this.rafHandle&&(window.cancelAnimationFrame(this.rafHandle),this.rafHandle=0)}renderOverlay(t){var n,i;const s=this.overlayCtx,o=this.overlayCanvas;!s||!o||(s.save(),s.setTransform(this.dpr,0,0,this.dpr,0,0),s.clearRect(0,0,this.cssWidth,this.cssHeight),this.opts.showPageBounds&&(i=(n=this.document)==null?void 0:n.pages)!=null&&i.length&&this.drawPageBoundsOverlay(s),this.scene&&(this.drawImagesOverlay(s,this.scene.imageItems,t),this.drawTextOverlay(s,this.scene.textItems,t)),s.restore())}drawPageBoundsOverlay(t){var n,i;if((i=(n=this.document)==null?void 0:n.pages)!=null&&i.length){t.save(),t.strokeStyle="rgba(148, 163, 184, 0.34)",t.lineWidth=1,t.setLineDash([8,6]);for(const s of this.document.pages){const o=this.worldToScreen({x:0,y:0}),r=this.worldToScreen({x:s.width,y:s.height});t.strokeRect(Math.min(o.x,r.x),Math.min(o.y,r.y),Math.abs(r.x-o.x),Math.abs(r.y-o.y))}t.restore()}}drawTextOverlay(t,n,i){const s=this.opts.maxVisibleTextLabels;let o=0;for(const r of n){if(o>=s)break;if(!dn(r.bounds,i))continue;const a=Math.abs(r.height)*this.view.scale;if(a<this.opts.textMinPixelHeight)continue;const c=this.worldToScreen(r.point);if(c.x<-512||c.y<-512||c.x>this.cssWidth+512||c.y>this.cssHeight+512)continue;t.save(),t.translate(c.x,c.y),t.rotate(-r.rotation);const h=Math.max(4,Math.min(256,a));t.font=`${h}px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`,t.fillStyle=r.color,t.globalAlpha=r.opacity,t.textBaseline="alphabetic";for(const[l,d]of r.text.split(/\r?\n/g).entries())t.fillText(d,0,l*h*1.22);t.restore(),o++}}drawImagesOverlay(t,n,i){for(const s of n){if(!dn(s.bounds,i))continue;const o=this.worldToScreen(s.point),r=this.worldToScreen({x:s.point.x+s.width,y:s.point.y-s.height}),a=Math.min(o.x,r.x),c=Math.min(o.y,r.y),h=Math.abs(r.x-o.x),l=Math.abs(r.y-o.y);if(!(h<1||l<1)){if(s.source){const d=this.getImage(s.source);if(d.complete&&d.naturalWidth>0){t.save(),t.globalAlpha=s.opacity,t.drawImage(d,a,c,h,l),t.restore();continue}d.onload=()=>this.scheduleRender()}this.opts.showImagePlaceholders&&(t.save(),t.strokeStyle=s.color,t.globalAlpha=s.opacity,t.lineWidth=1,t.strokeRect(a,c,h,l),t.beginPath(),t.moveTo(a,c),t.lineTo(a+h,c+l),t.moveTo(a+h,c),t.lineTo(a,c+l),t.stroke(),t.restore())}}}getImage(t){let n=this.imageCache.get(t);return n||(n=new Image,n.src=t,this.imageCache.set(t,n)),n}createOverlayCanvas(){const t=this.canvas.parentElement;if(!t||typeof document>"u")return;window.getComputedStyle(t).position==="static"&&(t.style.position="relative");const n=document.createElement("canvas");n.className="cad-viewer-text-overlay",n.setAttribute("aria-hidden","true"),n.style.position="absolute",n.style.inset="0",n.style.width="100%",n.style.height="100%",n.style.pointerEvents="none",n.style.zIndex="1";const i=n.getContext("2d");i&&(t.appendChild(n),this.overlayCanvas=n,this.overlayCtx=i)}resizeOverlay(t,n){this.overlayCanvas&&(this.overlayCanvas.width!==t||this.overlayCanvas.height!==n)&&(this.overlayCanvas.width=t,this.overlayCanvas.height=n)}bindEvents(){const t=this.eventController.signal;this.canvas.addEventListener("wheel",i=>{i.preventDefault();const s=i.deltaY<0?this.opts.wheelZoomFactor:1/this.opts.wheelZoomFactor;this.zoom(s,{x:i.offsetX,y:i.offsetY})},{passive:!1,signal:t}),this.canvas.addEventListener("pointerdown",i=>{this.canvas.setPointerCapture(i.pointerId),this.isDragging=!0,this.lastPointer={x:i.clientX,y:i.clientY},this.canvas.classList.add("is-dragging")},{signal:t}),this.canvas.addEventListener("pointermove",i=>{!this.isDragging||!this.lastPointer||(this.panByScreenDelta(i.clientX-this.lastPointer.x,i.clientY-this.lastPointer.y),this.lastPointer={x:i.clientX,y:i.clientY})},{signal:t});const n=i=>{i&&this.canvas.hasPointerCapture(i.pointerId)&&this.canvas.releasePointerCapture(i.pointerId),this.isDragging=!1,this.lastPointer=void 0,this.canvas.classList.remove("is-dragging")};this.canvas.addEventListener("pointerup",n,{signal:t}),this.canvas.addEventListener("pointercancel",()=>n(),{signal:t}),this.canvas.addEventListener("webglcontextlost",i=>{i.preventDefault(),this.cancelScheduledRender()},{signal:t})}visibleWorldBounds(){const t=this.cssWidth/Math.max(this.view.scale,1e-12)/2,n=this.cssHeight/Math.max(this.view.scale,1e-12)/2;return{minX:this.view.centerX-t,maxX:this.view.centerX+t,minY:this.view.centerY-n,maxY:this.view.centerY+n}}get cssWidth(){return this.canvas.clientWidth||1}get cssHeight(){return this.canvas.clientHeight||1}clampScale(t){return Math.min(this.opts.maxScale,Math.max(this.opts.minScale,t))}disposeScene(){if(!this.scene)return;const t=this.gl;for(const n of[...this.scene.lineBatches,...this.scene.triangleBatches,...this.scene.pointBatches])t.deleteBuffer(n.positionBuffer),t.deleteBuffer(n.colorBuffer);this.scene=void 0}emitViewChange(){var t;(t=this.onViewChange)==null||t.call(this,{view:this.getViewState(),fitScale:this.fitScale,zoomRatio:this.getZoomRatio(),zoomPercent:this.getZoomPercent(),bounds:this.getBounds()})}}function js(){if(typeof document>"u")return!1;const e=document.createElement("canvas");return!!(e.getContext("webgl2")??e.getContext("webgl")??e.getContext("experimental-webgl"))}function gh(e,t){const n={alpha:!1,antialias:t.antialias??!0,depth:!1,stencil:!1,preserveDrawingBuffer:t.preserveDrawingBuffer??!1,powerPreference:t.powerPreference??"high-performance"};return e.getContext("webgl2",n)??e.getContext("webgl",n)??e.getContext("experimental-webgl",n)??void 0}function wh(e){const t=`
+    `,
+      ),
+      s = Fi(t, n, i);
+    return (
+      (this.edgeProgram = {
+        program: s,
+        aPosition: t.getAttribLocation(s, 'a_position'),
+        uMvp: mt(t, s, 'u_mvp'),
+        uColor: mt(t, s, 'u_color'),
+      }),
+      this.edgeProgram
+    );
+  }
+  evictScenes(t, n, i) {
+    let s = Array.from(this.cache.values()).reduce((o, r) => o + r.bytes, 0);
+    for (; this.cache.size > Math.max(1, n) || s > i; ) {
+      const o = this.cache.entries().next().value;
+      if (!o) break;
+      (this.cache.delete(o[0]), tn(t, o[1]), (s -= o[1].bytes));
+    }
+  }
+  ensureScene(t, n) {
+    const i = this.cache.get(n);
+    if (i) return i;
+    const s = [];
+    let o = 0;
+    const r = this.ensureProgram(t),
+      a = typeof t.createVertexArray == 'function';
+    for (const h of n.model.meshes) {
+      const l = fe(t, t.ARRAY_BUFFER, h.positions),
+        d = h.normals ?? new Float32Array(h.positions.length),
+        u = fe(t, t.ARRAY_BUFFER, d),
+        f = fe(t, t.ELEMENT_ARRAY_BUFFER, h.indices),
+        m = h.edgeIndices ? fe(t, t.ELEMENT_ARRAY_BUFFER, h.edgeIndices) : void 0,
+        p = {
+          mesh: h,
+          pos: l,
+          normal: u,
+          index: f,
+          edgeIndex: m,
+          indexType: h.indices instanceof Uint32Array ? t.UNSIGNED_INT : t.UNSIGNED_SHORT,
+          edgeIndexType: h.edgeIndices instanceof Uint32Array ? t.UNSIGNED_INT : t.UNSIGNED_SHORT,
+          indexCount: h.indices.length,
+          edgeIndexCount: h.edgeIndices?.length,
+          bytes:
+            h.positions.byteLength +
+            d.byteLength +
+            h.indices.byteLength +
+            (h.edgeIndices?.byteLength ?? 0),
+        };
+      if (
+        (h.indices instanceof Uint32Array || h.edgeIndices instanceof Uint32Array) &&
+        !Cn(t) &&
+        !t.getExtension('OES_element_index_uint')
+      )
+        throw new Error('This WebGL implementation does not support 32-bit element indices.');
+      if (a) {
+        const g = t,
+          b = g.createVertexArray();
+        (g.bindVertexArray(b), Ii(t, r, p), g.bindVertexArray(null), (p.vao = b));
+      }
+      (s.push(p), (o += p.bytes));
+    }
+    const c = { page: n, meshes: s, bytes: o };
+    return (this.cache.set(n, c), c);
+  }
+}
+function tn(e, t) {
+  for (const n of t.meshes)
+    (e.deleteBuffer(n.pos),
+      e.deleteBuffer(n.normal),
+      e.deleteBuffer(n.index),
+      n.edgeIndex && e.deleteBuffer(n.edgeIndex),
+      n.vao && Cn(e) && e.deleteVertexArray(n.vao));
+}
+function fe(e, t, n) {
+  const i = e.createBuffer();
+  if (!i) throw new Error('Failed to create WebGL buffer.');
+  return (e.bindBuffer(t, i), e.bufferData(t, n, e.STATIC_DRAW), i);
+}
+function Ii(e, t, n) {
+  (e.bindBuffer(e.ARRAY_BUFFER, n.pos),
+    e.enableVertexAttribArray(t.aPosition),
+    e.vertexAttribPointer(t.aPosition, 3, e.FLOAT, !1, 0, 0),
+    e.bindBuffer(e.ARRAY_BUFFER, n.normal),
+    e.enableVertexAttribArray(t.aNormal),
+    e.vertexAttribPointer(t.aNormal, 3, e.FLOAT, !1, 0, 0));
+}
+function Ja(e) {
+  const t = e.getContext('2d');
+  t && (t.setTransform(1, 0, 0, 1, 0, 0), t.clearRect(0, 0, e.width, e.height));
+}
+function me(e, t, n) {
+  const i = e.createShader(t);
+  if (!i) throw new Error('Failed to create WebGL shader.');
+  if ((e.shaderSource(i, n), e.compileShader(i), !e.getShaderParameter(i, e.COMPILE_STATUS))) {
+    const s = e.getShaderInfoLog(i) ?? 'unknown shader error';
+    throw (e.deleteShader(i), new Error(s));
+  }
+  return i;
+}
+function Fi(e, t, n) {
+  const i = e.createProgram();
+  if (!i) throw new Error('Failed to create WebGL program.');
+  if (
+    (e.attachShader(i, t),
+    e.attachShader(i, n),
+    e.linkProgram(i),
+    !e.getProgramParameter(i, e.LINK_STATUS))
+  ) {
+    const s = e.getProgramInfoLog(i) ?? 'unknown program link error';
+    throw (e.deleteProgram(i), new Error(s));
+  }
+  return i;
+}
+function mt(e, t, n) {
+  const i = e.getUniformLocation(t, n);
+  if (!i) throw new Error(`Missing shader uniform ${n}.`);
+  return i;
+}
+function tc(e, t, n) {
+  const i = e.model.bounds,
+    s = Math.max(1e-6, t.width / Math.max(1, t.height)),
+    o = n.yaw ?? -0.78,
+    r = rc(n.pitch ?? 0.55, -1.45, 1.45),
+    a = Math.max(0.05, Math.min(100, n.zoom ?? 1)),
+    c = Math.max(1e-4, i.radius),
+    h = (c * 2.55) / a,
+    l = Math.cos(r),
+    d = [Math.sin(o) * l, Math.sin(r), Math.cos(o) * l],
+    u = i.center,
+    f = [Math.cos(o), 0, -Math.sin(o)],
+    m = [f[1] * d[2] - f[2] * d[1], f[2] * d[0] - f[0] * d[2], f[0] * d[1] - f[1] * d[0]],
+    p = (c * 2) / Math.max(1, Math.min(t.width, t.height)) / Math.max(0.1, a),
+    g = (n.panX ?? 0) * p,
+    b = (n.panY ?? 0) * p,
+    w = [u[0] - f[0] * g + m[0] * b, u[1] - f[1] * g + m[1] * b, u[2] - f[2] * g + m[2] * b],
+    y = [w[0] + d[0] * h, w[1] + d[1] * h, w[2] + d[2] * h],
+    C = ic(y, w, [0, 1, 0]),
+    M = nc(Math.PI / 4, s, Math.max(0.001, h - c * 2.2), h + c * 3.2);
+  return { mvp: sc(M, C) };
+}
+function ec() {
+  return new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+}
+function nc(e, t, n, i) {
+  const s = 1 / Math.tan(e / 2),
+    o = 1 / (n - i);
+  return new Float32Array([
+    s / t,
+    0,
+    0,
+    0,
+    0,
+    s,
+    0,
+    0,
+    0,
+    0,
+    (i + n) * o,
+    -1,
+    0,
+    0,
+    2 * i * n * o,
+    0,
+  ]);
+}
+function ic(e, t, n) {
+  let i = e[0] - t[0],
+    s = e[1] - t[1],
+    o = e[2] - t[2],
+    r = Math.hypot(i, s, o) || 1;
+  ((i /= r), (s /= r), (o /= r));
+  let a = n[1] * o - n[2] * s,
+    c = n[2] * i - n[0] * o,
+    h = n[0] * s - n[1] * i;
+  ((r = Math.hypot(a, c, h) || 1), (a /= r), (c /= r), (h /= r));
+  const l = s * h - o * c,
+    d = o * a - i * h,
+    u = i * c - s * a;
+  return new Float32Array([
+    a,
+    l,
+    i,
+    0,
+    c,
+    d,
+    s,
+    0,
+    h,
+    u,
+    o,
+    0,
+    -(a * e[0] + c * e[1] + h * e[2]),
+    -(l * e[0] + d * e[1] + u * e[2]),
+    -(i * e[0] + s * e[1] + o * e[2]),
+    1,
+  ]);
+}
+function sc(e, t) {
+  const n = new Float32Array(16);
+  for (let i = 0; i < 4; i++)
+    for (let s = 0; s < 4; s++)
+      n[i * 4 + s] =
+        e[0 + s] * t[i * 4 + 0] +
+        e[4 + s] * t[i * 4 + 1] +
+        e[8 + s] * t[i * 4 + 2] +
+        e[12 + s] * t[i * 4 + 3];
+  return n;
+}
+function rc(e, t, n) {
+  return Math.max(t, Math.min(n, e));
+}
+function Cn(e) {
+  return typeof WebGL2RenderingContext < 'u' && e instanceof WebGL2RenderingContext;
+}
+class oc {
+  constructor(t) {
+    this.document = t;
+  }
+  async render(t, n, i = {}) {
+    const s = this.document.pageData[t];
+    if (!s) throw new Error(`Page index out of range: ${t}`);
+    return (
+      s.kind !== 'w2d-text' &&
+        s.kind !== 'w3d-model' &&
+        i.webglCanvas &&
+        (i.webglCanvas.style.visibility = 'hidden'),
+      s.kind === 'xps-fixed-page'
+        ? (this.xps ?? (this.xps = new Aa(this.document)), await this.xps.render(s, n, i))
+        : s.kind === 'w2d-text'
+          ? (this.w2d ?? (this.w2d = new ja()), await this.w2d.render(s, n, i))
+          : s.kind === 'w3d-model'
+            ? (this.w3d ?? (this.w3d = new Qa()), await this.w3d.render(s, n, i))
+            : s.kind === 'image'
+              ? await this.renderImage(s, n, i)
+              : this.renderUnsupported(s, n, i)
+    );
+  }
+  dispose() {
+    (this.xps?.dispose(), this.w2d?.dispose(), this.w3d?.dispose());
+  }
+  async renderImage(t, n, i) {
+    const s = this.document.zip;
+    if (!s) throw new Error('Image page requires a ZIP package.');
+    const o = n.getContext('2d');
+    if (!o) throw new Error('CanvasRenderingContext2D is not available.');
+    (o.save(),
+      o.setTransform(1, 0, 0, 1, 0, 0),
+      (o.fillStyle = i.background ?? '#ffffff'),
+      o.fillRect(0, 0, n.width, n.height),
+      o.restore());
+    const r = await mn(await s.read(t.sourcePath), t.mediaType),
+      a = 'width' in r ? r.width : r.naturalWidth,
+      c = 'height' in r ? r.height : r.naturalHeight,
+      h = Math.min(n.width / Math.max(1, a), n.height / Math.max(1, c)) * (i.zoom ?? 1),
+      l = a * h,
+      d = c * h,
+      u = (n.width - l) / 2 + (i.panX ?? 0),
+      f = (n.height - d) / 2 + (i.panY ?? 0);
+    return (
+      o.drawImage(r, u, f, l, d),
+      { backend: 'image', commands: 1, warnings: De(t.diagnostics) }
+    );
+  }
+  renderUnsupported(t, n, i) {
+    const s = n.getContext('2d');
+    if (!s) throw new Error('CanvasRenderingContext2D is not available.');
+    return (
+      s.save(),
+      s.setTransform(1, 0, 0, 1, 0, 0),
+      (s.fillStyle = i.background ?? '#ffffff'),
+      s.fillRect(0, 0, n.width, n.height),
+      (s.fillStyle = '#111827'),
+      (s.font = '16px sans-serif'),
+      _i(s, t.name, 32, 48, n.width - 64, 24),
+      (s.font = '13px sans-serif'),
+      (s.fillStyle = '#92400e'),
+      _i(s, t.reason, 32, 88, n.width - 64, 20),
+      s.restore(),
+      {
+        backend: 'unsupported',
+        commands: 0,
+        warnings: [...t.diagnostics, S('warning', 'PAGE_UNSUPPORTED', t.reason, t.sourcePath)],
+      }
+    );
+  }
+}
+function _i(e, t, n, i, s, o) {
+  const r = t.split(/\s+/);
+  let a = '';
+  for (const c of r) {
+    const h = a ? `${a} ${c}` : c;
+    e.measureText(h).width > s && a ? (e.fillText(a, n, i), (a = c), (i += o)) : (a = h);
+  }
+  a && e.fillText(a, n, i);
+}
+class ac {
+  constructor(t, n = {}) {
+    ((this.pageIndex = 0),
+      (this.zoom = 1),
+      (this.panX = 0),
+      (this.panY = 0),
+      (this.yaw = -0.78),
+      (this.pitch = 0.55),
+      (this.rendering = !1),
+      (this.renderAgain = !1),
+      (this.renderRaf = 0),
+      (this.renderSeq = 0),
+      (this.currentDpr = 1),
+      (this.preferWebgl = n.preferWebgl ?? !0),
+      (this.preferWasm = n.preferWasm ?? !0),
+      (this.wasmUrl = n.wasmUrl),
+      (this.background = n.background ?? '#ffffff'),
+      (this.maxDevicePixelRatio = n.maxDevicePixelRatio ?? 2),
+      (this.maxCanvasPixels = n.maxCanvasPixels ?? 16777216),
+      (this.maxGpuCacheBytes = n.maxGpuCacheBytes),
+      (this.maxCachedScenes = n.maxCachedScenes),
+      (this.lineWeightMode = n.lineWeightMode ?? 'adaptive'),
+      (this.minStrokeCssPx = n.minStrokeCssPx),
+      (this.maxOverviewStrokeCssPx = n.maxOverviewStrokeCssPx),
+      (this.minTextCssPx = n.minTextCssPx),
+      (this.minFilledAreaCssPx = n.minFilledAreaCssPx),
+      (this.root = document.createElement('div')),
+      (this.root.className = 'dwfv-root'));
+    const i = document.createElement('div');
+    ((i.className = 'dwfv-toolbar'),
+      (this.pageSelect = document.createElement('select')),
+      (this.zoomOutButton = en('−')),
+      (this.zoomInButton = en('+')),
+      (this.resetButton = en('适应')),
+      (this.status = document.createElement('span')),
+      (this.status.className = 'dwfv-status'),
+      i.append(
+        '页: ',
+        this.pageSelect,
+        this.zoomOutButton,
+        this.zoomInButton,
+        this.resetButton,
+        this.status,
+      ));
+    const s = document.createElement('div');
+    ((s.className = 'dwfv-workspace'),
+      (this.treePanel = document.createElement('div')),
+      (this.treePanel.className = 'dwfv-tree'),
+      (this.treePanel.style.display = 'none'));
+    const o = document.createElement('div');
+    ((o.className = 'dwfv-stage'),
+      (this.webglCanvas = document.createElement('canvas')),
+      (this.webglCanvas.className = 'dwfv-canvas dwfv-webgl-canvas'),
+      (this.webglCanvas.style.visibility = 'hidden'),
+      (this.canvas = document.createElement('canvas')),
+      (this.canvas.className = 'dwfv-canvas dwfv-overlay-canvas'),
+      (this.canvas.style.touchAction = 'none'),
+      o.append(this.webglCanvas, this.canvas),
+      s.append(this.treePanel, o),
+      this.root.append(i, s),
+      t.replaceChildren(this.root),
+      this.pageSelect.addEventListener('change', () => {
+        ((this.pageIndex = this.pageSelect.selectedIndex),
+          this.resetView(),
+          this.populateModelTree(),
+          this.requestRender());
+      }),
+      this.zoomOutButton.addEventListener('click', () => {
+        (this.zoomAtCenter(0.8), this.requestRender());
+      }),
+      this.zoomInButton.addEventListener('click', () => {
+        (this.zoomAtCenter(1.25), this.requestRender());
+      }),
+      this.resetButton.addEventListener('click', () => {
+        (this.resetView(), this.requestRender());
+      }),
+      this.canvas.addEventListener('wheel', (r) => this.onWheel(r), { passive: !1 }),
+      this.canvas.addEventListener('pointerdown', (r) => this.onPointerDown(r)),
+      window.addEventListener('pointermove', (r) => this.onPointerMove(r)),
+      window.addEventListener('pointerup', () => {
+        this.drag = void 0;
+      }),
+      this.canvas.addEventListener('contextmenu', (r) => r.preventDefault()),
+      new ResizeObserver(() => this.requestRender()).observe(o),
+      this.setStatus('选择 .dwf/.dwfx 文件'));
+  }
+  setPreferWebgl(t) {
+    ((this.preferWebgl = t), this.requestRender());
+  }
+  setPreferWasm(t) {
+    ((this.preferWasm = t), this.requestRender());
+  }
+  setLineWeightMode(t) {
+    ((this.lineWeightMode = t), this.renderer?.dispose(), this.requestRender());
+  }
+  async load(t, n = {}) {
+    (this.setStatus('解析文件中…'),
+      this.renderer?.dispose(),
+      (this.doc = await Ms(t, { fileName: n.fileName })),
+      (this.renderer = new oc(this.doc)),
+      (this.pageIndex = n.pageIndex ?? 0),
+      (this.zoom = 1),
+      (this.panX = this.panY = 0),
+      (this.yaw = -0.78),
+      (this.pitch = 0.55),
+      (this.preferWebgl = n.preferWebgl ?? this.preferWebgl),
+      (this.preferWasm = n.preferWasm ?? this.preferWasm),
+      (this.wasmUrl = n.wasmUrl ?? this.wasmUrl),
+      (this.background = n.background ?? this.background),
+      (this.maxGpuCacheBytes = n.maxGpuCacheBytes ?? this.maxGpuCacheBytes),
+      (this.maxCachedScenes = n.maxCachedScenes ?? this.maxCachedScenes),
+      (this.lineWeightMode = n.lineWeightMode ?? this.lineWeightMode),
+      (this.minStrokeCssPx = n.minStrokeCssPx ?? this.minStrokeCssPx),
+      (this.maxOverviewStrokeCssPx = n.maxOverviewStrokeCssPx ?? this.maxOverviewStrokeCssPx),
+      (this.minTextCssPx = n.minTextCssPx ?? this.minTextCssPx),
+      (this.minFilledAreaCssPx = n.minFilledAreaCssPx ?? this.minFilledAreaCssPx),
+      this.populatePages(),
+      this.populateModelTree(),
+      await this.render());
+  }
+  async render() {
+    if (!(!this.renderer || !this.doc)) {
+      if (this.rendering) return ((this.renderAgain = !0), this.pendingRender);
+      this.rendering = !0;
+      try {
+        this.resizeCanvasToDisplaySize();
+        const t = this.doc.pageData[this.pageIndex];
+        if (!t) return;
+        const n = ++this.renderSeq,
+          i = this.renderer.render(this.pageIndex, this.canvas, {
+            zoom: this.zoom,
+            panX: this.panX,
+            panY: this.panY,
+            preferWebgl: this.preferWebgl,
+            preferWasm: this.preferWasm,
+            wasmUrl: this.wasmUrl,
+            background: this.background,
+            maxGpuCacheBytes: this.maxGpuCacheBytes,
+            maxCachedScenes: this.maxCachedScenes,
+            webglCanvas: this.webglCanvas,
+            yaw: this.yaw,
+            pitch: this.pitch,
+            lineWeightMode: this.lineWeightMode,
+            minStrokeCssPx: this.minStrokeCssPx,
+            maxOverviewStrokeCssPx: this.maxOverviewStrokeCssPx,
+            minTextCssPx: this.minTextCssPx,
+            minFilledAreaCssPx: this.minFilledAreaCssPx,
+          });
+        this.pendingRender = i;
+        try {
+          const s = await i;
+          if (this.pendingRender === i && n === this.renderSeq) {
+            const o = s.warnings.filter((a) => a.level !== 'info').length,
+              r = this.currentDpr > 1 ? ` · DPR ${this.currentDpr.toFixed(2)}` : '';
+            this.setStatus(
+              `${this.doc.kind.toUpperCase()} · ${t.kind} · ${s.backend} · ${s.commands} ops${r}${o ? ` · ${o} 警告` : ''}`,
+              o > 0,
+            );
+          }
+          return s;
+        } catch (s) {
+          throw (n === this.renderSeq && this.setStatus(`渲染失败：${String(s)}`, !0), s);
+        }
+      } finally {
+        ((this.rendering = !1),
+          this.renderAgain && ((this.renderAgain = !1), this.requestRender()));
+      }
+    }
+  }
+  getDocument() {
+    return this.doc;
+  }
+  fit() {
+    (this.resetView(), this.requestRender());
+  }
+  dispose() {
+    (this.renderRaf && cancelAnimationFrame(this.renderRaf),
+      (this.renderRaf = 0),
+      this.renderer?.dispose(),
+      (this.renderer = void 0),
+      (this.doc = void 0),
+      this.root.replaceChildren());
+  }
+  requestRender() {
+    this.renderRaf ||
+      (this.renderRaf = requestAnimationFrame(() => {
+        ((this.renderRaf = 0), this.render());
+      }));
+  }
+  populatePages() {
+    this.pageSelect.replaceChildren();
+    const t = this.doc?.pageData ?? [];
+    for (const [n, i] of t.entries()) {
+      const s = document.createElement('option');
+      ((s.value = String(n)),
+        (s.textContent = `${n + 1}. ${i.name} (${i.kind})`),
+        this.pageSelect.append(s));
+    }
+    this.pageSelect.selectedIndex = Math.max(0, Math.min(this.pageIndex, t.length - 1));
+  }
+  populateModelTree() {
+    const t = this.doc?.pageData[this.pageIndex];
+    if (!t || t.kind !== 'w3d-model' || !t.model.sceneTree?.length) {
+      ((this.treePanel.style.display = 'none'), this.treePanel.replaceChildren());
+      return;
+    }
+    this.treePanel.style.display = '';
+    const n = document.createElement('div');
+    ((n.className = 'dwfv-tree-header'),
+      (n.textContent = `模型结构 · ${t.model.stats.nodeCount ?? 0} 节点`));
+    const i = document.createElement('div');
+    ((i.className = 'dwfv-tree-stats'),
+      (i.textContent = `${t.model.stats.meshCount} meshes · ${t.model.stats.triangleCount} triangles · ${t.model.stats.textureCount ?? 0} textures`));
+    const s = document.createElement('div');
+    s.className = 'dwfv-tree-content';
+    for (const o of t.model.sceneTree) s.append(Bs(o));
+    this.treePanel.replaceChildren(n, i, s);
+  }
+  resizeCanvasToDisplaySize() {
+    const t = this.canvas.getBoundingClientRect(),
+      n = Math.max(1, t.width),
+      i = Math.max(1, t.height);
+    let s = Math.max(1, Math.min(this.maxDevicePixelRatio, window.devicePixelRatio || 1));
+    const o = n * i * s * s;
+    (o > this.maxCanvasPixels && (s *= Math.sqrt(this.maxCanvasPixels / o)), (this.currentDpr = s));
+    const r = Math.max(1, Math.floor(n * s)),
+      a = Math.max(1, Math.floor(i * s));
+    ((this.canvas.width !== r || this.canvas.height !== a) &&
+      ((this.canvas.width = r), (this.canvas.height = a)),
+      (this.webglCanvas.width !== r || this.webglCanvas.height !== a) &&
+        ((this.webglCanvas.width = r), (this.webglCanvas.height = a)));
+  }
+  resetView() {
+    ((this.zoom = 1), (this.panX = 0), (this.panY = 0), (this.yaw = -0.78), (this.pitch = 0.55));
+    const t = this.doc?.pageData[this.pageIndex];
+    if (t?.kind === 'w3d-model') {
+      const n = t.model.initialView?.camera,
+        i = n?.position,
+        s = n?.target;
+      if (i && s) {
+        const o = i[0] - s[0],
+          r = i[1] - s[1],
+          a = i[2] - s[2],
+          c = Math.hypot(o, r, a);
+        if (c > 1e-6) {
+          ((this.pitch = Math.max(-1.45, Math.min(1.45, Math.asin(r / c)))),
+            (this.yaw = Math.atan2(o, a)));
+          const h = Math.max(1e-6, t.model.bounds.radius);
+          this.zoom = Math.max(0.05, Math.min(100, (h * 2.55) / c));
+        }
+      }
+    }
+  }
+  zoomAtCenter(t) {
+    if ((this.resizeCanvasToDisplaySize(), this.is3dPage())) {
+      this.zoom = Math.max(0.05, Math.min(100, this.zoom * t));
+      return;
+    }
+    const n = this.canvas.width / 2,
+      i = this.canvas.height / 2;
+    this.zoomAroundPoint(t, n, i);
+  }
+  zoomAroundPoint(t, n, i) {
+    const s = this.zoom,
+      o = Math.max(0.05, Math.min(64, s * t));
+    if (o === s) return;
+    const r = this.pagePointAtCanvasPoint(n, i, s, this.panX, this.panY);
+    if (r) {
+      const c = this.pageMatrixAt(o, 0, 0);
+      if (c) {
+        const [h, l] = kt(c, r.x, r.y);
+        ((this.panX = n - h), (this.panY = i - l), (this.zoom = o));
+        return;
+      }
+    }
+    const a = o / s;
+    ((this.panX = n - (n - this.panX) * a), (this.panY = i - (i - this.panY) * a), (this.zoom = o));
+  }
+  onWheel(t) {
+    if (!this.doc) return;
+    (t.preventDefault(), this.resizeCanvasToDisplaySize());
+    const n = this.canvas.getBoundingClientRect(),
+      i = (t.clientX - n.left) * this.currentDpr,
+      s = (t.clientY - n.top) * this.currentDpr,
+      o =
+        t.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? t.deltaY * 16
+          : t.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? t.deltaY * Math.max(1, n.height)
+            : t.deltaY,
+      r = Math.exp(-o * 0.0015);
+    (this.is3dPage()
+      ? (this.zoom = Math.max(0.05, Math.min(100, this.zoom * r)))
+      : this.zoomAroundPoint(r, i, s),
+      this.requestRender());
+  }
+  onPointerDown(t) {
+    (this.canvas.setPointerCapture?.(t.pointerId), this.is3dPage() && t.preventDefault());
+    const n = this.is3dPage() ? (t.button === 2 || t.shiftKey ? 'pan3d' : 'rotate3d') : 'pan2d';
+    this.drag = {
+      x: t.clientX,
+      y: t.clientY,
+      panX: this.panX,
+      panY: this.panY,
+      yaw: this.yaw,
+      pitch: this.pitch,
+      mode: n,
+    };
+  }
+  onPointerMove(t) {
+    if (!this.drag) return;
+    const n = t.clientX - this.drag.x,
+      i = t.clientY - this.drag.y;
+    (this.drag.mode === 'rotate3d'
+      ? ((this.yaw = this.drag.yaw + n * 0.008),
+        (this.pitch = Math.max(-1.45, Math.min(1.45, this.drag.pitch + i * 0.008))))
+      : ((this.panX = this.drag.panX + n * this.currentDpr),
+        (this.panY = this.drag.panY + i * this.currentDpr)),
+      this.requestRender());
+  }
+  is3dPage() {
+    return this.doc?.pageData[this.pageIndex]?.kind === 'w3d-model';
+  }
+  pagePointAtCanvasPoint(t, n, i, s, o) {
+    const r = this.pageMatrixAt(i, s, o);
+    if (!r) return;
+    const a = r.a * r.d - r.b * r.c;
+    if (!Number.isFinite(a) || Math.abs(a) < 1e-12) return;
+    const c = t - r.e,
+      h = n - r.f;
+    return { x: (r.d * c - r.c * h) / a, y: (-r.b * c + r.a * h) / a };
+  }
+  pageMatrixAt(t, n, i) {
+    const s = this.doc?.pageData[this.pageIndex];
+    if (!s) return;
+    const o = Math.max(1, this.canvas.width),
+      r = Math.max(1, this.canvas.height);
+    if (s.kind === 'w2d-text') return In(s, o, r, t, n, i);
+    if (s.kind === 'xps-fixed-page')
+      return Ee({
+        canvasWidth: o,
+        canvasHeight: r,
+        pageWidth: Math.max(1, s.width),
+        pageHeight: Math.max(1, s.height),
+        zoom: t,
+        panX: n,
+        panY: i,
+      });
+    if (s.kind === 'image')
+      return Ee({
+        canvasWidth: o,
+        canvasHeight: r,
+        pageWidth: Math.max(1, s.width),
+        pageHeight: Math.max(1, s.height),
+        zoom: t,
+        panX: n,
+        panY: i,
+        margin: 0,
+      });
+  }
+  setStatus(t, n = !1) {
+    ((this.status.textContent = t), this.status.classList.toggle('dwfv-warn', n));
+  }
+}
+function en(e) {
+  const t = document.createElement('button');
+  return ((t.type = 'button'), (t.textContent = e), t);
+}
+function Bs(e) {
+  const t = document.createElement('details');
+  t.open = e.children.length > 0 && e.children.length < 20;
+  const n = document.createElement('summary');
+  if (
+    ((n.textContent = e.label || e.id),
+    e.meshIds.length > 0 && (n.title = `${e.meshIds.length} mesh(es)`),
+    t.append(n),
+    e.contentRefs.length > 0)
+  ) {
+    const i = document.createElement('div');
+    ((i.className = 'dwfv-tree-meta'),
+      (i.textContent = e.contentRefs.slice(0, 3).join(', ')),
+      t.append(i));
+  }
+  for (const i of e.children) t.append(Bs(i));
+  return t;
+}
+var cc = Object.defineProperty,
+  hc = (e, t, n) =>
+    t in e ? cc(e, t, { enumerable: !0, configurable: !0, writable: !0, value: n }) : (e[t] = n),
+  x = (e, t, n) => hc(e, typeof t != 'symbol' ? t + '' : t, n);
+async function Jt(e) {
+  if (e.buffer instanceof Uint8Array) return e.buffer;
+  if (e.buffer instanceof ArrayBuffer) return new Uint8Array(e.buffer);
+  if (e.file) return new Uint8Array(await e.file.arrayBuffer());
+  throw new Error('CadLoadInput requires a File, ArrayBuffer, or Uint8Array.');
+}
+function lc(e) {
+  return e.byteOffset === 0 && e.byteLength === e.buffer.byteLength ? e.buffer : e.slice().buffer;
+}
+function Rt(e) {
+  var t;
+  const n = e.fileName ?? ((t = e.file) == null ? void 0 : t.name) ?? '',
+    i = n.lastIndexOf('.');
+  return i >= 0 ? n.slice(i + 1).toLowerCase() : '';
+}
+function Wt(e, t) {
+  const n = Rt(e);
+  if (n === 'dwg') return 'dwg';
+  if (n === 'dxf') return 'dxf';
+  if (n === 'dwfx') return 'dwfx';
+  if (n === 'xps') return 'xps';
+  if (n === 'dwf') return 'dwf';
+  if (t && t.byteLength >= 6) {
+    const i = Li(t.slice(0, 6));
+    if (/^AC10/.test(i)) return 'dwg';
+    if (t[0] === 80 && t[1] === 75) return 'dwfx';
+    const s = Li(t.slice(0, Math.min(t.byteLength, 2048))).toUpperCase();
+    if (s.includes('SECTION') && s.includes('ENTITIES')) return 'dxf';
+    if (s.includes('DWF')) return 'dwf';
+  }
+  return 'unknown';
+}
+function Li(e) {
+  return Array.from(e, (t) => (t >= 32 && t <= 126 ? String.fromCharCode(t) : ' ')).join('');
+}
+class dc {
+  constructor(t = []) {
+    x(this, 'loaders', []);
+    for (const n of t) this.register(n);
+  }
+  register(t) {
+    const n = this.loaders.findIndex((i) => i.id === t.id);
+    return (n >= 0 ? this.loaders.splice(n, 1, t) : this.loaders.push(t), this);
+  }
+  unregister(t) {
+    const n = this.loaders.findIndex((i) => i.id === t);
+    return (n >= 0 && this.loaders.splice(n, 1), this);
+  }
+  list() {
+    return [...this.loaders];
+  }
+  async detect(t) {
+    const n = await Jt(t),
+      i = Wt(t, n),
+      s = this.loaders.find((r) => r.formats.includes(i) && r.accepts(t, n));
+    if (s) return { loader: s, bytes: n, format: i };
+    const o = this.loaders.find((r) => r.accepts(t, n));
+    if (o) return { loader: o, bytes: n, format: i };
+    throw new Error(
+      `No CAD loader registered for ${i === 'unknown' ? 'this file' : i.toUpperCase()}.`,
+    );
+  }
+  async load(t, n = {}) {
+    const { loader: i, bytes: s } = await this.detect(t);
+    return i.load({ ...t, buffer: s }, n);
+  }
+}
+const uc = 'wasm/dwg-worker.js';
+class fc {
+  constructor() {
+    (x(this, 'worker'), x(this, 'sequence', 0), x(this, 'pending', new Map()));
+  }
+  load(t, n, i = {}) {
+    var s, o;
+    if (!Pn()) throw new Error('Web Worker is not available in this runtime.');
+    const r = this.ensureWorker(i),
+      a = ++this.sequence,
+      c = Math.max(0, Number(i.workerTimeoutMs ?? 0)),
+      h = i.fileName ?? n.fileName ?? ((s = n.file) == null ? void 0 : s.name),
+      l = pc(t, n, i);
+    return (
+      (o = i.onProgress) == null ||
+        o.call(i, {
+          phase: 'worker-start',
+          format: 'dwg',
+          message: 'Dispatching DWG parse to worker…',
+          total: t.byteLength,
+        }),
+      new Promise((d, u) => {
+        var f;
+        if ((f = i.signal) != null && f.aborted) {
+          u(ge());
+          return;
+        }
+        const m = { resolve: d, reject: u, onProgress: i.onProgress, signal: i.signal };
+        (c > 0 &&
+          (m.timer = setTimeout(() => {
+            (this.pending.delete(a),
+              this.resetWorker(),
+              u(new Error(`DWG worker timed out after ${c} ms.`)));
+          }, c)),
+          i.signal &&
+            ((m.abortHandler = () => {
+              (this.pending.delete(a), this.resetWorker(), u(ge()));
+            }),
+            i.signal.addEventListener('abort', m.abortHandler, { once: !0 })),
+          this.pending.set(a, m));
+        try {
+          r.postMessage({ type: 'load', requestId: a, bytes: l, fileName: h, options: Di(i) }, [l]);
+        } catch (p) {
+          (this.pending.delete(a), pe(m), u(p instanceof Error ? p : new Error(String(p))));
+        }
+      })
+    );
+  }
+  preload(t = {}) {
+    var n;
+    if (!Pn()) return Promise.reject(new Error('Web Worker is not available in this runtime.'));
+    const i = this.ensureWorker(t),
+      s = ++this.sequence,
+      o = Math.max(0, Number(t.workerTimeoutMs ?? 0));
+    return (
+      (n = t.onProgress) == null ||
+        n.call(t, { phase: 'worker-start', format: 'dwg', message: 'Starting DWG worker warmup…' }),
+      new Promise((r, a) => {
+        var c;
+        if ((c = t.signal) != null && c.aborted) {
+          a(ge());
+          return;
+        }
+        const h = { resolve: () => r(), reject: a, onProgress: t.onProgress, signal: t.signal };
+        (o > 0 &&
+          (h.timer = setTimeout(() => {
+            (this.pending.delete(s),
+              this.resetWorker(),
+              a(new Error(`DWG worker warmup timed out after ${o} ms.`)));
+          }, o)),
+          t.signal &&
+            ((h.abortHandler = () => {
+              (this.pending.delete(s), this.resetWorker(), a(ge()));
+            }),
+            t.signal.addEventListener('abort', h.abortHandler, { once: !0 })),
+          this.pending.set(s, h));
+        try {
+          i.postMessage({ type: 'warmup', requestId: s, options: Di(t) });
+        } catch (l) {
+          (this.pending.delete(s), pe(h), a(l instanceof Error ? l : new Error(String(l))));
+        }
+      })
+    );
+  }
+  terminate() {
+    this.resetWorker();
+  }
+  ensureWorker(t) {
+    return (
+      this.worker ||
+        ((this.worker = mc(t)),
+        (this.worker.onmessage = (n) => this.handleMessage(n.data)),
+        (this.worker.onerror = (n) => {
+          const i = n.message || 'DWG worker failed.';
+          (this.rejectAll(new Error(i)), this.resetWorker(!1));
+        }),
+        (this.worker.onmessageerror = () => {
+          (this.rejectAll(new Error('DWG worker returned a message that could not be cloned.')),
+            this.resetWorker(!1));
+        })),
+      this.worker
+    );
+  }
+  handleMessage(t) {
+    var n, i;
+    if (t.type === 'ready') return;
+    const s = this.pending.get(t.requestId);
+    if (!s) return;
+    if (t.type === 'progress') {
+      (n = s.onProgress) == null || n.call(s, t.progress);
+      return;
+    }
+    if ((this.pending.delete(t.requestId), pe(s), t.type === 'result')) {
+      s.resolve(t.result);
+      return;
+    }
+    if (t.type === 'warmup-result') {
+      ((i = s.onProgress) == null ||
+        i.call(s, {
+          phase: 'worker-ready',
+          format: 'dwg',
+          message: 'DWG worker warmup complete.',
+          percent: 100,
+          elapsedMs: t.elapsedMs,
+        }),
+        s.resolve(void 0));
+      return;
+    }
+    const o = new Error(t.error.message);
+    ((o.name = t.error.name || 'DwgWorkerError'),
+      t.error.stack && (o.stack = t.error.stack),
+      s.reject(o));
+  }
+  rejectAll(t) {
+    for (const [, n] of this.pending) (pe(n), n.reject(t));
+    this.pending.clear();
+  }
+  resetWorker(t = !0) {
+    var n;
+    (t && this.rejectAll(new Error('DWG worker was terminated.')),
+      (n = this.worker) == null || n.terminate(),
+      (this.worker = void 0));
+  }
+}
+function Pn() {
+  return typeof Worker < 'u' && typeof URL < 'u';
+}
+function mc(e) {
+  return e.workerFactory
+    ? e.workerFactory()
+    : new Worker(wc(e.workerUrl), { type: 'module', name: 'lightweight-cad-dwg-loader' });
+}
+function Di(e) {
+  return {
+    wasmPath: gc(e.wasmPath),
+    includePaperSpace: e.includePaperSpace,
+    maxInsertDepth: e.maxInsertDepth,
+    keepRaw: !!e.keepRaw,
+  };
+}
+function pc(e, t, n) {
+  return t.file || n.transferInputBuffer === !0 ? lc(e) : e.slice().buffer;
+}
+function pe(e) {
+  (e.timer && clearTimeout(e.timer),
+    e.signal && e.abortHandler && e.signal.removeEventListener('abort', e.abortHandler));
+}
+function ge() {
+  if (typeof DOMException < 'u') return new DOMException('DWG loading was aborted.', 'AbortError');
+  const e = new Error('DWG loading was aborted.');
+  return ((e.name = 'AbortError'), e);
+}
+function gc(e) {
+  const t = (e?.trim() || '/wasm').replace(/\/+$/, '');
+  return t === ''
+    ? Bi()
+    : Rs(t)
+      ? t
+      : t.startsWith('/')
+        ? `${Bi()}${t}`
+        : new URL(t, Fn()).href.replace(/\/+$/, '');
+}
+function wc(e) {
+  if (e instanceof URL) return e;
+  const t = e?.trim() || uc;
+  return Rs(t) ? t : new URL(t, Fn()).href;
+}
+function Fn() {
+  return typeof document < 'u' && document.baseURI
+    ? document.baseURI
+    : typeof location < 'u' && location.href
+      ? location.href
+      : 'http://localhost/';
+}
+function Bi() {
+  return typeof location < 'u' && location.origin ? location.origin : new URL(Fn()).origin;
+}
+function Rs(e) {
+  return /^[a-z][a-z0-9+.-]*:/i.test(e);
+}
+class bc {
+  constructor(t = {}) {
+    (x(this, 'id', 'dwg'),
+      x(this, 'label', 'DWG / LibreDWG WebAssembly'),
+      x(this, 'formats', ['dwg']),
+      x(this, 'defaults'),
+      x(this, 'workerClient', new fc()),
+      (this.defaults = { useWorker: !0, ...t }));
+  }
+  accepts(t, n) {
+    return Rt(t) === 'dwg' ? !0 : Wt(t, n) === 'dwg';
+  }
+  async load(t, n = {}) {
+    var i, s;
+    const o = { ...this.defaults, ...n };
+    (i = o.onProgress) == null ||
+      i.call(o, { phase: 'read', format: 'dwg', message: 'Reading DWG bytes…' });
+    const r = await Jt(t),
+      a = t.fileName ?? ((s = t.file) == null ? void 0 : s.name);
+    if (o.useWorker === !1)
+      throw new Error(
+        'DWG main-thread parsing is intentionally not bundled by the default viewer. Keep useWorker enabled, or register a custom DWG loader for non-browser runtimes.',
+      );
+    if (!Pn())
+      throw new Error(
+        'DWG loading requires Web Worker support in this build. Provide a custom loader for this runtime.',
+      );
+    try {
+      return await this.workerClient.load(r, t, { ...o, fileName: a });
+    } catch (c) {
+      throw yc(c) ? c : xc(c);
+    }
+  }
+  terminateWorker() {
+    this.workerClient.terminate();
+  }
+  preload(t = {}) {
+    const n = { ...this.defaults, ...t };
+    return n.useWorker === !1
+      ? Promise.reject(new Error('DWG preload requires worker mode in the default viewer.'))
+      : this.workerClient.preload(n);
+  }
+}
+function yc(e) {
+  return e instanceof Error && e.name === 'AbortError';
+}
+function xc(e) {
+  const t = e instanceof Error ? e.message : String(e);
+  return new Error(
+    `${t} If the worker asset cannot be resolved by your bundler/CDN, pass workerUrl or workerFactory to CadViewer.`,
+  );
+}
+function Ws(e) {
+  return {
+    format: e.format,
+    sourceName: e.sourceName,
+    units: e.units,
+    header: e.header ?? {},
+    layers: e.layers ?? {},
+    blocks: e.blocks ?? {},
+    entities: e.entities ?? [],
+    pages: e.pages,
+    metadata: e.metadata ?? {},
+    warnings: e.warnings ?? [],
+    raw: e.raw,
+  };
+}
+function Xt(e) {
+  switch (String(e ?? '').toUpperCase()) {
+    case 'LINE':
+      return 'line';
+    case 'CIRCLE':
+      return 'circle';
+    case 'ARC':
+      return 'arc';
+    case 'LWPOLYLINE':
+    case 'POLYLINE':
+    case 'POLYLINE_2D':
+    case 'POLYLINE2D':
+    case 'POLYLINE_3D':
+    case 'POLYLINE3D':
+    case 'LEADER':
+    case 'MULTILEADER':
+      return 'polyline';
+    case 'ELLIPSE':
+      return 'ellipse';
+    case 'TEXT':
+    case 'MTEXT':
+    case 'ATTRIB':
+    case 'ATTDEF':
+    case 'DIMENSION':
+      return 'text';
+    case 'POINT':
+      return 'point';
+    case 'INSERT':
+      return 'insert';
+    case 'SOLID':
+    case 'TRACE':
+    case '3DFACE':
+      return 'solid';
+    case 'HATCH':
+      return 'hatch';
+    case 'SPLINE':
+      return 'spline';
+    case 'PATH':
+    case 'XPS_PATH':
+    case 'DWF_PATH':
+      return 'path';
+    case 'IMAGE':
+    case 'RASTER_IMAGE':
+    case 'DWF_IMAGE':
+      return 'image';
+    case 'VIEWPORT':
+      return 'viewport';
+    default:
+      return 'unsupported';
+  }
+}
+function vc(e, t, n = {}) {
+  const i = t ?? String(e.type ?? e.entityType ?? e.objectName ?? 'UNKNOWN').toUpperCase(),
+    s =
+      n.includeUnknownProperties === !1 ? { type: i, kind: Xt(i) } : { ...e, type: i, kind: Xt(i) };
+  (n.keepRaw && (s.raw = e),
+    (s.handle = q(e.handle ?? e.id)),
+    (s.layer = q(e.layer ?? e.layerName)),
+    (s.lineType = q(e.lineType ?? e.linetype)));
+  const o = n.numericColorMode ?? 'auto',
+    r = D(e.color),
+    a = D(e.colorIndex ?? e.colorNumber ?? e.aci ?? e.aciColor ?? e.color_index);
+  s.colorIndex = a ?? (o !== 'rgb' && r !== void 0 && Math.abs(r) <= 257 ? r : void 0);
+  const c =
+      e.trueColor ?? e.true_color ?? e.truecolor ?? e.colorRGB ?? e.colorRgb ?? e.rgbColor ?? e.rgb,
+    h =
+      r !== void 0 &&
+      r >= 0 &&
+      r <= 16777215 &&
+      (o === 'rgb' || (o === 'auto' && Math.abs(r) > 257));
+  ((s.trueColor = c ?? (h ? r : void 0)),
+    (typeof e.color == 'string' || typeof e.color == 'number') && (s.color = e.color),
+    (s.colorNumber = D(e.colorNumber) ?? s.colorNumber),
+    (s.colorName = q(e.colorName ?? e.color_name) ?? s.colorName),
+    (s.fillColor = e.fillColor ?? e.fill_color),
+    (s.fillColorIndex =
+      D(e.fillColorIndex ?? e.fill_color_index ?? e.fillColorNumber) ?? s.fillColorIndex),
+    (s.opacity = D(e.opacity ?? e.alpha) ?? s.opacity),
+    (s.lineweight = D(e.lineweight ?? e.lineWeight)),
+    (s.isVisible = !(e.isVisible === !1 || e.visible === !1)),
+    (s.startPoint = Z(e.startPoint ?? e.start ?? e.p0 ?? e.from) ?? s.startPoint),
+    (s.endPoint = Z(e.endPoint ?? e.end ?? e.p1 ?? e.to) ?? s.endPoint),
+    (s.center = Z(e.center ?? e.centerPoint) ?? s.center),
+    (s.insertionPoint =
+      Z(e.insertionPoint ?? e.position ?? e.location ?? e.point ?? e.basePoint) ??
+      s.insertionPoint),
+    (s.radius = D(e.radius) ?? s.radius),
+    (s.startAngle = D(e.startAngle ?? e.start_angle) ?? s.startAngle),
+    (s.endAngle = D(e.endAngle ?? e.end_angle) ?? s.endAngle),
+    (s.majorAxisEndPoint = Z(e.majorAxisEndPoint ?? e.majorAxis ?? e.major) ?? s.majorAxisEndPoint),
+    (s.axisRatio = D(e.axisRatio ?? e.ratio) ?? s.axisRatio),
+    (s.height = D(e.height ?? e.textHeight) ?? s.height),
+    (s.textHeight = D(e.textHeight ?? e.height) ?? s.textHeight),
+    (s.rotation = D(e.rotation ?? e.angle) ?? s.rotation),
+    (s.text = q(e.text ?? e.value ?? e.string ?? e.contents) ?? s.text),
+    (s.name = q(e.name ?? e.blockName) ?? s.name),
+    (s.blockName = q(e.blockName ?? e.name) ?? s.blockName));
+  const l = nn(e.vertices ?? e.points);
+  l.length > 0 && (s.vertices = l);
+  const d = nn(e.controlPoints ?? e.control_points);
+  d.length > 0 && (s.controlPoints = d);
+  const u = nn(e.fitPoints ?? e.fit_points);
+  return (u.length > 0 && (s.fitPoints = u), s);
+}
+function Z(e) {
+  if (!e || typeof e != 'object') return;
+  const t = e,
+    n = Number(t.x ?? t.X ?? t[0]),
+    i = Number(t.y ?? t.Y ?? t[1]),
+    s = t.z ?? t.Z ?? t[2],
+    o = s === void 0 ? void 0 : Number(s);
+  if (!(!Number.isFinite(n) || !Number.isFinite(i)))
+    return Number.isFinite(o) ? { x: n, y: i, z: o } : { x: n, y: i };
+}
+function nn(e) {
+  if (!Array.isArray(e)) return [];
+  const t = [];
+  for (const n of e) {
+    const i = Z(n);
+    if (!i) continue;
+    const s = n,
+      o = i,
+      r = D(s.bulge);
+    r !== void 0 && (o.bulge = r);
+    const a = D(s.startWidth ?? s.start_width);
+    a !== void 0 && (o.startWidth = a);
+    const c = D(s.endWidth ?? s.end_width);
+    (c !== void 0 && (o.endWidth = c), t.push(o));
+  }
+  return t;
+}
+function we(e) {
+  var t;
+  const n = {};
+  for (const i of e.entities) {
+    const s = String(i.type ?? 'UNKNOWN').toUpperCase();
+    n[s] = (n[s] ?? 0) + 1;
+  }
+  return {
+    format: e.format,
+    sourceName: e.sourceName,
+    entityCount: e.entities.length,
+    layerCount: Object.keys(e.layers).length,
+    blockCount: Object.keys(e.blocks).length,
+    pageCount: ((t = e.pages) == null ? void 0 : t.length) ?? 0,
+    byType: n,
+    warnings: [...e.warnings],
+  };
+}
+function Ri(e, t) {
+  t.name && ((e[t.name] = t), (e[t.name.toLowerCase()] = t));
+}
+function Cc(e, t) {
+  t.name && ((e[t.name] = t), (e[t.name.toLowerCase()] = t));
+}
+function Pc(e) {
+  return e != null && e.length
+    ? e.flatMap((t) => t.entities.map((n) => ({ ...n, pageIndex: t.index })))
+    : [];
+}
+function D(e) {
+  const t = Number(e);
+  return Number.isFinite(t) ? t : void 0;
+}
+function q(e) {
+  if (typeof e != 'string' && typeof e != 'number') return;
+  const t = String(e);
+  return t.length > 0 ? t : void 0;
+}
+function dt() {
+  return { minX: 1 / 0, minY: 1 / 0, maxX: -1 / 0, maxY: -1 / 0 };
+}
+function Yt(e) {
+  return (
+    Number.isFinite(e.minX) &&
+    Number.isFinite(e.minY) &&
+    Number.isFinite(e.maxX) &&
+    Number.isFinite(e.maxY) &&
+    e.maxX >= e.minX &&
+    e.maxY >= e.minY
+  );
+}
+function L(e, t) {
+  P(t) &&
+    ((e.minX = Math.min(e.minX, t.x)),
+    (e.minY = Math.min(e.minY, t.y)),
+    (e.maxX = Math.max(e.maxX, t.x)),
+    (e.maxY = Math.max(e.maxY, t.y)));
+}
+function Os(e, t, n) {
+  if (!P(t) || !Number.isFinite(n)) return;
+  const i = Math.abs(n);
+  (L(e, { x: t.x - i, y: t.y - i }), L(e, { x: t.x + i, y: t.y + i }));
+}
+function $s(e, t = 0.02, n = 1e-6) {
+  if (!Yt(e)) return { minX: -10, minY: -10, maxX: 10, maxY: 10 };
+  const i = Math.max((e.maxX - e.minX) * t, n),
+    s = Math.max((e.maxY - e.minY) * t, n);
+  return { minX: e.minX - i, minY: e.minY - s, maxX: e.maxX + i, maxY: e.maxY + s };
+}
+function P(e) {
+  return !!e && typeof e == 'object' && Number.isFinite(e.x) && Number.isFinite(e.y);
+}
+function O(e) {
+  return { x: e.x, y: e.y };
+}
+function Et(e) {
+  return (e * Math.PI) / 180;
+}
+function Te(e, t, n, i, s = !0, o = 64) {
+  if (!P(e) || !Number.isFinite(t)) return [];
+  let r = n,
+    a = i;
+  if (!Number.isFinite(r) || !Number.isFinite(a)) return [];
+  ((Math.abs(r) > Math.PI * 2 + 1e-6 || Math.abs(a) > Math.PI * 2 + 1e-6) &&
+    ((r = Et(r)), (a = Et(a))),
+    s && a < r && (a += Math.PI * 2),
+    !s && r < a && (r += Math.PI * 2));
+  const c = a - r,
+    h = Math.max(8, Math.min(256, Math.ceil((Math.abs(c) / (Math.PI * 2)) * o))),
+    l = [];
+  for (let d = 0; d <= h; d++) {
+    const u = r + c * (d / h);
+    l.push({ x: e.x + Math.cos(u) * t, y: e.y + Math.sin(u) * t });
+  }
+  return l;
+}
+function Ie(e, t, n = 1, i = 0, s = Math.PI * 2, o = 96) {
+  if (!P(e) || !P(t)) return [];
+  const r = Math.hypot(t.x, t.y);
+  if (!Number.isFinite(r) || r <= 0) return [];
+  const a = r * (Number.isFinite(n) && n > 0 ? n : 1),
+    c = Math.atan2(t.y, t.x);
+  let h = Number.isFinite(i) ? i : 0,
+    l = Number.isFinite(s) ? s : Math.PI * 2;
+  ((Math.abs(h) > Math.PI * 2 + 1e-6 || Math.abs(l) > Math.PI * 2 + 1e-6) &&
+    ((h = Et(h)), (l = Et(l))),
+    l < h && (l += Math.PI * 2));
+  const d = Math.max(12, Math.min(256, Math.ceil((Math.abs(l - h) / (Math.PI * 2)) * o))),
+    u = [],
+    f = Math.cos(c),
+    m = Math.sin(c);
+  for (let p = 0; p <= d; p++) {
+    const g = h + (l - h) * (p / d),
+      b = Math.cos(g) * r,
+      w = Math.sin(g) * a;
+    u.push({ x: e.x + b * f - w * m, y: e.y + b * m + w * f });
+  }
+  return u;
+}
+function zs(e, t, n = 0, i = 16) {
+  if (!Number.isFinite(n) || Math.abs(n) < 1e-12) return [O(e), O(t)];
+  const s = Math.hypot(t.x - e.x, t.y - e.y);
+  if (s <= 1e-12) return [O(e), O(t)];
+  const o = 4 * Math.atan(n),
+    r = Math.abs(s / (2 * Math.sin(o / 2))),
+    a = { x: (e.x + t.x) / 2, y: (e.y + t.y) / 2 },
+    c = (t.x - e.x) / s,
+    h = (t.y - e.y) / s,
+    l = n >= 0 ? 1 : -1,
+    d = Math.sqrt(Math.max(r * r - (s / 2) ** 2, 0)),
+    u = { x: a.x - l * h * d, y: a.y + l * c * d },
+    f = Math.atan2(e.y - u.y, e.x - u.x),
+    m = Math.atan2(t.y - u.y, t.x - u.x);
+  return Te(u, r, f, m, n >= 0, i);
+}
+function Us(e) {
+  return e
+    .replace(
+      /\\P/g,
+      `
+`,
+    )
+    .replace(/\\~|\\ /g, ' ')
+    .replace(/\\[A-Za-z][^;]*;/g, '')
+    .replace(/[{}]/g, '')
+    .replace(/\\[A-Za-z]/g, '')
+    .trim();
+}
+function _t(e, t, n) {
+  return Math.min(n, Math.max(t, e));
+}
+class Mc {
+  constructor(t = {}) {
+    (x(this, 'id', 'dxf'),
+      x(this, 'label', 'DXF / JavaScript parser'),
+      x(this, 'formats', ['dxf']),
+      x(this, 'defaults'),
+      (this.defaults = t));
+  }
+  accepts(t, n) {
+    return Rt(t) === 'dxf' || Wt(t, n) === 'dxf';
+  }
+  async load(t, n = {}) {
+    var i;
+    const s = { ...this.defaults, ...n },
+      o = performance.now(),
+      r = await Jt(t),
+      a = Fc(r, s.dxfEncoding),
+      c = [];
+    let h;
+    try {
+      h = await Sc(a);
+    } catch (u) {
+      (c.push(
+        `dxf-parser failed, using built-in fallback parser: ${u instanceof Error ? u.message : String(u)}`,
+      ),
+        (h = Wc(a)));
+    }
+    const l = kc(h, t.fileName ?? ((i = t.file) == null ? void 0 : i.name), c),
+      d = performance.now() - o;
+    return {
+      document: l,
+      raw: h,
+      bytes: r.byteLength,
+      elapsedMs: d,
+      format: 'dxf',
+      warnings: l.warnings,
+    };
+  }
+}
+async function Sc(e) {
+  const t = await ir(
+      () => import('./index-CJ2lZtZM.js'),
+      __vite__mapDeps([0, 1, 2, 3, 4]),
+      import.meta.url,
+    ),
+    n = t.default ?? t.DxfParser;
+  if (!n) throw new Error('dxf-parser did not expose a parser constructor.');
+  return new n().parseSync(e);
+}
+function kc(e, t, n = []) {
+  const i = e && typeof e == 'object' ? e : {},
+    s = Ec(i),
+    o = Ac(i),
+    r = (Array.isArray(i.entities) ? i.entities : [])
+      .filter((c) => !!c && typeof c == 'object')
+      .map((c) => _n(c)),
+    a = Ws({
+      format: 'dxf',
+      sourceName: t,
+      header: i.header && typeof i.header == 'object' ? i.header : {},
+      layers: s,
+      blocks: o,
+      entities: r,
+      metadata: { parser: 'dxf-parser + cad-viewer normalizer' },
+      warnings: n,
+      raw: e,
+    });
+  return (r.length === 0 && a.warnings.push('DXF file did not expose any ENTITIES.'), a);
+}
+function _n(e) {
+  const t = String(e.type ?? e.entityType ?? 'UNKNOWN').toUpperCase(),
+    n = vc(e, t),
+    i = D(e.colorIndex ?? e.colorNumber ?? e.aci),
+    s = D(e.color);
+  if (
+    ((n.colorIndex = i ?? (s !== void 0 && Math.abs(s) <= 257 ? s : void 0)),
+    (n.trueColor =
+      e.trueColor ??
+      e.true_color ??
+      e.colorRGB ??
+      e.trueColorValue ??
+      (s !== void 0 && Math.abs(s) > 257 ? s : void 0)),
+    (n.layer = q(e.layer ?? e.layerName) ?? '0'),
+    (n.isClosed =
+      !!(e.shape ?? e.closed ?? e.isClosed) || (Number(e.flag ?? e.flags ?? 0) & 1) === 1),
+    t === 'LINE' &&
+      ((n.startPoint =
+        Z(e.startPoint ?? { x: e.x1 ?? e.x, y: e.y1 ?? e.y, z: e.z1 ?? e.z }) ?? n.startPoint),
+      (n.endPoint = Z(e.endPoint ?? { x: e.x2, y: e.y2, z: e.z2 }) ?? n.endPoint)),
+    (t === 'TEXT' || t === 'MTEXT' || t === 'ATTRIB' || t === 'ATTDEF') &&
+      ((n.insertionPoint = Z(e.startPoint ?? e.position ?? e.insertionPoint) ?? n.insertionPoint),
+      (n.text = Rc(e.text ?? e.string ?? e.value) ?? n.text),
+      (n.textHeight = D(e.textHeight ?? e.height) ?? n.textHeight),
+      (n.rotation = Oi(e.rotation ?? e.angle))),
+    (t === 'ARC' || t === 'ELLIPSE') &&
+      ((n.startAngle = $i(e.startAngle ?? e.start_angle)),
+      (n.endAngle = $i(e.endAngle ?? e.end_angle))),
+    t === 'INSERT')
+  ) {
+    ((n.blockName = q(e.name ?? e.blockName) ?? n.blockName),
+      (n.insertionPoint = Z(e.position ?? e.insertionPoint ?? e.point) ?? n.insertionPoint));
+    const o = D(e.xScale ?? e.scaleX ?? e.xscale),
+      r = D(e.yScale ?? e.scaleY ?? e.yscale),
+      a = D(e.zScale ?? e.scaleZ ?? e.zscale);
+    ((o !== void 0 || r !== void 0 || a !== void 0) &&
+      (n.scale = { x: o ?? 1, y: r ?? o ?? 1, z: a ?? 1 }),
+      (n.rotation = Oi(e.rotation ?? e.angle)));
+  }
+  if (t === 'SPLINE') {
+    const o = Fe(e.controlPoints ?? e.control_points ?? e.points);
+    o.length && (n.controlPoints = o);
+    const r = Fe(e.fitPoints ?? e.fit_points);
+    r.length && (n.fitPoints = r);
+  }
+  return (
+    t === 'HATCH' && ((n.loops = Ic(e)), (n.fillColorIndex = n.colorIndex)),
+    (t === 'SOLID' || t === 'TRACE' || t === '3DFACE') &&
+      ((n.vertices = Tc(e)), (n.fillColorIndex = n.colorIndex)),
+    n
+  );
+}
+function Ec(e) {
+  const t = {},
+    n = e.tables,
+    i = e.layers ?? n?.layer ?? n?.LAYER ?? n?.layers,
+    s = Nc(i);
+  for (const o of s) {
+    const r = o,
+      a = q(r.name ?? r.layerName);
+    a &&
+      Ri(t, {
+        name: a,
+        color: r.color ?? r.colorNumber ?? r.colorIndex,
+        colorIndex: D(r.colorNumber ?? r.colorIndex ?? r.color),
+        lineType: q(r.lineType ?? r.linetype),
+        isVisible: Number(r.colorNumber ?? r.colorIndex ?? r.color ?? 1) >= 0,
+        isFrozen: !!r.frozen,
+        isLocked: !!r.locked,
+        raw: r,
+      });
+  }
+  return (t[0] || Ri(t, { name: '0', colorIndex: 7, isVisible: !0 }), t);
+}
+function Ac(e) {
+  const t = {},
+    n = e.blocks;
+  if (!n || typeof n != 'object') return t;
+  if (Array.isArray(n)) for (const i of n) Wi(t, i);
+  else for (const [i, s] of Object.entries(n)) Wi(t, s, i);
+  return t;
+}
+function Wi(e, t, n) {
+  if (!t || typeof t != 'object') return;
+  const i = t,
+    s = q(i.name ?? i.blockName ?? n);
+  if (!s) return;
+  const o = (Array.isArray(i.entities) ? i.entities : [])
+    .filter((r) => !!r && typeof r == 'object')
+    .map((r) => _n(r));
+  Cc(e, {
+    name: s,
+    basePoint: Z(i.basePoint ?? i.position) ?? { x: 0, y: 0 },
+    entities: o,
+    raw: i,
+  });
+}
+function Nc(e) {
+  if (!e) return [];
+  if (Array.isArray(e)) return e;
+  if (typeof e != 'object') return [];
+  const t = e;
+  return Array.isArray(t.entries)
+    ? t.entries
+    : Array.isArray(t.records)
+      ? t.records
+      : Array.isArray(t.layers)
+        ? t.layers
+        : Object.values(t).filter((n) => n && typeof n == 'object');
+}
+function Fe(e) {
+  return Array.isArray(e) ? e.map(Z).filter((t) => !!t) : [];
+}
+function Tc(e) {
+  const t = Fe(e.vertices ?? e.points);
+  if (t.length) return t;
+  const n = [];
+  for (let i = 0; i < 4; i++) {
+    const s = Z({
+      x: e[`x${i}`] ?? e[`x${i + 1}`],
+      y: e[`y${i}`] ?? e[`y${i + 1}`],
+      z: e[`z${i}`] ?? e[`z${i + 1}`],
+    });
+    s && n.push(s);
+  }
+  return n;
+}
+function Ic(e) {
+  const t = e.boundaryLoops ?? e.loops ?? e.paths;
+  if (Array.isArray(t))
+    return t
+      .map((n) => {
+        const i = n;
+        return { vertices: Fe(i.vertices ?? i.points), isClosed: !0 };
+      })
+      .filter((n) => n.vertices && n.vertices.length > 0);
+}
+function Oi(e) {
+  const t = D(e);
+  if (t !== void 0) return Math.abs(t) > Math.PI * 2 + 1e-6 ? Et(t) : t;
+}
+function $i(e) {
+  const t = D(e);
+  if (t !== void 0) return Math.abs(t) > Math.PI * 2 + 1e-6 ? Et(t) : t;
+}
+function Fc(e, t) {
+  const n = Mn(t);
+  if (n) return Pt(e, n);
+  const i = _c(e);
+  if (i) return Pt(e, i);
+  const s = Mn(Lc(e));
+  if (s) return Pt(e, s);
+  const o = Pt(e, 'utf-8');
+  return o.includes('�') ? Dc(e) : o;
+}
+const zi = {
+  ANSI_874: 'windows-874',
+  ANSI_932: 'shift_jis',
+  ANSI_936: 'gb18030',
+  ANSI_949: 'euc-kr',
+  ANSI_950: 'big5',
+  ANSI_1250: 'windows-1250',
+  ANSI_1251: 'windows-1251',
+  ANSI_1252: 'windows-1252',
+  ANSI_1253: 'windows-1253',
+  ANSI_1254: 'windows-1254',
+  ANSI_1255: 'windows-1255',
+  ANSI_1256: 'windows-1256',
+  ANSI_1257: 'windows-1257',
+  ANSI_1258: 'windows-1258',
+  BIG5: 'big5',
+  CP874: 'windows-874',
+  CP932: 'shift_jis',
+  CP936: 'gb18030',
+  CP949: 'euc-kr',
+  CP950: 'big5',
+  CP1250: 'windows-1250',
+  CP1251: 'windows-1251',
+  CP1252: 'windows-1252',
+  CP1253: 'windows-1253',
+  CP1254: 'windows-1254',
+  CP1255: 'windows-1255',
+  CP1256: 'windows-1256',
+  CP1257: 'windows-1257',
+  CP1258: 'windows-1258',
+  GB18030: 'gb18030',
+  GB2312: 'gb18030',
+  GBK: 'gb18030',
+  SHIFT_JIS: 'shift_jis',
+  SHIFTJIS: 'shift_jis',
+  SJIS: 'shift_jis',
+  UTF8: 'utf-8',
+  UTF_8: 'utf-8',
+  UTF16: 'utf-16le',
+  UTF_16: 'utf-16le',
+  UTF16LE: 'utf-16le',
+  UTF_16LE: 'utf-16le',
+  UTF16BE: 'utf-16be',
+  UTF_16BE: 'utf-16be',
+};
+function _c(e) {
+  if (e.length >= 3 && e[0] === 239 && e[1] === 187 && e[2] === 191) return 'utf-8';
+  if (e.length >= 2 && e[0] === 255 && e[1] === 254) return 'utf-16le';
+  if (e.length >= 2 && e[0] === 254 && e[1] === 255) return 'utf-16be';
+}
+function Lc(e) {
+  var t, n, i, s;
+  const o = Pt(e.subarray(0, Math.min(e.byteLength, 131072)), 'iso-8859-1')
+    .replace(
+      /\r\n/g,
+      `
+`,
+    )
+    .replace(
+      /\r/g,
+      `
+`,
+    ).split(`
+`);
+  for (let r = 0; r < o.length - 3; r++)
+    if (
+      !(
+        ((t = o[r]) == null ? void 0 : t.trim()) !== '9' ||
+        ((n = o[r + 1]) == null ? void 0 : n.trim().toUpperCase()) !== '$DWGCODEPAGE'
+      )
+    )
+      for (let a = r + 2; a < Math.min(r + 10, o.length - 1); a += 2) {
+        const c = (i = o[a]) == null ? void 0 : i.trim(),
+          h = (s = o[a + 1]) == null ? void 0 : s.trim();
+        if (c === '3' && h) return h;
+      }
+}
+function Mn(e) {
+  const t = e?.trim();
+  if (!t) return;
+  const n = t.replace(/[-\s]+/g, '_').toUpperCase();
+  if (zi[n]) return zi[n];
+  const i = /^ANSI_(\d{3,4})$/.exec(n);
+  if (i) return Mn(`cp${i[1]}`);
+  const s = /^CP(\d{3,4})$/.exec(n);
+  return s
+    ? s[1] === '936'
+      ? 'gb18030'
+      : s[1] === '950'
+        ? 'big5'
+        : s[1] === '932'
+          ? 'shift_jis'
+          : s[1] === '949'
+            ? 'euc-kr'
+            : `windows-${s[1]}`
+    : t;
+}
+function Pt(e, t) {
+  try {
+    return new TextDecoder(t, { fatal: !1 }).decode(e);
+  } catch {
+    return new TextDecoder('utf-8', { fatal: !1 }).decode(e);
+  }
+}
+function Dc(e) {
+  const t = ['windows-1252', 'gb18030', 'big5', 'shift_jis', 'euc-kr', 'iso-8859-1'];
+  let n = '',
+    i = Number.POSITIVE_INFINITY;
+  for (const s of t) {
+    const o = Pt(e, s),
+      r = Bc(o, s);
+    r < i && ((i = r), (n = o));
+  }
+  return n || Pt(e, 'utf-8');
+}
+function Bc(e, t) {
+  const n = sn(e, /\uFFFD/g),
+    i = sn(e, /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g),
+    s = sn(e, /[\u3400-\u9FFF\uF900-\uFAFF]/g),
+    o = e.includes('SECTION') && (e.includes('ENTITIES') || e.includes('HEADER'));
+  let r = n * 1e4 + i * 1e3;
+  return (
+    o && (r -= 500),
+    t === 'windows-1252' && (r -= 2),
+    t === 'gb18030' && s >= 2 && (r -= 50 + Math.min(s, 200) * 2),
+    r
+  );
+}
+function sn(e, t) {
+  var n;
+  return ((n = e.match(t)) == null ? void 0 : n.length) ?? 0;
+}
+function Rc(e) {
+  const t = q(e);
+  if (t !== void 0)
+    return t
+      .replace(/\\U\+([0-9a-fA-F]{4,6})/g, (n, i) => {
+        const s = Number.parseInt(i, 16);
+        return Number.isFinite(s) && s >= 0 && s <= 1114111 ? String.fromCodePoint(s) : n;
+      })
+      .replace(/%%[cC]/g, '∅')
+      .replace(/%%[dD]/g, '°')
+      .replace(/%%[pP]/g, '±')
+      .replace(
+        /\\P/g,
+        `
+`,
+      );
+}
+function Wc(e) {
+  var t, n;
+  const i = e
+      .replace(
+        /\r\n/g,
+        `
+`,
+      )
+      .replace(
+        /\r/g,
+        `
+`,
+      ).split(`
+`),
+    s = [];
+  for (let d = 0; d < i.length - 1; d += 2) {
+    const u = Number((t = i[d]) == null ? void 0 : t.trim()),
+      f = i[d + 1] ?? '';
+    Number.isFinite(u) && s.push({ code: u, value: f.trimEnd() });
+  }
+  const o = [],
+    r = {};
+  let a = '',
+    c = [],
+    h;
+  for (let d = 0; d < s.length; d++) {
+    const u = s[d];
+    if (u.code === 0 && u.value === 'SECTION') {
+      ((a = ((n = s[d + 1]) == null ? void 0 : n.code) === 2 ? s[d + 1].value.toUpperCase() : ''),
+        d++);
+      continue;
+    }
+    if (u.code === 0 && u.value === 'ENDSEC') {
+      (l(), (a = ''));
+      continue;
+    }
+    a === 'ENTITIES' && (u.code === 0 ? (l(), (c = [u])) : c.push(u));
+  }
+  return (l(), { header: {}, tables: {}, entities: o, blocks: r });
+  function l() {
+    var d;
+    if (!c.length) return;
+    const u = (d = c[0]) == null ? void 0 : d.value.toUpperCase();
+    if (u === 'VERTEX' && h) {
+      const m = V(c, 10, 20, 30);
+      (m && (h.vertices ?? (h.vertices = [])).push({ ...m, bulge: _(c, 42) }), (c = []));
+      return;
+    }
+    if (u === 'SEQEND') {
+      (h && o.push(h), (h = void 0), (c = []));
+      return;
+    }
+    if ((h && (o.push(h), (h = void 0)), !u || u === 'EOF')) {
+      c = [];
+      return;
+    }
+    const f = Oc(u, c);
+    (u === 'POLYLINE' ? (h = f) : o.push(f), (c = []));
+  }
+}
+function Oc(e, t) {
+  const n = {
+    type: e,
+    handle: Zt(t, 5),
+    layer: Zt(t, 8) ?? '0',
+    colorIndex: _(t, 62),
+    trueColor: _(t, 420),
+    lineType: Zt(t, 6),
+    lineweight: _(t, 370),
+  };
+  switch (e) {
+    case 'LINE':
+      Object.assign(n, { startPoint: V(t, 10, 20, 30), endPoint: V(t, 11, 21, 31) });
+      break;
+    case 'CIRCLE':
+      Object.assign(n, { center: V(t, 10, 20, 30), radius: _(t, 40) });
+      break;
+    case 'ARC':
+      Object.assign(n, {
+        center: V(t, 10, 20, 30),
+        radius: _(t, 40),
+        startAngle: be(_(t, 50)),
+        endAngle: be(_(t, 51)),
+      });
+      break;
+    case 'POINT':
+      Object.assign(n, { point: V(t, 10, 20, 30) });
+      break;
+    case 'TEXT':
+    case 'MTEXT':
+      Object.assign(n, {
+        insertionPoint: V(t, 10, 20, 30),
+        text: Uc(t),
+        textHeight: _(t, 40),
+        rotation: be(_(t, 50)),
+      });
+      break;
+    case 'LWPOLYLINE':
+      Object.assign(n, {
+        vertices: zc(t),
+        flag: _(t, 70),
+        isClosed: (Number(_(t, 70) ?? 0) & 1) === 1,
+      });
+      break;
+    case 'POLYLINE':
+      Object.assign(n, {
+        vertices: [],
+        flag: _(t, 70),
+        isClosed: (Number(_(t, 70) ?? 0) & 1) === 1,
+      });
+      break;
+    case 'ELLIPSE':
+      Object.assign(n, {
+        center: V(t, 10, 20, 30),
+        majorAxisEndPoint: V(t, 11, 21, 31),
+        axisRatio: _(t, 40),
+        startAngle: _(t, 41),
+        endAngle: _(t, 42),
+      });
+      break;
+    case 'SPLINE':
+      Object.assign(n, {
+        controlPoints: $c(t, 10, 20, 30),
+        degree: _(t, 71),
+        isClosed: (Number(_(t, 70) ?? 0) & 1) === 1,
+      });
+      break;
+    case 'INSERT':
+      Object.assign(n, {
+        name: Zt(t, 2),
+        blockName: Zt(t, 2),
+        insertionPoint: V(t, 10, 20, 30),
+        rotation: be(_(t, 50)),
+        scale: { x: _(t, 41) ?? 1, y: _(t, 42) ?? _(t, 41) ?? 1, z: _(t, 43) ?? 1 },
+      });
+      break;
+    case 'SOLID':
+    case 'TRACE':
+    case '3DFACE':
+      Object.assign(n, {
+        vertices: [V(t, 10, 20, 30), V(t, 11, 21, 31), V(t, 12, 22, 32), V(t, 13, 23, 33)].filter(
+          Boolean,
+        ),
+      });
+      break;
+  }
+  return _n(n);
+}
+function _(e, t) {
+  var n;
+  const i = (n = e.find((o) => o.code === t)) == null ? void 0 : n.value,
+    s = Number(i);
+  return Number.isFinite(s) ? s : void 0;
+}
+function Zt(e, t) {
+  var n;
+  const i = (n = e.find((s) => s.code === t)) == null ? void 0 : n.value;
+  return i && i.length > 0 ? i : void 0;
+}
+function V(e, t, n, i) {
+  const s = _(e, t),
+    o = _(e, n),
+    r = _(e, i);
+  if (!(s === void 0 || o === void 0)) return r === void 0 ? { x: s, y: o } : { x: s, y: o, z: r };
+}
+function $c(e, t, n, i) {
+  const s = [];
+  for (let o = 0; o < e.length; o++) {
+    if (e[o].code !== t) continue;
+    const r = Number(e[o].value),
+      a = e.slice(o + 1).find((d) => d.code === n),
+      c = e.slice(o + 1).find((d) => d.code === i),
+      h = Number(a?.value),
+      l = Number(c?.value);
+    Number.isFinite(r) &&
+      Number.isFinite(h) &&
+      s.push(Number.isFinite(l) ? { x: r, y: h, z: l } : { x: r, y: h });
+  }
+  return s;
+}
+function zc(e) {
+  const t = [];
+  for (let n = 0; n < e.length; n++) {
+    if (e[n].code !== 10) continue;
+    const i = Number(e[n].value);
+    let s, o;
+    for (let r = n + 1; r < e.length && e[r].code !== 10; r++)
+      (e[r].code === 20 && (s = Number(e[r].value)), e[r].code === 42 && (o = Number(e[r].value)));
+    Number.isFinite(i) &&
+      Number.isFinite(s) &&
+      t.push({ x: i, y: s, bulge: Number.isFinite(o) ? o : void 0 });
+  }
+  return t;
+}
+function Uc(e) {
+  const t = e.filter((n) => n.code === 1 || n.code === 3).map((n) => n.value);
+  return t.length ? t.join('') : void 0;
+}
+function be(e) {
+  return typeof e == 'number' && Number.isFinite(e) ? Et(e) : void 0;
+}
+class Xc {
+  constructor(t = {}) {
+    (x(this, 'id', 'dwf'),
+      x(this, 'label', 'DWF/DWFx native viewer powered by dwf-viewer'),
+      x(this, 'formats', ['dwf', 'dwfx', 'xps']),
+      x(this, 'nativeRenderer', !0),
+      x(this, 'defaults'),
+      x(this, 'native'),
+      x(this, 'host'),
+      x(this, 'lastStats'),
+      (this.defaults = t));
+  }
+  accepts(t, n) {
+    const i = Rt(t);
+    if (i === 'dwf' || i === 'dwfx' || i === 'xps') return !0;
+    const s = Wt(t, n);
+    return s === 'dwf' || s === 'dwfx' || s === 'xps';
+  }
+  async load(t, n = {}) {
+    var i, s, o, r;
+    const a = { ...this.defaults, ...n },
+      c = performance.now(),
+      h = t.fileName ?? ((i = t.file) == null ? void 0 : i.name),
+      l = await Jt(t),
+      d = Hi(Wt(t, l), Rt(t));
+    (s = a.onProgress) == null ||
+      s.call(a, {
+        phase: 'parse',
+        format: d,
+        message: 'Opening DWF/DWFx with dwf-viewer…',
+        percent: 48,
+      });
+    const u = await Ms(l, { fileName: h });
+    (o = a.onProgress) == null ||
+      o.call(a, {
+        phase: 'normalize',
+        format: d,
+        message: 'Reading DWF pages, sheets and model metadata…',
+        percent: 76,
+      });
+    const f = Ui(u, h, d, a.keepRaw === !0),
+      m = performance.now() - c;
+    return (
+      (r = a.onProgress) == null ||
+        r.call(a, {
+          phase: 'done',
+          format: f.format,
+          message: 'DWF/DWFx document ready.',
+          percent: 100,
+          elapsedMs: m,
+        }),
+      {
+        document: f,
+        raw: a.keepRaw ? u : void 0,
+        bytes: l.byteLength,
+        elapsedMs: m,
+        format: f.format,
+        warnings: f.warnings,
+      }
+    );
+  }
+  async mount(t, n, i = {}) {
+    var s, o, r, a, c;
+    const h = { ...this.defaults, ...i },
+      l = performance.now(),
+      d = t.fileName ?? ((s = t.file) == null ? void 0 : s.name),
+      u = await Jt(t),
+      f = Hi(Wt(t, u), Rt(t)),
+      m = jc(h),
+      p = Yi(h),
+      g = qc(h, m, p),
+      b = Xs(h, m, p);
+    ((o = h.onProgress) == null ||
+      o.call(h, {
+        phase: 'native-render',
+        format: f,
+        message: 'Mounting native DWF renderer…',
+        percent: 28,
+      }),
+      this.unmount(),
+      (this.host = n),
+      n.replaceChildren(),
+      (this.native = new ac(n, g)),
+      (r = h.onProgress) == null ||
+        r.call(h, {
+          phase: 'parse',
+          format: f,
+          message: 'Parsing DWF package and page streams…',
+          percent: 58,
+        }),
+      await this.native.load(u, { fileName: d, ...b }),
+      (a = h.onProgress) == null ||
+        a.call(h, {
+          phase: 'render',
+          format: f,
+          message: 'Rendering DWF/DWFx with dwf-viewer…',
+          percent: 88,
+        }),
+      (this.lastStats = await this.native.render()));
+    const w = this.native.getDocument(),
+      y = Ui(w, d, f, h.keepRaw === !0);
+    ((y.metadata.loaderMode = 'Native DWF'),
+      (y.metadata.nativeRenderer = 'dwf-viewer'),
+      (y.metadata.nativeRenderStats = this.lastStats
+        ? { ...this.lastStats, warnings: this.lastStats.warnings.length }
+        : void 0));
+    const C = performance.now() - l;
+    return (
+      (c = h.onProgress) == null ||
+        c.call(h, {
+          phase: 'done',
+          format: y.format,
+          message: 'DWF/DWFx rendered.',
+          percent: 100,
+          elapsedMs: C,
+        }),
+      {
+        document: y,
+        raw: h.keepRaw ? w : void 0,
+        bytes: u.byteLength,
+        elapsedMs: C,
+        format: y.format,
+        warnings: y.warnings,
+      }
+    );
+  }
+  unmount() {
+    var t;
+    ((t = this.native) == null || t.dispose(),
+      (this.native = void 0),
+      (this.lastStats = void 0),
+      this.host && this.host.replaceChildren());
+  }
+  fit() {
+    var t;
+    (t = this.native) == null || t.fit();
+  }
+  zoomIn() {
+    var t;
+    const n = (t = this.native) == null ? void 0 : t.zoomInButton;
+    n?.click();
+  }
+  zoomOut() {
+    var t;
+    const n = (t = this.native) == null ? void 0 : t.zoomOutButton;
+    n?.click();
+  }
+  resize() {
+    var t;
+    (t = this.native) == null || t.render();
+  }
+  setNativeOptions(t) {
+    var n, i, s, o;
+    const r = this.native;
+    if (r) {
+      if (typeof t.dwfBackground == 'string') r.background = t.dwfBackground;
+      else {
+        const a = Yi(t);
+        a && (r.background = a);
+      }
+      (typeof t.dwfPreferWebgl == 'boolean' &&
+        ((n = r.setPreferWebgl) == null || n.call(r, t.dwfPreferWebgl)),
+        typeof t.dwfPreferWasm == 'boolean' &&
+          ((i = r.setPreferWasm) == null || i.call(r, t.dwfPreferWasm)),
+        t.dwfLineWeightMode &&
+          ((s = r.setLineWeightMode) == null || s.call(r, t.dwfLineWeightMode)),
+        ye(r, 'minStrokeCssPx', t.dwfMinStrokeCssPx),
+        ye(r, 'maxOverviewStrokeCssPx', t.dwfMaxOverviewStrokeCssPx),
+        ye(r, 'minTextCssPx', t.dwfMinTextCssPx),
+        ye(r, 'minFilledAreaCssPx', t.dwfMinFilledAreaCssPx),
+        (o = r.render) == null || o.call(r));
+    }
+  }
+  getLastNativeStats() {
+    return this.lastStats;
+  }
+}
+function Ui(e, t, n, i) {
+  var s, o;
+  const r = Xi(e?.diagnostics ?? []),
+    a = (e?.pageData ?? []).map((h, l) => Hc(h, l));
+  for (const h of e?.pageData ?? []) r.push(...Xi(h.diagnostics));
+  const c = {
+    parser: 'dwf-viewer',
+    nativeRenderer: 'dwf-viewer',
+    dwfKind: e?.kind,
+    packageEntries: ((s = e?.packageEntries) == null ? void 0 : s.length) ?? 0,
+    resources: ((o = e?.resources) == null ? void 0 : o.length) ?? 0,
+    pageKinds: Qc((e?.pageData ?? []).map((h) => h.kind)),
+    pageNames: (e?.pages ?? []).map((h) => h.name),
+  };
+  return Ws({
+    format: n,
+    sourceName: t,
+    layers: {},
+    blocks: {},
+    pages: a,
+    entities: Pc(a),
+    metadata: c,
+    warnings: Jc(r),
+    raw: i ? e : void 0,
+  });
+}
+function Hc(e, t) {
+  const n = Yc(e, t);
+  return {
+    index: t,
+    name: e.name || e.sourcePath || `${t + 1}`,
+    width: e.width || 1e3,
+    height: e.height || 1e3,
+    entities: n,
+  };
+}
+function Yc(e, t) {
+  return e.kind === 'w2d-text'
+    ? e.primitives.flatMap((n, i) => Vc(n, t, i))
+    : e.kind === 'image'
+      ? [
+          {
+            type: 'DWF_IMAGE_PAGE',
+            kind: 'image',
+            pageIndex: t,
+            width: e.width,
+            height: e.height,
+            imageSource: e.sourcePath,
+          },
+        ]
+      : e.kind === 'w3d-model'
+        ? e.model.meshes.map((n, i) => ({
+            id: n.id,
+            type: 'W3D_MESH',
+            kind: 'solid',
+            pageIndex: t,
+            color: n.color ? Kc(n.color) : void 0,
+            name: n.name || `mesh-${i + 1}`,
+            raw: {
+              vertexCount: n.vertexCount,
+              triangleCount: n.triangleCount,
+              materialId: n.materialId,
+            },
+          }))
+        : e.kind === 'xps-fixed-page'
+          ? [
+              {
+                type: 'XPS_FIXED_PAGE',
+                kind: 'viewport',
+                pageIndex: t,
+                width: e.width,
+                height: e.height,
+                raw: { sourcePath: e.sourcePath },
+              },
+            ]
+          : [
+              {
+                type: 'DWF_PAGE',
+                kind: 'viewport',
+                pageIndex: t,
+                width: e.width,
+                height: e.height,
+                raw: { sourcePath: e.sourcePath },
+              },
+            ];
+}
+function Vc(e, t, n) {
+  const i = {
+    id: `dwf-${t}-${n}`,
+    pageIndex: t,
+    color: e.stroke,
+    fillColor: e.fill,
+    lineweight: e.lineWidth,
+    raw: { matrix: e.matrix },
+  };
+  if (e.type === 'polyline' || e.type === 'polygon')
+    return [
+      {
+        ...i,
+        type: e.type === 'polygon' ? 'DWF_POLYGON' : 'DWF_POLYLINE',
+        kind: 'polyline',
+        vertices: Gc(e.points),
+        isClosed: e.type === 'polygon',
+      },
+    ];
+  if (e.type === 'path') return [{ ...i, type: 'DWF_PATH', kind: 'path', commands: e.commands }];
+  if (e.type === 'text')
+    return [
+      {
+        ...i,
+        type: 'DWF_TEXT',
+        kind: 'text',
+        insertionPoint: { x: e.x, y: e.y, z: 0 },
+        text: e.text,
+        textHeight: e.size,
+      },
+    ];
+  if (e.type === 'rect') {
+    const s = e.x,
+      o = e.y,
+      r = e.width,
+      a = e.height;
+    return [
+      {
+        ...i,
+        type: 'DWF_RECT',
+        kind: 'polyline',
+        isClosed: !0,
+        vertices: [
+          { x: s, y: o, z: 0 },
+          { x: s + r, y: o, z: 0 },
+          { x: s + r, y: o + a, z: 0 },
+          { x: s, y: o + a, z: 0 },
+        ],
+      },
+    ];
+  }
+  return [];
+}
+function Gc(e) {
+  const t = [];
+  for (let n = 0; n + 1 < e.length; n += 2) t.push({ x: e[n], y: e[n + 1], z: 0 });
+  return t;
+}
+function Xi(e) {
+  return e
+    .filter((t) => t.level !== 'info')
+    .map((t) => `${t.code}: ${t.message}${t.source ? ` (${t.source})` : ''}`);
+}
+function Hi(e, t) {
+  return t === 'dwf' || t === 'dwfx' || t === 'xps'
+    ? t
+    : e === 'dwf' || e === 'dwfx' || e === 'xps'
+      ? e
+      : 'dwf';
+}
+function jc(e) {
+  if (e.dwfWasmUrl) return e.dwfWasmUrl;
+  if (typeof document > 'u') return;
+  const t = e.wasmPath
+    ? new URL(Zc(e.wasmPath), document.baseURI).href
+    : new URL('wasm/', document.baseURI).href;
+  return new URL('dwfv-render.wasm', t).href;
+}
+function Yi(e) {
+  if (e.dwfBackground) return e.dwfBackground;
+  const t = e.canvasOptions;
+  return t?.background ?? '#05070d';
+}
+function qc(e, t, n) {
+  return {
+    ...Xs(e, t, n),
+    maxDevicePixelRatio: e.dwfMaxDevicePixelRatio ?? 2,
+    maxCanvasPixels: e.dwfMaxCanvasPixels ?? 16777216,
+  };
+}
+function Xs(e, t, n) {
+  return {
+    wasmUrl: t,
+    preferWebgl: e.dwfPreferWebgl ?? !0,
+    preferWasm: e.dwfPreferWasm ?? !0,
+    background: n,
+    maxGpuCacheBytes: e.dwfMaxGpuCacheBytes ?? 160 * 1024 * 1024,
+    maxCachedScenes: e.dwfMaxCachedScenes ?? 2,
+    lineWeightMode: e.dwfLineWeightMode ?? 'adaptive',
+    minStrokeCssPx: e.dwfMinStrokeCssPx,
+    maxOverviewStrokeCssPx: e.dwfMaxOverviewStrokeCssPx,
+    minTextCssPx: e.dwfMinTextCssPx,
+    minFilledAreaCssPx: e.dwfMinFilledAreaCssPx,
+  };
+}
+function ye(e, t, n) {
+  typeof n == 'number' && Number.isFinite(n) && (e[t] = n);
+}
+function Zc(e) {
+  return e.endsWith('/') ? e : `${e}/`;
+}
+function Kc(e) {
+  const [t, n, i] = e.map((s) => Math.max(0, Math.min(255, Math.round(s * 255))));
+  return `#${rn(t)}${rn(n)}${rn(i)}`;
+}
+function rn(e) {
+  return e.toString(16).padStart(2, '0');
+}
+function Qc(e) {
+  const t = {};
+  for (const n of e) t[n] = (t[n] ?? 0) + 1;
+  return t;
+}
+function Jc(e) {
+  return Array.from(new Set(e));
+}
+function th(e = {}) {
+  return new dc([new bc(e), new Mc(e), new Xc(e)]);
+}
+function eh(e) {
+  const t = e;
+  return t.nativeRenderer === !0 && typeof t.mount == 'function';
+}
+const nh = {
+  1: '#ff0000',
+  2: '#ffff00',
+  3: '#00ff00',
+  4: '#00ffff',
+  5: '#0000ff',
+  6: '#ff00ff',
+  8: '#808080',
+  9: '#c0c0c0',
+  10: '#ff0000',
+  11: '#ff7f7f',
+  12: '#a50000',
+  13: '#a55252',
+  14: '#7f0000',
+  15: '#7f3f3f',
+  16: '#4c0000',
+  17: '#4c2626',
+  18: '#260000',
+  19: '#261313',
+  20: '#ff3f00',
+  21: '#ff9f7f',
+  22: '#a52900',
+  23: '#a56752',
+  24: '#7f1f00',
+  25: '#7f4f3f',
+  26: '#4c1300',
+  27: '#4c2f26',
+  28: '#260900',
+  29: '#261713',
+  30: '#ff7f00',
+  31: '#ffbf7f',
+  32: '#a55200',
+  33: '#a57c52',
+  34: '#7f3f00',
+  35: '#7f5f3f',
+  36: '#4c2600',
+  37: '#4c3926',
+  38: '#261300',
+  39: '#261c13',
+  40: '#ffbf00',
+  41: '#ffdf7f',
+  42: '#a57c00',
+  43: '#a59152',
+  44: '#7f5f00',
+  45: '#7f6f3f',
+  46: '#4c3900',
+  47: '#4c4226',
+  48: '#261c00',
+  49: '#262113',
+  50: '#ffff00',
+  51: '#ffff7f',
+  52: '#a5a500',
+  53: '#a5a552',
+  54: '#7f7f00',
+  55: '#7f7f3f',
+  56: '#4c4c00',
+  57: '#4c4c26',
+  58: '#262600',
+  59: '#262613',
+  60: '#bfff00',
+  61: '#dfff7f',
+  62: '#7ca500',
+  63: '#91a552',
+  64: '#5f7f00',
+  65: '#6f7f3f',
+  66: '#394c00',
+  67: '#424c26',
+  68: '#1c2600',
+  69: '#212613',
+  70: '#7fff00',
+  71: '#bfff7f',
+  72: '#52a500',
+  73: '#7ca552',
+  74: '#3f7f00',
+  75: '#5f7f3f',
+  76: '#264c00',
+  77: '#394c26',
+  78: '#132600',
+  79: '#1c2613',
+  80: '#3fff00',
+  81: '#9fff7f',
+  82: '#29a500',
+  83: '#67a552',
+  84: '#1f7f00',
+  85: '#4f7f3f',
+  86: '#134c00',
+  87: '#2f4c26',
+  88: '#092600',
+  89: '#172613',
+  90: '#00ff00',
+  91: '#7fff7f',
+  92: '#00a500',
+  93: '#52a552',
+  94: '#007f00',
+  95: '#3f7f3f',
+  96: '#004c00',
+  97: '#264c26',
+  98: '#002600',
+  99: '#132613',
+  100: '#00ff3f',
+  101: '#7fff9f',
+  102: '#00a529',
+  103: '#52a567',
+  104: '#007f1f',
+  105: '#3f7f4f',
+  106: '#004c13',
+  107: '#264c2f',
+  108: '#002609',
+  109: '#132617',
+  110: '#00ff7f',
+  111: '#7fffbf',
+  112: '#00a552',
+  113: '#52a57c',
+  114: '#007f3f',
+  115: '#3f7f5f',
+  116: '#004c26',
+  117: '#264c39',
+  118: '#002613',
+  119: '#13261c',
+  120: '#00ffbf',
+  121: '#7fffdf',
+  122: '#00a57c',
+  123: '#52a591',
+  124: '#007f5f',
+  125: '#3f7f6f',
+  126: '#004c39',
+  127: '#264c42',
+  128: '#00261c',
+  129: '#132621',
+  130: '#00ffff',
+  131: '#7fffff',
+  132: '#00a5a5',
+  133: '#52a5a5',
+  134: '#007f7f',
+  135: '#3f7f7f',
+  136: '#004c4c',
+  137: '#264c4c',
+  138: '#002626',
+  139: '#132626',
+  140: '#00bfff',
+  141: '#7fdfff',
+  142: '#007ca5',
+  143: '#5291a5',
+  144: '#005f7f',
+  145: '#3f6f7f',
+  146: '#00394c',
+  147: '#26424c',
+  148: '#001c26',
+  149: '#132126',
+  150: '#007fff',
+  151: '#7fbfff',
+  152: '#0052a5',
+  153: '#527ca5',
+  154: '#003f7f',
+  155: '#3f5f7f',
+  156: '#00264c',
+  157: '#26394c',
+  158: '#001326',
+  159: '#131c26',
+  160: '#003fff',
+  161: '#7f9fff',
+  162: '#0029a5',
+  163: '#5267a5',
+  164: '#001f7f',
+  165: '#3f4f7f',
+  166: '#00134c',
+  167: '#262f4c',
+  168: '#000926',
+  169: '#131726',
+  170: '#0000ff',
+  171: '#7f7fff',
+  172: '#0000a5',
+  173: '#5252a5',
+  174: '#00007f',
+  175: '#3f3f7f',
+  176: '#00004c',
+  177: '#26264c',
+  178: '#000026',
+  179: '#131326',
+  180: '#3f00ff',
+  181: '#9f7fff',
+  182: '#2900a5',
+  183: '#6752a5',
+  184: '#1f007f',
+  185: '#4f3f7f',
+  186: '#13004c',
+  187: '#2f264c',
+  188: '#090026',
+  189: '#171326',
+  190: '#7f00ff',
+  191: '#bf7fff',
+  192: '#5200a5',
+  193: '#7c52a5',
+  194: '#3f007f',
+  195: '#5f3f7f',
+  196: '#26004c',
+  197: '#39264c',
+  198: '#130026',
+  199: '#1c1326',
+  200: '#bf00ff',
+  201: '#df7fff',
+  202: '#7c00a5',
+  203: '#9152a5',
+  204: '#5f007f',
+  205: '#6f3f7f',
+  206: '#39004c',
+  207: '#42264c',
+  208: '#1c0026',
+  209: '#211326',
+  210: '#ff00ff',
+  211: '#ff7fff',
+  212: '#a500a5',
+  213: '#a552a5',
+  214: '#7f007f',
+  215: '#7f3f7f',
+  216: '#4c004c',
+  217: '#4c264c',
+  218: '#260026',
+  219: '#261326',
+  220: '#ff00bf',
+  221: '#ff7fdf',
+  222: '#a5007c',
+  223: '#a55291',
+  224: '#7f005f',
+  225: '#7f3f6f',
+  226: '#4c0039',
+  227: '#4c2642',
+  228: '#26001c',
+  229: '#261321',
+  230: '#ff007f',
+  231: '#ff7fbf',
+  232: '#a50052',
+  233: '#a5527c',
+  234: '#7f003f',
+  235: '#7f3f5f',
+  236: '#4c0026',
+  237: '#4c2639',
+  238: '#260013',
+  239: '#26131c',
+  240: '#ff003f',
+  241: '#ff7f9f',
+  242: '#a50029',
+  243: '#a55267',
+  244: '#7f001f',
+  245: '#7f3f4f',
+  246: '#4c0013',
+  247: '#4c262f',
+  248: '#260009',
+  249: '#261317',
+  250: '#333333',
+  251: '#505050',
+  252: '#696969',
+  253: '#828282',
+  254: '#bebebe',
+  255: '#ffffff',
+};
+function St(e, t = '#ffffff', n = t) {
+  if (typeof e != 'number' || Number.isNaN(e)) return t;
+  const i = Math.abs(Math.trunc(e));
+  return i === 0 || i === 256 || i === 257 ? t : i === 7 ? n : (nh[i] ?? t);
+}
+function te(e, t = 'rgb') {
+  const n = Math.max(0, Math.trunc(e)) & 16777215,
+    i = (n >> 16) & 255,
+    s = (n >> 8) & 255,
+    o = n & 255;
+  return `rgb(${t === 'rgb' ? i : o}, ${s}, ${t === 'rgb' ? o : i})`;
+}
+function Ot(e) {
+  if (typeof e == 'string') {
+    const t = e.trim();
+    return t
+      ? /^(#|rgb\(|rgba\(|hsl\(|hsla\()/i.test(t)
+        ? (ih(t) ?? t)
+        : {
+            red: '#ff0000',
+            yellow: '#ffff00',
+            green: '#00ff00',
+            cyan: '#00ffff',
+            blue: '#0000ff',
+            magenta: '#ff00ff',
+            white: '#ffffff',
+            black: '#000000',
+            grey: '#808080',
+            gray: '#808080',
+          }[t.toLowerCase()]
+      : void 0;
+  }
+  if (e && typeof e == 'object') {
+    const t = e,
+      n = Number(t.r ?? t.red),
+      i = Number(t.g ?? t.green),
+      s = Number(t.b ?? t.blue),
+      o = Number(t.a ?? t.alpha ?? 1);
+    if ([n, i, s].every(Number.isFinite))
+      return Number.isFinite(o) && o >= 0 && o < 1
+        ? `rgba(${n}, ${i}, ${s}, ${o})`
+        : `rgb(${n}, ${i}, ${s})`;
+  }
+}
+function ih(e) {
+  if (!e) return;
+  const t = e.trim();
+  if (/^#[0-9a-f]{8}$/i.test(t)) {
+    const n = parseInt(t.slice(1, 3), 16) / 255,
+      i = parseInt(t.slice(3, 5), 16),
+      s = parseInt(t.slice(5, 7), 16),
+      o = parseInt(t.slice(7, 9), 16);
+    return n >= 0.999 ? `rgb(${i}, ${s}, ${o})` : `rgba(${i}, ${s}, ${o}, ${En(n)})`;
+  }
+  if (/^#[0-9a-f]{6}$/i.test(t) || /^#[0-9a-f]{3}$/i.test(t)) return t;
+  if (/^sc#/i.test(t)) {
+    const n = t
+        .slice(3)
+        .split(',')
+        .map((a) => Number(a.trim())),
+      [i, s, o, r] = n.length === 4 ? n : [1, ...n];
+    if ([i, s, o, r].every(Number.isFinite))
+      return `rgba(${Math.round(s * 255)}, ${Math.round(o * 255)}, ${Math.round(r * 255)}, ${En(i)})`;
+  }
+}
+function $t(e, t, n = {}) {
+  const i = n.foreground ?? '#ffffff',
+    s = i;
+  let o;
+  const r = Ot(e.trueColor) ?? Ot(e.color) ?? Ot(e.colorName);
+  if ((r && (o = r), !o)) {
+    const a = hh(e, [
+      'trueColor',
+      'true_color',
+      'truecolor',
+      'colorRGB',
+      'colorRgb',
+      'rgbColor',
+      'rgb',
+    ]);
+    typeof a == 'number' && a >= 0 && a <= 16777215 && (o = te(a, n.trueColorByteOrder ?? 'rgb'));
+  }
+  if (!o) {
+    const a = Gs(e.colorIndex, e.colorNumber, e.aci);
+    typeof a == 'number' &&
+      Math.abs(a) <= 257 &&
+      a !== 256 &&
+      a !== 0 &&
+      a !== 257 &&
+      (o = St(a, s, i));
+  }
+  if (!o && typeof e.color == 'number') {
+    const a = Number(e.color);
+    Math.abs(a) <= 257
+      ? a !== 0 && a !== 256 && a !== 257 && (o = St(a, s, i))
+      : (o = te(a, n.trueColorByteOrder ?? 'rgb'));
+  }
+  if (!o) {
+    const a = ch(t, e.layer);
+    o = rh(a, n);
+  }
+  return Hs(o ?? s, n);
+}
+function Sn(e, t, n = {}) {
+  let i;
+  const s = Ot(e.fillColor);
+  if ((s && (i = s), !i && typeof e.fillColor == 'number')) {
+    const o = e.fillColor;
+    i =
+      Math.abs(o) <= 257
+        ? St(o, n.foreground ?? '#ffffff', n.foreground ?? '#ffffff')
+        : te(o, n.trueColorByteOrder ?? 'rgb');
+  }
+  return (
+    !i &&
+      typeof e.fillColorIndex == 'number' &&
+      (i = St(e.fillColorIndex, n.foreground ?? '#ffffff', n.foreground ?? '#ffffff')),
+    i ? Hs(i, n) : void 0
+  );
+}
+function Hs(e, t = {}) {
+  if (t.contrastMode !== 'adaptive') return e;
+  const n = t.background ?? '#0b1020',
+    i = t.foreground ?? '#ffffff';
+  return sh(e, n, i, t.minColorContrast ?? 2.4);
+}
+function sh(e, t, n, i = 2.4) {
+  const s = on(n) ?? { r: 255, g: 255, b: 255, a: 1 },
+    o = on(t) ?? { r: 11, g: 16, b: 32, a: 1 },
+    r = on(e);
+  if (!r) return e;
+  const a = Vi(r, o);
+  if (an(a, o) >= i) return e;
+  const c = kn(o),
+    h = c < 0.5 ? { r: 255, g: 255, b: 255, a: r.a } : { r: 0, g: 0, b: 0, a: r.a };
+  for (const l of [0.25, 0.4, 0.55, 0.7, 0.85, 1]) {
+    const d = lh(r, h, l);
+    if (an(Vi(d, o), o) >= i) return Gi(d);
+  }
+  return an(s, o) >= i ? Gi(s) : c < 0.5 ? '#ffffff' : '#000000';
+}
+function Ys(e) {
+  return e ? e.isVisible !== !1 && e.isFrozen !== !0 : !0;
+}
+function rh(e, t) {
+  if (!e) return;
+  const n = t.foreground ?? '#ffffff',
+    i = Ot(e.trueColor);
+  if (i) return i;
+  if (typeof e.trueColor == 'number' && e.trueColor >= 0 && e.trueColor <= 16777215)
+    return te(e.trueColor, t.trueColorByteOrder ?? 'rgb');
+  const s = Ot(e.color);
+  if (s) return s;
+  if (ah(e.colorIndex)) return St(e.colorIndex, n, n);
+  if (typeof e.color == 'number') {
+    const o = Number(e.color);
+    return Math.abs(o) <= 257 ? St(o, n, n) : te(o, t.trueColorByteOrder ?? 'rgb');
+  }
+  if (typeof e.colorIndex == 'number') return St(e.colorIndex, n, n);
+}
+function oh(e) {
+  return Gs(e.colorIndex, e.colorNumber, e.aci) === 0
+    ? !0
+    : e.trueColor === void 0 && e.color === 0;
+}
+function Vs(e, t, n, i = {}) {
+  if (!oh(e)) return e;
+  const s = $t(t, n, i);
+  return { ...e, color: s, trueColor: void 0, colorIndex: void 0, colorNumber: void 0 };
+}
+function ah(e) {
+  return (
+    typeof e == 'number' &&
+    Number.isFinite(e) &&
+    Math.abs(Math.trunc(e)) >= 1 &&
+    Math.abs(Math.trunc(e)) <= 255
+  );
+}
+function ch(e, t) {
+  if (!(!e || !t))
+    return (
+      e.layers[t] ??
+      e.layers[t.toLowerCase()] ??
+      Object.values(e.layers).find((n) => n.name.toLowerCase() === t.toLowerCase())
+    );
+}
+function Gs(...e) {
+  for (const t of e) if (typeof t == 'number' && Number.isFinite(t)) return t;
+}
+function hh(e, t) {
+  const n = e;
+  for (const i of t) {
+    const s = n[i];
+    if (typeof s == 'number' && Number.isFinite(s)) return s;
+  }
+}
+function on(e) {
+  const t = e.trim().toLowerCase();
+  if (/^#[0-9a-f]{3}$/i.test(t))
+    return {
+      r: parseInt(t[1] + t[1], 16),
+      g: parseInt(t[2] + t[2], 16),
+      b: parseInt(t[3] + t[3], 16),
+      a: 1,
+    };
+  if (/^#[0-9a-f]{6}$/i.test(t))
+    return {
+      r: parseInt(t.slice(1, 3), 16),
+      g: parseInt(t.slice(3, 5), 16),
+      b: parseInt(t.slice(5, 7), 16),
+      a: 1,
+    };
+  const n = t.match(/^rgba?\(([^)]+)\)$/i);
+  if (n) {
+    const i = n[1]
+      .split(/[,\s/]+/)
+      .filter(Boolean)
+      .map((s) => Number(s.replace('%', '')));
+    if (i.length >= 3 && i.slice(0, 3).every(Number.isFinite)) {
+      const s = /%/.test(n[1]);
+      return {
+        r: zt(s ? i[0] * 2.55 : i[0]),
+        g: zt(s ? i[1] * 2.55 : i[1]),
+        b: zt(s ? i[2] * 2.55 : i[2]),
+        a: Number.isFinite(i[3]) ? Math.max(0, Math.min(1, i[3])) : 1,
+      };
+    }
+  }
+}
+function Vi(e, t) {
+  const n = e.a + t.a * (1 - e.a);
+  return n <= 0
+    ? { r: 0, g: 0, b: 0, a: 0 }
+    : {
+        r: (e.r * e.a + t.r * t.a * (1 - e.a)) / n,
+        g: (e.g * e.a + t.g * t.a * (1 - e.a)) / n,
+        b: (e.b * e.a + t.b * t.a * (1 - e.a)) / n,
+        a: n,
+      };
+}
+function lh(e, t, n) {
+  const i = Math.max(0, Math.min(1, n));
+  return { r: e.r + (t.r - e.r) * i, g: e.g + (t.g - e.g) * i, b: e.b + (t.b - e.b) * i, a: e.a };
+}
+function kn(e) {
+  const t = [e.r, e.g, e.b].map((n) => {
+    const i = n / 255;
+    return i <= 0.03928 ? i / 12.92 : ((i + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * t[0] + 0.7152 * t[1] + 0.0722 * t[2];
+}
+function an(e, t) {
+  const n = kn(e),
+    i = kn(t),
+    s = Math.max(n, i),
+    o = Math.min(n, i);
+  return (s + 0.05) / (o + 0.05);
+}
+function Gi(e) {
+  const t = zt(e.r),
+    n = zt(e.g),
+    i = zt(e.b);
+  return e.a < 0.999 ? `rgba(${t}, ${n}, ${i}, ${En(e.a)})` : `rgb(${t}, ${n}, ${i})`;
+}
+function zt(e) {
+  return Math.max(0, Math.min(255, Math.round(e)));
+}
+function En(e) {
+  return Math.round(e * 1e3) / 1e3;
+}
+function cn(e, t) {
+  return {
+    a: e.a * t.a + e.c * t.b,
+    b: e.b * t.a + e.d * t.b,
+    c: e.a * t.c + e.c * t.d,
+    d: e.b * t.c + e.d * t.d,
+    e: e.a * t.e + e.c * t.f + e.e,
+    f: e.b * t.e + e.d * t.f + e.f,
+  };
+}
+function ji(e, t) {
+  return { a: 1, b: 0, c: 0, d: 1, e, f: t };
+}
+function dh(e) {
+  const t = Math.cos(e),
+    n = Math.sin(e);
+  return { a: t, b: n, c: -n, d: t, e: 0, f: 0 };
+}
+function uh(e, t = e) {
+  return { a: e, b: 0, c: 0, d: t, e: 0, f: 0 };
+}
+function Q(e, t) {
+  return {
+    x: e.x * t.a + e.y * t.c + t.e,
+    y: e.x * t.b + e.y * t.d + t.f,
+    z: 'z' in e ? e.z : void 0,
+  };
+}
+function qi(e, t) {
+  if (e) return e.map((n) => ({ cmd: n.cmd, points: n.points.map((i) => Q(i, t)) }));
+}
+function _e(e, t = { x: 0, y: 0 }) {
+  const n = e.insertionPoint ?? { x: 0, y: 0 },
+    i = e.scale,
+    s = Number(typeof i == 'object' && i ? (i.x ?? 1) : (e.scaleX ?? 1)),
+    o = Number(typeof i == 'object' && i ? (i.y ?? s) : (e.scaleY ?? s)),
+    r = Number(e.rotation ?? 0);
+  let a = ji(n.x, n.y);
+  return (
+    (a = cn(a, dh(Number.isFinite(r) ? r : 0))),
+    (a = cn(a, uh(Number.isFinite(s) ? s : 1, Number.isFinite(o) ? o : 1))),
+    (a = cn(a, ji(-t.x, -t.y))),
+    a
+  );
+}
+function Le(e, t) {
+  const n = { ...e, raw: e.raw ?? e };
+  if (
+    (e.startPoint && (n.startPoint = Q(e.startPoint, t)),
+    e.endPoint && (n.endPoint = Q(e.endPoint, t)),
+    e.center && (n.center = Q(e.center, t)),
+    e.insertionPoint && (n.insertionPoint = Q(e.insertionPoint, t)),
+    e.majorAxisEndPoint)
+  ) {
+    const s = Q({ x: 0, y: 0 }, t),
+      o = Q(e.majorAxisEndPoint, t);
+    n.majorAxisEndPoint = { x: o.x - s.x, y: o.y - s.y, z: o.z };
+  }
+  (e.vertices &&
+    (n.vertices = e.vertices.map((s) => ({
+      ...Q(s, t),
+      bulge: s.bulge,
+      startWidth: s.startWidth,
+      endWidth: s.endWidth,
+    }))),
+    e.points && (n.points = e.points.map((s) => Q(s, t))),
+    e.controlPoints && (n.controlPoints = e.controlPoints.map((s) => Q(s, t))),
+    e.fitPoints && (n.fitPoints = e.fitPoints.map((s) => Q(s, t))),
+    e.commands && (n.commands = qi(e.commands, t)),
+    e.loops &&
+      (n.loops = e.loops.map((s) => {
+        var o;
+        return {
+          ...s,
+          vertices: (o = s.vertices) == null ? void 0 : o.map((r) => Q(r, t)),
+          commands: qi(s.commands, t),
+        };
+      })));
+  const i = Math.sqrt(Math.abs(t.a * t.d - t.b * t.c));
+  return (typeof e.radius == 'number' && Number.isFinite(i) && (n.radius = e.radius * i), n);
+}
+const fh = {
+  background: '#0b1020',
+  foreground: '#ffffff',
+  showUnsupportedMarkers: !1,
+  showImagePlaceholders: !0,
+  showPageBounds: !0,
+  minScale: 1e-9,
+  maxScale: 1e9,
+  wheelZoomFactor: 1.14,
+  trueColorByteOrder: 'rgb',
+  maxInsertDepth: 16,
+  contrastMode: 'adaptive',
+  minColorContrast: 2.4,
+  maxCurveSegments: 96,
+  spatialIndexCellCount: 72,
+  maxVerticesPerBatch: 65536,
+  textMinPixelHeight: 4,
+  maxVisibleTextLabels: 2500,
+  powerPreference: 'high-performance',
+  antialias: !0,
+  preserveDrawingBuffer: !1,
+  enableSpatialIndex: !0,
+};
+class Zi {
+  constructor(t, n = {}) {
+    (x(this, 'canvas'),
+      x(this, 'ctx'),
+      x(this, 'opts'),
+      x(this, 'document'),
+      x(this, 'bounds', dt()),
+      x(this, 'view', { centerX: 0, centerY: 0, scale: 1 }),
+      x(this, 'fitScale', 1),
+      x(this, 'dpr', 1),
+      x(this, 'isDragging', !1),
+      x(this, 'lastPointer'),
+      x(this, 'resizeObserver'),
+      x(this, 'imageCache', new Map()),
+      x(this, 'stats', {
+        total: 0,
+        drawn: 0,
+        skipped: 0,
+        byType: {},
+        unsupported: {},
+        renderElapsedMs: 0,
+        backend: 'canvas2d',
+      }),
+      x(this, 'onStats'),
+      x(this, 'onViewChange'));
+    const i = t.getContext('2d');
+    if (!i) throw new Error('Canvas 2D context is not available.');
+    ((this.canvas = t),
+      (this.ctx = i),
+      (this.opts = { ...fh, ...n }),
+      this.canvas.classList.add('cad-viewer-canvas'),
+      this.bindEvents(),
+      typeof ResizeObserver < 'u' &&
+        ((this.resizeObserver = new ResizeObserver(() => this.resize())),
+        this.resizeObserver.observe(t)),
+      this.resize());
+  }
+  destroy() {
+    var t;
+    (t = this.resizeObserver) == null || t.disconnect();
+  }
+  clear() {
+    ((this.document = void 0),
+      (this.bounds = dt()),
+      (this.view = { centerX: 0, centerY: 0, scale: 1 }),
+      (this.fitScale = 1),
+      this.render(),
+      this.emitViewChange());
+  }
+  setDocument(t) {
+    ((this.document = t), (this.bounds = this.computeBounds(t)), this.fitToView());
+  }
+  getDocument() {
+    return this.document;
+  }
+  setOptions(t) {
+    (Object.assign(this.opts, t), this.render(), this.emitViewChange());
+  }
+  getOptions() {
+    return { ...this.opts };
+  }
+  fitToView(t = 0.92) {
+    if (!Yt(this.bounds)) {
+      ((this.view = { centerX: 0, centerY: 0, scale: 1 }),
+        (this.fitScale = 1),
+        this.render(),
+        this.emitViewChange());
+      return;
+    }
+    const n = Math.max(1, this.cssWidth),
+      i = Math.max(1, this.cssHeight),
+      s = Math.max(this.bounds.maxX - this.bounds.minX, 1e-9),
+      o = Math.max(this.bounds.maxY - this.bounds.minY, 1e-9),
+      r = this.clampScale(Math.min(n / s, i / o) * t);
+    ((this.fitScale = r),
+      (this.view = {
+        centerX: (this.bounds.minX + this.bounds.maxX) / 2,
+        centerY: (this.bounds.minY + this.bounds.maxY) / 2,
+        scale: r,
+      }),
+      this.render(),
+      this.emitViewChange());
+  }
+  resize() {
+    this.dpr = Math.max(1, window.devicePixelRatio || 1);
+    const t = Math.max(1, Math.floor(this.cssWidth * this.dpr)),
+      n = Math.max(1, Math.floor(this.cssHeight * this.dpr));
+    ((this.canvas.width !== t || this.canvas.height !== n) &&
+      ((this.canvas.width = t), (this.canvas.height = n)),
+      this.render(),
+      this.emitViewChange());
+  }
+  zoom(t, n) {
+    if (!Number.isFinite(t) || t <= 0) return;
+    const i = n ?? { x: this.cssWidth / 2, y: this.cssHeight / 2 },
+      s = this.screenToWorld(i);
+    this.view.scale = this.clampScale(this.view.scale * t);
+    const o = this.screenToWorld(i);
+    ((this.view.centerX += s.x - o.x),
+      (this.view.centerY += s.y - o.y),
+      this.render(),
+      this.emitViewChange());
+  }
+  zoomIn() {
+    this.zoom(this.opts.wheelZoomFactor);
+  }
+  zoomOut() {
+    this.zoom(1 / this.opts.wheelZoomFactor);
+  }
+  panByScreenDelta(t, n) {
+    !Number.isFinite(t) ||
+      !Number.isFinite(n) ||
+      ((this.view.centerX -= t / this.view.scale),
+      (this.view.centerY += n / this.view.scale),
+      this.render(),
+      this.emitViewChange());
+  }
+  setViewState(t) {
+    if (![t.centerX, t.centerY, t.scale].every(Number.isFinite))
+      throw new Error('Invalid view state.');
+    ((this.view = { ...t, scale: this.clampScale(t.scale) }), this.render(), this.emitViewChange());
+  }
+  getViewState() {
+    return { ...this.view };
+  }
+  getBounds() {
+    return { ...this.bounds };
+  }
+  getStats() {
+    return mh(this.stats);
+  }
+  getZoomRatio() {
+    return Math.abs(this.fitScale) < 1e-12 ? 1 : this.view.scale / this.fitScale;
+  }
+  getZoomPercent() {
+    return this.getZoomRatio() * 100;
+  }
+  worldToScreen(t) {
+    return {
+      x: this.cssWidth / 2 + (t.x - this.view.centerX) * this.view.scale,
+      y: this.cssHeight / 2 - (t.y - this.view.centerY) * this.view.scale,
+    };
+  }
+  screenToWorld(t) {
+    return {
+      x: this.view.centerX + (t.x - this.cssWidth / 2) / this.view.scale,
+      y: this.view.centerY - (t.y - this.cssHeight / 2) / this.view.scale,
+    };
+  }
+  render() {
+    var t, n;
+    const i = performance.now();
+    if (
+      ((this.stats = {
+        total: 0,
+        drawn: 0,
+        skipped: 0,
+        byType: {},
+        unsupported: {},
+        renderElapsedMs: 0,
+        backend: 'canvas2d',
+      }),
+      this.clearCanvas(),
+      this.document)
+    ) {
+      this.opts.showPageBounds &&
+        (t = this.document.pages) != null &&
+        t.length &&
+        this.drawPageBounds(this.document);
+      for (const s of this.document.entities) this.drawEntityTracked(s, 0);
+    }
+    return (
+      (this.stats.renderElapsedMs = performance.now() - i),
+      (n = this.onStats) == null || n.call(this, this.getStats()),
+      this.getStats()
+    );
+  }
+  get cssWidth() {
+    return this.canvas.clientWidth || 1;
+  }
+  get cssHeight() {
+    return this.canvas.clientHeight || 1;
+  }
+  bindEvents() {
+    (this.canvas.addEventListener(
+      'wheel',
+      (n) => {
+        n.preventDefault();
+        const i = n.deltaY < 0 ? this.opts.wheelZoomFactor : 1 / this.opts.wheelZoomFactor;
+        this.zoom(i, { x: n.offsetX, y: n.offsetY });
+      },
+      { passive: !1 },
+    ),
+      this.canvas.addEventListener('pointerdown', (n) => {
+        (this.canvas.setPointerCapture(n.pointerId),
+          (this.isDragging = !0),
+          (this.lastPointer = { x: n.clientX, y: n.clientY }),
+          this.canvas.classList.add('is-dragging'));
+      }),
+      this.canvas.addEventListener('pointermove', (n) => {
+        !this.isDragging ||
+          !this.lastPointer ||
+          (this.panByScreenDelta(n.clientX - this.lastPointer.x, n.clientY - this.lastPointer.y),
+          (this.lastPointer = { x: n.clientX, y: n.clientY }));
+      }));
+    const t = (n) => {
+      (n &&
+        this.canvas.hasPointerCapture(n.pointerId) &&
+        this.canvas.releasePointerCapture(n.pointerId),
+        (this.isDragging = !1),
+        (this.lastPointer = void 0),
+        this.canvas.classList.remove('is-dragging'));
+    };
+    (this.canvas.addEventListener('pointerup', t),
+      this.canvas.addEventListener('pointercancel', () => t()));
+  }
+  clearCanvas() {
+    const t = this.ctx;
+    (t.save(),
+      t.setTransform(this.dpr, 0, 0, this.dpr, 0, 0),
+      t.clearRect(0, 0, this.cssWidth, this.cssHeight),
+      (t.fillStyle = this.opts.background),
+      t.fillRect(0, 0, this.cssWidth, this.cssHeight),
+      t.restore());
+  }
+  drawPageBounds(t) {
+    const n = this.ctx;
+    (n.save(),
+      n.setTransform(this.dpr, 0, 0, this.dpr, 0, 0),
+      (n.strokeStyle = 'rgba(148, 163, 184, 0.35)'),
+      (n.lineWidth = 1),
+      n.setLineDash([8, 6]));
+    for (const i of t.pages ?? []) {
+      const s = this.worldToScreen({ x: 0, y: 0 }),
+        o = this.worldToScreen({ x: i.width, y: i.height });
+      n.strokeRect(
+        Math.min(s.x, o.x),
+        Math.min(s.y, o.y),
+        Math.abs(o.x - s.x),
+        Math.abs(o.y - s.y),
+      );
+    }
+    n.restore();
+  }
+  drawEntityTracked(t, n) {
+    this.stats.total++;
+    const i = String(t.type ?? 'UNKNOWN').toUpperCase();
+    this.stats.byType[i] = (this.stats.byType[i] ?? 0) + 1;
+    const s = this.lookupLayer(t.layer);
+    if (t.isVisible === !1 || !Ys(s)) {
+      this.stats.skipped++;
+      return;
+    }
+    this.drawEntity(t, i, n);
+  }
+  drawEntity(t, n, i) {
+    switch (t.kind ?? Xt(n)) {
+      case 'line':
+        return this.drawLine(t);
+      case 'circle':
+        return this.drawCircle(t);
+      case 'arc':
+        return this.drawArc(t);
+      case 'polyline':
+        return this.drawPolyline(t);
+      case 'ellipse':
+        return this.drawEllipse(t);
+      case 'text':
+        return this.drawText(t);
+      case 'point':
+        return this.drawPoint(t);
+      case 'insert':
+        return this.drawInsert(t, i);
+      case 'solid':
+        return this.drawSolid(t);
+      case 'hatch':
+        return this.drawHatch(t);
+      case 'spline':
+        return this.drawSpline(t);
+      case 'path':
+        return this.drawPath(t);
+      case 'image':
+        return this.drawImage(t);
+      case 'viewport':
+        return this.markSkipped(n);
+      default:
+        ((this.stats.unsupported[n] = (this.stats.unsupported[n] ?? 0) + 1),
+          this.stats.skipped++,
+          this.opts.showUnsupportedMarkers && this.drawUnsupportedMarker(t));
+    }
+  }
+  beginStyledPath(t, n = !1) {
+    const i = this.ctx;
+    (i.save(), i.setTransform(this.dpr, 0, 0, this.dpr, 0, 0));
+    const s = $t(t, this.document, {
+        foreground: this.opts.foreground,
+        background: this.opts.background,
+        trueColorByteOrder: this.opts.trueColorByteOrder,
+        contrastMode: this.opts.contrastMode,
+        minColorContrast: this.opts.minColorContrast,
+      }),
+      o =
+        Sn(t, this.document, {
+          foreground: this.opts.foreground,
+          background: this.opts.background,
+          trueColorByteOrder: this.opts.trueColorByteOrder,
+          contrastMode: this.opts.contrastMode,
+          minColorContrast: this.opts.minColorContrast,
+        }) ?? s;
+    ((i.strokeStyle = s),
+      (i.fillStyle = n ? o : s),
+      (i.globalAlpha = _t(Number(t.opacity ?? 1), 0, 1)),
+      (i.lineCap = 'round'),
+      (i.lineJoin = 'round'));
+    const r = typeof t.lineweight == 'number' && t.lineweight > 0 ? t.lineweight : 0;
+    ((i.lineWidth = Math.max(1, Math.min(12, r > 0 ? r / 30 : 1))), i.beginPath());
+  }
+  finishStroke() {
+    (this.ctx.stroke(), this.ctx.restore(), this.stats.drawn++);
+  }
+  finishFillStroke(t = !1) {
+    (t && this.ctx.fill(), this.ctx.stroke(), this.ctx.restore(), this.stats.drawn++);
+  }
+  drawLine(t) {
+    const n = t.startPoint,
+      i = t.endPoint;
+    if (!P(n) || !P(i)) return this.markSkipped('LINE');
+    const s = this.worldToScreen(n),
+      o = this.worldToScreen(i);
+    (this.beginStyledPath(t),
+      this.ctx.moveTo(s.x, s.y),
+      this.ctx.lineTo(o.x, o.y),
+      this.finishStroke());
+  }
+  drawCircle(t) {
+    const n = t.center,
+      i = Number(t.radius);
+    if (!P(n) || !Number.isFinite(i)) return this.markSkipped('CIRCLE');
+    const s = this.worldToScreen(n);
+    (this.beginStyledPath(t),
+      this.ctx.arc(s.x, s.y, Math.abs(i) * this.view.scale, 0, Math.PI * 2),
+      this.finishStroke());
+  }
+  drawArc(t) {
+    const n = t.center,
+      i = Number(t.radius),
+      s = Number(t.startAngle),
+      o = Number(t.endAngle);
+    if (!P(n) || !Number.isFinite(i) || !Number.isFinite(s) || !Number.isFinite(o))
+      return this.markSkipped('ARC');
+    this.strokeWorldPolyline(t, Te(O(n), i, s, o, !0), !1);
+  }
+  drawPolyline(t) {
+    const n = t.vertices ?? t.points;
+    if (!Array.isArray(n) || n.length < 2) return this.markSkipped(String(t.type));
+    const i = !!t.isClosed || (Number(t.flag) & 1) === 1,
+      s = [],
+      o = i ? n.length : n.length - 1;
+    for (let r = 0; r < o; r++) {
+      const a = n[r],
+        c = n[(r + 1) % n.length];
+      if (!P(a) || !P(c)) continue;
+      const h = zs(a, c, Number(a.bulge ?? 0));
+      (s.length > 0 && h.shift(), s.push(...h));
+    }
+    this.strokeWorldPolyline(t, s, i);
+  }
+  drawEllipse(t) {
+    const n = t.center,
+      i = t.majorAxisEndPoint,
+      s = Number(t.axisRatio ?? 1);
+    if (!P(n) || !P(i)) return this.markSkipped('ELLIPSE');
+    const o = Ie(n, i, s, Number(t.startAngle ?? 0), Number(t.endAngle ?? Math.PI * 2)),
+      r =
+        Math.abs(Number(t.endAngle ?? Math.PI * 2) - Number(t.startAngle ?? 0)) >=
+        Math.PI * 2 - 1e-6;
+    this.strokeWorldPolyline(t, o, r);
+  }
+  drawPoint(t) {
+    const n = t.point ?? t.location ?? t.center ?? t.insertionPoint;
+    if (!P(n)) return this.markSkipped('POINT');
+    const i = this.worldToScreen(n);
+    (this.beginStyledPath(t),
+      this.ctx.moveTo(i.x - 3, i.y),
+      this.ctx.lineTo(i.x + 3, i.y),
+      this.ctx.moveTo(i.x, i.y - 3),
+      this.ctx.lineTo(i.x, i.y + 3),
+      this.finishStroke());
+  }
+  drawText(t) {
+    const n = t.insertionPoint ?? t.startPoint ?? t.center,
+      i = Us(String(t.text ?? t.value ?? '')),
+      s = Number(t.textHeight ?? t.height ?? 1);
+    if (!P(n) || !i) return this.markSkipped(String(t.type));
+    this.drawTextAt(t, n, i, s, Number(t.rotation ?? 0));
+  }
+  drawInsert(t, n) {
+    const i = this.lookupBlock(t.blockName ?? t.name);
+    if (i && n < this.opts.maxInsertDepth) {
+      const a = _e(t, i.basePoint ?? { x: 0, y: 0 });
+      for (const c of i.entities) {
+        const h = Vs(c, t, this.document, {
+          foreground: this.opts.foreground,
+          background: this.opts.background,
+          trueColorByteOrder: this.opts.trueColorByteOrder,
+          contrastMode: this.opts.contrastMode,
+          minColorContrast: this.opts.minColorContrast,
+        });
+        this.drawEntityTracked(Le(h, a), n + 1);
+      }
+      return;
+    }
+    const s = t.insertionPoint;
+    if (!P(s)) return this.markSkipped('INSERT');
+    const o = this.worldToScreen(s);
+    this.beginStyledPath(t);
+    const r = 5;
+    if (
+      (this.ctx.rect(o.x - r, o.y - r, r * 2, r * 2), this.finishStroke(), Array.isArray(t.attribs))
+    )
+      for (const a of t.attribs) this.drawText(a);
+  }
+  drawSolid(t) {
+    const n = t.vertices ?? t.points;
+    if (!Array.isArray(n) || n.length < 3) return this.markSkipped(String(t.type));
+    this.beginStyledPath(t, !0);
+    const i = this.worldToScreen(n[0]);
+    this.ctx.moveTo(i.x, i.y);
+    for (const s of n.slice(1)) {
+      if (!P(s)) continue;
+      const o = this.worldToScreen(s);
+      this.ctx.lineTo(o.x, o.y);
+    }
+    (this.ctx.closePath(), this.finishFillStroke(!0));
+  }
+  drawHatch(t) {
+    var n, i;
+    const s = t.loops;
+    if (!Array.isArray(s) || s.length === 0) return this.markSkipped('HATCH');
+    this.beginStyledPath(t, !0);
+    for (const o of s)
+      if ((n = o.commands) != null && n.length) this.addPathCommands(o.commands);
+      else if ((i = o.vertices) != null && i.length) {
+        const r = this.worldToScreen(o.vertices[0]);
+        this.ctx.moveTo(r.x, r.y);
+        for (const a of o.vertices.slice(1)) {
+          const c = this.worldToScreen(a);
+          this.ctx.lineTo(c.x, c.y);
+        }
+        this.ctx.closePath();
+      }
+    this.finishFillStroke(
+      !!Sn(t, this.document, {
+        foreground: this.opts.foreground,
+        background: this.opts.background,
+        trueColorByteOrder: this.opts.trueColorByteOrder,
+        contrastMode: this.opts.contrastMode,
+        minColorContrast: this.opts.minColorContrast,
+      }),
+    );
+  }
+  drawSpline(t) {
+    var n;
+    const i = (n = t.fitPoints) != null && n.length ? t.fitPoints : t.controlPoints;
+    if (!i || i.length < 2) return this.markSkipped('SPLINE');
+    this.strokeWorldPolyline(t, i, !!t.isClosed);
+  }
+  drawPath(t) {
+    var n;
+    if (!((n = t.commands) != null && n.length)) return this.markSkipped(String(t.type));
+    (this.beginStyledPath(t, !!t.fillColor),
+      this.addPathCommands(t.commands),
+      this.finishFillStroke(!!t.fillColor));
+  }
+  addPathCommands(t) {
+    for (const n of t)
+      if (n.cmd === 'M') {
+        const i = this.worldToScreen(n.points[0]);
+        this.ctx.moveTo(i.x, i.y);
+      } else if (n.cmd === 'L') {
+        const i = this.worldToScreen(n.points[0]);
+        this.ctx.lineTo(i.x, i.y);
+      } else if (n.cmd === 'C') {
+        const [i, s, o] = n.points.map((r) => this.worldToScreen(r));
+        this.ctx.bezierCurveTo(i.x, i.y, s.x, s.y, o.x, o.y);
+      } else if (n.cmd === 'Q') {
+        const [i, s] = n.points.map((o) => this.worldToScreen(o));
+        this.ctx.quadraticCurveTo(i.x, i.y, s.x, s.y);
+      } else n.cmd === 'Z' && this.ctx.closePath();
+  }
+  drawImage(t) {
+    const n = t.insertionPoint;
+    if (!P(n)) return this.markSkipped(String(t.type));
+    const i = Number(t.width ?? 32),
+      s = Number(t.height ?? 32),
+      o = this.worldToScreen(n),
+      r = this.worldToScreen({ x: n.x + i, y: n.y - s }),
+      a = Math.min(o.x, r.x),
+      c = Math.min(o.y, r.y),
+      h = Math.abs(r.x - o.x),
+      l = Math.abs(r.y - o.y),
+      d = t.imageDataUrl;
+    if (d) {
+      const u = this.getImage(d);
+      if (u.complete && u.naturalWidth > 0) {
+        (this.ctx.save(),
+          this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0),
+          this.ctx.drawImage(u, a, c, h, l),
+          this.ctx.restore(),
+          this.stats.drawn++);
+        return;
+      }
+      u.onload = () => this.render();
+    }
+    if (!this.opts.showImagePlaceholders) return this.markSkipped(String(t.type));
+    (this.beginStyledPath(t),
+      this.ctx.rect(a, c, h, l),
+      this.ctx.moveTo(a, c),
+      this.ctx.lineTo(a + h, c + l),
+      this.ctx.moveTo(a + h, c),
+      this.ctx.lineTo(a, c + l),
+      this.finishStroke());
+  }
+  getImage(t) {
+    let n = this.imageCache.get(t);
+    return (n || ((n = new Image()), (n.src = t), this.imageCache.set(t, n)), n);
+  }
+  drawUnsupportedMarker(t) {
+    const n = this.entityAnchor(t);
+    if (!n) return;
+    const i = this.worldToScreen(n);
+    (this.beginStyledPath(t),
+      this.ctx.moveTo(i.x - 4, i.y - 4),
+      this.ctx.lineTo(i.x + 4, i.y + 4),
+      this.ctx.moveTo(i.x + 4, i.y - 4),
+      this.ctx.lineTo(i.x - 4, i.y + 4),
+      this.finishStroke());
+  }
+  drawTextAt(t, n, i, s, o) {
+    const r = this.ctx,
+      a = this.worldToScreen(n);
+    (r.save(), r.setTransform(this.dpr, 0, 0, this.dpr, 0, 0), r.translate(a.x, a.y), r.rotate(-o));
+    const c = Math.max(4, Math.min(256, Math.abs(s) * this.view.scale));
+    ((r.font = `${c}px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`),
+      (r.fillStyle = $t(t, this.document, {
+        foreground: this.opts.foreground,
+        background: this.opts.background,
+        trueColorByteOrder: this.opts.trueColorByteOrder,
+        contrastMode: this.opts.contrastMode,
+        minColorContrast: this.opts.minColorContrast,
+      })),
+      (r.globalAlpha = _t(Number(t.opacity ?? 1), 0, 1)),
+      (r.textBaseline = 'alphabetic'));
+    for (const [h, l] of i.split(/\r?\n/g).entries()) r.fillText(l, 0, h * c * 1.22);
+    (r.restore(), this.stats.drawn++);
+  }
+  strokeWorldPolyline(t, n, i) {
+    const s = n.filter(P);
+    if (s.length < 2) return this.markSkipped(String(t.type));
+    this.beginStyledPath(t);
+    const o = this.worldToScreen(s[0]);
+    this.ctx.moveTo(o.x, o.y);
+    for (const r of s.slice(1)) {
+      const a = this.worldToScreen(r);
+      this.ctx.lineTo(a.x, a.y);
+    }
+    (i && this.ctx.closePath(), this.finishStroke());
+  }
+  markSkipped(t) {
+    (this.stats.skipped++, (this.stats.unsupported[t] = this.stats.unsupported[t] ?? 0));
+  }
+  entityAnchor(t) {
+    for (const n of ['startPoint', 'insertionPoint', 'center', 'point', 'location']) {
+      const i = t[n];
+      if (P(i)) return O(i);
+    }
+    if (Array.isArray(t.vertices) && P(t.vertices[0])) return O(t.vertices[0]);
+    if (Array.isArray(t.commands) && t.commands.length) {
+      const n = t.commands.find((i) => i.points.length > 0);
+      if (n) return O(n.points[0]);
+    }
+  }
+  computeBounds(t) {
+    var n;
+    const i = dt();
+    if ((n = t.pages) != null && n.length)
+      for (const s of t.pages) (L(i, { x: 0, y: 0 }), L(i, { x: s.width, y: s.height }));
+    for (const s of t.entities) this.includeEntityBounds(i, s, 0);
+    return $s(i);
+  }
+  includeEntityBounds(t, n, i) {
+    const s = String(n.type ?? '').toUpperCase(),
+      o = n.kind ?? Xt(s);
+    if (o === 'insert') {
+      const r = this.lookupBlock(n.blockName ?? n.name);
+      if (r && i < this.opts.maxInsertDepth) {
+        const a = _e(n, r.basePoint ?? { x: 0, y: 0 });
+        for (const c of r.entities) this.includeEntityBounds(t, Le(c, a), i + 1);
+        return;
+      }
+    }
+    if (o === 'line') (P(n.startPoint) && L(t, n.startPoint), P(n.endPoint) && L(t, n.endPoint));
+    else if (o === 'circle' || o === 'arc')
+      P(n.center) && Number.isFinite(n.radius) && Os(t, n.center, Number(n.radius));
+    else if (o === 'polyline' || o === 'solid' || o === 'spline')
+      for (const r of [
+        ...(n.vertices ?? []),
+        ...(n.points ?? []),
+        ...(n.controlPoints ?? []),
+        ...(n.fitPoints ?? []),
+      ])
+        P(r) && L(t, r);
+    else if (o === 'ellipse')
+      P(n.center) &&
+        P(n.majorAxisEndPoint) &&
+        Ie(
+          n.center,
+          n.majorAxisEndPoint,
+          Number(n.axisRatio ?? 1),
+          Number(n.startAngle ?? 0),
+          Number(n.endAngle ?? Math.PI * 2),
+        ).forEach((r) => L(t, r));
+    else if (o === 'path') for (const r of n.commands ?? []) for (const a of r.points) L(t, a);
+    else if (o === 'hatch')
+      for (const r of n.loops ?? []) {
+        for (const a of r.vertices ?? []) L(t, a);
+        for (const a of r.commands ?? []) for (const c of a.points) L(t, c);
+      }
+    else {
+      const r = this.entityAnchor(n);
+      r && L(t, r);
+    }
+  }
+  lookupLayer(t) {
+    if (!(!this.document || !t))
+      return (
+        this.document.layers[t] ??
+        this.document.layers[t.toLowerCase()] ??
+        Object.values(this.document.layers).find((n) => n.name.toLowerCase() === t.toLowerCase())
+      );
+  }
+  lookupBlock(t) {
+    if (!(!this.document || !t))
+      return (
+        this.document.blocks[t] ??
+        this.document.blocks[t.toLowerCase()] ??
+        Object.values(this.document.blocks).find((n) => n.name.toLowerCase() === t.toLowerCase())
+      );
+  }
+  clampScale(t) {
+    return Math.min(this.opts.maxScale, Math.max(this.opts.minScale, t));
+  }
+  emitViewChange() {
+    var t;
+    (t = this.onViewChange) == null ||
+      t.call(this, {
+        view: this.getViewState(),
+        fitScale: this.fitScale,
+        zoomRatio: this.getZoomRatio(),
+        zoomPercent: this.getZoomPercent(),
+        bounds: this.getBounds(),
+      });
+  }
+}
+function mh(e) {
+  return {
+    total: e.total,
+    drawn: e.drawn,
+    skipped: e.skipped,
+    byType: { ...e.byType },
+    unsupported: { ...e.unsupported },
+    renderElapsedMs: e.renderElapsedMs,
+    backend: e.backend,
+    primitiveCount: e.primitiveCount,
+    visiblePrimitiveCount: e.visiblePrimitiveCount,
+    culledPrimitiveCount: e.culledPrimitiveCount,
+    gpuMemoryBytes: e.gpuMemoryBytes,
+    buildElapsedMs: e.buildElapsedMs,
+  };
+}
+const ph = {
+  background: '#0b1020',
+  foreground: '#ffffff',
+  showUnsupportedMarkers: !1,
+  showImagePlaceholders: !0,
+  showPageBounds: !0,
+  minScale: 1e-9,
+  maxScale: 1e9,
+  wheelZoomFactor: 1.14,
+  trueColorByteOrder: 'rgb',
+  maxInsertDepth: 16,
+  contrastMode: 'adaptive',
+  minColorContrast: 2.4,
+  maxCurveSegments: 96,
+  spatialIndexCellCount: 72,
+  maxVerticesPerBatch: 65536,
+  textMinPixelHeight: 4,
+  maxVisibleTextLabels: 2500,
+  powerPreference: 'high-performance',
+  antialias: !0,
+  preserveDrawingBuffer: !1,
+  enableSpatialIndex: !0,
+};
+class Ki {
+  constructor(t, n = {}) {
+    (x(this, 'canvas'),
+      x(this, 'backend', 'webgl'),
+      x(this, 'gl'),
+      x(this, 'program'),
+      x(this, 'eventController', new AbortController()),
+      x(this, 'imageCache', new Map()),
+      x(this, 'opts'),
+      x(this, 'document'),
+      x(this, 'bounds', dt()),
+      x(this, 'view', { centerX: 0, centerY: 0, scale: 1 }),
+      x(this, 'fitScale', 1),
+      x(this, 'dpr', 1),
+      x(this, 'isDragging', !1),
+      x(this, 'lastPointer'),
+      x(this, 'resizeObserver'),
+      x(this, 'overlayCanvas'),
+      x(this, 'overlayCtx'),
+      x(this, 'scene'),
+      x(this, 'stats', {
+        total: 0,
+        drawn: 0,
+        skipped: 0,
+        byType: {},
+        unsupported: {},
+        renderElapsedMs: 0,
+        backend: 'webgl',
+        primitiveCount: 0,
+        visiblePrimitiveCount: 0,
+        culledPrimitiveCount: 0,
+        gpuMemoryBytes: 0,
+        buildElapsedMs: 0,
+      }),
+      x(this, 'rafHandle', 0),
+      x(this, 'onStats'),
+      x(this, 'onViewChange'));
+    const i = gh(t, n);
+    if (!i)
+      throw new Error(
+        'WebGL is not available. Use renderer: "canvas2d" to force the Canvas2D fallback.',
+      );
+    ((this.canvas = t),
+      (this.gl = i),
+      (this.program = wh(i)),
+      (this.opts = { ...ph, ...n }),
+      this.canvas.classList.add('cad-viewer-canvas', 'cad-viewer-webgl-canvas'),
+      this.createOverlayCanvas(),
+      this.bindEvents(),
+      typeof ResizeObserver < 'u' &&
+        ((this.resizeObserver = new ResizeObserver(() => this.resize())),
+        this.resizeObserver.observe(t)),
+      this.resize());
+  }
+  static isSupported() {
+    return js();
+  }
+  destroy() {
+    var t, n;
+    (this.eventController.abort(),
+      (t = this.resizeObserver) == null || t.disconnect(),
+      this.cancelScheduledRender(),
+      this.disposeScene(),
+      (n = this.overlayCanvas) == null || n.remove());
+  }
+  clear() {
+    ((this.document = void 0),
+      (this.bounds = dt()),
+      (this.view = { centerX: 0, centerY: 0, scale: 1 }),
+      (this.fitScale = 1),
+      this.disposeScene(),
+      this.render(),
+      this.emitViewChange());
+  }
+  setDocument(t) {
+    ((this.document = t), (this.bounds = Ph(t, this.opts)), this.disposeScene());
+    const n = yh(t, this.opts, this.bounds);
+    ((this.scene = bh(this.gl, n)), (this.stats = kh(this.scene, 0)), this.fitToView());
+  }
+  getDocument() {
+    return this.document;
+  }
+  setOptions(t) {
+    const n = Sh(this.opts, t);
+    if (((this.opts = { ...this.opts, ...t }), n && this.document)) {
+      this.setDocument(this.document);
+      return;
+    }
+    (this.render(), this.emitViewChange());
+  }
+  getOptions() {
+    return { ...this.opts };
+  }
+  fitToView(t = 0.92) {
+    if (!Yt(this.bounds)) {
+      ((this.view = { centerX: 0, centerY: 0, scale: 1 }),
+        (this.fitScale = 1),
+        this.render(),
+        this.emitViewChange());
+      return;
+    }
+    const n = Math.max(1, this.cssWidth),
+      i = Math.max(1, this.cssHeight),
+      s = Math.max(this.bounds.maxX - this.bounds.minX, 1e-9),
+      o = Math.max(this.bounds.maxY - this.bounds.minY, 1e-9),
+      r = this.clampScale(Math.min(n / s, i / o) * t);
+    ((this.fitScale = r),
+      (this.view = {
+        centerX: (this.bounds.minX + this.bounds.maxX) / 2,
+        centerY: (this.bounds.minY + this.bounds.maxY) / 2,
+        scale: r,
+      }),
+      this.render(),
+      this.emitViewChange());
+  }
+  resize() {
+    this.dpr = Math.max(1, window.devicePixelRatio || 1);
+    const t = Math.max(1, Math.floor(this.cssWidth * this.dpr)),
+      n = Math.max(1, Math.floor(this.cssHeight * this.dpr));
+    ((this.canvas.width !== t || this.canvas.height !== n) &&
+      ((this.canvas.width = t), (this.canvas.height = n)),
+      this.resizeOverlay(t, n),
+      this.render(),
+      this.emitViewChange());
+  }
+  zoom(t, n) {
+    if (!Number.isFinite(t) || t <= 0) return;
+    const i = n ?? { x: this.cssWidth / 2, y: this.cssHeight / 2 },
+      s = this.screenToWorld(i);
+    this.view.scale = this.clampScale(this.view.scale * t);
+    const o = this.screenToWorld(i);
+    ((this.view.centerX += s.x - o.x),
+      (this.view.centerY += s.y - o.y),
+      this.scheduleRender(),
+      this.emitViewChange());
+  }
+  zoomIn() {
+    this.zoom(this.opts.wheelZoomFactor);
+  }
+  zoomOut() {
+    this.zoom(1 / this.opts.wheelZoomFactor);
+  }
+  panByScreenDelta(t, n) {
+    !Number.isFinite(t) ||
+      !Number.isFinite(n) ||
+      ((this.view.centerX -= t / this.view.scale),
+      (this.view.centerY += n / this.view.scale),
+      this.scheduleRender(),
+      this.emitViewChange());
+  }
+  setViewState(t) {
+    if (![t.centerX, t.centerY, t.scale].every(Number.isFinite))
+      throw new Error('Invalid view state.');
+    ((this.view = { ...t, scale: this.clampScale(t.scale) }), this.render(), this.emitViewChange());
+  }
+  getViewState() {
+    return { ...this.view };
+  }
+  getBounds() {
+    return { ...this.bounds };
+  }
+  getStats() {
+    return Eh(this.stats);
+  }
+  getZoomRatio() {
+    return Math.abs(this.fitScale) < 1e-12 ? 1 : this.view.scale / this.fitScale;
+  }
+  getZoomPercent() {
+    return this.getZoomRatio() * 100;
+  }
+  worldToScreen(t) {
+    return {
+      x: this.cssWidth / 2 + (t.x - this.view.centerX) * this.view.scale,
+      y: this.cssHeight / 2 - (t.y - this.view.centerY) * this.view.scale,
+    };
+  }
+  screenToWorld(t) {
+    return {
+      x: this.view.centerX + (t.x - this.cssWidth / 2) / this.view.scale,
+      y: this.view.centerY - (t.y - this.cssHeight / 2) / this.view.scale,
+    };
+  }
+  render() {
+    return (this.cancelScheduledRender(), this.renderNow());
+  }
+  renderNow() {
+    var t;
+    const n = performance.now(),
+      i = this.gl;
+    i.viewport(0, 0, this.canvas.width, this.canvas.height);
+    const s = An(this.opts.background, [11, 16, 32, 255]);
+    (i.clearColor(s[0] / 255, s[1] / 255, s[2] / 255, s[3] / 255),
+      i.clear(i.COLOR_BUFFER_BIT),
+      i.disable(i.DEPTH_TEST),
+      i.enable(i.BLEND),
+      i.blendFunc(i.SRC_ALPHA, i.ONE_MINUS_SRC_ALPHA));
+    let o = 0,
+      r = 0;
+    const a = this.scene,
+      c = this.visibleWorldBounds();
+    if (a) {
+      (i.useProgram(this.program.program),
+        i.uniform2f(
+          this.program.uViewCenter,
+          this.view.centerX - a.origin.x,
+          this.view.centerY - a.origin.y,
+        ),
+        i.uniform1f(this.program.uScale, this.view.scale * this.dpr),
+        i.uniform2f(this.program.uViewport, this.canvas.width, this.canvas.height),
+        i.uniform1f(this.program.uPointSize, Math.max(2, Math.min(12, 4 * this.dpr))));
+      const l = this.drawBatches(a.lineBatches, i.LINES, c);
+      ((o += l.visible), (r += l.culled));
+      const d = this.drawBatches(a.triangleBatches, i.TRIANGLES, c);
+      ((o += d.visible), (r += d.culled));
+      const u = this.drawBatches(a.pointBatches, i.POINTS, c);
+      ((o += u.visible), (r += u.culled));
+    }
+    this.renderOverlay(c);
+    const h = performance.now() - n;
+    return (
+      (this.stats = a
+        ? {
+            ...a.stats,
+            renderElapsedMs: h,
+            backend: 'webgl',
+            primitiveCount: a.primitiveCount,
+            visiblePrimitiveCount: o,
+            culledPrimitiveCount: r,
+            gpuMemoryBytes: a.gpuMemoryBytes,
+            buildElapsedMs: a.buildElapsedMs,
+          }
+        : {
+            total: 0,
+            drawn: 0,
+            skipped: 0,
+            byType: {},
+            unsupported: {},
+            renderElapsedMs: h,
+            backend: 'webgl',
+            primitiveCount: 0,
+            visiblePrimitiveCount: 0,
+            culledPrimitiveCount: 0,
+            gpuMemoryBytes: 0,
+            buildElapsedMs: 0,
+          }),
+      (t = this.onStats) == null || t.call(this, this.getStats()),
+      this.getStats()
+    );
+  }
+  drawBatches(t, n, i) {
+    const s = this.gl;
+    let o = 0,
+      r = 0;
+    for (const a of t) {
+      if (!dn(a.bounds, i)) {
+        r += a.primitiveCount;
+        continue;
+      }
+      (s.bindBuffer(s.ARRAY_BUFFER, a.positionBuffer),
+        s.enableVertexAttribArray(this.program.aPosition),
+        s.vertexAttribPointer(this.program.aPosition, 2, s.FLOAT, !1, 0, 0),
+        s.bindBuffer(s.ARRAY_BUFFER, a.colorBuffer),
+        s.enableVertexAttribArray(this.program.aColor),
+        s.vertexAttribPointer(this.program.aColor, 4, s.UNSIGNED_BYTE, !0, 0, 0),
+        s.drawArrays(n, 0, a.vertexCount),
+        (o += a.primitiveCount));
+    }
+    return { visible: o, culled: r };
+  }
+  scheduleRender() {
+    this.rafHandle ||
+      (this.rafHandle = window.requestAnimationFrame(() => {
+        ((this.rafHandle = 0), this.renderNow());
+      }));
+  }
+  cancelScheduledRender() {
+    this.rafHandle && (window.cancelAnimationFrame(this.rafHandle), (this.rafHandle = 0));
+  }
+  renderOverlay(t) {
+    var n, i;
+    const s = this.overlayCtx,
+      o = this.overlayCanvas;
+    !s ||
+      !o ||
+      (s.save(),
+      s.setTransform(this.dpr, 0, 0, this.dpr, 0, 0),
+      s.clearRect(0, 0, this.cssWidth, this.cssHeight),
+      this.opts.showPageBounds &&
+        (i = (n = this.document) == null ? void 0 : n.pages) != null &&
+        i.length &&
+        this.drawPageBoundsOverlay(s),
+      this.scene &&
+        (this.drawImagesOverlay(s, this.scene.imageItems, t),
+        this.drawTextOverlay(s, this.scene.textItems, t)),
+      s.restore());
+  }
+  drawPageBoundsOverlay(t) {
+    var n, i;
+    if ((i = (n = this.document) == null ? void 0 : n.pages) != null && i.length) {
+      (t.save(),
+        (t.strokeStyle = 'rgba(148, 163, 184, 0.34)'),
+        (t.lineWidth = 1),
+        t.setLineDash([8, 6]));
+      for (const s of this.document.pages) {
+        const o = this.worldToScreen({ x: 0, y: 0 }),
+          r = this.worldToScreen({ x: s.width, y: s.height });
+        t.strokeRect(
+          Math.min(o.x, r.x),
+          Math.min(o.y, r.y),
+          Math.abs(r.x - o.x),
+          Math.abs(r.y - o.y),
+        );
+      }
+      t.restore();
+    }
+  }
+  drawTextOverlay(t, n, i) {
+    const s = this.opts.maxVisibleTextLabels;
+    let o = 0;
+    for (const r of n) {
+      if (o >= s) break;
+      if (!dn(r.bounds, i)) continue;
+      const a = Math.abs(r.height) * this.view.scale;
+      if (a < this.opts.textMinPixelHeight) continue;
+      const c = this.worldToScreen(r.point);
+      if (c.x < -512 || c.y < -512 || c.x > this.cssWidth + 512 || c.y > this.cssHeight + 512)
+        continue;
+      (t.save(), t.translate(c.x, c.y), t.rotate(-r.rotation));
+      const h = Math.max(4, Math.min(256, a));
+      ((t.font = `${h}px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`),
+        (t.fillStyle = r.color),
+        (t.globalAlpha = r.opacity),
+        (t.textBaseline = 'alphabetic'));
+      for (const [l, d] of r.text.split(/\r?\n/g).entries()) t.fillText(d, 0, l * h * 1.22);
+      (t.restore(), o++);
+    }
+  }
+  drawImagesOverlay(t, n, i) {
+    for (const s of n) {
+      if (!dn(s.bounds, i)) continue;
+      const o = this.worldToScreen(s.point),
+        r = this.worldToScreen({ x: s.point.x + s.width, y: s.point.y - s.height }),
+        a = Math.min(o.x, r.x),
+        c = Math.min(o.y, r.y),
+        h = Math.abs(r.x - o.x),
+        l = Math.abs(r.y - o.y);
+      if (!(h < 1 || l < 1)) {
+        if (s.source) {
+          const d = this.getImage(s.source);
+          if (d.complete && d.naturalWidth > 0) {
+            (t.save(), (t.globalAlpha = s.opacity), t.drawImage(d, a, c, h, l), t.restore());
+            continue;
+          }
+          d.onload = () => this.scheduleRender();
+        }
+        this.opts.showImagePlaceholders &&
+          (t.save(),
+          (t.strokeStyle = s.color),
+          (t.globalAlpha = s.opacity),
+          (t.lineWidth = 1),
+          t.strokeRect(a, c, h, l),
+          t.beginPath(),
+          t.moveTo(a, c),
+          t.lineTo(a + h, c + l),
+          t.moveTo(a + h, c),
+          t.lineTo(a, c + l),
+          t.stroke(),
+          t.restore());
+      }
+    }
+  }
+  getImage(t) {
+    let n = this.imageCache.get(t);
+    return (n || ((n = new Image()), (n.src = t), this.imageCache.set(t, n)), n);
+  }
+  createOverlayCanvas() {
+    const t = this.canvas.parentElement;
+    if (!t || typeof document > 'u') return;
+    window.getComputedStyle(t).position === 'static' && (t.style.position = 'relative');
+    const n = document.createElement('canvas');
+    ((n.className = 'cad-viewer-text-overlay'),
+      n.setAttribute('aria-hidden', 'true'),
+      (n.style.position = 'absolute'),
+      (n.style.inset = '0'),
+      (n.style.width = '100%'),
+      (n.style.height = '100%'),
+      (n.style.pointerEvents = 'none'),
+      (n.style.zIndex = '1'));
+    const i = n.getContext('2d');
+    i && (t.appendChild(n), (this.overlayCanvas = n), (this.overlayCtx = i));
+  }
+  resizeOverlay(t, n) {
+    this.overlayCanvas &&
+      (this.overlayCanvas.width !== t || this.overlayCanvas.height !== n) &&
+      ((this.overlayCanvas.width = t), (this.overlayCanvas.height = n));
+  }
+  bindEvents() {
+    const t = this.eventController.signal;
+    (this.canvas.addEventListener(
+      'wheel',
+      (i) => {
+        i.preventDefault();
+        const s = i.deltaY < 0 ? this.opts.wheelZoomFactor : 1 / this.opts.wheelZoomFactor;
+        this.zoom(s, { x: i.offsetX, y: i.offsetY });
+      },
+      { passive: !1, signal: t },
+    ),
+      this.canvas.addEventListener(
+        'pointerdown',
+        (i) => {
+          (this.canvas.setPointerCapture(i.pointerId),
+            (this.isDragging = !0),
+            (this.lastPointer = { x: i.clientX, y: i.clientY }),
+            this.canvas.classList.add('is-dragging'));
+        },
+        { signal: t },
+      ),
+      this.canvas.addEventListener(
+        'pointermove',
+        (i) => {
+          !this.isDragging ||
+            !this.lastPointer ||
+            (this.panByScreenDelta(i.clientX - this.lastPointer.x, i.clientY - this.lastPointer.y),
+            (this.lastPointer = { x: i.clientX, y: i.clientY }));
+        },
+        { signal: t },
+      ));
+    const n = (i) => {
+      (i &&
+        this.canvas.hasPointerCapture(i.pointerId) &&
+        this.canvas.releasePointerCapture(i.pointerId),
+        (this.isDragging = !1),
+        (this.lastPointer = void 0),
+        this.canvas.classList.remove('is-dragging'));
+    };
+    (this.canvas.addEventListener('pointerup', n, { signal: t }),
+      this.canvas.addEventListener('pointercancel', () => n(), { signal: t }),
+      this.canvas.addEventListener(
+        'webglcontextlost',
+        (i) => {
+          (i.preventDefault(), this.cancelScheduledRender());
+        },
+        { signal: t },
+      ));
+  }
+  visibleWorldBounds() {
+    const t = this.cssWidth / Math.max(this.view.scale, 1e-12) / 2,
+      n = this.cssHeight / Math.max(this.view.scale, 1e-12) / 2;
+    return {
+      minX: this.view.centerX - t,
+      maxX: this.view.centerX + t,
+      minY: this.view.centerY - n,
+      maxY: this.view.centerY + n,
+    };
+  }
+  get cssWidth() {
+    return this.canvas.clientWidth || 1;
+  }
+  get cssHeight() {
+    return this.canvas.clientHeight || 1;
+  }
+  clampScale(t) {
+    return Math.min(this.opts.maxScale, Math.max(this.opts.minScale, t));
+  }
+  disposeScene() {
+    if (!this.scene) return;
+    const t = this.gl;
+    for (const n of [
+      ...this.scene.lineBatches,
+      ...this.scene.triangleBatches,
+      ...this.scene.pointBatches,
+    ])
+      (t.deleteBuffer(n.positionBuffer), t.deleteBuffer(n.colorBuffer));
+    this.scene = void 0;
+  }
+  emitViewChange() {
+    var t;
+    (t = this.onViewChange) == null ||
+      t.call(this, {
+        view: this.getViewState(),
+        fitScale: this.fitScale,
+        zoomRatio: this.getZoomRatio(),
+        zoomPercent: this.getZoomPercent(),
+        bounds: this.getBounds(),
+      });
+  }
+}
+function js() {
+  if (typeof document > 'u') return !1;
+  const e = document.createElement('canvas');
+  return !!(e.getContext('webgl2') ?? e.getContext('webgl') ?? e.getContext('experimental-webgl'));
+}
+function gh(e, t) {
+  const n = {
+    alpha: !1,
+    antialias: t.antialias ?? !0,
+    depth: !1,
+    stencil: !1,
+    preserveDrawingBuffer: t.preserveDrawingBuffer ?? !1,
+    powerPreference: t.powerPreference ?? 'high-performance',
+  };
+  return (
+    e.getContext('webgl2', n) ??
+    e.getContext('webgl', n) ??
+    e.getContext('experimental-webgl', n) ??
+    void 0
+  );
+}
+function wh(e) {
+  const t = `
     attribute vec2 a_position;
     attribute vec4 a_color;
     uniform vec2 u_viewCenter;
@@ -101,13 +9806,988 @@ void main() {
       gl_PointSize = u_pointSize;
       v_color = a_color;
     }
-  `,n=`
+  `,
+    n = `
     precision mediump float;
     varying vec4 v_color;
     void main() {
       gl_FragColor = v_color;
     }
-  `,i=Qi(e,e.VERTEX_SHADER,t),s=Qi(e,e.FRAGMENT_SHADER,n),o=e.createProgram();if(!o)throw new Error("Failed to create WebGL program.");if(e.attachShader(o,i),e.attachShader(o,s),e.linkProgram(o),!e.getProgramParameter(o,e.LINK_STATUS)){const l=e.getProgramInfoLog(o)??"Unknown WebGL program link error.";throw e.deleteProgram(o),new Error(l)}e.deleteShader(i),e.deleteShader(s);const r=e.getUniformLocation(o,"u_viewCenter"),a=e.getUniformLocation(o,"u_scale"),c=e.getUniformLocation(o,"u_viewport"),h=e.getUniformLocation(o,"u_pointSize");if(!r||!a||!c||!h)throw new Error("Failed to resolve WebGL shader uniforms.");return{program:o,aPosition:e.getAttribLocation(o,"a_position"),aColor:e.getAttribLocation(o,"a_color"),uViewCenter:r,uScale:a,uViewport:c,uPointSize:h}}function Qi(e,t,n){const i=e.createShader(t);if(!i)throw new Error("Failed to create WebGL shader.");if(e.shaderSource(i,n),e.compileShader(i),!e.getShaderParameter(i,e.COMPILE_STATUS)){const s=e.getShaderInfoLog(i)??"Unknown WebGL shader compile error.";throw e.deleteShader(i),new Error(s)}return i}function bh(e,t){let n=0;const i=a=>a.map(c=>{const h=Ji(e,c.positions),l=Ji(e,c.colors),d=c.positions.byteLength+c.colors.byteLength;return n+=d,{positionBuffer:h,colorBuffer:l,vertexCount:c.positions.length/2,primitiveCount:c.primitiveCount,bounds:c.bounds,gpuBytes:d}}),s=i(t.lineBatches),o=i(t.triangleBatches),r=i(t.pointBatches);return{origin:t.origin,lineBatches:s,triangleBatches:o,pointBatches:r,textItems:t.textItems,imageItems:t.imageItems,stats:t.stats,primitiveCount:t.primitiveCount,gpuMemoryBytes:n,buildElapsedMs:t.buildElapsedMs}}function Ji(e,t){const n=e.createBuffer();if(!n)throw new Error("Failed to create WebGL buffer.");return e.bindBuffer(e.ARRAY_BUFFER,n),e.bufferData(e.ARRAY_BUFFER,t,e.STATIC_DRAW),n}function yh(e,t,n){const i=performance.now(),s=Yt(n)?{x:(n.minX+n.maxX)/2,y:(n.minY+n.maxY)/2}:{x:0,y:0},o=new xh(e,t,n,s);for(const a of e.entities)o.addEntityTracked(a,0);const r=o.finalize();return r.buildElapsedMs=performance.now()-i,r}class xh{constructor(t,n,i,s){x(this,"lineBuckets",new Map),x(this,"triangleBuckets",new Map),x(this,"pointBuckets",new Map),x(this,"textItems",[]),x(this,"imageItems",[]),x(this,"stats",{total:0,drawn:0,skipped:0,byType:{},unsupported:{},backend:"webgl",primitiveCount:0,visiblePrimitiveCount:0,culledPrimitiveCount:0,gpuMemoryBytes:0,buildElapsedMs:0}),x(this,"tileSize"),x(this,"maxVerticesPerBatch"),x(this,"primitiveCount",0),this.document=t,this.opts=n,this.bounds=i,this.origin=s;const o=Yt(i)?Math.max(i.maxX-i.minX,i.maxY-i.minY,1e-9):1;this.tileSize=n.enableSpatialIndex?o/Math.max(8,n.spatialIndexCellCount):Number.POSITIVE_INFINITY,this.maxVerticesPerBatch=Math.max(4096,Math.floor(n.maxVerticesPerBatch))}addEntityTracked(t,n){this.stats.total++;const i=String(t.type??"UNKNOWN").toUpperCase();this.stats.byType[i]=(this.stats.byType[i]??0)+1;const s=this.lookupLayer(t.layer);if(t.isVisible===!1||!Ys(s)){this.stats.skipped++;return}this.addEntity(t,i,n)}finalize(){const t=hn(this.lineBuckets,this.maxVerticesPerBatch),n=hn(this.triangleBuckets,this.maxVerticesPerBatch),i=hn(this.pointBuckets,this.maxVerticesPerBatch);return this.stats.primitiveCount=this.primitiveCount,{origin:this.origin,lineBatches:t,triangleBatches:n,pointBatches:i,textItems:this.textItems,imageItems:this.imageItems,stats:this.stats,primitiveCount:this.primitiveCount,buildElapsedMs:0}}addEntity(t,n,i){switch(t.kind??Xt(n)){case"line":return this.addLineEntity(t);case"circle":return this.addCircleEntity(t);case"arc":return this.addArcEntity(t);case"polyline":return this.addPolylineEntity(t);case"ellipse":return this.addEllipseEntity(t);case"text":return this.addTextEntity(t);case"point":return this.addPointEntity(t);case"insert":return this.addInsertEntity(t,i);case"solid":return this.addSolidEntity(t);case"hatch":return this.addHatchEntity(t);case"spline":return this.addSplineEntity(t);case"path":return this.addPathEntity(t);case"image":return this.addImageEntity(t);case"viewport":return this.markSkipped(n);default:this.stats.unsupported[n]=(this.stats.unsupported[n]??0)+1,this.stats.skipped++,this.opts.showUnsupportedMarkers&&this.addUnsupportedMarker(t)}}addLineEntity(t){if(!P(t.startPoint)||!P(t.endPoint))return this.markSkipped("LINE");this.addSegment(t.startPoint,t.endPoint,this.strokeBytes(t)),this.stats.drawn++}addCircleEntity(t){const n=t.center,i=Number(t.radius);if(!P(n)||!Number.isFinite(i))return this.markSkipped("CIRCLE");const s=Math.max(16,Math.min(this.opts.maxCurveSegments,Math.ceil(Math.sqrt(Math.abs(i))*12))),o=Te(n,i,0,Math.PI*2,!0,s);this.addPolyline(o,!0,this.strokeBytes(t)),this.stats.drawn++}addArcEntity(t){const n=t.center,i=Number(t.radius),s=Number(t.startAngle),o=Number(t.endAngle);if(!P(n)||!Number.isFinite(i)||!Number.isFinite(s)||!Number.isFinite(o))return this.markSkipped("ARC");this.addPolyline(Te(n,i,s,o,!0,this.opts.maxCurveSegments),!1,this.strokeBytes(t)),this.stats.drawn++}addPolylineEntity(t){const n=t.vertices??t.points;if(!Array.isArray(n)||n.length<2)return this.markSkipped(String(t.type));const i=!!t.isClosed||(Number(t.flag)&1)===1,s=[],o=i?n.length:n.length-1;for(let r=0;r<o;r++){const a=n[r],c=n[(r+1)%n.length];if(!P(a)||!P(c))continue;const h=zs(a,c,Number(a.bulge??0),Math.max(4,Math.min(24,this.opts.maxCurveSegments/4)));s.length>0&&h.shift(),s.push(...h)}if(s.length<2)return this.markSkipped(String(t.type));this.addPolyline(s,i,this.strokeBytes(t)),this.stats.drawn++}addEllipseEntity(t){if(!P(t.center)||!P(t.majorAxisEndPoint))return this.markSkipped("ELLIPSE");const n=Ie(t.center,t.majorAxisEndPoint,Number(t.axisRatio??1),Number(t.startAngle??0),Number(t.endAngle??Math.PI*2),this.opts.maxCurveSegments),i=Math.abs(Number(t.endAngle??Math.PI*2)-Number(t.startAngle??0))>=Math.PI*2-1e-6;this.addPolyline(n,i,this.strokeBytes(t)),this.stats.drawn++}addTextEntity(t){const n=t.insertionPoint??t.startPoint??t.center,i=Us(String(t.text??t.value??"")),s=Number(t.textHeight??t.height??1);if(!P(n)||!i||!Number.isFinite(s))return this.markSkipped(String(t.type));const o=O(n),r=Math.max(1,i.split(/\r?\n/g).reduce((c,h)=>Math.max(c,h.length),0))*Math.abs(s)*.62,a=Math.max(1,i.split(/\r?\n/g).length)*Math.abs(s)*1.22;this.textItems.push({point:o,text:i,height:s,rotation:Number(t.rotation??0),color:$t(t,this.document,this.colorOptions()),opacity:_t(Number(t.opacity??1),0,1),bounds:{minX:o.x-r*.1,minY:o.y-a,maxX:o.x+r,maxY:o.y+a}}),this.stats.drawn++}addPointEntity(t){const n=t.point??t.location??t.center??t.insertionPoint;if(!P(n))return this.markSkipped("POINT");this.addPoint(n,this.strokeBytes(t)),this.stats.drawn++}addInsertEntity(t,n){const i=this.lookupBlock(t.blockName??t.name);if(i&&n<this.opts.maxInsertDepth){const o=_e(t,i.basePoint??{x:0,y:0});for(const r of i.entities){const a=Vs(r,t,this.document,this.colorOptions());this.addEntityTracked(Le(a,o),n+1)}return}const s=t.insertionPoint;if(!P(s))return this.markSkipped("INSERT");if(this.addPoint(s,this.strokeBytes(t)),Array.isArray(t.attribs))for(const o of t.attribs)this.addTextEntity(o);this.stats.drawn++}addSolidEntity(t){const n=t.vertices??t.points;if(!Array.isArray(n)||n.length<3)return this.markSkipped(String(t.type));const i=n.filter(P).map(O);if(i.length<3)return this.markSkipped(String(t.type));const s=this.fillBytes(t)??this.strokeBytes(t);this.addTriangleFan(i,s),this.addPolyline(i,!0,this.strokeBytes(t)),this.stats.drawn++}addHatchEntity(t){var n;const i=t.loops;if(!Array.isArray(i)||i.length===0)return this.markSkipped("HATCH");const s=this.strokeBytes(t),o=this.fillBytes(t);let r=!1;for(const a of i){const c=(n=a.commands)!=null&&n.length?ts(a.commands,this.opts.maxCurveSegments):(a.vertices??[]).filter(P).map(O);c.length<2||(this.addPolyline(c,!0,s),o&&c.length>=3&&this.addTriangleFan(c,o),r=!0)}if(!r)return this.markSkipped("HATCH");this.stats.drawn++}addSplineEntity(t){var n;const i=(n=t.fitPoints)!=null&&n.length?t.fitPoints:t.controlPoints;if(!i||i.length<2)return this.markSkipped("SPLINE");this.addPolyline(i.filter(P).map(O),!!t.isClosed,this.strokeBytes(t)),this.stats.drawn++}addPathEntity(t){var n;if(!((n=t.commands)!=null&&n.length))return this.markSkipped(String(t.type));const i=ts(t.commands,this.opts.maxCurveSegments);if(i.length<2)return this.markSkipped(String(t.type));this.addPolyline(i,!1,this.strokeBytes(t));const s=this.fillBytes(t);s&&i.length>=3&&this.addTriangleFan(i,s),this.stats.drawn++}addImageEntity(t){const n=t.insertionPoint;if(!P(n))return this.markSkipped(String(t.type));const i=Number(t.width??32),s=Number(t.height??32);if(!Number.isFinite(i)||!Number.isFinite(s))return this.markSkipped(String(t.type));const o=O(n),r=ln([o,{x:o.x+i,y:o.y-s}]);this.imageItems.push({point:o,width:i,height:s,source:t.imageDataUrl??t.imageSource,color:$t(t,this.document,this.colorOptions()),opacity:_t(Number(t.opacity??1),0,1),bounds:r}),this.stats.drawn++}addUnsupportedMarker(t){const n=qs(t);n&&this.addPoint(n,this.strokeBytes(t))}addPolyline(t,n,i){const s=t.filter(P).map(O);if(!(s.length<2)){for(let o=0;o<s.length-1;o++)this.addSegment(s[o],s[o+1],i);n&&this.addSegment(s[s.length-1],s[0],i)}}addSegment(t,n,i){if(!P(t)||!P(n)||Math.hypot(t.x-n.x,t.y-n.y)<=1e-14)return;const s=this.batchFor(this.lineBuckets,ln([t,n]));Ft(s,t,i,this.origin),Ft(s,n,i,this.origin),s.primitiveCount++,this.primitiveCount++}addPoint(t,n){const i=this.batchFor(this.pointBuckets,Mh(t));Ft(i,t,n,this.origin),i.primitiveCount++,this.primitiveCount++}addTriangleFan(t,n){const i=t.filter(P).map(O);if(i.length<3)return;const s=ln(i),o=this.batchFor(this.triangleBuckets,s);for(let r=1;r<i.length-1;r++)Ft(o,i[0],n,this.origin),Ft(o,i[r],n,this.origin),Ft(o,i[r+1],n,this.origin),o.primitiveCount++,this.primitiveCount++}batchFor(t,n){const i=this.bucketKey(n);let s=t.get(i);return s||(s=vh(),t.set(i,s)),L(s.bounds,{x:n.minX,y:n.minY}),L(s.bounds,{x:n.maxX,y:n.maxY}),s}bucketKey(t){if(!Number.isFinite(this.tileSize))return"all";const n=(t.minX+t.maxX)/2,i=(t.minY+t.maxY)/2,s=Math.floor((n-this.bounds.minX)/this.tileSize),o=Math.floor((i-this.bounds.minY)/this.tileSize);return`${s}:${o}`}strokeBytes(t){return An($t(t,this.document,this.colorOptions()),[255,255,255,255],_t(Number(t.opacity??1),0,1))}fillBytes(t){const n=Sn(t,this.document,this.colorOptions());return n?An(n,[255,255,255,255],_t(Number(t.opacity??1),0,1)):void 0}colorOptions(){return{foreground:this.opts.foreground,background:this.opts.background,trueColorByteOrder:this.opts.trueColorByteOrder,contrastMode:this.opts.contrastMode,minColorContrast:this.opts.minColorContrast}}markSkipped(t){this.stats.skipped++,this.stats.unsupported[t]=this.stats.unsupported[t]??0}lookupLayer(t){if(t)return this.document.layers[t]??this.document.layers[t.toLowerCase()]??Object.values(this.document.layers).find(n=>n.name.toLowerCase()===t.toLowerCase())}lookupBlock(t){if(t)return this.document.blocks[t]??this.document.blocks[t.toLowerCase()]??Object.values(this.document.blocks).find(n=>n.name.toLowerCase()===t.toLowerCase())}}function vh(){return{positions:[],colors:[],bounds:dt(),primitiveCount:0}}function Ft(e,t,n,i){e.positions.push(t.x-i.x,t.y-i.y),e.colors.push(n[0],n[1],n[2],n[3])}function hn(e,t){const n=[];for(const i of e.values()){const s=i.positions.length/2;if(s<=0||!Yt(i.bounds))continue;if(s<=t){n.push({positions:new Float32Array(i.positions),colors:new Uint8Array(i.colors),bounds:{...i.bounds},primitiveCount:i.primitiveCount});continue}const o=Ch(i),r=Math.max(o,Math.floor(t/o)*o);for(let a=0;a<s;a+=r){const c=Math.min(s,a+r),h=i.positions.slice(a*2,c*2),l=i.colors.slice(a*4,c*4),d=dt();for(let u=0;u<h.length;u+=2)L(d,{x:h[u],y:h[u+1]});n.push({positions:new Float32Array(h),colors:new Uint8Array(l),bounds:{...i.bounds},primitiveCount:Math.floor((c-a)/o)})}}return n}function Ch(e){const t=e.positions.length/2;return t===e.primitiveCount?1:t===e.primitiveCount*3?3:2}function Ph(e,t){var n;const i=dt();if((n=e.pages)!=null&&n.length)for(const r of e.pages)L(i,{x:0,y:0}),L(i,{x:r.width,y:r.height});const s=r=>{if(r)return e.blocks[r]??e.blocks[r.toLowerCase()]??Object.values(e.blocks).find(a=>a.name.toLowerCase()===r.toLowerCase())},o=(r,a)=>{const c=String(r.type??"").toUpperCase(),h=r.kind??Xt(c);if(h==="insert"){const l=s(r.blockName??r.name);if(l&&a<t.maxInsertDepth){const d=_e(r,l.basePoint??{x:0,y:0});for(const u of l.entities)o(Le(u,d),a+1);return}}if(h==="line")P(r.startPoint)&&L(i,r.startPoint),P(r.endPoint)&&L(i,r.endPoint);else if(h==="circle"||h==="arc")P(r.center)&&Number.isFinite(r.radius)&&Os(i,r.center,Number(r.radius));else if(h==="polyline"||h==="solid"||h==="spline")for(const l of[...r.vertices??[],...r.points??[],...r.controlPoints??[],...r.fitPoints??[]])P(l)&&L(i,l);else if(h==="ellipse")P(r.center)&&P(r.majorAxisEndPoint)&&Ie(r.center,r.majorAxisEndPoint,Number(r.axisRatio??1),Number(r.startAngle??0),Number(r.endAngle??Math.PI*2),t.maxCurveSegments).forEach(l=>L(i,l));else if(h==="path")for(const l of r.commands??[])for(const d of l.points)L(i,d);else if(h==="hatch")for(const l of r.loops??[]){for(const d of l.vertices??[])L(i,d);for(const d of l.commands??[])for(const u of d.points)L(i,u)}else{const l=qs(r);l&&L(i,l)}};for(const r of e.entities)o(r,0);return $s(i)}function ts(e,t){const n=[];let i,s;const o=r=>{(!n.length||Math.hypot(n[n.length-1].x-r.x,n[n.length-1].y-r.y)>1e-12)&&n.push(O(r)),i=O(r)};for(const r of e)if(r.cmd==="M")i=O(r.points[0]),s=i,o(i);else if(r.cmd==="L")o(r.points[0]);else if(r.cmd==="Q"&&i&&r.points.length>=2){const a=i,[c,h]=r.points,l=Math.max(4,Math.min(t,24));for(let d=1;d<=l;d++){const u=d/l,f=1-u;o({x:f*f*a.x+2*f*u*c.x+u*u*h.x,y:f*f*a.y+2*f*u*c.y+u*u*h.y})}}else if(r.cmd==="C"&&i&&r.points.length>=3){const a=i,[c,h,l]=r.points,d=Math.max(6,Math.min(t,32));for(let u=1;u<=d;u++){const f=u/d,m=1-f;o({x:m**3*a.x+3*m*m*f*c.x+3*m*f*f*h.x+f**3*l.x,y:m**3*a.y+3*m*m*f*c.y+3*m*f*f*h.y+f**3*l.y})}}else r.cmd==="Z"&&s&&o(s);return n}function qs(e){for(const t of["startPoint","insertionPoint","center","point","location"]){const n=e[t];if(P(n))return O(n)}if(Array.isArray(e.vertices)&&P(e.vertices[0]))return O(e.vertices[0]);if(Array.isArray(e.commands)&&e.commands.length){const t=e.commands.find(n=>n.points.length>0);if(t)return O(t.points[0])}}function ln(e){const t=dt();for(const n of e)L(t,n);return t}function Mh(e){return{minX:e.x,minY:e.y,maxX:e.x,maxY:e.y}}function dn(e,t){return e.minX<=t.maxX&&e.maxX>=t.minX&&e.minY<=t.maxY&&e.maxY>=t.minY}function Sh(e,t){return t.trueColorByteOrder!==void 0&&t.trueColorByteOrder!==e.trueColorByteOrder||t.contrastMode!==void 0&&t.contrastMode!==e.contrastMode||t.minColorContrast!==void 0&&t.minColorContrast!==e.minColorContrast||t.foreground!==void 0&&t.foreground!==e.foreground||t.background!==void 0&&t.background!==e.background||t.maxInsertDepth!==void 0&&t.maxInsertDepth!==e.maxInsertDepth||t.maxCurveSegments!==void 0&&t.maxCurveSegments!==e.maxCurveSegments||t.spatialIndexCellCount!==void 0&&t.spatialIndexCellCount!==e.spatialIndexCellCount||t.maxVerticesPerBatch!==void 0&&t.maxVerticesPerBatch!==e.maxVerticesPerBatch||t.enableSpatialIndex!==void 0&&t.enableSpatialIndex!==e.enableSpatialIndex}function kh(e,t){return{...e.stats,renderElapsedMs:t,backend:"webgl",primitiveCount:e.primitiveCount,visiblePrimitiveCount:0,culledPrimitiveCount:0,gpuMemoryBytes:e.gpuMemoryBytes,buildElapsedMs:e.buildElapsedMs}}function Eh(e){return{total:e.total,drawn:e.drawn,skipped:e.skipped,byType:{...e.byType},unsupported:{...e.unsupported},renderElapsedMs:e.renderElapsedMs,backend:e.backend,primitiveCount:e.primitiveCount,visiblePrimitiveCount:e.visiblePrimitiveCount,culledPrimitiveCount:e.culledPrimitiveCount,gpuMemoryBytes:e.gpuMemoryBytes,buildElapsedMs:e.buildElapsedMs}}function An(e,t,n=1){const i=e.trim().toLowerCase();let s;if(/^#[0-9a-f]{3}$/i.test(i))s=[parseInt(i[1]+i[1],16),parseInt(i[2]+i[2],16),parseInt(i[3]+i[3],16),255];else if(/^#[0-9a-f]{6}$/i.test(i))s=[parseInt(i.slice(1,3),16),parseInt(i.slice(3,5),16),parseInt(i.slice(5,7),16),255];else{const r=i.match(/^rgba?\(([^)]+)\)$/i);if(r){const a=r[1].split(/[\s,\/]+/).filter(Boolean),c=a.slice(0,3).some(l=>l.includes("%")),h=a.map(l=>Number(l.replace("%","")));h.length>=3&&h.slice(0,3).every(Number.isFinite)&&(s=[Kt(c?h[0]*2.55:h[0]),Kt(c?h[1]*2.55:h[1]),Kt(c?h[2]*2.55:h[2]),Kt((Number.isFinite(h[3])?h[3]:1)*255)])}}const o=s??t;return[o[0],o[1],o[2],Kt(o[3]*n)]}function Kt(e){return Math.max(0,Math.min(255,Math.round(e)))}class Ah{constructor(t={}){x(this,"canvas"),x(this,"renderer"),x(this,"registry"),x(this,"nativeHost"),x(this,"options"),x(this,"lastResult"),x(this,"activeNativeLoader");var n;if(this.options={autoFit:!0,...t},this.registry=t.registry??th(t),t.loaders)for(const i of t.loaders)this.registry.register(i);if(this.canvas=t.canvas??document.createElement("canvas"),this.canvas.classList.add("cad-viewer-canvas"),t.container)t.container.classList.add("cad-viewer-container"),t.canvas||(this.canvas.style.width="100%",this.canvas.style.height="100%",this.canvas.style.display="block",t.container.appendChild(this.canvas)),this.nativeHost=t.nativeHost??document.createElement("div"),this.nativeHost.classList.add("cad-viewer-native-host"),t.nativeHost||t.container.appendChild(this.nativeHost);else if(t.nativeHost)this.nativeHost=t.nativeHost,this.nativeHost.classList.add("cad-viewer-native-host");else if((n=t.canvas)!=null&&n.parentElement){t.canvas.parentElement.classList.add("cad-viewer-container");const i=document.createElement("div");i.classList.add("cad-viewer-native-host"),t.canvas.parentElement.appendChild(i),this.nativeHost=i}this.renderer=Th(t.renderer??"auto",this.canvas,t.canvasOptions),this.renderer.onStats=i=>{var s,o;return(o=(s=this.options).onRenderStats)==null?void 0:o.call(s,i)},this.renderer.onViewChange=i=>{var s,o;return(o=(s=this.options).onViewChange)==null?void 0:o.call(s,i)}}registerLoader(t){return this.registry.register(t),this}async loadFile(t,n={}){var i,s;return(s=(i=this.options).onLoadStart)==null||s.call(i,t),this.loadThroughRegistry({file:t,fileName:t.name},n,t.name)}async loadBuffer(t,n,i={}){var s,o;return(o=(s=this.options).onLoadStart)==null||o.call(s,t),this.loadThroughRegistry({buffer:t,fileName:n},i,n)}async load(t,n={}){var i,s,o;return(s=(i=this.options).onLoadStart)==null||s.call(i,t),this.loadThroughRegistry(t,n,t.fileName??((o=t.file)==null?void 0:o.name))}setDocument(t,n){var i,s;this.deactivateNativeRenderer();const o={document:t,raw:t.raw,bytes:0,elapsedMs:0,format:t.format,warnings:t.warnings,summary:we(t),fileName:n};return this.renderer.setDocument(t),this.options.autoFit||this.renderer.render(),this.lastResult=o,(s=(i=this.options).onLoad)==null||s.call(i,o),o}fit(){var t,n;this.activeNativeLoader?(n=(t=this.activeNativeLoader).fit)==null||n.call(t):this.renderer.fitToView()}zoomIn(){var t,n;this.activeNativeLoader?(n=(t=this.activeNativeLoader).zoomIn)==null||n.call(t):this.renderer.zoomIn()}zoomOut(){var t,n;this.activeNativeLoader?(n=(t=this.activeNativeLoader).zoomOut)==null||n.call(t):this.renderer.zoomOut()}resize(){var t,n;this.activeNativeLoader?(n=(t=this.activeNativeLoader).resize)==null||n.call(t):this.renderer.resize()}setCanvasOptions(t){var n,i;this.options.canvasOptions={...this.options.canvasOptions??{},...t},this.renderer.setOptions(t),this.activeNativeLoader&&((i=(n=this.activeNativeLoader).setNativeOptions)==null||i.call(n,{...this.mergeLoadOptions({}),dwfBackground:t.background??this.options.dwfBackground}))}async preloadDwg(t={}){const n=this.registry.list().find(i=>i.id==="dwg");if(!(n!=null&&n.preload))throw new Error("The registered DWG loader does not support preload().");return n.preload(this.mergeLoadOptions(t))}clear(){this.lastResult=void 0,this.deactivateNativeRenderer(),this.renderer.clear()}destroy(){var t,n,i;this.deactivateNativeRenderer();for(const s of this.registry.list()){const o=s;(t=o.terminateWorker)==null||t.call(o),(n=o.unmount)==null||n.call(o),(i=o.destroy)==null||i.call(o)}this.renderer.destroy()}getLoadResult(){return this.lastResult}getDocument(){var t;return this.activeNativeLoader?(t=this.lastResult)==null?void 0:t.document:this.renderer.getDocument()}getZoomPercent(){return this.activeNativeLoader?100:this.renderer.getZoomPercent()}isNativeRendererActive(){return!!this.activeNativeLoader}async loadThroughRegistry(t,n,i){var s,o;try{const r=this.mergeLoadOptions(n);un(r.signal);const a=await this.registry.detect(t),c={...t,buffer:a.bytes};if(eh(a.loader))return await this.applyNativeLoadResult(a.loader,c,r,i);const h=await a.loader.load(c,r);return this.applyLoadResult(h,i)}catch(r){const a=Nh(r);throw(o=(s=this.options).onError)==null||o.call(s,a),a}}applyLoadResult(t,n){var i,s,o,r;this.deactivateNativeRenderer(),(s=(i=this.options).onLoadProgress)==null||s.call(i,{phase:"render",format:t.format,message:"Rendering normalized CAD scene…",percent:96}),this.renderer.setDocument(t.document),this.options.autoFit||this.renderer.render();const a={...t,fileName:n,summary:we(t.document)};return this.lastResult=a,(r=(o=this.options).onLoad)==null||r.call(o,a),a}async applyNativeLoadResult(t,n,i,s){var o,r,a;if(!this.nativeHost)throw new Error("Native DWF rendering requires CadViewerOptions.container, nativeHost, or a canvas parent element.");un(i.signal),this.renderer.clear(),(o=this.activeNativeLoader)==null||o.unmount(),this.activeNativeLoader=t,this.canvas.style.display="none",this.nativeHost.classList.add("is-active");try{const c=await t.mount(n,this.nativeHost,i);un(i.signal);const h={...c,fileName:s,summary:we(c.document)};return this.lastResult=h,this.emitNativeRenderStats(c),(a=(r=this.options).onLoad)==null||a.call(r,h),h}catch(c){throw this.deactivateNativeRenderer(),c}}deactivateNativeRenderer(){var t,n;if(!this.activeNativeLoader&&!((t=this.nativeHost)!=null&&t.classList.contains("is-active"))){this.canvas.style.display="";return}(n=this.activeNativeLoader)==null||n.unmount(),this.activeNativeLoader=void 0,this.nativeHost&&(this.nativeHost.classList.remove("is-active"),this.nativeHost.replaceChildren()),this.canvas.style.display=""}emitNativeRenderStats(t){var n,i,s,o;const r=t.document.metadata,a=Number(((n=r.nativeRenderStats)==null?void 0:n.commands)??t.document.entities.length??0),c=String(((i=r.nativeRenderStats)==null?void 0:i.backend)??"webgl").includes("webgl")?"webgl":"canvas2d";(o=(s=this.options).onRenderStats)==null||o.call(s,{total:a,drawn:a,skipped:0,byType:we(t.document).byType,unsupported:{},renderElapsedMs:t.elapsedMs,backend:c,primitiveCount:a,visiblePrimitiveCount:a,culledPrimitiveCount:0,gpuMemoryBytes:void 0,buildElapsedMs:t.elapsedMs})}mergeLoadOptions(t){const n=this.options.onProgress,i=t.onProgress;return{...this.options,...t,onProgress:s=>{var o,r;(r=(o=this.options).onLoadProgress)==null||r.call(o,s),n?.(s),i&&i!==n&&i(s)}}}}function Nh(e){return e instanceof Error?e:new Error(String(e))}function un(e){if(e!=null&&e.aborted)throw new DOMException("Loading cancelled.","AbortError")}function Th(e,t,n={}){if(e==="canvas2d")return new Zi(t,n);if(e==="webgl")return new Ki(t,n);if(js())try{return new Ki(t,n)}catch{}return new Zi(t,n)}const Ih=12e4,Fh=`
+  `,
+    i = Qi(e, e.VERTEX_SHADER, t),
+    s = Qi(e, e.FRAGMENT_SHADER, n),
+    o = e.createProgram();
+  if (!o) throw new Error('Failed to create WebGL program.');
+  if (
+    (e.attachShader(o, i),
+    e.attachShader(o, s),
+    e.linkProgram(o),
+    !e.getProgramParameter(o, e.LINK_STATUS))
+  ) {
+    const l = e.getProgramInfoLog(o) ?? 'Unknown WebGL program link error.';
+    throw (e.deleteProgram(o), new Error(l));
+  }
+  (e.deleteShader(i), e.deleteShader(s));
+  const r = e.getUniformLocation(o, 'u_viewCenter'),
+    a = e.getUniformLocation(o, 'u_scale'),
+    c = e.getUniformLocation(o, 'u_viewport'),
+    h = e.getUniformLocation(o, 'u_pointSize');
+  if (!r || !a || !c || !h) throw new Error('Failed to resolve WebGL shader uniforms.');
+  return {
+    program: o,
+    aPosition: e.getAttribLocation(o, 'a_position'),
+    aColor: e.getAttribLocation(o, 'a_color'),
+    uViewCenter: r,
+    uScale: a,
+    uViewport: c,
+    uPointSize: h,
+  };
+}
+function Qi(e, t, n) {
+  const i = e.createShader(t);
+  if (!i) throw new Error('Failed to create WebGL shader.');
+  if ((e.shaderSource(i, n), e.compileShader(i), !e.getShaderParameter(i, e.COMPILE_STATUS))) {
+    const s = e.getShaderInfoLog(i) ?? 'Unknown WebGL shader compile error.';
+    throw (e.deleteShader(i), new Error(s));
+  }
+  return i;
+}
+function bh(e, t) {
+  let n = 0;
+  const i = (a) =>
+      a.map((c) => {
+        const h = Ji(e, c.positions),
+          l = Ji(e, c.colors),
+          d = c.positions.byteLength + c.colors.byteLength;
+        return (
+          (n += d),
+          {
+            positionBuffer: h,
+            colorBuffer: l,
+            vertexCount: c.positions.length / 2,
+            primitiveCount: c.primitiveCount,
+            bounds: c.bounds,
+            gpuBytes: d,
+          }
+        );
+      }),
+    s = i(t.lineBatches),
+    o = i(t.triangleBatches),
+    r = i(t.pointBatches);
+  return {
+    origin: t.origin,
+    lineBatches: s,
+    triangleBatches: o,
+    pointBatches: r,
+    textItems: t.textItems,
+    imageItems: t.imageItems,
+    stats: t.stats,
+    primitiveCount: t.primitiveCount,
+    gpuMemoryBytes: n,
+    buildElapsedMs: t.buildElapsedMs,
+  };
+}
+function Ji(e, t) {
+  const n = e.createBuffer();
+  if (!n) throw new Error('Failed to create WebGL buffer.');
+  return (e.bindBuffer(e.ARRAY_BUFFER, n), e.bufferData(e.ARRAY_BUFFER, t, e.STATIC_DRAW), n);
+}
+function yh(e, t, n) {
+  const i = performance.now(),
+    s = Yt(n) ? { x: (n.minX + n.maxX) / 2, y: (n.minY + n.maxY) / 2 } : { x: 0, y: 0 },
+    o = new xh(e, t, n, s);
+  for (const a of e.entities) o.addEntityTracked(a, 0);
+  const r = o.finalize();
+  return ((r.buildElapsedMs = performance.now() - i), r);
+}
+class xh {
+  constructor(t, n, i, s) {
+    (x(this, 'lineBuckets', new Map()),
+      x(this, 'triangleBuckets', new Map()),
+      x(this, 'pointBuckets', new Map()),
+      x(this, 'textItems', []),
+      x(this, 'imageItems', []),
+      x(this, 'stats', {
+        total: 0,
+        drawn: 0,
+        skipped: 0,
+        byType: {},
+        unsupported: {},
+        backend: 'webgl',
+        primitiveCount: 0,
+        visiblePrimitiveCount: 0,
+        culledPrimitiveCount: 0,
+        gpuMemoryBytes: 0,
+        buildElapsedMs: 0,
+      }),
+      x(this, 'tileSize'),
+      x(this, 'maxVerticesPerBatch'),
+      x(this, 'primitiveCount', 0),
+      (this.document = t),
+      (this.opts = n),
+      (this.bounds = i),
+      (this.origin = s));
+    const o = Yt(i) ? Math.max(i.maxX - i.minX, i.maxY - i.minY, 1e-9) : 1;
+    ((this.tileSize = n.enableSpatialIndex
+      ? o / Math.max(8, n.spatialIndexCellCount)
+      : Number.POSITIVE_INFINITY),
+      (this.maxVerticesPerBatch = Math.max(4096, Math.floor(n.maxVerticesPerBatch))));
+  }
+  addEntityTracked(t, n) {
+    this.stats.total++;
+    const i = String(t.type ?? 'UNKNOWN').toUpperCase();
+    this.stats.byType[i] = (this.stats.byType[i] ?? 0) + 1;
+    const s = this.lookupLayer(t.layer);
+    if (t.isVisible === !1 || !Ys(s)) {
+      this.stats.skipped++;
+      return;
+    }
+    this.addEntity(t, i, n);
+  }
+  finalize() {
+    const t = hn(this.lineBuckets, this.maxVerticesPerBatch),
+      n = hn(this.triangleBuckets, this.maxVerticesPerBatch),
+      i = hn(this.pointBuckets, this.maxVerticesPerBatch);
+    return (
+      (this.stats.primitiveCount = this.primitiveCount),
+      {
+        origin: this.origin,
+        lineBatches: t,
+        triangleBatches: n,
+        pointBatches: i,
+        textItems: this.textItems,
+        imageItems: this.imageItems,
+        stats: this.stats,
+        primitiveCount: this.primitiveCount,
+        buildElapsedMs: 0,
+      }
+    );
+  }
+  addEntity(t, n, i) {
+    switch (t.kind ?? Xt(n)) {
+      case 'line':
+        return this.addLineEntity(t);
+      case 'circle':
+        return this.addCircleEntity(t);
+      case 'arc':
+        return this.addArcEntity(t);
+      case 'polyline':
+        return this.addPolylineEntity(t);
+      case 'ellipse':
+        return this.addEllipseEntity(t);
+      case 'text':
+        return this.addTextEntity(t);
+      case 'point':
+        return this.addPointEntity(t);
+      case 'insert':
+        return this.addInsertEntity(t, i);
+      case 'solid':
+        return this.addSolidEntity(t);
+      case 'hatch':
+        return this.addHatchEntity(t);
+      case 'spline':
+        return this.addSplineEntity(t);
+      case 'path':
+        return this.addPathEntity(t);
+      case 'image':
+        return this.addImageEntity(t);
+      case 'viewport':
+        return this.markSkipped(n);
+      default:
+        ((this.stats.unsupported[n] = (this.stats.unsupported[n] ?? 0) + 1),
+          this.stats.skipped++,
+          this.opts.showUnsupportedMarkers && this.addUnsupportedMarker(t));
+    }
+  }
+  addLineEntity(t) {
+    if (!P(t.startPoint) || !P(t.endPoint)) return this.markSkipped('LINE');
+    (this.addSegment(t.startPoint, t.endPoint, this.strokeBytes(t)), this.stats.drawn++);
+  }
+  addCircleEntity(t) {
+    const n = t.center,
+      i = Number(t.radius);
+    if (!P(n) || !Number.isFinite(i)) return this.markSkipped('CIRCLE');
+    const s = Math.max(
+        16,
+        Math.min(this.opts.maxCurveSegments, Math.ceil(Math.sqrt(Math.abs(i)) * 12)),
+      ),
+      o = Te(n, i, 0, Math.PI * 2, !0, s);
+    (this.addPolyline(o, !0, this.strokeBytes(t)), this.stats.drawn++);
+  }
+  addArcEntity(t) {
+    const n = t.center,
+      i = Number(t.radius),
+      s = Number(t.startAngle),
+      o = Number(t.endAngle);
+    if (!P(n) || !Number.isFinite(i) || !Number.isFinite(s) || !Number.isFinite(o))
+      return this.markSkipped('ARC');
+    (this.addPolyline(Te(n, i, s, o, !0, this.opts.maxCurveSegments), !1, this.strokeBytes(t)),
+      this.stats.drawn++);
+  }
+  addPolylineEntity(t) {
+    const n = t.vertices ?? t.points;
+    if (!Array.isArray(n) || n.length < 2) return this.markSkipped(String(t.type));
+    const i = !!t.isClosed || (Number(t.flag) & 1) === 1,
+      s = [],
+      o = i ? n.length : n.length - 1;
+    for (let r = 0; r < o; r++) {
+      const a = n[r],
+        c = n[(r + 1) % n.length];
+      if (!P(a) || !P(c)) continue;
+      const h = zs(
+        a,
+        c,
+        Number(a.bulge ?? 0),
+        Math.max(4, Math.min(24, this.opts.maxCurveSegments / 4)),
+      );
+      (s.length > 0 && h.shift(), s.push(...h));
+    }
+    if (s.length < 2) return this.markSkipped(String(t.type));
+    (this.addPolyline(s, i, this.strokeBytes(t)), this.stats.drawn++);
+  }
+  addEllipseEntity(t) {
+    if (!P(t.center) || !P(t.majorAxisEndPoint)) return this.markSkipped('ELLIPSE');
+    const n = Ie(
+        t.center,
+        t.majorAxisEndPoint,
+        Number(t.axisRatio ?? 1),
+        Number(t.startAngle ?? 0),
+        Number(t.endAngle ?? Math.PI * 2),
+        this.opts.maxCurveSegments,
+      ),
+      i =
+        Math.abs(Number(t.endAngle ?? Math.PI * 2) - Number(t.startAngle ?? 0)) >=
+        Math.PI * 2 - 1e-6;
+    (this.addPolyline(n, i, this.strokeBytes(t)), this.stats.drawn++);
+  }
+  addTextEntity(t) {
+    const n = t.insertionPoint ?? t.startPoint ?? t.center,
+      i = Us(String(t.text ?? t.value ?? '')),
+      s = Number(t.textHeight ?? t.height ?? 1);
+    if (!P(n) || !i || !Number.isFinite(s)) return this.markSkipped(String(t.type));
+    const o = O(n),
+      r =
+        Math.max(
+          1,
+          i.split(/\r?\n/g).reduce((c, h) => Math.max(c, h.length), 0),
+        ) *
+        Math.abs(s) *
+        0.62,
+      a = Math.max(1, i.split(/\r?\n/g).length) * Math.abs(s) * 1.22;
+    (this.textItems.push({
+      point: o,
+      text: i,
+      height: s,
+      rotation: Number(t.rotation ?? 0),
+      color: $t(t, this.document, this.colorOptions()),
+      opacity: _t(Number(t.opacity ?? 1), 0, 1),
+      bounds: { minX: o.x - r * 0.1, minY: o.y - a, maxX: o.x + r, maxY: o.y + a },
+    }),
+      this.stats.drawn++);
+  }
+  addPointEntity(t) {
+    const n = t.point ?? t.location ?? t.center ?? t.insertionPoint;
+    if (!P(n)) return this.markSkipped('POINT');
+    (this.addPoint(n, this.strokeBytes(t)), this.stats.drawn++);
+  }
+  addInsertEntity(t, n) {
+    const i = this.lookupBlock(t.blockName ?? t.name);
+    if (i && n < this.opts.maxInsertDepth) {
+      const o = _e(t, i.basePoint ?? { x: 0, y: 0 });
+      for (const r of i.entities) {
+        const a = Vs(r, t, this.document, this.colorOptions());
+        this.addEntityTracked(Le(a, o), n + 1);
+      }
+      return;
+    }
+    const s = t.insertionPoint;
+    if (!P(s)) return this.markSkipped('INSERT');
+    if ((this.addPoint(s, this.strokeBytes(t)), Array.isArray(t.attribs)))
+      for (const o of t.attribs) this.addTextEntity(o);
+    this.stats.drawn++;
+  }
+  addSolidEntity(t) {
+    const n = t.vertices ?? t.points;
+    if (!Array.isArray(n) || n.length < 3) return this.markSkipped(String(t.type));
+    const i = n.filter(P).map(O);
+    if (i.length < 3) return this.markSkipped(String(t.type));
+    const s = this.fillBytes(t) ?? this.strokeBytes(t);
+    (this.addTriangleFan(i, s), this.addPolyline(i, !0, this.strokeBytes(t)), this.stats.drawn++);
+  }
+  addHatchEntity(t) {
+    var n;
+    const i = t.loops;
+    if (!Array.isArray(i) || i.length === 0) return this.markSkipped('HATCH');
+    const s = this.strokeBytes(t),
+      o = this.fillBytes(t);
+    let r = !1;
+    for (const a of i) {
+      const c =
+        (n = a.commands) != null && n.length
+          ? ts(a.commands, this.opts.maxCurveSegments)
+          : (a.vertices ?? []).filter(P).map(O);
+      c.length < 2 ||
+        (this.addPolyline(c, !0, s), o && c.length >= 3 && this.addTriangleFan(c, o), (r = !0));
+    }
+    if (!r) return this.markSkipped('HATCH');
+    this.stats.drawn++;
+  }
+  addSplineEntity(t) {
+    var n;
+    const i = (n = t.fitPoints) != null && n.length ? t.fitPoints : t.controlPoints;
+    if (!i || i.length < 2) return this.markSkipped('SPLINE');
+    (this.addPolyline(i.filter(P).map(O), !!t.isClosed, this.strokeBytes(t)), this.stats.drawn++);
+  }
+  addPathEntity(t) {
+    var n;
+    if (!((n = t.commands) != null && n.length)) return this.markSkipped(String(t.type));
+    const i = ts(t.commands, this.opts.maxCurveSegments);
+    if (i.length < 2) return this.markSkipped(String(t.type));
+    this.addPolyline(i, !1, this.strokeBytes(t));
+    const s = this.fillBytes(t);
+    (s && i.length >= 3 && this.addTriangleFan(i, s), this.stats.drawn++);
+  }
+  addImageEntity(t) {
+    const n = t.insertionPoint;
+    if (!P(n)) return this.markSkipped(String(t.type));
+    const i = Number(t.width ?? 32),
+      s = Number(t.height ?? 32);
+    if (!Number.isFinite(i) || !Number.isFinite(s)) return this.markSkipped(String(t.type));
+    const o = O(n),
+      r = ln([o, { x: o.x + i, y: o.y - s }]);
+    (this.imageItems.push({
+      point: o,
+      width: i,
+      height: s,
+      source: t.imageDataUrl ?? t.imageSource,
+      color: $t(t, this.document, this.colorOptions()),
+      opacity: _t(Number(t.opacity ?? 1), 0, 1),
+      bounds: r,
+    }),
+      this.stats.drawn++);
+  }
+  addUnsupportedMarker(t) {
+    const n = qs(t);
+    n && this.addPoint(n, this.strokeBytes(t));
+  }
+  addPolyline(t, n, i) {
+    const s = t.filter(P).map(O);
+    if (!(s.length < 2)) {
+      for (let o = 0; o < s.length - 1; o++) this.addSegment(s[o], s[o + 1], i);
+      n && this.addSegment(s[s.length - 1], s[0], i);
+    }
+  }
+  addSegment(t, n, i) {
+    if (!P(t) || !P(n) || Math.hypot(t.x - n.x, t.y - n.y) <= 1e-14) return;
+    const s = this.batchFor(this.lineBuckets, ln([t, n]));
+    (Ft(s, t, i, this.origin), Ft(s, n, i, this.origin), s.primitiveCount++, this.primitiveCount++);
+  }
+  addPoint(t, n) {
+    const i = this.batchFor(this.pointBuckets, Mh(t));
+    (Ft(i, t, n, this.origin), i.primitiveCount++, this.primitiveCount++);
+  }
+  addTriangleFan(t, n) {
+    const i = t.filter(P).map(O);
+    if (i.length < 3) return;
+    const s = ln(i),
+      o = this.batchFor(this.triangleBuckets, s);
+    for (let r = 1; r < i.length - 1; r++)
+      (Ft(o, i[0], n, this.origin),
+        Ft(o, i[r], n, this.origin),
+        Ft(o, i[r + 1], n, this.origin),
+        o.primitiveCount++,
+        this.primitiveCount++);
+  }
+  batchFor(t, n) {
+    const i = this.bucketKey(n);
+    let s = t.get(i);
+    return (
+      s || ((s = vh()), t.set(i, s)),
+      L(s.bounds, { x: n.minX, y: n.minY }),
+      L(s.bounds, { x: n.maxX, y: n.maxY }),
+      s
+    );
+  }
+  bucketKey(t) {
+    if (!Number.isFinite(this.tileSize)) return 'all';
+    const n = (t.minX + t.maxX) / 2,
+      i = (t.minY + t.maxY) / 2,
+      s = Math.floor((n - this.bounds.minX) / this.tileSize),
+      o = Math.floor((i - this.bounds.minY) / this.tileSize);
+    return `${s}:${o}`;
+  }
+  strokeBytes(t) {
+    return An(
+      $t(t, this.document, this.colorOptions()),
+      [255, 255, 255, 255],
+      _t(Number(t.opacity ?? 1), 0, 1),
+    );
+  }
+  fillBytes(t) {
+    const n = Sn(t, this.document, this.colorOptions());
+    return n ? An(n, [255, 255, 255, 255], _t(Number(t.opacity ?? 1), 0, 1)) : void 0;
+  }
+  colorOptions() {
+    return {
+      foreground: this.opts.foreground,
+      background: this.opts.background,
+      trueColorByteOrder: this.opts.trueColorByteOrder,
+      contrastMode: this.opts.contrastMode,
+      minColorContrast: this.opts.minColorContrast,
+    };
+  }
+  markSkipped(t) {
+    (this.stats.skipped++, (this.stats.unsupported[t] = this.stats.unsupported[t] ?? 0));
+  }
+  lookupLayer(t) {
+    if (t)
+      return (
+        this.document.layers[t] ??
+        this.document.layers[t.toLowerCase()] ??
+        Object.values(this.document.layers).find((n) => n.name.toLowerCase() === t.toLowerCase())
+      );
+  }
+  lookupBlock(t) {
+    if (t)
+      return (
+        this.document.blocks[t] ??
+        this.document.blocks[t.toLowerCase()] ??
+        Object.values(this.document.blocks).find((n) => n.name.toLowerCase() === t.toLowerCase())
+      );
+  }
+}
+function vh() {
+  return { positions: [], colors: [], bounds: dt(), primitiveCount: 0 };
+}
+function Ft(e, t, n, i) {
+  (e.positions.push(t.x - i.x, t.y - i.y), e.colors.push(n[0], n[1], n[2], n[3]));
+}
+function hn(e, t) {
+  const n = [];
+  for (const i of e.values()) {
+    const s = i.positions.length / 2;
+    if (s <= 0 || !Yt(i.bounds)) continue;
+    if (s <= t) {
+      n.push({
+        positions: new Float32Array(i.positions),
+        colors: new Uint8Array(i.colors),
+        bounds: { ...i.bounds },
+        primitiveCount: i.primitiveCount,
+      });
+      continue;
+    }
+    const o = Ch(i),
+      r = Math.max(o, Math.floor(t / o) * o);
+    for (let a = 0; a < s; a += r) {
+      const c = Math.min(s, a + r),
+        h = i.positions.slice(a * 2, c * 2),
+        l = i.colors.slice(a * 4, c * 4),
+        d = dt();
+      for (let u = 0; u < h.length; u += 2) L(d, { x: h[u], y: h[u + 1] });
+      n.push({
+        positions: new Float32Array(h),
+        colors: new Uint8Array(l),
+        bounds: { ...i.bounds },
+        primitiveCount: Math.floor((c - a) / o),
+      });
+    }
+  }
+  return n;
+}
+function Ch(e) {
+  const t = e.positions.length / 2;
+  return t === e.primitiveCount ? 1 : t === e.primitiveCount * 3 ? 3 : 2;
+}
+function Ph(e, t) {
+  var n;
+  const i = dt();
+  if ((n = e.pages) != null && n.length)
+    for (const r of e.pages) (L(i, { x: 0, y: 0 }), L(i, { x: r.width, y: r.height }));
+  const s = (r) => {
+      if (r)
+        return (
+          e.blocks[r] ??
+          e.blocks[r.toLowerCase()] ??
+          Object.values(e.blocks).find((a) => a.name.toLowerCase() === r.toLowerCase())
+        );
+    },
+    o = (r, a) => {
+      const c = String(r.type ?? '').toUpperCase(),
+        h = r.kind ?? Xt(c);
+      if (h === 'insert') {
+        const l = s(r.blockName ?? r.name);
+        if (l && a < t.maxInsertDepth) {
+          const d = _e(r, l.basePoint ?? { x: 0, y: 0 });
+          for (const u of l.entities) o(Le(u, d), a + 1);
+          return;
+        }
+      }
+      if (h === 'line') (P(r.startPoint) && L(i, r.startPoint), P(r.endPoint) && L(i, r.endPoint));
+      else if (h === 'circle' || h === 'arc')
+        P(r.center) && Number.isFinite(r.radius) && Os(i, r.center, Number(r.radius));
+      else if (h === 'polyline' || h === 'solid' || h === 'spline')
+        for (const l of [
+          ...(r.vertices ?? []),
+          ...(r.points ?? []),
+          ...(r.controlPoints ?? []),
+          ...(r.fitPoints ?? []),
+        ])
+          P(l) && L(i, l);
+      else if (h === 'ellipse')
+        P(r.center) &&
+          P(r.majorAxisEndPoint) &&
+          Ie(
+            r.center,
+            r.majorAxisEndPoint,
+            Number(r.axisRatio ?? 1),
+            Number(r.startAngle ?? 0),
+            Number(r.endAngle ?? Math.PI * 2),
+            t.maxCurveSegments,
+          ).forEach((l) => L(i, l));
+      else if (h === 'path') for (const l of r.commands ?? []) for (const d of l.points) L(i, d);
+      else if (h === 'hatch')
+        for (const l of r.loops ?? []) {
+          for (const d of l.vertices ?? []) L(i, d);
+          for (const d of l.commands ?? []) for (const u of d.points) L(i, u);
+        }
+      else {
+        const l = qs(r);
+        l && L(i, l);
+      }
+    };
+  for (const r of e.entities) o(r, 0);
+  return $s(i);
+}
+function ts(e, t) {
+  const n = [];
+  let i, s;
+  const o = (r) => {
+    ((!n.length || Math.hypot(n[n.length - 1].x - r.x, n[n.length - 1].y - r.y) > 1e-12) &&
+      n.push(O(r)),
+      (i = O(r)));
+  };
+  for (const r of e)
+    if (r.cmd === 'M') ((i = O(r.points[0])), (s = i), o(i));
+    else if (r.cmd === 'L') o(r.points[0]);
+    else if (r.cmd === 'Q' && i && r.points.length >= 2) {
+      const a = i,
+        [c, h] = r.points,
+        l = Math.max(4, Math.min(t, 24));
+      for (let d = 1; d <= l; d++) {
+        const u = d / l,
+          f = 1 - u;
+        o({
+          x: f * f * a.x + 2 * f * u * c.x + u * u * h.x,
+          y: f * f * a.y + 2 * f * u * c.y + u * u * h.y,
+        });
+      }
+    } else if (r.cmd === 'C' && i && r.points.length >= 3) {
+      const a = i,
+        [c, h, l] = r.points,
+        d = Math.max(6, Math.min(t, 32));
+      for (let u = 1; u <= d; u++) {
+        const f = u / d,
+          m = 1 - f;
+        o({
+          x: m ** 3 * a.x + 3 * m * m * f * c.x + 3 * m * f * f * h.x + f ** 3 * l.x,
+          y: m ** 3 * a.y + 3 * m * m * f * c.y + 3 * m * f * f * h.y + f ** 3 * l.y,
+        });
+      }
+    } else r.cmd === 'Z' && s && o(s);
+  return n;
+}
+function qs(e) {
+  for (const t of ['startPoint', 'insertionPoint', 'center', 'point', 'location']) {
+    const n = e[t];
+    if (P(n)) return O(n);
+  }
+  if (Array.isArray(e.vertices) && P(e.vertices[0])) return O(e.vertices[0]);
+  if (Array.isArray(e.commands) && e.commands.length) {
+    const t = e.commands.find((n) => n.points.length > 0);
+    if (t) return O(t.points[0]);
+  }
+}
+function ln(e) {
+  const t = dt();
+  for (const n of e) L(t, n);
+  return t;
+}
+function Mh(e) {
+  return { minX: e.x, minY: e.y, maxX: e.x, maxY: e.y };
+}
+function dn(e, t) {
+  return e.minX <= t.maxX && e.maxX >= t.minX && e.minY <= t.maxY && e.maxY >= t.minY;
+}
+function Sh(e, t) {
+  return (
+    (t.trueColorByteOrder !== void 0 && t.trueColorByteOrder !== e.trueColorByteOrder) ||
+    (t.contrastMode !== void 0 && t.contrastMode !== e.contrastMode) ||
+    (t.minColorContrast !== void 0 && t.minColorContrast !== e.minColorContrast) ||
+    (t.foreground !== void 0 && t.foreground !== e.foreground) ||
+    (t.background !== void 0 && t.background !== e.background) ||
+    (t.maxInsertDepth !== void 0 && t.maxInsertDepth !== e.maxInsertDepth) ||
+    (t.maxCurveSegments !== void 0 && t.maxCurveSegments !== e.maxCurveSegments) ||
+    (t.spatialIndexCellCount !== void 0 && t.spatialIndexCellCount !== e.spatialIndexCellCount) ||
+    (t.maxVerticesPerBatch !== void 0 && t.maxVerticesPerBatch !== e.maxVerticesPerBatch) ||
+    (t.enableSpatialIndex !== void 0 && t.enableSpatialIndex !== e.enableSpatialIndex)
+  );
+}
+function kh(e, t) {
+  return {
+    ...e.stats,
+    renderElapsedMs: t,
+    backend: 'webgl',
+    primitiveCount: e.primitiveCount,
+    visiblePrimitiveCount: 0,
+    culledPrimitiveCount: 0,
+    gpuMemoryBytes: e.gpuMemoryBytes,
+    buildElapsedMs: e.buildElapsedMs,
+  };
+}
+function Eh(e) {
+  return {
+    total: e.total,
+    drawn: e.drawn,
+    skipped: e.skipped,
+    byType: { ...e.byType },
+    unsupported: { ...e.unsupported },
+    renderElapsedMs: e.renderElapsedMs,
+    backend: e.backend,
+    primitiveCount: e.primitiveCount,
+    visiblePrimitiveCount: e.visiblePrimitiveCount,
+    culledPrimitiveCount: e.culledPrimitiveCount,
+    gpuMemoryBytes: e.gpuMemoryBytes,
+    buildElapsedMs: e.buildElapsedMs,
+  };
+}
+function An(e, t, n = 1) {
+  const i = e.trim().toLowerCase();
+  let s;
+  if (/^#[0-9a-f]{3}$/i.test(i))
+    s = [parseInt(i[1] + i[1], 16), parseInt(i[2] + i[2], 16), parseInt(i[3] + i[3], 16), 255];
+  else if (/^#[0-9a-f]{6}$/i.test(i))
+    s = [
+      parseInt(i.slice(1, 3), 16),
+      parseInt(i.slice(3, 5), 16),
+      parseInt(i.slice(5, 7), 16),
+      255,
+    ];
+  else {
+    const r = i.match(/^rgba?\(([^)]+)\)$/i);
+    if (r) {
+      const a = r[1].split(/[\s,\/]+/).filter(Boolean),
+        c = a.slice(0, 3).some((l) => l.includes('%')),
+        h = a.map((l) => Number(l.replace('%', '')));
+      h.length >= 3 &&
+        h.slice(0, 3).every(Number.isFinite) &&
+        (s = [
+          Kt(c ? h[0] * 2.55 : h[0]),
+          Kt(c ? h[1] * 2.55 : h[1]),
+          Kt(c ? h[2] * 2.55 : h[2]),
+          Kt((Number.isFinite(h[3]) ? h[3] : 1) * 255),
+        ]);
+    }
+  }
+  const o = s ?? t;
+  return [o[0], o[1], o[2], Kt(o[3] * n)];
+}
+function Kt(e) {
+  return Math.max(0, Math.min(255, Math.round(e)));
+}
+class Ah {
+  constructor(t = {}) {
+    (x(this, 'canvas'),
+      x(this, 'renderer'),
+      x(this, 'registry'),
+      x(this, 'nativeHost'),
+      x(this, 'options'),
+      x(this, 'lastResult'),
+      x(this, 'activeNativeLoader'));
+    var n;
+    if (((this.options = { autoFit: !0, ...t }), (this.registry = t.registry ?? th(t)), t.loaders))
+      for (const i of t.loaders) this.registry.register(i);
+    if (
+      ((this.canvas = t.canvas ?? document.createElement('canvas')),
+      this.canvas.classList.add('cad-viewer-canvas'),
+      t.container)
+    )
+      (t.container.classList.add('cad-viewer-container'),
+        t.canvas ||
+          ((this.canvas.style.width = '100%'),
+          (this.canvas.style.height = '100%'),
+          (this.canvas.style.display = 'block'),
+          t.container.appendChild(this.canvas)),
+        (this.nativeHost = t.nativeHost ?? document.createElement('div')),
+        this.nativeHost.classList.add('cad-viewer-native-host'),
+        t.nativeHost || t.container.appendChild(this.nativeHost));
+    else if (t.nativeHost)
+      ((this.nativeHost = t.nativeHost), this.nativeHost.classList.add('cad-viewer-native-host'));
+    else if ((n = t.canvas) != null && n.parentElement) {
+      t.canvas.parentElement.classList.add('cad-viewer-container');
+      const i = document.createElement('div');
+      (i.classList.add('cad-viewer-native-host'),
+        t.canvas.parentElement.appendChild(i),
+        (this.nativeHost = i));
+    }
+    ((this.renderer = Th(t.renderer ?? 'auto', this.canvas, t.canvasOptions)),
+      (this.renderer.onStats = (i) => {
+        var s, o;
+        return (o = (s = this.options).onRenderStats) == null ? void 0 : o.call(s, i);
+      }),
+      (this.renderer.onViewChange = (i) => {
+        var s, o;
+        return (o = (s = this.options).onViewChange) == null ? void 0 : o.call(s, i);
+      }));
+  }
+  registerLoader(t) {
+    return (this.registry.register(t), this);
+  }
+  async loadFile(t, n = {}) {
+    var i, s;
+    return (
+      (s = (i = this.options).onLoadStart) == null || s.call(i, t),
+      this.loadThroughRegistry({ file: t, fileName: t.name }, n, t.name)
+    );
+  }
+  async loadBuffer(t, n, i = {}) {
+    var s, o;
+    return (
+      (o = (s = this.options).onLoadStart) == null || o.call(s, t),
+      this.loadThroughRegistry({ buffer: t, fileName: n }, i, n)
+    );
+  }
+  async load(t, n = {}) {
+    var i, s, o;
+    return (
+      (s = (i = this.options).onLoadStart) == null || s.call(i, t),
+      this.loadThroughRegistry(t, n, t.fileName ?? ((o = t.file) == null ? void 0 : o.name))
+    );
+  }
+  setDocument(t, n) {
+    var i, s;
+    this.deactivateNativeRenderer();
+    const o = {
+      document: t,
+      raw: t.raw,
+      bytes: 0,
+      elapsedMs: 0,
+      format: t.format,
+      warnings: t.warnings,
+      summary: we(t),
+      fileName: n,
+    };
+    return (
+      this.renderer.setDocument(t),
+      this.options.autoFit || this.renderer.render(),
+      (this.lastResult = o),
+      (s = (i = this.options).onLoad) == null || s.call(i, o),
+      o
+    );
+  }
+  fit() {
+    var t, n;
+    this.activeNativeLoader
+      ? (n = (t = this.activeNativeLoader).fit) == null || n.call(t)
+      : this.renderer.fitToView();
+  }
+  zoomIn() {
+    var t, n;
+    this.activeNativeLoader
+      ? (n = (t = this.activeNativeLoader).zoomIn) == null || n.call(t)
+      : this.renderer.zoomIn();
+  }
+  zoomOut() {
+    var t, n;
+    this.activeNativeLoader
+      ? (n = (t = this.activeNativeLoader).zoomOut) == null || n.call(t)
+      : this.renderer.zoomOut();
+  }
+  resize() {
+    var t, n;
+    this.activeNativeLoader
+      ? (n = (t = this.activeNativeLoader).resize) == null || n.call(t)
+      : this.renderer.resize();
+  }
+  setCanvasOptions(t) {
+    var n, i;
+    ((this.options.canvasOptions = { ...(this.options.canvasOptions ?? {}), ...t }),
+      this.renderer.setOptions(t),
+      this.activeNativeLoader &&
+        ((i = (n = this.activeNativeLoader).setNativeOptions) == null ||
+          i.call(n, {
+            ...this.mergeLoadOptions({}),
+            dwfBackground: t.background ?? this.options.dwfBackground,
+          })));
+  }
+  async preloadDwg(t = {}) {
+    const n = this.registry.list().find((i) => i.id === 'dwg');
+    if (!(n != null && n.preload))
+      throw new Error('The registered DWG loader does not support preload().');
+    return n.preload(this.mergeLoadOptions(t));
+  }
+  clear() {
+    ((this.lastResult = void 0), this.deactivateNativeRenderer(), this.renderer.clear());
+  }
+  destroy() {
+    var t, n, i;
+    this.deactivateNativeRenderer();
+    for (const s of this.registry.list()) {
+      const o = s;
+      ((t = o.terminateWorker) == null || t.call(o),
+        (n = o.unmount) == null || n.call(o),
+        (i = o.destroy) == null || i.call(o));
+    }
+    this.renderer.destroy();
+  }
+  getLoadResult() {
+    return this.lastResult;
+  }
+  getDocument() {
+    var t;
+    return this.activeNativeLoader
+      ? (t = this.lastResult) == null
+        ? void 0
+        : t.document
+      : this.renderer.getDocument();
+  }
+  getZoomPercent() {
+    return this.activeNativeLoader ? 100 : this.renderer.getZoomPercent();
+  }
+  isNativeRendererActive() {
+    return !!this.activeNativeLoader;
+  }
+  async loadThroughRegistry(t, n, i) {
+    var s, o;
+    try {
+      const r = this.mergeLoadOptions(n);
+      un(r.signal);
+      const a = await this.registry.detect(t),
+        c = { ...t, buffer: a.bytes };
+      if (eh(a.loader)) return await this.applyNativeLoadResult(a.loader, c, r, i);
+      const h = await a.loader.load(c, r);
+      return this.applyLoadResult(h, i);
+    } catch (r) {
+      const a = Nh(r);
+      throw ((o = (s = this.options).onError) == null || o.call(s, a), a);
+    }
+  }
+  applyLoadResult(t, n) {
+    var i, s, o, r;
+    (this.deactivateNativeRenderer(),
+      (s = (i = this.options).onLoadProgress) == null ||
+        s.call(i, {
+          phase: 'render',
+          format: t.format,
+          message: 'Rendering normalized CAD scene…',
+          percent: 96,
+        }),
+      this.renderer.setDocument(t.document),
+      this.options.autoFit || this.renderer.render());
+    const a = { ...t, fileName: n, summary: we(t.document) };
+    return ((this.lastResult = a), (r = (o = this.options).onLoad) == null || r.call(o, a), a);
+  }
+  async applyNativeLoadResult(t, n, i, s) {
+    var o, r, a;
+    if (!this.nativeHost)
+      throw new Error(
+        'Native DWF rendering requires CadViewerOptions.container, nativeHost, or a canvas parent element.',
+      );
+    (un(i.signal),
+      this.renderer.clear(),
+      (o = this.activeNativeLoader) == null || o.unmount(),
+      (this.activeNativeLoader = t),
+      (this.canvas.style.display = 'none'),
+      this.nativeHost.classList.add('is-active'));
+    try {
+      const c = await t.mount(n, this.nativeHost, i);
+      un(i.signal);
+      const h = { ...c, fileName: s, summary: we(c.document) };
+      return (
+        (this.lastResult = h),
+        this.emitNativeRenderStats(c),
+        (a = (r = this.options).onLoad) == null || a.call(r, h),
+        h
+      );
+    } catch (c) {
+      throw (this.deactivateNativeRenderer(), c);
+    }
+  }
+  deactivateNativeRenderer() {
+    var t, n;
+    if (
+      !this.activeNativeLoader &&
+      !((t = this.nativeHost) != null && t.classList.contains('is-active'))
+    ) {
+      this.canvas.style.display = '';
+      return;
+    }
+    ((n = this.activeNativeLoader) == null || n.unmount(),
+      (this.activeNativeLoader = void 0),
+      this.nativeHost &&
+        (this.nativeHost.classList.remove('is-active'), this.nativeHost.replaceChildren()),
+      (this.canvas.style.display = ''));
+  }
+  emitNativeRenderStats(t) {
+    var n, i, s, o;
+    const r = t.document.metadata,
+      a = Number(
+        ((n = r.nativeRenderStats) == null ? void 0 : n.commands) ??
+          t.document.entities.length ??
+          0,
+      ),
+      c = String(((i = r.nativeRenderStats) == null ? void 0 : i.backend) ?? 'webgl').includes(
+        'webgl',
+      )
+        ? 'webgl'
+        : 'canvas2d';
+    (o = (s = this.options).onRenderStats) == null ||
+      o.call(s, {
+        total: a,
+        drawn: a,
+        skipped: 0,
+        byType: we(t.document).byType,
+        unsupported: {},
+        renderElapsedMs: t.elapsedMs,
+        backend: c,
+        primitiveCount: a,
+        visiblePrimitiveCount: a,
+        culledPrimitiveCount: 0,
+        gpuMemoryBytes: void 0,
+        buildElapsedMs: t.elapsedMs,
+      });
+  }
+  mergeLoadOptions(t) {
+    const n = this.options.onProgress,
+      i = t.onProgress;
+    return {
+      ...this.options,
+      ...t,
+      onProgress: (s) => {
+        var o, r;
+        ((r = (o = this.options).onLoadProgress) == null || r.call(o, s),
+          n?.(s),
+          i && i !== n && i(s));
+      },
+    };
+  }
+}
+function Nh(e) {
+  return e instanceof Error ? e : new Error(String(e));
+}
+function un(e) {
+  if (e != null && e.aborted) throw new DOMException('Loading cancelled.', 'AbortError');
+}
+function Th(e, t, n = {}) {
+  if (e === 'canvas2d') return new Zi(t, n);
+  if (e === 'webgl') return new Ki(t, n);
+  if (js())
+    try {
+      return new Ki(t, n);
+    } catch {}
+  return new Zi(t, n);
+}
+const Ih = 12e4,
+  Fh = `
 .cad-shell{display:flex;height:100%;min-height:100%;flex-direction:column;background:#f5f7fb;color:#142335}
 .cad-shell *{box-sizing:border-box}
 .cad-toolbar{display:flex;min-height:48px;align-items:center;justify-content:space-between;gap:16px;padding:0 14px;border-bottom:1px solid rgba(15,23,42,.08);background:#fff}
@@ -185,4 +10865,321 @@ void main() {
 .file-viewer[data-viewer-theme='dark'] .cad-toolbar,.file-viewer[data-viewer-theme='dark'] .cad-layers,.file-viewer[data-viewer-theme='dark'] .cad-inspector{background:#fff;color:#142335}
 @media (prefers-color-scheme:dark){.file-viewer[data-viewer-theme='system'] .cad-shell{background:#111827;color:#e5edf6}.file-viewer[data-viewer-theme='system'] .cad-toolbar,.file-viewer[data-viewer-theme='system'] .cad-layers,.file-viewer[data-viewer-theme='system'] .cad-inspector{background:#fff;color:#142335}}
 @media (max-width:860px){.cad-body,.cad-body.without-layers{grid-template-columns:minmax(0,1fr)}.cad-layers,.cad-inspector{display:none}}
-`,_h=()=>{const e=document.createElement("style");return e.textContent=Fh,e},T=(e,t,n)=>{const i=document.createElement(e);return t&&(i.className=t),n!==void 0&&(i.textContent=n),i},Lh=e=>(e||"dxf").toLowerCase(),fn=e=>e?Object.entries(e.document.layers).map(([t,n])=>({...n,name:t})).sort((t,n)=>t.name.localeCompare(n.name)):[],xe=e=>Number.isFinite(e)?new Intl.NumberFormat("zh-CN").format(Math.round(e||0)):"0",es=e=>{var t;return((t=e.ownerDocument)===null||t===void 0?void 0:t.baseURI)||"http://localhost/"};async function Uh(e,t,n="dxf",i){var s;const o=Lh(n),r=((s=i?.options)===null||s===void 0?void 0:s.cad)||{};let a="loading",c="正在加载 CAD 预览器...",h="",l=null,d=null,u=null,f=[],m=null,p=null,g=null,b=!1;const w=_h(),y=T("div","cad-shell");y.dataset.viewerZoomProvider="cad";const C=T("div","cad-toolbar"),M=T("div","cad-tools"),A=T("button",void 0,"适配"),N=T("button",void 0,"-"),F=T("span","cad-zoom","100%"),$=T("button",void 0,"+"),At=T("div","cad-meta"),Vt=T("span",void 0,o.toUpperCase()),st=T("span",void 0,"AUTO");[A,N,$].forEach(E=>{E.type="button"}),N.title="缩小",$.title="放大",M.append(A,N,F,$),At.append(Vt,st),C.append(M,At);const rt=T("div","cad-body without-layers"),yt=T("aside","cad-layers");yt.hidden=!0;const Gt=T("div","cad-layers-head"),ee=T("span",void 0,"0 项");Gt.append(T("strong",void 0,"图层"),ee);const ot=T("div","cad-layers-list");yt.append(Gt,ot);const jt=T("div","cad-canvas-wrap"),xt=T("div","cad-stage"),at=T("div","cad-native-stage");xt.append(at);const nt=T("div","cad-state",c);jt.append(xt,nt);const ne=T("aside","cad-inspector"),Oe=T("strong",void 0,"结构"),Ln=T("dl"),ie=T("p","cad-warning");ie.hidden=!0,ne.append(Oe,Ln,ie),rt.append(yt,jt,ne),y.append(C,rt),t.replaceChildren(w,y);const Dn=()=>i?.filename||`drawing.${o}`,Zs=()=>l?.warnings||l?.document.warnings||[],Bn=()=>{var E,I,z;const Y=(z=(E=u?.zoomPercent)!==null&&E!==void 0?E:(I=m?.getZoomPercent)===null||I===void 0?void 0:I.call(m))!==null&&z!==void 0?z:100;return Number.isFinite(Y)?Math.round(Y):100},se=()=>{const E=a==="ready"&&!!m,I=Bn();return{scale:I/100,label:`${I}%`,canZoomIn:E,canZoomOut:E,canReset:E,minScale:.05,maxScale:16}},vt=or(),Rn=()=>{const E=l?.summary,I=[["实体",xe(E?.entityCount)],["块",xe(E?.blockCount)],["页面",xe(E?.pageCount)],["绘制",xe(d?.drawn)]];Ln.replaceChildren(...I.map(([Y,ut])=>{const Tt=T("div");return Tt.append(T("dt",void 0,Y),T("dd",void 0,ut)),Tt}));const z=Zs()[0];ie.textContent=z||"",ie.hidden=!z},Ks=()=>{ee.textContent=`${f.length} 项`,yt.hidden=f.length===0,rt.classList.toggle("without-layers",f.length===0),ot.replaceChildren(...f.map(E=>{const I=T("button");I.type="button",I.classList.toggle("muted",E.isVisible===!1||!!E.isFrozen);const z=T("span","cad-layer-color");return typeof E.color=="string"&&(z.style.background=E.color),I.append(z,T("span",void 0,E.name)),I.addEventListener("click",()=>{const Y=m?.getDocument();if(!Y?.layers[E.name])return;const ut=Y.layers[E.name];ut.isVisible=ut.isVisible===!1,l=m?.setDocument(Y,Dn())||null,f=fn(l),Nt(),queueMicrotask(()=>{m?.fit(),vt.emit()})}),I}))},ct=()=>{F.textContent=`${Bn()}%`,st.textContent=(d?.backend||"auto").toUpperCase(),nt.hidden=a==="ready",nt.classList.toggle("error",a==="error"),a==="loading"?nt.textContent=c:a==="error"&&(nt.textContent=h)},Nt=()=>{ct(),Ks(),Rn()},Qs=E=>{const I=E.format?`${E.format.toUpperCase()} `:"",z=Number.isFinite(E.percent)?` ${Math.round(E.percent||0)}%`:"";c=`${I}${E.message}${z}`,ct()},Wn=()=>{m?.fit(),vt.emit(),ct()},On=()=>{m?.zoomIn(),vt.emit(),ct()},$n=()=>{m?.zoomOut(),vt.emit(),ct()};sr(y,{zoomIn:()=>(On(),se()),zoomOut:()=>($n(),se()),resetZoom:()=>(Wn(),se()),getState:se,subscribe:vt.subscribe}),A.addEventListener("click",Wn),$.addEventListener("click",On),N.addEventListener("click",$n);const Js=()=>{var E,I,z,Y,ut,Tt,$e;const{wasmPath:zn,workerUrl:Un,dwfWasmUrl:er}=Hn(r,es(t)),nr={background:"#f8fafc",foreground:"#0f172a",contrastMode:"adaptive",minColorContrast:2.4,showPageBounds:!0,showUnsupportedMarkers:!0,enableSpatialIndex:!0,maxVisibleTextLabels:2400,...r.canvasOptions||{}},Xn=new Ah({container:xt,nativeHost:at,renderer:r.renderer||"auto",wasmPath:zn,workerUrl:Un,dwfWasmUrl:er,dxfEncoding:r.dxfEncoding,useWorker:(E=r.useWorker)!==null&&E!==void 0?E:!0,workerTimeoutMs:(I=r.workerTimeoutMs)!==null&&I!==void 0?I:Ih,preferDwgWasm:(z=r.preferDwgWasm)!==null&&z!==void 0?z:!0,includePaperSpace:(Y=r.includePaperSpace)!==null&&Y!==void 0?Y:!0,maxInsertDepth:r.maxInsertDepth,keepRaw:(ut=r.keepRaw)!==null&&ut!==void 0?ut:!1,dwfPreferWebgl:(Tt=r.dwfPreferWebgl)!==null&&Tt!==void 0?Tt:!0,dwfPreferWasm:($e=r.dwfPreferWasm)!==null&&$e!==void 0?$e:!0,dwfBackground:r.dwfBackground||"#f8fafc",dwfMaxDevicePixelRatio:r.dwfMaxDevicePixelRatio,dwfMaxCanvasPixels:r.dwfMaxCanvasPixels,dwfMaxGpuCacheBytes:r.dwfMaxGpuCacheBytes,dwfMaxCachedScenes:r.dwfMaxCachedScenes,dwfLineWeightMode:r.dwfLineWeightMode,dwfMinStrokeCssPx:r.dwfMinStrokeCssPx,dwfMaxOverviewStrokeCssPx:r.dwfMaxOverviewStrokeCssPx,dwfMinTextCssPx:r.dwfMinTextCssPx,dwfMinFilledAreaCssPx:r.dwfMinFilledAreaCssPx,autoFit:!0,canvasOptions:nr,onLoadProgress:Qs,onRenderStats:ft=>{d=ft,ct(),Rn()},onViewChange:ft=>{u=ft,vt.emit(),ct()},onLoad:ft=>{l=ft,f=fn(ft),Nt()},onError:ft=>{h=ft.message||"CAD 文件解析失败",ct()}});return r.preloadDwg!==!1&&o==="dwg"&&Xn.preloadDwg({wasmPath:zn,workerUrl:Un}).catch(()=>{}),Xn},tr=async()=>{a="loading",c="正在解析 CAD...",h="",l=null,d=null,u=null,f=[],Nt(),g?.abort();const E=new AbortController;g=E;try{m?.destroy(),m=Js();const I=Hn(r,es(t)),z=await m.loadBuffer(e.slice(0),Dn(),{signal:E.signal,transferInputBuffer:!1,dxfEncoding:r.dxfEncoding,wasmPath:I.wasmPath,workerUrl:I.workerUrl,dwfWasmUrl:I.dwfWasmUrl});if(b||E.signal.aborted)return;l=z,f=fn(z),a="ready",Nt(),queueMicrotask(()=>{m?.fit(),vt.emit(),ct()})}catch(I){if(b||E.signal.aborted)return;console.error(I),a="error",h=I instanceof Error?I.message:"CAD 文件解析失败",Nt()}};return typeof ResizeObserver<"u"&&(p=new ResizeObserver(()=>{m?.resize()}),p.observe(xt)),Nt(),tr(),{$el:y,unmount(){b=!0,rr(y),g?.abort(),g=null,p?.disconnect(),p=null,m?.destroy(),m=null,t.replaceChildren()}}}export{Uh as default};
+`,
+  _h = () => {
+    const e = document.createElement('style');
+    return ((e.textContent = Fh), e);
+  },
+  T = (e, t, n) => {
+    const i = document.createElement(e);
+    return (t && (i.className = t), n !== void 0 && (i.textContent = n), i);
+  },
+  Lh = (e) => (e || 'dxf').toLowerCase(),
+  fn = (e) =>
+    e
+      ? Object.entries(e.document.layers)
+          .map(([t, n]) => ({ ...n, name: t }))
+          .sort((t, n) => t.name.localeCompare(n.name))
+      : [],
+  xe = (e) =>
+    Number.isFinite(e) ? new Intl.NumberFormat('zh-CN').format(Math.round(e || 0)) : '0',
+  es = (e) => {
+    var t;
+    return (
+      ((t = e.ownerDocument) === null || t === void 0 ? void 0 : t.baseURI) || 'http://localhost/'
+    );
+  };
+async function Uh(e, t, n = 'dxf', i) {
+  var s;
+  const o = Lh(n),
+    r = ((s = i?.options) === null || s === void 0 ? void 0 : s.cad) || {};
+  let a = 'loading',
+    c = '正在加载 CAD 预览器...',
+    h = '',
+    l = null,
+    d = null,
+    u = null,
+    f = [],
+    m = null,
+    p = null,
+    g = null,
+    b = !1;
+  const w = _h(),
+    y = T('div', 'cad-shell');
+  y.dataset.viewerZoomProvider = 'cad';
+  const C = T('div', 'cad-toolbar'),
+    M = T('div', 'cad-tools'),
+    A = T('button', void 0, '适配'),
+    N = T('button', void 0, '-'),
+    F = T('span', 'cad-zoom', '100%'),
+    $ = T('button', void 0, '+'),
+    At = T('div', 'cad-meta'),
+    Vt = T('span', void 0, o.toUpperCase()),
+    st = T('span', void 0, 'AUTO');
+  ([A, N, $].forEach((E) => {
+    E.type = 'button';
+  }),
+    (N.title = '缩小'),
+    ($.title = '放大'),
+    M.append(A, N, F, $),
+    At.append(Vt, st),
+    C.append(M, At));
+  const rt = T('div', 'cad-body without-layers'),
+    yt = T('aside', 'cad-layers');
+  yt.hidden = !0;
+  const Gt = T('div', 'cad-layers-head'),
+    ee = T('span', void 0, '0 项');
+  Gt.append(T('strong', void 0, '图层'), ee);
+  const ot = T('div', 'cad-layers-list');
+  yt.append(Gt, ot);
+  const jt = T('div', 'cad-canvas-wrap'),
+    xt = T('div', 'cad-stage'),
+    at = T('div', 'cad-native-stage');
+  xt.append(at);
+  const nt = T('div', 'cad-state', c);
+  jt.append(xt, nt);
+  const ne = T('aside', 'cad-inspector'),
+    Oe = T('strong', void 0, '结构'),
+    Ln = T('dl'),
+    ie = T('p', 'cad-warning');
+  ((ie.hidden = !0),
+    ne.append(Oe, Ln, ie),
+    rt.append(yt, jt, ne),
+    y.append(C, rt),
+    t.replaceChildren(w, y));
+  const Dn = () => i?.filename || `drawing.${o}`,
+    Zs = () => l?.warnings || l?.document.warnings || [],
+    Bn = () => {
+      var E, I, z;
+      const Y =
+        (z =
+          (E = u?.zoomPercent) !== null && E !== void 0
+            ? E
+            : (I = m?.getZoomPercent) === null || I === void 0
+              ? void 0
+              : I.call(m)) !== null && z !== void 0
+          ? z
+          : 100;
+      return Number.isFinite(Y) ? Math.round(Y) : 100;
+    },
+    se = () => {
+      const E = a === 'ready' && !!m,
+        I = Bn();
+      return {
+        scale: I / 100,
+        label: `${I}%`,
+        canZoomIn: E,
+        canZoomOut: E,
+        canReset: E,
+        minScale: 0.05,
+        maxScale: 16,
+      };
+    },
+    vt = or(),
+    Rn = () => {
+      const E = l?.summary,
+        I = [
+          ['实体', xe(E?.entityCount)],
+          ['块', xe(E?.blockCount)],
+          ['页面', xe(E?.pageCount)],
+          ['绘制', xe(d?.drawn)],
+        ];
+      Ln.replaceChildren(
+        ...I.map(([Y, ut]) => {
+          const Tt = T('div');
+          return (Tt.append(T('dt', void 0, Y), T('dd', void 0, ut)), Tt);
+        }),
+      );
+      const z = Zs()[0];
+      ((ie.textContent = z || ''), (ie.hidden = !z));
+    },
+    Ks = () => {
+      ((ee.textContent = `${f.length} 项`),
+        (yt.hidden = f.length === 0),
+        rt.classList.toggle('without-layers', f.length === 0),
+        ot.replaceChildren(
+          ...f.map((E) => {
+            const I = T('button');
+            ((I.type = 'button'), I.classList.toggle('muted', E.isVisible === !1 || !!E.isFrozen));
+            const z = T('span', 'cad-layer-color');
+            return (
+              typeof E.color == 'string' && (z.style.background = E.color),
+              I.append(z, T('span', void 0, E.name)),
+              I.addEventListener('click', () => {
+                const Y = m?.getDocument();
+                if (!Y?.layers[E.name]) return;
+                const ut = Y.layers[E.name];
+                ((ut.isVisible = ut.isVisible === !1),
+                  (l = m?.setDocument(Y, Dn()) || null),
+                  (f = fn(l)),
+                  Nt(),
+                  queueMicrotask(() => {
+                    (m?.fit(), vt.emit());
+                  }));
+              }),
+              I
+            );
+          }),
+        ));
+    },
+    ct = () => {
+      ((F.textContent = `${Bn()}%`),
+        (st.textContent = (d?.backend || 'auto').toUpperCase()),
+        (nt.hidden = a === 'ready'),
+        nt.classList.toggle('error', a === 'error'),
+        a === 'loading' ? (nt.textContent = c) : a === 'error' && (nt.textContent = h));
+    },
+    Nt = () => {
+      (ct(), Ks(), Rn());
+    },
+    Qs = (E) => {
+      const I = E.format ? `${E.format.toUpperCase()} ` : '',
+        z = Number.isFinite(E.percent) ? ` ${Math.round(E.percent || 0)}%` : '';
+      ((c = `${I}${E.message}${z}`), ct());
+    },
+    Wn = () => {
+      (m?.fit(), vt.emit(), ct());
+    },
+    On = () => {
+      (m?.zoomIn(), vt.emit(), ct());
+    },
+    $n = () => {
+      (m?.zoomOut(), vt.emit(), ct());
+    };
+  (sr(y, {
+    zoomIn: () => (On(), se()),
+    zoomOut: () => ($n(), se()),
+    resetZoom: () => (Wn(), se()),
+    getState: se,
+    subscribe: vt.subscribe,
+  }),
+    A.addEventListener('click', Wn),
+    $.addEventListener('click', On),
+    N.addEventListener('click', $n));
+  const Js = () => {
+      var E, I, z, Y, ut, Tt, $e;
+      const { wasmPath: zn, workerUrl: Un, dwfWasmUrl: er } = Hn(r, es(t)),
+        nr = {
+          background: '#f8fafc',
+          foreground: '#0f172a',
+          contrastMode: 'adaptive',
+          minColorContrast: 2.4,
+          showPageBounds: !0,
+          showUnsupportedMarkers: !0,
+          enableSpatialIndex: !0,
+          maxVisibleTextLabels: 2400,
+          ...(r.canvasOptions || {}),
+        },
+        Xn = new Ah({
+          container: xt,
+          nativeHost: at,
+          renderer: r.renderer || 'auto',
+          wasmPath: zn,
+          workerUrl: Un,
+          dwfWasmUrl: er,
+          dxfEncoding: r.dxfEncoding,
+          useWorker: (E = r.useWorker) !== null && E !== void 0 ? E : !0,
+          workerTimeoutMs: (I = r.workerTimeoutMs) !== null && I !== void 0 ? I : Ih,
+          preferDwgWasm: (z = r.preferDwgWasm) !== null && z !== void 0 ? z : !0,
+          includePaperSpace: (Y = r.includePaperSpace) !== null && Y !== void 0 ? Y : !0,
+          maxInsertDepth: r.maxInsertDepth,
+          keepRaw: (ut = r.keepRaw) !== null && ut !== void 0 ? ut : !1,
+          dwfPreferWebgl: (Tt = r.dwfPreferWebgl) !== null && Tt !== void 0 ? Tt : !0,
+          dwfPreferWasm: ($e = r.dwfPreferWasm) !== null && $e !== void 0 ? $e : !0,
+          dwfBackground: r.dwfBackground || '#f8fafc',
+          dwfMaxDevicePixelRatio: r.dwfMaxDevicePixelRatio,
+          dwfMaxCanvasPixels: r.dwfMaxCanvasPixels,
+          dwfMaxGpuCacheBytes: r.dwfMaxGpuCacheBytes,
+          dwfMaxCachedScenes: r.dwfMaxCachedScenes,
+          dwfLineWeightMode: r.dwfLineWeightMode,
+          dwfMinStrokeCssPx: r.dwfMinStrokeCssPx,
+          dwfMaxOverviewStrokeCssPx: r.dwfMaxOverviewStrokeCssPx,
+          dwfMinTextCssPx: r.dwfMinTextCssPx,
+          dwfMinFilledAreaCssPx: r.dwfMinFilledAreaCssPx,
+          autoFit: !0,
+          canvasOptions: nr,
+          onLoadProgress: Qs,
+          onRenderStats: (ft) => {
+            ((d = ft), ct(), Rn());
+          },
+          onViewChange: (ft) => {
+            ((u = ft), vt.emit(), ct());
+          },
+          onLoad: (ft) => {
+            ((l = ft), (f = fn(ft)), Nt());
+          },
+          onError: (ft) => {
+            ((h = ft.message || 'CAD 文件解析失败'), ct());
+          },
+        });
+      return (
+        r.preloadDwg !== !1 &&
+          o === 'dwg' &&
+          Xn.preloadDwg({ wasmPath: zn, workerUrl: Un }).catch(() => {}),
+        Xn
+      );
+    },
+    tr = async () => {
+      ((a = 'loading'),
+        (c = '正在解析 CAD...'),
+        (h = ''),
+        (l = null),
+        (d = null),
+        (u = null),
+        (f = []),
+        Nt(),
+        g?.abort());
+      const E = new AbortController();
+      g = E;
+      try {
+        (m?.destroy(), (m = Js()));
+        const I = Hn(r, es(t)),
+          z = await m.loadBuffer(e.slice(0), Dn(), {
+            signal: E.signal,
+            transferInputBuffer: !1,
+            dxfEncoding: r.dxfEncoding,
+            wasmPath: I.wasmPath,
+            workerUrl: I.workerUrl,
+            dwfWasmUrl: I.dwfWasmUrl,
+          });
+        if (b || E.signal.aborted) return;
+        ((l = z),
+          (f = fn(z)),
+          (a = 'ready'),
+          Nt(),
+          queueMicrotask(() => {
+            (m?.fit(), vt.emit(), ct());
+          }));
+      } catch (I) {
+        if (b || E.signal.aborted) return;
+        (console.error(I),
+          (a = 'error'),
+          (h = I instanceof Error ? I.message : 'CAD 文件解析失败'),
+          Nt());
+      }
+    };
+  return (
+    typeof ResizeObserver < 'u' &&
+      ((p = new ResizeObserver(() => {
+        m?.resize();
+      })),
+      p.observe(xt)),
+    Nt(),
+    tr(),
+    {
+      $el: y,
+      unmount() {
+        ((b = !0),
+          rr(y),
+          g?.abort(),
+          (g = null),
+          p?.disconnect(),
+          (p = null),
+          m?.destroy(),
+          (m = null),
+          t.replaceChildren());
+      },
+    }
+  );
+}
+export { Uh as default };

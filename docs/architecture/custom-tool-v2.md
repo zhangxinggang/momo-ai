@@ -10,7 +10,7 @@
 
 ```text
 工具名/
-├─ tool.json             # 入口、后台运行时、宿主能力权限
+├─ tool.json             # 稳定 ID、用户可见名称、actions、运行时与权限
 ├─ index.html            # 页面入口，生成时最先流式输出
 ├─ README.md             # 目录约定和页面 API
 ├─ assets/               # CSS、JS、图片、字体等静态资源
@@ -21,27 +21,77 @@
 └─ data/                 # 运行数据，不加入下一轮 AI 上下文
 ```
 
-旧版 `tool.json` 会按纯静态工具兼容读取。v2 manifest 示例：
+系统只接受当前单一 manifest 格式；`version`、`packageVersion` 和旧格式兼容分支均不存在。可调用工具的最小结构如下：
 
 ```json
 {
   "kind": "tool",
-  "version": 2,
+  "id": "stable-generated-id",
+  "name": "a",
+  "description": "查询当前西安天气",
+  "aliases": ["a工具", "工具a", "西安实时天气"],
+  "actions": [
+    {
+      "id": "current-weather",
+      "title": "查询西安实时天气",
+      "description": "返回结构化的西安当前天气",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": { "temperatureC": { "type": "number" } },
+        "required": ["temperatureC"],
+        "additionalProperties": false
+      },
+      "executor": {
+        "runtime": "node",
+        "entry": "actions/current-weather.mjs",
+        "export": "execute"
+      },
+      "capabilities": [],
+      "effects": ["network", "execute"],
+      "timeoutMs": 10000,
+      "retry": 0,
+      "parallelSafe": true,
+      "idempotent": true,
+      "examples": [{ "input": {}, "output": { "temperatureC": 24.1 } }]
+    }
+  ],
   "entry": "index.html",
-  "service": {
-    "runtime": "node",
-    "entry": "backend/server.mjs",
-    "healthPath": "/health",
-    "startupTimeoutMs": 15000
-  },
-  "permissions": {
-    "mcp": ["server__tool"],
-    "skills": ["skill-id-or-name"]
-  }
+  "service": { "runtime": "none" },
+  "permissions": { "mcp": [], "skills": [] }
 }
 ```
 
 `service.runtime` 支持 `none`、`node`、`python`。工具服务必须监听宿主注入的 `MOMO_TOOL_HOST` 和 `MOMO_TOOL_PORT`，并以 `MOMO_TOOL_ROOT` 定位当前工具目录，不能写死端口或绝对路径。
+
+## 自然语言创建与 Skill 引用
+
+工具创建界面对用户只暴露“名称”和“需求描述”。创建目录时，Workspace Service 把工具箱名称同时写入 `tool.json.name` 和 `aliases`；生成器读取该名称以及用户需求，自动生成稳定内部 ID、action、输入/输出 Schema、执行器和权限声明。AI 生成发布路径要求至少存在一个有意义的 action。
+
+Skill 同样只保存自然语言，例如“调用 a 工具，将天气进行 JSON 化处理返回”。运行时会对工具名称、别名和 action 标题做 NFKC、大小写、空格及“工具/工具箱”前后缀归一化；`a工具`、`工具a`、`工具 a` 均可命中可见名称 `a`。一至两个字符的英文/数字名称只有在明确的工具语境中才匹配，避免普通句子中的单字母误开放工具。
+
+```mermaid
+flowchart LR
+  Create[用户创建工具 a] --> Seed[Workspace 写入 name 与 aliases]
+  Prompt[自然语言需求] --> Generator[AI 工具包生成器]
+  Seed --> Generator
+  Generator --> Preflight[Renderer 协议与可调用性预检]
+  Preflight -->|通过| Manifest[tool.json + callable action]
+  Preflight -->|首次失败| Repair[自动修复指令]
+  Repair --> Generator
+  Skill[Skill: 调用 a 工具] --> Resolver[名称与别名归一化解析]
+  Manifest --> Resolver
+  Resolver --> Catalog[仅向本轮模型开放匹配 action]
+  Catalog --> Model[模型按 Schema 自动组织参数]
+  Model --> Broker[ToolBroker 校验、审批、快照执行]
+  Broker --> Result[结构化工具结果]
+```
+
+内部 ID 仍用于稳定执行、授权和审计，但不会要求用户记忆或复制。
 
 ## 运行和切换
 
@@ -95,6 +145,8 @@ await window.momoTool.runSkill('skill-id-or-name', '用户输入');
 ```
 
 `index.html` 必须是第一个文件。每收到一批 token，渲染进程最多每 80ms 增量抽取一次尚未闭合的 HTML，并立即更新 `srcDoc` 预览。模型完成后才解析完整文件集合、做路径和体积校验、写入当前工具目录并重启运行时。
+
+新建工具中的空 `index.html` 和 `actions: []` 是生成脚手架，生成提示会要求模型直接覆盖，而不是请求用户确认。渲染进程不会把普通解释文字当作旧版单 HTML；写盘前还会检查入口文件以及可调用 action。第一次输出缺少协议文件、`tool.json` 或 action 时，系统携带失败原因自动修复一次，第二次仍失败才向用户显示错误。主进程继续执行最终 manifest、入口、代码语法和原子发布校验。
 
 为了支持连续改写，下一轮会携带当前工具中的文本实现文件，包括 `index.html`、`tool.json`、后台、脚本及 MCP/Skill 辅助文件；运行数据、依赖目录、二进制和大文件会被排除。未遵守多文件协议的模型输出仍按传统单 `index.html` 兼容。
 

@@ -9,7 +9,7 @@ import {
   type IChatMessage,
 } from '@momo/aichat';
 import '@momo/markdown-styles';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { WorkflowAiChatShell } from '@renderer/components/Workflow/WorkflowAiChatShell';
 import { useToast } from '@renderer/components/ui/Toast';
@@ -17,15 +17,14 @@ import { useAiChatViewTheme } from '@renderer/hooks/useAiChatViewTheme';
 import { useChatWorkspaceBinding } from '@renderer/hooks/useChatWorkspaceBinding';
 import { useLocalPathBinding } from '@renderer/hooks/useLocalPathBinding';
 import { useRankedChatModelGroups } from '@renderer/hooks/useRankedChatModelGroups';
-import { useStableModelResolver } from '@renderer/hooks/useStableModelResolver';
-import { useStableRef } from '@renderer/hooks/useStableRef';
 import {
-  buildSharedAiChatServices,
-  createPromptTestStream,
-  createSkillLangGraphStream,
-} from '@renderer/services/aichat';
+  createHarnessChatOverrides,
+  ensureHarnessResourceContext,
+} from '@renderer/services/agent-runtime/client';
+import { buildSharedAiChatServices } from '@renderer/services/aichat';
 import { checkPathExists, openFolderPath } from '@renderer/services/desktop';
 import { buildActiveSkillLine, buildSkillsSummary } from '@renderer/services/skill/chat-context';
+import { loadSkillInstructionsForChat } from '@renderer/services/skill/instructions-for-chat';
 import { persistWorkflowArtifactsFromReply } from '@renderer/services/workflow/artifact-writer';
 import type { IParallelPreviousResultItem } from '@renderer/services/workflow/parallel-context';
 import { buildMergedParallelContext } from '@renderer/services/workflow/parallel-context';
@@ -57,6 +56,10 @@ export interface IProps {
   prefillUserPrompt: boolean;
   onAdopt: (content: string) => void;
   onArtifactsPersisted?: () => void;
+  autoStartToken?: number;
+  autoStartPrompt?: string;
+  onReplyCompleted?: (content: string) => void | Promise<void>;
+  onAutoStartFailed?: () => void;
 }
 
 function WorkflowChatBridge({
@@ -67,6 +70,12 @@ function WorkflowChatBridge({
   previousParallelResults,
   prefillUserPrompt,
   onAdopt,
+  runtimeSystemPrompt,
+  runtimeContextReady,
+  autoStartToken,
+  autoStartPrompt,
+  onAutoStartFailed,
+  expectedKbCollectionId,
 }: Pick<
   IProps,
   | 'systemPrompt'
@@ -76,9 +85,32 @@ function WorkflowChatBridge({
   | 'previousParallelResults'
   | 'prefillUserPrompt'
   | 'onAdopt'
->) {
+  | 'autoStartToken'
+  | 'autoStartPrompt'
+  | 'onAutoStartFailed'
+> & {
+  runtimeSystemPrompt: string;
+  runtimeContextReady: boolean;
+  expectedKbCollectionId?: string;
+}) {
   const chatTheme = useAiChatViewTheme();
-  const { currentSession, currentSessionId, addMessage, updateMessage } = useChatContext();
+  const {
+    currentSession,
+    currentSessionId,
+    isAILoading,
+    addMessage,
+    updateMessage,
+    setSystemPrompt,
+    sendMessage,
+    systemPrompt: activeSystemPrompt,
+    kbEnabled,
+    kbCollectionId,
+  } = useChatContext();
+  const autoStartedTokenRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    setSystemPrompt(runtimeSystemPrompt);
+  }, [runtimeSystemPrompt, setSystemPrompt]);
 
   useEffect(() => {
     if (!currentSessionId || resourceKind !== 'prompt') {
@@ -97,6 +129,49 @@ function WorkflowChatBridge({
     }
     addMessage(currentSessionId, { role: 'system', content: text });
   }, [addMessage, currentSession, currentSessionId, resourceKind, systemPrompt, updateMessage]);
+
+  useEffect(() => {
+    if (
+      autoStartToken === undefined ||
+      autoStartedTokenRef.current === autoStartToken ||
+      !runtimeContextReady ||
+      !currentSessionId ||
+      !currentSession ||
+      isAILoading ||
+      activeSystemPrompt !== runtimeSystemPrompt ||
+      (expectedKbCollectionId !== undefined &&
+        (!kbEnabled || kbCollectionId !== expectedKbCollectionId))
+    ) {
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      if (autoStartedTokenRef.current === autoStartToken) {
+        return;
+      }
+      autoStartedTokenRef.current = autoStartToken;
+      void sendMessage(autoStartPrompt?.trim() || '请继续执行当前工作流节点。')
+        .then((sent) => {
+          if (!sent) {
+            onAutoStartFailed?.();
+          }
+        })
+        .catch(() => onAutoStartFailed?.());
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [
+    activeSystemPrompt,
+    autoStartPrompt,
+    autoStartToken,
+    currentSession,
+    currentSessionId,
+    expectedKbCollectionId,
+    isAILoading,
+    kbCollectionId,
+    kbEnabled,
+    onAutoStartFailed,
+    runtimeContextReady,
+    sendMessage,
+  ]);
 
   const renderAssistantActions = useCallback(
     (message: IChatMessage) => (
@@ -118,7 +193,8 @@ function WorkflowChatBridge({
     [currentSession?.messages],
   );
 
-  const shouldPrefillUserPrompt = prefillUserPrompt && !hasChatHistory;
+  const shouldPrefillUserPrompt =
+    autoStartToken === undefined && prefillUserPrompt && !hasChatHistory;
   const showParallelTabs = previousParallelResults && previousParallelResults.length > 1;
 
   return (
@@ -170,6 +246,64 @@ function WorkflowChatBridge({
   );
 }
 
+function WorkflowArtifactBridge({
+  workflowName,
+  businessId,
+  nodeName,
+  onArtifactsPersisted,
+  onReplyCompleted,
+}: Pick<
+  IProps,
+  'workflowName' | 'businessId' | 'nodeName' | 'onArtifactsPersisted' | 'onReplyCompleted'
+>) {
+  const { currentSession, isAILoading } = useChatContext();
+  const wasLoadingRef = useRef(false);
+  const processedRef = useRef(new Set<string>());
+
+  useEffect(() => {
+    const completedTransition = wasLoadingRef.current && !isAILoading;
+    wasLoadingRef.current = isAILoading;
+    if (completedTransition) {
+      const message = currentSession?.messages
+        .slice()
+        .reverse()
+        .find(
+          (item) =>
+            item.role === 'assistant' &&
+            item.runStatus === 'completed' &&
+            !item.isError &&
+            Boolean(item.content.trim()),
+        );
+      if (!message || processedRef.current.has(message.id)) return;
+      processedRef.current.add(message.id);
+      void (async () => {
+        try {
+          const written = await persistWorkflowArtifactsFromReply(
+            workflowName,
+            businessId,
+            nodeName,
+            message.content,
+          );
+          if (written.length > 0) onArtifactsPersisted?.();
+        } catch (error) {
+          console.error('[workflow] 持久化回复产物失败', error);
+        } finally {
+          await onReplyCompleted?.(message.content);
+        }
+      })();
+    }
+  }, [
+    businessId,
+    currentSession?.messages,
+    isAILoading,
+    nodeName,
+    onArtifactsPersisted,
+    onReplyCompleted,
+    workflowName,
+  ]);
+  return null;
+}
+
 function WorkflowChatKbBootstrap({ kbCollectionId }: { kbCollectionId?: string }) {
   const { setKbEnabled, setKbCollectionId } = useChatContext();
 
@@ -207,9 +341,12 @@ export function WorkflowNodeChat({
   prefillUserPrompt,
   onAdopt,
   onArtifactsPersisted,
+  autoStartToken,
+  autoStartPrompt,
+  onReplyCompleted,
+  onAutoStartFailed,
 }: IProps) {
   const { showToast } = useToast();
-  const modelResolverRef = useStableModelResolver(aiModels);
   const chatModelOptionGroups = useRankedChatModelGroups(aiModels);
   const globalWorkspace = useChatWorkspaceBinding();
   const globalLocalPath = useLocalPathBinding();
@@ -244,129 +381,91 @@ export function WorkflowNodeChat({
     }
     return globalWorkspace;
   }, [globalWorkspace, nodeWorkspacePaths]);
-  const workspaceNodeNameRef = useStableRef(workspaceNodeName);
-  const nodeOutputDirRef = useStableRef(nodeOutputDir);
-  const workflowNameRef = useStableRef(workflowName);
-  const businessIdRef = useStableRef(businessId);
-  const nodeNameRef = useStableRef(nodeName);
-  const skillsSummaryRef = useStableRef(buildSkillsSummary(skills));
   const activeSkill = useMemo(
     () => (activeSkillId ? skills.find((s) => s.id === activeSkillId) : undefined),
     [activeSkillId, skills],
   );
-  const activeSkillRef = useStableRef(activeSkill);
-  const activeSkillLineRef = useStableRef(buildActiveSkillLine(activeSkill));
-  const systemPromptRef = useStableRef(systemPrompt);
-  const userPromptRef = useStableRef(userPrompt);
-  const previousParallelResultsRef = useStableRef(previousParallelResults);
-  const onArtifactsPersistedRef = useStableRef(onArtifactsPersisted);
+  const [runtimeSystemPrompt, setRuntimeSystemPrompt] = useState('');
+  const [runtimeContextReady, setRuntimeContextReady] = useState(false);
 
-  const handleNeedModel = useCallback(() => {
-    showToast('请先在设置中配置并选择可用的对话模型', 'error');
-  }, [showToast]);
-
-  const handleReplyComplete = useCallback(
-    async (reply: string) => {
-      const wf = workflowNameRef.current;
-      const bizId = businessIdRef.current;
-      const node = nodeNameRef.current;
-      const written = await persistWorkflowArtifactsFromReply(wf, bizId, node, reply);
-      if (written.length > 0) {
-        onArtifactsPersistedRef.current?.();
+  useEffect(() => {
+    let cancelled = false;
+    setRuntimeContextReady(false);
+    void (async () => {
+      const upstreamNodeNames = previousParallelResults?.length
+        ? previousParallelResults.map((item) => item.nodeName)
+        : [workspaceNodeName];
+      const [workspaceContexts, activeSkillInstructions] = await Promise.all([
+        Promise.all(
+          Array.from(
+            new Set(upstreamNodeNames.filter((name): name is string => Boolean(name))),
+          ).map((upstreamNodeName) =>
+            buildWorkflowWorkspaceContext(workflowName, businessId, upstreamNodeName),
+          ),
+        ),
+        activeSkill ? loadSkillInstructionsForChat(activeSkill) : Promise.resolve(''),
+      ]);
+      const workspaceContext = workspaceContexts.filter(Boolean).join('\n\n');
+      const parallelContext = previousParallelResults
+        ? buildMergedParallelContext(previousParallelResults)
+        : '';
+      const previousResultContext = previousNodeRunResult?.content.trim()
+        ? `上一节点运行结果（${previousNodeRunResult.nodeName}）：\n${previousNodeRunResult.content.trim()}`
+        : '';
+      const skillContext =
+        resourceKind === 'skill'
+          ? [
+              `可用技能摘要：\n${buildSkillsSummary(skills)}`,
+              `当前技能：\n${buildActiveSkillLine(activeSkill)}`,
+              activeSkillInstructions && `当前技能完整指令：\n${activeSkillInstructions}`,
+              nodeOutputDir && `工作流产物目录：${nodeOutputDir}`,
+            ]
+              .filter(Boolean)
+              .join('\n\n')
+          : '';
+      if (!cancelled) {
+        setRuntimeSystemPrompt(
+          [
+            previousResultContext,
+            parallelContext,
+            workspaceContext,
+            systemPrompt.trim(),
+            skillContext,
+          ]
+            .filter(Boolean)
+            .join('\n\n'),
+        );
+        setRuntimeContextReady(true);
       }
-    },
-    [businessIdRef, nodeNameRef, onArtifactsPersistedRef, workflowNameRef],
-  );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeSkill,
+    businessId,
+    nodeOutputDir,
+    previousNodeRunResult,
+    previousParallelResults,
+    resourceKind,
+    skills,
+    systemPrompt,
+    workflowName,
+    workspaceNodeName,
+  ]);
 
   const chatServices = useMemo((): IAiChatServices => {
-    const buildPromptStream = (wsContext: string) =>
-      createPromptTestStream({
-        getModelConfig: (key) => modelResolverRef.current.getModelConfig(key),
-        getDefaultConfig: () => modelResolverRef.current.getModelConfig(),
-        getBaseMessages: () => {
-          const msgs: { role: 'system' | 'user'; content: string }[] = [];
-          const parallelBlock = previousParallelResultsRef.current
-            ? buildMergedParallelContext(previousParallelResultsRef.current)
-            : '';
-          if (parallelBlock.trim()) {
-            msgs.push({ role: 'system', content: parallelBlock });
-          }
-          if (wsContext.trim()) {
-            msgs.push({ role: 'system', content: wsContext });
-          }
-          if (systemPromptRef.current.trim()) {
-            msgs.push({ role: 'system', content: systemPromptRef.current.trim() });
-          }
-          if (userPromptRef.current.trim()) {
-            msgs.push({ role: 'user', content: userPromptRef.current.trim() });
-          }
-          return msgs;
-        },
-        getResponseFormat: () => undefined,
-        onNeedModel: handleNeedModel,
-        onComplete: (text) => {
-          void handleReplyComplete(text);
-        },
-      });
-
-    const skillStream = createSkillLangGraphStream({
-      getModelConfig: (key) => modelResolverRef.current.getModelConfig(key),
-      getDefaultConfig: () => modelResolverRef.current.getModelConfig(),
-      getSkillsSummary: () => skillsSummaryRef.current,
-      getActiveSkillLine: () => activeSkillLineRef.current,
-      getActiveSkill: () => activeSkillRef.current,
-      onNeedModel: handleNeedModel,
-      getWorkflowOutput: () => {
-        const outputDir = nodeOutputDirRef.current;
-        if (!outputDir) {
-          return null;
-        }
-        return {
-          workflowName: workflowNameRef.current,
-          businessId: businessIdRef.current,
-          nodeName: nodeNameRef.current,
-          outputDir,
-        };
-      },
+    const harnessOverrides = createHarnessChatOverrides({
+      getResourceContext: () =>
+        ensureHarnessResourceContext(
+          `工作流：${workflowName}/${businessId}/${nodeName}`,
+          nodeWorkspacePaths && nodeWorkspacePaths.length > 0
+            ? nodeWorkspacePaths
+            : workspace.enabled
+              ? workspace.paths
+              : [],
+        ),
     });
-
-    const wrappedStream: IAiChatServices['callAIChatStream'] = async (
-      messages,
-      onChunk,
-      onError,
-      onStats,
-      modelKey,
-      streamOptions,
-    ) => {
-      const wsContext = await buildWorkflowWorkspaceContext(
-        workflowNameRef.current,
-        businessIdRef.current,
-        workspaceNodeNameRef.current,
-      );
-      const parallelBlock = previousParallelResultsRef.current
-        ? buildMergedParallelContext(previousParallelResultsRef.current)
-        : '';
-
-      if (resourceKind === 'prompt') {
-        return buildPromptStream(wsContext)(
-          messages,
-          onChunk,
-          onError,
-          onStats,
-          modelKey,
-          streamOptions,
-        );
-      }
-
-      return skillStream(messages, onChunk, onError, onStats, modelKey, {
-        ...streamOptions,
-        user_system_prompt:
-          [parallelBlock, wsContext.trim(), streamOptions?.user_system_prompt || '']
-            .filter(Boolean)
-            .join('\n\n')
-            .trim() || streamOptions?.user_system_prompt,
-      });
-    };
 
     return buildSharedAiChatServices({
       aiModels,
@@ -378,31 +477,22 @@ export function WorkflowNodeChat({
       enableSuperpower: resourceKind !== 'prompt',
       noAttachmentsMessage: '工作流对话暂不支持附件',
       onNoAttachments: (msg) => showToast(msg, 'warning'),
-      callAIChatStream: wrappedStream,
+      callAIChatStream: harnessOverrides.callAIChatStream!,
+      overrides: harnessOverrides,
     });
   }, [
-    activeSkillLineRef,
-    activeSkillRef,
     aiModels,
     chatModelOptionGroups,
+    businessId,
     executionModel,
-    handleNeedModel,
-    handleReplyComplete,
     localPath,
-    modelResolverRef,
-    businessIdRef,
-    nodeNameRef,
-    nodeOutputDirRef,
-    previousParallelResultsRef,
+    nodeName,
+    nodeWorkspacePaths,
     resourceKind,
     showToast,
-    skillsSummaryRef,
     storagePrefix,
-    systemPromptRef,
-    userPromptRef,
-    workflowNameRef,
+    workflowName,
     workspace,
-    workspaceNodeNameRef,
   ]);
 
   return (
@@ -412,12 +502,25 @@ export function WorkflowNodeChat({
       services={chatServices}
       sessionKey={sessionKey}>
       <WorkflowChatKbBootstrap kbCollectionId={kbCollectionId} />
+      <WorkflowArtifactBridge
+        businessId={businessId}
+        nodeName={nodeName}
+        onArtifactsPersisted={onArtifactsPersisted}
+        onReplyCompleted={onReplyCompleted}
+        workflowName={workflowName}
+      />
       <WorkflowChatBridge
+        autoStartPrompt={autoStartPrompt}
+        autoStartToken={autoStartToken}
+        expectedKbCollectionId={kbCollectionId}
         onAdopt={onAdopt}
+        onAutoStartFailed={onAutoStartFailed}
         previousNodeRunResult={previousNodeRunResult}
         previousParallelResults={previousParallelResults}
         prefillUserPrompt={prefillUserPrompt}
         resourceKind={resourceKind}
+        runtimeContextReady={runtimeContextReady}
+        runtimeSystemPrompt={runtimeSystemPrompt}
         systemPrompt={systemPrompt}
         userPrompt={userPrompt}
       />

@@ -305,3 +305,10 @@ onlineConfUrl 数据格式
   }
 }
 ```
+
+## 大模型价格
+```
+https://synthorai.io/zh/models/
+https://llmpricing.dev/zh/
+https://www.traktoken.com/
+```

@@ -9,7 +9,7 @@ import {
   type IWorkflowWebpageNodeData,
 } from '@momo/workflow';
 import type { Node } from '@xyflow/react';
-import { App } from 'antd';
+import { App, Switch, Tooltip } from 'antd';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { FullscreenModal } from '@renderer/components/ui/FullscreenModal';
@@ -17,6 +17,7 @@ import { WorkflowNodeChat } from '@renderer/components/Workflow/WorkflowNodeChat
 import { WorkflowNodeWebview } from '@renderer/components/Workflow/WorkflowNodeWebview';
 import { WorkflowRunPanel } from '@renderer/components/Workflow/WorkflowRunPanel';
 import { WorkflowStepsBar } from '@renderer/components/Workflow/WorkflowStepsBar';
+import { useConfirmLeaveAiChat } from '@renderer/hooks/useConfirmLeaveAiChat';
 import {
   ensureWorkflowAgentDir,
   ensureWorkflowBusinessAgentDir,
@@ -26,6 +27,10 @@ import {
   writeWorkflowNodeMainMd,
 } from '@renderer/services/workflow/agent-files';
 import { getWorkflow, isWorkflowAvailable } from '@renderer/services/workflow/api';
+import {
+  buildWorkflowAutoPrompt,
+  getNextWorkflowStepCursor,
+} from '@renderer/services/workflow/auto-execution';
 import { fetchBusinessList } from '@renderer/services/workflow/business';
 import { getOrCreateWorkflowNodeSession } from '@renderer/services/workflow/chat-storage';
 import {
@@ -58,7 +63,7 @@ function isResourceOutputReady(
 ): boolean {
   const hasRunResult = !!runResults[nodeId]?.trim();
   const hasFiles = nodeHasFiles[nodeId] ?? false;
-  return hasRunResult && hasFiles;
+  return hasRunResult || hasFiles;
 }
 
 function isMacroStepOutputReady(
@@ -93,6 +98,7 @@ function isMacroStepAccessible(
  */
 export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
   const { message } = App.useApp();
+  const confirmLeaveAiChat = useConfirmLeaveAiChat();
   const isWorkflowReady = isWorkflowAvailable();
   const prompts = usePromptStore((s) => s.prompts);
   const skills = useSkillStore((s) => s.skills);
@@ -109,10 +115,16 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
   const [nodeOutputDirs, setNodeOutputDirs] = useState<Record<string, string | null>>({});
   const [filesRefreshTokens, setFilesRefreshTokens] = useState<Record<string, number>>({});
   const [sidePanelWidth, setSidePanelWidth] = useState<number | null>(null);
+  const [autoExecute, setAutoExecute] = useState(false);
+  const [autoStartRequest, setAutoStartRequest] = useState<{
+    nodeId: string;
+    token: number;
+  } | null>(null);
   const panelsRef = useRef<HTMLDivElement>(null);
   const hasInitializedPanelWidthRef = useRef(false);
   const visitedPromptNodeIdsRef = useRef<Set<string>>(new Set());
   const isResizingSideRef = useRef(false);
+  const autoStartTokenRef = useRef(0);
 
   const refreshNodeFilesState = useCallback(
     async (wfName: string, bizId: string, resourceSteps: IResourceStepViewModel[]) => {
@@ -287,6 +299,13 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
   const isWebpageStep =
     !!activeStep && (activeStep.resourceKind === 'webpage' || isWebpageNode(activeStep.node));
 
+  useEffect(() => {
+    if (isWebpageStep && autoExecute) {
+      setAutoExecute(false);
+      setAutoStartRequest(null);
+    }
+  }, [autoExecute, isWebpageStep]);
+
   // 网页节点不创建对话 session，避免无意义 bootstrap
   const chatBootstrap = useMemo(() => {
     if (!activeStep || isWebpageStep) {
@@ -412,74 +431,197 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
     [businessId, workflow],
   );
 
-  const handleMacroStepClick = useCallback(
-    (macroIndex: number) => {
-      if (!isMacroStepAccessible(macroIndex, macroSteps, runResults, nodeHasFiles)) {
-        message.warning('请先完成上一节点的运行结果与文件产出');
+  const handleReplyCompleted = useCallback(
+    async (step: IResourceStepViewModel, content: string) => {
+      if (!autoExecute || !workflow) {
         return;
       }
-      setActiveMacroIndex(macroIndex);
+      const trimmed = content.trim();
+      if (!trimmed) {
+        return;
+      }
+
+      try {
+        await writeWorkflowNodeMainMd(workflow.name, businessId, step.nodeName, trimmed);
+        const entries = await listWorkflowAgentDir(workflow.name, businessId, step.nodeName);
+        const hasFiles = entries.some((entry) => entry.type === 'file');
+        setRunResults((prev) => ({ ...prev, [step.nodeId]: trimmed }));
+        setNodeHasFiles((prev) => ({ ...prev, [step.nodeId]: hasFiles }));
+        bumpFilesRefresh(step.nodeId);
+
+        const nextCursor = getNextWorkflowStepCursor(
+          macroSteps,
+          activeMacroIndex,
+          activeParallelChildIndex,
+        );
+        if (!nextCursor) {
+          setAutoStartRequest(null);
+          message.success('工作流已自动执行完成');
+          return;
+        }
+
+        const nextStep = resolveActiveResourceStep(
+          macroSteps,
+          nextCursor.macroIndex,
+          nextCursor.parallelChildIndex,
+        );
+        if (!nextStep || nextStep.resourceKind === 'webpage' || isWebpageNode(nextStep.node)) {
+          setAutoExecute(false);
+          setAutoStartRequest(null);
+          message.warning('网页节点不支持自动运行，请手动填写内容到运行结果中');
+          return;
+        }
+
+        autoStartTokenRef.current += 1;
+        setActiveMacroIndex(nextCursor.macroIndex);
+        setActiveParallelChildIndex(nextCursor.parallelChildIndex);
+        setAutoStartRequest({ nodeId: nextCursor.nodeId, token: autoStartTokenRef.current });
+      } catch (error) {
+        console.error(error);
+        setAutoExecute(false);
+        setAutoStartRequest(null);
+        message.error('自动执行失败，请手动检查当前节点的运行结果');
+      }
+    },
+    [
+      activeMacroIndex,
+      activeParallelChildIndex,
+      autoExecute,
+      businessId,
+      bumpFilesRefresh,
+      macroSteps,
+      message,
+      workflow,
+    ],
+  );
+
+  const handleMacroStepClick = useCallback(
+    async (macroIndex: number) => {
+      if (!isMacroStepAccessible(macroIndex, macroSteps, runResults, nodeHasFiles)) {
+        message.warning('请先完成上一节点的运行结果或文件产出');
+        return;
+      }
       const macro = macroSteps[macroIndex];
+      let nextParallelChildIndex = 0;
       if (macro?.kind === 'parallel') {
         const firstIncomplete = macro.children.findIndex(
           (child) => !isResourceOutputReady(child.nodeId, runResults, nodeHasFiles),
         );
-        setActiveParallelChildIndex(firstIncomplete >= 0 ? firstIncomplete : 0);
-      } else {
-        setActiveParallelChildIndex(0);
+        nextParallelChildIndex = firstIncomplete >= 0 ? firstIncomplete : 0;
       }
+      if (macroIndex === activeMacroIndex && nextParallelChildIndex === activeParallelChildIndex) {
+        return;
+      }
+      if (!(await confirmLeaveAiChat({ scope: 'workflow' }))) {
+        return;
+      }
+      setAutoStartRequest(null);
+      setActiveMacroIndex(macroIndex);
+      setActiveParallelChildIndex(nextParallelChildIndex);
     },
-    [macroSteps, message, nodeHasFiles, runResults],
+    [
+      activeMacroIndex,
+      activeParallelChildIndex,
+      confirmLeaveAiChat,
+      macroSteps,
+      message,
+      nodeHasFiles,
+      runResults,
+    ],
   );
 
   const handleParallelChildClick = useCallback(
-    (macroIndex: number, childIndex: number) => {
+    async (macroIndex: number, childIndex: number) => {
       if (!isMacroStepAccessible(macroIndex, macroSteps, runResults, nodeHasFiles)) {
-        message.warning('请先完成上一节点的运行结果与文件产出');
+        message.warning('请先完成上一节点的运行结果或文件产出');
         return;
       }
+      if (macroIndex === activeMacroIndex && childIndex === activeParallelChildIndex) {
+        return;
+      }
+      if (!(await confirmLeaveAiChat({ scope: 'workflow' }))) {
+        return;
+      }
+      setAutoStartRequest(null);
       setActiveMacroIndex(macroIndex);
       setActiveParallelChildIndex(childIndex);
     },
-    [macroSteps, message, nodeHasFiles, runResults],
+    [
+      activeMacroIndex,
+      activeParallelChildIndex,
+      confirmLeaveAiChat,
+      macroSteps,
+      message,
+      nodeHasFiles,
+      runResults,
+    ],
   );
+
+  const handleRequestClose = useCallback(() => {
+    void (async () => {
+      if (await confirmLeaveAiChat({ scope: 'workflow' })) {
+        onClose();
+      }
+    })();
+  }, [confirmLeaveAiChat, onClose]);
 
   const modalTitle = business?.name
     ? `${workflow?.name ?? '工作流'} · ${business.name}`
     : (workflow?.name ?? '工作流');
+  const autoExecuteControl = (
+    <Tooltip title={isWebpageStep ? '节点不支持自动运行，请手动填写内容到运行结果中' : undefined}>
+      <span className={styles['workflow-work-auto-execute']}>
+        <span>{'是否开启自动执行'}</span>
+        <Switch
+          checked={autoExecute}
+          disabled={!activeStep || isWebpageStep}
+          onChange={(checked) => {
+            setAutoExecute(checked);
+            if (!checked) {
+              setAutoStartRequest(null);
+            }
+          }}
+          size='small'
+        />
+      </span>
+    </Tooltip>
+  );
 
   return (
     <FullscreenModal
       destroyOnHidden
       footer={null}
-      onClose={onClose}
+      onClose={handleRequestClose}
       open
       showDefaultFooter={false}
       title={modalTitle}>
       <div className={styles['workflow-work']}>
         <div className={styles['workflow-work-body']}>
           <div className={styles['workflow-work-main']}>
-            {macroSteps.length > 0 ? (
-              <div
-                className={styles['workflow-work-steps-bar']}
-                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                <WorkflowStepsBar
-                  activeMacroIndex={activeMacroIndex}
-                  activeParallelChildIndex={activeParallelChildIndex}
-                  mode='interactive'
-                  nodeHasFiles={nodeHasFiles}
-                  onParallelChildClick={handleParallelChildClick}
-                  onStepClick={handleMacroStepClick}
-                  runResults={runResults}
-                  steps={macroSteps}
-                />
-              </div>
-            ) : null}
+            <div
+              className={styles['workflow-work-steps-bar']}
+              style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+              <WorkflowStepsBar
+                activeMacroIndex={activeMacroIndex}
+                activeParallelChildIndex={activeParallelChildIndex}
+                mode='interactive'
+                nodeHasFiles={nodeHasFiles}
+                onParallelChildClick={handleParallelChildClick}
+                onStepClick={handleMacroStepClick}
+                runResults={runResults}
+                steps={macroSteps}
+                toolbarExtra={autoExecuteControl}
+              />
+            </div>
 
             <div ref={panelsRef} className={styles['workflow-work-panels']}>
               <main
                 className={styles['workflow-work-chat']}
-                style={{ flex: 'none', width: chatPanelWidth }}>
+                style={
+                  activeStep
+                    ? { flex: 'none', width: chatPanelWidth }
+                    : { flex: '1 1 auto', width: '100%' }
+                }>
                 {activeStep && isWebpageStep ? (
                   <WorkflowNodeWebview title={activeStep.nodeName} url={webpageUrl} />
                 ) : activeStep && chatBootstrap ? (
@@ -499,7 +641,22 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
                     nodeName={activeStep.nodeName}
                     nodeOutputDir={nodeOutputDirs[activeStep.nodeId] ?? null}
                     onAdopt={(c) => void handleAdopt(c)}
+                    autoStartPrompt={buildWorkflowAutoPrompt(
+                      activeResourceData?.resourceKind ?? 'prompt',
+                      userPrompt,
+                    )}
+                    autoStartToken={
+                      autoStartRequest?.nodeId === activeStep.nodeId
+                        ? autoStartRequest.token
+                        : undefined
+                    }
+                    onAutoStartFailed={() => {
+                      setAutoExecute(false);
+                      setAutoStartRequest(null);
+                      message.error('自动执行下一节点失败，请手动发送');
+                    }}
                     onArtifactsPersisted={handleArtifactsPersisted}
+                    onReplyCompleted={(content) => handleReplyCompleted(activeStep, content)}
                     prefillUserPrompt={prefillUserPrompt}
                     previousNodeRunResult={previousNodeRunResult}
                     previousParallelResults={previousParallelResults}
@@ -513,7 +670,7 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
                     workspaceNodeName={workspaceNodeNames[activeStep.nodeId] ?? null}
                   />
                 ) : (
-                  <div className={styles['workflow-work-empty']}>{'请选择节点'}</div>
+                  <div className={styles['workflow-work-empty']}>{'当前工作流暂无任务'}</div>
                 )}
               </main>
 

@@ -1,6 +1,2901 @@
-import{aQ as Ke,b5 as Xe,ad as Je}from"./index-C2avURFS.js";import{b as Ye,a as Qe,f as he}from"./printLayout-DpvXGlU9.js";import"./markdown-vendor-DldLOD9R.js";import"./ui-vendor-C-FKu2uc.js";import"./markdown-it-vendor-DL4wSELR.js";import"./icons-B5Lu0sqU.js";const Fe=globalThis.Buffer;let Ie=0;function N(e){return String(e).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}function H(e="id"){return Ie+=1,`${e}-${Ie}`}function te(e){return e%2===0?e:e+1}function et(e){const r=e instanceof Uint8Array?e:e instanceof ArrayBuffer?new Uint8Array(e):new Uint8Array(e.buffer,e.byteOffset,e.byteLength);if(Fe)return Fe.from(r).toString("base64");let n="";const t=32768;for(let a=0;a<r.length;a+=t)n+=String.fromCharCode(...r.subarray(a,Math.min(a+t,r.length)));return btoa(n)}function pe(e,r="application/octet-stream"){return`data:${r};base64,${et(e)}`}function Re(e){return String(e??"").toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g,"-").replace(/^-+|-+$/g,"")||"item"}function We(e,r){if(e===r)return!0;if(!e||!r)return!1;const n=Object.keys(e),t=Object.keys(r);if(n.length!==t.length)return!1;for(const a of n)if(e[a]!==r[a])return!1;return!0}function ie(e,r,n){const t={message:r};return e.push(t),t}function _(e,r=96){if(!(e==null||Number.isNaN(e)))return e/1440*r}function tt(e){return String(e??"").replace(/\u000b/g,`
-`).replace(/\u000c/g,`
-`)}function Te(e="utf-8"){return new TextDecoder(e,{fatal:!1})}const Ee=Te("utf-16le"),rt=Te(typeof TextDecoder<"u"?"windows-1252":"latin1");class P{bytes;view;length;constructor(r){if(r instanceof Uint8Array)this.bytes=r;else if(r instanceof ArrayBuffer)this.bytes=new Uint8Array(r);else if(ArrayBuffer.isView(r))this.bytes=new Uint8Array(r.buffer,r.byteOffset,r.byteLength);else throw new TypeError("BinaryReader expects ArrayBuffer or Uint8Array");this.view=new DataView(this.bytes.buffer,this.bytes.byteOffset,this.bytes.byteLength),this.length=this.bytes.byteLength}ensure(r,n=1){return r>=0&&r+n<=this.length}u8(r){return this.ensure(r,1)?this.view.getUint8(r):0}i8(r){return this.ensure(r,1)?this.view.getInt8(r):0}u16(r){return this.ensure(r,2)?this.view.getUint16(r,!0):0}i16(r){return this.ensure(r,2)?this.view.getInt16(r,!0):0}u32(r){return this.ensure(r,4)?this.view.getUint32(r,!0):0}i32(r){return this.ensure(r,4)?this.view.getInt32(r,!0):0}u64(r){const n=this.u32(r);return this.u32(r+4)*4294967296+n}slice(r,n){return this.ensure(r,n)?this.bytes.subarray(r,r+n):new Uint8Array(0)}array(r,n,t){const a=[],s=t.byteWidth??1;for(let o=0;o<n;o+=1)a.push(t.call(this,r+o*s));return a}utf16le(r,n){return this.ensure(r,n)?Ee.decode(this.slice(r,n)):""}latin1(r,n){return this.ensure(r,n)?rt.decode(this.slice(r,n)):""}ascii(r,n){if(!this.ensure(r,n))return"";let t="";const a=this.slice(r,n);for(let s=0;s<a.length;s+=1)t+=String.fromCharCode(a[s]??0);return t}utf16z(r,n){const t=this.slice(r,n);let a=t.length;for(let s=0;s+1<t.length;s+=2)if(t[s]===0&&t[s+1]===0){a=s;break}return Ee.decode(t.subarray(0,a))}}P.prototype.u8.byteWidth=1;P.prototype.i8.byteWidth=1;P.prototype.u16.byteWidth=2;P.prototype.i16.byteWidth=2;P.prototype.u32.byteWidth=4;P.prototype.i32.byteWidth=4;function nt(e){if(e instanceof Uint8Array)return e;if(e instanceof ArrayBuffer)return new Uint8Array(e);if(ArrayBuffer.isView(e))return new Uint8Array(e.buffer,e.byteOffset,e.byteLength);throw new TypeError("Unsupported binary input")}const Ae=[208,207,17,224,161,177,26,225],ue=4294967295,Y=4294967294,at=4294967293,st=4294967292,ot=1<<20,ct=4096;function De(e){return e===ue||e===Y||e===at||e===st}function Se(e,r,n){const t=512+n*r,a=t+r;if(t<0||a>e.length)throw new Error(`Sector ${n} is out of bounds`);return e.subarray(t,a)}function $e(e,r,n=ot){const t=[],a=new Set;let s=e,o=0;for(;s!==Y&&s!==ue&&s>=0;){if(a.has(s))throw new Error(`Detected sector loop at ${s}`);if(a.add(s),t.push(s),s=r(s),o+=1,o>n)throw new Error("Sector chain exceeds safe limit")}return t}function oe(e,r,n,t,a=null){if(n===Y||n===ue||n<0)return new Uint8Array(0);const s=$e(n,i=>t[i]??Y),o=new Uint8Array(s.length*r);let c=0;for(const i of s)o.set(Se(e,r,i),c),c+=r;return a==null?o:o.subarray(0,Math.min(a,o.length))}function it(e){function r(a,s){if(a<0||a>=e.length)return;const o=e[a];o&&(r(o.leftSiblingId,s),s.push(a),r(o.rightSiblingId,s))}function n(a){const s=e[a];if(!s||s.childId<0)return;const o=[];r(s.childId,o),s.children=o;for(const c of o){const i=e[c];i&&(i.parentId=a,n(c))}}const t=e.find(a=>a.objectType===5);if(!t)throw new Error("CFB root storage not found");return n(t.id),t}function lt(e){const r=new Map;for(const n of e){if(!n||!n.name)continue;const t=[];let a=n;for(;a;)a.objectType!==5&&t.push(a.name),a=a.parentId!=null?e[a.parentId]??null:null;const s=`/${t.reverse().join("/")}`;n.path=s==="/"?`/${n.name}`:s,r.set(n.path,n)}return r}function pt(e){return e.replace(/\u0000+$/,"")}function ft(e,r={}){const n=nt(e),t=new P(n),a=[];for(let h=0;h<Ae.length;h+=1)if(t.u8(h)!==Ae[h])throw new Error("Not a Compound File Binary document");const s=t.u16(26),o=t.u16(30),c=t.u16(32),i=1<<o,p=1<<c,f=t.u32(40),u=t.u32(44),m=t.i32(48),b=t.u32(52),g=t.u32(56),w=t.i32(60),S=t.u32(64),M=t.i32(68),B=t.u32(72);g!==ct&&ie(a,`Unexpected mini stream cutoff size ${g}`);const F=[];for(let h=0;h<109;h+=1){const T=t.i32(76+h*4);!De(T)&&T>=0&&F.push(T)}const E=[...F];let L=M,j=0;for(;L!==Y&&L!==ue&&L>=0;){const h=Se(n,i,L),T=new P(h),k=i/4-1;for(let D=0;D<k;D+=1){const O=T.i32(D*4);!De(O)&&O>=0&&E.push(O)}if(L=T.i32(i-4),j+=1,j>B+4){ie(a,"DIFAT chain exceeded declared sector count; stopping early");break}}u&&E.length<u&&ie(a,`FAT sector count mismatch: header says ${u}, found ${E.length}`);const A=[];for(const h of E){const T=Se(n,i,h),k=new P(T);for(let D=0;D<i/4;D+=1)A.push(k.i32(D*4))}const W=oe(n,i,m,A),v=new P(W),x=[];for(let h=0,T=0;h+128<=W.length;h+=128,T+=1){const k=v.u16(h+64),D=pt(v.utf16le(h,Math.max(0,k-2)));!D&&v.u8(h+66)===0||x.push({id:T,name:D,objectType:v.u8(h+66),colorFlag:v.u8(h+67),leftSiblingId:v.i32(h+68),rightSiblingId:v.i32(h+72),childId:v.i32(h+76),clsid:v.slice(h+80,16),stateBits:v.u32(h+96),creationTime:v.u64(h+100),modifiedTime:v.u64(h+108),startSector:v.i32(h+116),streamSize:s===3?v.u32(h+120):v.u64(h+120),children:[],parentId:null})}const q=it(x),z=lt(x),Q=[];if(S&&w>=0){const h=oe(n,i,w,A),T=new P(h);for(let k=0;k+4<=h.length;k+=4)Q.push(T.i32(k))}const me=oe(n,i,q.startSector,A,q.streamSize);function Ge(h){if(h.startSector<0)return new Uint8Array(0);const T=$e(h.startSector,O=>Q[O]??Y),k=new Uint8Array(T.length*p);let D=0;for(const O of T){const se=O*p,ee=se+p;if(ee>me.length)throw new Error(`Mini sector ${O} is out of bounds`);k.set(me.subarray(se,ee),D),D+=p}return k.subarray(0,Math.min(h.streamSize,k.length))}function qe(h){const T=typeof h=="string"?z.get(h)??null:h;return!T||T.objectType!==2&&T.objectType!==5?null:T.objectType===5?me:T.streamSize<g&&T.startSector>=0&&Q.length?Ge(T):oe(n,i,T.startSector,A,T.streamSize)}function Ze(h){const T=typeof h=="string"?z.get(h)??null:h;return T?(T.children||[]).map(k=>x[k]).filter(k=>!!k):[]}return{bytes:n,majorVersion:s,sectorSize:i,miniSectorSize:p,numDirSectors:f,numFatSectors:u,firstDirSector:m,transactionSignature:b,miniStreamCutoffSize:g,warnings:a,entries:x,root:q,pathMap:z,getEntry(h){return z.get(h)??null},getStream:qe,listChildren:Ze,findByName(h,T="/"){const k=T==="/"?q:z.get(T)??null;if(!k)return null;const D=[k];for(;D.length;){const O=D.pop();if(O){if(O.name===h)return O;for(const se of O.children||[]){const ee=x[se];ee&&D.push(ee)}}}return null}}}const dt={"":"‚","":"ƒ","":"„","":"…","":"†","":"‡","":"ˆ","":"‰","":"Š","":"‹","":"Œ","":"‘","":"’","":"“","":"”","":"•","":"–","":"—","":"˜","":"™","":"š","":"›","":"œ","":"Ÿ"};function ut(e){return e.replace(/[\x82-\x8C\x91-\x9C\x9F]/g,r=>dt[r]||r)}function mt(e){let r="";for(let n=0;n<e.length;n+=1)r+=String.fromCharCode(e[n]??0);return ut(r)}function ht(e){return new TextDecoder("utf-16le").decode(e)}function gt(e,r){const n=r.fcClx,t=r.lcbClx;if(n==null||t==null||t<=0)throw new Error("FIB does not point to a CLX structure");const a=e.subarray(n,n+t),s=new P(a);let o=0;const c=[];for(;o<a.length&&s.u8(o)===1;){const u=s.u16(o+1);c.push({type:1,cbGrpprl:u,bytes:s.slice(o+3,u)}),o+=3+u}if(s.u8(o)!==2)throw new Error("CLX does not contain a Pcdt marker");const i=s.u32(o+1),p=s.slice(o+5,i),f=xt(p);return{prcs:c,pcdt:{lcb:i,pieceTable:f}}}function xt(e){if(!e.length)throw new Error("Empty PlcPcd");const r=new P(e),n=(e.length-4)/12;if(!Number.isInteger(n)||n<0)throw new Error("Invalid PlcPcd size");const t=[];for(let o=0;o<n+1;o+=1)t.push(r.u32(o*4));const a=[];let s=(n+1)*4;for(let o=0;o<n;o+=1){const c=r.u16(s),i=r.u32(s+2)>>>0,p=r.u16(s+6),f=!!(i&1073741824),u=i&1073741823,m=t[o]??0,b=t[o+1]??m,g=f?Math.floor(u/2):u,w=f?b-m:(b-m)*2;a.push({index:o,descriptor:c,fNoParaLast:!!(c&1),fRaw:!!(c&2),prm:p,compressed:f,fcRaw:i,fc:u,cpStart:m,cpEnd:b,actualByteStart:g,byteLength:w,actualByteEnd:g+w}),s+=8}return{cps:t,pieces:a}}function bt(e,r){const n=e.subarray(r.actualByteStart,r.actualByteEnd);return r.compressed?mt(n):ht(n)}function wt(e,r){return r.pcdt.pieceTable.pieces.map(n=>bt(e,n))}function fe(e,r,n=null){const t=e.pcdt.pieceTable.pieces,a=n??!!(r&1073741824),s=n==null?r&1073741823:r,o=a?Math.floor(s/2):s;for(const c of t){if(o<c.actualByteStart||o>c.actualByteEnd)continue;const i=o-c.actualByteStart,p=c.cpStart+Math.floor(i/(c.compressed?1:2));if(p>=c.cpStart&&p<=c.cpEnd)return p}for(const c of t){if(r<c.actualByteStart||r>c.actualByteEnd)continue;const i=r-c.actualByteStart,p=c.cpStart+Math.floor(i/(c.compressed?1:2));if(p>=c.cpStart&&p<=c.cpEnd)return p}return null}function yt(e,r,n,t,a){if(a<=t)return"";const s=[];for(let o=0;o<r.pcdt.pieceTable.pieces.length;o+=1){const c=r.pcdt.pieceTable.pieces[o];if(c.cpEnd<=t)continue;if(c.cpStart>=a)break;const i=Math.max(t,c.cpStart)-c.cpStart,p=Math.min(a,c.cpEnd)-c.cpStart;s.push((n[o]??"").slice(i,p))}return s.join("")}function Pt(e){const r=[];let n=0;for(let t=0;t<e.length;t+=1){const a=e[t];(a==="\r"||a==="\x07")&&(r.push({cpStart:n,cpEnd:t+1,terminator:a}),n=t+1)}return n<e.length&&r.push({cpStart:n,cpEnd:e.length,terminator:""}),r}const R={paragraph:"\r",cellMark:"\x07",picture:"",fieldStart:"",fieldSeparator:"",fieldEnd:"",annotationRef:"",hardLineBreak:"\v",pageBreak:"\f",nonBreakingHyphen:"",nonRequiredHyphen:""},Tt={0:"none",1:"single",2:"word",3:"double",4:"dotted",5:"hidden",6:"thick",7:"dash",9:"dot-dash",10:"dot-dot-dash",11:"wave",16:"dotted-heavy",17:"dashed-heavy",18:"dash-long",19:"dash-long-heavy",20:"dot-dash-heavy",21:"dot-dot-dash-heavy",22:"wavy-heavy",23:"wavy-double"},St={0:"left",1:"center",2:"right",3:"justify",4:"distributed"},vt={0:"top",1:"center",2:"bottom"},ve={1:"#000000",2:"#0000ff",3:"#00ffff",4:"#00ff00",5:"#ff00ff",6:"#ff0000",7:"#ffff00",8:"#ffffff",9:"#000080",10:"#008080",11:"#008000",12:"#800080",13:"#800000",14:"#808000",15:"#808080",16:"#c0c0c0"},Ct=["StshfOrig","Stshf","PlcffndRef","PlcffndTxt","PlcfandRef","PlcfandTxt","PlcfSed","PlcPad","PlcfPhe","SttbfGlsy","PlcfGlsy","PlcfHdd","PlcfBteChpx","PlcfBtePapx","PlcfSea","SttbfFfn","PlcfFldMom","PlcfFldHdr","PlcfFldFtn","PlcfFldAtn","PlcfFldMcr","SttbfBkmk","PlcfBkf","PlcfBkl","Cmds","Unused1","SttbfMcr","PrDrvr","PrEnvPort","PrEnvLand","Wss","Dop","SttbfAssoc","Clx","PlcfPgdFtn","AutosaveSource","GrpXstAtnOwners","SttbfAtnBkmk","Unused2","Unused3","PlcSpaMom","PlcSpaHdr","PlcfAtnBkf","PlcfAtnBkl","Pms","FormFldSttbs","PlcfendRef","PlcfendTxt","PlcfFldEdn","Unused4","DggInfo","SttbfRMark","SttbfCaption","SttbfAutoCaption","PlcfWkb","PlcfSpl","PlcftxbxTxt","PlcfFldTxbx","PlcfHdrtxbxTxt","PlcffldHdrTxbx","StwUser","SttbTtmbd","CookieData","PgdMotherOldOld","BkdMotherOldOld","PgdFtnOldOld","BkdFtnOldOld","PgdEdnOldOld","BkdEdnOldOld","SttbfIntlFld","RouteSlip","SttbSavedBy","SttbFnm","PlfLst","PlfLfo","PlcfTxbxBkd","PlcfTxbxHdrBkd","DocUndoWord9","RgbUse","Usp","Uskf","PlcupcRgbUse","PlcupcUsp","SttbGlsyStyle","Plgosl","Plcocx","PlcfBteLvc","dwLowDateTime","dwHighDateTime","PlcfLvcPre10","PlcfAsumy","PlcfGram","SttbListNames","SttbfUssr"];function Bt(e){const r=new P(e),n=kt(r);let t=32;const a=r.u16(t);t+=2;const s=r.slice(t,a*2);t+=a*2;const o=r.u16(t);t+=2;const c=r.slice(t,o*4);t+=o*4;const i=r.u16(t);t+=2;const p=r.slice(t,i*8);t+=i*8;const f=r.ensure(t,2)?r.u16(t):0;r.ensure(t,2)&&(t+=2);const u=f?r.slice(t,f*2):new Uint8Array(0),m=Ft(c),b=It(p,i),g=f?new P(u).u16(0):0;return{base:n,csw:a,cslw:o,cbRgFcLcb:i,cswNew:f,nFibNew:g,fibRgWBytes:s,fibRgLwBytes:c,fibRgFcLcbBytes:p,fibRgCswNewBytes:u,fibRgLw:m,fibRgFcLcb:b}}function kt(e){const r=e.u16(0),n=e.u16(2),t=e.u16(6),a=e.u16(8),s=e.u16(10),o=e.u16(18);return{wIdent:r,nFib:n,lid:t,pnNext:a,flags:s,envFlags:o,fDot:!!(s&1),fGlsy:!!(s&2),fComplex:!!(s&4),fHasPic:!!(s&8),cQuickSaves:s>>4&15,fEncrypted:!!(s&256),fWhichTblStm:s&512?1:0,fReadOnlyRecommended:!!(s&1024),fWriteReservation:!!(s&2048),fExtChar:!!(s&4096),fLoadOverride:!!(s&8192),fFarEast:!!(s&16384),fObfuscated:!!(s&32768),nFibBack:e.u16(12),lKey:e.u32(14),envr:e.u8(18),fMac:!!(o&1),fEmptySpecial:!!(o&2),fLoadOverridePage:!!(o&4)}}function Ft(e){const r=new P(e),n=[];for(let t=0;t+4<=e.length;t+=4)n.push(r.i32(t));return{raw:n,cbMac:n[0]??0,ccpText:n[3]??0,ccpFtn:n[4]??0,ccpHdd:n[5]??0,ccpMcr:n[6]??0,ccpAtn:n[7]??0,ccpEdn:n[8]??0,ccpTxbx:n[9]??0,ccpHdrTxbx:n[10]??0}}function It(e,r){const n=new P(e),t={_pairs:[]},a=[];for(let s=0;s<r&&s*8+8<=e.length;s+=1){const o=n.u32(s*8),c=n.u32(s*8+4),i=Ct[s]||`Field${s}`;t[`fc${i}`]=o,t[`lcb${i}`]=c,a.push({name:i,fc:o,lcb:c,index:s})}return t._pairs=a,t}const l={sprmCPicLocation:27139,sprmCFData:2054,sprmCFOle2:2058,sprmCHighlight:10764,sprmCIstd:18992,sprmCPlain:10803,sprmCFBold:2101,sprmCFItalic:2102,sprmCFStrike:2103,sprmCFOutline:2104,sprmCFShadow:2105,sprmCFSmallCaps:2106,sprmCFCaps:2107,sprmCFVanish:2108,sprmCKul:10814,sprmCDxaSpace:34880,sprmCIco:10818,sprmCHps:19011,sprmCHpsPos:18501,sprmCSymbol:27145,sprmCRgFtc0:19023,sprmCRgFtc1:19024,sprmCRgFtc2:19025,sprmCCharScale:18514,sprmCFDStrike:10835,sprmCFImprint:2132,sprmCFSpec:2133,sprmCFObj:2134,sprmCFEmboss:2136,sprmCFBiDi:2138,sprmCFBoldBi:2140,sprmCFItalicBi:2141,sprmCFtcBi:19038,sprmCIcoBi:19040,sprmCHpsBi:19041,sprmPIstd:17920,sprmPJc80:9219,sprmPFKeep:9221,sprmPFKeepFollow:9222,sprmPFPageBreakBefore:9223,sprmPIlvl:9738,sprmPIlfo:17931,sprmPChgTabsPapx:50701,sprmPDxaRight80:33806,sprmPDxaLeft80:33807,sprmPDxaLeft180:33809,sprmPDyaLine:25618,sprmPDyaBefore:42003,sprmPDyaAfter:42004,sprmPChgTabs:50709,sprmPFInTable:9238,sprmPFTtp:9239,sprmPDxaAbs:33816,sprmPDyaAbs:33817,sprmPDxaWidth:33818,sprmPPc:9755,sprmPWr:9251,sprmPBrcTop80:25636,sprmPBrcLeft80:25637,sprmPBrcBottom80:25638,sprmPBrcRight80:25639,sprmPBrcBetween80:25640,sprmPBrcBar80:26153,sprmPWHeightAbs:17451,sprmPShd80:17453,sprmPDyaFromText:33838,sprmPDxaFromText:33839,sprmPFLocked:9264,sprmPFWidowControl:9265,sprmPFBiDi:9281,sprmPFAdjustRight:9288,sprmPItap:26185,sprmPDtap:26186,sprmPFInnerTableCell:9291,sprmPFInnerTtp:9292,sprmPShd:50765,sprmPBrcTop:50766,sprmPBrcLeft:50767,sprmPBrcBottom:50768,sprmPBrcRight:50769,sprmPBrcBetween:50770,sprmPBrcBar:50771,sprmPFDyaBeforeAuto:9307,sprmPFDyaAfterAuto:9308,sprmPDxaRight:33885,sprmPDxaLeft:33886,sprmPDxaLeft1:33888,sprmPJc:9313,sprmTJc90:21504,sprmTDxaLeft:38401,sprmTDxaGapHalf:38402,sprmTFCantSplit90:13315,sprmTTableHeader:13316,sprmTTableBorders80:54789,sprmTDyaRowHeight:37895,sprmTDefTable:54792,sprmTDefTableShd80:54793,sprmTFBiDi:22027,sprmTDefTableShd3rd:54796,sprmTPc:13837,sprmTDxaAbs:37902,sprmTDyaAbs:37903,sprmTDxaFromText:37904,sprmTDyaFromText:37905,sprmTDefTableShd:54802,sprmTTableBorders:54803,sprmTTableWidth:62996,sprmTFAutofit:13845,sprmTWidthBefore:62999,sprmTWidthAfter:63e3,sprmTSetBrc80:54816,sprmTInsert:30241,sprmTDelete:22050,sprmTDxaCol:30243,sprmTMerge:22052,sprmTSplit:22053,sprmTTextFlow:30249,sprmTVertMerge:54827,sprmTVertAlign:54828,sprmTSetShd:54829,sprmTSetShdOdd:54830,sprmTSetBrc:54831,sprmTCellPadding:54834,sprmTCellPaddingDefault:54835,sprmTCellWidth:54837,sprmTFitText:63030,sprmTFCellNoWrap:54841,sprmTIstd:22074},Et=new Set([l.sprmPChgTabs,l.sprmPChgTabsPapx,l.sprmTDefTable,l.sprmTTableBorders80,l.sprmTTableBorders,l.sprmTDefTableShd,l.sprmTDefTableShd80,l.sprmTDefTableShd3rd,l.sprmTSetBrc80,l.sprmTSetBrc,l.sprmTSetShd,l.sprmTSetShdOdd,l.sprmTCellPadding,l.sprmTCellPaddingDefault,l.sprmTCellWidth,l.sprmTVertAlign,l.sprmTVertMerge,l.sprmTTextFlow,l.sprmTDxaCol]);function At(e){return e>>13&7}function I(e,r=0){return r+2>e.length?0:(e[r]??0)|(e[r+1]??0)<<8}function C(e,r=0){const n=I(e,r);return n>32767?n-65536:n}function le(e,r=0){return r+4>e.length?0:((e[r]??0)|(e[r+1]??0)<<8|(e[r+2]??0)<<16|(e[r+3]??0)<<24>>>0)>>>0}function K(e,r=0){return{first:e[r]??0,lim:e[r+1]??0}}function $(e,r=0){if(r+4>e.length)return null;const n=le(e,r)>>>0,t=n&255,a=n>>8&255,s=n>>16&255;return{raw:n,lineWidth:t,borderType:a,color:s}}function Dt(e,r=0){const n=I(e,r);return{raw:n,horzMerge:n&3,textFlow:n>>2&7,vertMerge:n>>5&3,vertAlign:n>>7&3,ftsWidth:n>>9&7,fitText:!!(n&4096),noWrap:!!(n&8192),hideMark:!!(n&16384)}}function He(e,r=0){return r+20>e.length?null:{tcgrf:Dt(e,r),wWidth:I(e,r+2),borders:{top:$(e,r+4)||{},left:$(e,r+8)||{},bottom:$(e,r+12)||{},right:$(e,r+16)||{}}}}function Mt(e){if(e.length<3)return null;const r=I(e,0),n=e[2]??0;let t=3;const a=[];for(let o=0;o<n+1&&t+2<=e.length;o+=1)a.push(C(e,t)),t+=2;const s=[];for(let o=0;o<n&&t+20<=e.length;o+=1){const c=He(e,t);c&&s.push(c),t+=20}return{cb:r,numberOfColumns:n,rgdxaCenter:a,cells:s}}function X(e){return e.length?{cb:e[0]??0,range:K(e,1),value:e[3]??0,extra:e.subarray(4)}:null}function ge(e){if(!e.length)return null;const r=e[0]??0,n=I(e,4);return{cb:r,range:K(e,1),ftsWidth:e[3]??0,width:n,wWidth:n}}function Lt(e){return e.length?{cb:e[0]??0,range:K(e,1),border:$(e,3)||{},extra:e.subarray(7)}:null}function xe(e){if(!e.length)return null;const r=I(e,1);return{ftsWidth:e[0]??0,width:r,wWidth:r}}function Ot(e){if(!e.length)return null;const r=e[0]??0,n=K(e,1),t=n.lim-n.first;let a=3;const s=[];for(let c=0;c<t&&a+2<=e.length;c+=1)s.push(C(e,a)),a+=2;const o=[];for(let c=0;c<t&&a+20<=e.length;c+=1)o.push(He(e,a)),a+=20;return{cb:r,range:n,itcFirst:n.first,ctc:t,dxaCol:s,cells:o}}function Rt(e,r,n){const t=n>>13&7;if(r>=e.length)return 0;if(n===l.sprmTDefTable){const a=I(e,r);return a?a+1:0}if(Et.has(n))return(e[r]??0)+1;switch(t){case 0:return 1;case 1:return 1;case 2:return 2;case 3:return 4;case 4:return 2;case 5:return 2;case 6:return(e[r]??0)+1;case 7:return 3;default:return 0}}function y(e){return!!(e[0]??0)}function d(e,r,n,t,a){return{kind:e,name:r,value:n,raw:t,operandBytes:a}}function Wt(e,r){const n=At(e),t=r,a=e;switch(e){case l.sprmCPicLocation:return d("char","pictureOffset",le(t,0)>>>0,a,t);case l.sprmCFData:return d("char","data",y(t),a,t);case l.sprmCFOle2:return d("char","ole2",y(t),a,t);case l.sprmCIstd:return d("char","charStyleId",I(t,0),a,t);case l.sprmCPlain:return d("char","plain",y(t),a,t);case l.sprmCFBold:return d("char","bold",y(t),a,t);case l.sprmCFItalic:return d("char","italic",y(t),a,t);case l.sprmCFStrike:return d("char","strike",y(t),a,t);case l.sprmCFOutline:return d("char","outline",y(t),a,t);case l.sprmCFShadow:return d("char","shadow",y(t),a,t);case l.sprmCFSmallCaps:return d("char","smallCaps",y(t),a,t);case l.sprmCFCaps:return d("char","caps",y(t),a,t);case l.sprmCFVanish:return d("char","hidden",y(t),a,t);case l.sprmCKul:return d("char","underline",t[0]??0,a,t);case l.sprmCDxaSpace:return d("char","spacing",C(t,0),a,t);case l.sprmCIco:case l.sprmCIcoBi:return d("char","colorIndex",t[0]??0,a,t);case l.sprmCHighlight:{const s=t[0]??0,o={index:s,color:ve[s]};return d("char","highlight",o,a,t)}case l.sprmCHps:case l.sprmCHpsBi:return d("char","fontSizeHalfPoints",I(t,0),a,t);case l.sprmCHpsPos:return d("char","positionHalfPoints",C(t,0),a,t);case l.sprmCSymbol:return d("char","symbol",{font:I(t,0),charCode:I(t,2)},a,t);case l.sprmCRgFtc0:case l.sprmCRgFtc1:case l.sprmCRgFtc2:case l.sprmCFtcBi:return d("char","fontFamilyId",I(t,0),a,t);case l.sprmCCharScale:return d("char","scale",I(t,0),a,t);case l.sprmCFDStrike:return d("char","doubleStrike",y(t),a,t);case l.sprmCFImprint:return d("char","imprint",y(t),a,t);case l.sprmCFSpec:return d("char","special",y(t),a,t);case l.sprmCFObj:return d("char","object",y(t),a,t);case l.sprmCFEmboss:return d("char","emboss",y(t),a,t);case l.sprmCFBiDi:return d("char","rtl",y(t),a,t);case l.sprmCFBoldBi:return d("char","boldBi",y(t),a,t);case l.sprmCFItalicBi:return d("char","italicBi",y(t),a,t);case l.sprmPIstd:return d("para","styleId",I(t,0),a,t);case l.sprmPJc80:case l.sprmPJc:return d("para","alignment",t[0]??0,a,t);case l.sprmPFKeep:return d("para","keepLines",y(t),a,t);case l.sprmPFKeepFollow:return d("para","keepNext",y(t),a,t);case l.sprmPFPageBreakBefore:return d("para","pageBreakBefore",y(t),a,t);case l.sprmPIlvl:return d("para","listLevel",t[0]??0,a,t);case l.sprmPIlfo:return d("para","listId",I(t,0),a,t);case l.sprmPDxaRight80:case l.sprmPDxaRight:return d("para","rightIndent",C(t,0),a,t);case l.sprmPDxaLeft80:case l.sprmPDxaLeft:return d("para","leftIndent",C(t,0),a,t);case l.sprmPDxaLeft180:case l.sprmPDxaLeft1:return d("para","firstLineIndent",C(t,0),a,t);case l.sprmPDyaLine:return d("para","lineSpacing",C(t,0),a,t);case l.sprmPDyaBefore:return d("para","spacingBefore",C(t,0),a,t);case l.sprmPDyaAfter:return d("para","spacingAfter",C(t,0),a,t);case l.sprmPFInTable:return d("para","inTable",y(t),a,t);case l.sprmPFTtp:return d("para","tableRowEnd",y(t),a,t);case l.sprmPDxaAbs:return d("para","frameLeft",C(t,0),a,t);case l.sprmPDyaAbs:return d("para","frameTop",C(t,0),a,t);case l.sprmPDxaWidth:return d("para","frameWidth",C(t,0),a,t);case l.sprmPPc:return d("para","framePosition",t[0]??0,a,t);case l.sprmPWr:return d("para","frameWrap",t[0]??0,a,t);case l.sprmPBrcTop80:case l.sprmPBrcTop:return d("para","borderTop",$(t,0),a,t);case l.sprmPBrcLeft80:case l.sprmPBrcLeft:return d("para","borderLeft",$(t,0),a,t);case l.sprmPBrcBottom80:case l.sprmPBrcBottom:return d("para","borderBottom",$(t,0),a,t);case l.sprmPBrcRight80:case l.sprmPBrcRight:return d("para","borderRight",$(t,0),a,t);case l.sprmPBrcBetween80:case l.sprmPBrcBetween:return d("para","borderBetween",$(t,0),a,t);case l.sprmPBrcBar80:case l.sprmPBrcBar:return d("para","borderBar",$(t,0),a,t);case l.sprmPWHeightAbs:return d("para","frameHeight",C(t,0),a,t);case l.sprmPShd80:case l.sprmPShd:return d("para","shading",t.slice(),a,t);case l.sprmPDyaFromText:return d("para","distanceFromTextY",C(t,0),a,t);case l.sprmPDxaFromText:return d("para","distanceFromTextX",C(t,0),a,t);case l.sprmPFLocked:return d("para","locked",y(t),a,t);case l.sprmPFWidowControl:return d("para","widowControl",y(t),a,t);case l.sprmPFBiDi:return d("para","rtlPara",y(t),a,t);case l.sprmPFAdjustRight:return d("para","adjustRight",y(t),a,t);case l.sprmPItap:return d("para","itap",le(t,0),a,t);case l.sprmPDtap:return d("para","dtap",le(t,0),a,t);case l.sprmPFInnerTableCell:return d("para","innerTableCell",y(t),a,t);case l.sprmPFInnerTtp:return d("para","innerTableRowEnd",y(t),a,t);case l.sprmPFDyaBeforeAuto:return d("para","spacingBeforeAuto",y(t),a,t);case l.sprmPFDyaAfterAuto:return d("para","spacingAfterAuto",y(t),a,t);case l.sprmTJc90:return d("table","alignment",I(t,0),a,t);case l.sprmTDxaLeft:return d("table","leftIndent",C(t,0),a,t);case l.sprmTDxaGapHalf:return d("table","gapHalf",I(t,0),a,t);case l.sprmTFCantSplit90:return d("table","cantSplit",y(t),a,t);case l.sprmTTableHeader:return d("table","header",y(t),a,t);case l.sprmTDyaRowHeight:return d("table","rowHeight",C(t,0),a,t);case l.sprmTDefTable:return d("table","defTable",Mt(t),a,t);case l.sprmTFBiDi:return d("table","rtl",y(t),a,t);case l.sprmTPc:return d("table","positionCode",t[0]??0,a,t);case l.sprmTDxaAbs:return d("table","absLeft",C(t,0),a,t);case l.sprmTDyaAbs:return d("table","absTop",C(t,0),a,t);case l.sprmTDxaFromText:return d("table","distanceLeft",C(t,0),a,t);case l.sprmTDyaFromText:return d("table","distanceTop",C(t,0),a,t);case l.sprmTTableWidth:return d("table","tableWidth",xe(t),a,t);case l.sprmTFAutofit:return d("table","autoFit",y(t),a,t);case l.sprmTWidthBefore:return d("table","widthBefore",xe(t),a,t);case l.sprmTWidthAfter:return d("table","widthAfter",xe(t),a,t);case l.sprmTInsert:return d("table","insertCells",Ot(t),a,t);case l.sprmTDelete:return d("table","deleteCells",K(t,0),a,t);case l.sprmTDxaCol:return d("table","columnWidth",ge(t),a,t);case l.sprmTMerge:return d("table","merge",K(t,0),a,t);case l.sprmTSplit:return d("table","split",K(t,0),a,t);case l.sprmTTextFlow:return d("table","textFlow",X(t),a,t);case l.sprmTVertMerge:return d("table","vertMerge",X(t),a,t);case l.sprmTVertAlign:return d("table","vertAlign",X(t),a,t);case l.sprmTSetShd:case l.sprmTSetShdOdd:return d("table","setShading",X(t),a,t);case l.sprmTSetBrc80:case l.sprmTSetBrc:return d("table","setBorder",Lt(t),a,t);case l.sprmTCellPadding:case l.sprmTCellPaddingDefault:return d("table","cellPadding",ge(t),a,t);case l.sprmTCellWidth:return d("table","cellWidth",ge(t),a,t);case l.sprmTFitText:return d("table","fitText",X(t),a,t);case l.sprmTFCellNoWrap:return d("table","cellNoWrap",X(t),a,t);case l.sprmTIstd:return d("table","styleId",I(t,0),a,t);default:return{kind:n===1?"para":n===2?"char":n===5?"table":"unknown",name:`sprm_${e.toString(16)}`,value:t,raw:e,operandBytes:t}}}function ae(e,r,n){const t=[];let a=r;for(;a+2<=n;){const s=I(e,a);a+=2;const o=Rt(e,a,s);if(!o||a+o>n)break;const c=e.subarray(a,a+o);a+=o,t.push(Wt(s,c))}return t}function Ue(e,r,n){if(r==null||n==null||n<=0)return{aFC:[],pages:[]};const t=e.subarray(r,r+n),a=new P(t),s=Math.floor((n-4)/8);if(s<=0)return{aFC:[],pages:[]};const o=[];for(let p=0;p<=s;p+=1)o.push(a.u32(p*4)>>>0);const c=[],i=(s+1)*4;for(let p=0;p<s;p+=1)c.push(a.u32(i+p*4)&4194303);return{aFC:o,pages:c}}function $t(e,r){const n=r*512,t=e.subarray(n,n+512);if(t.length<512)return null;const a=new P(t),s=a.u8(511);if(!s||s>100)return null;const o=[];for(let f=0;f<=s;f+=1)o.push(a.u32(f*4)>>>0);const c=[],i=[],p=(s+1)*4;for(let f=0;f<s;f+=1){const u=a.u8(p+f);c.push(u),i.push(u?n+u*2:0)}return{crun:s,rgfc:o,rgb:c,chpxOffsets:i}}function Ht(e,r){const n=r*512,t=e.subarray(n,n+512);if(t.length<512)return null;const a=new P(t),s=a.u8(511);if(s>29)return null;const o=[];for(let f=0;f<=s;f+=1)o.push(a.u32(f*4)>>>0);const c=(s+1)*4,i=[],p=[];for(let f=0;f<s;f+=1){const u=a.u8(c+f*13);i.push(u),p.push(u?n+u*2:0)}return{cpara:s,rgfc:o,bOffsets:i,papxOffsets:p}}function Ut(e,r,n,t){const a=n.fibRgFcLcb.fcPlcfBteChpx,s=n.fibRgFcLcb.lcbPlcfBteChpx,o=Ue(r,a,s),c=[];for(const i of o.pages){const p=$t(e,i);if(p)for(let f=0;f<p.crun;f+=1){const u=p.rgfc[f]??0,m=p.rgfc[f+1]??u,b=fe(t,u),g=fe(t,m);if(b==null||g==null||g<=b)continue;const w=p.chpxOffsets[f]?jt(e,p.chpxOffsets[f]):[];c.push({cpStart:b,cpEnd:g,fcStart:u,fcEnd:m,properties:w})}}return c.sort((i,p)=>i.cpStart-p.cpStart||i.cpEnd-p.cpEnd),c}function Nt(e,r,n,t){const a=n.fibRgFcLcb.fcPlcfBtePapx,s=n.fibRgFcLcb.lcbPlcfBtePapx,o=Ue(r,a,s),c=[];for(const i of o.pages){const p=Ht(e,i);if(p)for(let f=0;f<p.cpara;f+=1){const u=p.rgfc[f]??0,m=p.rgfc[f+1]??u,b=fe(t,u),g=fe(t,m);if(b==null||g==null||g<b)continue;const w=p.papxOffsets[f]?zt(e,p.papxOffsets[f]):{styleId:0,properties:[]};c.push({cpStart:b,cpEnd:g,fcStart:u,fcEnd:m,styleId:w.styleId,properties:w.properties,rawOffset:p.papxOffsets[f]??0})}}return c.sort((i,p)=>i.cpStart-p.cpStart||i.cpEnd-p.cpEnd),c}function jt(e,r){if(r==null||r<0||r>=e.length)return[];const n=e[r]??0;if(!n)return[];const t=r+1,a=Math.min(e.length,t+n);return ae(e,t,a)}function zt(e,r){if(r==null||r<0||r>=e.length)return{styleId:0,properties:[]};const n=new P(e),t=n.u8(r);if(t===0&&!n.ensure(r+1,1))return{styleId:0,properties:[]};let a,s;if(t===0?(s=n.u8(r+1)*2,a=r+2):(s=t-1,a=r+1),s<2||!n.ensure(a,Math.max(2,s)))return{styleId:0,properties:[]};const o=n.u16(a),c=a+2,i=Math.min(e.length,a+s),p=ae(e,c,i);return{styleId:o,properties:p}}function _t(e,r){let n=r;for(;n+1<e.length&&!(e[n]===0&&e[n+1]===0);)n+=2;return{value:new TextDecoder("utf-16le").decode(e.subarray(r,n)),nextOffset:Math.min(e.length,n+2)}}function Vt(e,r){if(!e.length)return null;const n=new P(e),t=n.u8(0),a=n.u8(1),s=n.u16(2),o=n.u8(4),c=n.u8(5),i=n.slice(6,10),p=n.slice(16,24),f=40;let u="",m="";if(e.length>f){const g=new TextDecoder("utf-16le").decode(e.subarray(f)).split("\0").filter(Boolean);if(u=g[0]||"",m=g[1]||"",!m&&c){const w=f+c*2;w+2<=e.length&&(m=_t(e,w).value)}}return{index:r,cbFfnM1:t,ffid:a,weight:s,charset:o,ixchSzAlt:c,panose:i,fontSignature:p,name:u,altName:m}}function Gt(e,r){const n=r.fcSttbfFfn,t=r.lcbSttbfFfn;if(n==null||t==null||t<=0)return{header:null,fonts:[],byIndex(f){return f==null,null}};const a=e.subarray(n,n+t),s=new P(a),o=s.u16(0),c=s.u16(2);let i=4;const p=[];for(let f=0;f<o&&i<a.length;f+=1){const m=s.u8(i)+1,b=a.subarray(i,Math.min(i+m,a.length)),g=Vt(b,f);g&&p.push(g),i+=m+c}return{header:{cData:o,cbExtra:c},fonts:p,byIndex(f){return f==null||f<0?null:p[f]||null}}}function Ne(e,r,n=0){if(n+r.length>e.length)return!1;for(let t=0;t<r.length;t+=1)if(e[n+t]!==r[t])return!1;return!0}function qt(e){const r=[{mime:"image/png",magic:[137,80,78,71],end:Zt},{mime:"image/jpeg",magic:[255,216,255],end:Kt},{mime:"image/gif",magic:[71,73,70,56],end:Xt},{mime:"image/bmp",magic:[66,77],end:Jt},{mime:"image/tiff",magic:[73,73,42,0],end:null},{mime:"image/tiff",magic:[77,77,0,42],end:null},{mime:"image/emf",magic:[1,0,0,0],end:Yt},{mime:"image/wmf",magic:[215,205,198,154],end:null}];for(let n=0;n<e.length-4;n+=1)for(const t of r)if(Ne(e,t.magic,n)){const a=t.end?t.end(e,n):e.length;return{mime:t.mime,start:n,end:a||e.length}}return null}function Zt(e,r){for(let n=r+8;n+8<e.length;n+=1)if(Ne(e,[73,69,78,68],n))return n+8;return e.length}function Kt(e,r){for(let n=r+2;n+1<e.length;n+=1)if(e[n]===255&&e[n+1]===217)return n+2;return e.length}function Xt(e,r){for(let n=r+6;n<e.length;n+=1)if(e[n]===59)return n+1;return e.length}function Jt(e,r){if(r+6<=e.length){const n=new P(e.subarray(r)).u32(2);if(n>0&&r+n<=e.length)return r+n}return e.length}function Yt(e,r){if(r+48<=e.length){const t=new P(e.subarray(r)).u32(40);if(t>0&&r+t<=e.length)return r+t}return e.length}function Qt(e,r,n={}){if(!e||r==null||r<0||r+68>e.length)return null;const t=new P(e),a=t.i32(r),s=t.u16(r+4),o=a>0&&r+a<=e.length?a:Math.min(e.length-r,n.maxPictureBytes||8*1024*1024),c=e.subarray(r,r+o),i=Math.min(s||68,c.length),p=qt(c.subarray(i));if(!p)return{id:H("asset-img"),type:"image",mime:"application/octet-stream",bytes:c,dataUrl:pe(c,"application/octet-stream"),meta:{pictureOffset:r,lcb:a,cbHeader:s}};const f=i+p.start,u=Math.min(i+p.end,c.length),m=c.subarray(f,u);return{id:H("asset-img"),type:"image",mime:p.mime,bytes:m,dataUrl:pe(m,p.mime),meta:{pictureOffset:r,lcb:a,cbHeader:s}}}function be(e,r){let n=r;for(;n<e.length&&e[n]!==0;)n+=1;return{value:new TextDecoder("windows-1252").decode(e.subarray(r,n)),nextOffset:n+1}}function er(e){const r=new P(e),n=[4,6];for(const t of n)try{let a=t;const s=be(e,a);a=s.nextOffset;const o=be(e,a);a=o.nextOffset;const c=be(e,a);if(a=c.nextOffset,a+4>e.length)continue;const i=r.u32(a);if(a+=4,i>0&&a+i<=e.length){const p=e.subarray(a,a+i);return{label:s.value,originalPath:o.value,tempPath:c.value,dataSize:i,bytes:p}}}catch{}return null}function tr(e,r){const n=e.listChildren(r).filter(i=>i.objectType===2||i.objectType===5),t=new Map(n.map(i=>[i.name.toLowerCase(),i])),a=t.get("objinfo")||t.get("objinfo")||t.get("objinfo"),s=t.get("ole10native")||t.get("ole10native")||t.get("ole10native"),o=t.get("package")||t.get("contents")||t.get("content"),c={entry:r,streams:n,displayName:r.name,attachment:null,objectData:null};if(s){const i=e.getStream(s)||new Uint8Array(0),p=er(i);if(p){const f=p.label||p.originalPath.split(/[\\/]/).pop()||`${r.name}.bin`,u={id:H("asset-ole"),type:"attachment",name:f,mime:"application/octet-stream",bytes:p.bytes,dataUrl:pe(p.bytes,"application/octet-stream"),meta:p};return c.attachment=u,c}}if(o){const i=e.getStream(o)||new Uint8Array(0),p={id:H("asset-pkg"),type:"attachment",name:`${Re(r.name)}.bin`,mime:"application/octet-stream",bytes:i,dataUrl:pe(i,"application/octet-stream"),meta:{stream:o.name}};c.attachment=p}return a&&(c.objectData=e.getStream(a)||new Uint8Array(0)),c}function rr(e){const r=e.getEntry("/ObjectPool");if(!r)return new Map;const n=e.listChildren(r).filter(a=>a.objectType===1),t=new Map;for(const a of n)t.set(a.name,tr(e,a));return t}function we(e){const r={bold:!1,italic:!1,strike:!1,underline:0,fontSizeHalfPoints:void 0,fontFamilyId:void 0,colorIndex:void 0,highlight:void 0,spacing:0,positionHalfPoints:0,scale:100,hidden:!1,smallCaps:!1,caps:!1,outline:!1,shadow:!1,emboss:!1,imprint:!1,rtl:!1,pictureOffset:void 0,data:!1,ole2:!1,object:!1,special:!1,charStyleId:void 0};for(const n of e||[])switch(n.name){case"plain":n.value&&(r.bold=!1,r.italic=!1,r.strike=!1,r.underline=0,r.smallCaps=!1,r.caps=!1);break;case"bold":case"italic":case"strike":case"hidden":case"smallCaps":case"caps":case"outline":case"shadow":case"emboss":case"imprint":case"rtl":case"data":case"ole2":case"object":case"special":r[n.name]=!!n.value;break;case"underline":r.underline=n.value??0;break;case"fontSizeHalfPoints":r.fontSizeHalfPoints=n.value;break;case"fontFamilyId":r.fontFamilyId=n.value;break;case"colorIndex":r.colorIndex=n.value;break;case"highlight":r.highlight=n.value;break;case"spacing":r.spacing=n.value||0;break;case"positionHalfPoints":r.positionHalfPoints=n.value||0;break;case"scale":r.scale=n.value||100;break;case"pictureOffset":r.pictureOffset=n.value;break;case"charStyleId":r.charStyleId=n.value;break;default:r[n.name]=n.value;break}return r}function nr(e){const r={styleId:0,alignment:0,spacingBefore:0,spacingAfter:0,lineSpacing:0,leftIndent:0,rightIndent:0,firstLineIndent:0,keepLines:!1,keepNext:!1,pageBreakBefore:!1,widowControl:!1,inTable:!1,tableRowEnd:!1,innerTableCell:!1,innerTableRowEnd:!1,itap:0,dtap:0,listLevel:void 0,listId:void 0,rtlPara:!1,adjustRight:!1,frameLeft:void 0,frameTop:void 0,frameWidth:void 0,frameHeight:void 0,framePosition:void 0,frameWrap:void 0,borders:{},shading:void 0};for(const n of e||[])switch(n.name){case"styleId":r.styleId=n.value||0;break;case"alignment":r.alignment=n.value??0;break;case"spacingBefore":r.spacingBefore=n.value||0;break;case"spacingAfter":r.spacingAfter=n.value||0;break;case"lineSpacing":r.lineSpacing=n.value||0;break;case"leftIndent":r.leftIndent=n.value||0;break;case"rightIndent":r.rightIndent=n.value||0;break;case"firstLineIndent":r.firstLineIndent=n.value||0;break;case"keepLines":case"keepNext":case"pageBreakBefore":case"widowControl":case"inTable":case"tableRowEnd":case"innerTableCell":case"innerTableRowEnd":case"rtlPara":case"adjustRight":r[n.name]=!!n.value;break;case"itap":r.itap=n.value||0;break;case"dtap":r.dtap=n.value||0;break;case"listLevel":r.listLevel=n.value;break;case"listId":r.listId=n.value;break;case"frameLeft":r.frameLeft=n.value;break;case"frameTop":r.frameTop=n.value;break;case"frameWidth":r.frameWidth=n.value;break;case"frameHeight":r.frameHeight=n.value;break;case"framePosition":r.framePosition=n.value;break;case"frameWrap":r.frameWrap=n.value;break;case"borderTop":r.borders.top=n.value;break;case"borderLeft":r.borders.left=n.value;break;case"borderBottom":r.borders.bottom=n.value;break;case"borderRight":r.borders.right=n.value;break;case"borderBetween":r.borders.between=n.value;break;case"borderBar":r.borders.bar=n.value;break;case"shading":r.shading=n.value;break;default:r[n.name]=n.value;break}return r}function de(e){const r={styleId:void 0,alignment:0,leftIndent:0,gapHalf:0,cantSplit:!1,header:!1,rowHeight:0,rtl:!1,positionCode:void 0,absLeft:void 0,absTop:void 0,distanceLeft:void 0,distanceTop:void 0,tableWidth:void 0,autoFit:void 0,widthBefore:void 0,widthAfter:void 0,defTable:void 0,operations:[]};for(const n of e||[])switch(n.name){case"styleId":r.styleId=n.value;break;case"alignment":r.alignment=n.value??0;break;case"leftIndent":r.leftIndent=n.value||0;break;case"gapHalf":r.gapHalf=n.value||0;break;case"cantSplit":case"header":case"rtl":r[n.name]=!!n.value;break;case"rowHeight":r.rowHeight=n.value||0;break;case"positionCode":r.positionCode=n.value;break;case"absLeft":r.absLeft=n.value;break;case"absTop":r.absTop=n.value;break;case"distanceLeft":r.distanceLeft=n.value;break;case"distanceTop":r.distanceTop=n.value;break;case"tableWidth":r.tableWidth=n.value;break;case"autoFit":r.autoFit=n.value;break;case"widthBefore":r.widthBefore=n.value;break;case"widthAfter":r.widthAfter=n.value;break;case"defTable":r.defTable=n.value;break;default:r.operations.push(n);break}return r}function Ce(e){return e?.inTable?Math.max(1,e.itap||0||(e.dtap?e.dtap:1)):0}function ar(e){return St[e]||"left"}function sr(e){return Tt[e]||(e?"single":"none")}function or(e){return vt[e]||"top"}function U(e,r,n){if(!r)return;const t=Math.max(0,r.first||0),a=Math.max(t,r.lim||t);for(let s=t;s<a&&s<e.length;s+=1)n(e[s],s)}function cr(e){const r=e?.defTable;if(!r||!Array.isArray(r.cells))return[];const n=r.cells.map((t,a)=>({index:a,width:t?.wWidth,ftsWidth:t?.tcgrf?.ftsWidth,borders:t?.borders||{},merge:t?.tcgrf?.horzMerge||0,vertMerge:t?.tcgrf?.vertMerge||0,vertAlign:t?.tcgrf?.vertAlign||0,fitText:!!t?.tcgrf?.fitText,noWrap:!!t?.tcgrf?.noWrap,hideMark:!!t?.tcgrf?.hideMark,textFlow:t?.tcgrf?.textFlow||0,rightBoundary:r.rgdxaCenter?.[a+1],leftBoundary:r.rgdxaCenter?.[a]}));for(const t of e.operations||[])switch(t.name){case"merge":U(n,t.value,(a,s)=>{const o=t.value;s===o.first?a.merge=2:a.merge=1});break;case"split":U(n,t.value,a=>{a.merge=0});break;case"cellWidth":case"columnWidth":U(n,t.value.range,a=>{const s=t.value;a.width=s.width,a.ftsWidth=s.ftsWidth});break;case"vertMerge":U(n,t.value.range,a=>{a.vertMerge=t.value.value});break;case"vertAlign":U(n,t.value.range,a=>{a.vertAlign=t.value.value});break;case"setBorder":U(n,t.value.range,a=>{a.borders={...a.borders||{},all:t.value.border}});break;case"setShading":U(n,t.value.range,a=>{a.shading=t.value.value});break;case"fitText":U(n,t.value.range,a=>{a.fitText=!!t.value.value});break;case"cellNoWrap":U(n,t.value.range,a=>{a.noWrap=!!t.value.value});break;case"textFlow":U(n,t.value.range,a=>{a.textFlow=t.value.value});break}return n}function J(...e){const r=new Map;for(const n of e)for(const t of n||[])r.set(`${t.kind}:${t.name}`,t);return Array.from(r.values())}function ir(e){const r={para:[],char:[],table:[]};for(const n of e||[])n.kind==="para"?r.para.push(n):n.kind==="char"?r.char.push(n):n.kind==="table"&&r.table.push(n);return r}function lr(e,r){const n=new P(e),t=n.u16(r),a=r+2,s=t*2,o=n.utf16le(a,s),c=a+s+2;return{value:o.replace(/\u0000+$/,""),nextOffset:c}}function pr(e,r){const n=new P(e),t=n.u16(r),a=n.u16(r+2),s=n.u16(r+4);return{sti:t&4095,flags1:t>>12,stk:a&15,istdBase:a>>4&4095,cupx:s&15,istdNext:s>>4&4095,bchUpe:n.u16(r+6),grfstd:n.u16(r+8)}}function Me(e,r){const t=new P(e).u16(r),a=r+2,s=a+t,o=e.subarray(a,Math.min(s,e.length));let c=0,i=[];return o.length>=2&&(c=o[0]|(o[1]??0)<<8,i=ae(o,2,o.length)),{cbUpx:t,styleId:c,properties:i,nextOffset:te(s)}}function ye(e,r){const t=new P(e).u16(r),a=r+2,s=a+t,o=e.subarray(a,Math.min(s,e.length)),c=ae(o,0,o.length);return{cbUpx:t,properties:c,nextOffset:te(s)}}function fr(e,r){const t=new P(e).u16(r),a=r+2,s=a+t,o=e.subarray(a,Math.min(s,e.length)),c=ae(o,0,o.length);return{cbUpx:t,properties:c,nextOffset:te(s)}}function dr(e,r,n){if(!e.length)return{istd:n,empty:!0,name:"",stdfBase:{istdBase:4095,istdNext:0,stk:1,cupx:0},paraProps:[],charProps:[],tableProps:[]};const t=Math.max(10,Math.min(r||10,e.length)),a=pr(e,0);let s=t;const o=lr(e,s);s=o.nextOffset;let c=[],i=[],p=[];try{if(a.stk===1){if(a.cupx>=1&&s+2<=e.length){const f=Me(e,s);c=f.properties,s=f.nextOffset}a.cupx>=2&&s+2<=e.length&&(i=ye(e,s).properties)}else if(a.stk===2)s+2<=e.length&&(i=ye(e,s).properties);else if(a.stk===3){if(a.cupx>=1&&s+2<=e.length){const f=fr(e,s);p=f.properties,s=f.nextOffset}if(a.cupx>=2&&s+2<=e.length){const f=Me(e,s);c=f.properties,s=f.nextOffset}a.cupx>=3&&s+2<=e.length&&(i=ye(e,s).properties)}}catch{}return{istd:n,name:o.value,stdfBase:a,paraProps:c,charProps:i,tableProps:p,empty:!1}}function ur(e,r){const n=r.fcStshf,t=r.lcbStshf;if(n==null||t==null||t<=0)return{styles:new Map,header:null,resolveStyle(S){return Be(new Map,S)}};const a=e.subarray(n,n+t),s=new P(a),o=s.u16(0),c=2,i=s.u16(c+0),p=s.u16(c+2),f=s.u16(c+10),u=s.u16(c+12),m=s.u16(c+14),b={cbStshi:o,cstd:i,cbSTDBaseInFile:p,ftcAsci:f,ftcFE:u,ftcOther:m};let g=2+o;const w=new Map;for(let S=0;S<i&&g+2<=a.length;S+=1){const M=s.u16(g),B=g+2,F=B+M;if(M===0){w.set(S,{istd:S,empty:!0,name:"",stdfBase:{istdBase:4095,istdNext:0,stk:1,cupx:0},paraProps:[],charProps:[],tableProps:[]}),g=te(F);continue}const E=a.subarray(B,Math.min(F,a.length)),L=dr(E,p,S);w.set(S,L),g=te(F)}return{header:b,styles:w,resolveStyle(S){return Be(w,S)}}}function Be(e,r,n=new Set){if(r==null||r===4095||n.has(r))return{paraProps:[],charProps:[],tableProps:[],styleIds:[]};const t=e.get(r);if(!t||t.empty)return{paraProps:[],charProps:[],tableProps:[],styleIds:[]};n.add(r);const a=Be(e,t.stdfBase?.istdBase,n);return{styleIds:[...a.styleIds,r],paraProps:J(a.paraProps,t.paraProps),charProps:J(a.charProps,t.charProps),tableProps:J(a.tableProps,t.tableProps)}}function mr(e,r,n,t){let a=t?.index||0;for(;a<e.length&&e[a].cpEnd<=r;)a+=1;t&&(t.index=a);const s=[];let o=a;for(;o<e.length&&e[o].cpStart<n;)e[o].cpEnd>r&&s.push(e[o]),o+=1;return s}function hr(e){return String(e||"").trim()}function Le(e){const r=String(e||"").replace(/[\r\n\t]+/g," ").replace(/\s+/g," ").trim();if(!r)return null;const n=r.toUpperCase();if(n.startsWith("HYPERLINK")){const t=r.slice(9).trim(),s=t.match(/"([^"]+)"/)?.[1]||t.split(/\s+/)[0]||"";return s?{type:"hyperlink",href:s}:null}if(n.startsWith("INCLUDEPICTURE")){const t=r.slice(14).trim();return{type:"includePicture",target:t.match(/"([^"]+)"/)?.[1]||t.split(/\s+/)[0]||""}}return n.startsWith("EMBED")?{type:"embed",raw:r}:n.startsWith("LINK")?{type:"link",raw:r}:{type:"unknown",raw:r}}function gr(e,r){if(!r.text)return;const n=e[e.length-1];if(n&&n.type==="text"&&n.href===r.href&&We(n.style,r.style)){n.text+=r.text;return}e.push(r)}function Z(e,r,n){if(!n)return;const t=e.length?e[e.length-1].nodes:r;n.type==="text"?gr(t,n):t.push(n)}function xr(e,r){const n=[`_${r}`,`_${String(r)}`,`_${r.toString(16)}`,`_${r.toString(16).toUpperCase()}`];for(const t of n)if(e.has(t))return e.get(t)||null;return null}function br(e,r,n,t,a,s={}){return function(c){const i=c?.pictureOffset;if(i==null)return null;if(a.has(i))return a.get(i)||null;let p=null;const f=xr(r,i);if((c.ole2||c.object||c.data)&&f?.attachment&&(p=f.attachment,t.add(f.entry.name)),!p&&e?.length){const u=Qt(e,i,s);u&&u.mime!=="application/octet-stream"?p=u:!p&&f?.attachment?(p=f.attachment,t.add(f.entry.name)):u&&(p=u)}return!p&&f?.attachment&&(p=f.attachment,t.add(f.entry.name)),p&&n.push(p),a.set(i,p),p}}function wr(e){switch(e){case R.nonBreakingHyphen:return"-";case R.nonRequiredHyphen:return"";case R.annotationRef:return"";default:return e}}function yr(e,r){const n=[],t=[];for(const a of e)if(!(!a.text||a.state.hidden))for(const s of a.text){const o=wr(s);if(o===R.fieldStart){t.push({instruction:"",parsed:null,readingInstruction:!0,nodes:[]});continue}if(o===R.fieldSeparator){const i=t[t.length-1];i&&(i.parsed=Le(i.instruction),i.readingInstruction=!1);continue}if(o===R.fieldEnd){const i=t.pop();if(!i)continue;let p=i.nodes;if(i.readingInstruction&&(i.parsed=Le(i.instruction)),i.parsed?.type==="hyperlink"){const f=i.parsed.href;p=p.map(u=>u.type==="lineBreak"||u.type==="pageBreak"?u:{...u,href:f})}for(const f of p)Z(t,n,f);continue}const c=t[t.length-1];if(c?.readingInstruction){c.instruction+=o;continue}if(o===R.hardLineBreak){Z(t,n,{type:"lineBreak"});continue}if(o===R.pageBreak){Z(t,n,{type:"pageBreak"});continue}if(o===R.picture){const i=r(a.state);i?.type==="image"?Z(t,n,{type:"image",asset:i,style:a.state}):i?.type==="attachment"&&Z(t,n,{type:"attachment",asset:i,style:a.state});continue}Z(t,n,{type:"text",text:tt(o),style:a.state})}for(;t.length;){const a=t.pop();for(const s of a.nodes)Z(t,n,s)}return n}function Pr(e,r,n,t,a,s,o){const c=mr(n,e.cpStart,e.cpEnd,o),i=new Set([e.cpStart,e.cpEnd]);for(const u of c)i.add(Math.max(e.cpStart,u.cpStart)),i.add(Math.min(e.cpEnd,u.cpEnd));const p=Array.from(i).sort((u,m)=>u-m),f=[];for(let u=0;u<p.length-1;u+=1){const m=p[u],b=p[u+1];if(b<=m)continue;const w=c.find(v=>v.cpStart<=m&&v.cpEnd>=b)?.properties||[],S=we(w),M=S.charStyleId!=null?t.resolveStyle(S.charStyleId).charProps:[],B=J(a,M,w),F=we(B),E=s(F.fontFamilyId);E&&(F.fontFamily=E.name||E.altName||void 0);const L=m-e.cpStart,j=b-e.cpStart,A=r.slice(L,j);if(!A)continue;const W=f[f.length-1];if(W&&We(W.state,F)){W.text+=A,W.cpEnd=b;continue}f.push({cpStart:m,cpEnd:b,text:A,state:F})}if(!f.length&&r){const u=we(a),m=s(u.fontFamilyId);m&&(u.fontFamily=m.name||m.altName||void 0),f.push({cpStart:e.cpStart,cpEnd:e.cpEnd,text:r,state:u})}return f}function Tr(e,r,n,t,a,s,o){const c=ir(e.properties||[]),i=e.styleId||c.para.find(E=>E.name==="styleId")?.value||0,p=n.resolveStyle(i),f=J(p.paraProps,c.para),u=nr(f),m=de(c.table),b=m.styleId!=null?n.resolveStyle(m.styleId).tableProps:[],g=J(b,c.table),w=de(g),S=p.charProps,B=Pr(e,r,a,n,S,E=>t.byIndex(E),o),F=yr(B,s);return{id:H("para"),cpStart:e.cpStart,cpEnd:e.cpEnd,terminator:e.terminator||"",text:r,rawProperties:e.properties||[],styleId:i,styleName:hr(n.styles.get(i)?.name),paraProps:f,paraState:u,tableProps:g,tableState:w,segments:B,inlines:F}}function Sr(e){for(const r of e)for(let n=0;n<r.cells.length;n+=1){const t=r.cells[n],a=t.meta?.merge||0;if(t.colIndex=n,t.colspan=1,t.rowspan=1,t.hidden=!1,a===1){t.hidden=!0;continue}if(a>1){let s=n+1;for(;s<r.cells.length&&(r.cells[s].meta?.merge||0)===1;)r.cells[s].hidden=!0,t.colspan+=1,s+=1}}for(let r=0;r<e.length;r+=1){const n=e[r];for(const t of n.cells){if(t.hidden)continue;const a=t.meta?.vertMerge||0;if(a===1){t.hidden=!0;continue}if(a>1){let s=r+1;for(;s<e.length;){let o=!0;for(let c=t.colIndex||0;c<(t.colIndex||0)+(t.colspan||1);c+=1){const i=e[s].cells[c];if(!i||(i.meta?.vertMerge||0)!==1){o=!1;break}}if(!o)break;for(let c=t.colIndex||0;c<(t.colIndex||0)+(t.colspan||1);c+=1)e[s].cells[c].hidden=!0;t.rowspan=(t.rowspan||1)+1,s+=1}}}}}function ke(e){return{type:"paragraph",id:e.id,styleId:e.styleId,styleName:e.styleName,paraState:e.paraState,inlines:e.inlines,text:e.text}}function vr(e){const r=[];let n={cells:[]},t=[];for(const o of e)if(t.push(o),o.terminator===R.cellMark&&(n.cells.push({id:H("cell"),paragraphs:t.map(ke),meta:null}),t=[],o.paraState.tableRowEnd||o.paraState.innerTableRowEnd)){const c=cr(o.tableState);for(;c.length&&n.cells.length>c.length&&n.cells[n.cells.length-1].paragraphs.every(p=>!p.text&&!(p.inlines||[]).length);)n.cells.pop();n.cells.forEach((p,f)=>{p.meta=c[f]||{index:f}});const i=c.length?(c[c.length-1].rightBoundary||0)-(c[0].leftBoundary||0):0;r.push({id:H("row"),cells:n.cells,state:o.tableState,gridWidthTwips:i}),n={cells:[]}}t.length&&n.cells.push({id:H("cell"),paragraphs:t.map(ke),meta:null}),n.cells.length&&r.push({id:H("row"),cells:n.cells,state:e[0]?.tableState||de([]),gridWidthTwips:0}),Sr(r);const a=r.find(o=>o.gridWidthTwips)?.gridWidthTwips||0,s=Math.max(...e.map(o=>Ce(o.paraState)),1);return{type:"table",id:H("table"),depth:s,rows:r,state:r[0]?.state||de([]),gridWidthTwips:a}}function Cr(e){const r=[];let n=0;for(;n<e.length;){const t=e[n];if(Ce(t.paraState)<=0){r.push(ke(t)),n+=1;continue}const s=[];for(;n<e.length&&Ce(e[n].paraState)>0;)s.push(e[n]),n+=1;r.push(vr(s))}return r}function Br(e,r={}){const n=[],t=ft(e,r);n.push(...t.warnings||[]);const a=t.getStream("/WordDocument");if(!a)throw new Error("Missing WordDocument stream");const s=Bt(a);if(s.base.wIdent!==42476&&ie(n,`Unexpected FIB identifier: 0x${s.base.wIdent.toString(16)}`),s.base.fEncrypted)throw new Error("Encrypted .doc files are not supported yet");const o=t.getStream(s.base.fWhichTblStm?"/1Table":"/0Table");if(!o)throw new Error("Missing table stream");const c=t.getStream("/Data")||new Uint8Array(0),i=gt(o,s.fibRgFcLcb),p=wt(a,i),f=p.join(""),u=s.fibRgLw.ccpText>0?s.fibRgLw.ccpText:f.length,m=ur(o,s.fibRgFcLcb),b=Gt(o,s.fibRgFcLcb),g=Ut(a,o,s,i).filter(x=>x.cpStart<u),w=Nt(a,o,s,i).filter(x=>x.cpStart<u).map(x=>({...x,cpEnd:Math.min(x.cpEnd,u)})),S=w.length?w.map(x=>({cpStart:x.cpStart,cpEnd:x.cpEnd,terminator:f[x.cpEnd-1]||"",styleId:x.styleId,properties:x.properties})):Pt(f.slice(0,u)).map(x=>({...x,styleId:0,properties:[]})),M=rr(t),B=[],F=new Set,L=br(c,M,B,F,new Map,r),j={index:0},A=S.map(x=>{const q=yt(a,i,p,x.cpStart,x.cpEnd),z=x.terminator===R.paragraph||x.terminator===R.cellMark?x.terminator:"",Q=z&&q.endsWith(z)?q.slice(0,-1):q;return Tr({...x,terminator:z},Q,m,b,g,L,j)}),W=Cr(A),v=Array.from(M.values()).filter(x=>x?.attachment&&!F.has(x.entry.name)).map(x=>x.attachment);for(const x of v)B.push(x);return v.length&&W.push({type:"attachments",id:H("attachments"),items:v}),{kind:"msdoc",version:1,warnings:n,meta:{fib:{wIdent:s.base.wIdent,nFib:s.base.nFib,fWhichTblStm:s.base.fWhichTblStm,fComplex:s.base.fComplex,fEncrypted:s.base.fEncrypted,ccpText:s.fibRgLw.ccpText},counts:{paragraphs:A.length,blocks:W.length,assets:B.length,styles:m.styles.size,fonts:b.fonts.length}},fonts:b.fonts,styles:Array.from(m.styles.values()).map(x=>({istd:x.istd,name:x.name,type:x.stdfBase?.stk,basedOn:x.stdfBase?.istdBase,next:x.stdfBase?.istdNext})),blocks:W,assets:B}}const re={1:"#000000",2:"#0000ff",3:"#00ffff",4:"#00ff00",5:"#ff00ff",6:"#ff0000",7:"#ffff00",8:"#ffffff",9:"#000080",10:"#008080",11:"#008000",12:"#800080",13:"#800000",14:"#808000",15:"#808080",16:"#c0c0c0"};function ne(e){return Object.entries(e).filter(([,r])=>r!=null&&r!=="").map(([r,n])=>`${r}:${n}`).join(";")}function V(e){if(!e)return null;const r=Math.max(1,Math.round((e.lineWidth??8)/8*1.3333)),n=e.borderType,t=n===6?"double":n===3?"dotted":n===2?"dashed":"solid",a=e.color,s=a&&re[a]||"#666";return`${r}px ${t} ${s}`}function kr(e){const r={"text-align":ar(e.alignment)},n=_(e.spacingBefore),t=_(e.spacingAfter),a=_(e.leftIndent),s=_(e.rightIndent),o=_(e.firstLineIndent);if(n&&(r["margin-top"]=`${n}px`),t&&(r["margin-bottom"]=`${t}px`),a&&(r["margin-left"]=`${a}px`),s&&(r["margin-right"]=`${s}px`),o&&(r["text-indent"]=`${o}px`),e.lineSpacing){const u=Math.abs(e.lineSpacing)/240;u&&(r["line-height"]=String(Math.max(1,u)))}e.keepLines&&(r["break-inside"]="avoid"),e.keepNext&&(r["break-after"]="avoid"),e.pageBreakBefore&&(r["break-before"]="page"),e.rtlPara&&(r.direction="rtl");const c=V(e.borders?.top),i=V(e.borders?.right),p=V(e.borders?.bottom),f=V(e.borders?.left);return c&&(r["border-top"]=c),i&&(r["border-right"]=i),p&&(r["border-bottom"]=p),f&&(r["border-left"]=f),r}function Fr(e){const r=sr(e);if(!e||r==="none")return{};const n={"text-decoration-line":"underline"};return r==="double"||r==="wavy-double"?n["text-decoration-style"]="double":r.includes("dot")||r==="dotted-heavy"?n["text-decoration-style"]="dotted":r.includes("dash")?n["text-decoration-style"]="dashed":r.includes("wave")||r.includes("wavy")?n["text-decoration-style"]="wavy":n["text-decoration-style"]="solid",n}function je(e){const r={};(e.bold||e.boldBi)&&(r["font-weight"]="700"),(e.italic||e.italicBi)&&(r["font-style"]="italic"),(e.strike||e.doubleStrike)&&(r["text-decoration-line"]=`${r["text-decoration-line"]?`${r["text-decoration-line"]} `:""}line-through`),Object.assign(r,Fr(e.underline)),e.fontSizeHalfPoints&&(r["font-size"]=`${e.fontSizeHalfPoints/2}pt`),e.fontFamily&&(r["font-family"]=`'${String(e.fontFamily).replace(/'/g,"\\'")}', sans-serif`),e.colorIndex&&re[e.colorIndex]&&(r.color=re[e.colorIndex]);const n=typeof e.highlight=="number"?e.highlight:e.highlight?.index;return n&&ve[n]&&(r["background-color"]=ve[n]),e.smallCaps&&(r["font-variant-caps"]="small-caps"),e.caps&&(r["text-transform"]="uppercase"),e.scale&&e.scale!==100&&(r.display="inline-block",r.transform=`scaleX(${e.scale/100})`,r["transform-origin"]="left center"),e.positionHalfPoints>0&&(r["vertical-align"]="super"),e.positionHalfPoints<0&&(r["vertical-align"]="sub"),e.outline&&(r["text-shadow"]="0 0 0.02em currentColor"),(e.shadow||e.emboss||e.imprint)&&(r["text-shadow"]=r["text-shadow"]?`${r["text-shadow"]}, 0.06em 0.06em 0.08em rgba(0,0,0,.25)`:"0.06em 0.06em 0.08em rgba(0,0,0,.25)"),e.rtl&&(r.direction="rtl"),r}function Ir(e){const r=N(e.text),n=je(e.style);n["white-space"]="break-spaces";const t=ne(n),a=`<span${t?` style="${t}"`:""}>${r}</span>`;return e.href?`<a class="msdoc-link" href="${N(e.href)}" target="_blank" rel="noreferrer noopener">${a}</a>`:a}function Er(e){const r=je(e.style);r["max-width"]="100%",r.height="auto";const n=`<img class="msdoc-image" src="${N(e.asset.dataUrl)}" alt="" style="${ne(r)}">`;return e.href?`<a class="msdoc-link" href="${N(e.href)}" target="_blank" rel="noreferrer noopener">${n}</a>`:n}function Ar(e){const r=N(e.asset.name||"embedded-file"),n=`<a class="msdoc-attachment" href="${N(e.asset.dataUrl)}" download="${r}">📎 ${r}</a>`;return e.href?`<a class="msdoc-link" href="${N(e.href)}" target="_blank" rel="noreferrer noopener">${n}</a>`:n}function Dr(e){return e.map(r=>r.type==="text"?Ir(r):r.type==="image"?Er(r):r.type==="attachment"?Ar(r):r.type==="lineBreak"?"<br>":r.type==="pageBreak"?'<span class="msdoc-page-break"></span>':"").join("")}function ze(e,r={}){const n=r.inline?"div":"p",t=ne(kr(e.paraState)),s=Dr(e.inlines||[])||"<br>",o=["msdoc-paragraph"];return e.styleName&&o.push(`msdoc-style-${Re(e.styleName)}`),`<${n} class="${o.join(" ")}"${t?` style="${t}"`:""}>${s}</${n}>`}function Mr(e){const r={},n=e.meta?.rightBoundary!=null&&e.meta?.leftBoundary!=null?e.meta.rightBoundary-e.meta.leftBoundary:e.meta?.width,t=_(n);t&&(r.width=`${t}px`),e.meta?.noWrap&&(r["white-space"]="nowrap"),e.meta?.fitText&&(r["text-align"]="justify"),e.meta?.vertAlign!=null&&(r["vertical-align"]=or(e.meta.vertAlign));const a=V(e.meta?.borders?.all),s=V(e.meta?.borders?.top)||a,o=V(e.meta?.borders?.right)||a,c=V(e.meta?.borders?.bottom)||a,i=V(e.meta?.borders?.left)||a;s&&(r["border-top"]=s),o&&(r["border-right"]=o),c&&(r["border-bottom"]=c),i&&(r["border-left"]=i);const p=typeof e.meta?.shading=="object"&&e.meta?.shading&&"color"in e.meta.shading?e.meta.shading.color:void 0;return p&&re[p]&&(r["background-color"]=re[p]),r}function Lr(e){const r={},n=_(e.gridWidthTwips||e.state?.tableWidth?.wWidth);n?r.width=`${n}px`:r.width="100%";const t=_(e.state?.leftIndent);return t&&(r["margin-left"]=`${t}px`),r["border-collapse"]="collapse",r["table-layout"]="fixed",r}function Or(e){const r=e.rows.map(n=>{const t=n.state?.rowHeight?_(Math.abs(n.state.rowHeight)):null,a=t?` style="height:${t}px"`:"",s=n.cells.filter(o=>!o.hidden).map(o=>{const c=[];(o.colspan??1)>1&&c.push(` colspan="${o.colspan}"`),(o.rowspan??1)>1&&c.push(` rowspan="${o.rowspan}"`);const i=ne(Mr(o)),p=o.paragraphs.map(f=>ze(f,{inline:!0})).join("");return`<td class="msdoc-cell"${c.join("")}${i?` style="${i}"`:""}>${p||'<div class="msdoc-paragraph"><br></div>'}</td>`}).join("");return`<tr class="msdoc-row"${a}>${s}</tr>`}).join("");return`<table class="msdoc-table msdoc-table-depth-${e.depth}" style="${ne(Lr(e))}"><tbody>${r}</tbody></table>`}function Rr(e){return`<section class="msdoc-attachments"><div class="msdoc-attachments-title">Embedded attachments</div><ul>${e.items.map(n=>`<li><a class="msdoc-attachment" href="${N(n.dataUrl)}" download="${N(n.name||"embedded-file")}">📎 ${N(n.name||"embedded-file")}</a></li>`).join("")}</ul></section>`}function _e(){return`
+import './icons-B5Lu0sqU.js';
+import { ad as Je, aQ as Ke, b5 as Xe } from './index-C2avURFS.js';
+import './markdown-it-vendor-DL4wSELR.js';
+import './markdown-vendor-DldLOD9R.js';
+import { a as Qe, b as Ye, f as he } from './printLayout-DpvXGlU9.js';
+import './ui-vendor-C-FKu2uc.js';
+const Fe = globalThis.Buffer;
+let Ie = 0;
+function N(e) {
+  return String(e)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+function H(e = 'id') {
+  return ((Ie += 1), `${e}-${Ie}`);
+}
+function te(e) {
+  return e % 2 === 0 ? e : e + 1;
+}
+function et(e) {
+  const r =
+    e instanceof Uint8Array
+      ? e
+      : e instanceof ArrayBuffer
+        ? new Uint8Array(e)
+        : new Uint8Array(e.buffer, e.byteOffset, e.byteLength);
+  if (Fe) return Fe.from(r).toString('base64');
+  let n = '';
+  const t = 32768;
+  for (let a = 0; a < r.length; a += t)
+    n += String.fromCharCode(...r.subarray(a, Math.min(a + t, r.length)));
+  return btoa(n);
+}
+function pe(e, r = 'application/octet-stream') {
+  return `data:${r};base64,${et(e)}`;
+}
+function Re(e) {
+  return (
+    String(e ?? '')
+      .toLowerCase()
+      .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'item'
+  );
+}
+function We(e, r) {
+  if (e === r) return !0;
+  if (!e || !r) return !1;
+  const n = Object.keys(e),
+    t = Object.keys(r);
+  if (n.length !== t.length) return !1;
+  for (const a of n) if (e[a] !== r[a]) return !1;
+  return !0;
+}
+function ie(e, r, n) {
+  const t = { message: r };
+  return (e.push(t), t);
+}
+function _(e, r = 96) {
+  if (!(e == null || Number.isNaN(e))) return (e / 1440) * r;
+}
+function tt(e) {
+  return String(e ?? '')
+    .replace(
+      /\u000b/g,
+      `
+`,
+    )
+    .replace(
+      /\u000c/g,
+      `
+`,
+    );
+}
+function Te(e = 'utf-8') {
+  return new TextDecoder(e, { fatal: !1 });
+}
+const Ee = Te('utf-16le'),
+  rt = Te(typeof TextDecoder < 'u' ? 'windows-1252' : 'latin1');
+class P {
+  bytes;
+  view;
+  length;
+  constructor(r) {
+    if (r instanceof Uint8Array) this.bytes = r;
+    else if (r instanceof ArrayBuffer) this.bytes = new Uint8Array(r);
+    else if (ArrayBuffer.isView(r))
+      this.bytes = new Uint8Array(r.buffer, r.byteOffset, r.byteLength);
+    else throw new TypeError('BinaryReader expects ArrayBuffer or Uint8Array');
+    ((this.view = new DataView(this.bytes.buffer, this.bytes.byteOffset, this.bytes.byteLength)),
+      (this.length = this.bytes.byteLength));
+  }
+  ensure(r, n = 1) {
+    return r >= 0 && r + n <= this.length;
+  }
+  u8(r) {
+    return this.ensure(r, 1) ? this.view.getUint8(r) : 0;
+  }
+  i8(r) {
+    return this.ensure(r, 1) ? this.view.getInt8(r) : 0;
+  }
+  u16(r) {
+    return this.ensure(r, 2) ? this.view.getUint16(r, !0) : 0;
+  }
+  i16(r) {
+    return this.ensure(r, 2) ? this.view.getInt16(r, !0) : 0;
+  }
+  u32(r) {
+    return this.ensure(r, 4) ? this.view.getUint32(r, !0) : 0;
+  }
+  i32(r) {
+    return this.ensure(r, 4) ? this.view.getInt32(r, !0) : 0;
+  }
+  u64(r) {
+    const n = this.u32(r);
+    return this.u32(r + 4) * 4294967296 + n;
+  }
+  slice(r, n) {
+    return this.ensure(r, n) ? this.bytes.subarray(r, r + n) : new Uint8Array(0);
+  }
+  array(r, n, t) {
+    const a = [],
+      s = t.byteWidth ?? 1;
+    for (let o = 0; o < n; o += 1) a.push(t.call(this, r + o * s));
+    return a;
+  }
+  utf16le(r, n) {
+    return this.ensure(r, n) ? Ee.decode(this.slice(r, n)) : '';
+  }
+  latin1(r, n) {
+    return this.ensure(r, n) ? rt.decode(this.slice(r, n)) : '';
+  }
+  ascii(r, n) {
+    if (!this.ensure(r, n)) return '';
+    let t = '';
+    const a = this.slice(r, n);
+    for (let s = 0; s < a.length; s += 1) t += String.fromCharCode(a[s] ?? 0);
+    return t;
+  }
+  utf16z(r, n) {
+    const t = this.slice(r, n);
+    let a = t.length;
+    for (let s = 0; s + 1 < t.length; s += 2)
+      if (t[s] === 0 && t[s + 1] === 0) {
+        a = s;
+        break;
+      }
+    return Ee.decode(t.subarray(0, a));
+  }
+}
+P.prototype.u8.byteWidth = 1;
+P.prototype.i8.byteWidth = 1;
+P.prototype.u16.byteWidth = 2;
+P.prototype.i16.byteWidth = 2;
+P.prototype.u32.byteWidth = 4;
+P.prototype.i32.byteWidth = 4;
+function nt(e) {
+  if (e instanceof Uint8Array) return e;
+  if (e instanceof ArrayBuffer) return new Uint8Array(e);
+  if (ArrayBuffer.isView(e)) return new Uint8Array(e.buffer, e.byteOffset, e.byteLength);
+  throw new TypeError('Unsupported binary input');
+}
+const Ae = [208, 207, 17, 224, 161, 177, 26, 225],
+  ue = 4294967295,
+  Y = 4294967294,
+  at = 4294967293,
+  st = 4294967292,
+  ot = 1 << 20,
+  ct = 4096;
+function De(e) {
+  return e === ue || e === Y || e === at || e === st;
+}
+function Se(e, r, n) {
+  const t = 512 + n * r,
+    a = t + r;
+  if (t < 0 || a > e.length) throw new Error(`Sector ${n} is out of bounds`);
+  return e.subarray(t, a);
+}
+function $e(e, r, n = ot) {
+  const t = [],
+    a = new Set();
+  let s = e,
+    o = 0;
+  for (; s !== Y && s !== ue && s >= 0; ) {
+    if (a.has(s)) throw new Error(`Detected sector loop at ${s}`);
+    if ((a.add(s), t.push(s), (s = r(s)), (o += 1), o > n))
+      throw new Error('Sector chain exceeds safe limit');
+  }
+  return t;
+}
+function oe(e, r, n, t, a = null) {
+  if (n === Y || n === ue || n < 0) return new Uint8Array(0);
+  const s = $e(n, (i) => t[i] ?? Y),
+    o = new Uint8Array(s.length * r);
+  let c = 0;
+  for (const i of s) (o.set(Se(e, r, i), c), (c += r));
+  return a == null ? o : o.subarray(0, Math.min(a, o.length));
+}
+function it(e) {
+  function r(a, s) {
+    if (a < 0 || a >= e.length) return;
+    const o = e[a];
+    o && (r(o.leftSiblingId, s), s.push(a), r(o.rightSiblingId, s));
+  }
+  function n(a) {
+    const s = e[a];
+    if (!s || s.childId < 0) return;
+    const o = [];
+    (r(s.childId, o), (s.children = o));
+    for (const c of o) {
+      const i = e[c];
+      i && ((i.parentId = a), n(c));
+    }
+  }
+  const t = e.find((a) => a.objectType === 5);
+  if (!t) throw new Error('CFB root storage not found');
+  return (n(t.id), t);
+}
+function lt(e) {
+  const r = new Map();
+  for (const n of e) {
+    if (!n || !n.name) continue;
+    const t = [];
+    let a = n;
+    for (; a; )
+      (a.objectType !== 5 && t.push(a.name),
+        (a = a.parentId != null ? (e[a.parentId] ?? null) : null));
+    const s = `/${t.reverse().join('/')}`;
+    ((n.path = s === '/' ? `/${n.name}` : s), r.set(n.path, n));
+  }
+  return r;
+}
+function pt(e) {
+  return e.replace(/\u0000+$/, '');
+}
+function ft(e, r = {}) {
+  const n = nt(e),
+    t = new P(n),
+    a = [];
+  for (let h = 0; h < Ae.length; h += 1)
+    if (t.u8(h) !== Ae[h]) throw new Error('Not a Compound File Binary document');
+  const s = t.u16(26),
+    o = t.u16(30),
+    c = t.u16(32),
+    i = 1 << o,
+    p = 1 << c,
+    f = t.u32(40),
+    u = t.u32(44),
+    m = t.i32(48),
+    b = t.u32(52),
+    g = t.u32(56),
+    w = t.i32(60),
+    S = t.u32(64),
+    M = t.i32(68),
+    B = t.u32(72);
+  g !== ct && ie(a, `Unexpected mini stream cutoff size ${g}`);
+  const F = [];
+  for (let h = 0; h < 109; h += 1) {
+    const T = t.i32(76 + h * 4);
+    !De(T) && T >= 0 && F.push(T);
+  }
+  const E = [...F];
+  let L = M,
+    j = 0;
+  for (; L !== Y && L !== ue && L >= 0; ) {
+    const h = Se(n, i, L),
+      T = new P(h),
+      k = i / 4 - 1;
+    for (let D = 0; D < k; D += 1) {
+      const O = T.i32(D * 4);
+      !De(O) && O >= 0 && E.push(O);
+    }
+    if (((L = T.i32(i - 4)), (j += 1), j > B + 4)) {
+      ie(a, 'DIFAT chain exceeded declared sector count; stopping early');
+      break;
+    }
+  }
+  u && E.length < u && ie(a, `FAT sector count mismatch: header says ${u}, found ${E.length}`);
+  const A = [];
+  for (const h of E) {
+    const T = Se(n, i, h),
+      k = new P(T);
+    for (let D = 0; D < i / 4; D += 1) A.push(k.i32(D * 4));
+  }
+  const W = oe(n, i, m, A),
+    v = new P(W),
+    x = [];
+  for (let h = 0, T = 0; h + 128 <= W.length; h += 128, T += 1) {
+    const k = v.u16(h + 64),
+      D = pt(v.utf16le(h, Math.max(0, k - 2)));
+    (!D && v.u8(h + 66) === 0) ||
+      x.push({
+        id: T,
+        name: D,
+        objectType: v.u8(h + 66),
+        colorFlag: v.u8(h + 67),
+        leftSiblingId: v.i32(h + 68),
+        rightSiblingId: v.i32(h + 72),
+        childId: v.i32(h + 76),
+        clsid: v.slice(h + 80, 16),
+        stateBits: v.u32(h + 96),
+        creationTime: v.u64(h + 100),
+        modifiedTime: v.u64(h + 108),
+        startSector: v.i32(h + 116),
+        streamSize: s === 3 ? v.u32(h + 120) : v.u64(h + 120),
+        children: [],
+        parentId: null,
+      });
+  }
+  const q = it(x),
+    z = lt(x),
+    Q = [];
+  if (S && w >= 0) {
+    const h = oe(n, i, w, A),
+      T = new P(h);
+    for (let k = 0; k + 4 <= h.length; k += 4) Q.push(T.i32(k));
+  }
+  const me = oe(n, i, q.startSector, A, q.streamSize);
+  function Ge(h) {
+    if (h.startSector < 0) return new Uint8Array(0);
+    const T = $e(h.startSector, (O) => Q[O] ?? Y),
+      k = new Uint8Array(T.length * p);
+    let D = 0;
+    for (const O of T) {
+      const se = O * p,
+        ee = se + p;
+      if (ee > me.length) throw new Error(`Mini sector ${O} is out of bounds`);
+      (k.set(me.subarray(se, ee), D), (D += p));
+    }
+    return k.subarray(0, Math.min(h.streamSize, k.length));
+  }
+  function qe(h) {
+    const T = typeof h == 'string' ? (z.get(h) ?? null) : h;
+    return !T || (T.objectType !== 2 && T.objectType !== 5)
+      ? null
+      : T.objectType === 5
+        ? me
+        : T.streamSize < g && T.startSector >= 0 && Q.length
+          ? Ge(T)
+          : oe(n, i, T.startSector, A, T.streamSize);
+  }
+  function Ze(h) {
+    const T = typeof h == 'string' ? (z.get(h) ?? null) : h;
+    return T ? (T.children || []).map((k) => x[k]).filter((k) => !!k) : [];
+  }
+  return {
+    bytes: n,
+    majorVersion: s,
+    sectorSize: i,
+    miniSectorSize: p,
+    numDirSectors: f,
+    numFatSectors: u,
+    firstDirSector: m,
+    transactionSignature: b,
+    miniStreamCutoffSize: g,
+    warnings: a,
+    entries: x,
+    root: q,
+    pathMap: z,
+    getEntry(h) {
+      return z.get(h) ?? null;
+    },
+    getStream: qe,
+    listChildren: Ze,
+    findByName(h, T = '/') {
+      const k = T === '/' ? q : (z.get(T) ?? null);
+      if (!k) return null;
+      const D = [k];
+      for (; D.length; ) {
+        const O = D.pop();
+        if (O) {
+          if (O.name === h) return O;
+          for (const se of O.children || []) {
+            const ee = x[se];
+            ee && D.push(ee);
+          }
+        }
+      }
+      return null;
+    },
+  };
+}
+const dt = {
+  '': '‚',
+  '': 'ƒ',
+  '': '„',
+  '': '…',
+  '': '†',
+  '': '‡',
+  '': 'ˆ',
+  '': '‰',
+  '': 'Š',
+  '': '‹',
+  '': 'Œ',
+  '': '‘',
+  '': '’',
+  '': '“',
+  '': '”',
+  '': '•',
+  '': '–',
+  '': '—',
+  '': '˜',
+  '': '™',
+  '': 'š',
+  '': '›',
+  '': 'œ',
+  '': 'Ÿ',
+};
+function ut(e) {
+  return e.replace(/[\x82-\x8C\x91-\x9C\x9F]/g, (r) => dt[r] || r);
+}
+function mt(e) {
+  let r = '';
+  for (let n = 0; n < e.length; n += 1) r += String.fromCharCode(e[n] ?? 0);
+  return ut(r);
+}
+function ht(e) {
+  return new TextDecoder('utf-16le').decode(e);
+}
+function gt(e, r) {
+  const n = r.fcClx,
+    t = r.lcbClx;
+  if (n == null || t == null || t <= 0) throw new Error('FIB does not point to a CLX structure');
+  const a = e.subarray(n, n + t),
+    s = new P(a);
+  let o = 0;
+  const c = [];
+  for (; o < a.length && s.u8(o) === 1; ) {
+    const u = s.u16(o + 1);
+    (c.push({ type: 1, cbGrpprl: u, bytes: s.slice(o + 3, u) }), (o += 3 + u));
+  }
+  if (s.u8(o) !== 2) throw new Error('CLX does not contain a Pcdt marker');
+  const i = s.u32(o + 1),
+    p = s.slice(o + 5, i),
+    f = xt(p);
+  return { prcs: c, pcdt: { lcb: i, pieceTable: f } };
+}
+function xt(e) {
+  if (!e.length) throw new Error('Empty PlcPcd');
+  const r = new P(e),
+    n = (e.length - 4) / 12;
+  if (!Number.isInteger(n) || n < 0) throw new Error('Invalid PlcPcd size');
+  const t = [];
+  for (let o = 0; o < n + 1; o += 1) t.push(r.u32(o * 4));
+  const a = [];
+  let s = (n + 1) * 4;
+  for (let o = 0; o < n; o += 1) {
+    const c = r.u16(s),
+      i = r.u32(s + 2) >>> 0,
+      p = r.u16(s + 6),
+      f = !!(i & 1073741824),
+      u = i & 1073741823,
+      m = t[o] ?? 0,
+      b = t[o + 1] ?? m,
+      g = f ? Math.floor(u / 2) : u,
+      w = f ? b - m : (b - m) * 2;
+    (a.push({
+      index: o,
+      descriptor: c,
+      fNoParaLast: !!(c & 1),
+      fRaw: !!(c & 2),
+      prm: p,
+      compressed: f,
+      fcRaw: i,
+      fc: u,
+      cpStart: m,
+      cpEnd: b,
+      actualByteStart: g,
+      byteLength: w,
+      actualByteEnd: g + w,
+    }),
+      (s += 8));
+  }
+  return { cps: t, pieces: a };
+}
+function bt(e, r) {
+  const n = e.subarray(r.actualByteStart, r.actualByteEnd);
+  return r.compressed ? mt(n) : ht(n);
+}
+function wt(e, r) {
+  return r.pcdt.pieceTable.pieces.map((n) => bt(e, n));
+}
+function fe(e, r, n = null) {
+  const t = e.pcdt.pieceTable.pieces,
+    a = n ?? !!(r & 1073741824),
+    s = n == null ? r & 1073741823 : r,
+    o = a ? Math.floor(s / 2) : s;
+  for (const c of t) {
+    if (o < c.actualByteStart || o > c.actualByteEnd) continue;
+    const i = o - c.actualByteStart,
+      p = c.cpStart + Math.floor(i / (c.compressed ? 1 : 2));
+    if (p >= c.cpStart && p <= c.cpEnd) return p;
+  }
+  for (const c of t) {
+    if (r < c.actualByteStart || r > c.actualByteEnd) continue;
+    const i = r - c.actualByteStart,
+      p = c.cpStart + Math.floor(i / (c.compressed ? 1 : 2));
+    if (p >= c.cpStart && p <= c.cpEnd) return p;
+  }
+  return null;
+}
+function yt(e, r, n, t, a) {
+  if (a <= t) return '';
+  const s = [];
+  for (let o = 0; o < r.pcdt.pieceTable.pieces.length; o += 1) {
+    const c = r.pcdt.pieceTable.pieces[o];
+    if (c.cpEnd <= t) continue;
+    if (c.cpStart >= a) break;
+    const i = Math.max(t, c.cpStart) - c.cpStart,
+      p = Math.min(a, c.cpEnd) - c.cpStart;
+    s.push((n[o] ?? '').slice(i, p));
+  }
+  return s.join('');
+}
+function Pt(e) {
+  const r = [];
+  let n = 0;
+  for (let t = 0; t < e.length; t += 1) {
+    const a = e[t];
+    (a === '\r' || a === '\x07') &&
+      (r.push({ cpStart: n, cpEnd: t + 1, terminator: a }), (n = t + 1));
+  }
+  return (n < e.length && r.push({ cpStart: n, cpEnd: e.length, terminator: '' }), r);
+}
+const R = {
+    paragraph: '\r',
+    cellMark: '\x07',
+    picture: '',
+    fieldStart: '',
+    fieldSeparator: '',
+    fieldEnd: '',
+    annotationRef: '',
+    hardLineBreak: '\v',
+    pageBreak: '\f',
+    nonBreakingHyphen: '',
+    nonRequiredHyphen: '',
+  },
+  Tt = {
+    0: 'none',
+    1: 'single',
+    2: 'word',
+    3: 'double',
+    4: 'dotted',
+    5: 'hidden',
+    6: 'thick',
+    7: 'dash',
+    9: 'dot-dash',
+    10: 'dot-dot-dash',
+    11: 'wave',
+    16: 'dotted-heavy',
+    17: 'dashed-heavy',
+    18: 'dash-long',
+    19: 'dash-long-heavy',
+    20: 'dot-dash-heavy',
+    21: 'dot-dot-dash-heavy',
+    22: 'wavy-heavy',
+    23: 'wavy-double',
+  },
+  St = { 0: 'left', 1: 'center', 2: 'right', 3: 'justify', 4: 'distributed' },
+  vt = { 0: 'top', 1: 'center', 2: 'bottom' },
+  ve = {
+    1: '#000000',
+    2: '#0000ff',
+    3: '#00ffff',
+    4: '#00ff00',
+    5: '#ff00ff',
+    6: '#ff0000',
+    7: '#ffff00',
+    8: '#ffffff',
+    9: '#000080',
+    10: '#008080',
+    11: '#008000',
+    12: '#800080',
+    13: '#800000',
+    14: '#808000',
+    15: '#808080',
+    16: '#c0c0c0',
+  },
+  Ct = [
+    'StshfOrig',
+    'Stshf',
+    'PlcffndRef',
+    'PlcffndTxt',
+    'PlcfandRef',
+    'PlcfandTxt',
+    'PlcfSed',
+    'PlcPad',
+    'PlcfPhe',
+    'SttbfGlsy',
+    'PlcfGlsy',
+    'PlcfHdd',
+    'PlcfBteChpx',
+    'PlcfBtePapx',
+    'PlcfSea',
+    'SttbfFfn',
+    'PlcfFldMom',
+    'PlcfFldHdr',
+    'PlcfFldFtn',
+    'PlcfFldAtn',
+    'PlcfFldMcr',
+    'SttbfBkmk',
+    'PlcfBkf',
+    'PlcfBkl',
+    'Cmds',
+    'Unused1',
+    'SttbfMcr',
+    'PrDrvr',
+    'PrEnvPort',
+    'PrEnvLand',
+    'Wss',
+    'Dop',
+    'SttbfAssoc',
+    'Clx',
+    'PlcfPgdFtn',
+    'AutosaveSource',
+    'GrpXstAtnOwners',
+    'SttbfAtnBkmk',
+    'Unused2',
+    'Unused3',
+    'PlcSpaMom',
+    'PlcSpaHdr',
+    'PlcfAtnBkf',
+    'PlcfAtnBkl',
+    'Pms',
+    'FormFldSttbs',
+    'PlcfendRef',
+    'PlcfendTxt',
+    'PlcfFldEdn',
+    'Unused4',
+    'DggInfo',
+    'SttbfRMark',
+    'SttbfCaption',
+    'SttbfAutoCaption',
+    'PlcfWkb',
+    'PlcfSpl',
+    'PlcftxbxTxt',
+    'PlcfFldTxbx',
+    'PlcfHdrtxbxTxt',
+    'PlcffldHdrTxbx',
+    'StwUser',
+    'SttbTtmbd',
+    'CookieData',
+    'PgdMotherOldOld',
+    'BkdMotherOldOld',
+    'PgdFtnOldOld',
+    'BkdFtnOldOld',
+    'PgdEdnOldOld',
+    'BkdEdnOldOld',
+    'SttbfIntlFld',
+    'RouteSlip',
+    'SttbSavedBy',
+    'SttbFnm',
+    'PlfLst',
+    'PlfLfo',
+    'PlcfTxbxBkd',
+    'PlcfTxbxHdrBkd',
+    'DocUndoWord9',
+    'RgbUse',
+    'Usp',
+    'Uskf',
+    'PlcupcRgbUse',
+    'PlcupcUsp',
+    'SttbGlsyStyle',
+    'Plgosl',
+    'Plcocx',
+    'PlcfBteLvc',
+    'dwLowDateTime',
+    'dwHighDateTime',
+    'PlcfLvcPre10',
+    'PlcfAsumy',
+    'PlcfGram',
+    'SttbListNames',
+    'SttbfUssr',
+  ];
+function Bt(e) {
+  const r = new P(e),
+    n = kt(r);
+  let t = 32;
+  const a = r.u16(t);
+  t += 2;
+  const s = r.slice(t, a * 2);
+  t += a * 2;
+  const o = r.u16(t);
+  t += 2;
+  const c = r.slice(t, o * 4);
+  t += o * 4;
+  const i = r.u16(t);
+  t += 2;
+  const p = r.slice(t, i * 8);
+  t += i * 8;
+  const f = r.ensure(t, 2) ? r.u16(t) : 0;
+  r.ensure(t, 2) && (t += 2);
+  const u = f ? r.slice(t, f * 2) : new Uint8Array(0),
+    m = Ft(c),
+    b = It(p, i),
+    g = f ? new P(u).u16(0) : 0;
+  return {
+    base: n,
+    csw: a,
+    cslw: o,
+    cbRgFcLcb: i,
+    cswNew: f,
+    nFibNew: g,
+    fibRgWBytes: s,
+    fibRgLwBytes: c,
+    fibRgFcLcbBytes: p,
+    fibRgCswNewBytes: u,
+    fibRgLw: m,
+    fibRgFcLcb: b,
+  };
+}
+function kt(e) {
+  const r = e.u16(0),
+    n = e.u16(2),
+    t = e.u16(6),
+    a = e.u16(8),
+    s = e.u16(10),
+    o = e.u16(18);
+  return {
+    wIdent: r,
+    nFib: n,
+    lid: t,
+    pnNext: a,
+    flags: s,
+    envFlags: o,
+    fDot: !!(s & 1),
+    fGlsy: !!(s & 2),
+    fComplex: !!(s & 4),
+    fHasPic: !!(s & 8),
+    cQuickSaves: (s >> 4) & 15,
+    fEncrypted: !!(s & 256),
+    fWhichTblStm: s & 512 ? 1 : 0,
+    fReadOnlyRecommended: !!(s & 1024),
+    fWriteReservation: !!(s & 2048),
+    fExtChar: !!(s & 4096),
+    fLoadOverride: !!(s & 8192),
+    fFarEast: !!(s & 16384),
+    fObfuscated: !!(s & 32768),
+    nFibBack: e.u16(12),
+    lKey: e.u32(14),
+    envr: e.u8(18),
+    fMac: !!(o & 1),
+    fEmptySpecial: !!(o & 2),
+    fLoadOverridePage: !!(o & 4),
+  };
+}
+function Ft(e) {
+  const r = new P(e),
+    n = [];
+  for (let t = 0; t + 4 <= e.length; t += 4) n.push(r.i32(t));
+  return {
+    raw: n,
+    cbMac: n[0] ?? 0,
+    ccpText: n[3] ?? 0,
+    ccpFtn: n[4] ?? 0,
+    ccpHdd: n[5] ?? 0,
+    ccpMcr: n[6] ?? 0,
+    ccpAtn: n[7] ?? 0,
+    ccpEdn: n[8] ?? 0,
+    ccpTxbx: n[9] ?? 0,
+    ccpHdrTxbx: n[10] ?? 0,
+  };
+}
+function It(e, r) {
+  const n = new P(e),
+    t = { _pairs: [] },
+    a = [];
+  for (let s = 0; s < r && s * 8 + 8 <= e.length; s += 1) {
+    const o = n.u32(s * 8),
+      c = n.u32(s * 8 + 4),
+      i = Ct[s] || `Field${s}`;
+    ((t[`fc${i}`] = o), (t[`lcb${i}`] = c), a.push({ name: i, fc: o, lcb: c, index: s }));
+  }
+  return ((t._pairs = a), t);
+}
+const l = {
+    sprmCPicLocation: 27139,
+    sprmCFData: 2054,
+    sprmCFOle2: 2058,
+    sprmCHighlight: 10764,
+    sprmCIstd: 18992,
+    sprmCPlain: 10803,
+    sprmCFBold: 2101,
+    sprmCFItalic: 2102,
+    sprmCFStrike: 2103,
+    sprmCFOutline: 2104,
+    sprmCFShadow: 2105,
+    sprmCFSmallCaps: 2106,
+    sprmCFCaps: 2107,
+    sprmCFVanish: 2108,
+    sprmCKul: 10814,
+    sprmCDxaSpace: 34880,
+    sprmCIco: 10818,
+    sprmCHps: 19011,
+    sprmCHpsPos: 18501,
+    sprmCSymbol: 27145,
+    sprmCRgFtc0: 19023,
+    sprmCRgFtc1: 19024,
+    sprmCRgFtc2: 19025,
+    sprmCCharScale: 18514,
+    sprmCFDStrike: 10835,
+    sprmCFImprint: 2132,
+    sprmCFSpec: 2133,
+    sprmCFObj: 2134,
+    sprmCFEmboss: 2136,
+    sprmCFBiDi: 2138,
+    sprmCFBoldBi: 2140,
+    sprmCFItalicBi: 2141,
+    sprmCFtcBi: 19038,
+    sprmCIcoBi: 19040,
+    sprmCHpsBi: 19041,
+    sprmPIstd: 17920,
+    sprmPJc80: 9219,
+    sprmPFKeep: 9221,
+    sprmPFKeepFollow: 9222,
+    sprmPFPageBreakBefore: 9223,
+    sprmPIlvl: 9738,
+    sprmPIlfo: 17931,
+    sprmPChgTabsPapx: 50701,
+    sprmPDxaRight80: 33806,
+    sprmPDxaLeft80: 33807,
+    sprmPDxaLeft180: 33809,
+    sprmPDyaLine: 25618,
+    sprmPDyaBefore: 42003,
+    sprmPDyaAfter: 42004,
+    sprmPChgTabs: 50709,
+    sprmPFInTable: 9238,
+    sprmPFTtp: 9239,
+    sprmPDxaAbs: 33816,
+    sprmPDyaAbs: 33817,
+    sprmPDxaWidth: 33818,
+    sprmPPc: 9755,
+    sprmPWr: 9251,
+    sprmPBrcTop80: 25636,
+    sprmPBrcLeft80: 25637,
+    sprmPBrcBottom80: 25638,
+    sprmPBrcRight80: 25639,
+    sprmPBrcBetween80: 25640,
+    sprmPBrcBar80: 26153,
+    sprmPWHeightAbs: 17451,
+    sprmPShd80: 17453,
+    sprmPDyaFromText: 33838,
+    sprmPDxaFromText: 33839,
+    sprmPFLocked: 9264,
+    sprmPFWidowControl: 9265,
+    sprmPFBiDi: 9281,
+    sprmPFAdjustRight: 9288,
+    sprmPItap: 26185,
+    sprmPDtap: 26186,
+    sprmPFInnerTableCell: 9291,
+    sprmPFInnerTtp: 9292,
+    sprmPShd: 50765,
+    sprmPBrcTop: 50766,
+    sprmPBrcLeft: 50767,
+    sprmPBrcBottom: 50768,
+    sprmPBrcRight: 50769,
+    sprmPBrcBetween: 50770,
+    sprmPBrcBar: 50771,
+    sprmPFDyaBeforeAuto: 9307,
+    sprmPFDyaAfterAuto: 9308,
+    sprmPDxaRight: 33885,
+    sprmPDxaLeft: 33886,
+    sprmPDxaLeft1: 33888,
+    sprmPJc: 9313,
+    sprmTJc90: 21504,
+    sprmTDxaLeft: 38401,
+    sprmTDxaGapHalf: 38402,
+    sprmTFCantSplit90: 13315,
+    sprmTTableHeader: 13316,
+    sprmTTableBorders80: 54789,
+    sprmTDyaRowHeight: 37895,
+    sprmTDefTable: 54792,
+    sprmTDefTableShd80: 54793,
+    sprmTFBiDi: 22027,
+    sprmTDefTableShd3rd: 54796,
+    sprmTPc: 13837,
+    sprmTDxaAbs: 37902,
+    sprmTDyaAbs: 37903,
+    sprmTDxaFromText: 37904,
+    sprmTDyaFromText: 37905,
+    sprmTDefTableShd: 54802,
+    sprmTTableBorders: 54803,
+    sprmTTableWidth: 62996,
+    sprmTFAutofit: 13845,
+    sprmTWidthBefore: 62999,
+    sprmTWidthAfter: 63e3,
+    sprmTSetBrc80: 54816,
+    sprmTInsert: 30241,
+    sprmTDelete: 22050,
+    sprmTDxaCol: 30243,
+    sprmTMerge: 22052,
+    sprmTSplit: 22053,
+    sprmTTextFlow: 30249,
+    sprmTVertMerge: 54827,
+    sprmTVertAlign: 54828,
+    sprmTSetShd: 54829,
+    sprmTSetShdOdd: 54830,
+    sprmTSetBrc: 54831,
+    sprmTCellPadding: 54834,
+    sprmTCellPaddingDefault: 54835,
+    sprmTCellWidth: 54837,
+    sprmTFitText: 63030,
+    sprmTFCellNoWrap: 54841,
+    sprmTIstd: 22074,
+  },
+  Et = new Set([
+    l.sprmPChgTabs,
+    l.sprmPChgTabsPapx,
+    l.sprmTDefTable,
+    l.sprmTTableBorders80,
+    l.sprmTTableBorders,
+    l.sprmTDefTableShd,
+    l.sprmTDefTableShd80,
+    l.sprmTDefTableShd3rd,
+    l.sprmTSetBrc80,
+    l.sprmTSetBrc,
+    l.sprmTSetShd,
+    l.sprmTSetShdOdd,
+    l.sprmTCellPadding,
+    l.sprmTCellPaddingDefault,
+    l.sprmTCellWidth,
+    l.sprmTVertAlign,
+    l.sprmTVertMerge,
+    l.sprmTTextFlow,
+    l.sprmTDxaCol,
+  ]);
+function At(e) {
+  return (e >> 13) & 7;
+}
+function I(e, r = 0) {
+  return r + 2 > e.length ? 0 : (e[r] ?? 0) | ((e[r + 1] ?? 0) << 8);
+}
+function C(e, r = 0) {
+  const n = I(e, r);
+  return n > 32767 ? n - 65536 : n;
+}
+function le(e, r = 0) {
+  return r + 4 > e.length
+    ? 0
+    : ((e[r] ?? 0) |
+        ((e[r + 1] ?? 0) << 8) |
+        ((e[r + 2] ?? 0) << 16) |
+        (((e[r + 3] ?? 0) << 24) >>> 0)) >>>
+        0;
+}
+function K(e, r = 0) {
+  return { first: e[r] ?? 0, lim: e[r + 1] ?? 0 };
+}
+function $(e, r = 0) {
+  if (r + 4 > e.length) return null;
+  const n = le(e, r) >>> 0,
+    t = n & 255,
+    a = (n >> 8) & 255,
+    s = (n >> 16) & 255;
+  return { raw: n, lineWidth: t, borderType: a, color: s };
+}
+function Dt(e, r = 0) {
+  const n = I(e, r);
+  return {
+    raw: n,
+    horzMerge: n & 3,
+    textFlow: (n >> 2) & 7,
+    vertMerge: (n >> 5) & 3,
+    vertAlign: (n >> 7) & 3,
+    ftsWidth: (n >> 9) & 7,
+    fitText: !!(n & 4096),
+    noWrap: !!(n & 8192),
+    hideMark: !!(n & 16384),
+  };
+}
+function He(e, r = 0) {
+  return r + 20 > e.length
+    ? null
+    : {
+        tcgrf: Dt(e, r),
+        wWidth: I(e, r + 2),
+        borders: {
+          top: $(e, r + 4) || {},
+          left: $(e, r + 8) || {},
+          bottom: $(e, r + 12) || {},
+          right: $(e, r + 16) || {},
+        },
+      };
+}
+function Mt(e) {
+  if (e.length < 3) return null;
+  const r = I(e, 0),
+    n = e[2] ?? 0;
+  let t = 3;
+  const a = [];
+  for (let o = 0; o < n + 1 && t + 2 <= e.length; o += 1) (a.push(C(e, t)), (t += 2));
+  const s = [];
+  for (let o = 0; o < n && t + 20 <= e.length; o += 1) {
+    const c = He(e, t);
+    (c && s.push(c), (t += 20));
+  }
+  return { cb: r, numberOfColumns: n, rgdxaCenter: a, cells: s };
+}
+function X(e) {
+  return e.length
+    ? { cb: e[0] ?? 0, range: K(e, 1), value: e[3] ?? 0, extra: e.subarray(4) }
+    : null;
+}
+function ge(e) {
+  if (!e.length) return null;
+  const r = e[0] ?? 0,
+    n = I(e, 4);
+  return { cb: r, range: K(e, 1), ftsWidth: e[3] ?? 0, width: n, wWidth: n };
+}
+function Lt(e) {
+  return e.length
+    ? { cb: e[0] ?? 0, range: K(e, 1), border: $(e, 3) || {}, extra: e.subarray(7) }
+    : null;
+}
+function xe(e) {
+  if (!e.length) return null;
+  const r = I(e, 1);
+  return { ftsWidth: e[0] ?? 0, width: r, wWidth: r };
+}
+function Ot(e) {
+  if (!e.length) return null;
+  const r = e[0] ?? 0,
+    n = K(e, 1),
+    t = n.lim - n.first;
+  let a = 3;
+  const s = [];
+  for (let c = 0; c < t && a + 2 <= e.length; c += 1) (s.push(C(e, a)), (a += 2));
+  const o = [];
+  for (let c = 0; c < t && a + 20 <= e.length; c += 1) (o.push(He(e, a)), (a += 20));
+  return { cb: r, range: n, itcFirst: n.first, ctc: t, dxaCol: s, cells: o };
+}
+function Rt(e, r, n) {
+  const t = (n >> 13) & 7;
+  if (r >= e.length) return 0;
+  if (n === l.sprmTDefTable) {
+    const a = I(e, r);
+    return a ? a + 1 : 0;
+  }
+  if (Et.has(n)) return (e[r] ?? 0) + 1;
+  switch (t) {
+    case 0:
+      return 1;
+    case 1:
+      return 1;
+    case 2:
+      return 2;
+    case 3:
+      return 4;
+    case 4:
+      return 2;
+    case 5:
+      return 2;
+    case 6:
+      return (e[r] ?? 0) + 1;
+    case 7:
+      return 3;
+    default:
+      return 0;
+  }
+}
+function y(e) {
+  return !!(e[0] ?? 0);
+}
+function d(e, r, n, t, a) {
+  return { kind: e, name: r, value: n, raw: t, operandBytes: a };
+}
+function Wt(e, r) {
+  const n = At(e),
+    t = r,
+    a = e;
+  switch (e) {
+    case l.sprmCPicLocation:
+      return d('char', 'pictureOffset', le(t, 0) >>> 0, a, t);
+    case l.sprmCFData:
+      return d('char', 'data', y(t), a, t);
+    case l.sprmCFOle2:
+      return d('char', 'ole2', y(t), a, t);
+    case l.sprmCIstd:
+      return d('char', 'charStyleId', I(t, 0), a, t);
+    case l.sprmCPlain:
+      return d('char', 'plain', y(t), a, t);
+    case l.sprmCFBold:
+      return d('char', 'bold', y(t), a, t);
+    case l.sprmCFItalic:
+      return d('char', 'italic', y(t), a, t);
+    case l.sprmCFStrike:
+      return d('char', 'strike', y(t), a, t);
+    case l.sprmCFOutline:
+      return d('char', 'outline', y(t), a, t);
+    case l.sprmCFShadow:
+      return d('char', 'shadow', y(t), a, t);
+    case l.sprmCFSmallCaps:
+      return d('char', 'smallCaps', y(t), a, t);
+    case l.sprmCFCaps:
+      return d('char', 'caps', y(t), a, t);
+    case l.sprmCFVanish:
+      return d('char', 'hidden', y(t), a, t);
+    case l.sprmCKul:
+      return d('char', 'underline', t[0] ?? 0, a, t);
+    case l.sprmCDxaSpace:
+      return d('char', 'spacing', C(t, 0), a, t);
+    case l.sprmCIco:
+    case l.sprmCIcoBi:
+      return d('char', 'colorIndex', t[0] ?? 0, a, t);
+    case l.sprmCHighlight: {
+      const s = t[0] ?? 0,
+        o = { index: s, color: ve[s] };
+      return d('char', 'highlight', o, a, t);
+    }
+    case l.sprmCHps:
+    case l.sprmCHpsBi:
+      return d('char', 'fontSizeHalfPoints', I(t, 0), a, t);
+    case l.sprmCHpsPos:
+      return d('char', 'positionHalfPoints', C(t, 0), a, t);
+    case l.sprmCSymbol:
+      return d('char', 'symbol', { font: I(t, 0), charCode: I(t, 2) }, a, t);
+    case l.sprmCRgFtc0:
+    case l.sprmCRgFtc1:
+    case l.sprmCRgFtc2:
+    case l.sprmCFtcBi:
+      return d('char', 'fontFamilyId', I(t, 0), a, t);
+    case l.sprmCCharScale:
+      return d('char', 'scale', I(t, 0), a, t);
+    case l.sprmCFDStrike:
+      return d('char', 'doubleStrike', y(t), a, t);
+    case l.sprmCFImprint:
+      return d('char', 'imprint', y(t), a, t);
+    case l.sprmCFSpec:
+      return d('char', 'special', y(t), a, t);
+    case l.sprmCFObj:
+      return d('char', 'object', y(t), a, t);
+    case l.sprmCFEmboss:
+      return d('char', 'emboss', y(t), a, t);
+    case l.sprmCFBiDi:
+      return d('char', 'rtl', y(t), a, t);
+    case l.sprmCFBoldBi:
+      return d('char', 'boldBi', y(t), a, t);
+    case l.sprmCFItalicBi:
+      return d('char', 'italicBi', y(t), a, t);
+    case l.sprmPIstd:
+      return d('para', 'styleId', I(t, 0), a, t);
+    case l.sprmPJc80:
+    case l.sprmPJc:
+      return d('para', 'alignment', t[0] ?? 0, a, t);
+    case l.sprmPFKeep:
+      return d('para', 'keepLines', y(t), a, t);
+    case l.sprmPFKeepFollow:
+      return d('para', 'keepNext', y(t), a, t);
+    case l.sprmPFPageBreakBefore:
+      return d('para', 'pageBreakBefore', y(t), a, t);
+    case l.sprmPIlvl:
+      return d('para', 'listLevel', t[0] ?? 0, a, t);
+    case l.sprmPIlfo:
+      return d('para', 'listId', I(t, 0), a, t);
+    case l.sprmPDxaRight80:
+    case l.sprmPDxaRight:
+      return d('para', 'rightIndent', C(t, 0), a, t);
+    case l.sprmPDxaLeft80:
+    case l.sprmPDxaLeft:
+      return d('para', 'leftIndent', C(t, 0), a, t);
+    case l.sprmPDxaLeft180:
+    case l.sprmPDxaLeft1:
+      return d('para', 'firstLineIndent', C(t, 0), a, t);
+    case l.sprmPDyaLine:
+      return d('para', 'lineSpacing', C(t, 0), a, t);
+    case l.sprmPDyaBefore:
+      return d('para', 'spacingBefore', C(t, 0), a, t);
+    case l.sprmPDyaAfter:
+      return d('para', 'spacingAfter', C(t, 0), a, t);
+    case l.sprmPFInTable:
+      return d('para', 'inTable', y(t), a, t);
+    case l.sprmPFTtp:
+      return d('para', 'tableRowEnd', y(t), a, t);
+    case l.sprmPDxaAbs:
+      return d('para', 'frameLeft', C(t, 0), a, t);
+    case l.sprmPDyaAbs:
+      return d('para', 'frameTop', C(t, 0), a, t);
+    case l.sprmPDxaWidth:
+      return d('para', 'frameWidth', C(t, 0), a, t);
+    case l.sprmPPc:
+      return d('para', 'framePosition', t[0] ?? 0, a, t);
+    case l.sprmPWr:
+      return d('para', 'frameWrap', t[0] ?? 0, a, t);
+    case l.sprmPBrcTop80:
+    case l.sprmPBrcTop:
+      return d('para', 'borderTop', $(t, 0), a, t);
+    case l.sprmPBrcLeft80:
+    case l.sprmPBrcLeft:
+      return d('para', 'borderLeft', $(t, 0), a, t);
+    case l.sprmPBrcBottom80:
+    case l.sprmPBrcBottom:
+      return d('para', 'borderBottom', $(t, 0), a, t);
+    case l.sprmPBrcRight80:
+    case l.sprmPBrcRight:
+      return d('para', 'borderRight', $(t, 0), a, t);
+    case l.sprmPBrcBetween80:
+    case l.sprmPBrcBetween:
+      return d('para', 'borderBetween', $(t, 0), a, t);
+    case l.sprmPBrcBar80:
+    case l.sprmPBrcBar:
+      return d('para', 'borderBar', $(t, 0), a, t);
+    case l.sprmPWHeightAbs:
+      return d('para', 'frameHeight', C(t, 0), a, t);
+    case l.sprmPShd80:
+    case l.sprmPShd:
+      return d('para', 'shading', t.slice(), a, t);
+    case l.sprmPDyaFromText:
+      return d('para', 'distanceFromTextY', C(t, 0), a, t);
+    case l.sprmPDxaFromText:
+      return d('para', 'distanceFromTextX', C(t, 0), a, t);
+    case l.sprmPFLocked:
+      return d('para', 'locked', y(t), a, t);
+    case l.sprmPFWidowControl:
+      return d('para', 'widowControl', y(t), a, t);
+    case l.sprmPFBiDi:
+      return d('para', 'rtlPara', y(t), a, t);
+    case l.sprmPFAdjustRight:
+      return d('para', 'adjustRight', y(t), a, t);
+    case l.sprmPItap:
+      return d('para', 'itap', le(t, 0), a, t);
+    case l.sprmPDtap:
+      return d('para', 'dtap', le(t, 0), a, t);
+    case l.sprmPFInnerTableCell:
+      return d('para', 'innerTableCell', y(t), a, t);
+    case l.sprmPFInnerTtp:
+      return d('para', 'innerTableRowEnd', y(t), a, t);
+    case l.sprmPFDyaBeforeAuto:
+      return d('para', 'spacingBeforeAuto', y(t), a, t);
+    case l.sprmPFDyaAfterAuto:
+      return d('para', 'spacingAfterAuto', y(t), a, t);
+    case l.sprmTJc90:
+      return d('table', 'alignment', I(t, 0), a, t);
+    case l.sprmTDxaLeft:
+      return d('table', 'leftIndent', C(t, 0), a, t);
+    case l.sprmTDxaGapHalf:
+      return d('table', 'gapHalf', I(t, 0), a, t);
+    case l.sprmTFCantSplit90:
+      return d('table', 'cantSplit', y(t), a, t);
+    case l.sprmTTableHeader:
+      return d('table', 'header', y(t), a, t);
+    case l.sprmTDyaRowHeight:
+      return d('table', 'rowHeight', C(t, 0), a, t);
+    case l.sprmTDefTable:
+      return d('table', 'defTable', Mt(t), a, t);
+    case l.sprmTFBiDi:
+      return d('table', 'rtl', y(t), a, t);
+    case l.sprmTPc:
+      return d('table', 'positionCode', t[0] ?? 0, a, t);
+    case l.sprmTDxaAbs:
+      return d('table', 'absLeft', C(t, 0), a, t);
+    case l.sprmTDyaAbs:
+      return d('table', 'absTop', C(t, 0), a, t);
+    case l.sprmTDxaFromText:
+      return d('table', 'distanceLeft', C(t, 0), a, t);
+    case l.sprmTDyaFromText:
+      return d('table', 'distanceTop', C(t, 0), a, t);
+    case l.sprmTTableWidth:
+      return d('table', 'tableWidth', xe(t), a, t);
+    case l.sprmTFAutofit:
+      return d('table', 'autoFit', y(t), a, t);
+    case l.sprmTWidthBefore:
+      return d('table', 'widthBefore', xe(t), a, t);
+    case l.sprmTWidthAfter:
+      return d('table', 'widthAfter', xe(t), a, t);
+    case l.sprmTInsert:
+      return d('table', 'insertCells', Ot(t), a, t);
+    case l.sprmTDelete:
+      return d('table', 'deleteCells', K(t, 0), a, t);
+    case l.sprmTDxaCol:
+      return d('table', 'columnWidth', ge(t), a, t);
+    case l.sprmTMerge:
+      return d('table', 'merge', K(t, 0), a, t);
+    case l.sprmTSplit:
+      return d('table', 'split', K(t, 0), a, t);
+    case l.sprmTTextFlow:
+      return d('table', 'textFlow', X(t), a, t);
+    case l.sprmTVertMerge:
+      return d('table', 'vertMerge', X(t), a, t);
+    case l.sprmTVertAlign:
+      return d('table', 'vertAlign', X(t), a, t);
+    case l.sprmTSetShd:
+    case l.sprmTSetShdOdd:
+      return d('table', 'setShading', X(t), a, t);
+    case l.sprmTSetBrc80:
+    case l.sprmTSetBrc:
+      return d('table', 'setBorder', Lt(t), a, t);
+    case l.sprmTCellPadding:
+    case l.sprmTCellPaddingDefault:
+      return d('table', 'cellPadding', ge(t), a, t);
+    case l.sprmTCellWidth:
+      return d('table', 'cellWidth', ge(t), a, t);
+    case l.sprmTFitText:
+      return d('table', 'fitText', X(t), a, t);
+    case l.sprmTFCellNoWrap:
+      return d('table', 'cellNoWrap', X(t), a, t);
+    case l.sprmTIstd:
+      return d('table', 'styleId', I(t, 0), a, t);
+    default:
+      return {
+        kind: n === 1 ? 'para' : n === 2 ? 'char' : n === 5 ? 'table' : 'unknown',
+        name: `sprm_${e.toString(16)}`,
+        value: t,
+        raw: e,
+        operandBytes: t,
+      };
+  }
+}
+function ae(e, r, n) {
+  const t = [];
+  let a = r;
+  for (; a + 2 <= n; ) {
+    const s = I(e, a);
+    a += 2;
+    const o = Rt(e, a, s);
+    if (!o || a + o > n) break;
+    const c = e.subarray(a, a + o);
+    ((a += o), t.push(Wt(s, c)));
+  }
+  return t;
+}
+function Ue(e, r, n) {
+  if (r == null || n == null || n <= 0) return { aFC: [], pages: [] };
+  const t = e.subarray(r, r + n),
+    a = new P(t),
+    s = Math.floor((n - 4) / 8);
+  if (s <= 0) return { aFC: [], pages: [] };
+  const o = [];
+  for (let p = 0; p <= s; p += 1) o.push(a.u32(p * 4) >>> 0);
+  const c = [],
+    i = (s + 1) * 4;
+  for (let p = 0; p < s; p += 1) c.push(a.u32(i + p * 4) & 4194303);
+  return { aFC: o, pages: c };
+}
+function $t(e, r) {
+  const n = r * 512,
+    t = e.subarray(n, n + 512);
+  if (t.length < 512) return null;
+  const a = new P(t),
+    s = a.u8(511);
+  if (!s || s > 100) return null;
+  const o = [];
+  for (let f = 0; f <= s; f += 1) o.push(a.u32(f * 4) >>> 0);
+  const c = [],
+    i = [],
+    p = (s + 1) * 4;
+  for (let f = 0; f < s; f += 1) {
+    const u = a.u8(p + f);
+    (c.push(u), i.push(u ? n + u * 2 : 0));
+  }
+  return { crun: s, rgfc: o, rgb: c, chpxOffsets: i };
+}
+function Ht(e, r) {
+  const n = r * 512,
+    t = e.subarray(n, n + 512);
+  if (t.length < 512) return null;
+  const a = new P(t),
+    s = a.u8(511);
+  if (s > 29) return null;
+  const o = [];
+  for (let f = 0; f <= s; f += 1) o.push(a.u32(f * 4) >>> 0);
+  const c = (s + 1) * 4,
+    i = [],
+    p = [];
+  for (let f = 0; f < s; f += 1) {
+    const u = a.u8(c + f * 13);
+    (i.push(u), p.push(u ? n + u * 2 : 0));
+  }
+  return { cpara: s, rgfc: o, bOffsets: i, papxOffsets: p };
+}
+function Ut(e, r, n, t) {
+  const a = n.fibRgFcLcb.fcPlcfBteChpx,
+    s = n.fibRgFcLcb.lcbPlcfBteChpx,
+    o = Ue(r, a, s),
+    c = [];
+  for (const i of o.pages) {
+    const p = $t(e, i);
+    if (p)
+      for (let f = 0; f < p.crun; f += 1) {
+        const u = p.rgfc[f] ?? 0,
+          m = p.rgfc[f + 1] ?? u,
+          b = fe(t, u),
+          g = fe(t, m);
+        if (b == null || g == null || g <= b) continue;
+        const w = p.chpxOffsets[f] ? jt(e, p.chpxOffsets[f]) : [];
+        c.push({ cpStart: b, cpEnd: g, fcStart: u, fcEnd: m, properties: w });
+      }
+  }
+  return (c.sort((i, p) => i.cpStart - p.cpStart || i.cpEnd - p.cpEnd), c);
+}
+function Nt(e, r, n, t) {
+  const a = n.fibRgFcLcb.fcPlcfBtePapx,
+    s = n.fibRgFcLcb.lcbPlcfBtePapx,
+    o = Ue(r, a, s),
+    c = [];
+  for (const i of o.pages) {
+    const p = Ht(e, i);
+    if (p)
+      for (let f = 0; f < p.cpara; f += 1) {
+        const u = p.rgfc[f] ?? 0,
+          m = p.rgfc[f + 1] ?? u,
+          b = fe(t, u),
+          g = fe(t, m);
+        if (b == null || g == null || g < b) continue;
+        const w = p.papxOffsets[f] ? zt(e, p.papxOffsets[f]) : { styleId: 0, properties: [] };
+        c.push({
+          cpStart: b,
+          cpEnd: g,
+          fcStart: u,
+          fcEnd: m,
+          styleId: w.styleId,
+          properties: w.properties,
+          rawOffset: p.papxOffsets[f] ?? 0,
+        });
+      }
+  }
+  return (c.sort((i, p) => i.cpStart - p.cpStart || i.cpEnd - p.cpEnd), c);
+}
+function jt(e, r) {
+  if (r == null || r < 0 || r >= e.length) return [];
+  const n = e[r] ?? 0;
+  if (!n) return [];
+  const t = r + 1,
+    a = Math.min(e.length, t + n);
+  return ae(e, t, a);
+}
+function zt(e, r) {
+  if (r == null || r < 0 || r >= e.length) return { styleId: 0, properties: [] };
+  const n = new P(e),
+    t = n.u8(r);
+  if (t === 0 && !n.ensure(r + 1, 1)) return { styleId: 0, properties: [] };
+  let a, s;
+  if (
+    (t === 0 ? ((s = n.u8(r + 1) * 2), (a = r + 2)) : ((s = t - 1), (a = r + 1)),
+    s < 2 || !n.ensure(a, Math.max(2, s)))
+  )
+    return { styleId: 0, properties: [] };
+  const o = n.u16(a),
+    c = a + 2,
+    i = Math.min(e.length, a + s),
+    p = ae(e, c, i);
+  return { styleId: o, properties: p };
+}
+function _t(e, r) {
+  let n = r;
+  for (; n + 1 < e.length && !(e[n] === 0 && e[n + 1] === 0); ) n += 2;
+  return {
+    value: new TextDecoder('utf-16le').decode(e.subarray(r, n)),
+    nextOffset: Math.min(e.length, n + 2),
+  };
+}
+function Vt(e, r) {
+  if (!e.length) return null;
+  const n = new P(e),
+    t = n.u8(0),
+    a = n.u8(1),
+    s = n.u16(2),
+    o = n.u8(4),
+    c = n.u8(5),
+    i = n.slice(6, 10),
+    p = n.slice(16, 24),
+    f = 40;
+  let u = '',
+    m = '';
+  if (e.length > f) {
+    const g = new TextDecoder('utf-16le').decode(e.subarray(f)).split('\0').filter(Boolean);
+    if (((u = g[0] || ''), (m = g[1] || ''), !m && c)) {
+      const w = f + c * 2;
+      w + 2 <= e.length && (m = _t(e, w).value);
+    }
+  }
+  return {
+    index: r,
+    cbFfnM1: t,
+    ffid: a,
+    weight: s,
+    charset: o,
+    ixchSzAlt: c,
+    panose: i,
+    fontSignature: p,
+    name: u,
+    altName: m,
+  };
+}
+function Gt(e, r) {
+  const n = r.fcSttbfFfn,
+    t = r.lcbSttbfFfn;
+  if (n == null || t == null || t <= 0)
+    return {
+      header: null,
+      fonts: [],
+      byIndex(f) {
+        return (f == null, null);
+      },
+    };
+  const a = e.subarray(n, n + t),
+    s = new P(a),
+    o = s.u16(0),
+    c = s.u16(2);
+  let i = 4;
+  const p = [];
+  for (let f = 0; f < o && i < a.length; f += 1) {
+    const m = s.u8(i) + 1,
+      b = a.subarray(i, Math.min(i + m, a.length)),
+      g = Vt(b, f);
+    (g && p.push(g), (i += m + c));
+  }
+  return {
+    header: { cData: o, cbExtra: c },
+    fonts: p,
+    byIndex(f) {
+      return f == null || f < 0 ? null : p[f] || null;
+    },
+  };
+}
+function Ne(e, r, n = 0) {
+  if (n + r.length > e.length) return !1;
+  for (let t = 0; t < r.length; t += 1) if (e[n + t] !== r[t]) return !1;
+  return !0;
+}
+function qt(e) {
+  const r = [
+    { mime: 'image/png', magic: [137, 80, 78, 71], end: Zt },
+    { mime: 'image/jpeg', magic: [255, 216, 255], end: Kt },
+    { mime: 'image/gif', magic: [71, 73, 70, 56], end: Xt },
+    { mime: 'image/bmp', magic: [66, 77], end: Jt },
+    { mime: 'image/tiff', magic: [73, 73, 42, 0], end: null },
+    { mime: 'image/tiff', magic: [77, 77, 0, 42], end: null },
+    { mime: 'image/emf', magic: [1, 0, 0, 0], end: Yt },
+    { mime: 'image/wmf', magic: [215, 205, 198, 154], end: null },
+  ];
+  for (let n = 0; n < e.length - 4; n += 1)
+    for (const t of r)
+      if (Ne(e, t.magic, n)) {
+        const a = t.end ? t.end(e, n) : e.length;
+        return { mime: t.mime, start: n, end: a || e.length };
+      }
+  return null;
+}
+function Zt(e, r) {
+  for (let n = r + 8; n + 8 < e.length; n += 1) if (Ne(e, [73, 69, 78, 68], n)) return n + 8;
+  return e.length;
+}
+function Kt(e, r) {
+  for (let n = r + 2; n + 1 < e.length; n += 1) if (e[n] === 255 && e[n + 1] === 217) return n + 2;
+  return e.length;
+}
+function Xt(e, r) {
+  for (let n = r + 6; n < e.length; n += 1) if (e[n] === 59) return n + 1;
+  return e.length;
+}
+function Jt(e, r) {
+  if (r + 6 <= e.length) {
+    const n = new P(e.subarray(r)).u32(2);
+    if (n > 0 && r + n <= e.length) return r + n;
+  }
+  return e.length;
+}
+function Yt(e, r) {
+  if (r + 48 <= e.length) {
+    const t = new P(e.subarray(r)).u32(40);
+    if (t > 0 && r + t <= e.length) return r + t;
+  }
+  return e.length;
+}
+function Qt(e, r, n = {}) {
+  if (!e || r == null || r < 0 || r + 68 > e.length) return null;
+  const t = new P(e),
+    a = t.i32(r),
+    s = t.u16(r + 4),
+    o =
+      a > 0 && r + a <= e.length ? a : Math.min(e.length - r, n.maxPictureBytes || 8 * 1024 * 1024),
+    c = e.subarray(r, r + o),
+    i = Math.min(s || 68, c.length),
+    p = qt(c.subarray(i));
+  if (!p)
+    return {
+      id: H('asset-img'),
+      type: 'image',
+      mime: 'application/octet-stream',
+      bytes: c,
+      dataUrl: pe(c, 'application/octet-stream'),
+      meta: { pictureOffset: r, lcb: a, cbHeader: s },
+    };
+  const f = i + p.start,
+    u = Math.min(i + p.end, c.length),
+    m = c.subarray(f, u);
+  return {
+    id: H('asset-img'),
+    type: 'image',
+    mime: p.mime,
+    bytes: m,
+    dataUrl: pe(m, p.mime),
+    meta: { pictureOffset: r, lcb: a, cbHeader: s },
+  };
+}
+function be(e, r) {
+  let n = r;
+  for (; n < e.length && e[n] !== 0; ) n += 1;
+  return { value: new TextDecoder('windows-1252').decode(e.subarray(r, n)), nextOffset: n + 1 };
+}
+function er(e) {
+  const r = new P(e),
+    n = [4, 6];
+  for (const t of n)
+    try {
+      let a = t;
+      const s = be(e, a);
+      a = s.nextOffset;
+      const o = be(e, a);
+      a = o.nextOffset;
+      const c = be(e, a);
+      if (((a = c.nextOffset), a + 4 > e.length)) continue;
+      const i = r.u32(a);
+      if (((a += 4), i > 0 && a + i <= e.length)) {
+        const p = e.subarray(a, a + i);
+        return { label: s.value, originalPath: o.value, tempPath: c.value, dataSize: i, bytes: p };
+      }
+    } catch {}
+  return null;
+}
+function tr(e, r) {
+  const n = e.listChildren(r).filter((i) => i.objectType === 2 || i.objectType === 5),
+    t = new Map(n.map((i) => [i.name.toLowerCase(), i])),
+    a = t.get('objinfo') || t.get('objinfo') || t.get('objinfo'),
+    s = t.get('ole10native') || t.get('ole10native') || t.get('ole10native'),
+    o = t.get('package') || t.get('contents') || t.get('content'),
+    c = { entry: r, streams: n, displayName: r.name, attachment: null, objectData: null };
+  if (s) {
+    const i = e.getStream(s) || new Uint8Array(0),
+      p = er(i);
+    if (p) {
+      const f = p.label || p.originalPath.split(/[\\/]/).pop() || `${r.name}.bin`,
+        u = {
+          id: H('asset-ole'),
+          type: 'attachment',
+          name: f,
+          mime: 'application/octet-stream',
+          bytes: p.bytes,
+          dataUrl: pe(p.bytes, 'application/octet-stream'),
+          meta: p,
+        };
+      return ((c.attachment = u), c);
+    }
+  }
+  if (o) {
+    const i = e.getStream(o) || new Uint8Array(0),
+      p = {
+        id: H('asset-pkg'),
+        type: 'attachment',
+        name: `${Re(r.name)}.bin`,
+        mime: 'application/octet-stream',
+        bytes: i,
+        dataUrl: pe(i, 'application/octet-stream'),
+        meta: { stream: o.name },
+      };
+    c.attachment = p;
+  }
+  return (a && (c.objectData = e.getStream(a) || new Uint8Array(0)), c);
+}
+function rr(e) {
+  const r = e.getEntry('/ObjectPool');
+  if (!r) return new Map();
+  const n = e.listChildren(r).filter((a) => a.objectType === 1),
+    t = new Map();
+  for (const a of n) t.set(a.name, tr(e, a));
+  return t;
+}
+function we(e) {
+  const r = {
+    bold: !1,
+    italic: !1,
+    strike: !1,
+    underline: 0,
+    fontSizeHalfPoints: void 0,
+    fontFamilyId: void 0,
+    colorIndex: void 0,
+    highlight: void 0,
+    spacing: 0,
+    positionHalfPoints: 0,
+    scale: 100,
+    hidden: !1,
+    smallCaps: !1,
+    caps: !1,
+    outline: !1,
+    shadow: !1,
+    emboss: !1,
+    imprint: !1,
+    rtl: !1,
+    pictureOffset: void 0,
+    data: !1,
+    ole2: !1,
+    object: !1,
+    special: !1,
+    charStyleId: void 0,
+  };
+  for (const n of e || [])
+    switch (n.name) {
+      case 'plain':
+        n.value &&
+          ((r.bold = !1),
+          (r.italic = !1),
+          (r.strike = !1),
+          (r.underline = 0),
+          (r.smallCaps = !1),
+          (r.caps = !1));
+        break;
+      case 'bold':
+      case 'italic':
+      case 'strike':
+      case 'hidden':
+      case 'smallCaps':
+      case 'caps':
+      case 'outline':
+      case 'shadow':
+      case 'emboss':
+      case 'imprint':
+      case 'rtl':
+      case 'data':
+      case 'ole2':
+      case 'object':
+      case 'special':
+        r[n.name] = !!n.value;
+        break;
+      case 'underline':
+        r.underline = n.value ?? 0;
+        break;
+      case 'fontSizeHalfPoints':
+        r.fontSizeHalfPoints = n.value;
+        break;
+      case 'fontFamilyId':
+        r.fontFamilyId = n.value;
+        break;
+      case 'colorIndex':
+        r.colorIndex = n.value;
+        break;
+      case 'highlight':
+        r.highlight = n.value;
+        break;
+      case 'spacing':
+        r.spacing = n.value || 0;
+        break;
+      case 'positionHalfPoints':
+        r.positionHalfPoints = n.value || 0;
+        break;
+      case 'scale':
+        r.scale = n.value || 100;
+        break;
+      case 'pictureOffset':
+        r.pictureOffset = n.value;
+        break;
+      case 'charStyleId':
+        r.charStyleId = n.value;
+        break;
+      default:
+        r[n.name] = n.value;
+        break;
+    }
+  return r;
+}
+function nr(e) {
+  const r = {
+    styleId: 0,
+    alignment: 0,
+    spacingBefore: 0,
+    spacingAfter: 0,
+    lineSpacing: 0,
+    leftIndent: 0,
+    rightIndent: 0,
+    firstLineIndent: 0,
+    keepLines: !1,
+    keepNext: !1,
+    pageBreakBefore: !1,
+    widowControl: !1,
+    inTable: !1,
+    tableRowEnd: !1,
+    innerTableCell: !1,
+    innerTableRowEnd: !1,
+    itap: 0,
+    dtap: 0,
+    listLevel: void 0,
+    listId: void 0,
+    rtlPara: !1,
+    adjustRight: !1,
+    frameLeft: void 0,
+    frameTop: void 0,
+    frameWidth: void 0,
+    frameHeight: void 0,
+    framePosition: void 0,
+    frameWrap: void 0,
+    borders: {},
+    shading: void 0,
+  };
+  for (const n of e || [])
+    switch (n.name) {
+      case 'styleId':
+        r.styleId = n.value || 0;
+        break;
+      case 'alignment':
+        r.alignment = n.value ?? 0;
+        break;
+      case 'spacingBefore':
+        r.spacingBefore = n.value || 0;
+        break;
+      case 'spacingAfter':
+        r.spacingAfter = n.value || 0;
+        break;
+      case 'lineSpacing':
+        r.lineSpacing = n.value || 0;
+        break;
+      case 'leftIndent':
+        r.leftIndent = n.value || 0;
+        break;
+      case 'rightIndent':
+        r.rightIndent = n.value || 0;
+        break;
+      case 'firstLineIndent':
+        r.firstLineIndent = n.value || 0;
+        break;
+      case 'keepLines':
+      case 'keepNext':
+      case 'pageBreakBefore':
+      case 'widowControl':
+      case 'inTable':
+      case 'tableRowEnd':
+      case 'innerTableCell':
+      case 'innerTableRowEnd':
+      case 'rtlPara':
+      case 'adjustRight':
+        r[n.name] = !!n.value;
+        break;
+      case 'itap':
+        r.itap = n.value || 0;
+        break;
+      case 'dtap':
+        r.dtap = n.value || 0;
+        break;
+      case 'listLevel':
+        r.listLevel = n.value;
+        break;
+      case 'listId':
+        r.listId = n.value;
+        break;
+      case 'frameLeft':
+        r.frameLeft = n.value;
+        break;
+      case 'frameTop':
+        r.frameTop = n.value;
+        break;
+      case 'frameWidth':
+        r.frameWidth = n.value;
+        break;
+      case 'frameHeight':
+        r.frameHeight = n.value;
+        break;
+      case 'framePosition':
+        r.framePosition = n.value;
+        break;
+      case 'frameWrap':
+        r.frameWrap = n.value;
+        break;
+      case 'borderTop':
+        r.borders.top = n.value;
+        break;
+      case 'borderLeft':
+        r.borders.left = n.value;
+        break;
+      case 'borderBottom':
+        r.borders.bottom = n.value;
+        break;
+      case 'borderRight':
+        r.borders.right = n.value;
+        break;
+      case 'borderBetween':
+        r.borders.between = n.value;
+        break;
+      case 'borderBar':
+        r.borders.bar = n.value;
+        break;
+      case 'shading':
+        r.shading = n.value;
+        break;
+      default:
+        r[n.name] = n.value;
+        break;
+    }
+  return r;
+}
+function de(e) {
+  const r = {
+    styleId: void 0,
+    alignment: 0,
+    leftIndent: 0,
+    gapHalf: 0,
+    cantSplit: !1,
+    header: !1,
+    rowHeight: 0,
+    rtl: !1,
+    positionCode: void 0,
+    absLeft: void 0,
+    absTop: void 0,
+    distanceLeft: void 0,
+    distanceTop: void 0,
+    tableWidth: void 0,
+    autoFit: void 0,
+    widthBefore: void 0,
+    widthAfter: void 0,
+    defTable: void 0,
+    operations: [],
+  };
+  for (const n of e || [])
+    switch (n.name) {
+      case 'styleId':
+        r.styleId = n.value;
+        break;
+      case 'alignment':
+        r.alignment = n.value ?? 0;
+        break;
+      case 'leftIndent':
+        r.leftIndent = n.value || 0;
+        break;
+      case 'gapHalf':
+        r.gapHalf = n.value || 0;
+        break;
+      case 'cantSplit':
+      case 'header':
+      case 'rtl':
+        r[n.name] = !!n.value;
+        break;
+      case 'rowHeight':
+        r.rowHeight = n.value || 0;
+        break;
+      case 'positionCode':
+        r.positionCode = n.value;
+        break;
+      case 'absLeft':
+        r.absLeft = n.value;
+        break;
+      case 'absTop':
+        r.absTop = n.value;
+        break;
+      case 'distanceLeft':
+        r.distanceLeft = n.value;
+        break;
+      case 'distanceTop':
+        r.distanceTop = n.value;
+        break;
+      case 'tableWidth':
+        r.tableWidth = n.value;
+        break;
+      case 'autoFit':
+        r.autoFit = n.value;
+        break;
+      case 'widthBefore':
+        r.widthBefore = n.value;
+        break;
+      case 'widthAfter':
+        r.widthAfter = n.value;
+        break;
+      case 'defTable':
+        r.defTable = n.value;
+        break;
+      default:
+        r.operations.push(n);
+        break;
+    }
+  return r;
+}
+function Ce(e) {
+  return e?.inTable ? Math.max(1, e.itap || 0 || (e.dtap ? e.dtap : 1)) : 0;
+}
+function ar(e) {
+  return St[e] || 'left';
+}
+function sr(e) {
+  return Tt[e] || (e ? 'single' : 'none');
+}
+function or(e) {
+  return vt[e] || 'top';
+}
+function U(e, r, n) {
+  if (!r) return;
+  const t = Math.max(0, r.first || 0),
+    a = Math.max(t, r.lim || t);
+  for (let s = t; s < a && s < e.length; s += 1) n(e[s], s);
+}
+function cr(e) {
+  const r = e?.defTable;
+  if (!r || !Array.isArray(r.cells)) return [];
+  const n = r.cells.map((t, a) => ({
+    index: a,
+    width: t?.wWidth,
+    ftsWidth: t?.tcgrf?.ftsWidth,
+    borders: t?.borders || {},
+    merge: t?.tcgrf?.horzMerge || 0,
+    vertMerge: t?.tcgrf?.vertMerge || 0,
+    vertAlign: t?.tcgrf?.vertAlign || 0,
+    fitText: !!t?.tcgrf?.fitText,
+    noWrap: !!t?.tcgrf?.noWrap,
+    hideMark: !!t?.tcgrf?.hideMark,
+    textFlow: t?.tcgrf?.textFlow || 0,
+    rightBoundary: r.rgdxaCenter?.[a + 1],
+    leftBoundary: r.rgdxaCenter?.[a],
+  }));
+  for (const t of e.operations || [])
+    switch (t.name) {
+      case 'merge':
+        U(n, t.value, (a, s) => {
+          const o = t.value;
+          s === o.first ? (a.merge = 2) : (a.merge = 1);
+        });
+        break;
+      case 'split':
+        U(n, t.value, (a) => {
+          a.merge = 0;
+        });
+        break;
+      case 'cellWidth':
+      case 'columnWidth':
+        U(n, t.value.range, (a) => {
+          const s = t.value;
+          ((a.width = s.width), (a.ftsWidth = s.ftsWidth));
+        });
+        break;
+      case 'vertMerge':
+        U(n, t.value.range, (a) => {
+          a.vertMerge = t.value.value;
+        });
+        break;
+      case 'vertAlign':
+        U(n, t.value.range, (a) => {
+          a.vertAlign = t.value.value;
+        });
+        break;
+      case 'setBorder':
+        U(n, t.value.range, (a) => {
+          a.borders = { ...(a.borders || {}), all: t.value.border };
+        });
+        break;
+      case 'setShading':
+        U(n, t.value.range, (a) => {
+          a.shading = t.value.value;
+        });
+        break;
+      case 'fitText':
+        U(n, t.value.range, (a) => {
+          a.fitText = !!t.value.value;
+        });
+        break;
+      case 'cellNoWrap':
+        U(n, t.value.range, (a) => {
+          a.noWrap = !!t.value.value;
+        });
+        break;
+      case 'textFlow':
+        U(n, t.value.range, (a) => {
+          a.textFlow = t.value.value;
+        });
+        break;
+    }
+  return n;
+}
+function J(...e) {
+  const r = new Map();
+  for (const n of e) for (const t of n || []) r.set(`${t.kind}:${t.name}`, t);
+  return Array.from(r.values());
+}
+function ir(e) {
+  const r = { para: [], char: [], table: [] };
+  for (const n of e || [])
+    n.kind === 'para'
+      ? r.para.push(n)
+      : n.kind === 'char'
+        ? r.char.push(n)
+        : n.kind === 'table' && r.table.push(n);
+  return r;
+}
+function lr(e, r) {
+  const n = new P(e),
+    t = n.u16(r),
+    a = r + 2,
+    s = t * 2,
+    o = n.utf16le(a, s),
+    c = a + s + 2;
+  return { value: o.replace(/\u0000+$/, ''), nextOffset: c };
+}
+function pr(e, r) {
+  const n = new P(e),
+    t = n.u16(r),
+    a = n.u16(r + 2),
+    s = n.u16(r + 4);
+  return {
+    sti: t & 4095,
+    flags1: t >> 12,
+    stk: a & 15,
+    istdBase: (a >> 4) & 4095,
+    cupx: s & 15,
+    istdNext: (s >> 4) & 4095,
+    bchUpe: n.u16(r + 6),
+    grfstd: n.u16(r + 8),
+  };
+}
+function Me(e, r) {
+  const t = new P(e).u16(r),
+    a = r + 2,
+    s = a + t,
+    o = e.subarray(a, Math.min(s, e.length));
+  let c = 0,
+    i = [];
+  return (
+    o.length >= 2 && ((c = o[0] | ((o[1] ?? 0) << 8)), (i = ae(o, 2, o.length))),
+    { cbUpx: t, styleId: c, properties: i, nextOffset: te(s) }
+  );
+}
+function ye(e, r) {
+  const t = new P(e).u16(r),
+    a = r + 2,
+    s = a + t,
+    o = e.subarray(a, Math.min(s, e.length)),
+    c = ae(o, 0, o.length);
+  return { cbUpx: t, properties: c, nextOffset: te(s) };
+}
+function fr(e, r) {
+  const t = new P(e).u16(r),
+    a = r + 2,
+    s = a + t,
+    o = e.subarray(a, Math.min(s, e.length)),
+    c = ae(o, 0, o.length);
+  return { cbUpx: t, properties: c, nextOffset: te(s) };
+}
+function dr(e, r, n) {
+  if (!e.length)
+    return {
+      istd: n,
+      empty: !0,
+      name: '',
+      stdfBase: { istdBase: 4095, istdNext: 0, stk: 1, cupx: 0 },
+      paraProps: [],
+      charProps: [],
+      tableProps: [],
+    };
+  const t = Math.max(10, Math.min(r || 10, e.length)),
+    a = pr(e, 0);
+  let s = t;
+  const o = lr(e, s);
+  s = o.nextOffset;
+  let c = [],
+    i = [],
+    p = [];
+  try {
+    if (a.stk === 1) {
+      if (a.cupx >= 1 && s + 2 <= e.length) {
+        const f = Me(e, s);
+        ((c = f.properties), (s = f.nextOffset));
+      }
+      a.cupx >= 2 && s + 2 <= e.length && (i = ye(e, s).properties);
+    } else if (a.stk === 2) s + 2 <= e.length && (i = ye(e, s).properties);
+    else if (a.stk === 3) {
+      if (a.cupx >= 1 && s + 2 <= e.length) {
+        const f = fr(e, s);
+        ((p = f.properties), (s = f.nextOffset));
+      }
+      if (a.cupx >= 2 && s + 2 <= e.length) {
+        const f = Me(e, s);
+        ((c = f.properties), (s = f.nextOffset));
+      }
+      a.cupx >= 3 && s + 2 <= e.length && (i = ye(e, s).properties);
+    }
+  } catch {}
+  return {
+    istd: n,
+    name: o.value,
+    stdfBase: a,
+    paraProps: c,
+    charProps: i,
+    tableProps: p,
+    empty: !1,
+  };
+}
+function ur(e, r) {
+  const n = r.fcStshf,
+    t = r.lcbStshf;
+  if (n == null || t == null || t <= 0)
+    return {
+      styles: new Map(),
+      header: null,
+      resolveStyle(S) {
+        return Be(new Map(), S);
+      },
+    };
+  const a = e.subarray(n, n + t),
+    s = new P(a),
+    o = s.u16(0),
+    c = 2,
+    i = s.u16(c + 0),
+    p = s.u16(c + 2),
+    f = s.u16(c + 10),
+    u = s.u16(c + 12),
+    m = s.u16(c + 14),
+    b = { cbStshi: o, cstd: i, cbSTDBaseInFile: p, ftcAsci: f, ftcFE: u, ftcOther: m };
+  let g = 2 + o;
+  const w = new Map();
+  for (let S = 0; S < i && g + 2 <= a.length; S += 1) {
+    const M = s.u16(g),
+      B = g + 2,
+      F = B + M;
+    if (M === 0) {
+      (w.set(S, {
+        istd: S,
+        empty: !0,
+        name: '',
+        stdfBase: { istdBase: 4095, istdNext: 0, stk: 1, cupx: 0 },
+        paraProps: [],
+        charProps: [],
+        tableProps: [],
+      }),
+        (g = te(F)));
+      continue;
+    }
+    const E = a.subarray(B, Math.min(F, a.length)),
+      L = dr(E, p, S);
+    (w.set(S, L), (g = te(F)));
+  }
+  return {
+    header: b,
+    styles: w,
+    resolveStyle(S) {
+      return Be(w, S);
+    },
+  };
+}
+function Be(e, r, n = new Set()) {
+  if (r == null || r === 4095 || n.has(r))
+    return { paraProps: [], charProps: [], tableProps: [], styleIds: [] };
+  const t = e.get(r);
+  if (!t || t.empty) return { paraProps: [], charProps: [], tableProps: [], styleIds: [] };
+  n.add(r);
+  const a = Be(e, t.stdfBase?.istdBase, n);
+  return {
+    styleIds: [...a.styleIds, r],
+    paraProps: J(a.paraProps, t.paraProps),
+    charProps: J(a.charProps, t.charProps),
+    tableProps: J(a.tableProps, t.tableProps),
+  };
+}
+function mr(e, r, n, t) {
+  let a = t?.index || 0;
+  for (; a < e.length && e[a].cpEnd <= r; ) a += 1;
+  t && (t.index = a);
+  const s = [];
+  let o = a;
+  for (; o < e.length && e[o].cpStart < n; ) (e[o].cpEnd > r && s.push(e[o]), (o += 1));
+  return s;
+}
+function hr(e) {
+  return String(e || '').trim();
+}
+function Le(e) {
+  const r = String(e || '')
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!r) return null;
+  const n = r.toUpperCase();
+  if (n.startsWith('HYPERLINK')) {
+    const t = r.slice(9).trim(),
+      s = t.match(/"([^"]+)"/)?.[1] || t.split(/\s+/)[0] || '';
+    return s ? { type: 'hyperlink', href: s } : null;
+  }
+  if (n.startsWith('INCLUDEPICTURE')) {
+    const t = r.slice(14).trim();
+    return { type: 'includePicture', target: t.match(/"([^"]+)"/)?.[1] || t.split(/\s+/)[0] || '' };
+  }
+  return n.startsWith('EMBED')
+    ? { type: 'embed', raw: r }
+    : n.startsWith('LINK')
+      ? { type: 'link', raw: r }
+      : { type: 'unknown', raw: r };
+}
+function gr(e, r) {
+  if (!r.text) return;
+  const n = e[e.length - 1];
+  if (n && n.type === 'text' && n.href === r.href && We(n.style, r.style)) {
+    n.text += r.text;
+    return;
+  }
+  e.push(r);
+}
+function Z(e, r, n) {
+  if (!n) return;
+  const t = e.length ? e[e.length - 1].nodes : r;
+  n.type === 'text' ? gr(t, n) : t.push(n);
+}
+function xr(e, r) {
+  const n = [`_${r}`, `_${String(r)}`, `_${r.toString(16)}`, `_${r.toString(16).toUpperCase()}`];
+  for (const t of n) if (e.has(t)) return e.get(t) || null;
+  return null;
+}
+function br(e, r, n, t, a, s = {}) {
+  return function (c) {
+    const i = c?.pictureOffset;
+    if (i == null) return null;
+    if (a.has(i)) return a.get(i) || null;
+    let p = null;
+    const f = xr(r, i);
+    if (
+      ((c.ole2 || c.object || c.data) && f?.attachment && ((p = f.attachment), t.add(f.entry.name)),
+      !p && e?.length)
+    ) {
+      const u = Qt(e, i, s);
+      u && u.mime !== 'application/octet-stream'
+        ? (p = u)
+        : !p && f?.attachment
+          ? ((p = f.attachment), t.add(f.entry.name))
+          : u && (p = u);
+    }
+    return (
+      !p && f?.attachment && ((p = f.attachment), t.add(f.entry.name)),
+      p && n.push(p),
+      a.set(i, p),
+      p
+    );
+  };
+}
+function wr(e) {
+  switch (e) {
+    case R.nonBreakingHyphen:
+      return '-';
+    case R.nonRequiredHyphen:
+      return '';
+    case R.annotationRef:
+      return '';
+    default:
+      return e;
+  }
+}
+function yr(e, r) {
+  const n = [],
+    t = [];
+  for (const a of e)
+    if (!(!a.text || a.state.hidden))
+      for (const s of a.text) {
+        const o = wr(s);
+        if (o === R.fieldStart) {
+          t.push({ instruction: '', parsed: null, readingInstruction: !0, nodes: [] });
+          continue;
+        }
+        if (o === R.fieldSeparator) {
+          const i = t[t.length - 1];
+          i && ((i.parsed = Le(i.instruction)), (i.readingInstruction = !1));
+          continue;
+        }
+        if (o === R.fieldEnd) {
+          const i = t.pop();
+          if (!i) continue;
+          let p = i.nodes;
+          if (
+            (i.readingInstruction && (i.parsed = Le(i.instruction)), i.parsed?.type === 'hyperlink')
+          ) {
+            const f = i.parsed.href;
+            p = p.map((u) =>
+              u.type === 'lineBreak' || u.type === 'pageBreak' ? u : { ...u, href: f },
+            );
+          }
+          for (const f of p) Z(t, n, f);
+          continue;
+        }
+        const c = t[t.length - 1];
+        if (c?.readingInstruction) {
+          c.instruction += o;
+          continue;
+        }
+        if (o === R.hardLineBreak) {
+          Z(t, n, { type: 'lineBreak' });
+          continue;
+        }
+        if (o === R.pageBreak) {
+          Z(t, n, { type: 'pageBreak' });
+          continue;
+        }
+        if (o === R.picture) {
+          const i = r(a.state);
+          i?.type === 'image'
+            ? Z(t, n, { type: 'image', asset: i, style: a.state })
+            : i?.type === 'attachment' && Z(t, n, { type: 'attachment', asset: i, style: a.state });
+          continue;
+        }
+        Z(t, n, { type: 'text', text: tt(o), style: a.state });
+      }
+  for (; t.length; ) {
+    const a = t.pop();
+    for (const s of a.nodes) Z(t, n, s);
+  }
+  return n;
+}
+function Pr(e, r, n, t, a, s, o) {
+  const c = mr(n, e.cpStart, e.cpEnd, o),
+    i = new Set([e.cpStart, e.cpEnd]);
+  for (const u of c) (i.add(Math.max(e.cpStart, u.cpStart)), i.add(Math.min(e.cpEnd, u.cpEnd)));
+  const p = Array.from(i).sort((u, m) => u - m),
+    f = [];
+  for (let u = 0; u < p.length - 1; u += 1) {
+    const m = p[u],
+      b = p[u + 1];
+    if (b <= m) continue;
+    const w = c.find((v) => v.cpStart <= m && v.cpEnd >= b)?.properties || [],
+      S = we(w),
+      M = S.charStyleId != null ? t.resolveStyle(S.charStyleId).charProps : [],
+      B = J(a, M, w),
+      F = we(B),
+      E = s(F.fontFamilyId);
+    E && (F.fontFamily = E.name || E.altName || void 0);
+    const L = m - e.cpStart,
+      j = b - e.cpStart,
+      A = r.slice(L, j);
+    if (!A) continue;
+    const W = f[f.length - 1];
+    if (W && We(W.state, F)) {
+      ((W.text += A), (W.cpEnd = b));
+      continue;
+    }
+    f.push({ cpStart: m, cpEnd: b, text: A, state: F });
+  }
+  if (!f.length && r) {
+    const u = we(a),
+      m = s(u.fontFamilyId);
+    (m && (u.fontFamily = m.name || m.altName || void 0),
+      f.push({ cpStart: e.cpStart, cpEnd: e.cpEnd, text: r, state: u }));
+  }
+  return f;
+}
+function Tr(e, r, n, t, a, s, o) {
+  const c = ir(e.properties || []),
+    i = e.styleId || c.para.find((E) => E.name === 'styleId')?.value || 0,
+    p = n.resolveStyle(i),
+    f = J(p.paraProps, c.para),
+    u = nr(f),
+    m = de(c.table),
+    b = m.styleId != null ? n.resolveStyle(m.styleId).tableProps : [],
+    g = J(b, c.table),
+    w = de(g),
+    S = p.charProps,
+    B = Pr(e, r, a, n, S, (E) => t.byIndex(E), o),
+    F = yr(B, s);
+  return {
+    id: H('para'),
+    cpStart: e.cpStart,
+    cpEnd: e.cpEnd,
+    terminator: e.terminator || '',
+    text: r,
+    rawProperties: e.properties || [],
+    styleId: i,
+    styleName: hr(n.styles.get(i)?.name),
+    paraProps: f,
+    paraState: u,
+    tableProps: g,
+    tableState: w,
+    segments: B,
+    inlines: F,
+  };
+}
+function Sr(e) {
+  for (const r of e)
+    for (let n = 0; n < r.cells.length; n += 1) {
+      const t = r.cells[n],
+        a = t.meta?.merge || 0;
+      if (((t.colIndex = n), (t.colspan = 1), (t.rowspan = 1), (t.hidden = !1), a === 1)) {
+        t.hidden = !0;
+        continue;
+      }
+      if (a > 1) {
+        let s = n + 1;
+        for (; s < r.cells.length && (r.cells[s].meta?.merge || 0) === 1; )
+          ((r.cells[s].hidden = !0), (t.colspan += 1), (s += 1));
+      }
+    }
+  for (let r = 0; r < e.length; r += 1) {
+    const n = e[r];
+    for (const t of n.cells) {
+      if (t.hidden) continue;
+      const a = t.meta?.vertMerge || 0;
+      if (a === 1) {
+        t.hidden = !0;
+        continue;
+      }
+      if (a > 1) {
+        let s = r + 1;
+        for (; s < e.length; ) {
+          let o = !0;
+          for (let c = t.colIndex || 0; c < (t.colIndex || 0) + (t.colspan || 1); c += 1) {
+            const i = e[s].cells[c];
+            if (!i || (i.meta?.vertMerge || 0) !== 1) {
+              o = !1;
+              break;
+            }
+          }
+          if (!o) break;
+          for (let c = t.colIndex || 0; c < (t.colIndex || 0) + (t.colspan || 1); c += 1)
+            e[s].cells[c].hidden = !0;
+          ((t.rowspan = (t.rowspan || 1) + 1), (s += 1));
+        }
+      }
+    }
+  }
+}
+function ke(e) {
+  return {
+    type: 'paragraph',
+    id: e.id,
+    styleId: e.styleId,
+    styleName: e.styleName,
+    paraState: e.paraState,
+    inlines: e.inlines,
+    text: e.text,
+  };
+}
+function vr(e) {
+  const r = [];
+  let n = { cells: [] },
+    t = [];
+  for (const o of e)
+    if (
+      (t.push(o),
+      o.terminator === R.cellMark &&
+        (n.cells.push({ id: H('cell'), paragraphs: t.map(ke), meta: null }),
+        (t = []),
+        o.paraState.tableRowEnd || o.paraState.innerTableRowEnd))
+    ) {
+      const c = cr(o.tableState);
+      for (
+        ;
+        c.length &&
+        n.cells.length > c.length &&
+        n.cells[n.cells.length - 1].paragraphs.every((p) => !p.text && !(p.inlines || []).length);
+      )
+        n.cells.pop();
+      n.cells.forEach((p, f) => {
+        p.meta = c[f] || { index: f };
+      });
+      const i = c.length ? (c[c.length - 1].rightBoundary || 0) - (c[0].leftBoundary || 0) : 0;
+      (r.push({ id: H('row'), cells: n.cells, state: o.tableState, gridWidthTwips: i }),
+        (n = { cells: [] }));
+    }
+  (t.length && n.cells.push({ id: H('cell'), paragraphs: t.map(ke), meta: null }),
+    n.cells.length &&
+      r.push({
+        id: H('row'),
+        cells: n.cells,
+        state: e[0]?.tableState || de([]),
+        gridWidthTwips: 0,
+      }),
+    Sr(r));
+  const a = r.find((o) => o.gridWidthTwips)?.gridWidthTwips || 0,
+    s = Math.max(...e.map((o) => Ce(o.paraState)), 1);
+  return {
+    type: 'table',
+    id: H('table'),
+    depth: s,
+    rows: r,
+    state: r[0]?.state || de([]),
+    gridWidthTwips: a,
+  };
+}
+function Cr(e) {
+  const r = [];
+  let n = 0;
+  for (; n < e.length; ) {
+    const t = e[n];
+    if (Ce(t.paraState) <= 0) {
+      (r.push(ke(t)), (n += 1));
+      continue;
+    }
+    const s = [];
+    for (; n < e.length && Ce(e[n].paraState) > 0; ) (s.push(e[n]), (n += 1));
+    r.push(vr(s));
+  }
+  return r;
+}
+function Br(e, r = {}) {
+  const n = [],
+    t = ft(e, r);
+  n.push(...(t.warnings || []));
+  const a = t.getStream('/WordDocument');
+  if (!a) throw new Error('Missing WordDocument stream');
+  const s = Bt(a);
+  if (
+    (s.base.wIdent !== 42476 && ie(n, `Unexpected FIB identifier: 0x${s.base.wIdent.toString(16)}`),
+    s.base.fEncrypted)
+  )
+    throw new Error('Encrypted .doc files are not supported yet');
+  const o = t.getStream(s.base.fWhichTblStm ? '/1Table' : '/0Table');
+  if (!o) throw new Error('Missing table stream');
+  const c = t.getStream('/Data') || new Uint8Array(0),
+    i = gt(o, s.fibRgFcLcb),
+    p = wt(a, i),
+    f = p.join(''),
+    u = s.fibRgLw.ccpText > 0 ? s.fibRgLw.ccpText : f.length,
+    m = ur(o, s.fibRgFcLcb),
+    b = Gt(o, s.fibRgFcLcb),
+    g = Ut(a, o, s, i).filter((x) => x.cpStart < u),
+    w = Nt(a, o, s, i)
+      .filter((x) => x.cpStart < u)
+      .map((x) => ({ ...x, cpEnd: Math.min(x.cpEnd, u) })),
+    S = w.length
+      ? w.map((x) => ({
+          cpStart: x.cpStart,
+          cpEnd: x.cpEnd,
+          terminator: f[x.cpEnd - 1] || '',
+          styleId: x.styleId,
+          properties: x.properties,
+        }))
+      : Pt(f.slice(0, u)).map((x) => ({ ...x, styleId: 0, properties: [] })),
+    M = rr(t),
+    B = [],
+    F = new Set(),
+    L = br(c, M, B, F, new Map(), r),
+    j = { index: 0 },
+    A = S.map((x) => {
+      const q = yt(a, i, p, x.cpStart, x.cpEnd),
+        z = x.terminator === R.paragraph || x.terminator === R.cellMark ? x.terminator : '',
+        Q = z && q.endsWith(z) ? q.slice(0, -1) : q;
+      return Tr({ ...x, terminator: z }, Q, m, b, g, L, j);
+    }),
+    W = Cr(A),
+    v = Array.from(M.values())
+      .filter((x) => x?.attachment && !F.has(x.entry.name))
+      .map((x) => x.attachment);
+  for (const x of v) B.push(x);
+  return (
+    v.length && W.push({ type: 'attachments', id: H('attachments'), items: v }),
+    {
+      kind: 'msdoc',
+      version: 1,
+      warnings: n,
+      meta: {
+        fib: {
+          wIdent: s.base.wIdent,
+          nFib: s.base.nFib,
+          fWhichTblStm: s.base.fWhichTblStm,
+          fComplex: s.base.fComplex,
+          fEncrypted: s.base.fEncrypted,
+          ccpText: s.fibRgLw.ccpText,
+        },
+        counts: {
+          paragraphs: A.length,
+          blocks: W.length,
+          assets: B.length,
+          styles: m.styles.size,
+          fonts: b.fonts.length,
+        },
+      },
+      fonts: b.fonts,
+      styles: Array.from(m.styles.values()).map((x) => ({
+        istd: x.istd,
+        name: x.name,
+        type: x.stdfBase?.stk,
+        basedOn: x.stdfBase?.istdBase,
+        next: x.stdfBase?.istdNext,
+      })),
+      blocks: W,
+      assets: B,
+    }
+  );
+}
+const re = {
+  1: '#000000',
+  2: '#0000ff',
+  3: '#00ffff',
+  4: '#00ff00',
+  5: '#ff00ff',
+  6: '#ff0000',
+  7: '#ffff00',
+  8: '#ffffff',
+  9: '#000080',
+  10: '#008080',
+  11: '#008000',
+  12: '#800080',
+  13: '#800000',
+  14: '#808000',
+  15: '#808080',
+  16: '#c0c0c0',
+};
+function ne(e) {
+  return Object.entries(e)
+    .filter(([, r]) => r != null && r !== '')
+    .map(([r, n]) => `${r}:${n}`)
+    .join(';');
+}
+function V(e) {
+  if (!e) return null;
+  const r = Math.max(1, Math.round(((e.lineWidth ?? 8) / 8) * 1.3333)),
+    n = e.borderType,
+    t = n === 6 ? 'double' : n === 3 ? 'dotted' : n === 2 ? 'dashed' : 'solid',
+    a = e.color,
+    s = (a && re[a]) || '#666';
+  return `${r}px ${t} ${s}`;
+}
+function kr(e) {
+  const r = { 'text-align': ar(e.alignment) },
+    n = _(e.spacingBefore),
+    t = _(e.spacingAfter),
+    a = _(e.leftIndent),
+    s = _(e.rightIndent),
+    o = _(e.firstLineIndent);
+  if (
+    (n && (r['margin-top'] = `${n}px`),
+    t && (r['margin-bottom'] = `${t}px`),
+    a && (r['margin-left'] = `${a}px`),
+    s && (r['margin-right'] = `${s}px`),
+    o && (r['text-indent'] = `${o}px`),
+    e.lineSpacing)
+  ) {
+    const u = Math.abs(e.lineSpacing) / 240;
+    u && (r['line-height'] = String(Math.max(1, u)));
+  }
+  (e.keepLines && (r['break-inside'] = 'avoid'),
+    e.keepNext && (r['break-after'] = 'avoid'),
+    e.pageBreakBefore && (r['break-before'] = 'page'),
+    e.rtlPara && (r.direction = 'rtl'));
+  const c = V(e.borders?.top),
+    i = V(e.borders?.right),
+    p = V(e.borders?.bottom),
+    f = V(e.borders?.left);
+  return (
+    c && (r['border-top'] = c),
+    i && (r['border-right'] = i),
+    p && (r['border-bottom'] = p),
+    f && (r['border-left'] = f),
+    r
+  );
+}
+function Fr(e) {
+  const r = sr(e);
+  if (!e || r === 'none') return {};
+  const n = { 'text-decoration-line': 'underline' };
+  return (
+    r === 'double' || r === 'wavy-double'
+      ? (n['text-decoration-style'] = 'double')
+      : r.includes('dot') || r === 'dotted-heavy'
+        ? (n['text-decoration-style'] = 'dotted')
+        : r.includes('dash')
+          ? (n['text-decoration-style'] = 'dashed')
+          : r.includes('wave') || r.includes('wavy')
+            ? (n['text-decoration-style'] = 'wavy')
+            : (n['text-decoration-style'] = 'solid'),
+    n
+  );
+}
+function je(e) {
+  const r = {};
+  ((e.bold || e.boldBi) && (r['font-weight'] = '700'),
+    (e.italic || e.italicBi) && (r['font-style'] = 'italic'),
+    (e.strike || e.doubleStrike) &&
+      (r['text-decoration-line'] =
+        `${r['text-decoration-line'] ? `${r['text-decoration-line']} ` : ''}line-through`),
+    Object.assign(r, Fr(e.underline)),
+    e.fontSizeHalfPoints && (r['font-size'] = `${e.fontSizeHalfPoints / 2}pt`),
+    e.fontFamily &&
+      (r['font-family'] = `'${String(e.fontFamily).replace(/'/g, "\\'")}', sans-serif`),
+    e.colorIndex && re[e.colorIndex] && (r.color = re[e.colorIndex]));
+  const n = typeof e.highlight == 'number' ? e.highlight : e.highlight?.index;
+  return (
+    n && ve[n] && (r['background-color'] = ve[n]),
+    e.smallCaps && (r['font-variant-caps'] = 'small-caps'),
+    e.caps && (r['text-transform'] = 'uppercase'),
+    e.scale &&
+      e.scale !== 100 &&
+      ((r.display = 'inline-block'),
+      (r.transform = `scaleX(${e.scale / 100})`),
+      (r['transform-origin'] = 'left center')),
+    e.positionHalfPoints > 0 && (r['vertical-align'] = 'super'),
+    e.positionHalfPoints < 0 && (r['vertical-align'] = 'sub'),
+    e.outline && (r['text-shadow'] = '0 0 0.02em currentColor'),
+    (e.shadow || e.emboss || e.imprint) &&
+      (r['text-shadow'] = r['text-shadow']
+        ? `${r['text-shadow']}, 0.06em 0.06em 0.08em rgba(0,0,0,.25)`
+        : '0.06em 0.06em 0.08em rgba(0,0,0,.25)'),
+    e.rtl && (r.direction = 'rtl'),
+    r
+  );
+}
+function Ir(e) {
+  const r = N(e.text),
+    n = je(e.style);
+  n['white-space'] = 'break-spaces';
+  const t = ne(n),
+    a = `<span${t ? ` style="${t}"` : ''}>${r}</span>`;
+  return e.href
+    ? `<a class="msdoc-link" href="${N(e.href)}" target="_blank" rel="noreferrer noopener">${a}</a>`
+    : a;
+}
+function Er(e) {
+  const r = je(e.style);
+  ((r['max-width'] = '100%'), (r.height = 'auto'));
+  const n = `<img class="msdoc-image" src="${N(e.asset.dataUrl)}" alt="" style="${ne(r)}">`;
+  return e.href
+    ? `<a class="msdoc-link" href="${N(e.href)}" target="_blank" rel="noreferrer noopener">${n}</a>`
+    : n;
+}
+function Ar(e) {
+  const r = N(e.asset.name || 'embedded-file'),
+    n = `<a class="msdoc-attachment" href="${N(e.asset.dataUrl)}" download="${r}">📎 ${r}</a>`;
+  return e.href
+    ? `<a class="msdoc-link" href="${N(e.href)}" target="_blank" rel="noreferrer noopener">${n}</a>`
+    : n;
+}
+function Dr(e) {
+  return e
+    .map((r) =>
+      r.type === 'text'
+        ? Ir(r)
+        : r.type === 'image'
+          ? Er(r)
+          : r.type === 'attachment'
+            ? Ar(r)
+            : r.type === 'lineBreak'
+              ? '<br>'
+              : r.type === 'pageBreak'
+                ? '<span class="msdoc-page-break"></span>'
+                : '',
+    )
+    .join('');
+}
+function ze(e, r = {}) {
+  const n = r.inline ? 'div' : 'p',
+    t = ne(kr(e.paraState)),
+    s = Dr(e.inlines || []) || '<br>',
+    o = ['msdoc-paragraph'];
+  return (
+    e.styleName && o.push(`msdoc-style-${Re(e.styleName)}`),
+    `<${n} class="${o.join(' ')}"${t ? ` style="${t}"` : ''}>${s}</${n}>`
+  );
+}
+function Mr(e) {
+  const r = {},
+    n =
+      e.meta?.rightBoundary != null && e.meta?.leftBoundary != null
+        ? e.meta.rightBoundary - e.meta.leftBoundary
+        : e.meta?.width,
+    t = _(n);
+  (t && (r.width = `${t}px`),
+    e.meta?.noWrap && (r['white-space'] = 'nowrap'),
+    e.meta?.fitText && (r['text-align'] = 'justify'),
+    e.meta?.vertAlign != null && (r['vertical-align'] = or(e.meta.vertAlign)));
+  const a = V(e.meta?.borders?.all),
+    s = V(e.meta?.borders?.top) || a,
+    o = V(e.meta?.borders?.right) || a,
+    c = V(e.meta?.borders?.bottom) || a,
+    i = V(e.meta?.borders?.left) || a;
+  (s && (r['border-top'] = s),
+    o && (r['border-right'] = o),
+    c && (r['border-bottom'] = c),
+    i && (r['border-left'] = i));
+  const p =
+    typeof e.meta?.shading == 'object' && e.meta?.shading && 'color' in e.meta.shading
+      ? e.meta.shading.color
+      : void 0;
+  return (p && re[p] && (r['background-color'] = re[p]), r);
+}
+function Lr(e) {
+  const r = {},
+    n = _(e.gridWidthTwips || e.state?.tableWidth?.wWidth);
+  n ? (r.width = `${n}px`) : (r.width = '100%');
+  const t = _(e.state?.leftIndent);
+  return (
+    t && (r['margin-left'] = `${t}px`),
+    (r['border-collapse'] = 'collapse'),
+    (r['table-layout'] = 'fixed'),
+    r
+  );
+}
+function Or(e) {
+  const r = e.rows
+    .map((n) => {
+      const t = n.state?.rowHeight ? _(Math.abs(n.state.rowHeight)) : null,
+        a = t ? ` style="height:${t}px"` : '',
+        s = n.cells
+          .filter((o) => !o.hidden)
+          .map((o) => {
+            const c = [];
+            ((o.colspan ?? 1) > 1 && c.push(` colspan="${o.colspan}"`),
+              (o.rowspan ?? 1) > 1 && c.push(` rowspan="${o.rowspan}"`));
+            const i = ne(Mr(o)),
+              p = o.paragraphs.map((f) => ze(f, { inline: !0 })).join('');
+            return `<td class="msdoc-cell"${c.join('')}${i ? ` style="${i}"` : ''}>${p || '<div class="msdoc-paragraph"><br></div>'}</td>`;
+          })
+          .join('');
+      return `<tr class="msdoc-row"${a}>${s}</tr>`;
+    })
+    .join('');
+  return `<table class="msdoc-table msdoc-table-depth-${e.depth}" style="${ne(Lr(e))}"><tbody>${r}</tbody></table>`;
+}
+function Rr(e) {
+  return `<section class="msdoc-attachments"><div class="msdoc-attachments-title">Embedded attachments</div><ul>${e.items.map((n) => `<li><a class="msdoc-attachment" href="${N(n.dataUrl)}" download="${N(n.name || 'embedded-file')}">📎 ${N(n.name || 'embedded-file')}</a></li>`).join('')}</ul></section>`;
+}
+function _e() {
+  return `
 .msdoc-root{box-sizing:border-box;max-width:100%;padding:24px;background:#fff;color:#111;font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .msdoc-root *{box-sizing:border-box}
 .msdoc-paragraph{margin:0 0 8px;white-space:normal;word-break:break-word;overflow-wrap:anywhere}
@@ -14,7 +2909,60 @@ import{aQ as Ke,b5 as Xe,ad as Je}from"./index-C2avURFS.js";import{b as Ye,a as 
 .msdoc-attachments{margin-top:20px;padding-top:12px;border-top:1px solid #e5e7eb}
 .msdoc-attachments-title{font-weight:600;margin-bottom:8px}
 .msdoc-page-break{display:block;height:0;border-top:1px dashed #cbd5e1;margin:16px 0}
-`}function Wr(e,r={}){const n=r.css??_e();return{html:e.blocks.map(a=>a.type==="paragraph"?ze(a):a.type==="table"?Or(a):a.type==="attachments"?Rr(a):"").join(""),css:n,warnings:e.warnings||[],meta:e.meta,assets:e.assets||[],parsed:e}}async function $r(e){if(e instanceof ArrayBuffer)return e;if(ArrayBuffer.isView(e)){const r=new Uint8Array(e.byteLength);return r.set(new Uint8Array(e.buffer,e.byteOffset,e.byteLength)),r.buffer}if(typeof Blob<"u"&&e instanceof Blob)return await e.arrayBuffer();if(typeof e=="string"){const r=await fetch(e);if(!r.ok)throw new Error(`Failed to fetch document: ${r.status}`);return await r.arrayBuffer()}throw new TypeError("Unsupported input type")}async function Hr(e,r={}){const n=await $r(e);if(r.workerClient)return r.workerClient.parseToHtml(n,{parseOptions:r.parseOptions||{},renderOptions:r.renderOptions||{}});const t=Br(n,r.parseOptions||{});return Wr(t,r.renderOptions||{})}const Ve='<span class="msdoc-page-break"></span>',Ur='<p class="msdoc-paragraph"><br></p>',G={width:794,height:1123},ce=.24,Pe=3,Oe=.15,Nr=`
+`;
+}
+function Wr(e, r = {}) {
+  const n = r.css ?? _e();
+  return {
+    html: e.blocks
+      .map((a) =>
+        a.type === 'paragraph'
+          ? ze(a)
+          : a.type === 'table'
+            ? Or(a)
+            : a.type === 'attachments'
+              ? Rr(a)
+              : '',
+      )
+      .join(''),
+    css: n,
+    warnings: e.warnings || [],
+    meta: e.meta,
+    assets: e.assets || [],
+    parsed: e,
+  };
+}
+async function $r(e) {
+  if (e instanceof ArrayBuffer) return e;
+  if (ArrayBuffer.isView(e)) {
+    const r = new Uint8Array(e.byteLength);
+    return (r.set(new Uint8Array(e.buffer, e.byteOffset, e.byteLength)), r.buffer);
+  }
+  if (typeof Blob < 'u' && e instanceof Blob) return await e.arrayBuffer();
+  if (typeof e == 'string') {
+    const r = await fetch(e);
+    if (!r.ok) throw new Error(`Failed to fetch document: ${r.status}`);
+    return await r.arrayBuffer();
+  }
+  throw new TypeError('Unsupported input type');
+}
+async function Hr(e, r = {}) {
+  const n = await $r(e);
+  if (r.workerClient)
+    return r.workerClient.parseToHtml(n, {
+      parseOptions: r.parseOptions || {},
+      renderOptions: r.renderOptions || {},
+    });
+  const t = Br(n, r.parseOptions || {});
+  return Wr(t, r.renderOptions || {});
+}
+const Ve = '<span class="msdoc-page-break"></span>',
+  Ur = '<p class="msdoc-paragraph"><br></p>',
+  G = { width: 794, height: 1123 },
+  ce = 0.24,
+  Pe = 3,
+  Oe = 0.15,
+  Nr = `
 .msdoc-stage{
   box-sizing:border-box;
   min-height:100%;
@@ -89,7 +3037,8 @@ import{aQ as Ke,b5 as Xe,ad as Je}from"./index-C2avURFS.js";import{b as Ye,a as 
     box-shadow:none;
   }
 }
-`,jr=`
+`,
+  jr = `
 .msdoc-zoom-viewer{
   box-sizing:border-box;
   height:100%;
@@ -113,5 +3062,161 @@ import{aQ as Ke,b5 as Xe,ad as Je}from"./index-C2avURFS.js";import{b as Ye,a as 
   margin:0;
   transform-origin:top center;
 }
-`,zr=e=>e.ownerDocument.defaultView;function _r(e){return e.replace(/<(p|table|section)([^>]*?)style="([^"]*?\bbreak-before\s*:\s*page;?[^"]*?)"([^>]*)>/gi,r=>`${Ve}${r}`)}function Vr(e){return`<div class="msdoc-stage">${_r(e).split(Ve).map(t=>`<section class="msdoc-page"><div class="msdoc-root">${t||Ur}</div></section>`).join("")}</div>`}function Gr(e){const r=e.cloneNode(!0);return r.classList.remove("msdoc-zoom-viewer"),r.querySelectorAll("style[data-msdoc-zoom]").forEach(n=>n.remove()),r.querySelectorAll(".msdoc-stage, .msdoc-page, .msdoc-root").forEach(n=>{n.style.height="auto",n.style.maxHeight="none",n.style.overflow="visible",n.style.transform="none"}),r.querySelectorAll(".msdoc-page").forEach(n=>{Qe(n,G,{heightMode:"min"}),n.style.position="relative",n.style.width=he(G.width),n.style.maxWidth="none",n.style.margin="0 auto 18px";const t=n.querySelector(".msdoc-root");t&&(t.style.position="relative",t.style.top="auto",t.style.left="auto",t.style.width=he(G.width),t.style.maxWidth="none",t.style.minHeight=he(G.height),t.style.height="auto",t.style.transform="none",t.style.transformOrigin="top left",t.style.boxShadow="none",t.style.border="0",t.style.overflow="visible")}),r.innerHTML}function qr(){return Ye({selector:".viewer-export-content .msdoc-page",width:G.width,height:G.height,heightMode:"min"})}function Zr(e){const r=Array.from(e.querySelectorAll(".msdoc-page"));if(!r.length)return()=>{};e.classList.add("msdoc-zoom-viewer");const n=zr(e),t=n?.ResizeObserver,a=e.ownerDocument.createElement("style");a.dataset.msdocZoom="true",a.textContent=jr,e.prepend(a);const s=Je();let o=0,c=1,i=1,p=1;const f=w=>Math.min(Pe,Math.max(ce,Number(w.toFixed(2)))),u=()=>{n&&(n.cancelAnimationFrame(o),o=n.requestAnimationFrame(()=>{let w=1,S=1;r.forEach(M=>{const B=M.querySelector(".msdoc-root");if(!B)return;const F=B.offsetWidth||G.width,E=Math.max(B.scrollHeight,B.offsetHeight,G.height),L=Math.max(e.clientWidth-48,120),j=Math.min(1,Math.max(ce,L/F)),A=f(j*c);w=A,S=j,B.style.transform=`translateX(-50%) scale(${A})`,M.style.width=`${Math.ceil(Math.max(F*A,120))}px`,M.style.height=`${Math.ceil(E*A)}px`}),i=w,p=S,s.emit()}))},m=()=>({scale:i,label:`${Math.round(i*100)}%`,canZoomIn:i<Pe,canZoomOut:i>ce,canReset:c!==1,minScale:ce,maxScale:Pe}),b=w=>(c=Math.min(6,Math.max(.2,Number(w.toFixed(2)))),u(),m());e.dataset.viewerZoomProvider="doc",Ke(e,{zoomIn:()=>b(c+Oe),zoomOut:()=>b(c-Oe),resetZoom:()=>b(1),setZoom:w=>b(w/Math.max(p,.01)),getState:m,subscribe:s.subscribe});const g=t?new t(u):null;return g?.observe(e),r.forEach(w=>{const S=w.querySelector(".msdoc-root");S&&g?.observe(S)}),u(),()=>{n?.cancelAnimationFrame(o),g?.disconnect(),Xe(e),a.remove(),e.classList.remove("msdoc-zoom-viewer")}}async function tn(e,r,n){var t;const a=await Hr(e,{renderOptions:{css:`${_e()}
-${Nr}`}});r.innerHTML=`<style data-msdoc>${a.css}</style>${Vr(a.html)}`;const s=Zr(r);return(t=n?.registerExportAdapter)===null||t===void 0||t.call(n,{includeDocumentStyles:!1,printStyle:qr,toHtml:()=>Gr(r)}),{$el:r,unmount(){var o;(o=n?.registerExportAdapter)===null||o===void 0||o.call(n,null),s(),r.innerHTML=""}}}export{tn as default};
+`,
+  zr = (e) => e.ownerDocument.defaultView;
+function _r(e) {
+  return e.replace(
+    /<(p|table|section)([^>]*?)style="([^"]*?\bbreak-before\s*:\s*page;?[^"]*?)"([^>]*)>/gi,
+    (r) => `${Ve}${r}`,
+  );
+}
+function Vr(e) {
+  return `<div class="msdoc-stage">${_r(e)
+    .split(Ve)
+    .map((t) => `<section class="msdoc-page"><div class="msdoc-root">${t || Ur}</div></section>`)
+    .join('')}</div>`;
+}
+function Gr(e) {
+  const r = e.cloneNode(!0);
+  return (
+    r.classList.remove('msdoc-zoom-viewer'),
+    r.querySelectorAll('style[data-msdoc-zoom]').forEach((n) => n.remove()),
+    r.querySelectorAll('.msdoc-stage, .msdoc-page, .msdoc-root').forEach((n) => {
+      ((n.style.height = 'auto'),
+        (n.style.maxHeight = 'none'),
+        (n.style.overflow = 'visible'),
+        (n.style.transform = 'none'));
+    }),
+    r.querySelectorAll('.msdoc-page').forEach((n) => {
+      (Qe(n, G, { heightMode: 'min' }),
+        (n.style.position = 'relative'),
+        (n.style.width = he(G.width)),
+        (n.style.maxWidth = 'none'),
+        (n.style.margin = '0 auto 18px'));
+      const t = n.querySelector('.msdoc-root');
+      t &&
+        ((t.style.position = 'relative'),
+        (t.style.top = 'auto'),
+        (t.style.left = 'auto'),
+        (t.style.width = he(G.width)),
+        (t.style.maxWidth = 'none'),
+        (t.style.minHeight = he(G.height)),
+        (t.style.height = 'auto'),
+        (t.style.transform = 'none'),
+        (t.style.transformOrigin = 'top left'),
+        (t.style.boxShadow = 'none'),
+        (t.style.border = '0'),
+        (t.style.overflow = 'visible'));
+    }),
+    r.innerHTML
+  );
+}
+function qr() {
+  return Ye({
+    selector: '.viewer-export-content .msdoc-page',
+    width: G.width,
+    height: G.height,
+    heightMode: 'min',
+  });
+}
+function Zr(e) {
+  const r = Array.from(e.querySelectorAll('.msdoc-page'));
+  if (!r.length) return () => {};
+  e.classList.add('msdoc-zoom-viewer');
+  const n = zr(e),
+    t = n?.ResizeObserver,
+    a = e.ownerDocument.createElement('style');
+  ((a.dataset.msdocZoom = 'true'), (a.textContent = jr), e.prepend(a));
+  const s = Je();
+  let o = 0,
+    c = 1,
+    i = 1,
+    p = 1;
+  const f = (w) => Math.min(Pe, Math.max(ce, Number(w.toFixed(2)))),
+    u = () => {
+      n &&
+        (n.cancelAnimationFrame(o),
+        (o = n.requestAnimationFrame(() => {
+          let w = 1,
+            S = 1;
+          (r.forEach((M) => {
+            const B = M.querySelector('.msdoc-root');
+            if (!B) return;
+            const F = B.offsetWidth || G.width,
+              E = Math.max(B.scrollHeight, B.offsetHeight, G.height),
+              L = Math.max(e.clientWidth - 48, 120),
+              j = Math.min(1, Math.max(ce, L / F)),
+              A = f(j * c);
+            ((w = A),
+              (S = j),
+              (B.style.transform = `translateX(-50%) scale(${A})`),
+              (M.style.width = `${Math.ceil(Math.max(F * A, 120))}px`),
+              (M.style.height = `${Math.ceil(E * A)}px`));
+          }),
+            (i = w),
+            (p = S),
+            s.emit());
+        })));
+    },
+    m = () => ({
+      scale: i,
+      label: `${Math.round(i * 100)}%`,
+      canZoomIn: i < Pe,
+      canZoomOut: i > ce,
+      canReset: c !== 1,
+      minScale: ce,
+      maxScale: Pe,
+    }),
+    b = (w) => ((c = Math.min(6, Math.max(0.2, Number(w.toFixed(2))))), u(), m());
+  ((e.dataset.viewerZoomProvider = 'doc'),
+    Ke(e, {
+      zoomIn: () => b(c + Oe),
+      zoomOut: () => b(c - Oe),
+      resetZoom: () => b(1),
+      setZoom: (w) => b(w / Math.max(p, 0.01)),
+      getState: m,
+      subscribe: s.subscribe,
+    }));
+  const g = t ? new t(u) : null;
+  return (
+    g?.observe(e),
+    r.forEach((w) => {
+      const S = w.querySelector('.msdoc-root');
+      S && g?.observe(S);
+    }),
+    u(),
+    () => {
+      (n?.cancelAnimationFrame(o),
+        g?.disconnect(),
+        Xe(e),
+        a.remove(),
+        e.classList.remove('msdoc-zoom-viewer'));
+    }
+  );
+}
+async function tn(e, r, n) {
+  var t;
+  const a = await Hr(e, {
+    renderOptions: {
+      css: `${_e()}
+${Nr}`,
+    },
+  });
+  r.innerHTML = `<style data-msdoc>${a.css}</style>${Vr(a.html)}`;
+  const s = Zr(r);
+  return (
+    (t = n?.registerExportAdapter) === null ||
+      t === void 0 ||
+      t.call(n, { includeDocumentStyles: !1, printStyle: qr, toHtml: () => Gr(r) }),
+    {
+      $el: r,
+      unmount() {
+        var o;
+        ((o = n?.registerExportAdapter) === null || o === void 0 || o.call(n, null),
+          s(),
+          (r.innerHTML = ''));
+      },
+    }
+  );
+}
+export { tn as default };

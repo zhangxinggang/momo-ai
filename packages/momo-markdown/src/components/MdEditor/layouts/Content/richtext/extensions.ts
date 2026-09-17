@@ -1,3 +1,4 @@
+import { Extension } from '@tiptap/core';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -7,9 +8,58 @@ import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table
 import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
 import Underline from '@tiptap/extension-underline';
+import { DOMParser as ProseMirrorDOMParser } from '@tiptap/pm/model';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from 'tiptap-markdown';
 import { Admonition, CodeBlock, KatexBlock, KatexInline } from './nodes';
+
+const MARKDOWN_PASTE_SYNTAX =
+  /(^|\n)\s*(?:#{1,6}\s+|`{3,}|~{3,}|[-+*]\s+|\d+[.)]\s+|>\s+|\|.*\||(?:---|\*\*\*|___)\s*$)|(?:\*\*|__|!\[|\[[^\]]+\]\([^\n)]+\))/m;
+
+/**
+ * 将系统剪贴板中的块级 Markdown 转为 ProseMirror 文档。
+ *
+ * tiptap-markdown 内置的 clipboardTextParser 仅以行内模式解析文本；含有
+ * Mermaid 等代码围栏时会被拆成普通段落。这里在默认粘贴流程之前处理
+ * Markdown，以保留标题、列表、表格和 fenced code block 的块级结构。
+ */
+const MarkdownPaste = Extension.create({
+  name: 'momoMarkdownPaste',
+
+  addProseMirrorPlugins() {
+    const { editor } = this;
+
+    return [
+      new Plugin({
+        key: new PluginKey('momoMarkdownPaste'),
+        props: {
+          handlePaste(view, event) {
+            const text = event.clipboardData?.getData('text/plain') ?? '';
+            if (!MARKDOWN_PASTE_SYNTAX.test(text)) {
+              return false;
+            }
+
+            const parser = (editor.storage as any).markdown?.parser;
+            if (!parser) {
+              return false;
+            }
+
+            const container = document.createElement('div');
+            container.innerHTML = parser.parse(text);
+            const slice = ProseMirrorDOMParser.fromSchema(view.state.schema).parseSlice(container, {
+              preserveWhitespace: true,
+              context: view.state.selection.$from,
+            });
+
+            view.dispatch(view.state.tr.replaceSelection(slice).scrollIntoView());
+            return true;
+          },
+        },
+      }),
+    ];
+  },
+});
 
 /** 与 markdown-it-image-figures 使用相同 DOM，确保图片与图注主题规则一致。 */
 const PreviewImage = Image.extend({
@@ -126,9 +176,13 @@ export const buildRichTextExtensions = (
     Markdown.configure({
       html: true,
       breaks: true,
+      // 内置剪贴板转换作为行内 Markdown 粘贴的兜底；块级内容由 MarkdownPaste
+      // 按完整文档结构处理。
+      transformPastedText: true,
       // 保留浏览器/ProseMirror 的富文本剪贴板：text/html 携带所见样式，
       // text/plain 只包含可见文字，不再把选择内容重新序列化成 Markdown。
       transformCopiedText: false,
     }),
+    MarkdownPaste,
   ];
 };

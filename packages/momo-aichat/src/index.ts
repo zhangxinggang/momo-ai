@@ -1,6 +1,8 @@
 export { AiChatView } from './components/AiChatView';
 export { AiChatConfigProvider, useAiChatConfig } from './contexts/AiChatConfigContext';
 export { ChatProvider, useChatContext } from './contexts/ChatContext';
+export { createRuntimeChatStream } from './runtime/chat-stream';
+export type { IRuntimeChatStreamOptions } from './runtime/chat-stream';
 
 // 会话类型与工具
 export {
@@ -18,6 +20,7 @@ export type {
   IChatAttachment,
   IChatAttachmentMeta,
   IChatContext,
+  IChatContextUsage,
   IChatMessage,
   IChatSession,
   INoteSnapshot,

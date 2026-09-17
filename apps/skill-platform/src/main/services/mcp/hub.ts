@@ -147,6 +147,30 @@ export class McpHub {
     return tools;
   }
 
+  async callToolStructured(
+    request: DMcpCallToolRequest,
+    signal?: AbortSignal,
+  ): Promise<{
+    content: unknown[];
+    structuredContent?: Record<string, unknown>;
+    isError: boolean;
+  }> {
+    const { serverName, toolName } = decodeMcpToolName(request.name);
+    const runtime = this.servers.get(serverName);
+    if (!runtime?.client || runtime.status !== EMcpConnectionStatus.EConnected)
+      throw new Error('MCP Server 未连接');
+    const result = await runtime.client.callTool(
+      { name: toolName, arguments: request.arguments ?? {} },
+      undefined,
+      { signal, timeout: CALL_TOOL_TIMEOUT_MS },
+    );
+    return {
+      content: (result.content ?? []) as unknown[],
+      structuredContent: result.structuredContent as Record<string, unknown> | undefined,
+      isError: Boolean(result.isError),
+    };
+  }
+
   async callTool(request: DMcpCallToolRequest): Promise<DMcpCallToolResult> {
     let serverName: string;
     let toolName: string;

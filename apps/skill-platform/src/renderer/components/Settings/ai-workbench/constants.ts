@@ -106,7 +106,7 @@ export const SCENARIO_DEFINITIONS: IScenarioDefinition[] = [
 
 export const DEFAULT_CHAT_PARAMS: IModelFormState['chatParams'] = {
   temperature: 0.7,
-  maxTokens: 2048,
+  maxTokens: 32768,
   topP: 1,
   topK: '',
   frequencyPenalty: 0,

@@ -47,7 +47,7 @@ export function ChatContextBanner() {
     );
   }, [collections, kbCollectionId, kbEnabled]);
 
-  const showRag = Boolean(kbEnabled && kbName);
+  const showRag = Boolean(listKbCollections && kbEnabled && kbName);
   const agentName = agentAppBanner?.name?.trim() || '';
   const showAgent = Boolean(agentName);
   const skillName = skillBanner?.name?.trim() || '';

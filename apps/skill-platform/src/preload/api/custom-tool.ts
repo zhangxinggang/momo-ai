@@ -20,7 +20,7 @@ export const customToolApi = {
   writeGeneratedFiles: (
     toolPath: string,
     files: ICustomToolGeneratedFile[],
-    options?: { activate?: boolean },
+    options?: { activate?: boolean; requireCallable?: boolean },
   ) =>
     ipcRenderer.invoke(
       IPC_CHANNELS.TOOL_WRITE_GENERATED_FILES,

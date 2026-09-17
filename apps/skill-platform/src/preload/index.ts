@@ -1,6 +1,7 @@
 ﻿import { contextBridge } from 'electron';
 import {
   agentAppApi,
+  agentRuntimeApi,
   aiApi,
   aichatApi,
   customToolApi,
@@ -43,6 +44,7 @@ const api = createPreloadApi({
   ai: aiApi,
   aichat: aichatApi,
   agentApp: agentAppApi,
+  agentRuntime: agentRuntimeApi,
   workflow: workflowApi,
   workflowAgent: workflowAgentApi,
   workflowBackup: workflowBackupApi,

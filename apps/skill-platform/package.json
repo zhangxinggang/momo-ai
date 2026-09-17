@@ -14,13 +14,13 @@
     "LICENSE"
   ],
   "scripts": {
-    "before:build": "node --max-old-space-size=8192 ./node_modules/vite/bin/vite.js build",
+    "before:build": "node ../../packages/momo-harness-runner/scripts/build.mjs --ensure && node --max-old-space-size=8192 ./node_modules/vite/bin/vite.js build",
     "build:default-skills": "node scripts/build-default-skills.mjs",
-    "dev": "pnpm --filter @momo/server run build && pnpm --filter @momo/file-editor run build && vite",
+    "dev": "node ../../packages/momo-harness-runner/scripts/build.mjs --ensure && pnpm --filter @momo/server run build && pnpm --filter @momo/file-editor run build && vite",
     "dev:web": "vite --config vite.web.config.ts",
     "electron:build:win": "pnpm run before:build && electron-builder --config ./scripts/build/electron-builder-win.json --win --x64 --publish never",
-    "electron:dev": "pnpm --filter @momo/server run build && pnpm --filter @momo/electron run build && pnpm --filter @momo/file-editor run build && vite",
-    "test": "vitest run"
+    "electron:dev": "node ../../packages/momo-harness-runner/scripts/build.mjs --ensure && pnpm --filter @momo/server run build && pnpm --filter @momo/electron run build && pnpm --filter @momo/file-editor run build && vite",
+    "test": "node node_modules/vitest/vitest.mjs run"
   },
   "dependencies": {
     "@lancedb/lancedb": "0.22.3",
@@ -35,7 +35,10 @@
     "html-to-docx": "^1.8.0",
     "log4js": "^6.3.0",
     "reflect-metadata": "^0.2.2",
-    "typeorm": "^1.0.0"
+    "typeorm": "^1.0.0",
+    "@momo/agent-contracts": "workspace:*",
+    "@momo/harness-adapter": "workspace:*",
+    "ajv": "^8.17.1"
   },
   "devDependencies": {
     "@ant-design/icons": "^6.2.2",
@@ -44,7 +47,6 @@
     "@momo/electron": "workspace:*",
     "@momo/file-editor": "workspace:*",
     "@momo/knowledge": "workspace:*",
-    "@momo/langchain": "workspace:*",
     "@momo/markdown": "workspace:*",
     "@momo/server": "workspace:*",
     "@momo/tree": "workspace:*",

@@ -1,15 +1,13 @@
-import fs from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
-
 import type {
   IKbDirectoryImportRequest,
   IKbEmbeddingConfig,
   IKbFileImportRequest,
   IKbIngestOptions,
   IKbRetrievalRequest,
+  IKbRetrievalResult,
 } from '@/types/modules/kb';
 
+import { parseChatAttachment, type IAttachmentParseInput } from './attachment-parser';
 import { createChunks, estimateTokens } from './chunker';
 import { openKnowledgeStorage, type IKnowledgeStorage } from './database';
 import { embedTexts } from './embedding';
@@ -178,39 +176,8 @@ export class KnowledgeV2Service {
     };
   }
 
-  async parseAttachment(input: {
-    base64?: string;
-    ext?: string;
-    mime?: string;
-  }): Promise<{ text: string; snippet: string }> {
-    if (!input.base64?.trim()) {
-      throw new KnowledgeError({
-        code: 'ATTACHMENT_CONTENT_REQUIRED',
-        stage: 'source',
-        message: '附件缺少文件内容。',
-        allowedManualActions: ['reimport'],
-      });
-    }
-    const bytes = Buffer.from(input.base64, 'base64');
-    if (!bytes.length || bytes.length > 100 * 1024 * 1024) {
-      throw new KnowledgeError({
-        code: bytes.length ? 'SOURCE_FILE_TOO_LARGE' : 'SOURCE_EMPTY',
-        stage: 'source',
-        message: bytes.length ? '附件超过 100MB 限制。' : '附件内容为空。',
-        details: { size: bytes.length },
-        allowedManualActions: ['reimport'],
-      });
-    }
-    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'aim-attachment-'));
-    const ext = /^\.[a-z0-9]+$/i.test(input.ext || '') ? input.ext! : '.txt';
-    const filePath = path.join(directory, 'attachment' + ext);
-    try {
-      await fs.writeFile(filePath, bytes);
-      const document = await parseKnowledgeFile(filePath);
-      return { text: document.content, snippet: document.content.slice(0, 1_000) };
-    } finally {
-      await fs.rm(directory, { recursive: true, force: true });
-    }
+  parseAttachment(input: IAttachmentParseInput): Promise<{ text: string; snippet: string }> {
+    return parseChatAttachment(input);
   }
 
   retryJob(jobId: string, embedding: IKbEmbeddingConfig) {
@@ -246,8 +213,21 @@ export class KnowledgeV2Service {
     return this.retrieval.retrieve(request);
   }
 
-  retrieveForChat(request: IKbRetrievalRequest) {
-    return this.retrieval.retrieve(request);
+  async retrieveForChat(request: IKbRetrievalRequest): Promise<IKbRetrievalResult> {
+    try {
+      return await this.retrieval.retrieve(request);
+    } catch (error) {
+      if (!(error instanceof KnowledgeError) || error.code !== 'INDEX_NOT_READY') {
+        throw error;
+      }
+      return {
+        status: 'no_match',
+        query: request.query,
+        evidence: [],
+        citations: [],
+        context: '所选知识库暂无可检索内容或尚未完成首次索引。',
+      };
+    }
   }
 
   async close(): Promise<void> {

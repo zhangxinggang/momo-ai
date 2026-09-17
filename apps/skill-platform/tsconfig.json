@@ -6,6 +6,8 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "paths": {
+      "@momo/agent-contracts": ["../../packages/momo-agent-contracts/src/index.ts"],
+      "@momo/harness-adapter": ["../../packages/momo-harness-adapter/src/index.ts"],
       "@/*": ["./src/*"],
       "@renderer/*": ["./src/renderer/*"],
       "@preload": ["./src/preload/index.ts"],
@@ -19,8 +21,6 @@
       ],
       "@momo/knowledge": ["../../packages/momo-knowledge/src/index.ts"],
       "@momo/knowledge/*": ["../../packages/momo-knowledge/src/*"],
-      "@momo/langchain": ["../../packages/momo-langchain/src/index.ts"],
-      "@momo/langchain/*": ["../../packages/momo-langchain/src/*"],
       "@momo/file-editor": ["../../packages/momo-file-editor/src/index.ts"],
       "@momo/file-editor/node": ["../../packages/momo-file-editor/src/node.ts"],
       "@momo/file-editor/*": ["../../packages/momo-file-editor/src/*"],

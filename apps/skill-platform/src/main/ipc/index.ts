@@ -1,6 +1,7 @@
-﻿import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
+import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
 import type { Database } from 'better-sqlite3';
 import { ipcMain } from 'electron';
+import { registerAgentRuntimeIPC } from '../agent-runtime/ipc';
 import { FolderDB, PromptDB, SkillDB, WorkflowDB } from '../database';
 import { WorkflowBusinessController } from '../database/controller/workflow-business';
 import { WorkflowFolderController } from '../database/controller/workflow-folder';
@@ -165,6 +166,7 @@ export function registerAllIPC(db: Database): void {
   registerWorkflowFolderIPC(workflowFolderDB);
   registerWorkflowAgentIPC();
   registerSettingsIPC(db);
+  registerAgentRuntimeIPC(db);
   registerImageIPC();
   registerAIIPC();
   registerAichatIPC();

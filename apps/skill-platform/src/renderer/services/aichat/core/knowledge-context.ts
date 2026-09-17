@@ -71,8 +71,7 @@ export async function retrieveKnowledgeContext(
 
   if (result.status === 'no_match') {
     return {
-      knowledgeSystemPrompt:
-        '知识库检索已成功完成，但当前知识库中没有达到相关性要求的证据。请明确告诉用户知识库中没有足够信息，不要依据常识猜测或编造答案。',
+      knowledgeSystemPrompt: `${result.context?.trim() || '当前知识库中没有达到相关性要求的证据。'} 请明确告诉用户知识库中没有足够信息，不要依据常识猜测或编造答案。`,
       citations: [],
     };
   }

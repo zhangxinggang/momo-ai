@@ -1,0 +1,31 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 10px 12px;
+  border-bottom: 1px solid hsl(var(--border));
+}
+.heading {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  span {
+    color: hsl(var(--muted-foreground));
+    font-size: 11px;
+  }
+}
+.chat {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+}
+.error {
+  margin: 8px;
+  flex-shrink: 0;
+}

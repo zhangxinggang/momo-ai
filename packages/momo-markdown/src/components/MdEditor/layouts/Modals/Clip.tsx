@@ -1,4 +1,5 @@
-import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import type CropperInstance from 'cropperjs';
+import { memo, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
 import Modal from '~/components/Modal';
 import { globalConfig, prefix } from '~/config';
@@ -6,199 +7,173 @@ import { EditorContext } from '~/context';
 import { ERROR_CATCHER, UPLOAD_IMAGE } from '~/static/event-name';
 import { base642File } from '~/utils';
 import bus from '~/utils/event-bus';
+
 interface IProps {
   visible: boolean;
   onCancel: () => void;
   onOk: (data?: any) => void;
 }
 
-let cropper: any = null;
-
 const ClipModal = (props: IProps) => {
-  const editorConext = useContext(EditorContext);
-  const { editorId, usedLanguageText, rootRef } = editorConext;
-
-  const Cropper = globalConfig.editorExtensions.cropper!.instance;
-
+  const { editorId, usedLanguageText } = useContext(EditorContext);
+  const Cropper = globalConfig.editorExtensions.cropper?.instance || window.Cropper;
   const uploadRef = useRef<HTMLInputElement>(null);
   const uploadImgRef = useRef<HTMLImageElement>(null);
-
-  // 预览框
   const previewTargetRef = useRef<HTMLDivElement>(null);
+  const cropperRef = useRef<CropperInstance | null>(null);
+  const readerRef = useRef<FileReader | null>(null);
+  const [imgSrc, setImgSrc] = useState('');
+  const [ready, setReady] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const [data, setData] = useState({
-    cropperInited: false,
-    imgSelected: false,
-    imgSrc: '',
-    // 是否全屏
-    isFullscreen: false,
-  });
-
-  useEffect(() => {
-    // 显示时构建实例及监听事件
-    if (props.visible && !data.cropperInited) {
-      window.Cropper = Cropper || window.Cropper;
-
-      // 直接定义onchange，防止创建新的实例时遗留事件
-      (uploadRef.current as HTMLInputElement).onchange = () => {
-        if (!window.Cropper) {
-          bus.emit(editorId, ERROR_CATCHER, {
-            name: 'Cropper',
-            message: 'Cropper is undefined',
-          });
-          return;
-        }
-
-        const fileList = (uploadRef.current as HTMLInputElement).files || [];
-
-        if (fileList?.length > 0) {
-          const fileReader = new FileReader();
-
-          fileReader.onload = (e: any) => {
-            setData((_data) => ({
-              ..._data,
-              imgSelected: true,
-              imgSrc: e.target.result,
-            }));
-          };
-
-          fileReader.readAsDataURL(fileList[0]);
-        }
-      };
-    }
-  }, [props.visible, data.cropperInited, Cropper, editorId]);
-
-  useEffect(() => {
-    (previewTargetRef.current as HTMLImageElement)?.setAttribute('style', '');
-  }, [data.imgSelected]);
-
-  useEffect(() => {
-    cropper?.destroy();
-    (previewTargetRef.current as HTMLImageElement)?.setAttribute('style', '');
-
-    if (uploadImgRef.current && data.imgSrc) {
-      cropper = new window.Cropper(uploadImgRef.current, {
-        viewMode: 2,
-        preview: (rootRef!.current?.getRootNode() as Document | ShadowRoot).querySelector(
-          `.${prefix}-clip-preview-target`,
-        ),
+  const reportError = useCallback(
+    (cause: unknown) => {
+      bus.emit(editorId, ERROR_CATCHER, {
+        name: 'Cropper',
+        message: cause instanceof Error ? cause.message : String(cause),
       });
-    }
-  }, [data.imgSrc, data.isFullscreen, rootRef]);
+    },
+    [editorId],
+  );
 
-  // 弹出层宽度
-  const modalSize = useMemo(() => {
-    return data.isFullscreen
-      ? {
-          width: '100%',
-          height: '100%',
-        }
-      : {
-          width: '668px',
-          height: '392px',
-        };
-  }, [data.isFullscreen]);
-
-  const reset = () => {
-    cropper.clear();
-    cropper.destroy();
-    cropper = null;
-    (uploadRef.current as HTMLInputElement).value = '';
-    setData((_data) => ({
-      ..._data,
-      imgSrc: '',
-      imgSelected: false,
-    }));
-  };
-
-  const onAdjust = useCallback((isFullscreen: boolean) => {
-    setData((_data) => ({
-      ..._data,
-      isFullscreen,
-    }));
+  const reset = useCallback(() => {
+    readerRef.current?.abort();
+    readerRef.current = null;
+    cropperRef.current?.destroy();
+    cropperRef.current = null;
+    if (uploadRef.current) uploadRef.current.value = '';
+    setImgSrc('');
+    setReady(false);
   }, []);
 
-  return useMemo(() => {
-    return (
-      <Modal
-        className={`${prefix}-modal-clip`}
-        title={usedLanguageText.clipModalTips?.title}
-        visible={props.visible}
-        onClose={props.onCancel}
-        showAdjust
-        isFullscreen={data.isFullscreen}
-        onAdjust={onAdjust}
-        {...modalSize}>
-        <div className={`${prefix}-form-item ${prefix}-clip`}>
-          <div className={`${prefix}-clip-main`}>
-            {data.imgSelected ? (
-              <div className={`${prefix}-clip-cropper`}>
-                <img src={data.imgSrc} ref={uploadImgRef} style={{ display: 'none' }} alt='' />
-                <div className={`${prefix}-clip-delete`} onClick={reset}>
-                  <Icon name='delete' />
-                </div>
-              </div>
-            ) : (
-              <div
-                className={`${prefix}-clip-upload`}
-                onClick={() => {
-                  (uploadRef.current as HTMLInputElement).click();
-                }}
-                role='button'
-                tabIndex={0}
-                aria-label={usedLanguageText.imgTitleItem?.upload}>
-                <Icon name='upload' />
-              </div>
-            )}
-          </div>
-          <div className={`${prefix}-clip-preview`}>
-            <div className={`${prefix}-clip-preview-target`} ref={previewTargetRef}></div>
-          </div>
-        </div>
-        <div className={`${prefix}-form-item`}>
-          <button
-            className={`${prefix}-btn`}
-            type='button'
-            onClick={() => {
-              if (cropper) {
-                const cvs: HTMLCanvasElement = cropper.getCroppedCanvas();
-                bus.emit(
-                  editorId,
-                  UPLOAD_IMAGE,
-                  [base642File(cvs.toDataURL('image/png'))],
-                  props.onOk,
-                );
+  useEffect(() => {
+    if (!props.visible) {
+      reset();
+      setIsFullscreen(false);
+    }
+    return () => {
+      readerRef.current?.abort();
+      readerRef.current = null;
+    };
+  }, [props.visible, reset]);
 
-                reset();
-              }
-            }}>
-            {usedLanguageText.linkModalTips?.buttonOK}
-          </button>
+  useEffect(() => {
+    setReady(false);
+    if (!props.visible || !imgSrc || !uploadImgRef.current) return;
+    let cancelled = false;
+    try {
+      if (!Cropper) throw new Error('图片裁切组件不可用');
+      cropperRef.current = new Cropper(uploadImgRef.current, {
+        viewMode: 2,
+        preview: previewTargetRef.current,
+        ready: () => {
+          if (!cancelled) setReady(true);
+        },
+      });
+    } catch (cause) {
+      reportError(cause);
+    }
+    return () => {
+      cancelled = true;
+      cropperRef.current?.destroy();
+      cropperRef.current = null;
+      previewTargetRef.current?.replaceChildren();
+    };
+  }, [props.visible, imgSrc, isFullscreen, Cropper, reportError]);
+
+  return (
+    <Modal
+      className={`${prefix}-modal-clip`}
+      title={usedLanguageText.clipModalTips?.title}
+      visible={props.visible}
+      onClose={props.onCancel}
+      showAdjust
+      isFullscreen={isFullscreen}
+      onAdjust={setIsFullscreen}
+      width='668px'
+      height='392px'>
+      <div className={`${prefix}-form-item ${prefix}-clip`}>
+        <div className={`${prefix}-clip-main`}>
+          {imgSrc ? (
+            <div className={`${prefix}-clip-cropper`}>
+              <img src={imgSrc} ref={uploadImgRef} style={{ maxWidth: '100%' }} alt='' />
+              <button
+                type='button'
+                className={`${prefix}-clip-delete`}
+                aria-label='移除图片'
+                onClick={reset}>
+                <Icon name='delete' />
+              </button>
+            </div>
+          ) : (
+            <div
+              className={`${prefix}-clip-upload`}
+              onClick={() => uploadRef.current?.click()}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  uploadRef.current?.click();
+                }
+              }}
+              role='button'
+              tabIndex={0}
+              aria-label={usedLanguageText.imgTitleItem?.upload}>
+              <Icon name='upload' />
+            </div>
+          )}
         </div>
-        <input
-          ref={uploadRef}
-          accept='image/*'
-          type='file'
-          multiple={false}
-          style={{ display: 'none' }}
-          aria-hidden='true'
-        />
-      </Modal>
-    );
-  }, [
-    usedLanguageText.clipModalTips?.title,
-    usedLanguageText.linkModalTips?.buttonOK,
-    usedLanguageText.imgTitleItem?.upload,
-    props.visible,
-    props.onCancel,
-    props.onOk,
-    data.isFullscreen,
-    data.imgSelected,
-    data.imgSrc,
-    onAdjust,
-    modalSize,
-    editorId,
-  ]);
+        <div className={`${prefix}-clip-preview`}>
+          <div className={`${prefix}-clip-preview-target`} ref={previewTargetRef} />
+        </div>
+      </div>
+      <div className={`${prefix}-form-item`}>
+        <button
+          className={`${prefix}-btn`}
+          type='button'
+          disabled={!ready}
+          onClick={() => {
+            if (!ready || !cropperRef.current) return;
+            try {
+              const canvas = cropperRef.current.getCroppedCanvas();
+              if (!canvas) throw new Error('图片尚未准备好，请重新选择图片');
+              const file = base642File(canvas.toDataURL('image/png'));
+              if (!file) throw new Error('无法生成裁切图片');
+              bus.emit(editorId, UPLOAD_IMAGE, [file], () => {
+                reset();
+                props.onOk();
+              });
+            } catch (cause) {
+              reportError(cause);
+            }
+          }}>
+          {usedLanguageText.linkModalTips?.buttonOK}
+        </button>
+      </div>
+      <input
+        ref={uploadRef}
+        accept='image/*'
+        type='file'
+        style={{ display: 'none' }}
+        aria-label={usedLanguageText.imgTitleItem?.upload}
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0];
+          event.currentTarget.value = '';
+          if (!file) return;
+          readerRef.current?.abort();
+          const reader = new FileReader();
+          readerRef.current = reader;
+          setReady(false);
+          reader.onload = () => {
+            if (readerRef.current !== reader) return;
+            readerRef.current = null;
+            setImgSrc(String(reader.result || ''));
+          };
+          reader.onerror = () => reportError(reader.error || new Error('无法读取图片'));
+          reader.readAsDataURL(file);
+        }}
+      />
+    </Modal>
+  );
 };
 
 export default memo(ClipModal);

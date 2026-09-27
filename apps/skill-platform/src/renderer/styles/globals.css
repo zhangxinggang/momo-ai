@@ -2,6 +2,121 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 列表排序使用插入线，树形排序由 antd Tree 显示插入位置。 */
+[data-drop-position='before'] {
+  box-shadow: inset 0 2px 0 hsl(var(--primary));
+}
+
+[data-drop-position='after'] {
+  box-shadow: inset 0 -2px 0 hsl(var(--primary));
+}
+
+/* Ant Design Modal 统一限制在当前窗口内。标题/关闭按钮和底部操作保持可见，
+   超出高度的内容只在正文区域滚动。 */
+.ant-modal-root,
+.ant-modal-root .ant-modal-wrap,
+.ant-modal-root .ant-modal,
+.ant-modal-root .ant-modal-container,
+.ant-modal-root .ant-modal-header,
+.ant-modal-root .ant-modal-close,
+.ant-modal-root .ant-modal-body,
+.ant-modal-root .ant-modal-footer {
+  -webkit-app-region: no-drag;
+}
+
+.ant-modal-root .ant-modal-wrap {
+  top: var(--app-titlebar-height, 0px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 24px;
+  overflow: hidden;
+}
+
+/* centered 模式原本用一个 100% 高的伪元素做垂直对齐；全局改用 flex 后必须移除，
+   否则它会和弹框一起参与布局并把高弹框挤出窗口。 */
+.ant-modal-root .ant-modal-wrap::before {
+  display: none !important;
+  content: none !important;
+}
+
+.ant-modal-root .ant-modal-wrap > .ant-modal {
+  top: auto;
+  display: flex;
+  flex-direction: column;
+  max-width: 100% !important;
+  max-height: 100%;
+  margin: 0 auto;
+  padding-bottom: 0;
+}
+
+.ant-modal-root .ant-modal-container {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - var(--app-titlebar-height, 0px) - 48px);
+  max-height: calc(100dvh - var(--app-titlebar-height, 0px) - 48px);
+  overflow: hidden;
+}
+
+.ant-modal-root .ant-modal-header,
+.ant-modal-root .ant-modal-footer {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  pointer-events: auto;
+}
+
+.ant-modal-root .ant-modal-close {
+  z-index: 3;
+  pointer-events: auto;
+}
+
+.ant-modal-root .ant-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.ant-modal-root .ant-modal-confirm-body-wrapper {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 480px), (max-height: 480px) {
+  .ant-modal-root .ant-modal-wrap {
+    padding: 8px;
+  }
+
+  .ant-modal-root .ant-modal-container {
+    max-height: calc(100vh - var(--app-titlebar-height, 0px) - 16px);
+    max-height: calc(100dvh - var(--app-titlebar-height, 0px) - 16px);
+  }
+}
+
+/* 全屏内容及其遮罩始终位于应用标题栏下方。 */
+.ant-modal-root .ant-modal-mask,
+.ant-image-preview-root .ant-image-preview-mask,
+.ant-image-preview-root .ant-image-preview-wrap {
+  top: var(--app-titlebar-height, 0px);
+}
+
+.app-titlebar {
+  position: relative;
+  z-index: 2147483647;
+}
+
+.app-fullscreen-modal-root .ant-modal-wrap {
+  padding: 0;
+}
+
+.app-fullscreen-modal-root .ant-modal-container {
+  max-height: calc(100vh - var(--app-titlebar-height, 0px));
+  max-height: calc(100dvh - var(--app-titlebar-height, 0px));
+}
+
 @layer base {
   :root {
     /* Theme variables - Morandi palette */
@@ -342,6 +457,11 @@
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* 底层渲染调试入口不面向产品用户。 */
+[data-openui-devtools-root] {
+  display: none;
 }
 
 /* Disable text selection (e.g. for buttons) */

@@ -2,17 +2,22 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import {
-  ElementType,
-  ExtractInputKind,
-  OutputFormat,
-  ResultFormat,
-  extract,
-  type ExtractedDocument,
-  type ProcessingWarning,
+import type {
+  ExtractedDocument,
+  ProcessingWarning,
+  ElementType as XbergElementType,
 } from '@xberg-io/xberg';
 
 import { KnowledgeError, toKnowledgeError } from './error';
+import { loadPackagedNativeModule } from './native-module';
+
+const { ElementType, ExtractInputKind, OutputFormat, ResultFormat, extract } =
+  loadPackagedNativeModule<typeof import('@xberg-io/xberg')>({
+    packageName: '@xberg-io/xberg',
+    nativePackageName: '@xberg-io/xberg-win32-x64-msvc',
+    nativeFileName: 'xberg-node.win32-x64-msvc.node',
+    nativePackageVersion: '1.0.7',
+  });
 
 export type ECanonicalElementType = 'heading' | 'paragraph' | 'list' | 'table' | 'code' | 'page';
 
@@ -212,7 +217,7 @@ function markdownElements(content: string): ICanonicalElement[] {
   return elements;
 }
 
-function canonicalElementType(type: ElementType): ECanonicalElementType {
+function canonicalElementType(type: XbergElementType): ECanonicalElementType {
   if (type === ElementType.Heading || type === ElementType.Title) return 'heading';
   if (type === ElementType.ListItem) return 'list';
   if (type === ElementType.Table) return 'table';

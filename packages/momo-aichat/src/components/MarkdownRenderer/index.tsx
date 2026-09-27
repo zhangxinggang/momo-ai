@@ -110,7 +110,13 @@ function MarkdownRenderer({
       if (!localPath?.onOpenLocalPath) {
         return;
       }
-      const absolutePath = resolvePath(rawPath);
+      const absolutePath = localPath.resolveLocalPathForOpen
+        ? await localPath.resolveLocalPathForOpen(normalizeLocalPathValue(rawPath))
+        : resolvePath(rawPath);
+      if (!absolutePath) {
+        message.warning('文件不在当前工作区中，或路径不存在');
+        return;
+      }
       if (localPath.checkPathExists) {
         try {
           const exists = await localPath.checkPathExists(absolutePath);
@@ -139,6 +145,14 @@ function MarkdownRenderer({
   );
 
   const canHandleClick = Boolean(localPath?.onOpenLocalPath || onOpenExternalUrl);
+  const handleLinkKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const target = event.target as HTMLElement;
+    if (target.closest('[data-local-path], [data-external-url]')) {
+      event.preventDefault();
+      target.click();
+    }
+  };
 
   const handleContainerClick = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
@@ -188,9 +202,9 @@ function MarkdownRenderer({
       enhanceExternalUrlElements(root, styles['external-url']);
     }
     if (localPath?.onOpenLocalPath) {
-      enhanceLocalPathElements(root, styles['local-path']);
+      enhanceLocalPathElements(root, styles['local-path'], localPath.allowRelativePaths);
     }
-  }, [localPath?.onOpenLocalPath, onOpenExternalUrl]);
+  }, [localPath?.onOpenLocalPath, localPath?.allowRelativePaths, onOpenExternalUrl]);
 
   useEffect(() => {
     enhanceInteractiveElements();
@@ -221,7 +235,7 @@ function MarkdownRenderer({
           );
         }
 
-        const pathParts = splitPlainTextByLocalPaths(urlPart.value);
+        const pathParts = splitPlainTextByLocalPaths(urlPart.value, localPath?.allowRelativePaths);
         return pathParts.map((pathPart, pathIndex) => {
           if (pathPart.kind === 'path' && localPath?.onOpenLocalPath) {
             return (
@@ -239,7 +253,7 @@ function MarkdownRenderer({
         });
       });
     },
-    [localPath?.onOpenLocalPath, onOpenExternalUrl],
+    [localPath?.onOpenLocalPath, localPath?.allowRelativePaths, onOpenExternalUrl],
   );
 
   if (!content || typeof content !== 'string') {
@@ -251,7 +265,8 @@ function MarkdownRenderer({
       <div
         ref={wrapRef}
         className={classNames(styles.plain, className)}
-        onClick={canHandleClick ? handleContainerClick : undefined}>
+        onClick={canHandleClick ? handleContainerClick : undefined}
+        onKeyDown={canHandleClick ? handleLinkKeyDown : undefined}>
         {renderPlainParts(content, 'plain')}
       </div>
     );
@@ -264,7 +279,8 @@ function MarkdownRenderer({
     <div
       ref={wrapRef}
       className={classNames(styles.wrap, className)}
-      onClick={canHandleClick ? handleContainerClick : undefined}>
+      onClick={canHandleClick ? handleContainerClick : undefined}
+      onKeyDown={canHandleClick ? handleLinkKeyDown : undefined}>
       <MdPreviewView
         id={editorId}
         value={mdValue}

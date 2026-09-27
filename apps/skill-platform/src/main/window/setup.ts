@@ -39,7 +39,7 @@ export function setupMainWindowReadyBehavior(win: BrowserWindow, appDb: Database
 export async function loadMainWindowContent(win: BrowserWindow): Promise<void> {
   let url = '';
   if (isDev) {
-    url = 'http://localhost:5173';
+    url = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
   }
   await loadWindowContent(win, url);
 }

@@ -1,6 +1,31 @@
+import fs from 'node:fs';
+
+// Standalone bundles carry a build-time snapshot from the app's builtIn catalog.
+// Source execution reads the same catalog without requiring a generated bundle.
+let builtinPolicies;
+try {
+  builtinPolicies = JSON.parse(fs.readFileSync(new URL('./builtin-policies.json', import.meta.url), 'utf8'));
+} catch (error) {
+  if (error.code !== 'ENOENT') throw error;
+  const sourceRoot = new URL('../../../../apps/skill-platform/default/skills/builtIn/', import.meta.url);
+  const manifest = JSON.parse(fs.readFileSync(new URL('manifest.json', sourceRoot), 'utf8'));
+  builtinPolicies = Object.fromEntries(
+    ['runtimeLanguage', 'runtimeContinue', 'runtimeAssistant', 'runtimePlan'].map(id => [id,
+      fs.readFileSync(new URL(manifest[id], sourceRoot), 'utf8')
+        .replace(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/, '').trim(),
+    ]),
+  );
+}
+
+export function builtinPolicy(id) {
+  const text = builtinPolicies[id];
+  if (typeof text !== 'string' || !text.trim()) throw Error('Missing builtin policy: ' + id);
+  return text;
+}
+
 // Keep request policy at the native Harness configuration boundary.
-export const CHINESE_OUTPUT = `语言要求：所有面向用户的自然语言输出必须使用简体中文，包括思考过程、推理说明、计划、追问、工具调用说明、进度、错误说明和最终答复。即使历史对话、工具结果、文件内容或自定义指令含英文，也继续使用中文。代码、路径、模型名、工具标识及必须原样引用的内容保留原文。思考和答复要简洁，优先完成用户请求，避免长篇重复分析耗尽输出预算。`;
-export const CONTINUE_AFTER_LIMIT = `上一段模型输出因达到本次输出上限而截断。请继续完成原始用户请求，直接给出简洁的中文答复。已成功执行的工具结果仍在上下文中，请直接复用，不要为了继续回答重复执行已完成的操作；只补充尚未输出的内容，避免重复前文和长篇思考。`;
+export const CHINESE_OUTPUT = builtinPolicy('runtimeLanguage');
+export const CONTINUE_AFTER_LIMIT = builtinPolicy('runtimeContinue');
 const DEFAULT_MAX_TOKENS = 32768;
 function isQwen(model) { return (model.apiProtocol ?? 'openai') === 'openai' && /qwen|dashscope/i.test(model.model + ' ' + (model.provider ?? '') + ' ' + model.apiUrl); }
 export function providerProfile(model, api, envKey) {

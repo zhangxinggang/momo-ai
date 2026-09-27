@@ -24,6 +24,8 @@ export interface IHttpProtocolConfig {
 }
 
 export interface IHttpSecurityConfig {
+  /** CSP ancestor sources; omit to retain Helmet's SAMEORIGIN default. */
+  frameAncestors?: string[];
   secret: string;
   tokenExpiresIn: string;
   noAuthorityRoutes: string[];

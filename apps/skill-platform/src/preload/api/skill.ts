@@ -1,4 +1,5 @@
-﻿import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
+﻿import type { BuiltinSkillCatalog } from '@/shared/builtin-skills';
+import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
 import type {
   DCreateSkill,
   DUpdateSkill,
@@ -8,6 +9,7 @@ import type {
   ILocalZipPreviewItem,
   IMcpServerConfig,
   ISkillLocalFileEntry,
+  ISkillLocalFileListOptions,
   ISkillLocalFileTreeEntry,
   ISkillMcpConfig,
   ISkillSafetyReport,
@@ -27,6 +29,8 @@ export const skillApi = {
   scanLocalPreview: (customPaths?: string[]) =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_SCAN_LOCAL_PREVIEW, customPaths),
   listDefaultSkills: () => ipcRenderer.invoke(IPC_CHANNELS.SKILL_LIST_DEFAULT_SKILLS),
+  getBuiltinSkills: (): Promise<BuiltinSkillCatalog> =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILL_GET_BUILTIN_SKILLS),
   importDefaultSkills: (zipFileNames: string[], options: { overwrite: boolean }) =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_IMPORT_DEFAULT_SKILLS, zipFileNames, options),
   previewLocalZips: (files: ILocalZipFileInput[]): Promise<ILocalZipPreviewItem[]> =>
@@ -100,8 +104,11 @@ export const skillApi = {
       installName?: string;
     },
   ) => ipcRenderer.invoke(IPC_CHANNELS.SKILL_SAVE_REMOTE_GIT_TO_REPO, skillId, options),
-  listLocalFiles: (skillId: string): Promise<ISkillLocalFileTreeEntry[]> =>
-    ipcRenderer.invoke(IPC_CHANNELS.SKILL_LIST_LOCAL_FILES, skillId),
+  listLocalFiles: (
+    skillId: string,
+    options?: ISkillLocalFileListOptions,
+  ): Promise<ISkillLocalFileTreeEntry[]> =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILL_LIST_LOCAL_FILES, skillId, options),
   readLocalFile: (skillId: string, relativePath: string): Promise<ISkillLocalFileEntry | null> =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_READ_LOCAL_FILE, skillId, relativePath),
   readLocalFileBuffer: async (
@@ -138,8 +145,11 @@ export const skillApi = {
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_DELETE_LOCAL_FILE, skillId, relativePath),
   createLocalDir: (skillId: string, relativePath: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_CREATE_LOCAL_DIR, skillId, relativePath),
-  listLocalFilesByPath: (localPath: string): Promise<ISkillLocalFileTreeEntry[]> =>
-    ipcRenderer.invoke(IPC_CHANNELS.SKILL_LIST_LOCAL_FILES_BY_PATH, localPath),
+  listLocalFilesByPath: (
+    localPath: string,
+    options?: ISkillLocalFileListOptions,
+  ): Promise<ISkillLocalFileTreeEntry[]> =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILL_LIST_LOCAL_FILES_BY_PATH, localPath, options),
   readLocalFileByPath: (
     localPath: string,
     relativePath: string,

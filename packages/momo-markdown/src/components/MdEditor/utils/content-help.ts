@@ -3,6 +3,7 @@ import CodeMirrorUt from '~/layouts/Content/codemirror';
 import { ERROR_CATCHER } from '~/static/event-name';
 import { TInsertContentGenerator, TUploadImgCallBackParam } from '~/type';
 import bus from '~/utils/event-bus';
+import { alignmentClosing, alignmentOpening, isTextAlignment } from './alignment';
 import { getChartFenceLang, getChartTemplate } from './chart/templates';
 
 export type TToolDirective =
@@ -17,6 +18,7 @@ export type TToolDirective =
   | 'h5'
   | 'h6'
   | 'quote'
+  | 'align'
   | 'unorderedList'
   | 'orderedList'
   | 'task'
@@ -118,6 +120,9 @@ export const directive2flag = async (
     case 'unorderedList':
     case 'task': {
       return handleMultiLine(direct, codeMirrorUt);
+    }
+    case 'align': {
+      return handleAlignment(params, codeMirrorUt);
     }
     case 'code': {
       return handleCodeBlock(params, codeMirrorUt);
@@ -278,6 +283,38 @@ const wrapText = (type: string, codeMirrorUt: CodeMirrorUt) => {
       deviationStart,
       deviationEnd,
       // replaceStart, replaceEnd
+    },
+  };
+};
+
+const handleAlignment = (params: any, codeMirrorUt: CodeMirrorUt) => {
+  if (!isTextAlignment(params?.alignment)) return { text: '', options: {} };
+  let [text, replaceStart, replaceEnd] = getSelectedInfo(codeMirrorUt, { wholeLine: true });
+  // Reuse an existing wrapper when the cursor or selection is inside its Markdown contents.
+  const wrappers =
+    /<div data-align="(left|center|right)" style="text-align: \1;">\n\n([\s\S]*?)\n\n<\/div>/g;
+  for (const match of codeMirrorUt.getValue().matchAll(wrappers)) {
+    if (match.index <= replaceStart && match.index + match[0].length >= replaceEnd) {
+      text = match[2];
+      replaceStart = match.index;
+      replaceEnd = match.index + match[0].length;
+      break;
+    }
+  }
+  // Rich-text alignment inside lists/tables is stored as HTML. Update its existing styles too.
+  text = text.replace(/<(?:p|h[1-6]|figure|div)\b[^>]*>/gi, (tag) =>
+    tag
+      .replace(/text-align:\s*(?:left|center|right)\s*;?/gi, `text-align: ${params.alignment};`)
+      .replace(/data-align="(?:left|center|right)"/gi, `data-align="${params.alignment}"`),
+  );
+  const opening = alignmentOpening(params.alignment);
+  return {
+    text: `${opening}${text || '<p></p>'}${alignmentClosing}`,
+    options: {
+      replaceStart,
+      replaceEnd,
+      deviationStart: opening.length,
+      deviationEnd: -alignmentClosing.length,
     },
   };
 };

@@ -1,93 +1,79 @@
 import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
-import type { ICustomToolGeneratedFile } from '@/types/modules';
-import { ipcMain } from 'electron';
+import type { ICustomToolCreateInput, ICustomToolSaveInput } from '@/types/modules';
+import { ipcMain, shell } from 'electron';
 
-import { customToolRuntimeService, customToolWorkspaceService } from '../services/custom-tool';
+import { refreshCustomToolCatalog } from '../agent-runtime/ipc';
+import { customToolWorkspaceService } from '../services/custom-tool';
+import { validatePlugin } from '../services/custom-tool/plugin-runtime';
+import { readEmbeddedWebPage } from '../services/webpage';
 
-/** 注册自定义工具 IPC */
+/** AI 插件在校验后保存，并同步刷新已启动的 Harness 会话。 */
 export function registerCustomToolIPC(): void {
-  ipcMain.handle(IPC_CHANNELS.TOOL_LIST_TREE, async () => {
-    return customToolWorkspaceService.listTree();
+  ipcMain.handle(IPC_CHANNELS.TOOL_CHECK_IDENTIFIER, (_event, identifier: string) => {
+    customToolWorkspaceService.assertIdentifierAvailable(identifier);
+    return true;
   });
-
+  ipcMain.handle(IPC_CHANNELS.TOOL_VALIDATE_PLUGIN, (_event, input: ICustomToolSaveInput) => {
+    if (input?.kind !== 'plugin' || !input.plugin) throw Error('插件定义无效');
+    return validatePlugin(input.content, input.plugin);
+  });
+  ipcMain.handle(IPC_CHANNELS.TOOL_INVOKE_PLUGIN, (_event, toolPath: string, input: unknown) =>
+    customToolWorkspaceService.invokePlugin(toolPath, input),
+  );
+  ipcMain.handle(IPC_CHANNELS.TOOL_READ_WEB_PAGE, readEmbeddedWebPage);
+  ipcMain.handle(IPC_CHANNELS.TOOL_LIST_TREE, () => customToolWorkspaceService.listTree());
   ipcMain.handle(
     IPC_CHANNELS.TOOL_CREATE_FOLDER,
-    async (_event, parentPath: string | null, name: string) => {
-      return customToolWorkspaceService.createFolder(parentPath, name);
-    },
+    (_event, parentPath: string | null, name: string) =>
+      customToolWorkspaceService.createFolder(parentPath, name),
   );
-
   ipcMain.handle(
     IPC_CHANNELS.TOOL_CREATE_FILE,
-    async (_event, parentPath: string | null, name: string) => {
-      return customToolWorkspaceService.createFile(parentPath, name);
-    },
+    (_event, parentPath: string | null, name: string, input?: ICustomToolCreateInput) =>
+      customToolWorkspaceService.createTool(parentPath, name, input),
   );
-
-  ipcMain.handle(IPC_CHANNELS.TOOL_READ_FILE, async (_event, filePath: string) => {
-    return customToolWorkspaceService.readFile(filePath);
-  });
-
+  ipcMain.handle(IPC_CHANNELS.TOOL_READ_FILE, (_event, toolPath: string) =>
+    customToolWorkspaceService.readDocument(toolPath),
+  );
   ipcMain.handle(
     IPC_CHANNELS.TOOL_WRITE_FILE,
-    async (_event, filePath: string, content: string) => {
-      customToolWorkspaceService.writeFile(filePath, content);
-      return { success: true };
+    async (_event, toolPath: string, input: ICustomToolSaveInput) => {
+      const result =
+        input?.kind === 'plugin'
+          ? await customToolWorkspaceService.savePlugin(toolPath, input)
+          : customToolWorkspaceService.saveDocument(toolPath, input);
+      await refreshCustomToolCatalog();
+      return result;
     },
   );
-
-  ipcMain.handle(
-    IPC_CHANNELS.TOOL_WRITE_GENERATED_FILES,
-    async (
-      _event,
-      toolPath: string,
-      files: ICustomToolGeneratedFile[],
-      options?: { activate?: boolean; requireCallable?: boolean },
-    ) => {
-      customToolWorkspaceService.writeGeneratedFiles(toolPath, files, {
-        requireCallable: options?.requireCallable,
-      });
-      return options?.activate === false ? null : customToolRuntimeService.activate(toolPath);
-    },
-  );
-
-  ipcMain.handle(IPC_CHANNELS.TOOL_ACTIVATE, async (_event, toolPath: string) => {
-    return customToolRuntimeService.activate(toolPath);
-  });
-
-  ipcMain.handle(IPC_CHANNELS.TOOL_DEACTIVATE, async (_event, toolPath?: string) => {
-    await customToolRuntimeService.deactivate(toolPath);
-    return { success: true };
-  });
-
-  ipcMain.handle(IPC_CHANNELS.TOOL_RUNTIME_STATUS, async (_event, toolPath: string) => {
-    return customToolRuntimeService.getStatus(toolPath);
-  });
-
-  ipcMain.handle(IPC_CHANNELS.TOOL_READ_CONTEXT_FILES, async (_event, toolPath: string) => {
-    return customToolWorkspaceService.readContextFiles(toolPath);
-  });
-
   ipcMain.handle(IPC_CHANNELS.TOOL_RENAME, async (_event, nodePath: string, newName: string) => {
-    await customToolRuntimeService.deactivate(nodePath);
-    return customToolWorkspaceService.rename(nodePath, newName);
+    const result = customToolWorkspaceService.rename(nodePath, newName);
+    await refreshCustomToolCatalog();
+    return result;
   });
-
   ipcMain.handle(IPC_CHANNELS.TOOL_DELETE, async (_event, nodePath: string) => {
-    await customToolRuntimeService.deactivate(nodePath);
     customToolWorkspaceService.deleteNode(nodePath);
+    await refreshCustomToolCatalog();
     return { success: true };
   });
-
   ipcMain.handle(
     IPC_CHANNELS.TOOL_MOVE,
     async (_event, sourcePath: string, targetParentPath: string | null) => {
-      await customToolRuntimeService.deactivate(sourcePath);
-      return customToolWorkspaceService.move(sourcePath, targetParentPath);
+      const result = customToolWorkspaceService.move(sourcePath, targetParentPath);
+      await refreshCustomToolCatalog();
+      return result;
     },
   );
-
-  ipcMain.handle(IPC_CHANNELS.TOOL_READ_SNAPEDIT_HTML, async () => {
-    return customToolWorkspaceService.readSnapEditHtml();
+  ipcMain.handle(IPC_CHANNELS.TOOL_OPEN_DIRECTORY, async (_event, toolPath: string) => {
+    try {
+      const directory = customToolWorkspaceService.resolveNodeDirectory(toolPath);
+      const error = await shell.openPath(directory);
+      return error ? { success: false, error } : { success: true };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
   });
+  ipcMain.handle(IPC_CHANNELS.TOOL_READ_SNAPEDIT_HTML, () =>
+    customToolWorkspaceService.readSnapEditHtml(),
+  );
 }

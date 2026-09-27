@@ -307,8 +307,21 @@ onlineConfUrl 数据格式
 ```
 
 ## 大模型价格
+
 ```
 https://synthorai.io/zh/models/
 https://llmpricing.dev/zh/
 https://www.traktoken.com/
+```
+
+## 每日资讯
+
+```
+https://ai-bot.cn/daily-ai-news/
+https://caip.org.cn/news?category=1&categoryName=AI%E6%9C%80%E6%96%B0%E8%B5%84%E8%AE%AF
+```
+
+```
+https://github.com/pbakaus/impeccable
+https://github.com/ibelick/ui-skills
 ```

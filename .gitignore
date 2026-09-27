@@ -26,3 +26,6 @@ dist-ssr
 *.sql
 
 .env
+
+# Pinned draw.io web distribution, prepared before development/build.
+apps/skill-platform/static/drawio/

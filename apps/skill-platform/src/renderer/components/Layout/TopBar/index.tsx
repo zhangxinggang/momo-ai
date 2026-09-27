@@ -29,12 +29,6 @@ import {
   useRef,
   useState,
 } from 'react';
-
-const QuickAddModal = lazy(() =>
-  import('@renderer/components/Prompt/QuickAddModal').then((module) => ({
-    default: module.QuickAddModal,
-  })),
-);
 const CreateSkillModal = lazy(() =>
   import('@renderer/components/Skill/CreateSkillModal').then((module) => ({
     default: module.CreateSkillModal,
@@ -42,17 +36,13 @@ const CreateSkillModal = lazy(() =>
 );
 
 const OPEN_CREATE_SKILL_PROJECT_MODAL_EVENT = 'open-create-skill-project-modal';
-interface IProps {
-  onOpenSettings: () => void;
-}
 
-export function TopBar({ onOpenSettings }: IProps) {
+export function TopBar() {
   // Prompt store
   const promptSearchQuery = usePromptStore((state) => state.searchQuery);
   const setPromptSearchQuery = usePromptStore((state) => state.setSearchQuery);
   const prompts = usePromptStore((state) => state.prompts);
   const selectPrompt = usePromptStore((state) => state.selectPrompt);
-  const createPrompt = usePromptStore((state) => state.createPrompt);
 
   // Skill store
   const skillSearchQuery = useSkillStore((state) => state.searchQuery);
@@ -68,27 +58,19 @@ export function TopBar({ onOpenSettings }: IProps) {
 
   const isDarkMode = useSettingsStore((state) => state.isDarkMode);
   const setDarkMode = useSettingsStore((state) => state.setDarkMode);
-  const aiModels = useSettingsStore((state) => state.aiModels);
-  const aiApiKey = useSettingsStore((state) => state.aiApiKey);
   const selectedFolderId = useFolderStore((state) => state.selectedFolderId);
   const folders = useFolderStore((state) => state.folders);
   const appModule = useUIStore((state) => state.appModule);
   const workflowScreen = useUIStore((state) => state.workflowScreen);
   const isSidebarCollapsed = useUIStore((state) => state.isSidebarCollapsed);
   const setSidebarCollapsed = useUIStore((state) => state.setSidebarCollapsed);
-  const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
   const [isCreateSkillModalOpen, setIsCreateSkillModalOpen] = useState(false);
-  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
   const searchInputRef = useRef<InputRef>(null);
-  const createMenuRef = useRef<HTMLDivElement>(null);
-  const createMenuDropdownRef = useRef<HTMLDivElement>(null);
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
-  const [createMenuPosition, setCreateMenuPosition] = useState({
-    top: 0,
-    right: 0,
-  });
   const isProjectSkillView = appModule === 'skill' && skillStoreView === 'projects';
   const isSkillView = appModule === 'skill';
+  const usesInlineSkillSearch =
+    isSkillView && (skillStoreView === 'my-skills' || skillStoreView === 'distribution');
   const isPromptView = appModule === 'prompt';
   const isNoteView = appModule === 'note';
   const isKbView = appModule === 'kb';
@@ -112,9 +94,6 @@ export function TopBar({ onOpenSettings }: IProps) {
     : isPromptView
       ? setTreeSearchQuery
       : setPromptSearchQuery;
-
-  // Check if AI is configured
-  const hasAiConfig = aiModels.length > 0 || (aiApiKey && aiApiKey.trim() !== '');
 
   // 计算 IPrompt 搜索结果（与 MainContent 保持一致的逻辑）
   const promptSearchResults = useMemo(() => {
@@ -223,18 +202,6 @@ export function TopBar({ onOpenSettings }: IProps) {
   const searchResultCount = searchResults.length;
   const showSearchNavigation = !isProjectSkillView && isPromptView && !isWorkflowView;
 
-  const updateCreateMenuPosition = useCallback(() => {
-    if (!createMenuRef.current) {
-      return;
-    }
-
-    const rect = createMenuRef.current.getBoundingClientRect();
-    setCreateMenuPosition({
-      top: rect.bottom + 4,
-      right: Math.max(window.innerWidth - rect.right, 8),
-    });
-  }, []);
-
   // 导航到上一个/下一个结果
   const navigateResult = useCallback(
     (direction: 'prev' | 'next') => {
@@ -322,6 +289,9 @@ export function TopBar({ onOpenSettings }: IProps) {
       openCreateEditor();
     };
     const handleSearch = () => {
+      if (usesInlineSkillSearch) {
+        return;
+      }
       searchInputRef.current?.focus();
     };
 
@@ -332,78 +302,18 @@ export function TopBar({ onOpenSettings }: IProps) {
       window.removeEventListener('shortcut:newPrompt', handleNewPrompt);
       window.removeEventListener('shortcut:search', handleSearch);
     };
-  }, []);
+  }, [openCreateEditor, usesInlineSkillSearch]);
 
-  // Click outside to close create menu
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      const target = event.target as Node;
-      const clickedTrigger = createMenuRef.current?.contains(target) ?? false;
-      const clickedDropdown = createMenuDropdownRef.current?.contains(target) ?? false;
-
-      if (!clickedTrigger && !clickedDropdown) {
-        setIsCreateMenuOpen(false);
-      }
-    }
-
-    // Listen for open-create-skill-modal event
     function handleOpenSkillModal() {
       setIsCreateSkillModalOpen(true);
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('open-create-skill-modal', handleOpenSkillModal);
-
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('open-create-skill-modal', handleOpenSkillModal);
     };
   }, []);
-
-  useEffect(() => {
-    if (!isCreateMenuOpen) {
-      return;
-    }
-
-    updateCreateMenuPosition();
-
-    const handleLayoutChange = () => {
-      updateCreateMenuPosition();
-    };
-
-    window.addEventListener('resize', handleLayoutChange);
-    window.addEventListener('scroll', handleLayoutChange, true);
-
-    return () => {
-      window.removeEventListener('resize', handleLayoutChange);
-      window.removeEventListener('scroll', handleLayoutChange, true);
-    };
-  }, [isCreateMenuOpen, updateCreateMenuPosition]);
-
-  const handleCreatePrompt = async (data: {
-    title: string;
-    systemPrompt?: string;
-    userPrompt: string;
-    tags?: string[];
-    folderId?: string;
-    source?: string;
-  }) => {
-    try {
-      const prompt = await createPrompt({
-        title: data.title,
-        systemPrompt: data.systemPrompt,
-        userPrompt: data.userPrompt,
-        tags: data.tags || [],
-        variables: [],
-        folderId: data.folderId,
-        source: data.source,
-      });
-      return prompt;
-    } catch (error) {
-      console.error('Failed to create prompt:', error);
-      return null;
-    }
-  };
 
   const toggleTheme = () => {
     setDarkMode(!isDarkMode);
@@ -440,7 +350,8 @@ export function TopBar({ onOpenSettings }: IProps) {
             isKbView ||
             isChatView ||
             isToolboxView ||
-            isWorkflowView ? null : (
+            isWorkflowView ||
+            usesInlineSkillSearch ? null : (
               <div className='relative flex w-full max-w-lg flex-1 items-center'>
                 <div className='app-wallpaper-search pointer-events-none absolute inset-0 rounded-lg border' />
                 <Input
@@ -527,7 +438,6 @@ export function TopBar({ onOpenSettings }: IProps) {
               !isToolboxView &&
               !isWorkflowView && (
                 <div
-                  ref={createMenuRef}
                   className='bg-primary text-primary-foreground hover:bg-primary/90 relative ml-4 flex h-8 items-center rounded-lg shadow-sm transition-all'
                   style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                   <Button
@@ -567,13 +477,6 @@ export function TopBar({ onOpenSettings }: IProps) {
       ) : null}
 
       <Suspense fallback={null}>
-        {/* 快速添加弹窗 */}
-        <QuickAddModal
-          isOpen={isQuickAddModalOpen}
-          onClose={() => setIsQuickAddModalOpen(false)}
-          onCreate={handleCreatePrompt}
-        />
-
         {/* 新建 ISkill 弹窗 */}
         <CreateSkillModal
           isOpen={isCreateSkillModalOpen}

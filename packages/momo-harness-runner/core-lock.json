@@ -1,7 +1,7 @@
 {
-  "version": "0.1.6-alpha.2",
+  "version": "0.2.1-alpha.1",
   "source": "https://github.com/deepseek-ai/deepseek-harness",
   "adapterVersion": "1.0.0",
   "nodeRange": "^22.19.0 || >=24.0.0",
-  "referenceCommit": "ddefc45fbc7f8e46dd73185e68295696d1297887"
+  "referenceCommit": "5badb15009ae1756c3afe0ae0cef1faafc290ccc"
 }

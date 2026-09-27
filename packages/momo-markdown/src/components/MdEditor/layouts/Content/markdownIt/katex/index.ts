@@ -4,7 +4,8 @@
  * 该代码只是正对md-editor-v3系列功能做了适配
  */
 import { RefObject } from 'react';
-import { globalConfig, prefix } from '~/config';
+import { prefix } from '~/config';
+import { getKatexOptions } from '~/utils/katex';
 import { mergeAttrs } from '~/utils/md-it';
 import {
   markdownit,
@@ -213,25 +214,22 @@ const KatexPlugin = (
     const attrs = slf.renderAttrs(tmpToken as MdToken);
 
     if (!katexRef.current) {
-      return `<${tagName} ${attrs}>${token.content}</${tagName}>`;
+      return `<${tagName} ${attrs}>${md.utils.escapeHtml(token.content)}</${tagName}>`;
     }
 
     const html = katexRef.current.renderToString(
       token.content,
-      globalConfig.katexConfig({
-        throwOnError: false,
-        displayMode,
-      }),
+      getKatexOptions(displayMode, token.content),
     );
 
     return `<${tagName} ${attrs} data-processed>${html}</${tagName}>`;
   };
 
-  const katexInline: MdRenderRule = (tokens, idx, options, env, slf) => {
+  const katexInline: MdRenderRule = (tokens, idx, _options, _env, slf) => {
     return renderKatex(tokens[idx], `${prefix}-katex-inline`, 'span', slf);
   };
 
-  const katexBlock: MdRenderRule = (tokens, idx, options, env, slf) => {
+  const katexBlock: MdRenderRule = (tokens, idx, _options, _env, slf) => {
     return renderKatex(tokens[idx], `${prefix}-katex-block`, 'p', slf, true);
   };
 

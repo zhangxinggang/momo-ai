@@ -34668,16 +34668,14 @@ class Es extends ct {
           );
         return { status: n.value, value: i };
       } else
-        return this._def.schema
-          ._parseAsync({ data: r.data, path: r.path, parent: r })
-          .then((a) =>
-            ks(a)
-              ? Promise.resolve(o.transform(a.value, s)).then((i) => ({
-                  status: n.value,
-                  value: i,
-                }))
-              : Ge,
-          );
+        return this._def.schema._parseAsync({ data: r.data, path: r.path, parent: r }).then((a) =>
+          ks(a)
+            ? Promise.resolve(o.transform(a.value, s)).then((i) => ({
+                status: n.value,
+                value: i,
+              }))
+            : Ge,
+        );
     ut.assertNever(o);
   }
 }

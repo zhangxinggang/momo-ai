@@ -3,7 +3,9 @@
   "appId": "com.aim.app",
   "icon": "dist/static/logo.png",
   "productName": "AIM",
-  "asar": true,
+  "asar": {
+    "smartUnpack": false
+  },
   "extraMetadata": {
     "main": "dist/main/index.js"
   },
@@ -13,12 +15,13 @@
     "dist/knowledge-worker/**/*",
     "package.json",
     "!node_modules/**/*.map",
+    "!node_modules/**/*.d.{ts,cts,mts}",
     "!node_modules/typeorm/browser{,/**/*}",
-    "!node_modules/better-sqlite3/{src,deps}{,/**/*}"
+    "!node_modules/better-sqlite3/{src,deps,build}{,/**/*}",
+    "!node_modules/@lancedb/lancedb-win32-x64-msvc{,/**/*}",
+    "!node_modules/@xberg-io/xberg-win32-x64-msvc{,/**/*}"
   ],
-  "electronLanguages": [
-    "zh-CN"
-  ],
+  "electronLanguages": ["zh-CN"],
   "extraFiles": [
     {
       "from": "dist/renderer",
@@ -26,7 +29,8 @@
     },
     {
       "from": "dist/static",
-      "to": "static"
+      "to": "static",
+      "filter": ["**/*", "!**/*.map"]
     },
     {
       "from": "appConf.cjs",
@@ -41,25 +45,22 @@
     {
       "from": "../electron/src/main/database/native",
       "to": "native",
-      "filter": [
-        "*.node"
-      ]
+      "filter": ["*.node"]
     },
     {
-      "from": "../../packages/momo-harness-runner/dist",
-      "to": "harness-builtin"
+      "from": "node_modules/@lancedb/lancedb-win32-x64-msvc",
+      "to": "native",
+      "filter": ["*.node"]
     },
     {
-      "from": "../../packages/momo-harness-runner/dist/node_modules",
-      "to": "harness-builtin/node_modules"
+      "from": "node_modules/@xberg-io/xberg-win32-x64-msvc",
+      "to": "native",
+      "filter": ["*.node", "*.dll"]
+    },
+    {
+      "from": "dist/runtime/harness-builtin.asar",
+      "to": "harness-builtin.asar"
     }
-  ],
-  "asarUnpack": [
-    "**/*.node",
-    "**/*.dll",
-    "**/*.dylib",
-    "**/*.so",
-    "**/*.wasm"
   ],
   "directories": {
     "output": "out"
@@ -67,15 +68,15 @@
   "npmRebuild": false,
   "nodeGypRebuild": false,
   "buildDependenciesFromSource": false,
-  "compression": "normal",
+  "compression": "maximum",
+  "beforePack": "scripts/build/check-output-idle.cjs",
   "afterPack": "scripts/build/verify-knowledge-native.cjs",
+  "afterAllArtifactBuild": "scripts/build/report-size.cjs",
   "win": {
     "target": [
       {
         "target": "nsis",
-        "arch": [
-          "x64"
-        ]
+        "arch": ["x64"]
       }
     ]
   },

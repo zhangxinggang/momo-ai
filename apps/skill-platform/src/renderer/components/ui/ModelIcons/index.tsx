@@ -15,11 +15,6 @@ import tencentCloudTiPng from '@renderer/assets/providers/tencent-cloud-ti.png';
 import zeroOnePng from '@renderer/assets/providers/zero-one.png';
 import zhipuPng from '@renderer/assets/providers/zhipu.png';
 
-interface IProps {
-  className?: string;
-  size?: number;
-}
-
 // 按模型分类名称映射到本地 provider 图标资源
 const CATEGORY_ICON_SRC: Record<string, string> = {
   GPT: openaiPng,

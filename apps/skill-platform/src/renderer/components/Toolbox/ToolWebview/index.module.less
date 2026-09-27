@@ -33,4 +33,56 @@
     pointer-events: none;
     opacity: 0;
   }
+
+  &-bot {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 1px solid hsl(var(--primary) / 0.25);
+    border-radius: 50%;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    box-shadow: 0 5px 20px hsl(var(--foreground) / 0.18);
+    cursor: pointer;
+    &:hover {
+      filter: brightness(1.1);
+    }
+    &:focus-visible {
+      outline: 2px solid hsl(var(--primary));
+      outline-offset: 3px;
+    }
+  }
+
+  &-chat {
+    position: absolute;
+    z-index: 4;
+    right: 12px;
+    bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    min-width: 420px;
+    height: 75%;
+    overflow: hidden;
+    border: 1px solid hsl(var(--border));
+    border-radius: 12px;
+    background: hsl(var(--background));
+    box-shadow: 0 8px 32px hsl(var(--foreground) / 0.18);
+    &[hidden] {
+      display: none;
+    }
+  }
+
+  &-chat--expanded {
+    inset: 0;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    border-radius: 0;
+  }
 }

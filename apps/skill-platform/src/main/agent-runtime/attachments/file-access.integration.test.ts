@@ -11,6 +11,7 @@ import { testStore } from '../persistence/test-store';
 const mocks = vi.hoisted(() => ({ root: '', parse: vi.fn() }));
 vi.mock('../../runtime-paths', () => ({
   getNotesDir: () => mocks.root,
+  getSkillSessionWorkspaceDir: (id: string) => path.join(mocks.root, 'temp', id),
   getToolsDir: () => path.join(mocks.root, 'tools'),
 }));
 vi.mock('../../services/knowledge-v2/worker-client', () => ({
@@ -57,7 +58,9 @@ describe('real Harness access to uploaded originals', () => {
     'accesses external DOCX on demand %j',
     async ({ hasWorkspace, mode }) => {
       const root = path.resolve('../../temp/harness-file-access-' + randomUUID());
-      const bundle = path.resolve('../../packages/momo-harness-runner/dist');
+      const bundle = path.resolve(
+        process.env.MOMO_TEST_HARNESS_BUNDLE || '../../packages/momo-harness-runner/dist',
+      );
       mocks.root = root;
       mocks.parse.mockReset().mockRejectedValue(new Error('Host must not parse uploads'));
       await fs.mkdir(path.join(root, 'workspace'), { recursive: true });
@@ -70,7 +73,8 @@ describe('real Harness access to uploaded originals', () => {
         readPaths: string[] = [];
       let expectedThinking = false,
         expectedMaxTokens = 2048,
-        truncatedOnce = false;
+        truncatedOnce = false,
+        executionPid: number | undefined;
       const server = createServer(async (req, res) => {
         try {
           let body = '';
@@ -148,6 +152,7 @@ describe('real Harness access to uploaded originals', () => {
               JSON.stringify(filePath) +
               ') as z:\n    root = ET.fromstring(z.read("word/document.xml"))\n';
             if (mode === 'output-limit') code += 'print("x" * 70000)\n';
+            code += 'open("generated.txt", "w", encoding="utf-8").write("temporary output")\n';
             code += 'print("".join(root.itertext()), flush=True)';
             if (mode === 'timeout') code += '\nimport time; time.sleep(60)';
             if (mode === 'cancel')
@@ -258,9 +263,10 @@ describe('real Harness access to uploaded originals', () => {
         const send = async (sourceRefs: RuntimeTurnInput['sourceRefs']) => {
           const turnId = randomUUID();
           let timer: ReturnType<typeof setTimeout>;
+          let rejectTurn!: (error: Error) => void;
           const terminal = new Promise<RunEvent>((resolve, reject) => {
             settle = resolve;
-            timer = setTimeout(() => reject(Error('File access turn timeout')), 20000);
+            rejectTurn = reject;
           });
           void terminal.catch(() => {});
           try {
@@ -279,18 +285,20 @@ describe('real Harness access to uploaded originals', () => {
               sourceRefs,
               permissionMode: mode === 'full-access' ? 'danger-full-access' : 'workspace-write',
             });
+            // Runtime startup has its own bounded RPCs; measure the turn once it is admitted.
+            timer = setTimeout(() => rejectTurn(Error('File access turn timeout')), 20000);
             if (mode === 'cancel') {
               for (let i = 0; i < 100; i++) {
-                if (
-                  await fs.stat(path.join(root, 'execution-pid')).then(
-                    () => true,
-                    () => false,
-                  )
-                )
+                const value = await fs
+                  .readFile(path.join(root, 'execution-pid'), 'utf8')
+                  .catch(() => '');
+                if (/^\d+$/.test(value)) {
+                  executionPid = Number(value);
                   break;
+                }
                 await new Promise((resolve) => setTimeout(resolve, 50));
               }
-              expect(await fs.readFile(path.join(root, 'execution-pid'), 'utf8')).toMatch(/^\d+$/);
+              expect(executionPid).toBeGreaterThan(0);
               await service.cancel(result.runId);
             }
             const end = await terminal;
@@ -361,6 +369,9 @@ describe('real Harness access to uploaded originals', () => {
             .digest('hex'),
         ).toBe(createHash('sha256').update(bytes).digest('hex'));
         expect(await fs.readdir(path.join(root, 'workspace'))).toEqual([]);
+        expect(await fs.readFile(path.join(root, 'temp', 'chat', 'generated.txt'), 'utf8')).toBe(
+          'temporary output',
+        );
         expect(mocks.parse).not.toHaveBeenCalled();
         if (!['cancel', 'persistent-limit'].includes(mode)) {
           expect(
@@ -420,8 +431,7 @@ describe('real Harness access to uploaded originals', () => {
       } finally {
         await service.dispose();
         if (mode === 'cancel') {
-          const pid = Number(await fs.readFile(path.join(root, 'execution-pid'), 'utf8'));
-          expect(() => process.kill(pid, 0)).toThrow();
+          expect(() => process.kill(executionPid!, 0)).toThrow();
         }
         store.db.close();
         server.closeAllConnections();

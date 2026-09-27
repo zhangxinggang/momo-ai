@@ -18,14 +18,6 @@ export function createStreamState(): IStreamState {
   };
 }
 
-function isGeminiApiHost(apiUrl: string): boolean {
-  return apiUrl.includes('generativelanguage.googleapis.com');
-}
-
-function isGeminiOpenAICompatEndpoint(endpoint: string): boolean {
-  return endpoint.includes('generativelanguage.googleapis.com') && endpoint.includes('/openai/');
-}
-
 function yieldToEventLoop() {
   return new Promise<void>((resolve) => {
     if (typeof requestAnimationFrame === 'function') {

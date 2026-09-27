@@ -6,7 +6,17 @@ import type { ISlashInvocation } from './slash-command';
 import type { IChatSourceRef } from './source';
 
 /** 智能体交互模式 */
-export type EAgentMode = 'ask' | 'plan';
+export type EAgentMode = 'ask' | 'plan' | 'ui';
+
+/** 每轮界面独立保存，后续生成不覆盖历史版本。 */
+export interface IChatGeneratedView {
+  kind: 'openui' | 'html';
+  content: string;
+  status: 'generating' | 'repairing' | 'complete' | 'stopped' | 'error';
+  errorMessage?: string;
+  /** Uploaded originals and generated artifact references admitted for this view; no inline bytes. */
+  sourceRefs?: IChatSourceRef[];
+}
 
 /** Harness 原生上下文占用；分类数值采用 Harness 的估算口径。 */
 export interface IChatContextUsage {
@@ -22,6 +32,8 @@ export interface IChatContextUsage {
 }
 
 export interface IChatRequestSnapshot {
+  /** Original user task resumed by a follow-up or a generated-view action. */
+  continuationOf?: string;
   apiContent: string;
   modelId: string;
   temperature: number;
@@ -30,6 +42,8 @@ export interface IChatRequestSnapshot {
   kbEnabled: boolean;
   kbCollectionId?: string;
   agentMode: EAgentMode;
+  /** UI presentation requested while the skill/command still executes through Harness ask. */
+  viewRequested?: boolean;
   permissionMode?: PermissionMode;
   runtimeCommand?: RuntimeCommand;
   harnessAgentId?: string;
@@ -39,6 +53,7 @@ export interface IChatRequestSnapshot {
 
 // 消息类型定义 - 触发重新编译
 export interface IChatMessage {
+  generatedView?: IChatGeneratedView;
   runId?: string;
   runStatus?: string;
   runtimeEvents?: RunEvent[];
@@ -115,6 +130,8 @@ export interface IChatContext {
   currentSessionId: string | null;
   // 当前活跃会话
   currentSession: IChatSession | null;
+  /** 当前会话或首轮发送前草稿所归属的项目。 */
+  currentProjectId: string | null;
   // 是否正在加载AI回复
   isAILoading: boolean;
   // 当前选中的模型
@@ -128,6 +145,8 @@ export interface IChatContext {
   createSessionInProject: (projectId: string) => IChatSession;
   switchToSession: (sessionId: string) => void;
   deleteSession: (sessionId: string) => void;
+  /** 清空指定会话的问答记录、引用快照及运行时上下文。 */
+  clearSession: (sessionId: string) => Promise<void>;
   /** 删除某项目下全部会话（调用方应先停止生成） */
   deleteSessionsByProjectId: (projectId: string) => void;
   /** 将缺少 projectId 的会话归入默认项目 */
@@ -158,6 +177,7 @@ export interface IChatContext {
       invocations?: ISlashInvocation[];
       requestSnapshot?: IChatRequestSnapshot;
       runtimeCommand?: RuntimeCommand;
+      continuationFromMessageId?: string;
     },
   ) => Promise<boolean>;
   // 停止生成方法
@@ -182,7 +202,7 @@ export interface IChatContext {
   setKbEnabled: (v: boolean) => void;
   kbCollectionId?: string;
   setKbCollectionId: (id?: string) => void;
-  /** 智能体模式：ask 直接问答，plan 计划梳理 */
+  /** 对话模式：ask 直接问答，plan 计划梳理，ui 生成界面 */
   agentMode: EAgentMode;
   setAgentMode: (mode: EAgentMode) => void;
   permissionMode: PermissionMode;

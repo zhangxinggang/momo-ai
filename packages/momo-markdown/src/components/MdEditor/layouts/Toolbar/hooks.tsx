@@ -1,14 +1,12 @@
-import { importScreenfull } from '@momo/utils';
 import { cloneElement, ReactElement, useCallback, useContext, useEffect, useRef } from 'react';
 import Divider from '~/components/Divider';
-import { allToolbar, editorExtensionsAttrs, globalConfig } from '~/config';
+import { allToolbar } from '~/config';
 import { EditorContext } from '~/context';
-import { CDN_IDS } from '~/static';
-import { CHANGE_FULL_SCREEN, ERROR_CATCHER, REPLACE } from '~/static/event-name';
+import { CHANGE_FULL_SCREEN, REPLACE } from '~/static/event-name';
 import { TInsertContentGenerator, TToolbarNames } from '~/type';
-import { appendHandler } from '~/utils/dom';
 import bus from '~/utils/event-bus';
 
+import ToolbarAlign from './tools/Align';
 import ToolbarBold from './tools/Bold';
 import ToolbarCatalog from './tools/Catalog';
 import ToolbarCode from './tools/Code';
@@ -42,90 +40,25 @@ import ToolbarUnderline from './tools/Underline';
 import ToolbarUnorderedList from './tools/UnorderedList';
 
 export const useSreenfull = () => {
-  const { editorId, updateSetting } = useContext(EditorContext);
-  const screenfull = useRef(globalConfig.editorExtensions.screenfull!.instance);
-  const screenfullMe = useRef(false);
+  const { editorId, setting, updateSetting } = useContext(EditorContext);
+  const activeRef = useRef(setting.fullscreen);
+  activeRef.current = setting.fullscreen;
 
   const fullscreenHandler = useCallback(
     (status?: boolean) => {
-      if (!screenfull.current) {
-        bus.emit(editorId, ERROR_CATCHER, {
-          name: 'fullscreen',
-          message: 'fullscreen is undefined',
-        });
-        return;
-      }
-
-      if (screenfull.current.isEnabled) {
-        const targetStatus = status === undefined ? !screenfull.current.isFullscreen : status;
-
-        if (targetStatus) {
-          screenfull.current.request();
-        } else {
-          screenfull.current.exit();
-        }
-      } else {
-        console.error('browser does not support screenfull!');
-      }
+      updateSetting('fullscreen', status ?? !activeRef.current);
     },
-    [editorId],
+    [updateSetting],
   );
 
   useEffect(() => {
-    const changedEvent = () => {
-      const isFullscreen = !!screenfull.current?.isFullscreen;
-      screenfullMe.current = isFullscreen;
-      updateSetting('fullscreen', isFullscreen);
+    if (!setting.fullscreen) return;
+    const onKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !event.defaultPrevented) fullscreenHandler(false);
     };
-
-    let timer = -1;
-
-    if (!screenfull.current) {
-      void importScreenfull().then((instance) => {
-        if (instance) {
-          screenfull.current = instance;
-          if (instance.isEnabled) {
-            instance.on('change', changedEvent);
-          }
-          return;
-        }
-
-        const { editorExtensions } = globalConfig;
-
-        timer = requestAnimationFrame(() => {
-          appendHandler(
-            'script',
-            {
-              ...editorExtensionsAttrs.screenfull?.js,
-              src: editorExtensions.screenfull!.js,
-              id: CDN_IDS.screenfull,
-              onload() {
-                screenfull.current = window.screenfull;
-                if (screenfull.current && screenfull.current.isEnabled) {
-                  screenfull.current.on('change', changedEvent);
-                }
-              },
-            },
-            'screenfull',
-          );
-        });
-      });
-    }
-
-    if (screenfull.current && screenfull.current.isEnabled) {
-      screenfull.current.on('change', changedEvent);
-    }
-
-    return () => {
-      if (!screenfull.current) {
-        cancelAnimationFrame(timer);
-      }
-
-      if (screenfull.current && screenfull.current.isEnabled) {
-        screenfull.current.off('change', changedEvent);
-      }
-    };
-  }, [updateSetting]);
+    window.addEventListener('keydown', onKeydown);
+    return () => window.removeEventListener('keydown', onKeydown);
+  }, [setting.fullscreen, fullscreenHandler]);
 
   useEffect(() => {
     bus.on(editorId, {
@@ -188,6 +121,9 @@ export const useBarRender = () => {
           }
           case 'quote': {
             return <ToolbarQuote key='bar-quote' />;
+          }
+          case 'align': {
+            return <ToolbarAlign key='bar-align' />;
           }
           case 'unorderedList': {
             return <ToolbarUnorderedList key='bar-unorderedList' />;

@@ -1,4 +1,7 @@
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
   Bold,
   ChartArea,
   Code,
@@ -48,6 +51,9 @@ export type IconName =
   | 'sub'
   | 'sup'
   | 'quote'
+  | 'align-left'
+  | 'align-center'
+  | 'align-right'
   | 'unordered-list'
   | 'ordered-list'
   | 'task'
@@ -89,6 +95,9 @@ const iconMaps: {
   sub: Subscript,
   sup: Superscript,
   quote: Quote,
+  'align-left': AlignLeft,
+  'align-center': AlignCenter,
+  'align-right': AlignRight,
   'unordered-list': List,
   'ordered-list': ListOrdered,
   task: ListTodo,

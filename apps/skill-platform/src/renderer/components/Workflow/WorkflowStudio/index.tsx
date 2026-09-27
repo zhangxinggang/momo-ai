@@ -1,4 +1,3 @@
-import type { IWorkflow } from '@/types/modules';
 import {
   attachResourceNodeToParallel,
   createParallelNode,
@@ -73,8 +72,6 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
   const aiModels = useSettingsStore((s) => s.aiModels);
   const fetchPrompts = usePromptStore((s) => s.fetchPrompts);
   const loadSkills = useSkillStore((s) => s.loadSkills);
-
-  const [workflow, setWorkflow] = useState<IWorkflow | null>(null);
   const [workflowName, setWorkflowName] = useState('');
   const [savedName, setSavedName] = useState('');
   const [savedGraphJson, setSavedGraphJson] = useState('');
@@ -98,7 +95,6 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
 
   const loadWorkflow = useCallback(async () => {
     if (!workflowId || !isWorkflowReady) {
-      setWorkflow(null);
       setWorkflowName('');
       setSavedName('');
       setSavedGraphJson(stringifyWorkflowGraph([], []));
@@ -113,7 +109,6 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
         onClose();
         return;
       }
-      setWorkflow(found);
       setWorkflowName(found.name);
       setSavedName(found.name);
       setSavedGraphJson(found.graphJson);
@@ -130,7 +125,6 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
     if (workflowId) {
       void loadWorkflow();
     } else {
-      setWorkflow(null);
       setWorkflowName('');
       setSavedName('');
       const empty = stringifyWorkflowGraph([], []);
@@ -385,7 +379,6 @@ export function WorkflowStudio({ workflowId, onClose }: IProps) {
         const created = await createWorkflowRecord({ name: trimmedName, graphJson });
         id = created.id;
         currentWorkflowIdRef.current = id;
-        setWorkflow(created);
         useUIStore.setState({ activeWorkflowId: id });
         useWorkflowStore.getState().selectWorkflow(id);
         void useWorkflowStore.getState().fetchWorkflows();

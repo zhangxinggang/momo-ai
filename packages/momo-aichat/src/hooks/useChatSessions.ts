@@ -3,20 +3,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { IChatStreamMessage } from '../adapters/types';
 import { useAiChatConfig } from '../contexts/AiChatConfigContext';
 import { executeRuntimeTurn } from '../runtime/execute';
-import { emptyProjection, reduceRunEvent } from '../runtime/projection';
+import { emptyProjection, reduceRunEvent, type RunProjection } from '../runtime/projection';
 import {
   AI_CHAT_SESSIONS_UPDATED_EVENT,
-  type IChatAttachmentMeta,
-  type IChatMessage,
-  type IChatRequestSnapshot,
-  type IChatSession,
-  type INoteSnapshot,
   buildStorageKeys,
   generateId,
   generateMessageId,
   generateSessionTitle,
+  type EAgentMode,
+  type IChatAttachmentMeta,
+  type IChatGeneratedView,
+  type IChatMessage,
+  type IChatRequestSnapshot,
+  type IChatSession,
+  type INoteSnapshot,
 } from '../types/chat';
 import type { ISlashInvocation } from '../types/slash-command';
+import { continuationContext, latestConversationSources } from '../utils/chat-continuation';
 import { formatResponseTime, normalizeChatUsage } from '../utils/chat-stats';
 import {
   ensureNoteSnapshots,
@@ -24,7 +27,12 @@ import {
   findNoteMentions,
   normalizeNotePath,
 } from '../utils/note-mention';
-import { findSlashInvocationTokens, slashTokensToPlainText } from '../utils/slash-token';
+import {
+  buildSlashInvocationToken,
+  findSlashInvocationTokens,
+  slashTokensToPlainText,
+} from '../utils/slash-token';
+import { withArtifactSources } from '../utils/view-sources';
 import { useChatSync } from './useChatSync';
 
 export interface IUseChatSessionsOptions {
@@ -33,10 +41,6 @@ export interface IUseChatSessionsOptions {
   /** bootstrap 会话标题；空消息时不落库 */
   bootstrapSessionTitle?: string | null;
 }
-
-/** 笔记引用注入 API 时的系统提示：禁止在回答中复述全文 */
-const NOTE_REFERENCE_SYSTEM_HINT =
-  '用户消息中以「--- 笔记: … START ---」与「--- 笔记: … END ---」包裹的内容仅为供你阅读的笔记上下文。请基于其内容作答，不要在回答中复述、粘贴或展开笔记全文。';
 
 function toApiUserContent(
   displayContent: string,
@@ -141,6 +145,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
   bootstrapSessionTitleRef.current = bootstrapSessionTitle;
   const {
     callAIChatStream,
+    viewGeneration,
     runtime,
     superpowerPrompts,
     workspace,
@@ -148,6 +153,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     defaultModel,
     storageKeyPrefix = 'momo-aichat',
     chatStorage,
+    chatSync: chatSyncAdapter,
     isImageModel,
     noteReferences,
     beforeSubmitPrompt,
@@ -174,6 +180,11 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
   const systemPromptRef = useRef(systemPrompt);
   /** 草稿对话待归属的项目（首次发送时写入 session.projectId） */
   const pendingProjectIdRef = useRef<string | null>(null);
+  const [pendingProjectId, setPendingProjectIdState] = useState<string | null>(null);
+  const setPendingProjectId = useCallback((projectId: string | null) => {
+    pendingProjectIdRef.current = projectId;
+    setPendingProjectIdState(projectId);
+  }, []);
 
   useEffect(() => {
     temperatureRef.current = temperature;
@@ -188,7 +199,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
   // RAG：知识库开关与当前集合
   const [kbEnabled, setKbEnabled] = useState<boolean>(false);
   const [kbCollectionId, setKbCollectionId] = useState<string | undefined>(undefined);
-  const [agentMode, setAgentMode] = useState<'ask' | 'plan'>('ask');
+  const [agentMode, setAgentMode] = useState<EAgentMode>('ask');
   const kbEnabledRef = useRef(kbEnabled);
   const kbCollectionIdRef = useRef(kbCollectionId);
   const agentModeRef = useRef(agentMode);
@@ -205,6 +216,8 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
   const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
   /** 流式 generation 令牌：用于忽略错误/停止后的延迟 chunk 更新 */
   const streamTokensRef = useRef<Map<string, symbol>>(new Map());
+  const clearingSessionsRef = useRef(new Set<string>());
+  const contextVersionsRef = useRef(new Map<string, number>());
   // 标记是否已经进行过登录后的数据同步
   const [hasSyncedAfterLogin, setHasSyncedAfterLogin] = useState(false);
 
@@ -218,6 +231,8 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
 
   // 获取当前活跃会话
   const currentSession = sessions.find((session) => session.id === currentSessionId) || null;
+  const currentProjectId =
+    currentSession?.projectId ?? (currentSessionId ? null : pendingProjectId);
   const [draftPermission, setDraftPermission] = useState<PermissionMode>('workspace-write');
   const permissionMode = currentSession
     ? (currentSession.permissionMode ?? 'workspace-write')
@@ -264,6 +279,22 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           const hasContent = Boolean(loadingMessage.content?.trim());
           const hasThinking = Boolean(loadingMessage.thinkingContent?.trim());
 
+          if (loadingMessage.generatedView) {
+            return {
+              ...s,
+              messages: s.messages.map((msg) =>
+                msg.id === loadingMessage.id
+                  ? {
+                      ...msg,
+                      isLoading: false,
+                      generatedView: { ...loadingMessage.generatedView!, status: 'stopped' },
+                    }
+                  : msg,
+              ),
+              isLoading: false,
+            };
+          }
+
           if (!hasContent) {
             if (hasThinking) {
               return {
@@ -305,27 +336,14 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     [],
   );
 
-  // 停止指定会话的生成
-  const stopGeneration = useCallback(
-    (sessionId: string) => {
-      const abortController = abortControllersRef.current.get(sessionId);
-      abortController?.abort();
-      if (!abortController && runtime) {
-        const run = sessions
-          .find((s) => s.id === sessionId)
-          ?.messages.slice()
-          .reverse()
-          .find((m) => m.runStatus === 'running' && m.runId);
-        if (run?.runId) void runtime.port.cancel({ runId: run.runId }).catch(console.error);
-      }
-      clearSessionGeneratingState(sessionId, { appendStoppedMark: true });
-    },
-    [clearSessionGeneratingState, runtime, sessions],
-  );
-
   // 防抖保存到持久化存储（仅在游客模式下）
   const debouncedSave = useCallback(
-    (sessionsToSave: IChatSession[], currentId: string | null, modelId?: string) => {
+    (
+      sessionsToSave: IChatSession[],
+      currentId: string | null,
+      modelId?: string,
+      immediate = false,
+    ) => {
       // 如果用户已登录，不写入本地持久化
       if (isAuthenticated) {
         return;
@@ -335,7 +353,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         clearTimeout(saveTimeoutRef.current);
       }
 
-      saveTimeoutRef.current = setTimeout(() => {
+      const save = () => {
         try {
           const pinnedId = bootstrapSessionIdRef.current;
           // bootstrap 未问答（空或仅 system）不写入历史
@@ -360,7 +378,9 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         } catch (error) {
           console.error('保存会话数据失败:', error);
         }
-      }, 500);
+      };
+      if (immediate) save();
+      else saveTimeoutRef.current = setTimeout(save, 500);
     },
     [chatStorage, isAuthenticated, storageKeys],
   );
@@ -434,6 +454,25 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     [currentSessionId, debouncedSave],
   );
 
+  // 停止指定会话的生成，并持久化部分界面及停止状态。
+  const stopGeneration = useCallback(
+    (sessionId: string) => {
+      const abortController = abortControllersRef.current.get(sessionId);
+      abortController?.abort();
+      if (!abortController && runtime) {
+        const run = sessions
+          .find((s) => s.id === sessionId)
+          ?.messages.slice()
+          .reverse()
+          .find((m) => m.runStatus === 'running' && m.runId);
+        if (run?.runId) void runtime.port.cancel({ runId: run.runId }).catch(console.error);
+      }
+      clearSessionGeneratingState(sessionId, { appendStoppedMark: true });
+      setSessionLoading(sessionId, false);
+    },
+    [clearSessionGeneratingState, runtime, sessions, setSessionLoading],
+  );
+
   // 从持久化存储加载数据（仅在游客模式下）
   const loadFromStorage = useCallback(() => {
     // 如果用户已登录，不从本地持久化加载
@@ -464,7 +503,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
             systemPrompt?: string;
             kbEnabled?: boolean;
             kbCollectionId?: string;
-            agentMode?: 'ask' | 'plan';
+            agentMode?: EAgentMode;
           };
           const clamp = (v: number) => Math.min(1.0, Math.max(0.1, v));
           const round1 = (v: number) => Math.round(v * 10) / 10;
@@ -488,7 +527,11 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
               prev === parsed.kbCollectionId ? prev : parsed.kbCollectionId,
             );
           }
-          if (parsed.agentMode === 'ask' || parsed.agentMode === 'plan') {
+          if (
+            parsed.agentMode === 'ask' ||
+            parsed.agentMode === 'plan' ||
+            (parsed.agentMode === 'ui' && viewGeneration)
+          ) {
             setAgentMode((prev) => (prev === parsed.agentMode ? prev : parsed.agentMode!));
           }
         } catch {}
@@ -510,9 +553,25 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
               messages: (rest.messages ?? [])
                 .filter(
                   (m) =>
-                    !(m.isLoading && !m.runId && !m.content?.trim() && !m.thinkingContent?.trim()),
+                    !(
+                      m.isLoading &&
+                      !m.generatedView &&
+                      !m.runId &&
+                      !m.content?.trim() &&
+                      !m.thinkingContent?.trim()
+                    ),
                 )
-                .map((m) => (m.isLoading ? { ...m, isLoading: false } : m)),
+                .map((m) =>
+                  m.isLoading
+                    ? {
+                        ...m,
+                        isLoading: false,
+                        generatedView: m.generatedView
+                          ? { ...m.generatedView, status: 'stopped' }
+                          : undefined,
+                      }
+                    : m,
+                ),
             };
           },
         );
@@ -654,6 +713,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       if (!targetId) {
         return;
       }
+      if (pendingProjectIdRef.current === targetId) setPendingProjectId(null);
 
       const prevSessions = Array.isArray(sessions) ? sessions : [];
       const removedIds = prevSessions
@@ -695,6 +755,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       isSessionGenerating,
       sessions,
       stopGeneration,
+      setPendingProjectId,
     ],
   );
 
@@ -728,7 +789,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
   // 切换到指定会话
   const switchToSession = useCallback(
     (sessionId: string) => {
-      pendingProjectIdRef.current = null;
+      setPendingProjectId(null);
       const targetSession = sessions.find((s) => s.id === sessionId);
       if (targetSession) {
         const sessionModel = resolveSessionModelId(targetSession);
@@ -769,9 +830,25 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
             messages: (session.messages ?? [])
               .filter(
                 (m) =>
-                  !(!m.runId && m.isLoading && !m.content?.trim() && !m.thinkingContent?.trim()),
+                  !(
+                    !m.generatedView &&
+                    !m.runId &&
+                    m.isLoading &&
+                    !m.content?.trim() &&
+                    !m.thinkingContent?.trim()
+                  ),
               )
-              .map((m) => (m.isLoading ? { ...m, isLoading: false } : m)),
+              .map((m) =>
+                m.isLoading
+                  ? {
+                      ...m,
+                      isLoading: false,
+                      generatedView: m.generatedView
+                        ? { ...m.generatedView, status: 'stopped' }
+                        : undefined,
+                    }
+                  : m,
+              ),
           }),
         );
         if (!parsedSessions.some((session) => session.id === sessionId)) {
@@ -813,6 +890,48 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       }
     },
     [currentSessionId, debouncedSave, isAuthenticated, chatSync],
+  );
+
+  const clearSession = useCallback(
+    async (sessionId: string) => {
+      const session = sessionsRef.current.find((item) => item.id === sessionId);
+      if (!session || clearingSessionsRef.current.has(sessionId)) return;
+      if (session.isLoading || session.messages.some((item) => item.isLoading))
+        throw new Error('当前会话正在生成，请先停止生成后再清除上下文');
+      if (runtime && !runtime.port.clearSession) throw new Error('当前运行时不支持清除上下文');
+      clearingSessionsRef.current.add(sessionId);
+      try {
+        if (isAuthenticated) await chatSyncAdapter?.deleteSession(sessionId);
+        await runtime?.port.clearSession?.(sessionId);
+        contextVersionsRef.current.set(
+          sessionId,
+          (contextVersionsRef.current.get(sessionId) ?? 0) + 1,
+        );
+        for (const [runId, target] of recoverTargets.current) {
+          if (target.sessionId !== sessionId) continue;
+          recoverTargets.current.delete(runId);
+          recoveredRunIds.current.add(runId);
+        }
+        setSessions((prev) => {
+          const updated = prev.map((item) =>
+            item.id === sessionId
+              ? {
+                  ...item,
+                  messages: [],
+                  noteSnapshots: undefined,
+                  isLoading: false,
+                  updatedAt: Date.now(),
+                }
+              : item,
+          );
+          debouncedSave(updated, currentSessionId, undefined, true);
+          return updated;
+        });
+      } finally {
+        clearingSessionsRef.current.delete(sessionId);
+      }
+    },
+    [chatSyncAdapter, currentSessionId, debouncedSave, isAuthenticated, runtime],
   );
 
   // 更新会话标题（自动标题不 bump updatedAt，避免切换历史时误重排）
@@ -910,24 +1029,89 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         invocations?: ISlashInvocation[];
         requestSnapshot?: IChatRequestSnapshot;
         runtimeCommand?: RuntimeCommand;
+        continuationFromMessageId?: string;
       },
     ) => {
       const isRetry = Boolean(options?.retry);
       const replaySnapshot = options?.requestSnapshot;
-      const sourceRefs = replaySnapshot?.sourceRefs ?? options?.sourceRefs ?? [];
-      if ((!content.trim() && sourceRefs.length === 0) || isAILoading) {
-        return false;
-      }
-
-      let apiContent = replaySnapshot?.apiContent ?? content;
-      let displayContent = (options?.displayContent ?? content).trim();
+      const requestMode = replaySnapshot?.agentMode ?? agentModeRef.current;
+      const previousMessages =
+        sessions.find((session) => session.id === currentSessionId)?.messages ?? [];
+      const retryIndex = options?.retry
+        ? previousMessages.findIndex((message) => message.id === options.retry!.userMessageId)
+        : undefined;
+      const continuation = continuationContext(
+        previousMessages.slice(0, retryIndex),
+        replaySnapshot || options?.runtimeCommand ? '' : content,
+        replaySnapshot ? undefined : options?.continuationFromMessageId,
+      );
       let resolvedInvocations =
         options?.invocations ??
         (options?.invocation
           ? [options.invocation]
-          : findSlashInvocationTokens(displayContent).map((match) => match.invocation));
+          : findSlashInvocationTokens(options?.displayContent ?? content).map(
+              (match) => match.invocation,
+            ));
+      const explicitResource =
+        resolvedInvocations.length > 0 ||
+        /^\/[\p{L}][\p{L}\p{N}_:-]*(?:\s|$)/u.test(content.trim());
+      const resumedTask =
+        !replaySnapshot && !options?.runtimeCommand && !explicitResource
+          ? continuation.task
+          : undefined;
+      if (resumedTask)
+        resolvedInvocations = (continuation.invocations ?? []).map((invocation) => ({
+          ...invocation,
+          token: invocation.token || buildSlashInvocationToken(invocation),
+        }));
+      // 显式技能/命令需要资源与工具能力；界面模式不能替换它们的执行与输出契约。
+      const hasResourceRequest =
+        resolvedInvocations.length > 0 ||
+        Boolean(resumedTask && continuation.command) ||
+        Boolean(runtime && /^\/[\p{L}][\p{L}\p{N}_:-]*(?:\s|$)/u.test(content.trim()));
+      const isViewGeneration =
+        requestMode === 'ui' && !options?.runtimeCommand && !hasResourceRequest;
+      const contextVersion = currentSessionId
+        ? (contextVersionsRef.current.get(currentSessionId) ?? 0)
+        : 0;
+      const contextChanged = () =>
+        Boolean(
+          currentSessionId &&
+          (clearingSessionsRef.current.has(currentSessionId) ||
+            (contextVersionsRef.current.get(currentSessionId) ?? 0) !== contextVersion),
+        );
+      if (isViewGeneration && !viewGeneration) return false;
+      const sourceRefs =
+        replaySnapshot?.sourceRefs ??
+        (options?.sourceRefs?.length
+          ? options.sourceRefs
+          : isViewGeneration || resumedTask
+            ? latestConversationSources(continuation.history)
+            : []);
+      if (
+        (!content.trim() && sourceRefs.length === 0) ||
+        isAILoading ||
+        (currentSessionId && clearingSessionsRef.current.has(currentSessionId))
+      ) {
+        return false;
+      }
 
-      if (beforeSubmitPrompt && !replaySnapshot && !options?.runtimeCommand) {
+      let apiContent = replaySnapshot?.apiContent ?? content;
+      if (resumedTask) {
+        const tokens = resolvedInvocations.map(
+          (invocation) => invocation.token || invocation.command,
+        );
+        apiContent = [
+          tokens.length ? tokens.join(' ') : continuation.command,
+          `继续此前用户任务：${slashTokensToPlainText(resumedTask.content)}`,
+          `本次要求：${content}`,
+          '使用本会话已提供的附件继续处理；不要因本条消息未重新上传而要求重复选择原文件。',
+        ]
+          .filter(Boolean)
+          .join('\n\n');
+      }
+      let displayContent = (options?.displayContent ?? content).trim();
+      if (beforeSubmitPrompt && !replaySnapshot && !options?.runtimeCommand && !isViewGeneration) {
         try {
           const gate = await beforeSubmitPrompt({
             content: apiContent,
@@ -954,14 +1138,15 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         }
       }
 
-      // 未配置宿主预处理器时，仍不能把内部序列化 token 暴露给模型。
-      apiContent = slashTokensToPlainText(apiContent);
+      // Harness 在宿主展开行内资源；直接模型调用才在此移除内部 token。
+      if (!runtime) apiContent = slashTokensToPlainText(apiContent);
 
       if (!apiContent.trim() && !displayContent.trim() && sourceRefs.length === 0) {
         return false;
       }
 
       const requestSnapshot: IChatRequestSnapshot = replaySnapshot ?? {
+        continuationOf: resumedTask?.id,
         apiContent,
         modelId: currentModel || defaultModel || '',
         temperature: temperatureRef.current,
@@ -969,13 +1154,21 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         systemPrompt: systemPromptRef.current,
         kbEnabled: kbEnabledRef.current,
         kbCollectionId: kbCollectionIdRef.current,
-        agentMode: agentModeRef.current,
+        agentMode: requestMode === 'ui' && !isViewGeneration ? 'ask' : requestMode,
+        viewRequested:
+          requestMode === 'ui' && hasResourceRequest && Boolean(viewGeneration?.projectRuntimeView),
         permissionMode,
         runtimeCommand: options?.runtimeCommand,
         harnessAgentId: runtime?.getAgentId(),
         sourceRefs,
         createdAt: Date.now(),
       };
+
+      if (!replaySnapshot && requestSnapshot.viewRequested && viewGeneration?.runtimePrompt) {
+        requestSnapshot.systemPrompt = [requestSnapshot.systemPrompt, viewGeneration.runtimePrompt]
+          .filter(Boolean)
+          .join('\n\n');
+      }
 
       let resolvedSources: Awaited<ReturnType<typeof loadChatSources>> = [];
       if (requestSnapshot.sourceRefs?.length) {
@@ -987,12 +1180,15 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         }
       }
 
+      if (contextChanged()) return false;
+
       let selectedProjectId = sessions.find((s) => s.id === currentSessionId)?.projectId;
       let activeSessionId = currentSessionId;
+      let createdSessionNow = false;
       if (!activeSessionId) {
         const draftProjectId = pendingProjectIdRef.current?.trim() || undefined;
         selectedProjectId = draftProjectId;
-        pendingProjectIdRef.current = null;
+        setPendingProjectId(null);
         const draftSession: IChatSession = {
           id: generateId(),
           title: '新对话',
@@ -1011,6 +1207,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         });
         setCurrentSessionId(draftSession.id);
         activeSessionId = draftSession.id;
+        createdSessionNow = true;
       }
 
       // 确保 bootstrap 会话已在内存中（延后落库场景）
@@ -1033,7 +1230,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       let sessionForSnapshots = sessions.find((s) => s.id === activeSessionId);
       let activeSnapshots: Record<string, INoteSnapshot> = sessionForSnapshots?.noteSnapshots ?? {};
 
-      if (!runtime && noteReferences?.readContent) {
+      if ((!runtime || isViewGeneration) && noteReferences?.readContent) {
         const historyUserMessages = (sessionForSnapshots?.messages ?? []).filter(
           (m) => m.role === 'user' && m.content.trim(),
         );
@@ -1043,6 +1240,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           activeSnapshots,
           noteReferences.readContent,
         );
+        if (contextChanged()) return false;
         if (Object.keys(activeSnapshots).length > 0 || sessionForSnapshots?.noteSnapshots) {
           updateSessionMeta(activeSessionId, { noteSnapshots: activeSnapshots });
         }
@@ -1062,7 +1260,9 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       // 如果是会话的第一条用户消息，更新会话标题
       const session = sessions.find((s) => s.id === activeSessionId);
       const isFirstUserMessage =
-        !isRetry && session && session.messages.filter((m) => m.role === 'user').length === 0;
+        !isRetry &&
+        (createdSessionNow ||
+          Boolean(session && session.messages.filter((m) => m.role === 'user').length === 0));
 
       // 构造云端保存内容：对用户消息用包装格式保留附件元信息（不保存大段文本）
       const buildCloudContent = (
@@ -1129,12 +1329,16 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         }
       }
 
+      if (contextChanged()) return false;
+
       let loadingMessage: IChatMessage;
       if (isRetry && options?.retry) {
         updateMessage(activeSessionId, options.retry.assistantMessageId, {
           content: '',
           thinkingContent: undefined,
           stats: undefined,
+          generatedView: undefined,
+          requestSnapshot,
           isLoading: true,
           isError: false,
         });
@@ -1151,6 +1355,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           role: 'assistant',
           content: '',
           isLoading: true,
+          requestSnapshot,
         });
       }
 
@@ -1163,8 +1368,103 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       const streamToken = Symbol('stream');
       streamTokensRef.current.set(activeSessionId, streamToken);
       const isStreamActive = () => streamTokensRef.current.get(activeSessionId) === streamToken;
+      let latestGeneratedView: IChatGeneratedView | undefined;
+      const historyEnd = options?.retry
+        ? session?.messages.findIndex((m) => m.id === options.retry!.userMessageId)
+        : undefined;
+      const viewSourceRefs = [
+        ...new Map(
+          [
+            ...(session?.messages ?? [])
+              .slice(0, historyEnd)
+              .flatMap((message) =>
+                withArtifactSources(
+                  [
+                    ...(message.requestSnapshot?.sourceRefs ?? []),
+                    ...(message.generatedView?.sourceRefs ?? []),
+                  ],
+                  message.runtimeEvents,
+                ),
+              ),
+            ...(requestSnapshot.sourceRefs ?? []),
+          ].map((ref) => [ref.sourceId, ref]),
+        ).values(),
+      ];
+      const runtimeView = (
+        projection: Pick<RunProjection, 'content' | 'status' | 'error' | 'events'>,
+      ) => {
+        if (!requestSnapshot.viewRequested) return undefined;
+        const view =
+          viewGeneration?.projectRuntimeView?.(
+            projection.content,
+            projection.status === 'running',
+          ) ??
+          (projection.status === 'failed' || projection.status === 'cancelled'
+            ? latestGeneratedView
+            : undefined);
+        if (!view) return undefined;
+        latestGeneratedView = {
+          ...view,
+          sourceRefs: withArtifactSources(viewSourceRefs, projection.events),
+        };
+        if (projection.status === 'cancelled') latestGeneratedView.status = 'stopped';
+        if (projection.status === 'failed') {
+          latestGeneratedView.status = 'error';
+          latestGeneratedView.errorMessage = projection.error ?? 'Harness 执行失败';
+        }
+        return latestGeneratedView;
+      };
 
       try {
+        if (isViewGeneration && viewGeneration) {
+          // 重试只读取该轮之前的历史；每次生成只写当前助手消息。
+          const historyEnd = options?.retry
+            ? session?.messages.findIndex((m) => m.id === options.retry!.userMessageId)
+            : undefined;
+          const history = (session?.messages ?? []).slice(0, historyEnd);
+          const currentView = [...history]
+            .reverse()
+            .find((m) => m.generatedView?.status === 'complete')?.generatedView;
+          const result = await viewGeneration.generate(
+            {
+              instruction: toApiUserContent(apiContent.trim() || displayContent, activeSnapshots),
+              history: history
+                .filter(
+                  (m) =>
+                    !m.isLoading && !m.isError && hasApiMessageContent(m) && m.role !== 'system',
+                )
+                .map((m) => ({
+                  role: m.role,
+                  content:
+                    m.role === 'user' ? toHistoricalApiUserContent(m, activeSnapshots) : m.content,
+                })),
+              currentView,
+              sources: resolvedSources,
+              modelId: requestSnapshot.modelId,
+              temperature: requestSnapshot.temperature,
+              topP: requestSnapshot.topP,
+              signal: abortController.signal,
+            },
+            (view) => {
+              if (!isStreamActive()) return;
+              latestGeneratedView = view;
+              updateMessage(activeSessionId!, loadingMessage.id, {
+                generatedView: view,
+                content: view.content,
+                isLoading: true,
+              });
+            },
+          );
+          if (!isStreamActive()) return true;
+          updateMessage(activeSessionId, loadingMessage.id, {
+            generatedView: result,
+            content: result.content,
+            isLoading: false,
+            isError: false,
+          });
+          return true;
+        }
+
         // 准备发送给AI的消息历史
         let chatMessages: IChatStreamMessage[] = [];
         if (isRetry && options?.retry && session) {
@@ -1199,10 +1499,13 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         const hasNoteContext =
           Object.keys(activeSnapshots).length > 0 ||
           chatMessages.some(
-            (message) => message.role === 'user' && message.content.includes('--- 笔记:'),
+            (message) =>
+              message.role === 'user' &&
+              (message.content.includes('--- 笔记:') ||
+                message.content.includes('--- 工作区文件:')),
           );
-        if (hasNoteContext) {
-          chatMessages = [{ role: 'system', content: NOTE_REFERENCE_SYSTEM_HINT }, ...chatMessages];
+        if (hasNoteContext && noteReferences?.systemHint) {
+          chatMessages = [{ role: 'system', content: noteReferences.systemHint }, ...chatMessages];
         }
 
         if (runtime) {
@@ -1220,12 +1523,20 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
               agentId: requestSnapshot.harnessAgentId ?? runtime.getAgentId(),
               permissionMode,
               command: requestSnapshot.runtimeCommand,
-              modeId: requestSnapshot.agentMode,
+              modeId: requestSnapshot.agentMode === 'plan' ? 'plan' : 'ask',
               rawIntent: slashTokensToPlainText(displayContent) || apiContent,
               displayInput: displayContent,
+              apiInput: apiContent,
               invocations: resolvedInvocations,
               sourceRefs: requestSnapshot.sourceRefs ?? [],
-              systemPrompt: requestSnapshot.systemPrompt,
+              systemPrompt: [
+                requestSnapshot.systemPrompt,
+                requestSnapshot.viewRequested && viewSourceRefs.length
+                  ? `可用于 FilePreview 的本会话附件清单：${JSON.stringify(viewSourceRefs.map(({ sourceId, name }) => ({ sourceId, name })))}`
+                  : '',
+              ]
+                .filter(Boolean)
+                .join('\n\n'),
               kbEnabled: requestSnapshot.kbEnabled,
               kbCollectionId: requestSnapshot.kbCollectionId,
               temperature: requestSnapshot.temperature,
@@ -1237,7 +1548,9 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
             },
             abortController.signal,
             (projection) => {
+              if (!isStreamActive()) return;
               const usage = normalizeChatUsage(projection.usage);
+              const projectedView = runtimeView(projection);
               updateMessage(activeSessionId!, loadingMessage.id, {
                 runId: projection.runId,
                 runStatus: projection.status,
@@ -1245,9 +1558,10 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
                 contextUsage: projection.contextUsage,
                 goal: projection.goal,
                 content: projection.content,
+                generatedView: projectedView,
                 thinkingContent: projection.thinking || undefined,
                 isLoading: projection.status === 'running',
-                isError: projection.status === 'failed',
+                isError: projection.status === 'failed' || projectedView?.status === 'error',
                 stats: {
                   model: requestSnapshot.modelId,
                   responseTime:
@@ -1260,6 +1574,8 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
               });
             },
           );
+          if (!isStreamActive()) return true;
+          const finalView = runtimeView(result);
           // Always settle stats from the returned projection. This does not rely on the renderer
           // receiving a separate terminal event callback and guarantees model | time | tokens.
           updateMessage(activeSessionId, loadingMessage.id, {
@@ -1269,9 +1585,10 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
             contextUsage: result.contextUsage,
             goal: result.goal,
             content: result.content,
+            generatedView: finalView,
             thinkingContent: result.thinking || undefined,
             isLoading: false,
-            isError: result.status === 'failed',
+            isError: result.status === 'failed' || finalView?.status === 'error',
             stats: {
               model: requestSnapshot.modelId,
               responseTime: formatResponseTime(Date.now() - runtimeStartedAt),
@@ -1506,11 +1823,19 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
 
         // 更新错误消息（统一为友好提示）
         updateMessage(activeSessionId, loadingMessage.id, {
-          content: runtime
-            ? error instanceof Error
-              ? error.message
-              : 'Harness 启动失败'
-            : '🤖 AI 服务暂时不可用，请稍后重试。',
+          generatedView: latestGeneratedView
+            ? {
+                ...latestGeneratedView,
+                status: 'error',
+                errorMessage: error instanceof Error ? error.message : '界面生成失败',
+              }
+            : undefined,
+          content:
+            runtime || isViewGeneration
+              ? error instanceof Error
+                ? error.message
+                : 'Harness 启动失败'
+              : '🤖 AI 服务暂时不可用，请稍后重试。',
           isLoading: false,
           isError: true,
         });
@@ -1543,6 +1868,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       noteReferences,
       beforeSubmitPrompt,
       callAIChatStream,
+      viewGeneration,
       runtime,
       debouncedSave,
       isImageModel,
@@ -1641,7 +1967,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
   const handleNewChat = useCallback(() => {
     setDraftPermission('workspace-write');
     window.dispatchEvent(new CustomEvent('kb:close-manager'));
-    pendingProjectIdRef.current = null;
+    setPendingProjectId(null);
     setCurrentSessionId(null);
     if (!isAuthenticated) {
       debouncedSave(sessions, null);
@@ -1657,7 +1983,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         return;
       }
       window.dispatchEvent(new CustomEvent('kb:close-manager'));
-      pendingProjectIdRef.current = trimmed;
+      setPendingProjectId(trimmed);
       setDraftPermission('workspace-write');
       setCurrentSessionId(null);
       if (!isAuthenticated) {
@@ -1840,7 +2166,31 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
           if (abortControllersRef.current.has(target.sessionId)) continue;
           try {
             const events = await runtime.port.events(runId, 0);
-            if (disposed || !events.length) continue;
+            if (
+              disposed ||
+              abortControllersRef.current.has(target.sessionId) ||
+              !recoverTargets.current.has(runId)
+            )
+              continue;
+            if (events === null) {
+              // Renderer history can outlive the main database (e.g. imported/synced chats).
+              // Missing durable runs cannot recover, so retain their saved output and stop polling.
+              recoveredRunIds.current.add(runId);
+              recoverTargets.current.delete(runId);
+              const message = sessionsRef.current
+                .find((session) => session.id === target.sessionId)
+                ?.messages.find((message) => message.id === target.messageId);
+              if (message && (message.runStatus === 'running' || message.isLoading)) {
+                updateMessage(target.sessionId, target.messageId, {
+                  runStatus: 'failed',
+                  isLoading: false,
+                  isError: true,
+                });
+                setSessionLoading(target.sessionId, false);
+              }
+              continue;
+            }
+            if (!events.length) continue;
             const projection = events.reduce(reduceRunEvent, emptyProjection());
             updateMessage(target.sessionId, target.messageId, {
               content: projection.content,
@@ -1900,6 +2250,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     sessions,
     currentSessionId,
     currentSession,
+    currentProjectId,
     isAILoading,
     currentModel,
     isSessionGenerating,
@@ -1907,6 +2258,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
     createSessionInProject,
     switchToSession,
     deleteSession,
+    clearSession,
     deleteSessionsByProjectId,
     assignMissingProjectIds,
     updateSessionTitle,

@@ -61,6 +61,8 @@
   border: 1px solid hsl(var(--border) / 0.55);
   cursor: default;
   text-align: left;
+  // 卡片使用固定浅色底，文字不能继承暗黑主题的白色前景。
+  color: #172b4d;
   transition:
     border-color 0.2s,
     box-shadow 0.2s,
@@ -118,7 +120,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: hsl(var(--foreground) / 0.75);
+  color: #42526e;
 }
 
 .workflow-step-body {
@@ -139,7 +141,7 @@
 
 .workflow-step-name {
   font-size: 10px;
-  color: hsl(var(--muted-foreground));
+  color: #52627a;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

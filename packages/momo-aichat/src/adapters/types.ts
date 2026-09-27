@@ -1,7 +1,13 @@
 import type { ChatRuntimePort } from '@momo/agent-contracts';
 import type { ReactNode } from 'react';
 import type { IChatStorageAdapter } from '../storage/chat-storage';
-import type { IChatAttachment, IChatAttachmentMeta, IChatSession } from '../types/chat';
+import type {
+  IChatAttachment,
+  IChatAttachmentMeta,
+  IChatGeneratedView,
+  IChatMessage,
+  IChatSession,
+} from '../types/chat';
 import type { ILocalPathConfig } from '../types/local-path';
 import type { INoteReferencesConfig } from '../types/note-reference';
 import type {
@@ -105,6 +111,37 @@ export interface IChatSyncAdapter {
 /** 宿主可注入的 AI 对话服务能力 */
 
 export interface IAiChatServices {
+  /** 宿主提供通用界面生成与预览；技能执行仍使用 Agent 工具链。 */
+  viewGeneration?: {
+    /** Generic component/output contract appended to skill UI turns, without business rules. */
+    runtimePrompt?: string;
+    projectRuntimeView?: (content: string, streaming: boolean) => IChatGeneratedView | undefined;
+    generate: (
+      input: {
+        instruction: string;
+        history: IChatStreamMessage[];
+        currentView?: IChatGeneratedView;
+        sources: IResolvedChatSource[];
+        modelId: string;
+        temperature: number;
+        topP: number;
+        signal: AbortSignal;
+      },
+      onUpdate: (view: IChatGeneratedView) => void,
+    ) => Promise<IChatGeneratedView>;
+    render: (
+      message: IChatMessage,
+      actions?: {
+        attachFiles: (files: File[]) => Promise<boolean>;
+        submit: (input: {
+          message: string;
+          formState?: Record<string, unknown>;
+        }) => Promise<boolean>;
+        busy: boolean;
+      },
+    ) => ReactNode;
+    uploadFiles?: TUploadFilesFn;
+  };
   renderRuntimeArtifact?: (artifact: {
     id: string;
     name: string;
@@ -118,6 +155,7 @@ export interface IAiChatServices {
       projectId: string;
       folderPaths: string[];
       resourceAgentAppId?: string;
+      resourceAgentAppIds?: string[];
     };
   };
   callAIChatStream: TCallAiChatStream;
@@ -162,8 +200,10 @@ export interface IAiChatServices {
   superpowerPrompts?: {
     workflow: string;
   };
-  /** 输入框 @ 笔记引用（由宿主注入） */
+  /** 输入框 @ 资源引用（由宿主注入，可包含笔记和工作区文件） */
   noteReferences?: INoteReferencesConfig;
+  /** 用户仅发送附件时，宿主提供对应场景的默认请求。 */
+  getDefaultAttachmentPrompt?: (kind: 'view' | 'image' | 'summary') => string;
   /** 消息内本地路径点击（由宿主注入） */
   localPath?: ILocalPathConfig;
   /** 消息内 http(s) 链接点击（由宿主注入，如系统浏览器打开） */

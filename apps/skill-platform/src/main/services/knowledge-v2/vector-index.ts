@@ -1,8 +1,14 @@
 import { createHash } from 'node:crypto';
 
-import * as lancedb from '@lancedb/lancedb';
-
 import { KnowledgeError, toKnowledgeError } from './error';
+import { loadPackagedNativeModule } from './native-module';
+
+const lancedb = loadPackagedNativeModule<typeof import('@lancedb/lancedb')>({
+  packageName: '@lancedb/lancedb',
+  nativePackageName: '@lancedb/lancedb-win32-x64-msvc',
+  nativeFileName: 'lancedb.win32-x64-msvc.node',
+  nativePackageVersion: '0.22.3',
+});
 
 export interface IVectorRow {
   chunk_id: string;

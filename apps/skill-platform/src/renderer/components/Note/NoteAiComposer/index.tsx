@@ -1,3 +1,4 @@
+import { getBuiltinSkillPrompt } from '@/shared/builtin-skills';
 import {
   ChatInputPanel,
   useAiChatConfig,
@@ -31,9 +32,7 @@ function buildAttachmentsPrompt(files: IChatAttachment[]): string {
       `--- 文件: ${file.name} END ---`,
     ].join('\n');
   });
-  return ['以下为用户上传的文件内容（可能已截断），回答可引用并标注文件名：', ...blocks].join(
-    '\n\n',
-  );
+  return [getBuiltinSkillPrompt('attachmentContext'), ...blocks].join('\n\n');
 }
 
 export function NoteAiComposer({ noteKey, onRewritingChange }: IProps) {
@@ -216,9 +215,9 @@ export function NoteAiComposer({ noteKey, onRewritingChange }: IProps) {
 
     let instruction = userContent;
     if (!isCurrentImageModel && attachments.length > 0) {
-      instruction = `${attachmentsPrompt}\n\n我的问题：\n${userContent || '(基于以上文件，请给出总结/见解)'}`;
+      instruction = `${attachmentsPrompt}\n\n我的问题：\n${userContent || getBuiltinSkillPrompt('attachmentSummaryTask')}`;
     } else if (isCurrentImageModel && !userContent && referenceImages.length > 0) {
-      instruction = '请根据参考图生成或编辑图片';
+      instruction = getBuiltinSkillPrompt('attachmentImageTask');
     }
 
     const snapshot = useNoteStore.getState().editorContent;
@@ -461,7 +460,6 @@ export function NoteAiComposer({ noteKey, onRewritingChange }: IProps) {
           onAttachFiles={handleAttachFiles}
           onRemoveAttachment={handleRemoveAttachment}
           exportSession={exportSession}
-          showSessionCommands={false}
         />
       </div>
     </div>

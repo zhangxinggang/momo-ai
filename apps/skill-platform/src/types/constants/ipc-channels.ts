@@ -95,12 +95,15 @@ export const IPC_CHANNELS = {
   TOOL_RENAME: 'tool:rename',
   TOOL_DELETE: 'tool:delete',
   TOOL_MOVE: 'tool:move',
+  TOOL_OPEN_DIRECTORY: 'tool:openDirectory',
   TOOL_READ_SNAPEDIT_HTML: 'tool:readSnapEditHtml',
-  TOOL_WRITE_GENERATED_FILES: 'tool:writeGeneratedFiles',
-  TOOL_ACTIVATE: 'tool:activate',
-  TOOL_DEACTIVATE: 'tool:deactivate',
-  TOOL_RUNTIME_STATUS: 'tool:runtimeStatus',
-  TOOL_READ_CONTEXT_FILES: 'tool:readContextFiles',
+  TOOL_READ_WEB_PAGE: 'tool:readWebPage',
+  TOOL_CHECK_IDENTIFIER: 'tool:checkIdentifier',
+  TOOL_VALIDATE_PLUGIN: 'tool:validatePlugin',
+  TOOL_INVOKE_PLUGIN: 'tool:invokePlugin',
+
+  // 可复用接口请求工作台
+  API_REQUEST_EXECUTE: 'apiRequest:execute',
 
   // Knowledge base（知识库）
   KNOWLEDGE_LIST_COLLECTIONS: 'knowledge:listCollections',
@@ -184,6 +187,7 @@ export const IPC_CHANNELS = {
   SKILL_SCAN_LOCAL: 'skill:scanLocal',
   SKILL_SCAN_LOCAL_PREVIEW: 'skill:scanLocalPreview',
   SKILL_LIST_DEFAULT_SKILLS: 'skill:listDefaultSkills',
+  SKILL_GET_BUILTIN_SKILLS: 'skill:getBuiltinSkills',
   SKILL_IMPORT_DEFAULT_SKILLS: 'skill:importDefaultSkills',
   SKILL_PREVIEW_LOCAL_ZIPS: 'skill:previewLocalZips',
   SKILL_IMPORT_LOCAL_ZIPS: 'skill:importLocalZips',
@@ -244,6 +248,8 @@ export const IPC_CHANNELS = {
   IMAGE_SAVE_BASE64: 'image:saveBase64',
   IMAGE_EXISTS: 'image:exists',
   IMAGE_CLEAR: 'image:clear',
+  DRAWIO_DIAGRAM_SAVE: 'drawioDiagram:save',
+  DRAWIO_DIAGRAM_LOAD: 'drawioDiagram:load',
 
   // Video
   DIALOG_SELECT_VIDEO: 'dialog:selectVideo',

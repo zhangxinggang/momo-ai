@@ -1,7 +1,8 @@
 import { DeleteOutlined, FolderAddOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Input, Modal, Radio } from 'antd';
+import { Button, Checkbox, Input, Modal } from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { normalizeAgentAppIds } from '@/types/constants/agent-app-profile';
 import { SKILL_PLATFORMS } from '@/types/constants/platforms';
 import type { DAgentAppDetectionItem } from '@/types/modules/agent-app';
 import { PlatformIcon } from '@renderer/components/ui/PlatformIcon';
@@ -33,12 +34,13 @@ export function ChatProjectModal({ open, mode, projectId, onClose, onSuccess }: 
 
   const [name, setName] = useState('');
   const [folderPaths, setFolderPaths] = useState<string[]>([]);
-  const [agentAppId, setAgentAppId] = useState<string | null>(null);
+  const [agentAppIds, setAgentAppIds] = useState<string[]>([]);
   const [detectedItems, setDetectedItems] = useState<DAgentAppDetectionItem[]>([]);
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectError, setDetectError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const detectSeqRef = useRef(0);
+  const skipInitialDetectionRef = useRef(false);
 
   const editingProject = useMemo(
     () => (mode === 'edit' && projectId ? projects.find((item) => item.id === projectId) : null),
@@ -62,28 +64,33 @@ export function ChatProjectModal({ open, mode, projectId, onClose, onSuccess }: 
     if (!open) {
       return;
     }
+    skipInitialDetectionRef.current = true;
     setDetectedItems([]);
     setDetectError('');
     setIsDetecting(false);
     if (mode === 'edit' && editingProject) {
       setName(editingProject.name);
       setFolderPaths([...editingProject.folderPaths]);
-      setAgentAppId(editingProject.agentAppId ?? null);
+      setAgentAppIds(normalizeAgentAppIds(editingProject.agentAppIds ?? editingProject.agentAppId));
       return;
     }
     setName('');
     setFolderPaths([]);
-    setAgentAppId(null);
+    setAgentAppIds([]);
   }, [open, mode, editingProject]);
 
   useEffect(() => {
     if (!open) {
       return;
     }
+    if (skipInitialDetectionRef.current) {
+      skipInitialDetectionRef.current = false;
+      return;
+    }
     if (folderPaths.length === 0) {
       detectSeqRef.current += 1;
       setDetectedItems([]);
-      setAgentAppId(null);
+      setAgentAppIds([]);
       setDetectError('');
       setIsDetecting(false);
       return;
@@ -103,12 +110,7 @@ export function ChatProjectModal({ open, mode, projectId, onClose, onSuccess }: 
           }
           setDetectedItems(result.items);
           const resultIds = new Set(result.items.map((item) => item.platformId));
-          const orderedResultIds = orderedPlatforms
-            .filter((item) => resultIds.has(item.id))
-            .map((item) => item.id);
-          setAgentAppId((current) =>
-            current && resultIds.has(current) ? current : (orderedResultIds[0] ?? null),
-          );
+          setAgentAppIds((current) => current.filter((id) => resultIds.has(id)));
           if (result.errors.length > 0 && result.items.length === 0) {
             setDetectError('部分目录无法读取，请检查目录是否仍然存在');
           }
@@ -118,7 +120,6 @@ export function ChatProjectModal({ open, mode, projectId, onClose, onSuccess }: 
             return;
           }
           setDetectedItems([]);
-          setAgentAppId(null);
           setDetectError('Agent 识别失败，请重试');
         })
         .finally(() => {
@@ -155,7 +156,7 @@ export function ChatProjectModal({ open, mode, projectId, onClose, onSuccess }: 
     setIsSaving(true);
     try {
       if (mode === 'create') {
-        const result = createProject(name, folderPaths, agentAppId);
+        const result = createProject(name, folderPaths, agentAppIds);
         if (result.ok === true) {
           onSuccess?.(result.project.id);
           onClose();
@@ -168,7 +169,7 @@ export function ChatProjectModal({ open, mode, projectId, onClose, onSuccess }: 
         showToast(SAVE_ERROR_TEXT['not-found'], 'error');
         return;
       }
-      const result = updateProject(projectId, name, folderPaths, agentAppId);
+      const result = updateProject(projectId, name, folderPaths, agentAppIds);
       if (result.ok === true) {
         onSuccess?.(projectId);
         onClose();
@@ -187,7 +188,7 @@ export function ChatProjectModal({ open, mode, projectId, onClose, onSuccess }: 
       onCancel={onClose}
       onOk={handleSave}
       confirmLoading={isSaving}
-      okButtonProps={{ disabled: isDetecting }}
+      okButtonProps={{ disabled: isDetecting || Boolean(detectError) }}
       okText='确定'
       cancelText='取消'
       destroyOnHidden
@@ -249,12 +250,12 @@ export function ChatProjectModal({ open, mode, projectId, onClose, onSuccess }: 
           <div className={styles['chat-project-modal-field']}>
             <div className={styles['chat-project-modal-label']}>Agent 应用</div>
             <div className={styles['chat-project-modal-hint']}>仅显示所选目录中检测到的 Agent</div>
-            <Radio.Group
-              value={agentAppId ?? ''}
-              onChange={(event) => setAgentAppId(String(event.target.value))}
+            <Checkbox.Group
+              value={agentAppIds}
+              onChange={(values) => setAgentAppIds(values.map(String))}
               className={styles['chat-project-modal-agent-group']}>
               {visibleDetectedPlatforms.map((platform) => (
-                <Radio
+                <Checkbox
                   key={platform.id}
                   value={platform.id}
                   className={styles['chat-project-modal-agent-item']}>
@@ -262,9 +263,12 @@ export function ChatProjectModal({ open, mode, projectId, onClose, onSuccess }: 
                     <PlatformIcon platformId={platform.id} size={18} />
                     <span className={styles['chat-project-modal-agent-name']}>{platform.name}</span>
                   </span>
-                </Radio>
+                </Checkbox>
               ))}
-            </Radio.Group>
+            </Checkbox.Group>
+            <div className={styles['chat-project-modal-hint']}>
+              可多选；全部取消时仅使用 momo-ai 技能
+            </div>
           </div>
         ) : null}
 

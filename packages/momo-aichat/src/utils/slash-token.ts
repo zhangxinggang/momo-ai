@@ -38,6 +38,8 @@ function normalizeInvocation(value: unknown): ISlashInvocation | null {
     kind: input.kind,
     scope: input.scope!,
     category: typeof input.category === 'string' ? input.category : undefined,
+    agentAppId: typeof input.agentAppId === 'string' ? input.agentAppId : undefined,
+    agentAppName: typeof input.agentAppName === 'string' ? input.agentAppName : undefined,
     tags: Array.isArray(input.tags)
       ? input.tags.filter((tag): tag is string => typeof tag === 'string').slice(0, 8)
       : undefined,

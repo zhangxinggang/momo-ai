@@ -23,7 +23,7 @@ const port = server.address().port;
 const child = spawn(process.execPath, [path.join(bundle, 'node_modules/@deepseek-ai/dsh/lib/bin.js'), '--profile', 'momo'], {
   cwd: bundle, env: { ...process.env, DSH_HOME: home, MOMO_SESSION_ROOT: path.join(home, 'sessions'), MOMO_BRIDGE_PLUGIN: path.join(bundle, 'plugins/momo-host-bridge/index.mjs'),
     MOMO_CREDENTIAL_PLUGIN: path.join(bundle, 'plugins/momo-model-credentials/index.mjs'),
-    MOMO_PRESET_ROOT: path.join(bundle, 'profile/agent-presets'), MOMO_BUNDLE_ID: 'smoke', MOMO_CORE_VERSION: '0.1.6-alpha.2' }, windowsHide: true,
+    MOMO_BUNDLE_ID: 'smoke', MOMO_CORE_VERSION: '0.2.1-alpha.1' }, windowsHide: true,
 });
 let buffer = '', seq = 0;
 const pending = new Map();

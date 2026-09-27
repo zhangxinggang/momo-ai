@@ -2,12 +2,15 @@ import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
 import type { Database } from 'better-sqlite3';
 import { ipcMain } from 'electron';
 import { registerAgentRuntimeIPC } from '../agent-runtime/ipc';
+import { customToolWorkspaceService } from '../services/custom-tool';
 import { FolderDB, PromptDB, SkillDB, WorkflowDB } from '../database';
 import { WorkflowBusinessController } from '../database/controller/workflow-business';
 import { WorkflowFolderController } from '../database/controller/workflow-folder';
 import { registerAgentAppIPC } from './agent-app';
 import { registerAIIPC } from './ai';
 import { registerAichatIPC } from './aichat-handlers';
+import { registerApiRequestIPC } from './api-request';
+import { registerBuiltinSkillsIPC } from './builtin-skills';
 import { registerCustomToolIPC } from './custom-tool';
 import { registerDataIPC } from './data';
 import { registerDialogIPC } from './dialog';
@@ -126,6 +129,7 @@ function resetAllRegisteredIpcHandlers(): void {
  * 注册不依赖数据库的 IPC（应用启动时调用）
  */
 export function registerBootstrapIPC(): void {
+  registerBuiltinSkillsIPC();
   registerDialogIPC();
   registerFsIPC();
   registerDataIPC();
@@ -166,7 +170,7 @@ export function registerAllIPC(db: Database): void {
   registerWorkflowFolderIPC(workflowFolderDB);
   registerWorkflowAgentIPC();
   registerSettingsIPC(db);
-  registerAgentRuntimeIPC(db);
+  registerAgentRuntimeIPC(db, customToolWorkspaceService);
   registerImageIPC();
   registerAIIPC();
   registerAichatIPC();
@@ -176,5 +180,6 @@ export function registerAllIPC(db: Database): void {
   registerSystemIPC();
   registerRulesIPC();
   registerNoteIPC();
+  registerApiRequestIPC();
   registerCustomToolIPC();
 }

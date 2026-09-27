@@ -3,6 +3,7 @@ export const MAIN_IPC_EVENT_CHANNELS = [
   'window:close-action',
   'window:showCloseDialog',
   'window:fullscreen-changed',
+  'window:maximized-changed',
   'window:visibility-changed',
 ] as const;
 

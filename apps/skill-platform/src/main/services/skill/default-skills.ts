@@ -13,7 +13,7 @@ import { extractZipToDir, findSkillMdFile } from './installer/zip-archive';
 import { parseSkillMd } from './safety/validator';
 
 export function getDefaultSkillsDir(): string {
-  return path.join(getProjectRoot(), 'default', 'skills');
+  return path.join(getProjectRoot(), 'default', 'skills', 'user');
 }
 
 function getDefaultImportCacheDir(zipFileName: string): string {
@@ -21,7 +21,7 @@ function getDefaultImportCacheDir(zipFileName: string): string {
   return path.join(getAppTempDir(), 'default-import', base);
 }
 
-/** 扫描内置 default/skills 目录，解压并解析 zip 预览数据 */
+/** 仅扫描 default/skills/user 的用户技能 ZIP，不将系统 builtIn 规则导入用户仓库。 */
 export async function listDefaultSkillPreviews(db: SkillDB): Promise<IDefaultSkillPreview[]> {
   const dir = getDefaultSkillsDir();
   let entries: string[];

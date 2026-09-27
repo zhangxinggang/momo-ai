@@ -1,6 +1,6 @@
 import { createTray, destroyTray, getMainWindow, registerWindowChromeIpc } from '@momo/electron';
 import type { BrowserWindow } from 'electron';
-import { app } from 'electron';
+import { app, ipcMain, powerSaveBlocker } from 'electron';
 
 type ShowAppWindowLike = Pick<
   BrowserWindow,
@@ -12,6 +12,23 @@ let isQuitting = false;
 let closeAction: 'ask' | 'minimize' | 'exit' = 'ask';
 let pendingCloseAction = false;
 let isDebugMode = false;
+const powerSaveBlockerIds = new Map<'prevent-app-suspension' | 'prevent-display-sleep', number>();
+
+function setPowerSaveMode(
+  mode: 'prevent-app-suspension' | 'prevent-display-sleep',
+  enabled: boolean,
+): void {
+  const currentId = powerSaveBlockerIds.get(mode);
+  if (enabled) {
+    if (currentId !== undefined && powerSaveBlocker.isStarted(currentId)) return;
+    powerSaveBlockerIds.set(mode, powerSaveBlocker.start(mode));
+    return;
+  }
+  if (currentId !== undefined && powerSaveBlocker.isStarted(currentId)) {
+    powerSaveBlocker.stop(currentId);
+  }
+  powerSaveBlockerIds.delete(mode);
+}
 
 export function getIsQuitting(): boolean {
   return isQuitting;
@@ -98,6 +115,19 @@ export function getWindowCloseTrayBehaviorOptions(): IWindowCloseTrayBehaviorOpt
 
 /** 注册窗口与应用外壳相关 IPC */
 export function registerWindowChromeIPC(): void {
+  ipcMain.removeAllListeners('app:setPowerSaveMode');
+  ipcMain.on(
+    'app:setPowerSaveMode',
+    (_event, mode: 'prevent-app-suspension' | 'prevent-display-sleep', enabled: boolean) => {
+      if (
+        (mode !== 'prevent-app-suspension' && mode !== 'prevent-display-sleep') ||
+        typeof enabled !== 'boolean'
+      ) {
+        return;
+      }
+      setPowerSaveMode(mode, enabled);
+    },
+  );
   registerWindowChromeIpc({
     getMinimizeToTray: () => minimizeToTray,
     setMinimizeToTray: (value) => {

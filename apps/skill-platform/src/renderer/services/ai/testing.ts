@@ -1,3 +1,4 @@
+import { getBuiltinSkillPrompt } from '@/shared/builtin-skills';
 import { chatCompletion } from './chat';
 import { isImageGenerationConfig } from './image/capabilities';
 import { testImageGeneration } from './image/test';
@@ -79,7 +80,7 @@ export async function testAIConnection(
   }
 
   const startTime = Date.now();
-  const prompt = testPrompt || 'Hello! Please respond with a brief greeting.';
+  const prompt = testPrompt || getBuiltinSkillPrompt('aiConnectionTest');
   const useStream =
     resolveAIProtocol(config) === 'anthropic' ? false : (config.chatParams?.stream ?? false);
   const useThinking = config.chatParams?.enableThinking ?? false;

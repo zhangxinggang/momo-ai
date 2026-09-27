@@ -7,7 +7,13 @@ import { classnames } from '~/utils';
 import bus from '~/utils/event-bus';
 
 const ToolbarLink = () => {
-  const { editorId, usedLanguageText: ult, showToolbarName, disabled } = useContext(EditorContext);
+  const {
+    editorId,
+    usedLanguageText: ult,
+    showToolbarName,
+    disabled,
+    editorMode,
+  } = useContext(EditorContext);
 
   return (
     <button
@@ -15,6 +21,9 @@ const ToolbarLink = () => {
       title={ult.toolbarTips?.link}
       aria-label={ult.toolbarTips?.link}
       disabled={disabled}
+      onMouseDown={(event) => {
+        if (editorMode === 'richtext') event.preventDefault();
+      }}
       onClick={() => {
         bus.emit(editorId, REPLACE, 'link');
       }}

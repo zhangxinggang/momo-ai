@@ -7,7 +7,7 @@ import type {
 import { listAgentAppSlashCommands, prepareAgentAppSubmit } from '@renderer/services/agent-app/api';
 
 interface ICreateAgentAppChatAdaptersOptions {
-  getAgentAppId: () => string | null;
+  getAgentAppIds: () => string[];
   getFolderPaths: () => string[];
   onDenied?: (reason: string) => void;
 }
@@ -21,11 +21,11 @@ export function createAgentAppChatAdapters(options: ICreateAgentAppChatAdaptersO
     // momo-ai 应用技能不依赖当前项目是否选择了 Agent。
     isActive: () => true,
     list: async (query, ctx) => {
-      const agentAppId = options.getAgentAppId()?.trim();
+      const agentAppIds = options.getAgentAppIds();
       const folderPaths =
         ctx.workspacePaths?.length > 0 ? ctx.workspacePaths : options.getFolderPaths();
       const result = await listAgentAppSlashCommands({
-        agentAppId,
+        agentAppIds,
         folderPaths,
         query,
       });
@@ -41,6 +41,9 @@ export function createAgentAppChatAdapters(options: ICreateAgentAppChatAdaptersO
           category: item.category,
           tags: item.tags,
           hasArgs: item.hasArgs,
+          agentAppId: item.agentAppId,
+          agentAppName: item.agentAppName,
+          directoryPath: item.directoryPath,
         })),
         warning: result.warning,
       };
@@ -50,12 +53,12 @@ export function createAgentAppChatAdapters(options: ICreateAgentAppChatAdaptersO
   const beforeSubmitPrompt = async (
     input: IBeforeSubmitPromptInput,
   ): Promise<IBeforeSubmitPromptResult> => {
-    const agentAppId = options.getAgentAppId()?.trim();
+    const agentAppIds = options.getAgentAppIds();
     const folderPaths =
       input.workspacePaths?.length > 0 ? input.workspacePaths : options.getFolderPaths();
 
     const result = await prepareAgentAppSubmit({
-      agentAppId,
+      agentAppIds,
       folderPaths,
       content: input.content,
       displayContent: input.displayContent,

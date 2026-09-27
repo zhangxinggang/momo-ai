@@ -19,7 +19,10 @@ const ToolbarPreview = () => {
     <button
       className={classnames([
         `${prefix}-toolbar-item`,
-        setting.preview && `${prefix}-toolbar-active`,
+        editorMode === 'markdown' &&
+          !setting.previewOnly &&
+          !setting.htmlPreview &&
+          `${prefix}-toolbar-active`,
         disabled && `${prefix}-disabled`,
       ])}
       title={ult.toolbarTips?.preview}

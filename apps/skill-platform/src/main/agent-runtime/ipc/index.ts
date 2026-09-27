@@ -12,7 +12,11 @@ import { getProjectRoot, getUserDataPath } from '../../runtime-paths';
 import { ChatApplicationService } from '../application/service';
 import { AgentStore } from '../persistence/store';
 import { RuntimeBundles } from '../supervisor/bundles';
+import type { CustomToolWorkspaceService } from '../../services/custom-tool/workspace';
 let service: ChatApplicationService | undefined;
+export async function refreshCustomToolCatalog() {
+  await service?.refreshCustomTools();
+}
 const owners = new Map<string, number>();
 const watchedSenders = new Set<number>();
 function validateSender(event: any) {
@@ -22,15 +26,19 @@ function validateSender(event: any) {
   if (!url.startsWith('file:') && !/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(url))
     throw new Error('UNTRUSTED_IPC_ORIGIN');
 }
-export function registerAgentRuntimeIPC(db: Database) {
+export function registerAgentRuntimeIPC(db: Database, customTools?: CustomToolWorkspaceService) {
   void service?.dispose();
   const root = path.join(getUserDataPath(), 'agent-runtimes');
   const builtin = app.isPackaged
-    ? path.join(process.resourcesPath, 'harness-builtin')
+    ? path.join(process.resourcesPath, 'harness-builtin.asar')
     : path.join(getProjectRoot(), '../../packages/momo-harness-runner/dist');
   const store = new AgentStore(db);
-  const bundles = new RuntimeBundles(path.join(root, 'bundles'), builtin);
-  service = new ChatApplicationService(store, bundles, root);
+  const bundles = new RuntimeBundles(
+    path.join(root, 'bundles'),
+    builtin,
+    app.isPackaged ? path.join(root, 'builtin-cache') : undefined,
+  );
+  service = new ChatApplicationService(store, bundles, root, customTools);
   service.onEvent = (event) => {
     for (const window of BrowserWindow.getAllWindows())
       if (
@@ -40,9 +48,14 @@ export function registerAgentRuntimeIPC(db: Database) {
         window.webContents.send(AGENT_EVENT_CHANNEL, event);
   };
   ipcMain.removeHandler(AGENT_CHANNEL);
-  const ownRun = (event: IpcMainInvokeEvent, runId: string) => {
+  const ownRun = (event: IpcMainInvokeEvent, runId: string, allowMissing = false) => {
+    if (typeof runId !== 'string' || !runId.trim() || runId.length > 200)
+      throw new Error('INVALID_RUN_ID');
     const run = store.run(runId);
-    if (!run) throw new Error('UNKNOWN_RUN');
+    if (!run) {
+      if (allowMissing) return null;
+      throw new Error('UNKNOWN_RUN');
+    }
     const owner = owners.get(run.session_id);
     if (owner && owner !== event.sender.id) throw new Error('SESSION_OWNED_BY_OTHER_WINDOW');
     return run;
@@ -81,20 +94,52 @@ export function registerAgentRuntimeIPC(db: Database) {
           ? service.controlGoal(input.sessionId, input.action)
           : service.exportSession(input.sessionId);
       }
+      case 'clearSession': {
+        const owner = owners.get(input.sessionId);
+        if (owner && owner !== event.sender.id) throw new Error('SESSION_OWNED_BY_OTHER_WINDOW');
+        return service.clearSession(input.sessionId);
+      }
       case 'setPermission': {
         const owner = owners.get(input.sessionId);
         if (owner && owner !== event.sender.id) throw new Error('SESSION_OWNED_BY_OTHER_WINDOW');
         return service.setPermission(input.sessionId, input.mode);
       }
       case 'cancel': {
-        if (input.runId) ownRun(event, input.runId);
-        else if (owners.get(input.sessionId) !== event.sender.id)
+        if (input.runId) {
+          // Cleanup/stop can race with restored history whose durable run is already gone.
+          if (!ownRun(event, input.runId, true)) return;
+        } else if (owners.get(input.sessionId) !== event.sender.id)
           throw new Error('UNKNOWN_SESSION_OWNER');
         return service.cancelPending(input);
       }
       case 'events':
-        ownRun(event, input.runId);
+        if (!ownRun(event, input.runId, true)) return null;
         return store.events(input.runId, Number.isSafeInteger(input.afterSeq) ? input.afterSeq : 0);
+      case 'fileChanges':
+        ownRun(event, input.runId);
+        return service.fileChanges.list(input.runId);
+      case 'reviewChange':
+        ownRun(event, input.runId);
+        if (typeof input.path !== 'string') throw new Error('INVALID_FILE_PATH');
+        return service.fileChanges.review(input.runId, input.path);
+      case 'correctChange':
+      case 'undoChanges': {
+        const run = ownRun(event, input.runId);
+        const busy = store.db
+          .prepare(
+            "SELECT id FROM agent_runs WHERE session_id=? AND status IN ('starting','running','cancelling') LIMIT 1",
+          )
+          .get(run.session_id);
+        if (busy) throw new Error('请等待本轮完成或停止生成后再修改文件');
+        if (operation === 'undoChanges') return service.fileChanges.undo(input.runId);
+        if (
+          typeof input.path !== 'string' ||
+          typeof input.content !== 'string' ||
+          typeof input.revision !== 'string'
+        )
+          throw new Error('INVALID_CORRECTION');
+        return service.fileChanges.correct(input.runId, input.path, input.content, input.revision);
+      }
       case 'sessionBinding':
         return store.session(input.sessionId) ?? null;
       case 'saveSources': {
@@ -186,6 +231,7 @@ export function registerAgentRuntimeIPC(db: Database) {
     }
   });
 }
+
 export async function disposeAgentRuntime() {
   await service?.dispose();
   service = undefined;

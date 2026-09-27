@@ -22,6 +22,10 @@ export const mediaApi = {
     ipcRenderer.invoke(IPC_CHANNELS.IMAGE_SAVE_BASE64, fileName, base64),
   imageExists: (fileName: string) => ipcRenderer.invoke(IPC_CHANNELS.IMAGE_EXISTS, fileName),
   clearImages: () => ipcRenderer.invoke(IPC_CHANNELS.IMAGE_CLEAR),
+  saveDrawioDiagram: (input: { assetId?: string; xml: string; pngDataUri: string }) =>
+    ipcRenderer.invoke(IPC_CHANNELS.DRAWIO_DIAGRAM_SAVE, input),
+  loadDrawioDiagram: (assetId: string): Promise<string | null> =>
+    ipcRenderer.invoke(IPC_CHANNELS.DRAWIO_DIAGRAM_LOAD, assetId),
   selectVideo: () => ipcRenderer.invoke(IPC_CHANNELS.DIALOG_SELECT_VIDEO),
   saveVideo: (paths: string[]) => ipcRenderer.invoke(IPC_CHANNELS.VIDEO_SAVE, paths),
   openVideo: (fileName: string) => ipcRenderer.invoke(IPC_CHANNELS.VIDEO_OPEN, fileName),

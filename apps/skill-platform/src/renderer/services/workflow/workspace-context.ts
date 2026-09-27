@@ -1,3 +1,4 @@
+import { getBuiltinSkillPrompt } from '@/shared/builtin-skills';
 import { isCodeEditorPath } from '@momo/file-editor';
 import { getWorkspaceApi } from '@renderer/services/workspace/api';
 import {
@@ -50,13 +51,13 @@ export async function buildWorkflowWorkspaceContext(
 
     const label = `${workflowName}/${businessId}/${nodeName}`;
     if (blocks.length === 0) {
-      return `当前工作区目录：${label}\n（目录内无可读取的文本文件，请基于目录结构回答）`;
+      return getBuiltinSkillPrompt('workflowContextEmpty', { label });
     }
-    return [
-      `当前工作区目录：${label}`,
-      '以下为上一节点产出目录中的文件内容（可能已截断），回答时请优先参考：',
-      ...blocks,
-    ].join('\n\n');
+    return getBuiltinSkillPrompt('workflowContext', {
+      label,
+      scope: '上一节点产出目录',
+      content: blocks.join('\n\n'),
+    });
   }
 
   const entries = await listWorkflowAgentDir(workflowName, businessId);
@@ -82,11 +83,11 @@ export async function buildWorkflowWorkspaceContext(
 
   const label = `${workflowName}/${businessId}`;
   if (blocks.length === 0) {
-    return `当前工作区目录：agent/${label}\n（目录内无可读取的文本文件，请基于目录结构回答）`;
+    return getBuiltinSkillPrompt('workflowContextEmpty', { label: `agent/${label}` });
   }
-  return [
-    `当前工作区目录：agent/${label}`,
-    '以下为业务根目录中的文件内容（可能已截断），回答时请优先参考：',
-    ...blocks,
-  ].join('\n\n');
+  return getBuiltinSkillPrompt('workflowContext', {
+    label: `agent/${label}`,
+    scope: '业务根目录',
+    content: blocks.join('\n\n'),
+  });
 }

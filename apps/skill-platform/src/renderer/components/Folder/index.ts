@@ -1,1 +1,0 @@
-export { FolderModal } from './FolderModal';

@@ -6,6 +6,9 @@ import {
   type RunResponse,
   type RuntimeTurnInput,
   type SourceRef,
+  type WorkspaceChangeSet,
+  type WorkspaceFileReview,
+  type WorkspaceUndoResult,
 } from '@momo/agent-contracts';
 import { ipcRenderer } from 'electron';
 const invoke = (method: string, input?: unknown) =>
@@ -18,6 +21,7 @@ export const agentRuntimeApi = {
     invoke('controlGoal', { sessionId, action }),
   exportSession: (sessionId: string): Promise<Record<string, unknown>> =>
     invoke('exportSession', { sessionId }),
+  clearSession: (sessionId: string): Promise<void> => invoke('clearSession', { sessionId }),
   setPermission: (sessionId: string, mode: PermissionMode): Promise<void> =>
     invoke('setPermission', { sessionId, mode }),
   respond: (input: RunResponse) => invoke('respond', input),
@@ -27,8 +31,18 @@ export const agentRuntimeApi = {
     idempotencyKey?: string;
     reason?: string;
   }) => invoke('cancel', input),
-  events: (runId: string, afterSeq = 0): Promise<RunEvent[]> =>
+  events: (runId: string, afterSeq = 0): Promise<RunEvent[] | null> =>
     invoke('events', { runId, afterSeq }),
+  fileChanges: (runId: string): Promise<WorkspaceChangeSet> => invoke('fileChanges', { runId }),
+  reviewChange: (runId: string, path: string): Promise<WorkspaceFileReview> =>
+    invoke('reviewChange', { runId, path }),
+  correctChange: (
+    runId: string,
+    path: string,
+    content: string,
+    revision: string,
+  ): Promise<WorkspaceFileReview> => invoke('correctChange', { runId, path, content, revision }),
+  undoChanges: (runId: string): Promise<WorkspaceUndoResult> => invoke('undoChanges', { runId }),
   onEvent: (listener: (event: RunEvent) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, value: RunEvent) => listener(value);
     ipcRenderer.on(AGENT_EVENT_CHANNEL, handler);

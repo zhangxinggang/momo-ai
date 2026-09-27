@@ -1,4 +1,10 @@
-import type { RunEvent, RunInteraction, RunResponse } from '@momo/agent-contracts';
+import {
+  isFileQuestion,
+  type RunEvent,
+  type RunInteraction,
+  type RunResponse,
+  type SourceRef,
+} from '@momo/agent-contracts';
 import { Button, Checkbox, Input, Radio, Space, Tag } from 'antd';
 import React, { useState } from 'react';
 import { runFailureDetails } from '../../utils/run-failure';
@@ -7,14 +13,18 @@ function Interaction({
   event,
   resolved,
   respond,
+  uploadFiles,
 }: {
   event: RunEvent;
   resolved: boolean;
   respond: (value: RunResponse) => Promise<void>;
+  uploadFiles?: (files: File[]) => Promise<SourceRef[]>;
 }) {
   const request = event.payload as unknown as RunInteraction;
   const [selected, setSelected] = useState<Record<string, string[]>>({});
   const [custom, setCustom] = useState<Record<string, string>>({});
+  const [files, setFiles] = useState<Record<string, SourceRef[]>>({});
+  const [uploading, setUploading] = useState(false);
   const [remember, setRemember] = useState(false);
   const [busy, setBusy] = useState(false),
     [answered, setAnswered] = useState(false),
@@ -34,6 +44,7 @@ function Interaction({
                 id: q.id,
                 selected: selected[q.id] ?? [],
                 custom: custom[q.id] || undefined,
+                sourceRefs: files[q.id]?.length ? files[q.id] : undefined,
               }))
             : undefined,
       });
@@ -44,7 +55,25 @@ function Interaction({
       setBusy(false);
     }
   };
-  const disabled = resolved || answered || busy;
+  const disabled = resolved || answered || busy || uploading;
+  const ready = (request.questions ?? []).every(
+    (q) =>
+      (selected[q.id]?.length ?? 0) > 0 ||
+      (isFileQuestion(q) ? files[q.id]?.length : custom[q.id]?.trim()),
+  );
+  const selectFiles = async (id: string, chosen: File[]) => {
+    if (!chosen.length || !uploadFiles) return;
+    setUploading(true);
+    setError('');
+    try {
+      const refs = await uploadFiles(chosen);
+      setFiles((previous) => ({ ...previous, [id]: refs }));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  };
   return (
     <div
       style={{
@@ -55,7 +84,7 @@ function Interaction({
       }}>
       <Tag color={disabled ? 'default' : 'blue'}>
         {request.kind === 'approval' ? '执行审批' : 'Harness 追问'}
-        {disabled ? ' · 已结束' : ''}
+        {resolved || answered ? ' · 已结束' : ''}
       </Tag>
       {request.kind === 'approval' ? (
         <>
@@ -88,7 +117,9 @@ function Interaction({
           {(request.questions ?? []).map((q) => (
             <div key={q.id} style={{ margin: '10px 0' }}>
               <strong>
-                {q.intent?.kind === 'plan-review' ? '计划审阅' : q.header || q.question}
+                {q.intent?.kind === 'plan-review'
+                  ? '计划审阅'
+                  : q.header?.replace(/^\[file\]\s*/i, '') || q.question}
               </strong>
               {q.header && (
                 <p>
@@ -147,16 +178,43 @@ function Interaction({
                   </Space>
                 </Radio.Group>
               )}
-              <Input.TextArea
-                disabled={disabled}
-                placeholder='补充回答'
-                value={custom[q.id] ?? ''}
-                onChange={(e) => setCustom((s) => ({ ...s, [q.id]: e.target.value }))}
-                rows={2}
-              />
+              {isFileQuestion(q) ? (
+                <div>
+                  <label style={{ display: 'inline-block', margin: '8px 0' }}>
+                    <span>{uploading ? '正在上传文件…' : '选择文件'}</span>
+                    <input
+                      type='file'
+                      aria-label={q.question}
+                      multiple
+                      disabled={disabled || !uploadFiles}
+                      onChange={(e) => {
+                        const chosen = Array.from(e.target.files ?? []);
+                        e.target.value = '';
+                        void selectFiles(q.id, chosen);
+                      }}
+                    />
+                  </label>
+                  {(files[q.id] ?? []).map((file) => (
+                    <div key={file.sourceId}>{file.name}</div>
+                  ))}
+                  {!uploadFiles && <p>当前入口不支持文件上传，请在主 AI 对话中选择文件。</p>}
+                </div>
+              ) : (
+                <Input.TextArea
+                  disabled={disabled}
+                  placeholder='补充回答'
+                  value={custom[q.id] ?? ''}
+                  onChange={(e) => setCustom((s) => ({ ...s, [q.id]: e.target.value }))}
+                  rows={2}
+                />
+              )}
             </div>
           ))}
-          <Button type='primary' loading={busy} disabled={disabled} onClick={() => void send()}>
+          <Button
+            type='primary'
+            loading={busy}
+            disabled={disabled || !ready}
+            onClick={() => void send()}>
             提交回答
           </Button>
         </>
@@ -170,11 +228,13 @@ export function RunTimeline({
   status,
   respond,
   renderArtifact,
+  uploadFiles,
 }: {
   events: RunEvent[];
   status?: string;
   renderArtifact?: (artifact: any) => React.ReactNode;
   respond: (value: RunResponse) => Promise<void>;
+  uploadFiles?: (files: File[]) => Promise<SourceRef[]>;
 }) {
   const resolved = new Set(
     events.filter((e) => e.type === 'interaction.resolved').map((e) => e.payload.requestId),
@@ -216,6 +276,7 @@ export function RunTimeline({
           event={e}
           resolved={resolved.has(e.payload.requestId) || Boolean(status && status !== 'running')}
           respond={respond}
+          uploadFiles={uploadFiles}
         />
       ))}
       {[

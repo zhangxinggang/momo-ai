@@ -1256,7 +1256,7 @@ zod                    # IPC/RPC DTO runtime validation（若项目尚无统一�
 构建需要：
 
 - 在 `vite.config.ts` 的 main process externals 增加 LanceDB/Xberg native packages。
-- `electron-builder` 除 `**/*.node` 外，按包实际产物检查 `.dll/.dylib/.so` 和模型资源的 unpack/copy。
+- Windows `electron-builder` 关闭 smart unpack，将 LanceDB/Xberg/SQLite 的平台 `.node` 与配套 DLL 扁平复制到 `resources/native`；知识库 worker 从 `app.asar` 加载 JavaScript 包，并只把原生 binding 重定向到该目录。
 - afterPack 执行平台二进制存在性校验，缺失时构建失败，不能等用户启动后报错。
 - CI 增加 packaged-app smoke test，不只跑 Vite dev。
 - OCR/本地模型放 `extraResources` 或用户数据下载目录，不打入基础 ASAR。
@@ -1266,7 +1266,7 @@ zod                    # IPC/RPC DTO runtime validation（若项目尚无统一�
 | 风险 | 应对 |
 | --- | --- |
 | Xberg 近期更名或 Node ABI/平台包变化 | 先 spike、锁定版本与 checksum；验证失败的平台不发布 V2，不替换 parser |
-| LanceDB 原生包在 Electron 打包后缺资源 | external + asarUnpack + 三平台 packaged smoke test；验证失败则阻止构建发布 |
+| LanceDB 原生包在 Electron 打包后缺资源 | external + `resources/native` 扁平 binding + packaged smoke test；验证失败则阻止构建发布 |
 | SQLite 与 LanceDB 双写不一致 | shadow revision、outbox、read-time active revision 校验；发现不一致即报错并要求客户手动重建 |
 | 中文 FTS 效果不稳定 | unicode61 + trigram 双路；中文 fixture 和 Recall 门槛；后续可插入分词器 adapter |
 | OCR 增大安装体积和启动耗时 | 默认不内置模型；按需下载；独立 process；资源配额 |

@@ -2,6 +2,10 @@
 export interface ILocalPathConfig {
   /** 将消息中的相对路径解析为绝对路径 */
   resolveLocalPath?: (rawPath: string) => string | null;
+  /** Resolve existing relative files across multiple workspace roots. */
+  resolveLocalPathForOpen?: (rawPath: string) => Promise<string | null>;
+  /** Enable relative workspace filenames in chat messages. */
+  allowRelativePaths?: boolean;
   /** 在系统默认应用中打开路径 */
   onOpenLocalPath?: (absolutePath: string) => void | Promise<void>;
   /** 检测路径是否存在 */

@@ -1,6 +1,7 @@
 import { NodeViewWrapper } from '@tiptap/react';
 import { useEffect, useRef, useState } from 'react';
 import { globalConfig, prefix } from '~/config';
+import { getKatexOptions } from '~/utils/katex';
 
 interface IProps {
   node: {
@@ -29,10 +30,7 @@ const KatexView = (props: IProps) => {
     const latex = node.attrs.latex || '';
     const renderKatex = (katex: any) => {
       try {
-        const out = katex.renderToString(latex, {
-          throwOnError: false,
-          displayMode: isBlock,
-        });
+        const out = katex.renderToString(latex, getKatexOptions(isBlock, latex));
         setHtml(out);
         setError('');
       } catch (err: any) {
@@ -60,21 +58,26 @@ const KatexView = (props: IProps) => {
       });
   }, [node.attrs.latex, isBlock]);
 
-  const Tag = isBlock ? 'div' : 'span';
+  const Tag = isBlock ? 'p' : 'span';
 
   return (
     <NodeViewWrapper
       as={Tag}
-      className={`${prefix}-katex ${isBlock ? `${prefix}-katex-block-view` : `${prefix}-katex-inline-view`} ${selected ? `${prefix}-katex-selected` : ''}`}>
-      {selected ? (
+      contentEditable={false}
+      data-processed=''
+      className={`${prefix}-${isBlock ? 'katex-block' : 'katex-inline'} ${selected ? `${prefix}-katex-selected` : ''}`}>
+      {html ? (
+        <span ref={renderRef} dangerouslySetInnerHTML={{ __html: html }} />
+      ) : (
+        node.attrs.latex
+      )}
+      {selected && (
         <input
           className={`${prefix}-katex-input`}
           value={node.attrs.latex}
           onChange={(e) => updateAttributes({ latex: e.target.value })}
           placeholder='LaTeX 公式'
         />
-      ) : (
-        <span ref={renderRef} dangerouslySetInnerHTML={{ __html: html || node.attrs.latex }} />
       )}
       {error && <span className={`${prefix}-katex-error`}>{error}</span>}
     </NodeViewWrapper>

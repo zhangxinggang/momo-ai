@@ -1,5 +1,5 @@
 import { MoreOutlined } from '@ant-design/icons';
-import type { MenuProps, TreeDataNode } from 'antd';
+import type { MenuProps, TreeDataNode, TreeProps } from 'antd';
 import { App, Button, Dropdown, Empty, Input, Modal, Tree, TreeSelect } from 'antd';
 import { FileTextIcon, FolderIcon } from 'lucide-react';
 import type { ChangeEvent, Key, MouseEvent, ReactNode } from 'react';
@@ -12,6 +12,7 @@ import type {
 } from '../../types';
 import { hasDuplicateSiblingName } from '../../utils/create-name';
 import { renderHighlightedText } from '../../utils/highlight';
+import { planSiblingReorder } from '../../utils/reorder';
 import { buildMoveTargetTreeData, findTreeNode } from '../../utils/tree';
 import styles from './index.module.less';
 
@@ -53,8 +54,16 @@ export interface IProps {
   emptyAction?: ReactNode;
   /** 文件节点菜单隐藏「重命名」 */
   hideFileRename?: boolean;
+  /** 新建文件弹框中，名称输入框下方的扩展表单。 */
+  createNoteExtra?: ReactNode;
+  /** 提交新建文件前的业务校验，返回错误文案时阻止提交。 */
+  validateCreateNote?: () => string | null;
+  onCreateNoteDialogOpenChange?: (open: boolean) => void;
   /** 节点标题右侧的常驻状态区（例如后台生成指示器） */
   renderNodeExtra?: (node: IMomoTreeNode) => ReactNode;
+  renderNodeIcon?: (node: IMomoTreeNode) => ReactNode;
+  /** 拖曳仅调整同级顺序，完整树用于保留搜索隐藏的节点。 */
+  onReorder?: (parentId: string | null, ids: string[]) => void | Promise<void>;
 }
 
 function mapToAntdNodes(nodes: IMomoTreeNode[]): TreeDataNode[] {
@@ -81,10 +90,15 @@ export function MomoTree({
   emptyDescription,
   emptyAction,
   hideFileRename = false,
+  createNoteExtra,
+  validateCreateNote,
+  onCreateNoteDialogOpenChange,
   renderNodeExtra,
+  renderNodeIcon,
+  onReorder,
 }: IProps) {
   const { modal, message } = App.useApp();
-  const labels = { ...DEFAULT_LABELS, ...labelOverrides };
+  const labels = useMemo(() => ({ ...DEFAULT_LABELS, ...labelOverrides }), [labelOverrides]);
   const [openMenuNodeId, setOpenMenuNodeId] = useState<string | null>(null);
   const [renameNodeId, setRenameNodeId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -99,11 +113,26 @@ export function MomoTree({
 
   const nodeById = useCallback((nodeId: string) => findTreeNode(treeData, nodeId), [treeData]);
 
-  const openCreateDialog = useCallback((kind: EMomoTreeNodeKind, parentId: string | null) => {
-    setCreateKind(kind);
-    setCreateParentId(parentId);
+  const openCreateDialog = useCallback(
+    (kind: EMomoTreeNodeKind, parentId: string | null) => {
+      setCreateKind(kind);
+      setCreateParentId(parentId);
+      setCreateNameValue('');
+      if (kind === 'file') {
+        onCreateNoteDialogOpenChange?.(true);
+      }
+    },
+    [onCreateNoteDialogOpenChange],
+  );
+
+  const closeCreateDialog = useCallback(() => {
+    if (createKind === 'file') {
+      onCreateNoteDialogOpenChange?.(false);
+    }
+    setCreateKind(null);
+    setCreateParentId(null);
     setCreateNameValue('');
-  }, []);
+  }, [createKind, onCreateNoteDialogOpenChange]);
 
   const confirmDeleteNode = useCallback(
     (node: IMomoTreeNode) => {
@@ -209,6 +238,20 @@ export function MomoTree({
   const buildFileMenuItems = useCallback(
     (node: IMomoTreeNode): MenuProps['items'] => {
       const items: MenuProps['items'] = [];
+      if (adapter.onOpenInFileSystem && labels.openInFileSystem) {
+        items.push(
+          {
+            key: 'open-in-file-system',
+            label: labels.openInFileSystem,
+            onClick: () => {
+              void adapter.onOpenInFileSystem?.(node.id).catch((error) => {
+                message.error(error instanceof Error ? error.message : '打开目录失败');
+              });
+            },
+          },
+          { type: 'divider' },
+        );
+      }
       if (!hideFileRename) {
         items.push({
           key: 'rename',
@@ -259,7 +302,7 @@ export function MomoTree({
       );
       return items;
     },
-    [adapter, confirmDeleteNode, hideFileRename, labels, rootId],
+    [adapter, confirmDeleteNode, hideFileRename, labels, message, rootId],
   );
 
   const moveTargetTreeData = useMemo(() => {
@@ -285,11 +328,12 @@ export function MomoTree({
       return (
         <div className={styles['momo-tree-row']}>
           <span className={styles['momo-tree-row-icon']}>
-            {node.kind === 'folder' ? (
-              <FolderIcon className='h-4 w-4' />
-            ) : (
-              <FileTextIcon className='h-4 w-4' />
-            )}
+            {renderNodeIcon?.(node) ??
+              (node.kind === 'folder' ? (
+                <FolderIcon className='h-4 w-4' />
+              ) : (
+                <FileTextIcon className='h-4 w-4' />
+              ))}
           </span>
           <span className={styles['momo-tree-row-title']} title={node.name}>
             {renderHighlightedText(node.name, searchQuery, styles['momo-tree-highlight'])}
@@ -322,6 +366,7 @@ export function MomoTree({
       nodeById,
       openMenuNodeId,
       renderNodeExtra,
+      renderNodeIcon,
       searchQuery,
     ],
   );
@@ -351,6 +396,29 @@ export function MomoTree({
     },
     [onExpandedChange],
   );
+
+  const reorderTree = moveTreeData ?? treeData;
+  const allowDrop: TreeProps['allowDrop'] = ({ dragNode, dropNode, dropPosition }) =>
+    dropPosition !== 0 &&
+    Boolean(
+      planSiblingReorder(reorderTree, String(dragNode.key), String(dropNode.key), dropPosition > 0),
+    );
+  const handleDrop: TreeProps['onDrop'] = (info) => {
+    if (!info.dropToGap || !onReorder) return;
+    const position = info.dropPosition - Number(info.node.pos.split('-').pop());
+    const plan = planSiblingReorder(
+      reorderTree,
+      String(info.dragNode.key),
+      String(info.node.key),
+      position > 0,
+    );
+    if (!plan) return;
+    void Promise.resolve()
+      .then(() => onReorder(plan.parentId, plan.ids))
+      .catch((error) => {
+        message.error(error instanceof Error ? error.message : '排序保存失败');
+      });
+  };
 
   const handleRenameOk = async () => {
     if (!renameNodeId || !renameValue.trim()) {
@@ -392,14 +460,19 @@ export function MomoTree({
       message.error(labels.duplicateNameError || 'Name already exists at this level');
       return;
     }
+    if (createKind === 'file') {
+      const validationMessage = validateCreateNote?.();
+      if (validationMessage) {
+        message.warning(validationMessage);
+        return;
+      }
+    }
     if (createKind === 'folder') {
       await adapter.onCreateFolder(createParentId, trimmed);
     } else {
       await adapter.onCreateNote(createParentId, trimmed);
     }
-    setCreateKind(null);
-    setCreateParentId(null);
-    setCreateNameValue('');
+    closeCreateDialog();
   };
 
   const createModalTitle =
@@ -422,6 +495,9 @@ export function MomoTree({
       ) : (
         <Tree
           blockNode
+          draggable={onReorder ? { icon: false } : false}
+          allowDrop={allowDrop}
+          onDrop={handleDrop}
           showIcon={false}
           treeData={antdTreeData}
           selectedKeys={selectedKeys}
@@ -452,20 +528,19 @@ export function MomoTree({
         title={createModalTitle}
         open={createKind !== null}
         onOk={() => void handleCreateOk()}
-        onCancel={() => {
-          setCreateKind(null);
-          setCreateParentId(null);
-          setCreateNameValue('');
-        }}
+        onCancel={closeCreateDialog}
         okText={labels.confirm}
         cancelText={labels.cancel}
         destroyOnHidden>
-        <Input
-          value={createNameValue}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setCreateNameValue(e.target.value)}
-          placeholder={labels.createNamePlaceholder || labels.renamePlaceholder}
-          onPressEnter={() => void handleCreateOk()}
-        />
+        <div className={styles['momo-tree-create-fields']}>
+          <Input
+            value={createNameValue}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setCreateNameValue(e.target.value)}
+            placeholder={labels.createNamePlaceholder || labels.renamePlaceholder}
+            onPressEnter={() => void handleCreateOk()}
+          />
+          {createKind === 'file' ? createNoteExtra : null}
+        </div>
       </Modal>
 
       <Modal

@@ -31,6 +31,7 @@ export const ERROR_CATCHER = 'errorCatcher';
 
 // 替换文本
 export const REPLACE = 'replace';
+export const DRAWIO_CREATE = 'drawioCreate';
 
 // 上传图片
 export const UPLOAD_IMAGE = 'uploadImage';

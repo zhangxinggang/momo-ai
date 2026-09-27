@@ -272,8 +272,28 @@ const winEvent = ({ win }: { win: BrowserWindow }) => {
       win.webContents.send(SYSTEM_EVENT.FULL_SCREEN_CHANGED, false);
     }
   });
+  win.on('maximize', () => {
+    if (!win.isDestroyed() && !win.webContents.isDestroyed()) {
+      win.webContents.send(SYSTEM_EVENT.MAXIMIZED_CHANGED, true);
+    }
+  });
+  win.on('unmaximize', () => {
+    if (!win.isDestroyed() && !win.webContents.isDestroyed()) {
+      win.webContents.send(SYSTEM_EVENT.MAXIMIZED_CHANGED, false);
+    }
+  });
 
   win.webContents.on('before-input-event', (event, input) => {
+    if (input.type === 'keyDown' && input.key === 'F11') {
+      event.preventDefault();
+      if (!input.isAutoRepeat) win.setFullScreen(!win.isFullScreen());
+      return;
+    }
+    if (input.type === 'keyDown' && input.key === 'Escape' && win.isFullScreen()) {
+      event.preventDefault();
+      win.setFullScreen(false);
+      return;
+    }
     // Check for DevTools shortcuts: F12, Ctrl+Shift+I, Cmd+Option+I
     // 检查是否为开发者工具快捷键
     const isDevToolsShortcut =

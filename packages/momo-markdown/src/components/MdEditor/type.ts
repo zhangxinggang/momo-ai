@@ -32,6 +32,7 @@ export interface IToolbarTips {
   sub?: string;
   sup?: string;
   quote?: string;
+  align?: string;
   unorderedList?: string;
   orderedList?: string;
   task?: string;
@@ -60,6 +61,11 @@ export interface IToolbarTips {
 
 export interface IStaticTextDefaultValue {
   toolbarTips?: IToolbarTips;
+  alignItem?: {
+    left?: string;
+    center?: string;
+    right?: string;
+  };
   titleItem?: {
     h1?: string;
     h2?: string;
@@ -667,6 +673,31 @@ export interface ICodeMirrorExtension {
   options?: any;
 }
 
+export interface IDrawioDiagramAsset {
+  /** 用于关联同名 PNG 与 .drawio 文件的稳定标识 */
+  assetId: string;
+  /** Markdown 中持久化的 PNG 地址 */
+  imageUrl: string;
+}
+
+export interface ISaveDrawioDiagramInput {
+  /** 二次编辑时传入原标识，以便直接覆盖原文件 */
+  assetId?: string;
+  /** draw.io 原始 XML，仅保存到旁路文件，不写入 Markdown */
+  xml: string;
+  /** draw.io 导出的 PNG data URI */
+  pngDataUri: string;
+}
+
+export interface IDrawioEditorExtension {
+  /** diagrams.net embed 页面地址 */
+  editorUrl?: string;
+  /** 保存 PNG 与 XML；assetId 存在时必须覆盖同一资源 */
+  saveDiagram?: (input: ISaveDrawioDiagramInput) => Promise<IDrawioDiagramAsset>;
+  /** 按资源标识读取旁路保存的 draw.io XML */
+  loadDiagram?: (assetId: string) => Promise<string | null>;
+}
+
 export interface IGlobalConfig {
   /**
    * 编辑器内部依赖库
@@ -725,6 +756,7 @@ export interface IGlobalConfig {
         },
       ) => any;
     };
+    drawio?: IDrawioEditorExtension;
   };
   /**
    * 对应editorExtensions中的cdn链接标签属性

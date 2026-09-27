@@ -56,6 +56,8 @@ import {
   deleteRepoByPath,
   getLocalRepoPath,
   isManagedRepoPath,
+  listLocalRepoDirectory,
+  listLocalRepoDirectoryByPath,
   listLocalRepoFiles,
   listLocalRepoFilesByPath,
   readLocalRepoFile,
@@ -69,6 +71,8 @@ import {
   replaceLocalRepoFilesByPath,
   saveContentToLocalRepo,
   saveToLocalRepo,
+  searchLocalRepoFiles,
+  searchLocalRepoFilesByPath,
   writeLocalRepoFile,
   writeLocalRepoFileByPath,
 } from './repo';
@@ -118,8 +122,12 @@ export class SkillInstaller {
   static readLocalRepoFiles = readLocalRepoFiles;
   static readLocalRepoFilesByPath = readLocalRepoFilesByPath;
   static readLocalRepoFileBuffersByPath = readLocalRepoFileBuffersByPath;
+  static listLocalRepoDirectory = listLocalRepoDirectory;
+  static listLocalRepoDirectoryByPath = listLocalRepoDirectoryByPath;
   static listLocalRepoFiles = listLocalRepoFiles;
   static listLocalRepoFilesByPath = listLocalRepoFilesByPath;
+  static searchLocalRepoFiles = searchLocalRepoFiles;
+  static searchLocalRepoFilesByPath = searchLocalRepoFilesByPath;
   static readLocalRepoFile = readLocalRepoFile;
   static readLocalRepoFileByPath = readLocalRepoFileByPath;
   static readLocalRepoFileBufferByPath = readLocalRepoFileBufferByPath;

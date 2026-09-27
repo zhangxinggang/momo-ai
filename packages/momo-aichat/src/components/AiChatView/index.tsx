@@ -40,6 +40,12 @@ export interface IProps {
   codeTheme?: string;
   /** 助手消息「复制」按钮右侧扩展插槽 */
   renderAssistantMessageActions?: (message: IChatMessage) => React.ReactNode;
+  /** Host file-change summary shown below an assistant reply. */
+  renderAssistantMessageFooter?: (message: IChatMessage) => React.ReactNode;
+  /** Empty state shown before the first message. */
+  emptyState?: React.ReactNode;
+  /** Host actions rendered on the right side of the context header. */
+  headerActions?: React.ReactNode;
 }
 
 export const AiChatView: React.FC<IProps> = ({
@@ -52,6 +58,9 @@ export const AiChatView: React.FC<IProps> = ({
   previewTheme = 'cyanosis',
   codeTheme = 'atom',
   renderAssistantMessageActions,
+  renderAssistantMessageFooter,
+  emptyState,
+  headerActions,
 }) => {
   const { message, modal } = App.useApp();
   const {
@@ -62,6 +71,8 @@ export const AiChatView: React.FC<IProps> = ({
     getImageModelInputHint,
     runtime,
     renderRuntimeArtifact,
+    viewGeneration,
+    getDefaultAttachmentPrompt,
     chatModels = [],
   } = useAiChatConfig();
   // 用户输入内容
@@ -109,6 +120,8 @@ export const AiChatView: React.FC<IProps> = ({
   const [attachments, setAttachments] = useState<IChatAttachment[]>([]);
   const [uploadingAttachmentIds, setUploadingAttachmentIds] = useState<string[]>([]);
   const isUploading = uploadingAttachmentIds.length > 0;
+  const sendsInFlight = useRef(new Set<string>());
+  const [submittingSessions, setSubmittingSessions] = useState<string[]>([]);
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
   const [isDragging, setIsDragging] = useState(false);
   // 拖拽进入/离开计数，避免子元素触发抖动
@@ -178,6 +191,7 @@ export const AiChatView: React.FC<IProps> = ({
     currentSession,
     currentSessionId,
     currentModel,
+    agentMode,
     isAILoading,
     isSessionGenerating,
     sendMessage,
@@ -185,6 +199,9 @@ export const AiChatView: React.FC<IProps> = ({
     deleteUserMessage,
     retryAssistantReply,
   } = useChatContext();
+
+  const submissionKey = currentSessionId ?? '__draft__';
+  const isSubmitting = submittingSessions.includes(submissionKey);
 
   const isCurrentImageModel = isImageModel?.(currentModel) ?? false;
   const inputPlaceholder = getImageModelInputHint?.(currentModel) ?? placeholder;
@@ -405,20 +422,30 @@ export const AiChatView: React.FC<IProps> = ({
   }, [currentSessionId]);
 
   // 发送消息处理函数
-  const handleSendMessage = async () => {
-    const hasText = !!inputValue.trim();
+  const handleSendMessage = async (viewAction?: {
+    message: string;
+    formState?: Record<string, unknown>;
+    fromMessageId: string;
+  }) => {
+    const draftContent = inputValue.trim();
+    const userContent = viewAction
+      ? [viewAction.message, draftContent].filter(Boolean).join('\n\n')
+      : draftContent;
+    const hasText = !!userContent;
     const hasImageAttachments = attachments.some(
       (file) => file.imageBase64 && file.mime.startsWith('image/'),
     );
     if (
       (!hasText && !(isCurrentImageModel && hasImageAttachments) && attachments.length === 0) ||
       isAILoading ||
-      isUploading
+      isUploading ||
+      sendsInFlight.current.has(submissionKey)
     ) {
-      return;
+      return false;
     }
 
-    const userContent = inputValue.trim();
+    sendsInFlight.current.add(submissionKey);
+    setSubmittingSessions((pending) => [...pending, submissionKey]);
     const pendingAttachments = [...attachments];
     const pendingProgressMap = { ...progressMap };
     const pendingInvocations = findSlashInvocationTokens(userContent).map(
@@ -435,9 +462,14 @@ export const AiChatView: React.FC<IProps> = ({
 
     const finalUserContent =
       userContent ||
-      (isCurrentImageModel && hasImageAttachments
-        ? '请根据参考图生成或编辑图片'
-        : '请基于已上传的附件给出总结或见解');
+      getDefaultAttachmentPrompt?.(
+        agentMode === 'ui'
+          ? 'view'
+          : isCurrentImageModel && hasImageAttachments
+            ? 'image'
+            : 'summary',
+      ) ||
+      '（已发送附件）';
 
     const displayContent = userContent || (pendingAttachments.length > 0 ? '（已发送附件）' : '');
 
@@ -464,24 +496,34 @@ export const AiChatView: React.FC<IProps> = ({
       setAttachments([]);
       setProgressMap({});
 
-      const sent = await sendMessage(finalUserContent, attachmentsMeta, {
+      const apiContent =
+        viewAction?.formState && Object.keys(viewAction.formState).length
+          ? `${finalUserContent}\n\n用户在界面填写的表单内容：\n${JSON.stringify(viewAction.formState, null, 2)}`
+          : finalUserContent;
+      const sent = await sendMessage(apiContent, attachmentsMeta, {
         displayContent,
         sourceRefs,
         invocations: pendingInvocations,
+        continuationFromMessageId: viewAction?.fromMessageId,
       });
       if (!sent) {
-        handleInputChange(userContent);
+        handleInputChange(draftContent);
         setAttachments(pendingAttachments);
         setProgressMap(pendingProgressMap);
-        return;
+        return false;
       }
       onAfterSend?.();
+      return true;
     } catch (error) {
       console.error('发送消息失败:', error);
-      handleInputChange(userContent);
+      handleInputChange(draftContent);
       setAttachments(pendingAttachments);
       setProgressMap(pendingProgressMap);
       message.error('发送消息失败，请稍后重试');
+      return false;
+    } finally {
+      sendsInFlight.current.delete(submissionKey);
+      setSubmittingSessions((pending) => pending.filter((key) => key !== submissionKey));
     }
   };
 
@@ -559,17 +601,17 @@ export const AiChatView: React.FC<IProps> = ({
 
   // 处理文件选择/上传
   const handleAttachFiles = async (files: File[]) => {
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0) return false;
 
     if (attachments.length + files.length > 10) {
       message.error('单次最多 10 个附件');
-      return;
+      return false;
     }
 
     const v = validateLocalFiles(files);
     if (!v.ok) {
       message.error(v.message || '文件不合法');
-      return;
+      return false;
     }
 
     // 先添加临时项以显示上传进度
@@ -589,15 +631,19 @@ export const AiChatView: React.FC<IProps> = ({
     setAttachments((prev) => [...prev, ...tempItems]);
     setUploadingAttachmentIds((prev) => [...prev, ...tempItems.map((item) => item.id)]);
 
+    let succeeded = true;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const tempId = tempItems[i].id;
       try {
-        const [res] = await uploadFiles([file], (_i, p) => {
+        const upload =
+          agentMode === 'ui' ? (viewGeneration?.uploadFiles ?? uploadFiles) : uploadFiles;
+        const [res] = await upload([file], (_i, p) => {
           setProgressMap((pm) => ({ ...pm, [tempId]: p }));
         });
         setAttachments((prev) => prev.map((a) => (a.id === tempId ? res : a)));
       } catch (e: any) {
+        succeeded = false;
         message.error(e?.message || `${file.name} 上传失败`);
         setAttachments((prev) => prev.filter((a) => a.id !== tempId));
       } finally {
@@ -609,6 +655,7 @@ export const AiChatView: React.FC<IProps> = ({
         });
       }
     }
+    return succeeded;
   };
 
   const handleRemoveAttachment = (id: string) => {
@@ -623,7 +670,8 @@ export const AiChatView: React.FC<IProps> = ({
 
   // 获取当前会话的消息列表，如果没有消息则显示欢迎语
   const displayMessages = currentSession?.messages || [];
-  const showWelcome = !hideWelcome;
+  const showWelcome = !hideWelcome && displayMessages.length === 0 && !emptyState;
+  const showEmptyState = displayMessages.length === 0 && Boolean(emptyState);
 
   // 判断当前会话是否正在生成
   const isCurrentSessionGenerating = currentSessionId
@@ -631,17 +679,20 @@ export const AiChatView: React.FC<IProps> = ({
     : false;
 
   return (
-    <div className='bg-panel flex h-full flex-col transition-colors'>
-      <ChatContextBanner />
+    <div className='bg-panel flex h-full min-h-0 flex-col transition-colors'>
+      <ChatContextBanner actions={headerActions} />
       {/* 消息滚动容器：全宽，允许在左右 10% 空白区域滚动 */}
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
         onWheel={handleWheel}
-        className='relative flex-1 overflow-y-auto p-4'
+        className={`relative min-h-0 flex-1 overflow-y-auto p-4 ${showEmptyState ? 'flex flex-col' : ''}`}
         style={{ overflowAnchor: 'none' }}>
         {/* 视觉内容区：80% 宽度、居中 */}
-        <div ref={messagesContentRef} className='mx-auto w-[80%] space-y-4'>
+        <div
+          ref={messagesContentRef}
+          className={`mx-auto w-[80%] ${showEmptyState ? 'flex flex-1 items-center justify-center' : 'space-y-4'}`}>
+          {showEmptyState ? emptyState : null}
           {/* 欢迎消息 - 用户发送消息后仍保持显示 */}
           {showWelcome && (
             <div className='w-full'>
@@ -672,6 +723,20 @@ export const AiChatView: React.FC<IProps> = ({
                       events={message.runtimeEvents}
                       status={message.runStatus}
                       respond={(value) => runtime.port.respond(value)}
+                      uploadFiles={async (files) => {
+                        const validation = validateLocalFiles(files);
+                        if (!validation.ok) throw new Error(validation.message || '文件不合法');
+                        const uploaded = await uploadFiles(files);
+                        return saveChatSources(
+                          uploaded.map((file) => ({
+                            sourceRef: file.sourceRef,
+                            name: file.name,
+                            mimeType: file.mime || 'application/octet-stream',
+                            encoding: file.imageBase64 ? 'base64' : 'utf8',
+                            content: file.imageBase64 || file.text || '',
+                          })),
+                        );
+                      }}
                     />
                   )}
                   {message.thinkingContent?.trim() ? (
@@ -682,7 +747,22 @@ export const AiChatView: React.FC<IProps> = ({
                       className='mb-2'
                     />
                   ) : null}
-                  {message.isLoading ? (
+                  {message.generatedView && viewGeneration ? (
+                    <div>
+                      {viewGeneration.render(message, {
+                        attachFiles: handleAttachFiles,
+                        submit: (input) =>
+                          handleSendMessage({ ...input, fromMessageId: message.id }),
+                        busy: isUploading || isSubmitting || isAILoading,
+                      })}
+                      {!message.isLoading && (
+                        <MessageCopyAction
+                          content={message.generatedView.content}
+                          trailingSlot={renderAssistantMessageActions?.(message)}
+                        />
+                      )}
+                    </div>
+                  ) : message.isLoading ? (
                     message.content?.trim() ? (
                       <div>
                         <MarkdownRenderer
@@ -719,11 +799,12 @@ export const AiChatView: React.FC<IProps> = ({
                       />
                     </div>
                   )}
+                  {renderAssistantMessageFooter?.(message)}
                 </div>
               ) : (
                 // 用户消息 - 气泡样式，右对齐
                 <div className='group flex justify-end'>
-                  <div className='max-w-[70%]'>
+                  <div className='min-w-0 max-w-[85%]'>
                     <div className='whitespace-pre-wrap break-words rounded-l-2xl rounded-br-sm rounded-tr-2xl bg-[var(--user-bubble-bg)] px-4 py-2 text-[var(--user-bubble-text)] transition-colors'>
                       {message.invocation && !findSlashInvocationTokens(message.content).length ? (
                         <div className='mb-1 text-xs opacity-70'>
@@ -740,14 +821,19 @@ export const AiChatView: React.FC<IProps> = ({
                           return (
                             <div
                               key={att.id}
-                              className='border-surface bg-panel text-foreground flex items-center gap-2 rounded border p-2'>
+                              className='border-surface bg-panel text-foreground flex min-w-0 items-center gap-2 rounded border p-2'>
                               <ChatAttachmentIcon
                                 ext={extLower}
                                 className='shrink-0 text-blue-500'
                                 size={16}
                               />
-                              <div className='text-xs text-gray-500'>
-                                {att.name} · {att.ext.toUpperCase()} · {formatSize(att.size)}
+                              <div className='min-w-0 text-xs text-gray-500'>
+                                <div className='line-clamp-2 break-all' title={att.name}>
+                                  {att.name}
+                                </div>
+                                <div>
+                                  {att.ext.toUpperCase()} · {formatSize(att.size)}
+                                </div>
                               </div>
                             </div>
                           );
@@ -770,7 +856,7 @@ export const AiChatView: React.FC<IProps> = ({
           ))}
 
           {/* 用于自动滚动的空div */}
-          <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} className={showEmptyState ? 'hidden' : undefined} />
         </div>
       </div>
 
@@ -809,7 +895,7 @@ export const AiChatView: React.FC<IProps> = ({
             ref={chatInputRef}
             value={inputValue}
             onChange={handleInputChange}
-            onSend={handleSendMessage}
+            onSend={() => void handleSendMessage()}
             onStop={handleStopGeneration}
             onKeyDown={handleKeyPress}
             placeholder={inputPlaceholder}

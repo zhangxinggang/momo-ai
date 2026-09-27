@@ -17,7 +17,7 @@ function encode6bit(bytes: Uint8Array): string {
 
 async function deflatePlantumlSource(source: string): Promise<Uint8Array> {
   if (typeof CompressionStream === 'undefined') {
-    throw new Error('当前环境不支持 PlantUML 压缩编码');
+    return new Uint8Array();
   }
 
   const input = new TextEncoder().encode(source);
@@ -29,14 +29,21 @@ async function deflatePlantumlSource(source: string): Promise<Uint8Array> {
   } catch {
     const stream = new Blob([input]).stream().pipeThrough(new CompressionStream('deflate'));
     const buffer = await new Response(stream).arrayBuffer();
-    return new Uint8Array(buffer);
+    // deflate 包含两字节 zlib 头和四字节校验值；PlantUML 接收 raw DEFLATE。
+    return new Uint8Array(buffer).slice(2, -4);
   }
 }
 
 /** 将 PlantUML 源码编码为官方 SVG 服务可用的路径片段 */
 export async function encodePlantuml(source: string): Promise<string> {
-  const compressed = await deflatePlantumlSource(source.trim());
-  return encode6bit(compressed);
+  const text = source.trim();
+  try {
+    const compressed = await deflatePlantumlSource(text);
+    if (compressed.length) return encode6bit(compressed);
+  } catch {
+    // 无压缩流环境仍可使用 PlantUML 官方支持的 UTF-8 HEX 格式。
+  }
+  return `~h${Array.from(new TextEncoder().encode(text), (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
 }
 
 export function buildPlantumlSvgUrl(_source: string, encoded: string): string {

@@ -15,7 +15,9 @@ import {
   FolderIcon,
   FolderPlusIcon,
   Loader2Icon,
+  RefreshCwIcon,
   SaveIcon,
+  SearchIcon,
   UploadIcon,
 } from 'lucide-react';
 import {
@@ -36,9 +38,13 @@ import type {
   IFileEditorNotifyPayload,
   IFileTreeEntry,
 } from '../../types/adapter';
-import { isCodeEditorPath } from '../../utils/code-editor-language';
 import { DEFAULT_CODE_EDITOR_THEME, type ECodeEditorTheme } from '../../utils/code-editor-theme';
-import { cloneArrayBuffer } from '../../utils/file-content';
+import {
+  cloneArrayBuffer,
+  decodeEditableFile,
+  isEditableText,
+  normalizeEditableText,
+} from '../../utils/file-content';
 import { isMarkdownPath } from '../../utils/markdown-config';
 import { MARKDOWN_TOOLBARS } from '../../utils/markdown-toolbars';
 import {
@@ -66,6 +72,8 @@ export interface IFileEditorHandle {
 
 export interface IProps {
   adapter: IFileEditorAdapter;
+  /** Open a workspace file requested by the host, including nested files. */
+  requestedPath?: { path: string; requestId: number };
   refreshToken?: number;
   onFilesChange?: () => void;
   onUnsavedChange?: (hasUnsaved: boolean) => void;
@@ -92,13 +100,17 @@ interface IPathTarget {
 function toAntTreeData(
   nodes: IFileTreeNode[],
   renderTitle: (node: IFileTreeNode) => React.ReactNode,
+  emptyDirectoryPaths: ReadonlySet<string>,
 ): TreeDataNode[] {
   return nodes.map((node) => ({
     key: node.path,
     title: renderTitle(node),
-    isLeaf: !node.isDirectory,
+    isLeaf: !node.isDirectory || emptyDirectoryPaths.has(node.path),
     selectable: true,
-    children: node.children.length > 0 ? toAntTreeData(node.children, renderTitle) : undefined,
+    children:
+      node.children.length > 0
+        ? toAntTreeData(node.children, renderTitle, emptyDirectoryPaths)
+        : undefined,
   }));
 }
 
@@ -116,12 +128,51 @@ function collectDirectoryPaths(entries: IFileTreeEntry[]): string[] {
   return Array.from(dirs).sort((a, b) => a.localeCompare(b));
 }
 
+function normalizeEntries(
+  adapter: IFileEditorAdapter,
+  entries: IFileTreeEntry[],
+): IFileTreeEntry[] {
+  return entries
+    .map((entry) => ({
+      ...entry,
+      relativePath: normalizeRelativePath(entry.relativePath),
+    }))
+    .filter(
+      (entry) =>
+        Boolean(entry.relativePath) && (adapter.filterEntry ? adapter.filterEntry(entry) : true),
+    );
+}
+
+function buildSearchEntries(entries: IFileTreeEntry[], query: string): IFileTreeEntry[] {
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  if (!normalizedQuery) {
+    return [];
+  }
+
+  const result = new Map<string, IFileTreeEntry>();
+  for (const entry of entries) {
+    if (!entry.relativePath.toLocaleLowerCase().includes(normalizedQuery)) {
+      continue;
+    }
+    result.set(entry.relativePath, entry);
+    const parts = entry.relativePath.split('/');
+    for (let index = 1; index < parts.length; index += 1) {
+      const ancestorPath = parts.slice(0, index).join('/');
+      if (!result.has(ancestorPath)) {
+        result.set(ancestorPath, { relativePath: ancestorPath, isDirectory: true });
+      }
+    }
+  }
+  return Array.from(result.values());
+}
+
 /**
  * 通用树形文件编辑器：左树 + 右编辑（Markdown 分屏 / 纯文本）
  */
 export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEditor(
   {
     adapter,
+    requestedPath,
     refreshToken = 0,
     onFilesChange,
     onUnsavedChange,
@@ -145,6 +196,11 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState('');
   const [savedContent, setSavedContent] = useState('');
+  const [loadedFile, setLoadedFile] = useState<{
+    path: string;
+    kind: 'text' | 'binary' | 'error';
+  } | null>(null);
+  const fileReadRequestRef = useRef(0);
   const [isNewFileOpen, setIsNewFileOpen] = useState(false);
   const [newFileParentDir, setNewFileParentDir] = useState('');
   const [newFileName, setNewFileName] = useState('');
@@ -158,6 +214,14 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
   const [previewBuffer, setPreviewBuffer] = useState<ArrayBuffer | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchEntries, setSearchEntries] = useState<IFileTreeEntry[]>([]);
+  const [searchExpandedKeys, setSearchExpandedKeys] = useState<string[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [emptyDirectoryPaths, setEmptyDirectoryPaths] = useState<string[]>([]);
+  const loadedDirectoryPathsRef = useRef(new Set<string>());
+  const loadingDirectoryPathsRef = useRef(new Map<string, Promise<void>>());
+  const searchRequestRef = useRef(0);
 
   const notify = useCallback(
     (message: string, type: IFileEditorNotifyPayload['type']) => {
@@ -166,65 +230,185 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
     [onNotify],
   );
 
-  const reloadTree = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const list = await adapter.listTree();
-      const visible = list
-        .map((entry) => ({
-          ...entry,
-          relativePath: normalizeRelativePath(entry.relativePath),
-        }))
-        .filter((entry) => (adapter.filterEntry ? adapter.filterEntry(entry) : true));
-      setEntries(visible);
+  const reloadTree = useCallback(
+    async (reset = false) => {
+      setIsLoading(true);
+      try {
+        if (reset) {
+          loadedDirectoryPathsRef.current.clear();
+          loadingDirectoryPathsRef.current.clear();
+          setExpandedKeys([]);
+          setEmptyDirectoryPaths([]);
+        }
 
-      setSelectedPath((current) => {
-        if (current && visible.some((e) => e.relativePath === current && !e.isDirectory)) {
-          return current;
+        const loadedDirectories = reset ? [] : Array.from(loadedDirectoryPathsRef.current);
+        const lists = adapter.listDirectory
+          ? await Promise.all([
+              adapter.listDirectory(''),
+              ...loadedDirectories.map((directory) => adapter.listDirectory!(directory)),
+            ])
+          : [await adapter.listTree()];
+        const visible = normalizeEntries(adapter, lists.flat());
+        setEntries(visible);
+
+        if (adapter.listDirectory && !reset) {
+          setEmptyDirectoryPaths(
+            loadedDirectories.filter(
+              (directory) =>
+                !visible.some((entry) => getParentPath(entry.relativePath) === directory),
+            ),
+          );
         }
-        const initial = adapter.selectInitialPath?.(visible) ?? null;
-        if (initial) {
-          return initial;
-        }
-        const firstFile = visible.find((e) => !e.isDirectory)?.relativePath ?? null;
-        return firstFile;
-      });
-    } catch (error) {
-      console.error(error);
-      notify('加载文件列表失败', 'error');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [adapter, notify]);
+
+        setSelectedPath((current) => {
+          if (
+            current &&
+            (Boolean(adapter.listDirectory) ||
+              visible.some((e) => e.relativePath === current && !e.isDirectory))
+          ) {
+            return current;
+          }
+          const initial = adapter.selectInitialPath?.(visible) ?? null;
+          if (initial) {
+            return initial;
+          }
+          const firstFile = visible.find((e) => !e.isDirectory)?.relativePath ?? null;
+          return firstFile;
+        });
+      } catch (error) {
+        console.error(error);
+        notify('加载文件列表失败', 'error');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [adapter, notify],
+  );
 
   useEffect(() => {
-    void reloadTree();
+    setSearchQuery('');
+    setSearchEntries([]);
+    setSearchExpandedKeys([]);
+    void reloadTree(true);
   }, [reloadTree, refreshToken]);
 
-  const treeNodes = useMemo(() => buildFileTree(entries), [entries]);
-  const directoryOptions = useMemo(() => collectDirectoryPaths(entries), [entries]);
+  const ensureDirectoryLoaded = useCallback(
+    (directory: string): Promise<void> => {
+      if (!adapter.listDirectory || loadedDirectoryPathsRef.current.has(directory)) {
+        return Promise.resolve();
+      }
+      const existingRequest = loadingDirectoryPathsRef.current.get(directory);
+      if (existingRequest) {
+        return existingRequest;
+      }
+
+      const request = adapter
+        .listDirectory(directory)
+        .then((list) => {
+          const children = normalizeEntries(adapter, list);
+          setEntries((current) => [
+            ...current.filter((entry) => getParentPath(entry.relativePath) !== directory),
+            ...children,
+          ]);
+          setEmptyDirectoryPaths((current) => {
+            const next = new Set(current);
+            if (children.length === 0) {
+              next.add(directory);
+            } else {
+              next.delete(directory);
+            }
+            return Array.from(next);
+          });
+          loadedDirectoryPathsRef.current.add(directory);
+        })
+        .catch((error) => {
+          console.error(error);
+          notify('加载目录失败', 'error');
+        })
+        .finally(() => {
+          loadingDirectoryPathsRef.current.delete(directory);
+        });
+      loadingDirectoryPathsRef.current.set(directory, request);
+      return request;
+    },
+    [adapter, notify],
+  );
 
   useEffect(() => {
-    const allDirs = collectDirectoryPaths(entries);
-    setExpandedKeys((prev) => {
-      const merged = new Set([...prev, ...allDirs]);
-      return Array.from(merged);
-    });
-  }, [entries]);
+    const query = searchQuery.trim();
+    const requestId = searchRequestRef.current + 1;
+    searchRequestRef.current = requestId;
+    if (!query) {
+      setSearchEntries([]);
+      setSearchExpandedKeys([]);
+      setIsSearching(false);
+      return;
+    }
 
-  const toggleDirectoryExpanded = useCallback((dirPath: string) => {
-    setExpandedKeys((prev) =>
-      prev.includes(dirPath) ? prev.filter((key) => key !== dirPath) : [...prev, dirPath],
-    );
-  }, []);
+    setIsSearching(true);
+    const timer = window.setTimeout(() => {
+      const runSearch = async () => {
+        try {
+          const list = adapter.searchTree
+            ? await adapter.searchTree(query)
+            : await adapter.listTree();
+          if (searchRequestRef.current !== requestId) {
+            return;
+          }
+          const result = buildSearchEntries(normalizeEntries(adapter, list), query);
+          setSearchEntries(result);
+          setSearchExpandedKeys(collectDirectoryPaths(result).filter(Boolean));
+        } catch (error) {
+          console.error(error);
+          if (searchRequestRef.current === requestId) {
+            setSearchEntries([]);
+            notify('搜索文件失败', 'error');
+          }
+        } finally {
+          if (searchRequestRef.current === requestId) {
+            setIsSearching(false);
+          }
+        }
+      };
+      void runSearch();
+    }, 220);
 
-  const isMarkdownActive = selectedPath ? isMarkdownPath(selectedPath) : false;
-  const isCodeEditorActive = Boolean(
-    selectedPath && !isMarkdownActive && isCodeEditorPath(selectedPath),
+    return () => window.clearTimeout(timer);
+  }, [adapter, notify, searchQuery]);
+
+  const isSearchMode = Boolean(searchQuery.trim());
+  const visibleEntries = isSearchMode ? searchEntries : entries;
+  const treeNodes = useMemo(() => buildFileTree(visibleEntries), [visibleEntries]);
+  const directoryOptions = useMemo(() => collectDirectoryPaths(entries), [entries]);
+  const activeExpandedKeys = isSearchMode ? searchExpandedKeys : expandedKeys;
+
+  const toggleDirectoryExpanded = useCallback(
+    (dirPath: string) => {
+      if (isSearchMode) {
+        setSearchExpandedKeys((current) =>
+          current.includes(dirPath)
+            ? current.filter((key) => key !== dirPath)
+            : [...current, dirPath],
+        );
+        return;
+      }
+      const isExpanding = !expandedKeys.includes(dirPath);
+      setExpandedKeys((current) =>
+        isExpanding ? [...current, dirPath] : current.filter((key) => key !== dirPath),
+      );
+      if (isExpanding) {
+        void ensureDirectoryLoaded(dirPath);
+      }
+    },
+    [ensureDirectoryLoaded, expandedKeys, isSearchMode],
   );
-  const isBinaryPreviewActive = Boolean(selectedPath && !isMarkdownActive && !isCodeEditorActive);
-  const hasUnsaved =
-    selectedPath !== null && !isBinaryPreviewActive && fileContent !== savedContent;
+
+  const isTextActive = loadedFile?.path === selectedPath && loadedFile?.kind === 'text';
+  const isMarkdownActive = Boolean(isTextActive && selectedPath && isMarkdownPath(selectedPath));
+  const isCodeEditorActive = isTextActive && !isMarkdownActive;
+  const isBinaryPreviewActive = loadedFile?.path === selectedPath && loadedFile?.kind === 'binary';
+  const isFileLoading = Boolean(selectedPath && loadedFile?.path !== selectedPath);
+  const hasUnsaved = isTextActive && fileContent !== savedContent;
 
   useEffect(() => {
     onUnsavedChange?.(hasUnsaved);
@@ -232,68 +416,80 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
 
   const loadFile = useCallback(
     async (relativePath: string) => {
+      const request = ++fileReadRequestRef.current;
+      setLoadedFile(null);
+      setIsPreviewLoading(true);
       try {
-        const content = await adapter.readFile(relativePath);
-        setSelectedPath(relativePath);
+        const buffer = adapter.readFileBuffer ? await adapter.readFileBuffer(relativePath) : null;
+        let text: string | null;
+        if (buffer) {
+          text = decodeEditableFile(new Uint8Array(buffer));
+        } else {
+          const source = await adapter.readFile(relativePath);
+          text =
+            source === '[binary file]' || source === '[file too large]' || !isEditableText(source)
+              ? null
+              : source;
+        }
+        if (request !== fileReadRequestRef.current) return;
+        const content = text === null ? '' : normalizeEditableText(text);
         setFileContent(content);
         setSavedContent(content);
+        setPreviewBuffer(text === null && buffer ? cloneArrayBuffer(buffer) : null);
+        setLoadedFile({ path: relativePath, kind: text === null ? 'binary' : 'text' });
       } catch (error) {
+        if (request !== fileReadRequestRef.current) return;
         console.error(error);
+        setLoadedFile({ path: relativePath, kind: 'error' });
         notify('加载文件失败', 'error');
+      } finally {
+        if (request === fileReadRequestRef.current) setIsPreviewLoading(false);
       }
     },
     [adapter, notify],
   );
 
-  useEffect(() => {
-    if (!selectedPath) {
-      setFileContent('');
-      setSavedContent('');
+  const handleRefresh = useCallback(() => {
+    const refresh = async () => {
+      await reloadTree();
+      if (selectedPath) {
+        await loadFile(selectedPath);
+      }
+    };
+
+    if (!hasUnsaved) {
+      void refresh();
       return;
     }
-    const entry = entries.find((e) => e.relativePath === selectedPath);
+
+    Modal.confirm({
+      title: '刷新文件内容',
+      content: '刷新会放弃当前尚未保存的修改，是否继续？',
+      okText: '刷新',
+      cancelText: '取消',
+      onOk: refresh,
+    });
+  }, [hasUnsaved, loadFile, reloadTree, selectedPath]);
+
+  useEffect(() => {
+    if (!selectedPath) {
+      setLoadedFile(null);
+      setFileContent('');
+      setSavedContent('');
+      setPreviewBuffer(null);
+      return;
+    }
+    const entry = [...entries, ...searchEntries].find((e) => e.relativePath === selectedPath);
     if (!entry || entry.isDirectory) {
       return;
     }
     void loadFile(selectedPath);
+    return () => {
+      fileReadRequestRef.current += 1;
+    };
     // 仅在切换文件时加载内容，避免保存后刷新树覆盖未保存编辑
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPath]);
-
-  useEffect(() => {
-    if (!selectedPath || !isBinaryPreviewActive || !adapter.readFileBuffer) {
-      setPreviewBuffer(null);
-      setIsPreviewLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setIsPreviewLoading(true);
-    setPreviewBuffer(null);
-
-    void adapter
-      .readFileBuffer(selectedPath)
-      .then((buffer) => {
-        if (!cancelled && buffer) {
-          setPreviewBuffer(cloneArrayBuffer(buffer));
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        if (!cancelled) {
-          notify('加载文件预览失败', 'error');
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIsPreviewLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [adapter, isBinaryPreviewActive, notify, selectedPath]);
 
   const handleSave = useCallback(async (): Promise<boolean> => {
     if (!selectedPath || !hasUnsaved) {
@@ -328,6 +524,37 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
     }),
     [discardChanges, handleSave, hasUnsaved],
   );
+
+  useEffect(() => {
+    if (!requestedPath?.path) return;
+    let cancelled = false;
+    const open = async () => {
+      if (hasUnsaved && !(await handleSave())) return;
+      if (cancelled) return;
+      const target = normalizeRelativePath(requestedPath.path);
+      const parents = target
+        .split('/')
+        .slice(0, -1)
+        .map((_, i, segments) => segments.slice(0, i + 1).join('/'));
+      if (adapter.listDirectory) {
+        const lists = await Promise.all(
+          parents.map((directory) => adapter.listDirectory!(directory)),
+        );
+        if (cancelled) return;
+        parents.forEach((directory) => loadedDirectoryPathsRef.current.add(directory));
+        setEntries((current) => normalizeEntries(adapter, [...current, ...lists.flat()]));
+      }
+      setExpandedKeys((current) => [...new Set([...current, ...parents])]);
+      setSelectedPath(target);
+      if (selectedPath === target) await loadFile(target);
+    };
+    void open().catch(() => notify('无法打开工作区文件', 'error'));
+    return () => {
+      cancelled = true;
+    };
+    // Each host request opens once; changes to the current draft must not reopen it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestedPath?.requestId, adapter]);
 
   const movePath = useCallback(
     async (fromRelativePath: string, toRelativePath: string): Promise<boolean> => {
@@ -667,9 +894,10 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
     [buildNodeMenu, handleNodeMenuClick, selectedPath],
   );
 
+  const emptyDirectoryPathSet = useMemo(() => new Set(emptyDirectoryPaths), [emptyDirectoryPaths]);
   const treeData = useMemo(
-    () => toAntTreeData(treeNodes, renderTreeTitle),
-    [renderTreeTitle, treeNodes],
+    () => toAntTreeData(treeNodes, renderTreeTitle, emptyDirectoryPathSet),
+    [emptyDirectoryPathSet, renderTreeTitle, treeNodes],
   );
 
   const rootClassName = className
@@ -708,6 +936,14 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
             <span className='momo-file-editor__tree-title'>{treeTitle}</span>
             <div className='momo-file-editor__tree-actions'>
               <button
+                aria-label='刷新文件内容'
+                className='momo-file-editor__tree-btn'
+                onClick={handleRefresh}
+                title='刷新文件内容'
+                type='button'>
+                <RefreshCwIcon style={{ width: '0.875rem', height: '0.875rem' }} />
+              </button>
+              <button
                 className='momo-file-editor__tree-btn'
                 onClick={() => openNewFileInDir('')}
                 title={'新建文件'}
@@ -731,29 +967,63 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
             </div>
           </div>
 
+          <div className='momo-file-editor__tree-search'>
+            <Input
+              allowClear
+              aria-label='搜索文件'
+              placeholder='搜索全部文件'
+              prefix={<SearchIcon aria-hidden style={{ width: '0.875rem', height: '0.875rem' }} />}
+              size='small'
+              suffix={
+                isSearching ? (
+                  <Loader2Icon
+                    aria-label='正在搜索全部文件'
+                    className='momo-file-editor__search-spinner'
+                  />
+                ) : undefined
+              }
+              title='搜索全部文件；自动忽略依赖、构建与缓存目录'
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+            />
+          </div>
+
           <div className='momo-file-editor__tree-list'>
-            {isLoading ? (
+            {isLoading || (isSearching && searchEntries.length === 0) ? (
               <div className='momo-file-editor__loading'>
                 <Loader2Icon style={{ width: '1rem', height: '1rem' }} />
               </div>
             ) : treeData.length === 0 ? (
               <div className='momo-file-editor__tree-empty'>
                 <FileIcon style={{ width: '1.5rem', height: '1.5rem', opacity: 0.4 }} />
-                <span>{'暂无文件'}</span>
+                <span>{isSearchMode ? '未找到匹配文件' : '暂无文件'}</span>
               </div>
             ) : (
               <Tree
                 blockNode
-                showLine
+                showLine={{ showLeafIcon: false }}
                 className='momo-file-editor__antd-tree'
-                expandedKeys={expandedKeys}
-                onExpand={(keys) => setExpandedKeys(keys.map(String))}
+                expandedKeys={activeExpandedKeys}
+                loadData={
+                  isSearchMode ? undefined : (node) => ensureDirectoryLoaded(String(node.key ?? ''))
+                }
+                onExpand={(keys, info) => {
+                  const nextKeys = keys.map(String);
+                  if (isSearchMode) {
+                    setSearchExpandedKeys(nextKeys);
+                    return;
+                  }
+                  setExpandedKeys(nextKeys);
+                  if (info.expanded) {
+                    void ensureDirectoryLoaded(String(info.node.key ?? ''));
+                  }
+                }}
                 onSelect={(keys) => {
                   const key = String(keys[0] ?? '');
                   if (!key) {
                     return;
                   }
-                  const entry = entries.find((e) => e.relativePath === key);
+                  const entry = visibleEntries.find((e) => e.relativePath === key);
                   if (!entry) {
                     return;
                   }
@@ -810,7 +1080,7 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
                       {'编辑'}
                     </span>
                   )}
-                  {!isBinaryPreviewActive ? (
+                  {isTextActive ? (
                     <Button
                       type='text'
                       className='momo-file-editor__editor-tab'
@@ -824,7 +1094,13 @@ export const FileEditor = forwardRef<IFileEditorHandle, IProps>(function FileEdi
               </div>
 
               <div className='momo-file-editor__editor-content'>
-                {isMarkdownActive ? (
+                {isFileLoading ? (
+                  <div className='momo-file-editor__loading'>
+                    <Loader2Icon aria-label='正在读取文件' />
+                  </div>
+                ) : loadedFile?.kind === 'error' ? (
+                  <div className='momo-file-editor__editor-empty'>加载文件失败，请刷新重试</div>
+                ) : isMarkdownActive ? (
                   <div className='momo-file-editor__md-editor-root'>
                     <MomoMdEditor
                       key={selectedPath}

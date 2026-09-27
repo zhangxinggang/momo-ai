@@ -2,7 +2,8 @@ import { useCallback, useMemo, type KeyboardEvent, type MouseEvent } from 'react
 
 import { useAiChatConfig } from '../../contexts/AiChatConfigContext';
 import { isHttpUrl, splitPlainTextByHttpUrls } from '../../utils/external-url';
-import { parseNoteReferenceContent } from '../../utils/note-mention';
+import { joinLocalPath } from '../../utils/local-path';
+import { parseNoteReferenceContent, parseWorkspaceMentionPath } from '../../utils/note-mention';
 import { NoteReferenceChip } from '../NoteReferenceChip';
 import { SlashInvocationChip } from '../SlashInvocationChip';
 import styles from './index.module.less';
@@ -15,7 +16,7 @@ interface IProps {
 /** 将文本中的笔记引用与 Skill/Command 渲染为行内 chip，并支持 http(s) 链接点击。 */
 export function NoteReferenceText(props: IProps) {
   const { content, plainClassName } = props;
-  const { onOpenExternalUrl } = useAiChatConfig();
+  const { onOpenExternalUrl, localPath } = useAiChatConfig();
   const segments = useMemo(() => parseNoteReferenceContent(content), [content]);
 
   const handleOpenUrl = useCallback(
@@ -59,7 +60,22 @@ export function NoteReferenceText(props: IProps) {
     <>
       {segments.map((segment, index) => {
         if (segment.type === 'mention') {
-          return <NoteReferenceChip key={`mention-${index}`} path={segment.path} />;
+          const file = parseWorkspaceMentionPath(segment.path);
+          return (
+            <NoteReferenceChip
+              key={`mention-${index}`}
+              path={segment.path}
+              onOpen={
+                file && localPath?.onOpenLocalPath
+                  ? () => {
+                      void localPath.onOpenLocalPath!(
+                        joinLocalPath(file.rootPath, file.relativePath),
+                      );
+                    }
+                  : undefined
+              }
+            />
+          );
         }
         if (segment.type === 'slash') {
           return <SlashInvocationChip key={`slash-${index}`} invocation={segment.invocation} />;

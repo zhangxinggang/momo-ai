@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
 import type { LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 import styles from './index.module.less';
 
@@ -9,10 +10,17 @@ interface IProps {
   description: string;
   /** 是否垂直居中（工作流主体区域） */
   centered?: boolean;
+  action?: ReactNode;
 }
 
 /** 模块空状态：样式参考工作流列表为空 */
-export function ModuleEmptyState({ icon: Icon, title, description, centered = false }: IProps) {
+export function ModuleEmptyState({
+  icon: Icon,
+  title,
+  description,
+  centered = false,
+  action,
+}: IProps) {
   return (
     <div className={centered ? styles['module-empty--centered'] : styles['module-empty']}>
       <div className={styles['module-empty-icon-wrap']}>
@@ -22,6 +30,7 @@ export function ModuleEmptyState({ icon: Icon, title, description, centered = fa
       <Typography.Text className={styles['module-empty-desc']} type='secondary'>
         {description}
       </Typography.Text>
+      {action ? <div className={styles['module-empty-action']}>{action}</div> : null}
     </div>
   );
 }

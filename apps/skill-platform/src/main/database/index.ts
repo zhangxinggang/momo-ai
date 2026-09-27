@@ -9,10 +9,7 @@ import { closeDatabase, initDatabase as dbInit, getDatabase, isDatabaseEmpty } f
 
 export { destroyDataSource, getBetterSqliteFromDataSource } from '@momo/electron';
 export { default as DatabaseAdapter } from 'better-sqlite3';
-export { FolderController as FolderDB } from './controller/folder';
-export { PromptController as PromptDB } from './controller/prompt';
 export { SkillController as SkillDB } from './controller/skill';
-export { WorkflowController as WorkflowDB } from './controller/workflow';
 export * from './entities';
 export { SCHEMA_INDEXES, SCHEMA_TABLES } from './schema';
 export { closeDatabase, getDatabase, isDatabaseEmpty };

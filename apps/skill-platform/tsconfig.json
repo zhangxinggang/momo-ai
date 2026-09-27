@@ -7,6 +7,8 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@momo/agent-contracts": ["../../packages/momo-agent-contracts/src/index.ts"],
+      "@momo/api-request": ["../../packages/momo-api-request/src/index.ts"],
+      "@momo/api-request/core": ["../../packages/momo-api-request/src/core.ts"],
       "@momo/harness-adapter": ["../../packages/momo-harness-adapter/src/index.ts"],
       "@/*": ["./src/*"],
       "@renderer/*": ["./src/renderer/*"],
@@ -26,8 +28,6 @@
       "@momo/file-editor/*": ["../../packages/momo-file-editor/src/*"],
       "~/*": ["../../packages/momo-markdown/src/components/MdEditor/*"],
       "~~/*": ["../../packages/momo-markdown/src/*"],
-      "@momo/workflow": ["../../packages/momo-workflow/src/index.ts"],
-      "@momo/workflow/*": ["../../packages/momo-workflow/src/*"],
       "@momo/electron": ["../electron/src/index.ts"],
       "@momo/server": ["../../packages/momo-server/src/index.ts"],
       "@momo/server/*": ["../../packages/momo-server/src/*"]

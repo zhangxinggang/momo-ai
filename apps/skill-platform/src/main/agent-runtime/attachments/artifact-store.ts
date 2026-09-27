@@ -6,6 +6,7 @@ export class ArtifactStore {
   constructor(
     private store: AgentStore,
     private root: string,
+    private legacyRoot?: string,
   ) {
     store.db.exec(
       'CREATE TABLE IF NOT EXISTS agent_artifacts(id TEXT PRIMARY KEY,run_id TEXT NOT NULL,metadata TEXT NOT NULL,blob_id TEXT NOT NULL)',
@@ -52,7 +53,10 @@ export class ArtifactStore {
   async load(id: string) {
     const row = this.store.db.prepare('SELECT * FROM agent_artifacts WHERE id=?').get(id) as any;
     if (!row) throw new Error('UNKNOWN_ARTIFACT');
-    const bytes = await fs.readFile(path.join(this.root, row.blob_id));
+    const bytes = await fs.readFile(path.join(this.root, row.blob_id)).catch((error) => {
+      if (error.code !== 'ENOENT' || !this.legacyRoot) throw error;
+      return fs.readFile(path.join(this.legacyRoot, row.blob_id));
+    });
     if (createHash('sha256').update(bytes).digest('hex') !== row.blob_id)
       throw new Error('ARTIFACT_CORRUPT');
     return { metadata: JSON.parse(row.metadata), bytes };

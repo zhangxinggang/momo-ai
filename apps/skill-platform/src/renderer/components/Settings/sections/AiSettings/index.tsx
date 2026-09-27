@@ -139,18 +139,6 @@ export function AiSettings() {
     );
   }, [aiModels]);
 
-  const hasLegacyOnlyConfig = useMemo(
-    () =>
-      aiModels.length === 0 &&
-      Boolean(
-        settings.aiProvider.trim() &&
-        settings.aiApiKey.trim() &&
-        settings.aiApiUrl.trim() &&
-        settings.aiModel.trim(),
-      ),
-    [aiModels.length, settings.aiApiKey, settings.aiApiUrl, settings.aiModel, settings.aiProvider],
-  );
-
   const statusCards = useMemo<IStatusCardData[]>(
     () => [
       {
@@ -675,29 +663,14 @@ export function AiSettings() {
     setTestingDefault(false);
   };
 
-  const importLegacyConfig = () => {
-    settings.addAiModel({
-      name: settings.aiModel,
-      provider: settings.aiProvider,
-      apiProtocol: settings.aiApiProtocol,
-      apiKey: settings.aiApiKey,
-      apiUrl: settings.aiApiUrl,
-      model: settings.aiModel,
-      type: 'chat',
-    });
-    showToast('已导入旧版默认模型配置', 'success');
-  };
-
   return (
     <div className='mx-auto max-w-5xl space-y-10 pb-10'>
       <HeaderSection
         testingDefault={testingDefault}
-        hasLegacyOnlyConfig={hasLegacyOnlyConfig}
         statusCards={statusCards}
         defaultModelDisplayName={defaultModelDisplayName}
         onTestDefault={() => void handleTestDefaultModel()}
         onAddModel={() => openAddModel()}
-        onImportLegacy={importLegacyConfig}
       />
 
       <ScenarioDefaultsSection

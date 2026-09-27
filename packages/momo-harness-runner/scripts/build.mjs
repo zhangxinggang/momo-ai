@@ -11,11 +11,51 @@ if (!(major === 22 && minor >= 19 || major >= 24)) throw new Error('Harness buil
 const packages = ['dsh', 'dsh-agent', 'dsh-agent-loop', 'dsh-llm', 'dsh-session', 'dsh-system-prompt',
   'dsh-tools', 'dsh-session-persistence-jsonl', 'dsh-session-projection', 'dsh-attachment-local', 'dsh-fs-local', 'dsh-subprocess-local',
   'dsh-llm-pi-ai', 'dsh-user-questions', 'dsh-user-approval', 'dsh-plan-mode', 'dsh-commands', 'dsh-skill',
-  'dsh-tool-skill', 'dsh-tool-ask-user', 'dsh-agent-presets', 'dsh-token-meter', 'dsh-goal', 'dsh-goal-round-driver', 'dsh-tool-goal',
+  'dsh-tool-skill', 'dsh-tool-ask-user', 'dsh-agent-preset-registry', 'dsh-agent-preset', 'dsh-token-meter', 'dsh-goal', 'dsh-goal-round-driver', 'dsh-tool-goal',
   'dsh-command-goal', 'dsh-compaction-basic', 'dsh-command-compact'];
 const dependencies = Object.fromEntries(packages.map(p => [`@deepseek-ai/${p}`, lock.version]));
 const sameDependencies = value => JSON.stringify(Object.entries(value ?? {}).sort()) === JSON.stringify(Object.entries(dependencies).sort());
 const assetPaths = [];
+const pluginRoot = path.resolve(root, '../../apps/skill-platform/default/plugins');
+// The runner directory is a generated mirror, never a second source of truth.
+const pluginAssets = [];
+for (const area of ['builtIn', 'user']) {
+  await walk(path.join(pluginRoot, area), async file => {
+    const relative = path.relative(path.join(pluginRoot, area), file).replaceAll('\\', '/');
+    const target = 'plugins/' + (area === 'user' ? 'user/' : '') + relative;
+    if (area === 'builtIn' && relative.startsWith('user/')) throw Error('Reserved plugin directory: user');
+    pluginAssets.push([file, target]);
+  });
+}
+const mirror = path.resolve(root, 'plugins');
+if (path.dirname(mirror) !== root) throw Error('Invalid plugin mirror');
+await fs.rm(mirror, { recursive: true, force: true });
+for (const [file, relative] of pluginAssets) {
+  const target = path.join(root, relative);
+  await fs.mkdir(path.dirname(target), { recursive: true });
+  await fs.copyFile(file, target);
+}
+const builtinRoot = path.resolve(root, '../../apps/skill-platform/default/skills/builtIn');
+const builtinManifest = JSON.parse(await fs.readFile(path.join(builtinRoot, 'manifest.json'), 'utf8'));
+const builtinIds = ['runtimeLanguage', 'runtimeContinue', 'runtimeAssistant', 'runtimePlan'];
+const builtinPolicies = Object.fromEntries(await Promise.all(builtinIds.map(async id => {
+  const source = await fs.readFile(path.join(builtinRoot, builtinManifest[id]), 'utf8');
+  const body = source.replace(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/, '').trim();
+  if (!body) throw new Error('Missing builtin policy: ' + id);
+  return [id, body];
+})));
+const policyJson = JSON.stringify(builtinPolicies, null, 2) + '\n';
+const policyTarget = 'plugins/momo-host-bridge/builtin-policies.json';
+const policyHash = createHash('sha256').update(policyJson).digest('hex');
+const profileSource = 'profile/cordis.patch.yml';
+let profileText = (await fs.readFile(path.join(root, profileSource), 'utf8'))
+  .replace("'__MOMO_ASSISTANT_POLICY__'", JSON.stringify(builtinPolicies.runtimeAssistant))
+  .replace("'__MOMO_PLAN_POLICY__'", JSON.stringify(builtinPolicies.runtimePlan));
+const additionalBuiltins = pluginAssets.filter(([file, target]) => file.endsWith(path.sep + 'index.mjs') &&
+  !target.startsWith('plugins/user/') && !['plugins/momo-host-bridge/index.mjs', 'plugins/momo-model-credentials/index.mjs'].includes(target));
+if (additionalBuiltins.length) profileText += '\n- insert:\n' + additionalBuiltins.map(([, target], index) =>
+  `    - id: momo-default-plugin-${index}\n      name: !!js process.env.MOMO_PLUGIN_ROOT + ${JSON.stringify('/' + target.slice('plugins/'.length))}\n`).join('');
+const profileHash = createHash('sha256').update(profileText).digest('hex');
 async function walk(dir, callback) {
   for (const item of (await fs.readdir(dir, { withFileTypes: true })).sort((a,b) => a.name < b.name ? -1 : 1)) {
     const full = path.join(dir, item.name);
@@ -25,11 +65,18 @@ async function walk(dir, callback) {
   }
 }
 for (const area of ['plugins','profile']) await walk(path.join(root,area), async file => assetPaths.push(file));
+await fs.writeFile(path.join(root, policyTarget), policyJson);
 if (process.argv.includes('--ensure')) {
   try {
     const manifest = JSON.parse(await fs.readFile(path.join(output,'runtime.json'),'utf8'));
     const current = manifest.coreVersion === lock.version && manifest.nodeVersion === process.version && manifest.platform === process.platform && manifest.arch === process.arch;
-    if (current && (await Promise.all(assetPaths.map(async file => manifest.files[path.relative(root,file).replaceAll('\\','/')] === createHash('sha256').update(await fs.readFile(file)).digest('hex')))).every(Boolean)) {
+    const sourceAssets = await Promise.all(assetPaths.map(async file => {
+      const relative = path.relative(root,file).replaceAll('\\','/');
+      return [relative, relative === profileSource ? profileHash : createHash('sha256').update(await fs.readFile(file)).digest('hex')];
+    }));
+    sourceAssets.push([policyTarget, policyHash]);
+    const declaredAssets = Object.keys(manifest.files).filter(file => file.startsWith('plugins/') || file.startsWith('profile/'));
+    if (current && declaredAssets.length === sourceAssets.length && sourceAssets.every(([file,hash]) => manifest.files[file] === hash)) {
       console.log('Harness runtime ready:', manifest.bundleId); process.exit(0);
     }
   } catch { /* Build a missing or stale runtime. */ }
@@ -49,8 +96,11 @@ if (!reuse) {
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
 await fs.copyFile(path.join(output,'package-lock.json'),path.join(root,'runtime-package-lock.json'));
+await Promise.all(['plugins','profile'].map(directory => fs.rm(path.join(output,directory),{recursive:true,force:true})));
 await fs.cp(path.join(root,'plugins'),path.join(output,'plugins'),{recursive:true});
 await fs.cp(path.join(root,'profile'),path.join(output,'profile'),{recursive:true});
+await fs.writeFile(path.join(output, policyTarget), policyJson);
+await fs.writeFile(path.join(output, profileSource), profileText);
 const node = process.platform === 'win32' ? 'node.exe' : 'node';
 const bundledNode = path.join(output, node);
 // Windows locks a running executable. An unchanged Node binary needs no replacement.
@@ -72,5 +122,5 @@ let next = 0;
 await Promise.all(Array.from({length:16},async()=>{while(next<paths.length){const full=paths[next++];files[path.relative(output,full).replaceAll('\\','/')]=createHash('sha256').update(await fs.readFile(full)).digest('hex');}}));
 const sorted=Object.fromEntries(Object.entries(files).sort(([a],[b])=>a<b?-1:a>b?1:0));
 const digest=createHash('sha256').update(JSON.stringify(sorted)).digest('hex').slice(0,16);
-await fs.writeFile(path.join(output,'runtime.json'),JSON.stringify({runtimeId:'deepseek-harness',bundleId:`dsh-${lock.version}-${digest}`,coreVersion:lock.version,coreCommit:lock.publishedCommit,adapterVersion:lock.adapterVersion,hostProtocolRange:'1.x',platform:process.platform,arch:process.arch,nodeVersion:process.version,entry:'node_modules/@deepseek-ai/dsh/lib/bin.js',node,source:lock.source,files:sorted},null,2));
+await fs.writeFile(path.join(output,'runtime.json'),JSON.stringify({runtimeId:'deepseek-harness',bundleId:`dsh-${lock.version}-${digest}`,coreVersion:lock.version,coreCommit:lock.referenceCommit,adapterVersion:lock.adapterVersion,hostProtocolRange:'1.x',platform:process.platform,arch:process.arch,nodeVersion:process.version,entry:'node_modules/@deepseek-ai/dsh/lib/bin.js',node,source:lock.source,files:sorted},null,2));
 console.log('Harness runtime built:',digest);

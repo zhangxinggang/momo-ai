@@ -1,0 +1,134 @@
+import { CenteredLoading } from '@renderer/components/ui/CenteredLoading';
+import { readSnapEditHtml } from '@renderer/services/custom-tool/api';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+
+import styles from './index.module.less';
+
+interface IProps {
+  html: string;
+  fileName?: string;
+  onChange?: (html: string) => void;
+}
+
+export interface ISnapEditFrameHandle {
+  pullHtml: () => Promise<string>;
+}
+
+/** 嵌入 snapEdit.html，通过 postMessage 同步 HTML。 */
+export const SnapEditFrame = forwardRef<ISnapEditFrameHandle, IProps>(
+  function SnapEditFrame(props, ref) {
+    const { html, fileName = 'tool.html', onChange } = props;
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+    const [frameUrl, setFrameUrl] = useState<string | null>(null);
+    const [isReady, setIsReady] = useState(false);
+    const requestIdRef = useRef(0);
+    const pendingRef = useRef<Map<string, (value: string) => void>>(new Map());
+    const htmlRef = useRef(html);
+    const lastFrameHtmlRef = useRef<string | null>(null);
+    htmlRef.current = html;
+
+    useEffect(() => {
+      let objectUrl: string | null = null;
+      let cancelled = false;
+      void readSnapEditHtml()
+        .then((source) => {
+          if (cancelled) return;
+          const injected = source.replace(
+            '<html lang="zh-CN">',
+            '<html lang="zh-CN" data-embed="1">',
+          );
+          objectUrl = URL.createObjectURL(
+            new Blob([injected], { type: 'text/html;charset=utf-8' }),
+          );
+          setFrameUrl(objectUrl);
+        })
+        .catch((error) => console.error('[SnapEditFrame] load failed:', error));
+      return () => {
+        cancelled = true;
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+      };
+    }, []);
+
+    useEffect(() => {
+      const handleMessage = (event: MessageEvent) => {
+        if (event.source !== iframeRef.current?.contentWindow) return;
+        const data = event.data;
+        if (!data || typeof data !== 'object') return;
+        if (data.type === 'snapedit:ready') {
+          setIsReady(true);
+          iframeRef.current?.contentWindow?.postMessage(
+            { type: 'snapedit:setHtml', html: htmlRef.current, fileName },
+            '*',
+          );
+          return;
+        }
+        if (data.type === 'snapedit:html' && data.requestId) {
+          const resolve = pendingRef.current.get(String(data.requestId));
+          if (resolve) {
+            pendingRef.current.delete(String(data.requestId));
+            resolve(typeof data.html === 'string' ? data.html : '');
+          }
+        }
+        if (data.type === 'snapedit:change' && typeof data.html === 'string') {
+          lastFrameHtmlRef.current = data.html;
+          htmlRef.current = data.html;
+          onChange?.(data.html);
+        }
+      };
+      window.addEventListener('message', handleMessage);
+      return () => window.removeEventListener('message', handleMessage);
+    }, [fileName, onChange]);
+
+    useEffect(() => {
+      if (!isReady) return;
+      if (lastFrameHtmlRef.current === html) {
+        lastFrameHtmlRef.current = null;
+        return;
+      }
+      iframeRef.current?.contentWindow?.postMessage(
+        { type: 'snapedit:setHtml', html, fileName },
+        '*',
+      );
+    }, [fileName, html, isReady]);
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        pullHtml: () =>
+          new Promise((resolve) => {
+            const frame = iframeRef.current;
+            if (!isReady || !frame?.contentWindow) {
+              resolve(htmlRef.current);
+              return;
+            }
+            const requestId = `req-${++requestIdRef.current}`;
+            pendingRef.current.set(requestId, resolve);
+            frame.contentWindow.postMessage({ type: 'snapedit:getHtml', requestId }, '*');
+            window.setTimeout(() => {
+              if (pendingRef.current.has(requestId)) {
+                pendingRef.current.delete(requestId);
+                resolve(htmlRef.current);
+              }
+            }, 3000);
+          }),
+      }),
+      [isReady],
+    );
+
+    return (
+      <div className={styles['snap-edit-frame']}>
+        {frameUrl ? (
+          <iframe
+            ref={iframeRef}
+            className={styles['snap-edit-frame-iframe']}
+            src={frameUrl}
+            title='HTML 编辑器'
+            sandbox='allow-scripts allow-same-origin allow-forms allow-downloads'
+          />
+        ) : (
+          <CenteredLoading />
+        )}
+      </div>
+    );
+  },
+);

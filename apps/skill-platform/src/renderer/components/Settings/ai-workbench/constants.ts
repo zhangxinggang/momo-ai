@@ -77,7 +77,7 @@ export const SCENARIO_DEFINITIONS: IScenarioDefinition[] = [
   {
     key: 'imageTest',
     label: '生图测试',
-    desc: 'IPrompt 生图测试的默认模型。',
+    desc: '生图测试的默认模型。',
     type: 'image',
     badge: '生图测试',
   },

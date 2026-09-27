@@ -1,57 +1,41 @@
-import type { IFolder } from '@/types/modules';
 import { compareVersions } from '@/utils/version';
 import { MomoTreeToolbar } from '@momo/tree';
 import { ChatPanel } from '@renderer/components/Chat';
-import { FolderModal } from '@renderer/components/Folder';
 import { KnowledgePanel } from '@renderer/components/Knowledge';
 import { NoteTreePanel } from '@renderer/components/Note/NoteTreePanel';
-import { PromptTreePanel } from '@renderer/components/Prompt/PromptTreePanel';
 import badgeStyles from '@renderer/components/Settings/SettingBadge/index.module.less';
 import { ToolboxPanel, useHasToolboxModule } from '@renderer/components/Toolbox';
-import { useToast } from '@renderer/components/ui/Toast';
-import WorkflowImportConflictModal from '@renderer/components/Workflow/WorkflowImportConflictModal';
-import { WorkflowTreePanel } from '@renderer/components/Workflow/WorkflowTreePanel';
 import { useConfirmLeaveEditors } from '@renderer/hooks/useConfirmLeaveEditors';
 import {
   useOnlineStoreSources,
   useSyncDefaultOnlineStoreSource,
 } from '@renderer/hooks/useOnlineStoreSources';
-import { usePromptBackup } from '@renderer/hooks/usePromptBackup';
 import { useTreeRootCreate } from '@renderer/hooks/useTreeRootCreate';
-import { useWorkflowBackup } from '@renderer/hooks/useWorkflowBackup';
 import { isWindowFullscreen } from '@renderer/services/desktop';
-import { buildPromptStats } from '@renderer/services/prompt/filter';
 import { buildSkillStats } from '@renderer/services/skill/stats';
 import {
-  useFolderStore,
   useKbStore,
   useNoteStore,
   useOnlineConfStore,
-  usePromptStore,
   useSettingsStore,
   useSkillStore,
   useUIStore,
-  useWorkflowStore,
 } from '@renderer/store';
 import { Button } from 'antd';
 import {
   BookOpenIcon,
   Clock3Icon,
-  CommandIcon,
   CuboidIcon,
-  DownloadIcon,
   FolderPlusIcon,
-  GitBranchIcon,
   GlobeIcon,
   MessageSquareIcon,
   NotebookIcon,
   PlusIcon,
   SettingsIcon,
   StoreIcon,
-  UploadIcon,
   WrenchIcon,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { NavItem } from './components/NavItem';
 type PageType = 'home' | 'settings';
@@ -66,40 +50,9 @@ interface IProps {
 export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps) {
   const { confirmLeaveAllEditors } = useConfirmLeaveEditors();
   useSyncDefaultOnlineStoreSource();
-  const folders = useFolderStore((state) => state.folders);
-  const selectedFolderId = useFolderStore((state) => state.selectedFolderId);
-  const selectFolder = useFolderStore((state) => state.selectFolder);
-  const reorderFolders = useFolderStore((state) => state.reorderFolders);
-  const expandedIds = useFolderStore((state) => state.expandedIds);
-  const toggleExpand = useFolderStore((state) => state.toggleExpand);
-  const updateFolder = useFolderStore((state) => state.updateFolder);
-  const prompts = usePromptStore((state) => state.prompts);
   const [isMac, setIsMac] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
-  const [editingFolder, setEditingFolder] = useState<IFolder | null>(null);
-  const [showAllTags, setShowAllTags] = useState(false);
-  const filterTags = usePromptStore((state) => state.filterTags);
-  const toggleFilterTag = usePromptStore((state) => state.toggleFilterTag);
-  const clearFilterTags = usePromptStore((state) => state.clearFilterTags);
-  const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
-  const [isTagPopoverVisible, setIsTagPopoverVisible] = useState(false);
-  const [tagPopoverPos, setTagPopoverPos] = useState<{
-    top?: number;
-    bottom?: number;
-    left: number;
-  }>({ top: 0, left: 0 });
-  const tagButtonRef = useRef<HTMLButtonElement | null>(null);
-  const tagPopoverRef = useRef<HTMLDivElement | null>(null);
-  const tagPopoverCloseTimerRef = useRef<number | null>(null);
-
-  // Resize state
-  const tagsSectionHeight = useSettingsStore((state) => state.tagsSectionHeight);
-  const setTagsSectionHeight = useSettingsStore((state) => state.setTagsSectionHeight);
-  const isTagsCollapsed = useSettingsStore((state) => state.isTagsSectionCollapsed);
-  const setIsTagsCollapsed = useSettingsStore((state) => state.setIsTagsSectionCollapsed);
   const viewMode = useUIStore((state) => state.viewMode);
-  const workflowScreen = useUIStore((state) => state.workflowScreen);
   const setAppModule = useUIStore((state) => state.setAppModule);
   const isCollapsed = useUIStore((state) => state.isSidebarCollapsed);
   const skillProjects = useSettingsStore((state) => state.skillProjects);
@@ -125,13 +78,10 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
   const customStoreSources = useSkillStore((state) => state.customStoreSources);
   const onlineStoreSources = useOnlineStoreSources();
   const remoteStoreEntries = useSkillStore((state) => state.remoteStoreEntries);
-  const promptStats = useMemo(() => buildPromptStats(prompts), [prompts]);
   const skillStats = useMemo(
     () => buildSkillStats(skills, deployedSkillNames),
     [skills, deployedSkillNames],
   );
-  const favoriteCount = promptStats.favoriteCount;
-  const uniqueTags = promptStats.uniqueTags;
   const showRail = layout !== 'panel';
   const railWidthClass = 'w-20';
   const combinedWidthClass = 'w-[23rem]';
@@ -149,164 +99,9 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
   const noteTreeData = useNoteStore((state) => state.treeData);
   const noteTreeSearchQuery = useNoteStore((state) => state.treeSearchQuery);
   const setNoteTreeSearchQuery = useNoteStore((state) => state.setTreeSearchQuery);
-  const workflowTreeData = useWorkflowStore((state) => state.treeData);
-  const workflowTreeSearchQuery = useWorkflowStore((state) => state.treeSearchQuery);
-  const setWorkflowTreeSearchQuery = useWorkflowStore((state) => state.setTreeSearchQuery);
-  const selectWorkflow = useWorkflowStore((state) => state.selectWorkflow);
-  const createWorkflowFolder = useWorkflowStore((state) => state.createFolder);
-  const createWorkflowAndOpenStudio = useWorkflowStore(
-    (state) => state.createWorkflowAndOpenStudio,
-  );
-  const refreshWorkflowTree = useWorkflowStore((state) => state.refreshTree);
-
-  const workflowRootCreate = useTreeRootCreate({
-    treeData: workflowTreeData,
-    labels: {
-      createFolderTitle: '新建目录',
-      createNoteTitle: '新建工作流',
-      createNamePlaceholder: '请输入名称',
-      duplicateNameError: '同级下已存在相同名称',
-      emptyNameError: '名称不能为空',
-      confirm: '确定',
-      cancel: '取消',
-    },
-    onCreateFolder: async (name) => {
-      await createWorkflowFolder({ name });
-      refreshWorkflowTree();
-      if (currentPage !== 'home') onNavigate('home');
-    },
-    onCreateItem: async (name) => {
-      await createWorkflowAndOpenStudio(name);
-      refreshWorkflowTree();
-      if (currentPage !== 'home') onNavigate('home');
-    },
-  });
   const kbListSearchQuery = useKbStore((state) => state.listSearchQuery);
   const setKbListSearchQuery = useKbStore((state) => state.setListSearchQuery);
   const setKbCreateModalOpen = useKbStore((state) => state.setCreateModalOpen);
-  const promptTreeData = usePromptStore((state) => state.treeData);
-  const promptTreeSearchQuery = usePromptStore((state) => state.treeSearchQuery);
-  const setPromptTreeSearchQuery = usePromptStore((state) => state.setTreeSearchQuery);
-  const openEditEditor = usePromptStore((state) => state.openEditEditor);
-  const createPrompt = usePromptStore((state) => state.createPrompt);
-  const refreshPromptTree = usePromptStore((state) => state.refreshTree);
-  const createPromptFolder = useFolderStore((state) => state.createFolder);
-
-  const promptRootCreate = useTreeRootCreate({
-    treeData: promptTreeData,
-    labels: {
-      createFolderTitle: '新建目录',
-      createNoteTitle: '新建提示词',
-      createNamePlaceholder: '请输入名称',
-      duplicateNameError: '同级下已存在相同名称',
-      emptyNameError: '名称不能为空',
-      confirm: '确定',
-      cancel: '取消',
-    },
-    onCreateFolder: async (name) => {
-      await createPromptFolder({ name });
-      refreshPromptTree();
-      if (currentPage !== 'home') onNavigate('home');
-    },
-    onCreateItem: async (name) => {
-      const created = await createPrompt({
-        title: name,
-        userPrompt: '',
-        tags: [],
-      });
-      openEditEditor(created.id);
-      refreshPromptTree();
-      if (currentPage !== 'home') onNavigate('home');
-    },
-  });
-
-  const { showToast } = useToast();
-  const {
-    exportAllPrompts,
-    importPromptBackup: importPromptBackupFile,
-    isExporting: isExportingPrompts,
-    isImporting: isImportingPrompts,
-  } = usePromptBackup();
-
-  const {
-    importWorkflow,
-    isImporting: isImportingWorkflow,
-    conflictModalProps: workflowConflictModalProps,
-  } = useWorkflowBackup();
-
-  const handleExportPrompts = useCallback(async () => {
-    try {
-      const result = await exportAllPrompts();
-      if (result.canceled) {
-        return;
-      }
-      showToast(`已导出 ${result.promptCount ?? 0} 个提示词`, 'success');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : '导出失败';
-      showToast(message, 'error');
-    }
-  }, [exportAllPrompts, showToast]);
-
-  const handleImportPrompts = useCallback(async () => {
-    try {
-      const result = await importPromptBackupFile();
-      if (result.canceled) {
-        return;
-      }
-      showToast(
-        `已导入 ${result.promptCount ?? 0} 个提示词、${result.folderCount ?? 0} 个目录`,
-        'success',
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : '导入失败';
-      showToast(message, 'error');
-    }
-  }, [importPromptBackupFile, showToast]);
-
-  const handleImportWorkflow = useCallback(async () => {
-    try {
-      await importWorkflow();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : '导入失败';
-      showToast(message, 'error');
-    }
-  }, [importWorkflow, showToast]);
-
-  const workflowImportActions = (
-    <button
-      type='button'
-      className='text-muted-foreground hover:text-foreground rounded p-1 transition-colors disabled:opacity-50'
-      title='导入工作流'
-      aria-label='导入工作流'
-      disabled={isImportingWorkflow}
-      onClick={() => void handleImportWorkflow()}>
-      <UploadIcon className='h-4 w-4' />
-    </button>
-  );
-
-  const promptBackupActions = (
-    <>
-      <button
-        type='button'
-        className='text-muted-foreground hover:text-foreground rounded p-1 transition-colors disabled:opacity-50'
-        title='导出提示词'
-        aria-label='导出提示词'
-        disabled={isExportingPrompts}
-        onClick={() => void handleExportPrompts()}>
-        <DownloadIcon className='h-4 w-4' />
-      </button>
-      <button
-        type='button'
-        className='text-muted-foreground hover:text-foreground rounded p-1 transition-colors disabled:opacity-50'
-        title='导入提示词'
-        aria-label='导入提示词'
-        disabled={isImportingPrompts}
-        onClick={() => void handleImportPrompts()}>
-        <UploadIcon className='h-4 w-4' />
-      </button>
-    </>
-  );
-
   const noteRootCreate = useTreeRootCreate({
     treeData: noteTreeData,
     labels: {
@@ -328,31 +123,12 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
 
   const railNavItems = useMemo(() => {
     const items: Array<{
-      key: 'prompt' | 'skill' | 'workflow' | 'kb' | 'note' | 'chat' | 'toolbox';
+      key: 'skill' | 'kb' | 'note' | 'chat' | 'toolbox';
       label: string;
       icon: React.ReactNode;
       active: boolean;
       onClick: () => void;
     }> = [
-      {
-        key: 'prompt',
-        label: '提示词',
-        icon: <CommandIcon className='h-5 w-5' />,
-        active: viewMode === 'prompt',
-        onClick: () => {
-          void (async () => {
-            const canLeave = await confirmLeaveAllEditors({
-              checkAiChat: currentPage === 'home' && viewMode !== 'prompt',
-            });
-            if (!canLeave) {
-              return;
-            }
-            setAppModule('prompt');
-            closeTagPopover();
-            if (currentPage !== 'home') onNavigate('home');
-          })();
-        },
-      },
       {
         key: 'skill',
         label: '技能',
@@ -367,8 +143,6 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
               return;
             }
             setAppModule('skill');
-            selectSkill(null);
-            closeTagPopover();
             if (currentPage !== 'home') onNavigate('home');
           })();
         },
@@ -387,7 +161,6 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
               return;
             }
             setAppModule('kb');
-            closeTagPopover();
             if (currentPage !== 'home') {
               onNavigate('home');
             }
@@ -406,32 +179,7 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
             });
             if (!canLeave) return;
             setAppModule('note');
-            closeTagPopover();
             if (currentPage !== 'home') onNavigate('home');
-          })();
-        },
-      },
-      {
-        key: 'workflow',
-        label: '工作流',
-        icon: <GitBranchIcon className='h-5 w-5' />,
-        active: viewMode === 'workflow',
-        onClick: () => {
-          void (async () => {
-            const canLeave = await confirmLeaveAllEditors({
-              checkAiChat:
-                currentPage === 'home' &&
-                (viewMode !== 'workflow' || workflowScreen === 'business-work'),
-            });
-            if (!canLeave) {
-              return;
-            }
-            setAppModule('workflow');
-            selectWorkflow(null);
-            closeTagPopover();
-            if (currentPage !== 'home') {
-              onNavigate('home');
-            }
           })();
         },
       },
@@ -449,7 +197,6 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
               return;
             }
             setAppModule('chat');
-            closeTagPopover();
             if (currentPage !== 'home') {
               onNavigate('home');
             }
@@ -470,7 +217,6 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
               return;
             }
             setAppModule('toolbox');
-            closeTagPopover();
             if (currentPage !== 'home') {
               onNavigate('home');
             }
@@ -481,26 +227,13 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
     return hasToolboxModule ? items : items.filter((item) => item.key !== 'toolbox');
   }, [
     viewMode,
-    workflowScreen,
     hasToolboxModule,
     confirmLeaveAllEditors,
     setAppModule,
     currentPage,
     onNavigate,
     selectSkill,
-    selectWorkflow,
   ]);
-
-  // Skill tags section settings (mirrors prompt tags behavior)
-  const skillTagsSectionHeight = useSettingsStore((state) => state.skillTagsSectionHeight);
-  const setSkillTagsSectionHeight = useSettingsStore((state) => state.setSkillTagsSectionHeight);
-  const isSkillTagsCollapsed = useSettingsStore((state) => state.isSkillTagsSectionCollapsed);
-  const setIsSkillTagsCollapsed = useSettingsStore((state) => state.setIsSkillTagsSectionCollapsed);
-
-  const [isResizing, setIsResizing] = useState(false);
-  const sidebarRef = useRef<HTMLElement>(null);
-  const dragStartY = useRef(0);
-  const dragStartHeight = useRef(0);
 
   useEffect(() => {
     const platform = navigator.userAgent.toLowerCase();
@@ -516,138 +249,8 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
     return () => window.removeEventListener('resize', checkFullscreen);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (tagPopoverCloseTimerRef.current !== null) {
-        window.clearTimeout(tagPopoverCloseTimerRef.current);
-        tagPopoverCloseTimerRef.current = null;
-      }
-    };
-  }, []);
-
-  const closeTagPopover = useCallback(() => {
-    setIsTagPopoverVisible(false);
-    if (tagPopoverCloseTimerRef.current !== null) {
-      window.clearTimeout(tagPopoverCloseTimerRef.current);
-      tagPopoverCloseTimerRef.current = null;
-    }
-    tagPopoverCloseTimerRef.current = window.setTimeout(() => {
-      setIsTagPopoverOpen(false);
-      tagPopoverCloseTimerRef.current = null;
-    }, 160);
-  }, []);
-
-  useEffect(() => {
-    if (!isTagPopoverOpen) return;
-
-    const handleMouseDown = (e: MouseEvent) => {
-      const target = e.target as Node | null;
-      if (!target) return;
-      if (tagPopoverRef.current?.contains(target)) return;
-      if (tagButtonRef.current?.contains(target)) return;
-      closeTagPopover();
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeTagPopover();
-    };
-
-    document.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.removeEventListener('mousedown', handleMouseDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [closeTagPopover, isTagPopoverOpen]);
-
-  const openTagPopover = () => {
-    const el = tagButtonRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-
-    const width = 320;
-    const maxHeight = Math.min(420, Math.max(240, window.innerHeight - 24));
-
-    let left = rect.right + 12;
-    if (left + width > window.innerWidth - 12) {
-      left = Math.max(12, rect.left - width - 12);
-    }
-
-    // 彻底修复定位：根据按钮所在屏幕位置，决定是用 top 还是 bottom 定位
-    // Fix positioning: use top or bottom depending on button's screen position
-    const isInBottomHalf = rect.top > window.innerHeight / 2;
-    const newPos: { top?: number; bottom?: number; left: number } = { left };
-
-    if (isInBottomHalf) {
-      // 底部对齐逻辑：设置 bottom 距离，让弹窗向上生长
-      // Bottom alignment: set bottom distance, let popover grow upwards
-      newPos.bottom = window.innerHeight - rect.bottom + 8;
-    } else {
-      // 顶部对齐逻辑：设置 top 距离
-      // Top alignment: set top distance
-      newPos.top = rect.top - 8;
-      if (newPos.top + maxHeight > window.innerHeight - 12) {
-        newPos.top = Math.max(12, window.innerHeight - 12 - maxHeight);
-      }
-    }
-
-    if (tagPopoverCloseTimerRef.current !== null) {
-      window.clearTimeout(tagPopoverCloseTimerRef.current);
-      tagPopoverCloseTimerRef.current = null;
-    }
-
-    setTagPopoverPos(newPos);
-    setIsTagPopoverOpen(true);
-    setIsTagPopoverVisible(false);
-    requestAnimationFrame(() => {
-      setIsTagPopoverVisible(true);
-    });
-  };
-
-  // Resize handler (shared for prompt and skill tags sections)
-  const resizeTarget = useRef<'prompt' | 'skill'>('prompt');
-
-  const handleResizeStart = (e: React.MouseEvent, target: 'prompt' | 'skill' = 'prompt') => {
-    e.preventDefault();
-    setIsResizing(true);
-    resizeTarget.current = target;
-    dragStartY.current = e.clientY;
-    dragStartHeight.current = target === 'prompt' ? tagsSectionHeight : skillTagsSectionHeight;
-    document.body.style.cursor = 'ns-resize';
-  };
-
-  useEffect(() => {
-    if (!isResizing) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaY = dragStartY.current - e.clientY;
-      const newHeight = dragStartHeight.current + deltaY;
-      const minHeight = 140;
-      const maxHeight = window.innerHeight - 300;
-      const clampedHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
-      if (resizeTarget.current === 'prompt') {
-        setTagsSectionHeight(clampedHeight);
-      } else {
-        setSkillTagsSectionHeight(clampedHeight);
-      }
-    };
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      document.body.style.cursor = '';
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isResizing, setTagsSectionHeight, setSkillTagsSectionHeight]);
   return (
     <aside
-      ref={sidebarRef}
       className={`relative z-20 shrink-0 overflow-hidden transition-all duration-300 ease-in-out ${
         layout === 'panel' && isCollapsed ? 'hidden' : 'flex'
       } ${asideClassName}`}>
@@ -657,7 +260,7 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
           {isMac && !isFullscreen && <div className='titlebar-drag h-14 shrink-0' />}
 
           <div className='flex flex-1 flex-col px-2 py-3'>
-            <div className='flex flex-1 flex-col gap-2'>
+            <div className='flex flex-1 flex-col'>
               {railNavItems.map((item) => (
                 <Button
                   key={item.key}
@@ -709,30 +312,7 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
 
       {layout !== 'rail' ? (
         <div className='bg-sidebar-background/85 relative flex min-w-0 flex-1 flex-col'>
-          {viewMode === 'prompt' ? (
-            <>
-              <div className='mt-2 flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-4'>
-                <MomoTreeToolbar
-                  visible={!isCollapsed}
-                  sectionLabel={'目录'}
-                  searchPlaceholder={'搜索提示词或目录...'}
-                  searchQuery={promptTreeSearchQuery}
-                  onSearchQueryChange={setPromptTreeSearchQuery}
-                  clearSearchLabel={'清除搜索'}
-                  createDirectoryTitle={'新增目录'}
-                  onCreateDirectory={promptRootCreate.openCreateFolder}
-                  createItemTitle={'新建提示词'}
-                  onCreateItem={promptRootCreate.openCreateItem}
-                  extraActions={promptBackupActions}
-                />
-                {promptRootCreate.createModal}
-
-                <div className='scrollbar-hide flex-1 overflow-y-auto overflow-x-hidden'>
-                  <PromptTreePanel />
-                </div>
-              </div>
-            </>
-          ) : viewMode === 'kb' ? (
+          {viewMode === 'kb' ? (
             <>
               <div className='mt-2 flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-4'>
                 <MomoTreeToolbar
@@ -763,30 +343,6 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
               <div className='flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-2'>
                 <div className='scrollbar-hide min-h-0 flex-1 overflow-y-auto overflow-x-hidden'>
                   {!isCollapsed && <ToolboxPanel />}
-                </div>
-              </div>
-            </>
-          ) : viewMode === 'workflow' ? (
-            <>
-              <div className='mt-2 flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-4'>
-                <MomoTreeToolbar
-                  visible={!isCollapsed}
-                  sectionLabel={'工作流'}
-                  searchPlaceholder={'搜索工作流或目录...'}
-                  searchQuery={workflowTreeSearchQuery}
-                  onSearchQueryChange={setWorkflowTreeSearchQuery}
-                  clearSearchLabel={'清除搜索'}
-                  createDirectoryTitle={'新建目录'}
-                  onCreateDirectory={workflowRootCreate.openCreateFolder}
-                  createItemTitle={'新建工作流'}
-                  onCreateItem={workflowRootCreate.openCreateItem}
-                  extraActions={workflowImportActions}
-                />
-                {workflowRootCreate.createModal}
-                <WorkflowImportConflictModal {...workflowConflictModalProps} />
-
-                <div className='scrollbar-hide flex-1 overflow-y-auto overflow-x-hidden'>
-                  <WorkflowTreePanel />
                 </div>
               </div>
             </>
@@ -969,15 +525,6 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
               </div>
             </>
           )}
-
-          <FolderModal
-            isOpen={isFolderModalOpen}
-            onClose={() => {
-              setIsFolderModalOpen(false);
-              setEditingFolder(null);
-            }}
-            folder={editingFolder}
-          />
         </div>
       ) : null}
     </aside>

@@ -1,11 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type ViewMode = 'prompt' | 'skill' | 'kb' | 'note' | 'chat' | 'toolbox' | 'workflow';
+type ViewMode = 'skill' | 'kb' | 'note' | 'chat' | 'toolbox';
 
 export type EAppModule = ViewMode;
-
-type EWorkflowScreen = 'business-list' | 'studio' | 'business-work';
 
 interface IUIState {
   viewMode: ViewMode;
@@ -31,44 +29,19 @@ interface IUIState {
   setExpandedToolboxToolKeys: (keys: string[]) => void;
   clearActiveToolboxBranch: () => void;
   resetToolboxSelection: () => void;
-  /** 工作流业务列表 / 编辑器 / 执行页切换 */
-  workflowScreen: EWorkflowScreen;
-  activeWorkflowId: string | null;
-  activeBusinessId: string | null;
-  businessListQuery: string;
-  /** 从工作流跳转编辑资源后，返回时恢复的 workflowId */
-  workflowResumeStudioId: string | null;
-  /** 工作流编辑器是否有未保存更改 */
-  workflowEditorDirty: boolean;
-  /** 工作流编辑器注册的离开确认（由 Studio 挂载） */
-  workflowLeaveConfirm: (() => Promise<boolean>) | null;
-  setWorkflowEditorDirty: (dirty: boolean) => void;
-  registerWorkflowLeaveConfirm: (fn: (() => Promise<boolean>) | null) => void;
-  confirmWorkflowLeave: () => Promise<boolean>;
-  setBusinessListQuery: (query: string) => void;
-  openWorkflowStudio: (workflowId: string | null) => void;
-  openWorkflowBusinessWork: (workflowId: string, businessId: string) => void;
-  closeWorkflowStudio: () => void;
-  closeWorkflowBusinessWork: () => void;
-  beginWorkflowResourceEdit: (workflowId: string) => void;
-  /** 若存在待恢复的工作流，则打开 Studio 并清除标记 */
-  resumeWorkflowStudioIfPending: () => boolean;
 }
 
 export const useUIStore = create<IUIState>()(
   persist(
     (set): IUIState => ({
-      viewMode: 'prompt',
-      appModule: 'prompt',
+      viewMode: 'chat',
+      appModule: 'chat',
       setViewMode: (mode) => set({ viewMode: mode, appModule: mode }),
       setAppModule: (mode) => {
         set({
           appModule: mode,
           viewMode: mode,
         });
-        if (mode === 'workflow') {
-          useUIStore.getState().resumeWorkflowStudioIfPending();
-        }
       },
       isSidebarCollapsed: false,
       toggleSidebar: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
@@ -147,63 +120,6 @@ export const useUIStore = create<IUIState>()(
           activeToolboxTabKey: '',
           expandedToolboxToolKeys: [],
         }),
-      workflowScreen: 'business-list',
-      activeWorkflowId: null,
-      activeBusinessId: null,
-      businessListQuery: '',
-      workflowResumeStudioId: null,
-      workflowEditorDirty: false,
-      workflowLeaveConfirm: null,
-      setWorkflowEditorDirty: (dirty) => set({ workflowEditorDirty: dirty }),
-      registerWorkflowLeaveConfirm: (fn) => set({ workflowLeaveConfirm: fn }),
-      confirmWorkflowLeave: async () => {
-        const { workflowScreen, workflowEditorDirty, workflowLeaveConfirm } = useUIStore.getState();
-        if (workflowScreen !== 'studio' || !workflowEditorDirty || !workflowLeaveConfirm) {
-          return true;
-        }
-        return workflowLeaveConfirm();
-      },
-      setBusinessListQuery: (query) => set({ businessListQuery: query }),
-      openWorkflowStudio: (workflowId) =>
-        set({
-          appModule: 'workflow',
-          viewMode: 'workflow',
-          workflowScreen: 'studio',
-          activeWorkflowId: workflowId,
-          workflowResumeStudioId: null,
-        }),
-      openWorkflowBusinessWork: (workflowId, businessId) =>
-        set({
-          appModule: 'workflow',
-          viewMode: 'workflow',
-          workflowScreen: 'business-work',
-          activeWorkflowId: workflowId,
-          activeBusinessId: businessId,
-        }),
-      closeWorkflowStudio: () =>
-        set({
-          workflowScreen: 'business-list',
-          workflowEditorDirty: false,
-          workflowLeaveConfirm: null,
-        }),
-      closeWorkflowBusinessWork: () =>
-        set({
-          workflowScreen: 'business-list',
-          activeBusinessId: null,
-        }),
-      beginWorkflowResourceEdit: (workflowId) => set({ workflowResumeStudioId: workflowId }),
-      resumeWorkflowStudioIfPending: () => {
-        const resumeId = useUIStore.getState().workflowResumeStudioId;
-        if (!resumeId) {
-          return false;
-        }
-        set({
-          workflowScreen: 'studio',
-          activeWorkflowId: resumeId,
-          workflowResumeStudioId: null,
-        });
-        return true;
-      },
     }),
     {
       name: 'ui-storage',

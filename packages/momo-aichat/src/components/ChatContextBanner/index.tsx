@@ -1,4 +1,5 @@
 import { Bot, Cuboid, Database } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useAiChatConfig } from '../../contexts/AiChatConfigContext';
@@ -6,7 +7,7 @@ import { useChatContext } from '../../contexts/ChatContext';
 import styles from './index.module.less';
 
 /** 对话顶部上下文条：单行展示已启用的 RAG、Agent 与技能 */
-export function ChatContextBanner() {
+export function ChatContextBanner({ actions }: { actions?: ReactNode }) {
   const { listKbCollections, skillBanner, agentAppBanner } = useAiChatConfig();
   const { kbEnabled, kbCollectionId } = useChatContext();
   const [collections, setCollections] = useState<{ id: string; name: string }[]>([]);
@@ -42,9 +43,7 @@ export function ChatContextBanner() {
     if (kbCollectionId === undefined) {
       return '自动选择';
     }
-    return (
-      collections.find((item) => item.id === kbCollectionId)?.name ?? `知识库 #${kbCollectionId}`
-    );
+    return collections.find((item) => item.id === kbCollectionId)?.name ?? null;
   }, [collections, kbCollectionId, kbEnabled]);
 
   const showRag = Boolean(listKbCollections && kbEnabled && kbName);
@@ -53,7 +52,7 @@ export function ChatContextBanner() {
   const skillName = skillBanner?.name?.trim() || '';
   const showSkill = Boolean(skillName);
 
-  if (!showRag && !showAgent && !showSkill) {
+  if (!showRag && !showAgent && !showSkill && !actions) {
     return null;
   }
 
@@ -89,6 +88,7 @@ export function ChatContextBanner() {
           </div>
         ) : null}
       </div>
+      {actions ? <div className={styles['chat-context-banner-actions']}>{actions}</div> : null}
     </div>
   );
 }

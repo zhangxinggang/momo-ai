@@ -1,6 +1,7 @@
 import { Popover } from 'antd';
 import { useState } from 'react';
 import { useChatContext } from '../../contexts/ChatContext';
+import type { IChatSession } from '../../types/chat';
 import {
   contextUsagePercent,
   estimateSessionContextUsage,
@@ -15,12 +16,19 @@ const rows = [
   { key: 'messageTokens', label: '对话消息', color: '#4b8df8' },
 ] as const;
 
-export function ChatContextUsage({ modelId }: { modelId?: string }) {
+export function ChatContextUsage({
+  modelId,
+  session,
+}: {
+  modelId?: string;
+  session?: IChatSession | null;
+}) {
   const { currentSession, currentModel } = useChatContext();
   const selectedModel = modelId ?? currentModel;
   const [open, setOpen] = useState(false);
-  const usage = latestContextUsage(currentSession?.messages ?? [], selectedModel);
-  const estimatedUsage = estimateSessionContextUsage(currentSession?.messages ?? [], selectedModel);
+  const messages = (session === undefined ? currentSession : session)?.messages ?? [];
+  const usage = latestContextUsage(messages, selectedModel);
+  const estimatedUsage = estimateSessionContextUsage(messages, selectedModel);
   const displayUsage = usage
     ? usage.contextWindowSource === 'model' && usage.contextWindow
       ? usage
@@ -31,6 +39,7 @@ export function ChatContextUsage({ modelId }: { modelId?: string }) {
         }
     : estimatedUsage;
   const percent = contextUsagePercent(displayUsage) ?? 0;
+  const percentLabel = displayUsage.usedTokens > 0 && percent === 0 ? '<1%' : `${percent}%`;
   const contextWindow = displayUsage.contextWindow ?? REFERENCE_CONTEXT_WINDOW_TOKENS;
   const circumference = 2 * Math.PI * 6;
   const total = rows.reduce((sum, row) => sum + displayUsage[row.key], 0);
@@ -47,7 +56,7 @@ export function ChatContextUsage({ modelId }: { modelId?: string }) {
         <div className='chat-context-usage-panel'>
           <div className='chat-context-usage-header'>
             <span>
-              上下文已用 <strong>{percent}%</strong>
+              上下文已用 <strong>{percentLabel}</strong>
             </span>
             <span className='chat-context-usage-figures'>
               {`~${formatContextTokens(displayUsage.usedTokens)} / ${formatContextTokens(contextWindow)}`}
@@ -80,7 +89,7 @@ export function ChatContextUsage({ modelId }: { modelId?: string }) {
       <button
         type='button'
         className='chat-context-usage-trigger'
-        aria-label={`上下文已用 ${percent}%，约 ${formatContextTokens(displayUsage.usedTokens)} / ${formatContextTokens(contextWindow)}`}
+        aria-label={`上下文已用 ${percentLabel}，约 ${formatContextTokens(displayUsage.usedTokens)} / ${formatContextTokens(contextWindow)}`}
         aria-expanded={open}>
         <svg width='16' height='16' viewBox='0 0 16 16' aria-hidden>
           <circle className='chat-context-usage-track' cx='8' cy='8' r='6' />

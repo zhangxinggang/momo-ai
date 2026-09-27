@@ -21,6 +21,7 @@ export type {
   IChatAttachmentMeta,
   IChatContext,
   IChatContextUsage,
+  IChatGeneratedView,
   IChatMessage,
   IChatSession,
   INoteSnapshot,
@@ -83,6 +84,7 @@ export type {
   ISlashCommandsListResult,
   ISlashInvocation,
 } from './types/slash-command';
+export { findSlashInvocationTokens, slashTokensToPlainText } from './utils/slash-token';
 export type { IChatWorkspaceConfig, IChatWorkspacePreset } from './types/workspace';
 export {
   buildChatProjectUniqueKey,
@@ -114,6 +116,7 @@ export {
   getNoteMentionDisplayPath,
   normalizeNotePath,
   parseNoteReferenceContent,
+  parseWorkspaceMentionPath,
   resolveNoteMentionsInContent,
   stripEchoedNoteBlocks,
   truncateNoteContent,

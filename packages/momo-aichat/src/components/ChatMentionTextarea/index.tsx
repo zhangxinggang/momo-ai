@@ -185,9 +185,15 @@ function ChatMentionTextareaInner(props: IProps, ref: Ref<IChatMentionTextareaRe
       return;
     }
     mirrorContent.style.transform = `translate(${-textarea.scrollLeft}px, ${-textarea.scrollTop}px)`;
-    const scrollbarWidth = textarea.offsetWidth - textarea.clientWidth;
-    mirror.style.paddingRight = scrollbarWidth > 0 ? `${scrollbarWidth}px` : '0px';
+    // clientWidth already excludes the stable scrollbar gutter. Reserving it a second
+    // time makes the overlay wrap sooner and accumulates vertical caret drift.
+    mirror.style.width = `${textarea.clientWidth}px`;
+    mirror.style.paddingRight = '0px';
     mirror.style.height = `${textarea.clientHeight}px`;
+    const computed = getComputedStyle(textarea);
+    for (const property of ['font', 'letter-spacing', 'word-spacing', 'text-indent', 'tab-size']) {
+      mirror.style.setProperty(property, computed.getPropertyValue(property));
+    }
   }, []);
 
   const notifySelection = useCallback(() => {

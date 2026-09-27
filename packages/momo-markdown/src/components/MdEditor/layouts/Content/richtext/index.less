@@ -137,14 +137,14 @@
     }
   }
 
-  // markdown-it-image-figures 与 PreviewImage 共享 figure DOM。TipTap 选中
-  // 图片时只增加 ProseMirror-selectednode，不改变排版尺寸。
-  figure:has(> img) {
-    &.ProseMirror-selectednode {
-      outline: 2px solid var(--md-border-active-color);
-      outline-offset: 2px;
-    }
+  // 图片和图表共用预览主题的强调色；outline 不改变节点的排版尺寸。
+  figure:has(> img).ProseMirror-selectednode,
+  .@{prefix}-diagram-selected {
+    outline: 2px solid var(--md-theme-link-color, var(--md-border-active-color));
+    outline-offset: 2px;
+  }
 
+  figure:has(> img) {
     > img.md-zoom {
       display: block;
     }
@@ -172,7 +172,7 @@
 
 // ============ 图表 CodeBlock ============
 .@{prefix}-diagram {
-  border: 1px solid var(--md-border-color);
+  border: 1px solid var(--md-theme-border-color, var(--md-border-color));
   border-radius: 6px;
   margin: 12px 0;
   overflow: hidden;
@@ -186,11 +186,6 @@
   // 显式隐藏的 NodeViewContent（承接原始源码），不参与展示
   .@{prefix}-diagram-source {
     display: none;
-  }
-
-  &-selected {
-    border-color: var(--md-border-active-color);
-    box-shadow: 0 0 0 2px rgba(68, 131, 247, 0.18);
   }
 }
 
@@ -240,39 +235,8 @@
 
 // 图表右上角操作栏（与 markdown 预览模式保持一致的视觉）
 .@{prefix}-mermaid-action {
-  position: absolute;
-  inset-block-start: 10px;
-  inset-inline-end: 10px;
-  z-index: 1;
   opacity: 0;
   transition: opacity 0.3s;
-  cursor: pointer;
-  display: flex;
-  gap: 8px;
-
-  .@{prefix}-diagram-action-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    border: 0;
-    background: transparent;
-    padding: 0;
-    color: inherit;
-
-    svg {
-      width: 24px;
-      height: 24px;
-      padding: 6px;
-      border-radius: 4px;
-      background-color: var(--md-bk-color-outstand);
-      pointer-events: none;
-    }
-
-    &:hover svg {
-      background-color: var(--md-bk-hover-color);
-    }
-  }
 }
 
 // 悬停图表或节点被选中时显示操作栏（markdown 预览仅 hover 显示，richtext 额外在选中态常驻）
@@ -467,25 +431,90 @@
   }
 }
 
-// ============ KaTeX ============
-.@{prefix}-katex {
-  display: inline-block;
-  vertical-align: middle;
-  cursor: text;
+// ============ Link editor ============
+.@{prefix}-richtext-link-editor {
+  --md-link-popover: 0 0% 100%;
+  --md-link-foreground: 220 20% 25%;
+  --md-link-border: 220 13% 90%;
+  &[data-theme='dark'] {
+    --md-link-popover: 220 22% 12%;
+    --md-link-foreground: 220 15% 92%;
+    --md-link-border: 220 20% 20%;
+  }
+  position: fixed;
+  z-index: 2147483001;
+  box-sizing: border-box;
+  width: min(280px, calc(100vw - 24px));
+  padding: 8px;
+  border: 1px solid hsl(var(--border, var(--md-link-border)));
+  border-radius: 6px;
+  background: hsl(var(--popover, var(--md-link-popover)));
+  color: hsl(var(--popover-foreground, var(--md-link-foreground)));
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+  -webkit-app-region: no-drag;
+  label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+  }
+  > div {
+    display: flex;
+    gap: 6px;
+  }
+  input {
+    flex: 1;
+    min-width: 0;
+    box-sizing: border-box;
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid hsl(var(--input, var(--md-link-border)));
+    border-radius: 4px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    outline: none;
+    box-shadow: none;
+    &:focus {
+      border-color: hsl(var(--primary, 220 80% 55%));
+      box-shadow: 0 0 0 2px hsl(var(--primary, 220 80% 55%) / 15%);
+    }
+  }
+  button {
+    flex: 0 0 auto;
+    height: 28px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 4px;
+    background: hsl(var(--primary, 220 80% 55%));
+    color: hsl(var(--primary-foreground, 0 0% 100%));
+    font: inherit;
+    cursor: pointer;
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+}
 
-  &-selected {
+// ============ KaTeX ============
+.@{prefix}-richtext .@{prefix}-katex-inline,
+.@{prefix}-richtext .@{prefix}-katex-block {
+  position: relative;
+  cursor: text;
+  &.@{prefix}-katex-selected {
     outline: 1px dashed var(--md-border-active-color);
     outline-offset: 2px;
   }
 }
 
-.@{prefix}-katex-block-view {
-  display: block;
-  text-align: center;
-  margin: 12px 0;
-}
-
 .@{prefix}-katex-input {
+  position: absolute;
+  inset-block-end: calc(100% + 4px);
+  inset-inline-start: 0;
+  z-index: 5;
   min-width: 200px;
   padding: 2px 6px;
   border: 1px solid var(--md-border-color);
@@ -558,4 +587,157 @@
 
 .@{prefix}-admonition-content {
   // 内容区由 ProseMirror 渲染
+}
+
+// ============ draw.io 图形编辑 ============
+// 全屏层使用一条紧凑的宿主栏，明确“保存并退出”的动作归属，其余空间完整交给 draw.io。
+.@{prefix}-drawio-editor {
+  position: fixed;
+  inset: var(--app-titlebar-height, 0px) 0 0;
+  z-index: 2147483000;
+  display: grid;
+  grid-template-rows: 42px minmax(0, 1fr);
+  background: #f7f9fc;
+  color: #172033;
+
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #fff;
+  }
+}
+
+.@{prefix}-drawio-editor-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 10px 0 14px;
+  border-bottom: 1px solid #d8deea;
+  box-shadow: 0 1px 8px rgba(26, 43, 72, 0.08);
+  background: #fff;
+
+  > button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #526078;
+    cursor: pointer;
+
+    &:hover {
+      background: #edf2fa;
+      color: #172033;
+    }
+
+    &:focus-visible {
+      outline: 2px solid #4f7cff;
+      outline-offset: 1px;
+    }
+  }
+}
+
+.@{prefix}-drawio-editor-heading {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.@{prefix}-drawio-editor-content {
+  position: relative;
+  min-height: 0;
+}
+
+.@{prefix}-drawio-editor-recovery {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(255 255 255 / 96%);
+}
+
+.@{prefix}-drawio-editor-recovery-card {
+  max-width: 480px;
+  text-align: center;
+  line-height: 1.6;
+  p {
+    margin: 0 0 16px;
+  }
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 112px;
+    min-height: 36px;
+    flex-shrink: 0;
+    padding: 8px 20px;
+    border: 1px solid #c6d2e6;
+    border-radius: 6px;
+    background: #edf2fa;
+    color: #172033;
+    cursor: pointer;
+    white-space: nowrap;
+    &:hover {
+      background: #e1e9f8;
+    }
+  }
+}
+
+.@{prefix}-drawio-editor-status {
+  overflow: hidden;
+  color: #6f7d95;
+  font-size: 12px;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.@{prefix}-drawio-image {
+  position: relative;
+
+  &:hover .@{prefix}-drawio-image-action,
+  &:focus-within .@{prefix}-drawio-image-action,
+  &.ProseMirror-selectednode .@{prefix}-drawio-image-action {
+    opacity: 1;
+  }
+
+  .@{prefix}-diagram-action-btn {
+    &:focus-visible {
+      outline: 2px solid var(--md-theme-link-color, var(--md-border-active-color));
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+  }
+}
+
+.@{prefix}-drawio-image-error {
+  max-width: min(360px, 60vw);
+  padding: 6px 9px;
+  border: 1px solid #ffccc7;
+  border-radius: 6px;
+  background: #fff2f0;
+  color: #a8071a;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .@{prefix}-drawio-image-action {
+    transition: none;
+  }
 }

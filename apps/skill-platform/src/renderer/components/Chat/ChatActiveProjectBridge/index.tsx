@@ -5,10 +5,10 @@ import { useChatProjectStore } from '@renderer/store/chat';
 
 /** 将当前会话所属项目的文件夹与 Agent 同步到运行时状态；仅在有无归属会话时补建「自由对话」 */
 export function ChatActiveProjectBridge() {
-  const { currentSession, currentSessionId, sessions, assignMissingProjectIds } = useChatContext();
+  const { currentProjectId, sessions, assignMissingProjectIds } = useChatContext();
   const projects = useChatProjectStore((s) => s.projects);
   const setActiveFolderPaths = useChatProjectStore((s) => s.setActiveFolderPaths);
-  const setActiveAgentAppId = useChatProjectStore((s) => s.setActiveAgentAppId);
+  const setActiveAgentAppIds = useChatProjectStore((s) => s.setActiveAgentAppIds);
   const ensureUncategorizedProject = useChatProjectStore((s) => s.ensureUncategorizedProject);
 
   useEffect(() => {
@@ -21,20 +21,10 @@ export function ChatActiveProjectBridge() {
   }, [assignMissingProjectIds, ensureUncategorizedProject, sessions]);
 
   useEffect(() => {
-    const session = currentSession ?? sessions.find((item) => item.id === currentSessionId) ?? null;
-    const project = session?.projectId
-      ? projects.find((item) => item.id === session.projectId)
-      : undefined;
+    const project = projects.find((item) => item.id === currentProjectId);
     setActiveFolderPaths(project?.folderPaths ?? []);
-    setActiveAgentAppId(project?.agentAppId ?? null);
-  }, [
-    currentSession,
-    currentSessionId,
-    projects,
-    sessions,
-    setActiveAgentAppId,
-    setActiveFolderPaths,
-  ]);
+    setActiveAgentAppIds(project?.agentAppIds ?? []);
+  }, [currentProjectId, projects, setActiveAgentAppIds, setActiveFolderPaths]);
 
   return null;
 }

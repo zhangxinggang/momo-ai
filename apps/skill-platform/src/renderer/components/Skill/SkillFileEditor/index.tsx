@@ -16,6 +16,7 @@ import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState
 interface IProps {
   skillId: string;
   localPath?: string;
+  requestedPath?: { path: string; requestId: number };
   /** 展示用技能名称，缺省时回退为 skillId */
   skillName?: string;
   isOpen: boolean;
@@ -44,7 +45,17 @@ function joinRepoAbsolutePath(repoRoot: string, relativePath: string): string {
  * 技能文件编辑器：基于 @momo/file-editor，支持内嵌与弹窗两种模式
  */
 export const SkillFileEditor = forwardRef<ISkillFileEditorHandle, IProps>(function SkillFileEditor(
-  { skillId, localPath, skillName, isOpen, onClose, onSave, mode = 'modal', onUnsavedChange },
+  {
+    skillId,
+    localPath,
+    requestedPath,
+    skillName,
+    isOpen,
+    onClose,
+    onSave,
+    mode = 'modal',
+    onUnsavedChange,
+  },
   ref,
 ) {
   const { showToast } = useToast();
@@ -143,6 +154,7 @@ export const SkillFileEditor = forwardRef<ISkillFileEditorHandle, IProps>(functi
     <FileEditor
       ref={editorRef}
       adapter={adapter}
+      requestedPath={requestedPath}
       codeEditorTheme={codeEditorTheme}
       defaultNewFileExtension='md'
       filePreviewBaseUrl={filePreviewBaseUrl}

@@ -6,20 +6,16 @@ import type { IStatusCardData } from '@renderer/types/ai-workbench';
 
 export function HeaderSection({
   testingDefault,
-  hasLegacyOnlyConfig,
   statusCards,
   defaultModelDisplayName,
   onTestDefault,
   onAddModel,
-  onImportLegacy,
 }: {
   testingDefault: boolean;
-  hasLegacyOnlyConfig: boolean;
   statusCards: IStatusCardData[];
   defaultModelDisplayName?: string;
   onTestDefault: () => void;
   onAddModel: () => void;
-  onImportLegacy: () => void;
 }) {
   return (
     <>
@@ -57,26 +53,6 @@ export function HeaderSection({
           </Button>
         </div>
       </div>
-
-      {hasLegacyOnlyConfig ? (
-        <div className='rounded-xl border border-amber-500/30 bg-amber-500/5 p-4'>
-          <div className='flex items-start justify-between gap-4'>
-            <div>
-              <div className='text-sm font-medium'>{'检测到旧版单模型配置'}</div>
-              <div className='text-muted-foreground mt-1 text-xs'>
-                {'当前 AI 功能仍可继续使用旧版默认配置，但新工作台需要把它导入到多模型列表中。'}
-              </div>
-            </div>
-            <Button
-              type='primary'
-              size='small'
-              onClick={onImportLegacy}
-              className='bg-primary text-primary-foreground inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-3 text-xs font-medium leading-none'>
-              {'导入旧版配置'}
-            </Button>
-          </div>
-        </div>
-      ) : null}
 
       <div>
         <h3 className='text-muted-foreground mb-3 text-sm font-medium'>{'状态总览'}</h3>

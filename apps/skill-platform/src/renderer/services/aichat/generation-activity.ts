@@ -1,11 +1,4 @@
-export type EAiChatGenerationScope =
-  | 'prompt'
-  | 'skill'
-  | 'kb'
-  | 'note'
-  | 'chat'
-  | 'toolbox'
-  | 'workflow';
+export type EAiChatGenerationScope = 'skill' | 'kb' | 'note' | 'chat' | 'toolbox';
 
 const activeOwners = new Map<symbol, EAiChatGenerationScope>();
 

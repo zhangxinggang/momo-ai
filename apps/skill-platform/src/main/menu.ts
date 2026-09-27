@@ -1,5 +1,5 @@
 import { getAppConfig } from '@momo/electron';
-import { BrowserWindow, Menu, app, shell } from 'electron';
+import { Menu, app, shell } from 'electron';
 
 const { appName } = getAppConfig() as { appName?: string };
 
@@ -44,32 +44,7 @@ export function createMenu(): void {
     // 文件菜单
     {
       label: '文件',
-      submenu: [
-        {
-          label: '新建 IPrompt',
-          accelerator: 'CmdOrCtrl+N',
-          click: () => {
-            BrowserWindow.getFocusedWindow()?.webContents.send('menu:new-prompt');
-          },
-        },
-        { type: 'separator' },
-        {
-          label: '导入',
-          accelerator: 'CmdOrCtrl+I',
-          click: () => {
-            BrowserWindow.getFocusedWindow()?.webContents.send('menu:import');
-          },
-        },
-        {
-          label: '导出',
-          accelerator: 'CmdOrCtrl+E',
-          click: () => {
-            BrowserWindow.getFocusedWindow()?.webContents.send('menu:export');
-          },
-        },
-        { type: 'separator' },
-        isMac ? { role: 'close' } : { role: 'quit' },
-      ],
+      submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
     },
 
     // Edit menu

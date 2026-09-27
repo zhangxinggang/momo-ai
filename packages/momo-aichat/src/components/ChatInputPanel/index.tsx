@@ -1,5 +1,4 @@
 import { CloseOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons';
-import type { PermissionMode } from '@momo/agent-contracts';
 import { Alert, App, Button, Input, Modal, Popover, Select } from 'antd';
 import {
   ArrowUp,
@@ -7,13 +6,11 @@ import {
   Circle,
   Database,
   Download,
-  FilePenLine,
   Lightbulb,
+  PanelsTopLeft,
   Paperclip,
-  Shield,
-  ShieldAlert,
-  ShieldCheck,
   Target,
+  Trash2,
   X,
 } from 'lucide-react';
 import React, {
@@ -62,8 +59,6 @@ interface IProps {
    * 单轮编辑器最近一次独立会话。undefined 沿用当前聊天会话，null 表示尚无可导出会话。
    */
   exportSession?: IChatSession | null;
-  /** 隐藏会作用于当前聊天会话的目标、压缩和权限入口。 */
-  showSessionCommands?: boolean;
 }
 
 const EMPTY_WORKSPACE_PATHS: string[] = [];
@@ -87,7 +82,6 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       onAttachFiles,
       onRemoveAttachment,
       exportSession,
-      showSessionCommands = true,
     },
     ref,
   ) => {
@@ -101,8 +95,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
     const [selectionStart, setSelectionStart] = useState(0);
     const [menuOpen, setMenuOpen] = useState(false);
     const [menuSelected, setMenuSelected] = useState(0);
-    const [permissionOpen, setPermissionOpen] = useState(false);
-    const [permissionSaving, setPermissionSaving] = useState(false);
+    const [modeOpen, setModeOpen] = useState(false);
     const [knowledgeOpen, setKnowledgeOpen] = useState(false);
     const [knowledgeCollections, setKnowledgeCollections] = useState<
       Array<{ id: string; name: string }>
@@ -110,6 +103,8 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
     const [knowledgeLoading, setKnowledgeLoading] = useState(false);
     const [goalOpen, setGoalOpen] = useState(false);
     const [goalDraft, setGoalDraft] = useState('');
+    const [clearContextSessionId, setClearContextSessionId] = useState<string | null>(null);
+    const [clearingContext, setClearingContext] = useState(false);
     const { message } = App.useApp();
     const chatCtx = useChatContext();
     const {
@@ -120,8 +115,8 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       slashCommands,
       noteReferences,
       renderInputToolbarLeftExtra,
-      agentAppBanner,
       runtime,
+      viewGeneration,
       listKbCollections,
     } = useAiChatConfig();
     const {
@@ -130,29 +125,27 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       setCurrentModel,
       agentMode,
       setAgentMode,
-      permissionMode,
-      setPermissionMode,
       kbEnabled,
       setKbEnabled,
       kbCollectionId,
       setKbCollectionId,
     } = chatCtx;
+    useEffect(() => {
+      if (clearContextSessionId && clearContextSessionId !== currentSession?.id && !clearingContext)
+        setClearContextSessionId(null);
+    }, [clearContextSessionId, clearingContext, currentSession?.id]);
     const goal = [...(currentSession?.messages ?? [])]
       .reverse()
       .find((item) => item.goal !== undefined)?.goal;
-    const permissions: Array<{ id: PermissionMode; label: string; icon: React.ReactNode }> = [
-      { id: 'read-only', label: '仅可查看', icon: <ShieldCheck size={15} /> },
-      { id: 'workspace-write', label: '工作区内修改', icon: <FilePenLine size={15} /> },
-      { id: 'danger-full-access', label: '完全权限', icon: <ShieldAlert size={15} /> },
-    ];
-    const selectedPermission =
-      permissions.find((item) => item.id === permissionMode) ?? permissions[1];
+    const mentionInputHint = workspace?.paths.length ? '@ 引用笔记或工作区文件' : '@ 引用笔记';
 
     const inputPlaceholder = (() => {
       if (slashCommands?.isActive(currentModel)) {
-        return noteReferences ? '输入消息，/ 命令，@ 引用笔记' : '输入消息，或 / 查看命令...';
+        return noteReferences
+          ? `输入消息，/ 命令，${mentionInputHint}`
+          : '输入消息，或 / 查看命令...';
       }
-      return noteReferences ? '输入消息，@ 引用笔记' : placeholder;
+      return noteReferences ? `输入消息，${mentionInputHint}` : placeholder;
     })();
 
     const flatModelIds = useMemo(() => {
@@ -309,7 +302,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       (value.trim().length > 0 || (attachments && attachments.length > 0));
 
     const closeMenu = () => {
-      setPermissionOpen(false);
+      setModeOpen(false);
       setKnowledgeOpen(false);
       setMenuOpen(false);
       window.requestAnimationFrame(() => mentionTextareaRef.current?.focus());
@@ -324,36 +317,19 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       );
       if (!sent) message.error('操作未完成，请检查模型配置或稍后重试');
     };
-    const changePermission = async (mode: PermissionMode) => {
-      setPermissionSaving(true);
+    const clearContext = async () => {
+      if (!clearContextSessionId || clearingContext) return;
+      setClearingContext(true);
       try {
-        await setPermissionMode(mode);
-        setPermissionOpen(false);
-        closeMenu();
+        await chatCtx.clearSession(clearContextSessionId);
+        setClearContextSessionId(null);
+        mentionTextareaRef.current?.focus();
       } catch (error) {
-        message.error(error instanceof Error ? error.message : '切换权限失败');
+        message.error(error instanceof Error ? error.message : '清除上下文失败，请稍后重试');
       } finally {
-        setPermissionSaving(false);
+        setClearingContext(false);
       }
     };
-    const permissionOptions = (
-      <div className='harness-permission-menu' role='menu' aria-label='选择权限'>
-        {permissions.map((item) => (
-          <button
-            key={item.id}
-            type='button'
-            role='menuitemradio'
-            aria-checked={permissionMode === item.id}
-            disabled={permissionSaving}
-            className='harness-permission-menu-row'
-            onClick={() => void changePermission(item.id)}>
-            {item.icon}
-            <span>{item.label}</span>
-            {permissionMode === item.id && <Check size={16} />}
-          </button>
-        ))}
-      </div>
-    );
     const selectKnowledge = (collectionId: string) => {
       setKbCollectionId(collectionId);
       setKbEnabled(true);
@@ -384,11 +360,39 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
     );
     const selectedKnowledgeName =
       knowledgeCollections.find((item) => item.id === kbCollectionId)?.name ?? '知识库';
+    const modeOptions = (
+      <div className='harness-permission-menu' role='menu' aria-label='选择模式'>
+        {[
+          { id: 'plan' as const, label: '计划', icon: <Lightbulb size={15} /> },
+          { id: 'ui' as const, label: '界面', icon: <PanelsTopLeft size={15} /> },
+        ].map((item) => (
+          <button
+            key={item.id}
+            type='button'
+            role='menuitemradio'
+            aria-checked={agentMode === item.id}
+            disabled={disabled || isGenerating || (item.id === 'ui' && !viewGeneration)}
+            className='harness-permission-menu-row'
+            onClick={() => {
+              setAgentMode(item.id);
+              closeMenu();
+            }}>
+            {item.icon}
+            <span>{item.label}</span>
+            {agentMode === item.id && <Check size={16} />}
+          </button>
+        ))}
+      </div>
+    );
     const sessionForExport = exportSession === undefined ? currentSession : exportSession;
     const downloadLog = async () => {
       if (!sessionForExport) return;
       try {
-        const log = await runtime?.port.exportSession?.(sessionForExport.id);
+        // 独立编辑器传入的会话不属于 Harness 持久化层，直接导出前端快照。
+        const log =
+          exportSession === undefined
+            ? await runtime?.port.exportSession?.(sessionForExport.id)
+            : undefined;
         downloadChatSessionExport(sessionForExport, log);
         closeMenu();
       } catch (error) {
@@ -414,63 +418,67 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
         description: '选择一个知识库作为问答依据',
         icon: <Database size={15} />,
         disabled: disabled || isGenerating || !listKbCollections,
-        onClick: () => setKnowledgeOpen((open) => !open),
-      },
-      ...(showSessionCommands
-        ? [
-            {
-              id: 'goal',
-              section: '添加',
-              label: '目标',
-              command: 'goal',
-              description: '设置或查看长期任务目标',
-              icon: <Target size={15} />,
-              disabled: disabled || !runtime,
-              onClick: () => {
-                setGoalDraft(goal?.objective ?? '');
-                setGoalOpen(true);
-                setMenuOpen(false);
-              },
-            },
-          ]
-        : []),
-      {
-        id: 'plan',
-        section: '添加',
-        label: '计划',
-        command: 'plan',
-        description: '进入或退出计划模式',
-        icon: <FilePenLine size={15} />,
-        disabled: disabled || isGenerating,
         onClick: () => {
-          setAgentMode(agentMode === 'plan' ? 'ask' : 'plan');
-          closeMenu();
+          setKnowledgeOpen((open) => !open);
+          setModeOpen(false);
         },
       },
-      ...(showSessionCommands
-        ? [
-            {
-              id: 'compact',
-              section: '指令',
-              label: '压缩',
-              command: 'compact',
-              description: '压缩以上对话内容',
-              icon: <Circle size={15} />,
-              disabled: disabled || isGenerating || !runtime || !currentSession?.messages.length,
-              onClick: () => void runCommand('compact'),
-            },
-            {
-              id: 'permission',
-              section: '指令',
-              label: '权限',
-              command: 'permission',
-              description: '切换权限预设（沙箱模式与审批策略）',
-              icon: <Shield size={15} />,
-              disabled: disabled || permissionSaving || !runtime,
-              onClick: () => setPermissionOpen((open) => !open),
-            },
-          ]
-        : []),
+      {
+        id: 'goal',
+        section: '添加',
+        label: '目标',
+        command: 'goal',
+        description: '设置或查看长期任务目标',
+        icon: <Target size={15} />,
+        disabled: disabled || !runtime,
+        onClick: () => {
+          setGoalDraft(goal?.objective ?? '');
+          setGoalOpen(true);
+          setMenuOpen(false);
+        },
+      },
+      {
+        id: 'mode',
+        section: '添加',
+        label: '模式',
+        command: 'mode',
+        description: '选择计划或界面模式',
+        icon: <PanelsTopLeft size={15} />,
+        disabled: disabled || isGenerating,
+        onClick: () => {
+          setModeOpen((open) => !open);
+          setKnowledgeOpen(false);
+        },
+      },
+      {
+        id: 'compact',
+        section: '指令',
+        label: '压缩',
+        command: 'compact',
+        description: '压缩以上对话内容',
+        icon: <Circle size={15} />,
+        disabled: disabled || isGenerating || !runtime || !currentSession?.messages.length,
+        onClick: () => void runCommand('compact'),
+      },
+      {
+        id: 'clear-context',
+        section: '指令',
+        label: '清除上下文',
+        command: 'clear',
+        description: '清空当前对话的所有问答记录',
+        icon: <Trash2 size={15} />,
+        disabled:
+          disabled ||
+          loading ||
+          isGenerating ||
+          clearingContext ||
+          !currentSession?.messages.length ||
+          Boolean(runtime && !runtime.port.clearSession),
+        onClick: () => {
+          closeMenu();
+          setClearContextSessionId(currentSession!.id);
+        },
+      },
       {
         id: 'download',
         section: '指令',
@@ -487,7 +495,6 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
       if (event.nativeEvent.isComposing || event.target !== event.currentTarget) return;
       if (event.key === 'Escape') {
         event.preventDefault();
-        setPermissionOpen(false);
         setKnowledgeOpen(false);
         closeMenu();
       }
@@ -523,10 +530,10 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
     return (
       <div
         ref={panelRef}
-        className='chat-input-panel bg-panel border-surface relative rounded-xl border shadow-sm'>
+        className='chat-input-panel bg-panel border-surface relative min-w-0 max-w-full rounded-xl border shadow-sm'>
         {attachments && attachments.length > 0 && (
           <div className='px-4 pt-4'>
-            <div className='flex flex-nowrap items-stretch gap-3 overflow-x-auto'>
+            <div className='grid max-h-60 grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] gap-2 overflow-y-auto overflow-x-hidden'>
               {attachments.map((f) => {
                 const formatBytes = (bytes: number) => {
                   if (bytes < 1024) return `${bytes}B`;
@@ -556,15 +563,19 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
                 return (
                   <div
                     key={f.id}
-                    className='border-surface bg-attachment group relative flex min-w-[220px] max-w-[280px] items-start gap-3 rounded-lg border p-3 transition-colors'>
+                    className='border-surface bg-attachment group relative flex min-w-0 items-start gap-2 rounded-lg border p-3 pr-7 transition-colors'>
                     <ChatAttachmentIcon
                       ext={extLower}
                       className='mt-0 shrink-0 text-blue-500'
                       size={32}
                     />
                     <div className='min-w-0 flex-1'>
-                      <div className='text-attachment truncate text-sm font-normal'>{f.name}</div>
-                      <div className='text-attachment-meta mt-1 text-[12px]'>
+                      <div
+                        title={f.name}
+                        className='text-attachment line-clamp-2 break-all text-sm font-normal'>
+                        {f.name}
+                      </div>
+                      <div className='text-attachment-meta mt-1 break-words text-[12px]'>
                         {infoLine}
                         {isUploading && progress !== undefined && (
                           <span className='text-attachment-progress ml-2'>{progress}%</span>
@@ -574,7 +585,8 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
                     {onRemoveAttachment && (
                       <button
                         aria-label='移除附件'
-                        className='absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded text-gray-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100'
+                        type='button'
+                        className='absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded text-gray-400 transition-colors hover:text-red-500 focus-visible:outline'
                         onClick={() => onRemoveAttachment(f.id)}
                         title='移除'>
                         <CloseOutlined style={{ fontSize: 12 }} />
@@ -594,8 +606,18 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
             selectedIndex={slash.selectedIndex}
             loading={slash.loading}
             warning={slash.warning}
-            title={agentAppBanner?.name ? `${agentAppBanner.name} · 技能与命令` : 'momo-ai 技能'}
-            onSelect={slash.handleSelect}
+            query={slash.query}
+            onQueryChange={slash.setQuery}
+            onSearchKeyDown={(event) => {
+              event.stopPropagation();
+              if (slash.handleKeyDown(event) && ['Escape', 'Enter', 'Tab'].includes(event.key)) {
+                mentionTextareaRef.current?.focus();
+              }
+            }}
+            onSelect={(index) => {
+              slash.handleSelect(index);
+              mentionTextareaRef.current?.focus();
+            }}
             onHover={slash.setSelectedIndex}
           />
           <NoteReferencePopover
@@ -604,6 +626,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
             open={noteRef.open}
             tree={noteRef.tree}
             loading={noteRef.loading}
+            loadingFolderIds={noteRef.loadingFolderIds}
             selectedFileId={noteRef.selectedFileId}
             expandedKeys={noteRef.expandedKeys}
             onToggleFolder={noteRef.toggleFolder}
@@ -646,7 +669,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
               styles={{ container: { padding: 4, borderRadius: 14 } }}
               onOpenChange={(open) => {
                 setMenuOpen(open);
-                setPermissionOpen(false);
+                setModeOpen(false);
                 setKnowledgeOpen(false);
                 if (open) setMenuSelected(0);
               }}
@@ -675,10 +698,9 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
                             disabled={item.disabled}
                             onMouseEnter={() => setMenuSelected(index)}
                             onClick={item.onClick}
-                            aria-pressed={item.id === 'plan' ? agentMode === 'plan' : undefined}
                             aria-expanded={
-                              item.id === 'permission'
-                                ? permissionOpen
+                              item.id === 'mode'
+                                ? modeOpen
                                 : item.id === 'knowledge'
                                   ? knowledgeOpen
                                   : undefined
@@ -691,18 +713,16 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
                             </span>
                           </button>
                         );
-                        return item.id === 'permission' || item.id === 'knowledge' ? (
+                        return ['mode', 'knowledge'].includes(item.id) ? (
                           <Popover
                             destroyOnHidden
                             key={item.id}
-                            open={item.id === 'permission' ? permissionOpen : knowledgeOpen}
+                            open={item.id === 'mode' ? modeOpen : knowledgeOpen}
                             placement='bottomLeft'
                             arrow={false}
                             trigger={[]}
                             styles={{ container: { padding: 4, borderRadius: 14 } }}
-                            content={
-                              item.id === 'permission' ? permissionOptions : knowledgeOptions
-                            }>
+                            content={item.id === 'mode' ? modeOptions : knowledgeOptions}>
                             {row}
                           </Popover>
                         ) : (
@@ -724,37 +744,24 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
                 disabled={disabled}
               />
             </Popover>
-            {runtime && showSessionCommands && (
-              <Popover
-                trigger='click'
-                placement='topLeft'
-                arrow={false}
-                styles={{ container: { padding: 4, borderRadius: 14 } }}
-                content={permissionOptions}>
-                <button
-                  type='button'
-                  className='chat-input-permission-chip'
-                  disabled={disabled || permissionSaving}
-                  aria-label='选择权限'>
-                  {selectedPermission.icon}
-                  <span>{selectedPermission.label}</span>
-                </button>
-              </Popover>
-            )}
             {renderInputToolbarLeftExtra?.()}
-            {agentMode === 'plan' && (
+            {(agentMode === 'plan' || agentMode === 'ui') && (
               <button
                 type='button'
                 className='chat-input-plan-chip'
                 disabled={disabled || isGenerating}
-                aria-label='关闭计划模式'
-                title='关闭计划模式'
+                aria-label={agentMode === 'ui' ? '关闭界面模式' : '关闭计划模式'}
+                title={agentMode === 'ui' ? '关闭界面模式' : '关闭计划模式'}
                 onClick={() => setAgentMode('ask')}>
                 <span className='chat-input-plan-chip-icon'>
-                  <Lightbulb size={14} className='chat-input-plan-lightbulb' />
+                  {agentMode === 'ui' ? (
+                    <PanelsTopLeft size={14} className='chat-input-plan-lightbulb' />
+                  ) : (
+                    <Lightbulb size={14} className='chat-input-plan-lightbulb' />
+                  )}
                   <X size={14} className='chat-input-plan-close' />
                 </span>
-                <span>计划</span>
+                <span>{agentMode === 'ui' ? '界面' : '计划'}</span>
               </button>
             )}
             {kbEnabled && kbCollectionId && (
@@ -804,7 +811,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
                 popupMatchSelectWidth={false}
               />
             ) : null}
-            <ChatContextUsage modelId={selectedModel} />
+            <ChatContextUsage modelId={selectedModel} session={sessionForExport} />
             {isGenerating ? (
               <Button
                 type='primary'
@@ -829,6 +836,24 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
             )}
           </div>
         </div>
+        <Modal
+          title='清除上下文'
+          open={clearContextSessionId !== null}
+          onCancel={() => {
+            if (!clearingContext) setClearContextSessionId(null);
+          }}
+          onOk={() => void clearContext()}
+          okText='确认清除'
+          cancelText='取消'
+          okButtonProps={{ danger: true, disabled: loading || isGenerating }}
+          cancelButtonProps={{ disabled: clearingContext }}
+          confirmLoading={clearingContext}
+          closable={!clearingContext}
+          mask={{ closable: !clearingContext }}
+          keyboard={!clearingContext}
+          destroyOnHidden>
+          <p>确定清除上下文吗？当前对话的所有问答记录将清空，此操作无法撤销。</p>
+        </Modal>
         <Modal
           title='目标'
           open={goalOpen}

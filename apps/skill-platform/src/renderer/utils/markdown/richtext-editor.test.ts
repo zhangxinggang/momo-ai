@@ -13,6 +13,26 @@ function getExtension(name: string) {
 }
 
 describe('rich-text editor parity', () => {
+  it('copies shell commands as plain document text with ASCII spaces and hyphens', () => {
+    const editor = new Editor({
+      extensions: buildRichTextExtensions('', true, 30),
+      content: '<p><code>npm run build:fc-template -- register</code></p>',
+    });
+    try {
+      const serializer = editor.state.plugins.find((plugin) =>
+        (plugin as any).key.startsWith('momoPlainTextClipboard'),
+      )?.props.clipboardTextSerializer;
+      expect(serializer).toBeDefined();
+      const slice = editor.state.doc.slice(0, editor.state.doc.content.size);
+      expect((serializer as any)(slice)).toBe('npm run build:fc-template -- register');
+      editor.commands.setContent('<p>npm\u00a0run build:fc-template -- register</p>');
+      expect((serializer as any)(editor.state.doc.slice(0, editor.state.doc.content.size))).toBe(
+        'npm run build:fc-template -- register',
+      );
+    } finally {
+      editor.destroy();
+    }
+  });
   it('copies rendered content instead of Markdown source', () => {
     expect(getExtension('markdown').options.transformCopiedText).toBe(false);
     expect(getExtension('markdown').options.breaks).toBe(true);
@@ -29,7 +49,9 @@ describe('rich-text editor parity', () => {
 flowchart LR
   User\\[用户\\]
 \`\`\``;
-    const plugin = editor.state.plugins.find((item) => item.key.startsWith('momoMarkdownPaste'));
+    const plugin = editor.state.plugins.find((item) =>
+      (item as any).key.startsWith('momoMarkdownPaste'),
+    );
     const handlePaste = plugin?.spec.props?.handlePaste as
       | ((view: typeof editor.view, event: ClipboardEvent) => boolean)
       | undefined;
@@ -85,7 +107,7 @@ flowchart LR
 
   it('renders the same image and caption structure as markdown-it-image-figures', () => {
     const image = getExtension('image');
-    const renderHTML = image.config.renderHTML as any;
+    const renderHTML = (image.config as any).renderHTML;
     expect(
       renderHTML.call(
         { options: image.options },

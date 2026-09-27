@@ -19,9 +19,12 @@ const useHighlight = (props: IContentPreviewProps) => {
 
   useEffect(() => {
     // 强制不高亮，则什么都不做
-    if (props.noHighlight || globalConfig.editorExtensions.highlight!.instance) {
+    if (props.noHighlight) {
       return;
     }
+
+    const link = document.getElementById(CDN_IDS.hlcss);
+    if (link?.getAttribute('href') === highlight.css.href) return;
 
     updateHandler('link', {
       ...highlight.css,

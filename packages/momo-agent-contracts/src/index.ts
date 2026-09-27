@@ -56,9 +56,15 @@ export interface RuntimeTurnInput {
   modeId: 'ask' | 'plan';
   rawIntent: string;
   displayInput: string;
+  /** 发送前预处理后的模型输入；与界面显示的问题分开保存。 */
+  apiInput?: string;
+  /** 仅网页问答入口启用宿主网页抓取工具。 */
+  webBrowsing?: boolean;
   invocations: ResourceInvocation[];
   sourceRefs: SourceRef[];
   resourceAgentAppId?: string;
+  /** Selected resource providers; [] explicitly disables all Agent apps. */
+  resourceAgentAppIds?: string[];
   folderPaths: string[];
   systemPrompt?: string;
   kbEnabled?: boolean;
@@ -72,11 +78,22 @@ export interface RuntimeTurnInput {
 export interface QuestionItem {
   id: string;
   question: string;
+  inputType?: 'text' | 'file';
   header?: string;
   detail?: string;
   multiSelect?: boolean;
   options?: Array<{ label: string; description?: string }>;
   intent?: { kind: string; approve: string };
+}
+/** The native question schema preserves headers; [file] explicitly requests a file picker. */
+export function isFileQuestion(question: QuestionItem): boolean {
+  if (question.intent?.kind === 'plan-review') return false;
+  if (question.inputType) return question.inputType === 'file';
+  if (/^\[file\]/i.test(question.header ?? '')) return true;
+  // Compatibility for existing, untyped upload questions. File format/name questions stay text.
+  return /(?:上传|选择|提供|附上|重新发送|重新提交).{0,16}(?:文件(?!名|格式|类型|数量|大小|编码|处理)|附件|原件|PDF|DOCX)|(?:upload|attach|select|choose)\b.{0,30}\b(?:file|document|attachment)\b(?!\s+(?:name|type|format|size|encoding))/i.test(
+    `${question.header ?? ''} ${question.question}`,
+  );
 }
 export interface RunInteraction {
   requestId: string;
@@ -90,7 +107,7 @@ export interface RunInteraction {
 export interface RunResponse {
   runId: string;
   requestId: string;
-  answers?: Array<{ id: string; selected: string[]; custom?: string }>;
+  answers?: Array<{ id: string; selected: string[]; custom?: string; sourceRefs?: SourceRef[] }>;
   decision?: 'allowed-once' | 'rejected';
   remember?: boolean;
 }
@@ -116,6 +133,7 @@ export type RunEventType =
   | 'agent.status'
   | 'context.updated'
   | 'goal.updated'
+  | 'workspace.changed'
   | 'runtime.event';
 export interface RunEvent {
   eventSchemaVersion: '1';
@@ -129,45 +147,18 @@ export interface RunEvent {
   type: RunEventType;
   payload: Record<string, unknown>;
 }
-export interface ToolAction {
-  id: string;
-  title: string;
-  description: string;
-  inputSchema: JsonSchema;
-  outputSchema: JsonSchema;
-  executor: {
-    runtime: 'node' | 'python' | 'http';
-    entry?: string;
-    export?: string;
-    url?: string;
-    method?: 'GET' | 'POST';
-  };
-  capabilities: string[];
-  effects: Array<'read' | 'write' | 'network' | 'execute'>;
-  timeoutMs: number;
-  retry: number;
-  parallelSafe: boolean;
-  idempotent: boolean;
-  examples?: Array<{ input: unknown; output: unknown }>;
-}
-export interface ToolPackageActions {
-  id: string;
-  name?: string;
-  description?: string;
-  aliases?: string[];
-  actions: ToolAction[];
-}
+export type ToolEffect = 'read' | 'write' | 'network' | 'execute';
 export interface ToolDescriptor {
+  /** Trusted host-generated Cordis registration glue for a custom plugin. Never model execution code. */
+  registrationSource?: string;
   id: string;
   name: string;
   title: string;
   description: string;
   revision: string;
-  /** User-facing names that let the model associate an explicit prompt/Skill reference with this tool. */
-  aliases?: string[];
   inputSchema: JsonSchema;
   outputSchema?: JsonSchema;
-  effects: ToolAction['effects'];
+  effects: ToolEffect[];
   timeoutMs: number;
   parallelSafe: boolean;
   idempotent: boolean;
@@ -198,11 +189,40 @@ export interface ChatRuntimePort {
     idempotencyKey?: string;
     reason?: string;
   }): Promise<void>;
-  events(runId: string, afterSeq?: number): Promise<RunEvent[]>;
+  /** null means the durable run is unavailable; [] means it exists with no new events. */
+  events(runId: string, afterSeq?: number): Promise<RunEvent[] | null>;
   onEvent(listener: (event: RunEvent) => void): () => void;
   setPermission?(sessionId: string, mode: PermissionMode): Promise<void>;
   controlGoal?(sessionId: string, action: 'pause' | 'clear'): Promise<void>;
   exportSession?(sessionId: string): Promise<Record<string, unknown>>;
+  /** Clear durable turns and start with a fresh native context on the next turn. */
+  clearSession?(sessionId: string): Promise<void>;
+}
+
+export interface WorkspaceFileChange {
+  path: string;
+  root: string;
+  relativePath: string;
+  added: number;
+  removed: number;
+  kind: 'created' | 'modified' | 'deleted';
+  status: 'pending' | 'accepted' | 'undone';
+}
+export interface WorkspaceChangeSet {
+  runId: string;
+  files: WorkspaceFileChange[];
+}
+export interface WorkspaceFileReview {
+  path: string;
+  before: string;
+  current: string;
+  currentExists: boolean;
+  revision: string;
+}
+export interface WorkspaceUndoResult {
+  reverted: number;
+  preserved: number;
+  changes: WorkspaceChangeSet;
 }
 export function assertRecord(value: unknown): asserts value is Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value))
@@ -232,6 +252,9 @@ export function validateTurn(value: unknown): asserts value is RuntimeTurnInput 
   ])
     text(value, key, 200);
   for (const key of ['rawIntent', 'displayInput']) text(value, key, 1_000_000, false, true);
+  text(value, 'apiInput', 1_000_000, true, true);
+  if (value.webBrowsing !== undefined && typeof value.webBrowsing !== 'boolean')
+    throw new Error('Invalid web browsing option');
   if (!['ask', 'plan'].includes(String(value.modeId))) throw new Error('Invalid mode');
   if (
     value.permissionMode !== undefined &&
@@ -274,6 +297,11 @@ export function validateTurn(value: unknown): asserts value is RuntimeTurnInput 
     text(invocation, 'token', 10000, true);
   }
   for (const key of ['resourceAgentAppId', 'kbCollectionId']) text(value, key, 200, true);
+  if (value.resourceAgentAppIds !== undefined) {
+    if (!Array.isArray(value.resourceAgentAppIds) || value.resourceAgentAppIds.length > 16)
+      throw new Error('Invalid Agent apps');
+    for (const id of value.resourceAgentAppIds) text({ id }, 'id', 200);
+  }
   text(value, 'systemPrompt', 200000, true, true);
   if (value.kbEnabled !== undefined && typeof value.kbEnabled !== 'boolean')
     throw new Error('Invalid knowledge option');

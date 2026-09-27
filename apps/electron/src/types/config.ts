@@ -35,6 +35,7 @@ export interface IAppConfig {
   closeConfirm?: boolean;
   onlineConfUrl?: string;
   databaseName?: string;
-  browserWindow?: IAppConfigBrowserWindow;
+  /** null 表示应用窗口以全屏模式启动 */
+  browserWindow?: IAppConfigBrowserWindow | null;
   server?: IAppConfigServer;
 }

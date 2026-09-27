@@ -11,6 +11,7 @@ export type TToolDirective =
   | 'h5'
   | 'h6'
   | 'quote'
+  | 'align'
   | 'unorderedList'
   | 'orderedList'
   | 'task'

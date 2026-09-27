@@ -1,0 +1,40 @@
+root = Stack([hero, formSection, tipsSection], "column", "xl", "stretch")
+
+hero = Stack([heroTitle, heroDesc], "column", "s", "start")
+heroTitle = TextContent("标书解析助手", "large-heavy")
+heroDesc = TextContent("上传招标文件，系统将自动提取关键信息，包括项目名称、招标单位、预算金额、投标截止时间、资质要求等核心要素。")
+
+formSection = Card([formHeader, tenderForm, formHint], "column", "l")
+formHeader = InlineHeader("上传招标文件", "支持 PDF、Word 等常见格式")
+
+tenderForm = Form("tender_upload", formButtons, [fileField, projectTypeField, notesField])
+
+fileField = FormControl("招标文件", fileInput, "请上传需要解析的标书文件")
+fileInput = FileInput("tender_file", "选择文件", ".pdf,.doc,.docx", false)
+
+projectTypeField = FormControl("项目类型", projectTypeSelect, "选择项目类型以获得更精准的解析结果")
+projectTypeSelect = Select("project_type", [typeItem1, typeItem2, typeItem3, typeItem4, typeItem5], "请选择项目类型")
+
+typeItem1 = SelectItem("construction", "建设工程")
+typeItem2 = SelectItem("goods", "货物采购")
+typeItem3 = SelectItem("service", "服务采购")
+typeItem4 = SelectItem("it", "信息化项目")
+typeItem5 = SelectItem("other", "其他")
+
+notesField = FormControl("备注说明", notesInput, "如有特殊关注点可在此补充")
+notesInput = TextArea("notes", "例如：重点关注资质要求、评分标准等", 3)
+
+formButtons = Buttons([submitBtn, resetBtn], "row")
+submitBtn = Button("开始解析", Action([@ToAssistant("请解析上传的标书文件")]), "primary")
+resetBtn = Button("重置", Action([@ToAssistant("重置标书解析表单")]), "tertiary")
+
+formHint = TextContent("解析完成后，将生成结构化摘要报告，包含：项目概况、投标资格要求、评标办法、合同条款要点、风险提示等。", "small")
+
+tipsSection = Card([tipsHeader, tipsList], "column", "m")
+tipsHeader = InlineHeader("使用提示", "提高解析准确率的建议")
+tipsList = ListBlock([tip1, tip2, tip3, tip4], "number")
+
+tip1 = ListItem("上传完整文件", "确保标书文件内容完整，包含封面、正文、附件等全部章节")
+tip2 = ListItem("选择正确项目类型", "不同项目类型的解析侧重点不同，选择准确可提升关键信息提取率")
+tip3 = ListItem("补充关注点", "在备注中说明特别关注的条款或信息，系统会优先提取")
+tip4 = ListItem("分批处理大文件", "

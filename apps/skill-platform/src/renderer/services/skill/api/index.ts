@@ -10,6 +10,7 @@ import type {
   IScanLocalResult,
   IScannedSkill,
   ISkill,
+  ISkillLocalFileListOptions,
   ISkillLocalFileTreeEntry,
   ISkillMcpConfig,
   ISkillSafetyReport,
@@ -234,12 +235,18 @@ export function installSkillMdSymlink(
   return requireSkillIpc().installMdSymlink(skillName, skillMdContent, platformId);
 }
 
-export function listSkillLocalFiles(skillId: string): Promise<ISkillLocalFileTreeEntry[]> {
-  return requireSkillIpc().listLocalFiles(skillId);
+export function listSkillLocalFiles(
+  skillId: string,
+  options?: ISkillLocalFileListOptions,
+): Promise<ISkillLocalFileTreeEntry[]> {
+  return requireSkillIpc().listLocalFiles(skillId, options);
 }
 
-export function listSkillLocalFilesByPath(localPath: string): Promise<ISkillLocalFileTreeEntry[]> {
-  return requireSkillIpc().listLocalFilesByPath(localPath);
+export function listSkillLocalFilesByPath(
+  localPath: string,
+  options?: ISkillLocalFileListOptions,
+): Promise<ISkillLocalFileTreeEntry[]> {
+  return requireSkillIpc().listLocalFilesByPath(localPath, options);
 }
 
 export function writeSkillLocalFileByPath(

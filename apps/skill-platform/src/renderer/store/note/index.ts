@@ -18,6 +18,7 @@ import {
 } from '@renderer/services/note/note-ai-storage';
 import { collectNoteFolderIds, filterNoteTreeByQuery } from '@renderer/services/note/tree-filter';
 import { create } from 'zustand';
+import { useSidebarOrderStore } from '../sidebar-order';
 
 function mapToMomoNodes(nodes: INoteTreeNode[]): IMomoTreeNode[] {
   return nodes.map((node) => ({
@@ -63,6 +64,28 @@ function resolveExpandedKeys(
   return collectFirstLevelFolderIds(treeData);
 }
 
+const NOTE_IPC_ATTEMPTS = 2;
+
+let treeRequestId = 0;
+let fileRequestId = 0;
+let saveRequestId = 0;
+
+async function retryTransientNoteRequest<T>(request: () => Promise<T>): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < NOTE_IPC_ATTEMPTS; attempt += 1) {
+    try {
+      return await request();
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
 interface INoteState {
   rawTree: IMomoTreeNode[];
   treeData: IMomoTreeNode[];
@@ -75,6 +98,8 @@ interface INoteState {
   isLoadingTree: boolean;
   isLoadingFile: boolean;
   isSaving: boolean;
+  treeLoadError: string | null;
+  fileLoadError: string | null;
   setTreeSearchQuery: (query: string) => void;
   loadTree: () => Promise<void>;
   setExpandedKeys: (keys: string[]) => void;
@@ -107,6 +132,8 @@ export const useNoteStore = create<INoteState>((set, get) => ({
   isLoadingTree: false,
   isLoadingFile: false,
   isSaving: false,
+  treeLoadError: null,
+  fileLoadError: null,
 
   setTreeSearchQuery: (query) => {
     const { rawTree } = get();
@@ -116,10 +143,20 @@ export const useNoteStore = create<INoteState>((set, get) => ({
   },
 
   loadTree: async () => {
-    set({ isLoadingTree: true });
+    const requestId = ++treeRequestId;
+    set({ isLoadingTree: true, treeLoadError: null });
     try {
-      await bootstrapCursorRules();
-      const nodes = mapToMomoNodes(await listNoteTree());
+      try {
+        await bootstrapCursorRules();
+      } catch (error) {
+        // 规则目录初始化只是兼容性导入，失败不应阻断用户已有笔记的加载。
+        console.warn('[note] bootstrap cursor rules failed:', error);
+      }
+
+      const nodes = mapToMomoNodes(await retryTransientNoteRequest(() => listNoteTree()));
+      if (requestId !== treeRequestId) {
+        return;
+      }
       const { treeSearchQuery, selectedId } = get();
       const treeData = buildVisibleTree(nodes, treeSearchQuery);
       const expandedKeys = resolveExpandedKeys(treeData, treeSearchQuery, get().expandedKeys);
@@ -127,9 +164,16 @@ export const useNoteStore = create<INoteState>((set, get) => ({
       const { selectedNoteId: prevNoteId, selectedId: prevSelectedId } = get();
       const selectedNoteId =
         treeNoteId ?? (selectedId && prevSelectedId === selectedId ? prevNoteId : null);
-      set({ rawTree: nodes, treeData, expandedKeys, selectedNoteId });
+      set({ rawTree: nodes, treeData, expandedKeys, selectedNoteId, treeLoadError: null });
+    } catch (error) {
+      console.error('[note] loadTree failed:', error);
+      if (requestId === treeRequestId) {
+        set({ treeLoadError: getErrorMessage(error, '笔记列表加载失败') });
+      }
     } finally {
-      set({ isLoadingTree: false });
+      if (requestId === treeRequestId) {
+        set({ isLoadingTree: false });
+      }
     }
   },
 
@@ -179,14 +223,33 @@ export const useNoteStore = create<INoteState>((set, get) => ({
   },
 
   selectFile: async (fileId) => {
+    const requestId = ++fileRequestId;
     const { selectedId, editorContent, savedContent } = get();
     if (selectedId && selectedId !== fileId && editorContent !== savedContent) {
-      await get().saveCurrentFile();
+      try {
+        await get().saveCurrentFile();
+      } catch (error) {
+        console.error('[note] save before selection failed:', error);
+        return;
+      }
+    }
+    if (requestId !== fileRequestId) {
+      return;
     }
 
-    set({ isLoadingFile: true, selectedId: fileId });
+    set({
+      isLoadingFile: true,
+      selectedId: fileId,
+      selectedNoteId: findNoteIdInTree(get().rawTree, fileId),
+      editorContent: '',
+      savedContent: '',
+      fileLoadError: null,
+    });
     try {
-      const result = await readNoteFile(fileId);
+      const result = await retryTransientNoteRequest(() => readNoteFile(fileId));
+      if (requestId !== fileRequestId || get().selectedId !== fileId) {
+        return;
+      }
       let content = '';
       let noteId = findNoteIdInTree(get().rawTree, fileId);
       if (typeof result === 'string') {
@@ -201,12 +264,22 @@ export const useNoteStore = create<INoteState>((set, get) => ({
         editorContent: content,
         savedContent: content,
         selectedNoteId: noteId,
+        fileLoadError: null,
       });
     } catch (err) {
       console.error('[note] readFile failed:', err);
-      set({ selectedId: null, selectedNoteId: null, editorContent: '', savedContent: '' });
+      if (requestId === fileRequestId && get().selectedId === fileId) {
+        // 保留用户刚刚点击的节点，让右侧展示明确错误并允许重试。
+        set({
+          editorContent: '',
+          savedContent: '',
+          fileLoadError: getErrorMessage(err, '笔记加载失败'),
+        });
+      }
     } finally {
-      set({ isLoadingFile: false });
+      if (requestId === fileRequestId && get().selectedId === fileId) {
+        set({ isLoadingFile: false });
+      }
     }
   },
 
@@ -221,12 +294,23 @@ export const useNoteStore = create<INoteState>((set, get) => ({
     if (!selectedId || editorContent === savedContent) {
       return;
     }
+    const requestId = ++saveRequestId;
+    const targetId = selectedId;
+    const targetContent = editorContent;
     set({ isSaving: true });
     try {
-      await writeNoteFile(selectedId, editorContent);
-      set({ savedContent: editorContent });
+      await writeNoteFile(targetId, targetContent);
+      if (
+        requestId === saveRequestId &&
+        get().selectedId === targetId &&
+        get().editorContent === targetContent
+      ) {
+        set({ savedContent: targetContent });
+      }
     } finally {
-      set({ isSaving: false });
+      if (requestId === saveRequestId) {
+        set({ isSaving: false });
+      }
     }
   },
 
@@ -261,6 +345,7 @@ export const useNoteStore = create<INoteState>((set, get) => ({
 
   renameNode: async (nodeId, newName) => {
     const renamed = await renameNote(nodeId, newName);
+    useSidebarOrderStore.getState().remapPath('notes', nodeId, renamed.id);
     const { selectedId } = get();
     if (selectedId === nodeId && renamed.kind === 'file') {
       set({ selectedId: renamed.id });
@@ -284,6 +369,7 @@ export const useNoteStore = create<INoteState>((set, get) => ({
 
   moveNode: async (nodeId, targetParentId) => {
     const moved = await moveNote(nodeId, targetParentId);
+    useSidebarOrderStore.getState().remapPath('notes', nodeId, moved.id);
     const { selectedId } = get();
     if (selectedId === nodeId) {
       set({ selectedId: moved.id });

@@ -9,6 +9,7 @@ import {
   useEffect,
   useImperativeHandle,
   useMemo,
+  useState,
 } from 'react';
 import CustomScrollbar from '~/components/CustomScrollbar';
 import { prefix } from '~/config';
@@ -22,13 +23,15 @@ import {
   RERENDER,
 } from '~/static/event-name';
 import { IHeadList, TFocusOption, TMdHeadingId } from '~/type';
-import { getChartFenceLang, getChartTemplate } from '~/utils/chart/templates';
 import { TToolDirective } from '~/utils/content-help';
 import bus from '~/utils/event-bus';
 import MdCatalog, { ITocItem } from '~~/components/MdCatalog';
+import useDrawioCreation from '../hooks/useDrawioCreation';
 import { IContentProps } from '../props';
 import { IContentExposeParam } from '../type';
 import { buildRichTextExtensions } from './extensions';
+import LinkEditor, { type LinkRange } from './LinkEditor';
+import { applyRichTextDirective } from './toolbar';
 
 /**
  * 富文本（WYSIWYG）内容区
@@ -41,6 +44,7 @@ import { buildRichTextExtensions } from './extensions';
  */
 const RichTextContent = forwardRef((props: IContentProps, ref: ForwardedRef<unknown>) => {
   const { editorId, theme, previewTheme, catalogVisible } = useContext(EditorContext);
+  const [linkRange, setLinkRange] = useState<LinkRange | null>(null);
 
   // 取得当前编辑器内容的 Markdown 字符串（tiptap-markdown 提供 storage.markdown.getMarkdown）
   const getMarkdown = useCallback((ed: typeof editor) => {
@@ -74,15 +78,35 @@ const RichTextContent = forwardRef((props: IContentProps, ref: ForwardedRef<unkn
     // extensions 变化时重建编辑器
     [extensions],
   );
+  const drawioCreation = useDrawioCreation(props.readOnly, () => {
+    if (!editor || !editor.isEditable) return;
+    const { from, to } = editor.state.selection;
+    const original = editor.state.doc;
+    return (imageUrl) => {
+      if (editor.isDestroyed || !editor.isEditable) throw new Error('当前文档无法插入图形');
+      if (editor.state.doc !== original) throw new Error('文档已变化，请关闭后重新新增图形');
+      editor.chain().focus().setTextSelection({ from, to }).setImage({ src: imageUrl }).run();
+    };
+  });
 
   // 外部 modelValue 变化时同步到编辑器（避免与用户编辑形成回环）
   useEffect(() => {
     if (!editor) return;
-    const currentMd = getMarkdown(editor);
-    if (currentMd !== props.modelValue) {
+
+    let cancelled = false;
+    const nextContent = props.modelValue;
+
+    // TipTap's React node views use flushSync when the editor is already mounted.
+    // Run content replacement after React has finished the current effect cycle.
+    queueMicrotask(() => {
+      if (cancelled || editor.isDestroyed || getMarkdown(editor) === nextContent) return;
       // setContent 接收 Markdown 字符串，由 tiptap-markdown 解析；不触发 onUpdate
-      editor.commands.setContent(props.modelValue, { emitUpdate: false });
-    }
+      editor.commands.setContent(nextContent, { emitUpdate: false });
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [editor, props.modelValue, getMarkdown]);
 
   // 只读 / 禁用状态同步
@@ -206,118 +230,12 @@ const RichTextContent = forwardRef((props: IContentProps, ref: ForwardedRef<unkn
   useEffect(() => {
     if (!editor) return;
     const callback = (direct: TToolDirective, params: any = {}) => {
-      if (!editor) return;
-      const chain = () => editor.chain().focus();
-
-      // 标题
-      if (/^h[1-6]$/.test(direct)) {
-        const level = Number(direct.slice(1)) as 1 | 2 | 3 | 4 | 5 | 6;
-        chain().toggleHeading({ level }).run();
+      if (direct === 'link' && !params.url && editor.isEditable) {
+        const { from, to } = editor.state.selection;
+        setLinkRange({ from, to });
         return;
       }
-
-      switch (direct) {
-        case 'bold':
-          chain().toggleBold().run();
-          return;
-        case 'italic':
-          chain().toggleItalic().run();
-          return;
-        case 'strikeThrough':
-          chain().toggleStrike().run();
-          return;
-        case 'underline':
-          chain().toggleUnderline().run();
-          return;
-        case 'sub':
-          chain().toggleSubscript().run();
-          return;
-        case 'sup':
-          chain().toggleSuperscript().run();
-          return;
-        case 'codeRow':
-          chain().toggleCode().run();
-          return;
-        case 'quote':
-          chain().toggleBlockquote().run();
-          return;
-        case 'unorderedList':
-          chain().toggleBulletList().run();
-          return;
-        case 'orderedList':
-          chain().toggleOrderedList().run();
-          return;
-        case 'task':
-          chain().toggleTaskList().run();
-          return;
-        case 'code':
-          chain().toggleCodeBlock().run();
-          return;
-        case 'link': {
-          const selectedText = editor.state.doc.textBetween(
-            editor.state.selection.from,
-            editor.state.selection.to,
-            '\n',
-          );
-          const desc = params.desc ?? selectedText ?? '';
-          const url = params.url ?? '';
-          // 以 HTML 形式插入，由 ProseMirror 解析为链接 mark
-          const html = `<a href="${url}">${desc || '链接'}</a>`;
-          chain().insertContent(html).run();
-          return;
-        }
-        case 'image': {
-          const desc = params.desc ?? '';
-          const url = params.url ?? '';
-          const html = `<img src="${url}" alt="${desc}" />`;
-          chain().insertContent(html).run();
-          return;
-        }
-        case 'table': {
-          const { selectedShape = { x: 1, y: 1 } } = params;
-          const rows = (selectedShape.x ?? 1) + 1;
-          const cols = (selectedShape.y ?? 1) + 1;
-          chain().insertTable({ rows, cols, withHeaderRow: true }).run();
-          return;
-        }
-        case 'universal': {
-          // 自定义插入：将生成内容作为文本插入
-          const generate = params?.generate;
-          if (typeof generate === 'function') {
-            const selectedText = editor.state.doc.textBetween(
-              editor.state.selection.from,
-              editor.state.selection.to,
-              '\n',
-            );
-            const opts = generate(selectedText);
-            if (opts?.targetValue !== undefined) {
-              chain().insertContent(opts.targetValue).run();
-            }
-          }
-          return;
-        }
-        case 'katexInline':
-          chain()
-            .insertContent({ type: 'katexInline', attrs: { latex: '公式' } })
-            .run();
-          return;
-        case 'katexBlock':
-          chain()
-            .insertContent({ type: 'katexBlock', attrs: { latex: '公式' } })
-            .run();
-          return;
-        default: {
-          // mermaid / plantuml / flow 等图表：以代码块形式插入模板
-          const fenceLang = getChartFenceLang(direct);
-          const template = getChartTemplate(direct);
-          if (fenceLang && template) {
-            chain().setCodeBlock({ language: fenceLang }).insertContent(template).run();
-            return;
-          }
-          // 其余未支持的指令：忽略
-          return;
-        }
-      }
+      applyRichTextDirective(editor, direct, params);
     };
 
     bus.on(editorId, { name: REPLACE, callback });
@@ -363,6 +281,10 @@ const RichTextContent = forwardRef((props: IContentProps, ref: ForwardedRef<unkn
 
   return (
     <div className={`${prefix}-content`}>
+      {drawioCreation}
+      {editor && linkRange && (
+        <LinkEditor editor={editor} range={linkRange} onClose={() => setLinkRange(null)} />
+      )}
       <div className={`${prefix}-content-wrapper ${prefix}-richtext-wrapper`}>
         <CustomScrollbar style={{ flex: 1 }}>
           <div className={`${prefix}-richtext-scroll`}>

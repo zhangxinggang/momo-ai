@@ -4,15 +4,28 @@
   min-height: 0;
   overflow: hidden;
   background: hsl(var(--background));
+  position: relative;
   color: hsl(var(--foreground));
 
   .cm-editor {
-    height: 100%;
+    position: absolute;
+    inset: 0;
+  }
+
+  .cm-scroller {
+    overflow: auto;
+    overscroll-behavior: contain;
   }
 
   .cm-gutters {
     background: hsl(var(--muted) / 0.35);
     border-right: 1px solid var(--border);
     color: hsl(var(--muted-foreground));
+  }
+  .cm-change-add {
+    background: hsl(142 55% 40% / 0.16);
+  }
+  .cm-change-remove {
+    background: hsl(0 70% 52% / 0.16);
   }
 }

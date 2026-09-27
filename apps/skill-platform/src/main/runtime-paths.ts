@@ -63,39 +63,6 @@ export function getSkillRuntimeNodeModulesDir(): string {
   return path.join(getSkillRuntimeDir(), 'node_modules');
 }
 
-export function getLegacyWorkspaceDir(): string {
-  return path.join(getUserDataPath(), 'workspace');
-}
-
-export function getLegacyPromptsWorkspaceDir(): string {
-  return path.join(getLegacyWorkspaceDir(), 'prompts');
-}
-
-export function getPromptsDir(): string {
-  return resolvePreferredPath(path.join(getDataDir(), 'prompts'), getLegacyPromptsWorkspaceDir());
-}
-
-export function getWorkspaceDir(): string {
-  const dataDir = getDataDir();
-  if (
-    fs.existsSync(path.join(dataDir, 'prompts')) ||
-    fs.existsSync(path.join(dataDir, 'folders.json'))
-  ) {
-    return dataDir;
-  }
-
-  const legacyWorkspaceDir = getLegacyWorkspaceDir();
-  if (fs.existsSync(legacyWorkspaceDir)) {
-    return legacyWorkspaceDir;
-  }
-
-  return dataDir;
-}
-
-export function getPromptsWorkspaceDir(): string {
-  return getPromptsDir();
-}
-
 export function getLegacyImagesDir(): string {
   return path.join(getUserDataPath(), 'images');
 }
@@ -116,9 +83,13 @@ export function getNotesDir(): string {
   return path.join(getDataDir(), 'notes');
 }
 
-/** 自定义工具目录：与笔记同级，位于 data/tools */
+export function getDefaultPluginsDir(): string {
+  return path.join(getProjectRoot(), 'default', 'plugins');
+}
+
+/** 用户自定义工具与插件的唯一可编辑目录。 */
 export function getToolsDir(): string {
-  return path.join(getDataDir(), 'tools');
+  return path.join(getDefaultPluginsDir(), 'user');
 }
 
 /** 静态资源目录（snapEdit.html 等） */
@@ -160,37 +131,4 @@ export function getSkillSessionWorkspaceDir(sessionId: string): string {
 export function getSkillTempOutputDir(skillId: string): string {
   const safeId = skillId.replace(/[^a-zA-Z0-9_-]/g, '_') || 'skill';
   return path.join(getAppTempDir(), safeId);
-}
-
-/** 工作流 Agent 根目录：<userData>/agent */
-export function getAgentDir(): string {
-  return path.join(getUserDataPath(), 'agent');
-}
-
-/** 单个工作流产出目录：<userData>/agent/<workflowName> */
-export function getWorkflowAgentDir(workflowName: string): string {
-  const safeName = workflowName.replace(/[^a-zA-Z0-9_-]/g, '_') || 'workflow';
-  return path.join(getAgentDir(), safeName);
-}
-
-/** 工作流业务实例目录：<userData>/agent/<workflowName>/<businessId> */
-export function getWorkflowBusinessAgentDir(workflowName: string, businessId: string): string {
-  const safeBiz = businessId.replace(/[^a-zA-Z0-9_-]/g, '_') || 'business';
-  return path.join(getWorkflowAgentDir(workflowName), safeBiz);
-}
-
-/** 工作流节点产出目录（旧，无 businessId）：<userData>/agent/<workflowName>/<nodeName> */
-export function getWorkflowNodeAgentDir(workflowName: string, nodeName: string): string {
-  const safeNode = nodeName.replace(/[^a-zA-Z0-9_-]/g, '_') || 'node';
-  return path.join(getWorkflowAgentDir(workflowName), safeNode);
-}
-
-/** 工作流业务节点产出目录：<userData>/agent/<workflowName>/<businessId>/<nodeName> */
-export function getWorkflowBusinessNodeAgentDir(
-  workflowName: string,
-  businessId: string,
-  nodeName: string,
-): string {
-  const safeNode = nodeName.replace(/[^a-zA-Z0-9_-]/g, '_') || 'node';
-  return path.join(getWorkflowBusinessAgentDir(workflowName, businessId), safeNode);
 }

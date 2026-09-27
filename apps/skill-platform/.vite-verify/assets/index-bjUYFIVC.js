@@ -2764,19 +2764,17 @@ function is({ overrideSkill: t, projectContext: r, onBack: s } = {}) {
                                       e.jsxs('div', {
                                         className: 'mt-2 flex flex-wrap gap-1.5',
                                         children: [
-                                          N.filePaths
-                                            .slice(1, 5)
-                                            .map((p) =>
-                                              e.jsx(
-                                                'span',
-                                                {
-                                                  className:
-                                                    'bg-muted text-muted-foreground rounded-full px-2 py-0.5 font-mono text-[10px]',
-                                                  children: p,
-                                                },
-                                                p,
-                                              ),
+                                          N.filePaths.slice(1, 5).map((p) =>
+                                            e.jsx(
+                                              'span',
+                                              {
+                                                className:
+                                                  'bg-muted text-muted-foreground rounded-full px-2 py-0.5 font-mono text-[10px]',
+                                                children: p,
+                                              },
+                                              p,
                                             ),
+                                          ),
                                           N.filePaths.length > 5 &&
                                             e.jsxs('span', {
                                               className:
@@ -5868,46 +5866,44 @@ function Oa({ skill: t, isInstalled: r, onClose: s }) {
                     we.length > 0 &&
                       e.jsx('ul', {
                         className: 'mt-1.5 space-y-0.5',
-                        children: we
-                          .slice(0, 3)
-                          .map((i) =>
-                            e.jsxs(
-                              'li',
-                              {
-                                className: 'text-muted-foreground text-[11px]',
-                                children: [
-                                  '•',
-                                  ' ',
-                                  {
-                                    'shell-pipe-exec': '检测到远程下载后直接管道执行',
-                                    'dangerous-delete': '检测到高危删除命令',
-                                    'encoded-powershell': '检测到编码后的 PowerShell 执行',
-                                    'encoded-shell-bootstrap': '检测到编码载荷解码后立即执行',
-                                    'privilege-escalation': '检测到提权执行请求',
-                                    'system-persistence': '检测到系统持久化或服务机制',
-                                    'secret-access': '检测到读取密钥或凭证路径',
-                                    'security-bypass': '检测到绕过审批或沙箱的描述',
-                                    'network-exfil': '检测到可能的凭证外传行为',
-                                    'exec-bit': '检测到可执行权限修改',
-                                    'network-bootstrap': '检测到远程下载行为',
-                                    'env-mutation': '检测到环境变量或 shell 配置修改',
-                                    'untrusted-source-host': '来源主机不是常见可信商店',
-                                    'external-audits': '商店提供了外部安全审计元数据',
-                                    'internal-source': '来源地址指向本地或内网',
-                                    'unknown-source': '缺少来源信息',
-                                    'invalid-source-url': '来源地址格式无效',
-                                    'insecure-source-url': '来源地址不是 HTTPS',
-                                    'persistence-file': '仓库包含 workflow 或持久化相关文件',
-                                    'high-risk-binary': '仓库包含高风险可执行文件',
-                                    'script-file': '仓库包含脚本文件',
-                                  }[i.code] ?? i.title,
-                                  i.count > 1 ? ` × ${i.count}` : '',
-                                  i.filePaths[0] ? ` · ${i.filePaths[0]}` : '',
-                                ],
-                              },
-                              `${i.code}-${i.filePaths[0] || i.evidences[0] || ''}`,
-                            ),
+                        children: we.slice(0, 3).map((i) =>
+                          e.jsxs(
+                            'li',
+                            {
+                              className: 'text-muted-foreground text-[11px]',
+                              children: [
+                                '•',
+                                ' ',
+                                {
+                                  'shell-pipe-exec': '检测到远程下载后直接管道执行',
+                                  'dangerous-delete': '检测到高危删除命令',
+                                  'encoded-powershell': '检测到编码后的 PowerShell 执行',
+                                  'encoded-shell-bootstrap': '检测到编码载荷解码后立即执行',
+                                  'privilege-escalation': '检测到提权执行请求',
+                                  'system-persistence': '检测到系统持久化或服务机制',
+                                  'secret-access': '检测到读取密钥或凭证路径',
+                                  'security-bypass': '检测到绕过审批或沙箱的描述',
+                                  'network-exfil': '检测到可能的凭证外传行为',
+                                  'exec-bit': '检测到可执行权限修改',
+                                  'network-bootstrap': '检测到远程下载行为',
+                                  'env-mutation': '检测到环境变量或 shell 配置修改',
+                                  'untrusted-source-host': '来源主机不是常见可信商店',
+                                  'external-audits': '商店提供了外部安全审计元数据',
+                                  'internal-source': '来源地址指向本地或内网',
+                                  'unknown-source': '缺少来源信息',
+                                  'invalid-source-url': '来源地址格式无效',
+                                  'insecure-source-url': '来源地址不是 HTTPS',
+                                  'persistence-file': '仓库包含 workflow 或持久化相关文件',
+                                  'high-risk-binary': '仓库包含高风险可执行文件',
+                                  'script-file': '仓库包含脚本文件',
+                                }[i.code] ?? i.title,
+                                i.count > 1 ? ` × ${i.count}` : '',
+                                i.filePaths[0] ? ` · ${i.filePaths[0]}` : '',
+                              ],
+                            },
+                            `${i.code}-${i.filePaths[0] || i.evidences[0] || ''}`,
                           ),
+                        ),
                       }),
                   ],
                 }),
@@ -5987,44 +5983,42 @@ function Oa({ skill: t, isInstalled: r, onClose: s }) {
                 e.jsx('p', { children: S.summary }),
                 e.jsx('ul', {
                   className: 'space-y-1',
-                  children: S.findings
-                    .slice(0, 5)
-                    .map((i) =>
-                      e.jsxs(
-                        'li',
-                        {
-                          children: [
-                            '•',
-                            ' ',
-                            {
-                              'shell-pipe-exec': '检测到远程下载后直接管道执行',
-                              'dangerous-delete': '检测到高危删除命令',
-                              'encoded-powershell': '检测到编码后的 PowerShell 执行',
-                              'encoded-shell-bootstrap': '检测到编码载荷解码后立即执行',
-                              'privilege-escalation': '检测到提权执行请求',
-                              'system-persistence': '检测到系统持久化或服务机制',
-                              'secret-access': '检测到读取密钥或凭证路径',
-                              'security-bypass': '检测到绕过审批或沙箱的描述',
-                              'network-exfil': '检测到可能的凭证外传行为',
-                              'exec-bit': '检测到可执行权限修改',
-                              'network-bootstrap': '检测到远程下载行为',
-                              'env-mutation': '检测到环境变量或 shell 配置修改',
-                              'untrusted-source-host': '来源主机不是常见可信商店',
-                              'external-audits': '商店提供了外部安全审计元数据',
-                              'internal-source': '来源地址指向本地或内网',
-                              'unknown-source': '缺少来源信息',
-                              'invalid-source-url': '来源地址格式无效',
-                              'insecure-source-url': '来源地址不是 HTTPS',
-                              'persistence-file': '仓库包含 workflow 或持久化相关文件',
-                              'high-risk-binary': '仓库包含高风险可执行文件',
-                              'script-file': '仓库包含脚本文件',
-                            }[i.code] ?? i.title,
-                            i.filePath ? ` · ${i.filePath}` : '',
-                          ],
-                        },
-                        `${i.code}-${i.filePath || i.evidence || ''}`,
-                      ),
+                  children: S.findings.slice(0, 5).map((i) =>
+                    e.jsxs(
+                      'li',
+                      {
+                        children: [
+                          '•',
+                          ' ',
+                          {
+                            'shell-pipe-exec': '检测到远程下载后直接管道执行',
+                            'dangerous-delete': '检测到高危删除命令',
+                            'encoded-powershell': '检测到编码后的 PowerShell 执行',
+                            'encoded-shell-bootstrap': '检测到编码载荷解码后立即执行',
+                            'privilege-escalation': '检测到提权执行请求',
+                            'system-persistence': '检测到系统持久化或服务机制',
+                            'secret-access': '检测到读取密钥或凭证路径',
+                            'security-bypass': '检测到绕过审批或沙箱的描述',
+                            'network-exfil': '检测到可能的凭证外传行为',
+                            'exec-bit': '检测到可执行权限修改',
+                            'network-bootstrap': '检测到远程下载行为',
+                            'env-mutation': '检测到环境变量或 shell 配置修改',
+                            'untrusted-source-host': '来源主机不是常见可信商店',
+                            'external-audits': '商店提供了外部安全审计元数据',
+                            'internal-source': '来源地址指向本地或内网',
+                            'unknown-source': '缺少来源信息',
+                            'invalid-source-url': '来源地址格式无效',
+                            'insecure-source-url': '来源地址不是 HTTPS',
+                            'persistence-file': '仓库包含 workflow 或持久化相关文件',
+                            'high-risk-binary': '仓库包含高风险可执行文件',
+                            'script-file': '仓库包含脚本文件',
+                          }[i.code] ?? i.title,
+                          i.filePath ? ` · ${i.filePath}` : '',
+                        ],
+                      },
+                      `${i.code}-${i.filePath || i.evidence || ''}`,
                     ),
+                  ),
                 }),
                 e.jsx('p', {
                   className: 'text-xs opacity-80',

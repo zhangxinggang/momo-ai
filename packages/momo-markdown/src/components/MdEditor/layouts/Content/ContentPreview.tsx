@@ -5,6 +5,7 @@ import { EditorContext } from '~/context';
 import { ISettingType } from '~/type';
 import { classnames } from '~/utils';
 import { useAntdImagePreview, useCopyCode, useMarkdownIt, useRemount, useTaskState } from './hooks';
+import useDrawioPreview from './hooks/useDrawioPreview';
 import { IContentPreviewProps } from './props';
 import UpdateOnDemand from './UpdateOnDemand';
 
@@ -18,6 +19,7 @@ const ContentPreview = (props: IContentPreviewProps) => {
 
   // markdown => html
   const { html, key } = useMarkdownIt(props, !!previewOnly);
+  const drawioEditorNode = useDrawioPreview(props, html, key);
   // 复制代码
   useCopyCode(props, html, key);
   // 图片点击放大（antd Image 预览，支持多图切换）
@@ -64,6 +66,7 @@ const ContentPreview = (props: IContentPreviewProps) => {
         </div>
       )}
       {imagePreviewNode}
+      {drawioEditorNode}
     </>
   );
 };

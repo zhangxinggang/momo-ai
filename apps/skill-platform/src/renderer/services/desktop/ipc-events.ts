@@ -24,3 +24,10 @@ export function subscribeFullscreenChanged(callback: (isFullscreen: boolean) => 
   return () =>
     unsubscribeMainEvent('window:fullscreen-changed', callback as (...args: unknown[]) => void);
 }
+
+/** 订阅窗口最大化状态变化 */
+export function subscribeMaximizedChanged(callback: (isMaximized: boolean) => void): () => void {
+  subscribeMainEvent('window:maximized-changed', callback as (...args: unknown[]) => void);
+  return () =>
+    unsubscribeMainEvent('window:maximized-changed', callback as (...args: unknown[]) => void);
+}

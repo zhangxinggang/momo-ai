@@ -1,33 +1,173 @@
 .skill-tag-filter {
+  container-type: inline-size;
   flex-shrink: 0;
-  background: hsl(var(--sidebar-background) / 0.28);
-  padding: 10px 16px 0;
+  padding: 12px 16px 0;
 
   @media (min-width: 640px) {
-    padding: 10px 24px 0;
+    padding: 12px 24px 0;
   }
+}
+
+.skill-filter-panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 56px;
+  padding: 7px;
+  border: 1px solid hsl(var(--border) / 0.85);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px hsl(var(--foreground) / 0.03),
+    inset 0 1px 0 hsl(var(--background) / 0.75) !important;
+}
+
+.skill-filter-search {
+  display: flex;
+  flex: 0 1 330px;
+  align-items: center;
+  min-width: 220px;
+  height: 40px;
+  padding: 0 7px 0 11px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: hsl(var(--muted) / 0.62);
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
+
+  &:focus-within {
+    border-color: hsl(var(--primary) / 0.38);
+    background: hsl(var(--background) / 0.9);
+    box-shadow: none;
+
+    .skill-filter-search-icon {
+      color: hsl(var(--primary));
+    }
+  }
+}
+
+.skill-filter-search-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  color: hsl(var(--muted-foreground) / 0.82);
+}
+
+.skill-filter-search-input {
+  min-width: 0;
+  flex: 1;
+  height: 100%;
+  padding: 0 9px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: hsl(var(--foreground));
+  font: inherit;
+  font-size: 13px;
+
+  &::placeholder {
+    color: hsl(var(--muted-foreground) / 0.72);
+  }
+
+  &::-webkit-search-cancel-button {
+    display: none;
+  }
+
+  &:focus,
+  &:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+}
+
+.skill-filter-search-count {
+  flex: 0 0 auto;
+  color: hsl(var(--muted-foreground));
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.skill-filter-search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+
+  &:hover {
+    background: hsl(var(--accent) / 0.8);
+    color: hsl(var(--foreground));
+  }
+
+  &:focus-visible {
+    outline: 2px solid hsl(var(--primary) / 0.45);
+    outline-offset: 1px;
+  }
+}
+
+.skill-filter-divider {
+  width: 1px;
+  height: 28px;
+  flex: 0 0 auto;
+  background: hsl(var(--border) / 0.8);
+}
+
+.skill-filter-tags {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.skill-filter-tags-label {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  padding-left: 2px;
+  color: hsl(var(--muted-foreground));
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 32px;
 }
 
 .skill-tag-filter-track {
   display: flex;
   flex-wrap: wrap;
+  flex: 1;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  min-width: 0;
+  padding: 2px;
 }
 
 .skill-tag-filter-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  max-width: 100%;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid hsl(var(--border) / 0.75);
-  background: hsl(var(--background) / 0.72);
-  color: hsl(var(--foreground) / 0.82);
+  height: 32px;
+  flex: 0 0 auto;
+  max-width: 180px;
+  padding: 0 11px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
   font-size: 12px;
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 30px;
+  white-space: nowrap;
   cursor: pointer;
   transition:
     background-color 0.2s ease,
@@ -36,8 +176,8 @@
     box-shadow 0.2s ease;
 
   &:hover:not(.skill-tag-filter-chip--active) {
-    border-color: hsl(var(--primary) / 0.35);
-    background: hsl(var(--accent) / 0.55);
+    border-color: hsl(var(--border) / 0.7);
+    background: hsl(var(--accent) / 0.62);
     color: hsl(var(--foreground));
   }
 
@@ -47,10 +187,10 @@
   }
 
   &--active {
-    border-color: hsl(var(--primary) / 0.55);
-    background: hsl(var(--primary));
+    border-color: hsl(var(--primary) / 0.72);
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.84));
     color: hsl(var(--primary-foreground));
-    box-shadow: 0 1px 6px hsl(var(--primary) / 0.28);
+    box-shadow: 0 3px 9px hsl(var(--primary) / 0.22);
 
     &:hover {
       border-color: hsl(var(--primary));
@@ -60,7 +200,7 @@
   }
 
   &--all {
-    padding-inline: 14px;
+    padding-inline: 13px;
     font-weight: 600;
   }
 }
@@ -75,13 +215,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  margin-left: 2px;
+  gap: 6px;
+  height: 36px;
+  flex: 0 0 auto;
+  padding: 0 11px;
   border: 1px solid hsl(var(--border) / 0.75);
-  border-radius: 999px;
-  background: hsl(var(--background) / 0.72);
+  border-radius: 10px;
+  background: hsl(var(--background) / 0.62);
   color: hsl(var(--foreground) / 0.72);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
   cursor: pointer;
   transition:
     background-color 0.2s ease,
@@ -101,9 +245,65 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .skill-tag-filter-chip,
+.skill-tag-filter-manage-label {
+  display: inline;
+}
+
+@container (max-width: 760px) {
+  .skill-filter-panel {
+    flex-wrap: wrap;
+  }
+
+  .skill-filter-search {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+
+  .skill-filter-divider {
+    display: none;
+  }
+
+  .skill-filter-tags {
+    width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  .skill-filter-panel {
+    flex-wrap: wrap;
+  }
+
+  .skill-filter-search {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+
+  .skill-filter-divider {
+    display: none;
+  }
+
+  .skill-filter-tags {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .skill-filter-tags-label,
+  .skill-tag-filter-manage-label {
+    display: none;
+  }
+
   .skill-tag-filter-manage {
+    width: 36px;
+    padding: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skill-filter-search,
+  .skill-tag-filter-chip,
+  .skill-tag-filter-manage,
+  .skill-filter-search-clear {
     transition: none;
   }
 }

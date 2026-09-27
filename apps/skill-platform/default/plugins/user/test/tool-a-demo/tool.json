@@ -1,0 +1,155 @@
+{
+  "kind": "tool",
+  "id": "14fea7b3-3287-48b5-844b-9d0e1a42ab63",
+  "name": "tool-a-demo",
+  "description": "查询西安（或任意指定城市）的实时天气与短期预报：当前气温、体感、湿度、风力、降水、紫外线、日出日落，以及逐小时与未来数日趋势。AI 对话可直接调用并拿到结构化结果。",
+  "aliases": ["tool-a-demo", "西安实时天气", "西安天气", "实时天气查询"],
+  "actions": [
+    {
+      "id": "get_weather",
+      "title": "获取实时天气",
+      "description": "获取西安（默认）或指定城市的实时天气快照，包含气温、体感、湿度、风向风速、降水、气压、能见度、紫外线与今日高低温，并附中文摘要。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "city": { "type": "string", "description": "城市名，默认「西安」；支持常见中文城市，其他城市走在线地理编码。", "default": "西安" },
+          "hourly": { "type": "boolean", "description": "是否附带未来 24 小时逐时趋势，默认 false。", "default": false }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "city": { "type": "string" },
+          "region": { "type": "string" },
+          "observedAt": { "type": "string" },
+          "timezone": { "type": "string" },
+          "summary": { "type": "string" },
+          "current": {
+            "type": "object",
+            "properties": {
+              "text": { "type": "string" },
+              "icon": { "type": "string" },
+              "isDay": { "type": "boolean" },
+              "temperature": { "type": ["number", "null"] },
+              "feelsLike": { "type": ["number", "null"] },
+              "humidity": { "type": ["number", "null"] },
+              "precipitation": { "type": ["number", "null"] },
+              "windSpeed": { "type": ["number", "null"] },
+              "windDirText": { "type": "string" },
+              "pressure": { "type": ["number", "null"] },
+              "visibilityKm": { "type": ["number", "null"] },
+              "uvIndex": { "type": ["number", "null"] }
+            },
+            "required": ["text", "temperature"],
+            "additionalProperties": true
+          },
+          "today": {
+            "type": ["object", "null"],
+            "properties": {
+              "date": { "type": "string" },
+              "text": { "type": "string" },
+              "tempMax": { "type": ["number", "null"] },
+              "tempMin": { "type": ["number", "null"] },
+              "sunrise": { "type": ["string", "null"] },
+              "sunset": { "type": ["string", "null"] }
+            },
+            "additionalProperties": true
+          },
+          "hourly": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+        },
+        "required": ["city", "observedAt", "current", "summary"],
+        "additionalProperties": false
+      },
+      "executor": { "runtime": "node", "entry": "actions/get_weather.mjs", "export": "execute" },
+      "capabilities": ["http:api.open-meteo.com", "http:geocoding-api.open-meteo.com"],
+      "effects": ["read", "network", "execute"],
+      "timeoutMs": 20000,
+      "retry": 1,
+      "parallelSafe": true,
+      "idempotent": true,
+      "examples": [
+        {
+          "input": { "city": "西安" },
+          "output": {
+            "city": "西安",
+            "region": "陕西省 · 中国",
+            "observedAt": "2025-04-10T14:00",
+            "timezone": "Asia/Shanghai",
+            "summary": "西安实时天气：局部多云，气温 21.3℃（体感 20.8℃），湿度 43%，东北风 11.2 km/h，今日 12~24℃。",
+            "current": { "text": "局部多云", "icon": "⛅", "isDay": true, "temperature": 21.3, "feelsLike": 20.8, "humidity": 43, "precipitation": 0, "windSpeed": 11.2, "windDirText": "东北风", "pressure": 1013.2, "visibilityKm": 24.1, "uvIndex": 4.8 },
+            "today": { "date": "2025-04-10", "text": "局部多云", "tempMax": 24, "tempMin": 12, "sunrise": "2025-04-10T06:18", "sunset": "2025-04-10T19:12" },
+            "hourly": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "get_forecast",
+      "title": "获取多日天气预报",
+      "description": "获取西安（默认）或指定城市未来 1~7 天的逐日预报摘要，含高低温、天气现象、降水量与降水概率。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "city": { "type": "string", "description": "城市名，默认「西安」。", "default": "西安" },
+          "days": { "type": "integer", "description": "预报天数，1~7，默认 3。", "minimum": 1, "maximum": 7, "default": 3 }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "city": { "type": "string" },
+          "days": { "type": "integer" },
+          "summary": { "type": "string" },
+          "forecast": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": { "type": "string" },
+                "weekday": { "type": "string" },
+                "text": { "type": "string" },
+                "tempMin": { "type": ["number", "null"] },
+                "tempMax": { "type": ["number", "null"] },
+                "precipitation": { "type": ["number", "null"] },
+                "precipProbability": { "type": ["number", "null"] }
+              },
+              "required": ["date", "text"],
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": ["city", "days", "forecast", "summary"],
+        "additionalProperties": false
+      },
+      "executor": { "runtime": "node", "entry": "actions/get_forecast.mjs", "export": "execute" },
+      "capabilities": ["http:api.open-meteo.com", "http:geocoding-api.open-meteo.com"],
+      "effects": ["read", "network", "execute"],
+      "timeoutMs": 20000,
+      "retry": 1,
+      "parallelSafe": true,
+      "idempotent": true,
+      "examples": [
+        {
+          "input": { "city": "西安", "days": 3 },
+          "output": {
+            "city": "西安",
+            "days": 3,
+            "summary": "西安未来 3 天预报：04-10 局部多云 12~24℃；04-11 小雨 13~20℃；04-12 晴 10~22℃。（当前：局部多云 21.3℃）",
+            "forecast": [
+              { "date": "2025-04-10", "weekday": "周四", "text": "局部多云", "tempMin": 12, "tempMax": 24, "precipitation": 0, "precipProbability": 12 },
+              { "date": "2025-04-11", "weekday": "周五", "text": "小雨", "tempMin": 13, "tempMax": 20, "precipitation": 4.2, "precipProbability": 78 },
+              { "date": "2025-04-12", "weekday": "周六", "text": "晴", "tempMin": 10, "tempMax": 22, "precipitation": 0, "precipProbability": 3 }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "entry": "index.html",
+  "service": { "runtime": "none" },
+  "permissions": { "mcp": [], "skills": [] }
+}

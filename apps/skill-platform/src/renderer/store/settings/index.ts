@@ -4,6 +4,7 @@ import {
   setCloseAction,
   setDebugMode,
   setMinimizeToTray,
+  setPowerSaveMode,
 } from '@renderer/services/desktop';
 import { syncSettingsToMain } from '@renderer/services/settings/api';
 import type {
@@ -231,6 +232,8 @@ interface ISettingsState {
   launchAtStartup: boolean;
   minimizeOnLaunch: boolean;
   debugMode: boolean;
+  keepComputerAwake: boolean;
+  preventDisplaySleep: boolean;
 
   // 关闭行为设置 (Windows) / Close behavior settings (Windows)
   closeAction: 'ask' | 'minimize' | 'exit'; // ask=prompt every time, minimize=minimize to tray, exit=exit directly
@@ -301,6 +304,8 @@ interface ISettingsState {
   setLaunchAtStartup: (enabled: boolean) => void;
   setMinimizeOnLaunch: (enabled: boolean) => void;
   setDebugMode: (enabled: boolean) => void;
+  setKeepComputerAwake: (enabled: boolean) => void;
+  setPreventDisplaySleep: (enabled: boolean) => void;
   setEnableNotifications: (enabled: boolean) => void;
   setCloseAction: (action: 'ask' | 'minimize' | 'exit') => void;
   setShowCopyNotification: (enabled: boolean) => void;
@@ -395,6 +400,8 @@ export const useSettingsStore = create<ISettingsState>()(
         launchAtStartup: false,
         minimizeOnLaunch: true,
         debugMode: false,
+        keepComputerAwake: false,
+        preventDisplaySleep: false,
         closeAction: 'ask' as const, // Default to ask every time / 默认每次询问
         enableNotifications: true,
         showCopyNotification: true,
@@ -587,6 +594,14 @@ export const useSettingsStore = create<ISettingsState>()(
           setTouched({ debugMode: enabled });
           setDebugMode(enabled);
         },
+        setKeepComputerAwake: (enabled) => {
+          setTouched({ keepComputerAwake: enabled });
+          setPowerSaveMode('prevent-app-suspension', enabled);
+        },
+        setPreventDisplaySleep: (enabled) => {
+          setTouched({ preventDisplaySleep: enabled });
+          setPowerSaveMode('prevent-display-sleep', enabled);
+        },
         setEnableNotifications: (enabled) => setTouched({ enableNotifications: enabled }),
         setShowCopyNotification: (enabled) => setTouched({ showCopyNotification: enabled }),
         setShowSaveNotification: (enabled) => setTouched({ showSaveNotification: enabled }),
@@ -745,6 +760,8 @@ export const useSettingsStore = create<ISettingsState>()(
           if (state.debugMode) {
             setDebugMode(true);
           }
+          setPowerSaveMode('prevent-app-suspension', Boolean(state.keepComputerAwake));
+          setPowerSaveMode('prevent-display-sleep', Boolean(state.preventDisplaySleep));
           // Sync close action
           if (state.closeAction) {
             setCloseAction(state.closeAction);
@@ -912,7 +929,7 @@ export const useSettingsStore = create<ISettingsState>()(
     },
     {
       name: 'aim-settings',
-      version: 9,
+      version: 10,
       migrate: (state, version) => {
         if (!state || typeof state !== 'object') {
           return state as ISettingsState;

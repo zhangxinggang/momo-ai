@@ -14,7 +14,7 @@ export function NotificationsSettings() {
             onChange={settings.setEnableNotifications}
           />
         </SettingItem>
-        <SettingItem label={'复制成功提示'} description={'复制 IPrompt 后显示提示'}>
+        <SettingItem label={'复制成功提示'} description={'复制内容后显示提示'}>
           <Switch
             checked={settings.showCopyNotification}
             onChange={settings.setShowCopyNotification}

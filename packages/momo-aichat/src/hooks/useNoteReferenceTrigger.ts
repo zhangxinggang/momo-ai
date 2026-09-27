@@ -79,12 +79,69 @@ function collectSelectableFileIds(nodes: INoteReferenceNode[]): string[] {
   return ids;
 }
 
+function collectFolderIds(nodes: INoteReferenceNode[]): string[] {
+  return nodes.flatMap((node) =>
+    node.kind === 'folder'
+      ? [node.id, ...(node.children ? collectFolderIds(node.children) : [])]
+      : [],
+  );
+}
+
+/** Expand only structural roots so each resource group initially shows one real directory level. */
+function collectInitialExpandedKeys(nodes: INoteReferenceNode[]): string[] {
+  const keys: string[] = [];
+  for (const node of nodes) {
+    if (node.kind !== 'folder') {
+      continue;
+    }
+    keys.push(node.id);
+    if (node.id === 'reference-category:workspace') {
+      for (const child of node.children ?? []) {
+        if (child.kind === 'folder') {
+          keys.push(child.id);
+        }
+      }
+    }
+  }
+  return keys;
+}
+
+function findNode(nodes: INoteReferenceNode[], targetId: string): INoteReferenceNode | null {
+  for (const node of nodes) {
+    if (node.id === targetId) {
+      return node;
+    }
+    const nested = node.children ? findNode(node.children, targetId) : null;
+    if (nested) {
+      return nested;
+    }
+  }
+  return null;
+}
+
+function replaceNodeChildren(
+  nodes: INoteReferenceNode[],
+  targetId: string,
+  children: INoteReferenceNode[],
+): INoteReferenceNode[] {
+  return nodes.map((node) => {
+    if (node.id === targetId) {
+      return { ...node, children };
+    }
+    if (!node.children) {
+      return node;
+    }
+    return { ...node, children: replaceNodeChildren(node.children, targetId, children) };
+  });
+}
+
 export function useNoteReferenceTrigger(options: IUseNoteReferenceTriggerOptions) {
   const { value, onChange, noteReferences, selectionStart, onSelectionChange } = options;
 
   const [open, setOpen] = useState(false);
   const [tree, setTree] = useState<INoteReferenceNode[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingFolderIds, setLoadingFolderIds] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
   const [replaceTarget, setReplaceTarget] = useState<INoteMentionMatch | null>(null);
@@ -92,6 +149,8 @@ export function useNoteReferenceTrigger(options: IUseNoteReferenceTriggerOptions
   const atContextRef = useRef<IAtQueryContext | null>(null);
   const replaceTargetRef = useRef<INoteMentionMatch | null>(null);
   const requestIdRef = useRef(0);
+  const folderRequestsRef = useRef(new Map<string, Promise<void>>());
+  const previousQueryRef = useRef('');
   const popoverRef = useRef<HTMLDivElement>(null);
   const prevValueLengthRef = useRef(value.length);
 
@@ -111,12 +170,14 @@ export function useNoteReferenceTrigger(options: IUseNoteReferenceTriggerOptions
     }
     return atContext ? filterTree(tree, atContext.query) : [];
   }, [atContext, isReplaceMode, tree]);
+  const activeQuery = isReplaceMode ? '' : (atContext?.query.trim() ?? '');
 
   const selectableIds = useMemo(() => collectSelectableFileIds(filteredTree), [filteredTree]);
 
   const loadTree = useCallback(async () => {
     if (!noteReferences) {
       setTree([]);
+      setExpandedKeys([]);
       return;
     }
     const requestId = requestIdRef.current + 1;
@@ -127,7 +188,11 @@ export function useNoteReferenceTrigger(options: IUseNoteReferenceTriggerOptions
       if (requestIdRef.current !== requestId) {
         return;
       }
-      setTree(Array.isArray(nodes) ? nodes : []);
+      const nextTree = Array.isArray(nodes) ? nodes : [];
+      setTree(nextTree);
+      setExpandedKeys(collectInitialExpandedKeys(nextTree));
+      folderRequestsRef.current.clear();
+      setLoadingFolderIds([]);
     } catch {
       if (requestIdRef.current !== requestId) {
         return;
@@ -154,26 +219,32 @@ export function useNoteReferenceTrigger(options: IUseNoteReferenceTriggerOptions
     if (!menuVisible) {
       setOpen(false);
       atContextRef.current = null;
+      previousQueryRef.current = '';
       return;
     }
-    atContextRef.current = atContext;
     setOpen(true);
     setSelectedIndex(0);
     void loadTree();
-  }, [menuVisible, atContext, loadTree]);
+  }, [loadTree, menuVisible]);
 
   useEffect(() => {
-    if (!menuVisible) {
+    if (menuVisible) {
+      atContextRef.current = atContext;
+    }
+  }, [atContext, menuVisible]);
+
+  useEffect(() => {
+    if (!menuVisible || loading) {
       return;
     }
-    const collectFolderIds = (nodes: INoteReferenceNode[]): string[] =>
-      nodes.flatMap((node) =>
-        node.kind === 'folder'
-          ? [node.id, ...(node.children ? collectFolderIds(node.children) : [])]
-          : [],
-      );
-    setExpandedKeys(collectFolderIds(tree));
-  }, [menuVisible, tree]);
+    const previousQuery = previousQueryRef.current;
+    previousQueryRef.current = activeQuery;
+    if (activeQuery) {
+      setExpandedKeys(collectFolderIds(filteredTree));
+    } else if (previousQuery) {
+      setExpandedKeys(collectInitialExpandedKeys(tree));
+    }
+  }, [activeQuery, filteredTree, loading, menuVisible, tree]);
 
   const closeMenu = useCallback(() => {
     setOpen(false);
@@ -214,9 +285,8 @@ export function useNoteReferenceTrigger(options: IUseNoteReferenceTriggerOptions
       replaceTargetRef.current = mention;
       setPanelDismissed(false);
       setOpen(true);
-      void loadTree();
     },
-    [loadTree, value],
+    [value],
   );
 
   const applySelection = useCallback(
@@ -290,16 +360,63 @@ export function useNoteReferenceTrigger(options: IUseNoteReferenceTriggerOptions
     [applySelection],
   );
 
-  const toggleFolder = useCallback((folderId: string) => {
-    setExpandedKeys((prev) =>
-      prev.includes(folderId) ? prev.filter((id) => id !== folderId) : [...prev, folderId],
-    );
-  }, []);
+  const loadFolderChildren = useCallback(
+    (folderId: string): Promise<void> => {
+      if (!noteReferences?.loadChildren) {
+        return Promise.resolve();
+      }
+      const folder = findNode(tree, folderId);
+      if (!folder || folder.kind !== 'folder' || folder.children !== undefined) {
+        return Promise.resolve();
+      }
+      const existingRequest = folderRequestsRef.current.get(folderId);
+      if (existingRequest) {
+        return existingRequest;
+      }
+
+      const treeRequestId = requestIdRef.current;
+      setLoadingFolderIds((current) => [...new Set([...current, folderId])]);
+      const request = noteReferences
+        .loadChildren(folder)
+        .then((children) => {
+          if (requestIdRef.current === treeRequestId) {
+            setTree((current) =>
+              replaceNodeChildren(current, folderId, Array.isArray(children) ? children : []),
+            );
+          }
+        })
+        .catch(() => {
+          if (requestIdRef.current === treeRequestId) {
+            setTree((current) => replaceNodeChildren(current, folderId, []));
+          }
+        })
+        .finally(() => {
+          folderRequestsRef.current.delete(folderId);
+          setLoadingFolderIds((current) => current.filter((id) => id !== folderId));
+        });
+      folderRequestsRef.current.set(folderId, request);
+      return request;
+    },
+    [noteReferences, tree],
+  );
+
+  const toggleFolder = useCallback(
+    (folderId: string) => {
+      if (expandedKeys.includes(folderId)) {
+        setExpandedKeys((current) => current.filter((id) => id !== folderId));
+        return;
+      }
+      setExpandedKeys((current) => [...current, folderId]);
+      void loadFolderChildren(folderId);
+    },
+    [expandedKeys, loadFolderChildren],
+  );
 
   return {
     open: open && menuVisible,
     tree: filteredTree,
     loading,
+    loadingFolderIds,
     selectedFileId: selectableIds[selectedIndex],
     expandedKeys,
     popoverRef,

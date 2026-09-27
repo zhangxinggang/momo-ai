@@ -14,7 +14,7 @@ interface IConfirmLeaveAllOptions {
 }
 
 /**
- * 离开页面前统一确认：生成中的 AI 对话 + 工作流编辑器 + 技能文件编辑器。
+ * 离开页面前统一确认：生成中的 AI 对话 + 技能文件编辑器。
  */
 export function useConfirmLeaveEditors() {
   const { modal } = App.useApp();
@@ -33,21 +33,6 @@ export function useConfirmLeaveEditors() {
     });
   }, [modal]);
 
-  const confirmLeaveWorkflowEditor = useCallback(async (): Promise<boolean> => {
-    const state = useUIStore.getState();
-    if (state.workflowScreen === 'business-work') {
-      state.closeWorkflowBusinessWork();
-    }
-    if (state.workflowScreen !== 'studio') {
-      return true;
-    }
-    const ok = await state.confirmWorkflowLeave();
-    if (ok) {
-      state.closeWorkflowStudio();
-    }
-    return ok;
-  }, []);
-
   const confirmLeaveAllEditors = useCallback(
     async (options: IConfirmLeaveAllOptions = {}): Promise<boolean> => {
       if (options.checkAiChat !== false) {
@@ -58,18 +43,13 @@ export function useConfirmLeaveEditors() {
         }
       }
 
-      const workflowOk = await confirmLeaveWorkflowEditor();
-      if (!workflowOk) {
-        return false;
-      }
       return confirmLeaveDirtySkillEditor();
     },
-    [confirmLeaveAiChat, confirmLeaveDirtySkillEditor, confirmLeaveWorkflowEditor],
+    [confirmLeaveAiChat, confirmLeaveDirtySkillEditor],
   );
 
   return {
     confirmLeaveAllEditors,
-    confirmLeaveWorkflowEditor,
     confirmLeaveDirtySkillEditor,
   };
 }

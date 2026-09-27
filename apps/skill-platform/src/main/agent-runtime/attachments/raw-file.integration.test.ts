@@ -30,7 +30,9 @@ function nestedDocx() {
 
 describe('official Harness raw file admission', () => {
   it('stores a deeply nested DOCX byte for byte without parsing it', async () => {
-    const bundle = path.resolve('../../packages/momo-harness-runner/dist');
+    const bundle = path.resolve(
+      process.env.MOMO_TEST_HARNESS_BUNDLE || '../../packages/momo-harness-runner/dist',
+    );
     const home = path.resolve('../../temp/harness-raw-file-' + randomUUID());
     const profile = path.join(home, 'profiles/momo');
     await fs.mkdir(profile, { recursive: true });
@@ -56,9 +58,8 @@ describe('official Harness raw file admission', () => {
         env: {
           DSH_HOME: home,
           MOMO_SESSION_ROOT: path.join(home, 'sessions'),
-          MOMO_PRESET_ROOT: path.join(bundle, 'profile/agent-presets'),
           MOMO_BUNDLE_ID: 'raw-file-contract',
-          MOMO_CORE_VERSION: '0.1.6-alpha.2',
+          MOMO_CORE_VERSION: '0.2.1-alpha.1',
         },
       },
     );

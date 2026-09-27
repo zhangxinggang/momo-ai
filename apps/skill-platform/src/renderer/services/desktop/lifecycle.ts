@@ -15,3 +15,10 @@ export function setCloseAction(action: 'ask' | 'minimize' | 'exit'): void {
 export function setDebugMode(enabled: boolean): void {
   getElectronApi()?.setDebugMode?.(enabled);
 }
+
+export function setPowerSaveMode(
+  mode: 'prevent-app-suspension' | 'prevent-display-sleep',
+  enabled: boolean,
+): void {
+  getElectronApi()?.setPowerSaveMode?.(mode, enabled);
+}

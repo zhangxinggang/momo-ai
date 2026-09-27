@@ -1,0 +1,167 @@
+root = Stack([
+  header,
+  mainGrid,
+  footer
+], "column", "l", "stretch")
+
+header = Stack([
+  titleText,
+  subtitleText,
+  statusRow
+], "row", "m", "center", "between")
+
+titleText = TextContent("⚡ POWER GRID COMMAND CENTER", "large-heavy")
+subtitleText = TextContent("Cyberpunk Energy Monitoring System v4.2.0 | Real-time Telemetry", "small")
+
+statusRow = Stack([
+  statusTag1,
+  statusTag2,
+  statusTag3
+], "row", "s", "center")
+
+statusTag1 = Tag("ONLINE", Icon("circle-check"), "sm", "success")
+statusTag2 = Tag("CYBER-MODE", Icon("cpu"), "sm", "info")
+statusTag3 = Tag("4K-HUD", Icon("monitor"), "sm", "warning")
+
+mainGrid = Stack([
+  leftPanel,
+  centerPanel,
+  rightPanel
+], "row", "l", "stretch")
+
+leftPanel = Card([
+  leftHeader,
+  kpiRow,
+  waveChart,
+  leftFooter
+], "sunk", "column", "m")
+
+leftHeader = CardHeader("POWER GRID STATUS", "实时电压 · 电流监控")
+
+kpiRow = Stack([
+  voltageCard,
+  currentCard,
+  freqCard
+], "row", "m", "stretch")
+
+voltageCard = Card([
+  TextContent("电压 (kV)", "small"),
+  TextContent("220.5", "large-heavy"),
+  TextContent("+0.3% vs 基准", "small")
+], "clear", "column", "xs", "center")
+
+currentCard = Card([
+  TextContent("电流 (A)", "small"),
+  TextContent("1,842", "large-heavy"),
+  TextContent("稳定", "small")
+], "clear", "column", "xs", "center")
+
+freqCard = Card([
+  TextContent("频率 (Hz)", "small"),
+  TextContent("50.02", "large-heavy"),
+  TextContent("正常范围", "small")
+], "clear", "column", "xs", "center")
+
+waveChart = LineChart(["T-10", "T-8", "T-6", "T-4", "T-2", "T-0"], [
+  Series("电压波形", [218, 220, 222, 219, 221, 220.5]),
+  Series("电流波形", [1800, 1820, 1850, 1830, 1840, 1842])
+], "natural", "时间", "幅值", 180)
+
+leftFooter = TextContent("🟢 所有节点在线 | 频率 50.02Hz", "small")
+
+centerPanel = Card([
+  centerHeader,
+  topologyText,
+  nodeStats,
+  energyFlow,
+  centerFooter
+], "sunk", "column", "m")
+
+centerHeader = CardHeader("3D 电网拓扑核心", "全息投影 · 能量粒子流")
+
+topologyText = MarkDownRenderer("```\n    [节点A] ═══▶ [节点B]\n       ║              ║\n       ║    ◉ 核心     ║\n       ║   发电机      ║\n       ║              ║\n    [节点C] ═══▶ [节点D]\n```", "clear")
+
+nodeStats = Table([
+  Col("节点", ["A", "B", "C", "D", "核心"]),
+  Col("负载%", [82, 76, 91, 68, 95], "number"),
+  Col("状态", @Each([
+    {status: "正常"}, {status: "正常"}, {status: "警告"}, {status: "正常"}, {status: "满载"}
+  ], "item", Tag(item.status, null, "sm", item.status == "正常" ? "success" : item.status == "警告" ? "warning" : "danger"))),
+  Col("粒子流", ["→→→", "→→", "→→→→", "→", "→→→→→"])
+])
+
+energyFlow = BarChart(["输入", "输出", "损耗", "储备"], [
+  Series("能量(MW)", [1200, 1080, 45, 75])
+], "grouped", "流向", "功率", 160)
+
+centerFooter = TextContent("🔵 能量粒子穿梭中 | 传输效率 90.0%", "small")
+
+rightPanel = Card([
+  rightHeader,
+  allocationChart,
+  regionTable,
+  rightFooter
+], "sunk", "column", "m")
+
+rightHeader = CardHeader("ENERGY ALLOCATION", "区域电力分配 · 品红光效")
+
+allocationChart = HorizontalBarChart(["华北区", "华东区", "华南区", "西部区", "东北区"], [
+  Series("分配量(MW)", [320, 280, 245, 190, 165])
+], "grouped", "功率", "区域")
+
+regionTable = Table([
+  Col("区域", ["华北", "华东", "华南", "西部", "东北"]),
+  Col("占比%", [26.7, 23.3, 20.4, 15.8, 13.8], "number"),
+  Col("趋势", ["↑", "→", "↑", "↓", "→"]),
+  Col("状态", @Each([
+    {s: "正常"}, {s: "正常"}, {s: "正常"}, {s: "低效"}, {s: "正常"}
+  ], "item", Tag(item.s, null, "sm", item.s == "正常" ? "success" : "warning")))
+])
+
+rightFooter = TextContent("🟣 总分配 1,200MW | 峰值 1,350MW", "small")
+
+footer = Stack([
+  warningPanel,
+  aiPanel
+], "row", "l", "stretch")
+
+warningPanel = Card([
+  warnHeader,
+  warnList,
+  warnChart
+], "sunk", "column", "m")
+
+warnHeader = CardHeader("⚠ 异常预警 WARNING", "故障艺术纹理 · 闪烁红光")
+
+warnList = EntityList([
+  {left: "节点C 过载", right: "91%"},
+  {left: "线路B-2 温度", right: "78°C"},
+  {left: "变压器D 振动", right: "0.4mm"},
+  {left: "频率偏移", right: "0.02Hz"},
+  {left: "谐波失真", right: "3.2%"}
+], "default", {left: "故障项", right: "数值", rightVariant: "number"}, {left: "共5项", right: "🔴 红色警报", rightVariant: "text"})
+
+warnChart = PieChart(["严重", "警告", "提示"], [1, 2, 2], "donut")
+
+aiPanel = Card([
+  aiHeader,
+  aiMatrix,
+  aiPrediction,
+  aiFooter
+], "sunk", "column", "m")
+
+aiHeader = CardHeader("🤖 AI 能效预测", "全息折线 · 数据矩阵")
+
+aiMatrix = Table([
+  Col("时段", ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"]),
+  Col("预测负载(MW)", [680, 520, 890, 1100, 950, 780], "number"),
+  Col("置信度%", [94, 91, 88, 85, 90, 93], "number"),
+  Col("建议", ["降载", "待机", "增供", "峰值", "平稳", "降载"])
+])
+
+aiPrediction = AreaChart(["周一", "周二", "周三", "周四", "周五", "周六", "周日"], [
+  Series("AI预测", [920, 945, 980, 1010, 970, 850, 780]),
+  Series("实际值", [910, 950, 975, 1005, 960, 840, 770])
+], "natural", "日期", "MW", 160)
+
+aiFooter = TextContent("🟣 总分配 1,200MW | 峰值 1,350MW", "

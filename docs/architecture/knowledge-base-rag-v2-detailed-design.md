@@ -105,10 +105,10 @@
 | LanceDB/FTS5 | 改成单通道、JS 暴力计算或返回残缺索引结果 | 当前索引或检索失败 | 查看诊断并手动重建索引 |
 | 已启用 query rewrite/rerank | 使用原 query、跳过 rerank 继续回答 | 当前对话检索失败，不调用回答模型 | 修复配置后重试，或由客户显式修改 retrieval profile |
 | 多知识库检索 | 忽略失败知识库并返回其他库结果 | 整次检索失败 | 处理失败知识库或重新选择检索范围 |
-| worker 崩溃/任务中断 | 自动重放、自动恢复、无限重试 | 标记 `interrupted` 并停止 | 客户查看错误后创建新的重试任务 |
+| worker 崩溃/任务中断 | 自动重放业务写入、无限重试 | 标记 `interrupted`；有界重启服务 | 客户查看错误后创建新的重试任务 |
 | 检测到旧版数据 | 读取、转换、ID 映射、双写、旧链路回退 | V2 只初始化空白新库 | 客户从原文件重新导入，自行处置旧目录 |
 
-“客户手动处理”是产品行为约束：错误页面必须给出错误码、失败阶段、日志位置、关联文档/任务和允许的操作按钮，但后台不得代替客户触发恢复动作。
+错误页面给出错误码、失败阶段、关联文档/任务和允许的操作。服务进程可以恢复；中断的业务写入不自动重放，防止重复创建或重复导入。
 
 ## 4. 目标与非目标
 
@@ -143,7 +143,7 @@ flowchart LR
 
   subgraph Main[Electron Main]
     IPC[KB IPC Controller]
-    SUP[KB Worker Supervisor]
+    SUP[KnowledgeWorkerClient / 单次初始化与有界重启]
     PERM[文件选择与权限]
   end
 
@@ -167,6 +167,8 @@ flowchart LR
   IPC --> SUP
   PERM --> SUP
   SUP <--> APP
+  APP -->|退出时拒绝等待请求| SUP
+  SUP -->|就绪进程退出后最多两次重启| APP
   APP --> JOB
   JOB --> INGEST
   APP --> RETRIEVE
@@ -194,6 +196,7 @@ flowchart LR
 - 使用 `dialog.showOpenDialog` 获取文件/目录权限。
 - 校验用户选择的真实路径、符号链接和允许范围。
 - 启动、监控和重启知识库 utility process。
+- 并发 RPC 共用初始化 Promise，等待 initialize 成功而非仅检查 pid；启动超时 30 秒。进程退出清理等待请求与旧句柄，已就绪服务最多自动重启两次，成功业务调用重置预算；启动失败后下次操作可重新启动。应用关闭取消恢复。
 - 将 renderer IPC 请求转换为 worker RPC，并把 job event 推送给窗口。
 
 **KB utility process**
@@ -201,6 +204,7 @@ flowchart LR
 - 独占知识库写任务调度，执行解析、切分、embedding、索引、同步和检索。
 - 打开独立 SQLite 连接并启用 WAL、busy timeout；所有知识库写操作由该进程串行协调。
 - 解析崩溃不拖垮主窗口；进程重启后把运行中的 job 标记为 `interrupted`，不自动续跑，客户可查看错误后手动重试。
+- 集合管理启动只打开 SQLite；LanceDB 与 Xberg 分别在索引/检索与文档解析时加载，原生扩展的加载错误不阻止基本集合创建。
 
 ### 5.2 包与目录建议
 
@@ -1256,7 +1260,7 @@ zod                    # IPC/RPC DTO runtime validation（若项目尚无统一�
 构建需要：
 
 - 在 `vite.config.ts` 的 main process externals 增加 LanceDB/Xberg native packages。
-- `electron-builder` 除 `**/*.node` 外，按包实际产物检查 `.dll/.dylib/.so` 和模型资源的 unpack/copy。
+- Windows `electron-builder` 关闭 smart unpack，将 LanceDB/Xberg/SQLite 的平台 `.node` 与配套 DLL 扁平复制到 `resources/native`；知识库 worker 从 `app.asar` 加载 JavaScript 包，并只把原生 binding 重定向到该目录。
 - afterPack 执行平台二进制存在性校验，缺失时构建失败，不能等用户启动后报错。
 - CI 增加 packaged-app smoke test，不只跑 Vite dev。
 - OCR/本地模型放 `extraResources` 或用户数据下载目录，不打入基础 ASAR。
@@ -1266,7 +1270,7 @@ zod                    # IPC/RPC DTO runtime validation（若项目尚无统一�
 | 风险 | 应对 |
 | --- | --- |
 | Xberg 近期更名或 Node ABI/平台包变化 | 先 spike、锁定版本与 checksum；验证失败的平台不发布 V2，不替换 parser |
-| LanceDB 原生包在 Electron 打包后缺资源 | external + asarUnpack + 三平台 packaged smoke test；验证失败则阻止构建发布 |
+| LanceDB 原生包在 Electron 打包后缺资源 | external + `resources/native` 扁平 binding + packaged smoke test；验证失败则阻止构建发布 |
 | SQLite 与 LanceDB 双写不一致 | shadow revision、outbox、read-time active revision 校验；发现不一致即报错并要求客户手动重建 |
 | 中文 FTS 效果不稳定 | unicode61 + trigram 双路；中文 fixture 和 Recall 门槛；后续可插入分词器 adapter |
 | OCR 增大安装体积和启动耗时 | 默认不内置模型；按需下载；独立 process；资源配额 |

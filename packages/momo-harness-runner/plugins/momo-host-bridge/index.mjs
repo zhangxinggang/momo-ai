@@ -1,17 +1,19 @@
 import { createUserMessage } from '@deepseek-ai/dsh-llm';
 import * as PiAi from '@deepseek-ai/dsh-llm-pi-ai';
+import { PERSONA_PREFIX_SECTION } from '@deepseek-ai/dsh-system-prompt';
 import { createHash, randomUUID } from 'node:crypto';
 import readline from 'node:readline';
 import {
   CHINESE_OUTPUT,
   CONTINUE_AFTER_LIMIT,
+  builtinPolicy,
   commandResultText,
   failurePayload,
   providerProfile,
   requestConfig,
 } from './model-policy.mjs';
 import { runManagedCode } from './process.mjs';
-import { nativeInputSchema } from './tool-schema.mjs';
+import { registerHostTools } from './host-tools.mjs';
 export const name = 'momo-host-bridge';
 export const inject = [
   'agents',
@@ -237,7 +239,7 @@ export function apply(ctx) {
       throw Error('Attachment too large');
     if (Buffer.from(input.data, 'base64').toString('base64') !== input.data)
       throw Error('INVALID_BASE64');
-    if (input.mimeType.startsWith('image/')) {
+    if (input.mimeType.startsWith('image/') && !input.asFile) {
       const [attachment] = await ctx.attachments.saveImages([
         {
           data: new Uint8Array(Buffer.from(input.data, 'base64')),
@@ -251,6 +253,18 @@ export function apply(ctx) {
       type: 'file',
       attachment: await ctx.attachments.admitEncodedFile({ data: input.data, name: input.name }),
     };
+  }
+  function replaceTools(rec, tools) {
+    const update = (rec.toolUpdate ?? Promise.resolve()).catch(() => {}).then(async () => {
+      for (const dispose of rec.registrations) await dispose();
+      rec.registrations = [];
+      rec.registrations = await registerHostTools(rec.scopedContext, tools, (tool, args, exec) =>
+        call('host.tool', { runId: owner(exec.agent)?.runId, name: tool.name, args, callId: exec.callId }, exec.signal));
+      rec.current.tools = tools;
+      for (const run of runs.values()) if (run.agent === rec.handle.agent) run.tools = tools;
+    });
+    rec.toolUpdate = update;
+    return update;
   }
   async function start(input) {
     if (runs.has(input.runId)) return { runId: input.runId };
@@ -275,6 +289,15 @@ export function apply(ctx) {
         agentCtx,
         input.agentId === 'default' ? 'momo-default' : input.agentId,
       );
+      if (input.agentId === 'default' || input.agentId === 'momo-default') {
+        const systemPrompt = agentCtx.get('systemPrompt');
+        systemPrompt.section({
+          name: PERSONA_PREFIX_SECTION,
+          order: systemPrompt.getSectionOrder('DEPLOYMENT_PERSONA_PREFIX'),
+          interpolate: false,
+          text: () => rec?.current?.builtinPolicies?.runtimeAssistant ?? input.builtinPolicies?.runtimeAssistant ?? builtinPolicy('runtimeAssistant'),
+        });
+      }
       agentCtx
         .get('systemPrompt')
         .section({
@@ -285,7 +308,8 @@ export function apply(ctx) {
         });
       agentCtx
         .get('systemPrompt')
-        .section({ name: 'momo:language', order: 1000, interpolate: false, text: CHINESE_OUTPUT });
+        .section({ name: 'momo:language', order: 1000, interpolate: false,
+          text: () => rec?.current?.builtinPolicies?.runtimeLanguage ?? input.builtinPolicies?.runtimeLanguage ?? CHINESE_OUTPUT });
       agentCtx.get('skills').registerProvider((control) => {
         invalidateSkills = control.invalidate;
         return {
@@ -317,35 +341,6 @@ export function apply(ctx) {
             return { ...candidate, content: result.content };
           },
         };
-      });
-    };
-    const registerTools = (agentCtx, tools) => {
-      return tools.map((tool) => {
-        const parameters = nativeInputSchema(tool.inputSchema);
-        const aliases = [...new Set([tool.title, ...(tool.aliases ?? [])].filter(Boolean))];
-        const identity = aliases.length ? '\n可识别名称：' + aliases.join('、') : '';
-        const description =
-          tool.description +
-          identity +
-          (JSON.stringify(parameters) === JSON.stringify(tool.inputSchema)
-            ? ''
-            : '\n完整输入约束由宿主严格校验：' + JSON.stringify(tool.inputSchema));
-        return agentCtx.get('tools').register({
-          name: tool.name,
-          description,
-          parameters,
-          output: {
-            schema: {},
-            render: (_, value) => [{ type: 'text', text: JSON.stringify(value) }],
-          },
-          isConcurrencySafe: () => tool.parallelSafe,
-          execute: (args, exec) =>
-            call(
-              'host.tool',
-              { runId: owner(exec.agent)?.runId, name: tool.name, args, callId: exec.callId },
-              exec.signal,
-            ),
-        });
       });
     };
     if (!rec) {
@@ -397,10 +392,10 @@ export function apply(ctx) {
     rec.current = input;
     rec.invalidateSkills?.();
     await ctx.credentials.set(rec.envKey, input.model.apiKey);
-    for (const dispose of rec.registrations) dispose();
-    rec.registrations = registerTools(rec.scopedContext, input.tools);
+    await replaceTools(rec, input.tools);
     run.agent = rec.handle.agent;
     runs.set(input.runId, run);
+    ctx.planMode.section = input.builtinPolicies?.runtimePlan ?? builtinPolicy('runtimePlan');
     ctx.planMode.set(run.agent, input.modeId === 'plan');
 
     if (!input.resume && !input.hasNativeHistory && input.history?.length) {
@@ -464,7 +459,7 @@ export function apply(ctx) {
           run.nativeReason = undefined;
           run.agent.followup(
             createUserMessage({
-              content: [{ type: 'text', text: CONTINUE_AFTER_LIMIT }],
+              content: [{ type: 'text', text: input.builtinPolicies?.runtimeContinue ?? CONTINUE_AFTER_LIMIT }],
               source: { kind: 'user' },
             }),
           );
@@ -530,6 +525,13 @@ export function apply(ctx) {
     },
     prepareAttachment,
     start,
+    async updateCustomTools({ tools }) {
+      if (!Array.isArray(tools) || tools.some(tool => !tool.id?.startsWith('custom.'))) throw Error('INVALID_CUSTOM_CATALOG');
+      for (const rec of sessions.values()) {
+        await replaceTools(rec, [...rec.current.tools.filter(tool => !tool.id.startsWith('custom.')), ...tools]);
+      }
+      return { updated: sessions.size };
+    },
     attachmentPaths({ attachments }) {
       return attachments.map((block) =>
         block.type === 'file'

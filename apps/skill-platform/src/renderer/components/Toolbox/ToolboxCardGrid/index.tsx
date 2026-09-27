@@ -1,3 +1,4 @@
+import { useSortableSidebarList } from '@renderer/hooks/useSidebarOrder';
 import { clsx } from 'clsx';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -15,6 +16,7 @@ import styles from './index.module.less';
 
 interface IProps {
   toolTitle: string;
+  toolKey: string;
   cards: IToolboxCardItem[];
   activeCardKey: string;
   onSelectCard: (cardKey: string) => void;
@@ -36,7 +38,8 @@ function resolveCardIcon(title: string): LucideIcon {
 
 /** 工具箱卡片列表（非 childrenInLeaf 模式） */
 export function ToolboxCardGrid(props: IProps) {
-  const { toolTitle, cards, activeCardKey, onSelectCard } = props;
+  const { toolTitle, toolKey, cards, activeCardKey, onSelectCard } = props;
+  const ordering = useSortableSidebarList('toolbox', cards, (card) => card.key, toolKey);
 
   return (
     <div className={styles['toolbox-card-grid']}>
@@ -45,7 +48,7 @@ export function ToolboxCardGrid(props: IProps) {
         <p className={styles['toolbox-card-grid-desc']}>{'选择下方工具卡片开始使用'}</p>
       </div>
       <div className={styles['toolbox-card-grid-list']}>
-        {cards.map((card) => {
+        {ordering.items.map((card) => {
           const Icon = resolveCardIcon(card.title);
           const isActive = activeCardKey === card.key;
           const tabCount = card.tabs.length;
@@ -53,6 +56,7 @@ export function ToolboxCardGrid(props: IProps) {
           return (
             <button
               key={card.key}
+              {...ordering.dragProps(card.key)}
               type='button'
               className={clsx(
                 styles['toolbox-card-grid-card'],

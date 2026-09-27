@@ -77,13 +77,11 @@ const Pe =
     './common/content-types': function (E, H, f) {
       (Object.defineProperty(f, '__esModule', { value: !0 }),
         (f.parseContentTypes = function (d, i) {
-          return i
-            .elements(d)
-            .map((T) => ({
-              extension: i.attr(T, 'Extension'),
-              partName: i.attr(T, 'PartName'),
-              contentType: i.attr(T, 'ContentType'),
-            }));
+          return i.elements(d).map((T) => ({
+            extension: i.attr(T, 'Extension'),
+            partName: i.attr(T, 'PartName'),
+            contentType: i.attr(T, 'ContentType'),
+          }));
         }));
     },
     './common/open-xml-package': function (E, H, f) {

@@ -25,6 +25,9 @@
           inset-inline-end: 0;
           // 幽灵空白
           font-size: 0;
+          z-index: 10;
+          padding: 0;
+          border: 0;
           background-color: var(--md-bk-color-outstand);
           border-end-start-radius: 4px;
           color: var(--md-color);
@@ -131,6 +134,11 @@
       width: 100%;
     }
   }
+}
+
+.@{prefix}-modal-clip .@{prefix}-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 @media (max-width: 688px) {

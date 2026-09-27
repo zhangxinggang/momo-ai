@@ -1,7 +1,7 @@
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { languages } from '@codemirror/language-data';
-import { EditorState, type Extension } from '@codemirror/state';
-import { EditorView, keymap, lineNumbers } from '@codemirror/view';
+import { Compartment, EditorState, type Extension } from '@codemirror/state';
+import { Decoration, EditorView, keymap, lineNumbers } from '@codemirror/view';
 import { useEffect, useRef } from 'react';
 
 import {
@@ -17,6 +17,7 @@ export interface IProps {
   onSave?: () => void;
   readOnly?: boolean;
   themeId?: ECodeEditorTheme;
+  highlightedLines?: { lines: number[]; kind: 'add' | 'remove' };
 }
 
 function getFileExtension(relativePath: string): string {
@@ -67,13 +68,34 @@ export function CodeFileEditor({
   onSave,
   readOnly = false,
   themeId = DEFAULT_CODE_EDITOR_THEME,
+  highlightedLines,
 }: IProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  const lineEndingRef = useRef(value.includes('\r\n') ? '\r\n' : '\n');
+  lineEndingRef.current = value.includes('\r\n') ? '\r\n' : '\n';
   const onChangeRef = useRef(onChange);
   const onSaveRef = useRef(onSave);
+  const highlightsRef = useRef(highlightedLines);
+  const highlightsCompartment = useRef(new Compartment());
   onChangeRef.current = onChange;
   onSaveRef.current = onSave;
+  highlightsRef.current = highlightedLines;
+  const highlightExtension = (_doc: EditorState['doc']) =>
+    EditorView.decorations.compute(['doc'], (state) =>
+      Decoration.set(
+        [...new Set(highlightsRef.current?.lines ?? [])]
+          .filter((line) => line > 0 && line <= state.doc.lines)
+          .sort((a, b) => a - b)
+          .map((line) =>
+            Decoration.line({ class: `cm-change-${highlightsRef.current?.kind}` }).range(
+              state.doc.line(line).from,
+            ),
+          ),
+      ),
+    );
 
   useEffect(() => {
     const container = containerRef.current;
@@ -93,9 +115,10 @@ export function CodeFileEditor({
       }
 
       const state = EditorState.create({
-        doc: value,
+        doc: valueRef.current,
         extensions: [
           editorTheme,
+          highlightsCompartment.current.of([]),
           lineNumbers(),
           history(),
           keymap.of([
@@ -113,7 +136,9 @@ export function CodeFileEditor({
           EditorView.lineWrapping,
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
-              onChangeRef.current(update.state.doc.toString());
+              onChangeRef.current(
+                update.state.doc.toString().replace(/\n/g, lineEndingRef.current),
+              );
             }
           }),
           EditorState.readOnly.of(readOnly),
@@ -125,6 +150,11 @@ export function CodeFileEditor({
       viewRef.current = new EditorView({
         state,
         parent: containerRef.current,
+      });
+      viewRef.current.dispatch({
+        effects: highlightsCompartment.current.reconfigure(
+          highlightExtension(viewRef.current.state.doc),
+        ),
       });
     };
 
@@ -142,7 +172,7 @@ export function CodeFileEditor({
     if (!view) {
       return;
     }
-    const currentValue = view.state.doc.toString();
+    const currentValue = view.state.doc.toString().replace(/\n/g, lineEndingRef.current);
     if (currentValue === value) {
       return;
     }
@@ -154,6 +184,14 @@ export function CodeFileEditor({
       },
     });
   }, [value]);
+
+  useEffect(() => {
+    const view = viewRef.current;
+    if (view)
+      view.dispatch({
+        effects: highlightsCompartment.current.reconfigure(highlightExtension(view.state.doc)),
+      });
+  }, [highlightedLines, value]);
 
   return <div className='momo-file-editor__code-editor' ref={containerRef} />;
 }

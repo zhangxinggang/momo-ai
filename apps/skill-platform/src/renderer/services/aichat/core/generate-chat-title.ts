@@ -1,3 +1,4 @@
+import { getBuiltinSkillPrompt } from '@/shared/builtin-skills';
 import { generateSessionTitle } from '@momo/aichat';
 
 import type { IAIConfig } from '@renderer/services/ai';
@@ -21,8 +22,7 @@ export async function generateChatTitle(
       [
         {
           role: 'system',
-          content:
-            '根据对话内容生成一个简洁的中文标题，不超过15个字，不要引号和标点结尾。只输出标题本身。',
+          content: getBuiltinSkillPrompt('chatTitle'),
         },
         {
           role: 'user',

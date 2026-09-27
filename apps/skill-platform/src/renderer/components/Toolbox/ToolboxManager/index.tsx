@@ -9,22 +9,20 @@ import { CustomToolWorkspace } from '../CustomToolWorkspace';
 import { ToolboxCardGrid } from '../ToolboxCardGrid';
 import { ToolboxDetailHeader } from '../ToolboxDetailHeader';
 import { ToolWebview } from '../ToolWebview';
-import { useToolboxTools } from '../useToolboxTools';
+import { useToolboxNodes } from '../useToolboxTools';
 import {
   collectHrefTabs,
   EToolboxToolMode,
   findBranchByKey,
   findToolByKey,
   mapCardItems,
-  mapToolsWithKeys,
 } from '../utils';
 import styles from './index.module.less';
 
 /** 工具箱主内容区：自定义工具 / iframe / Tab / 卡片列表 */
 export function ToolboxManager() {
   const customSelectedId = useCustomToolStore((state) => state.selectedId);
-  const tools = useToolboxTools();
-  const toolNodes = useMemo(() => mapToolsWithKeys(tools), [tools]);
+  const toolNodes = useToolboxNodes();
 
   const activeToolboxToolKey = useUIStore((state) => state.activeToolboxToolKey);
   const activeToolboxBranchKey = useUIStore((state) => state.activeToolboxBranchKey);
@@ -149,6 +147,7 @@ export function ToolboxManager() {
       <div className={styles['toolbox-manager']}>
         <ToolboxCardGrid
           toolTitle={activeTool.title}
+          toolKey={activeTool.key}
           cards={cardItems}
           activeCardKey={activeToolboxBranchKey}
           onSelectCard={setActiveToolboxBranchKey}

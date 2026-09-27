@@ -8,6 +8,19 @@ export interface IAgentProjectMarker {
 
 export type EAgentResourceCapability = 'native-equivalent' | 'adapted' | 'unsupported';
 
+/** 兼容旧单选值；显式空数组表示不启用任何 Agent。 */
+export function normalizeAgentAppIds(value?: string | readonly string[] | null): string[] {
+  const values = typeof value === 'string' ? [value] : Array.isArray(value) ? value : [];
+  return [
+    ...new Set(
+      values
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  ];
+}
+
 /** 已验证的 Agent 应用资源约定 */
 export interface IAgentAppProfile {
   schemaVersion: number;

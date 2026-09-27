@@ -377,7 +377,7 @@ export function SkillScanPreview({
                     <h3 className='text-sm font-medium'>{loadError || '暂无默认技能包'}</h3>
                     {!loadError && (
                       <p className='mt-1 text-xs opacity-70'>
-                        {'请确认 default/skills 目录下是否已放置有效的 zip 文件'}
+                        {'请确认 default/skills/user 目录下是否已放置有效的 zip 文件'}
                       </p>
                     )}
                   </>

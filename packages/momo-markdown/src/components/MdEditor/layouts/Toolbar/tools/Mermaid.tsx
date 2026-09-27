@@ -3,14 +3,14 @@ import DropDown from '~/components/Dropdown';
 import Icon from '~/components/Icon';
 import { prefix } from '~/config';
 import { EditorContext } from '~/context';
-import { REPLACE } from '~/static/event-name';
+import { DRAWIO_CREATE, REPLACE } from '~/static/event-name';
 import { classnames } from '~/utils';
 import { getChartMenuIcon } from '~/utils/chart/icons';
 import { getMermaidMenuItems, getPlantumlMenuItems } from '~/utils/chart/templates';
 import { TToolDirective } from '~/utils/content-help';
 import bus from '~/utils/event-bus';
 
-type EChartTab = 'mermaid' | 'plantuml';
+type EChartTab = 'custom' | 'mermaid' | 'plantuml';
 
 const ToolbarMermaid = () => {
   const {
@@ -59,6 +59,20 @@ const ToolbarMermaid = () => {
       <div className={`${prefix}-chart-menu`}>
         <div className={`${prefix}-chart-menu-tabs`} role='tablist'>
           <button
+            type='button'
+            role='tab'
+            aria-selected={activeTab === 'custom'}
+            className={classnames([
+              `${prefix}-chart-menu-tab`,
+              activeTab === 'custom' && `${prefix}-chart-menu-tab-active`,
+            ])}
+            onClick={(event) => {
+              event.stopPropagation();
+              setActiveTab('custom');
+            }}>
+            {isZh ? '自定义' : 'Custom'}
+          </button>
+          <button
             className={classnames([
               `${prefix}-chart-menu-tab`,
               activeTab === 'mermaid' && `${prefix}-chart-menu-tab-active`,
@@ -87,46 +101,63 @@ const ToolbarMermaid = () => {
             PlantUML
           </button>
         </div>
-        <div className={`${prefix}-chart-menu-search`}>
-          <input
-            className={`${prefix}-chart-menu-search-input`}
-            type='search'
-            placeholder={isZh ? '搜索图表' : 'Search charts'}
-            value={keyword}
-            onClick={(event) => event.stopPropagation()}
-            onChange={(event) => setKeyword(event.target.value)}
-          />
-        </div>
-        <ul
-          className={`${prefix}-menu ${prefix}-chart-menu-list`}
-          onClick={() => {
-            setVisible(false);
-          }}
-          role='menu'>
-          {filteredMenuItems.map((item) => {
-            const MenuIcon = getChartMenuIcon(item.direct);
-            return (
-              <li
-                key={item.direct}
-                className={`${prefix}-menu-item ${prefix}-menu-item-mermaid ${prefix}-chart-menu-item`}
-                onClick={() => {
-                  emitHandler(item.direct as TToolDirective);
-                }}
-                role='menuitem'
-                tabIndex={0}>
-                <span className={`${prefix}-chart-menu-item-icon`}>
-                  {createElement(MenuIcon, { size: 14, strokeWidth: 2 })}
-                </span>
-                <span className={`${prefix}-chart-menu-item-label`}>
-                  {isZh ? item.labelZh : item.labelEn}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+        {activeTab === 'custom' ? (
+          <div className={`${prefix}-chart-menu-custom`}>
+            <p>{isZh ? 'drawio任意图形绘制' : 'Draw any diagram with draw.io'}</p>
+            <button
+              type='button'
+              disabled={disabled}
+              onClick={() => {
+                setVisible(false);
+                bus.emit(editorId, DRAWIO_CREATE);
+              }}>
+              {isZh ? '新增' : 'New'}
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className={`${prefix}-chart-menu-search`}>
+              <input
+                className={`${prefix}-chart-menu-search-input`}
+                type='search'
+                placeholder={isZh ? '搜索图表' : 'Search charts'}
+                value={keyword}
+                onClick={(event) => event.stopPropagation()}
+                onChange={(event) => setKeyword(event.target.value)}
+              />
+            </div>
+            <ul
+              className={`${prefix}-menu ${prefix}-chart-menu-list`}
+              onClick={() => {
+                setVisible(false);
+              }}
+              role='menu'>
+              {filteredMenuItems.map((item) => {
+                const MenuIcon = getChartMenuIcon(item.direct);
+                return (
+                  <li
+                    key={item.direct}
+                    className={`${prefix}-menu-item ${prefix}-menu-item-mermaid ${prefix}-chart-menu-item`}
+                    onClick={() => {
+                      emitHandler(item.direct as TToolDirective);
+                    }}
+                    role='menuitem'
+                    tabIndex={0}>
+                    <span className={`${prefix}-chart-menu-item-icon`}>
+                      {createElement(MenuIcon, { size: 14, strokeWidth: 2 })}
+                    </span>
+                    <span className={`${prefix}-chart-menu-item-label`}>
+                      {isZh ? item.labelZh : item.labelEn}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
       </div>
     );
-  }, [activeTab, emitHandler, filteredMenuItems, keyword, language]);
+  }, [activeTab, emitHandler, filteredMenuItems, keyword, language, disabled, editorId]);
 
   const child = useMemo(() => {
     return (

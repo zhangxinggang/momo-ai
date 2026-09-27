@@ -58,19 +58,17 @@ const p = async (t, i, r = t.name, n) => {
         o = `${r}/${e.name}`;
       e.kind === 'file'
         ? y.push(
-            e
-              .getFile()
-              .then(
-                (a) => (
-                  (a.directoryHandle = t),
-                  (a.handle = e),
-                  Object.defineProperty(a, 'webkitRelativePath', {
-                    configurable: !0,
-                    enumerable: !0,
-                    get: () => o,
-                  })
-                ),
+            e.getFile().then(
+              (a) => (
+                (a.directoryHandle = t),
+                (a.handle = e),
+                Object.defineProperty(a, 'webkitRelativePath', {
+                  configurable: !0,
+                  enumerable: !0,
+                  get: () => o,
+                })
               ),
+            ),
           )
         : e.kind !== 'directory' || !i || (n && n(e)) || s.push(p(e, i, o, n));
     }

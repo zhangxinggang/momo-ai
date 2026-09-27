@@ -8,6 +8,7 @@ export class AgentStore {
       CREATE TABLE IF NOT EXISTS agent_sessions(id TEXT PRIMARY KEY,project_id TEXT NOT NULL,bundle_id TEXT NOT NULL,native_id TEXT NOT NULL,agent_id TEXT NOT NULL,model_id TEXT NOT NULL,created_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS agent_runs(id TEXT PRIMARY KEY,session_id TEXT NOT NULL,project_id TEXT NOT NULL,turn_id TEXT NOT NULL,idempotency_key TEXT NOT NULL UNIQUE,status TEXT NOT NULL,input TEXT NOT NULL,created_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS agent_events(run_id TEXT NOT NULL,seq INTEGER NOT NULL,event TEXT NOT NULL,PRIMARY KEY(run_id,seq));
+      CREATE TABLE IF NOT EXISTS agent_file_changes(run_id TEXT NOT NULL,path TEXT NOT NULL,record TEXT NOT NULL,PRIMARY KEY(run_id,path));
       CREATE TABLE IF NOT EXISTS agent_sources(id TEXT PRIMARY KEY,revision TEXT NOT NULL,metadata TEXT NOT NULL,blob_id TEXT NOT NULL,derived_text TEXT NOT NULL DEFAULT '');
       CREATE TABLE IF NOT EXISTS agent_contexts(id TEXT PRIMARY KEY,run_id TEXT NOT NULL,manifest TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS agent_grants(id TEXT PRIMARY KEY,project_id TEXT NOT NULL,tool_id TEXT NOT NULL,revision TEXT NOT NULL,target_hash TEXT NOT NULL,expires_at INTEGER NOT NULL);
@@ -38,6 +39,34 @@ export class AgentStore {
   }
   session(id: string): any {
     return this.db.prepare('SELECT * FROM agent_sessions WHERE id=?').get(id);
+  }
+  clearSession(sessionId: string) {
+    this.db.transaction(() => {
+      const busy = this.db
+        .prepare(
+          "SELECT id FROM agent_runs WHERE session_id=? AND status IN ('starting','running','cancelling') LIMIT 1",
+        )
+        .get(sessionId);
+      if (busy) throw new Error('当前会话正在生成，请先停止生成后再清除上下文');
+      const runs = this.db
+        .prepare('SELECT id FROM agent_runs WHERE session_id=?')
+        .all(sessionId) as Array<{ id: string }>;
+      for (const run of runs) {
+        this.db.prepare('DELETE FROM agent_events WHERE run_id=?').run(run.id);
+        this.db.prepare('DELETE FROM agent_file_changes WHERE run_id=?').run(run.id);
+        this.db.prepare('DELETE FROM agent_contexts WHERE run_id=?').run(run.id);
+        this.db.prepare('DELETE FROM agent_audit WHERE run_id=?').run(run.id);
+        this.remove('kb-scope:' + run.id);
+        this.remove('kb-count:' + run.id);
+      }
+      this.db.prepare('DELETE FROM agent_runs WHERE session_id=?').run(sessionId);
+      // Keep the logical conversation and its bindings, but never resume the old native context.
+      this.db
+        .prepare('UPDATE agent_sessions SET native_id=? WHERE id=?')
+        .run(randomUUID(), sessionId);
+      this.remove('native-ready:' + sessionId);
+      this.remove('uploaded-files:' + sessionId);
+    })();
   }
   run(id: string): any {
     return this.db.prepare('SELECT * FROM agent_runs WHERE id=?').get(id);

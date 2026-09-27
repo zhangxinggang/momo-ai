@@ -29,7 +29,31 @@ export interface INoteMentionMatch {
 }
 
 export function getNoteMentionDisplayPath(path: string): string {
+  const workspace = parseWorkspaceMentionPath(path);
+  if (workspace) {
+    return workspace.relativePath.replace(/\\/g, '/');
+  }
   return path.replace(/\\/g, '/');
+}
+
+export function parseWorkspaceMentionPath(
+  path: string,
+): { rootPath: string; relativePath: string } | null {
+  if (!path.startsWith('workspace:')) return null;
+  const separator = path.indexOf('::', 'workspace:'.length);
+  if (separator < 0) return null;
+  try {
+    return {
+      rootPath: decodeURIComponent(path.slice('workspace:'.length, separator)),
+      relativePath: decodeURIComponent(path.slice(separator + 2)),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function getReferenceLabel(path: string): '笔记' | '工作区文件' {
+  return parseWorkspaceMentionPath(path) ? '工作区文件' : '笔记';
 }
 
 /** 解析文本中的笔记引用片段 */
@@ -341,17 +365,18 @@ export function expandNoteMentionsWithSnapshots(
   for (const mention of [...mentions].reverse()) {
     const normalizedPath = normalizeNotePath(mention.path);
     const displayPath = getNoteMentionDisplayPath(mention.path);
+    const label = getReferenceLabel(mention.path);
     const snapshot = snapshots[normalizedPath] ?? snapshots[mention.path];
 
     if (snapshot) {
       const block = [
-        `--- 笔记: ${displayPath} START ---`,
+        `--- ${label}: ${displayPath} START ---`,
         snapshot.content,
-        `--- 笔记: ${displayPath} END ---`,
+        `--- ${label}: ${displayPath} END ---`,
       ].join('\n');
       result = `${result.slice(0, mention.start)}${block}${result.slice(mention.end)}`;
     } else {
-      result = `${result.slice(0, mention.start)}[笔记 ${displayPath} 未找到快照]${result.slice(mention.end)}`;
+      result = `${result.slice(0, mention.start)}[${label} ${displayPath} 未找到快照]${result.slice(mention.end)}`;
     }
   }
   return result;
@@ -359,11 +384,14 @@ export function expandNoteMentionsWithSnapshots(
 
 /** 剥离助手回答中被复述的笔记全文块 */
 export function stripEchoedNoteBlocks(content: string): string {
-  if (!content || !content.includes('--- 笔记:')) {
+  if (!content || (!content.includes('--- 笔记:') && !content.includes('--- 工作区文件:'))) {
     return content;
   }
   const stripped = content
-    .replace(/--- 笔记:[^\n]*START ---\r?\n[\s\S]*?--- 笔记:[^\n]*END ---/g, '')
+    .replace(
+      /--- (?:笔记|工作区文件):[^\n]*START ---\r?\n[\s\S]*?--- (?:笔记|工作区文件):[^\n]*END ---/g,
+      '',
+    )
     .replace(/\n{3,}/g, '\n\n')
     .trim();
   return stripped.length > 0 ? stripped : content.trim();
@@ -412,16 +440,17 @@ export async function resolveNoteMentionsInContent(
   let result = content;
   for (const mention of [...mentions].reverse()) {
     const displayPath = getNoteMentionDisplayPath(mention.path);
+    const label = getReferenceLabel(mention.path);
     try {
       const noteText = await readContent(mention.path);
       const block = [
-        `--- 笔记: ${displayPath} START ---`,
+        `--- ${label}: ${displayPath} START ---`,
         noteText,
-        `--- 笔记: ${displayPath} END ---`,
+        `--- ${label}: ${displayPath} END ---`,
       ].join('\n');
       result = `${result.slice(0, mention.start)}${block}${result.slice(mention.end)}`;
     } catch {
-      result = `${result.slice(0, mention.start)}[笔记 ${displayPath} 读取失败]${result.slice(mention.end)}`;
+      result = `${result.slice(0, mention.start)}[${label} ${displayPath} 读取失败]${result.slice(mention.end)}`;
     }
   }
   return result;

@@ -10,14 +10,6 @@ export function getAichatIpc(): TApi['aichat'] | undefined {
   return getAppApi()?.aichat;
 }
 
-export function getFolderIpc(): TApi['folder'] | undefined {
-  return getAppApi()?.folder;
-}
-
-export function getIoIpc(): TApi['io'] | undefined {
-  return getAppApi()?.io;
-}
-
 export function getKbIpc(): TApi['kb'] | undefined {
   return getAppApi()?.kb;
 }
@@ -38,10 +30,6 @@ export function getOnlineConfIpc(): TApi['onlineConf'] | undefined {
   return getAppApi()?.onlineConf;
 }
 
-export function getPromptIpc(): TApi['prompt'] | undefined {
-  return getAppApi()?.prompt;
-}
-
 export function getRulesIpc(): TApi['rules'] | undefined {
   return getAppApi()?.rules;
 }
@@ -60,30 +48,6 @@ export function getSkillIpc(): TApi['skill'] | undefined {
 
 export function getSystemIpc(): TApi['system'] | undefined {
   return getAppApi()?.system;
-}
-
-export function getVersionIpc(): TApi['version'] | undefined {
-  return getAppApi()?.version;
-}
-
-export function getWorkflowIpc(): TApi['workflow'] | undefined {
-  return getAppApi()?.workflow;
-}
-
-export function getWorkflowAgentIpc(): TApi['workflowAgent'] | undefined {
-  return getAppApi()?.workflowAgent;
-}
-
-export function getWorkflowBackupIpc(): TApi['workflowBackup'] | undefined {
-  return getAppApi()?.workflowBackup;
-}
-
-export function getWorkflowBusinessIpc(): TApi['workflowBusiness'] | undefined {
-  return getAppApi()?.workflowBusiness;
-}
-
-export function getWorkflowFolderIpc(): TApi['workflowFolder'] | undefined {
-  return getAppApi()?.workflowFolder;
 }
 
 export function getWorkspaceIpc(): TApi['workspace'] | undefined {

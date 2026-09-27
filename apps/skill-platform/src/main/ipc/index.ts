@@ -2,25 +2,23 @@ import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
 import type { Database } from 'better-sqlite3';
 import { ipcMain } from 'electron';
 import { registerAgentRuntimeIPC } from '../agent-runtime/ipc';
-import { FolderDB, PromptDB, SkillDB, WorkflowDB } from '../database';
-import { WorkflowBusinessController } from '../database/controller/workflow-business';
-import { WorkflowFolderController } from '../database/controller/workflow-folder';
+import { SkillDB } from '../database';
+import { customToolWorkspaceService } from '../services/custom-tool';
 import { registerAgentAppIPC } from './agent-app';
 import { registerAIIPC } from './ai';
 import { registerAichatIPC } from './aichat-handlers';
+import { registerApiRequestIPC } from './api-request';
+import { registerBuiltinSkillsIPC } from './builtin-skills';
 import { registerCustomToolIPC } from './custom-tool';
 import { registerDataIPC } from './data';
 import { registerDialogIPC } from './dialog';
-import { registerFolderIPC } from './folder';
 import { registerFsIPC } from './fs';
 import { registerImageIPC } from './image';
-import { registerIoIPC } from './io';
 import { KNOWLEDGE_CHANNELS, registerKbIPC } from './kb';
 import { registerMcpIPC, startMcpHub } from './mcp';
 import { registerNoteIPC } from './note';
 import { registerNotificationIPC } from './notification';
 import { registerOnlineConfIPC } from './online-conf';
-import { registerPromptIPC } from './prompt';
 import { registerRulesIPC } from './rules';
 import { registerScraperIPC } from './scraper';
 import { registerSettingsIPC } from './settings';
@@ -28,34 +26,9 @@ import { registerShellIPC } from './shell';
 import { registerSkillIPC } from './skill';
 import { registerSystemIPC } from './system';
 import { registerWindowChromeIPC } from './window-chrome';
-import { registerWorkflowIPC } from './workflow';
-import { registerWorkflowAgentIPC } from './workflow-agent';
-import { registerWorkflowBackupIPC } from './workflow-backup';
-import { registerWorkflowBusinessIPC } from './workflow-business';
-import { registerWorkflowFolderIPC } from './workflow-folder';
 import { registerWorkspaceIPC } from './workspace';
 
 const REBINDABLE_DB_CHANNELS = [
-  IPC_CHANNELS.PROMPT_CREATE,
-  IPC_CHANNELS.PROMPT_GET,
-  IPC_CHANNELS.PROMPT_GET_ALL,
-  IPC_CHANNELS.PROMPT_UPDATE,
-  IPC_CHANNELS.PROMPT_DELETE,
-  IPC_CHANNELS.PROMPT_SEARCH,
-  IPC_CHANNELS.PROMPT_COPY,
-  IPC_CHANNELS.PROMPT_INSERT_DIRECT,
-  IPC_CHANNELS.PROMPT_SYNC_WORKSPACE,
-  IPC_CHANNELS.VERSION_GET_ALL,
-  IPC_CHANNELS.VERSION_CREATE,
-  IPC_CHANNELS.VERSION_ROLLBACK,
-  IPC_CHANNELS.VERSION_DELETE,
-  IPC_CHANNELS.VERSION_INSERT_DIRECT,
-  IPC_CHANNELS.FOLDER_CREATE,
-  IPC_CHANNELS.FOLDER_GET_ALL,
-  IPC_CHANNELS.FOLDER_UPDATE,
-  IPC_CHANNELS.FOLDER_DELETE,
-  IPC_CHANNELS.FOLDER_REORDER,
-  IPC_CHANNELS.FOLDER_INSERT_DIRECT,
   IPC_CHANNELS.SETTINGS_GET,
   IPC_CHANNELS.SETTINGS_SET,
   IPC_CHANNELS.SKILL_CREATE,
@@ -98,21 +71,6 @@ const REBINDABLE_DB_CHANNELS = [
   IPC_CHANNELS.SKILL_EXECUTE_WORKSPACE,
   IPC_CHANNELS.SKILL_ENSURE_SESSION_WORKSPACE,
   IPC_CHANNELS.SKILL_WRITE_SESSION_FILE,
-  IPC_CHANNELS.WORKFLOW_CREATE,
-  IPC_CHANNELS.WORKFLOW_GET,
-  IPC_CHANNELS.WORKFLOW_GET_ALL,
-  IPC_CHANNELS.WORKFLOW_UPDATE,
-  IPC_CHANNELS.WORKFLOW_DELETE,
-  IPC_CHANNELS.WORKFLOW_EXPORT_TEMPLATE,
-  IPC_CHANNELS.WORKFLOW_PREVIEW_IMPORT,
-  IPC_CHANNELS.WORKFLOW_COMMIT_IMPORT,
-  IPC_CHANNELS.WORKFLOW_CANCEL_IMPORT,
-  IPC_CHANNELS.WORKFLOW_BUSINESS_CREATE,
-  IPC_CHANNELS.WORKFLOW_BUSINESS_GET_ALL,
-  IPC_CHANNELS.WORKFLOW_BUSINESS_UPDATE,
-  IPC_CHANNELS.WORKFLOW_BUSINESS_DELETE,
-  IPC_CHANNELS.WORKFLOW_BUSINESS_DELETE_BY_WORKFLOW,
-  IPC_CHANNELS.WORKFLOW_BUSINESS_HAS_ANY,
   ...KNOWLEDGE_CHANNELS,
 ] as const;
 
@@ -126,6 +84,7 @@ function resetAllRegisteredIpcHandlers(): void {
  * 注册不依赖数据库的 IPC（应用启动时调用）
  */
 export function registerBootstrapIPC(): void {
+  registerBuiltinSkillsIPC();
   registerDialogIPC();
   registerFsIPC();
   registerDataIPC();
@@ -150,23 +109,10 @@ export function registerBootstrapIPC(): void {
 export function registerAllIPC(db: Database): void {
   resetAllRegisteredIpcHandlers();
 
-  const promptDB = new PromptDB();
-  const folderDB = new FolderDB();
   const skillDB = new SkillDB();
-  const workflowDB = new WorkflowDB();
-  const workflowBusinessDB = new WorkflowBusinessController();
-  const workflowFolderDB = new WorkflowFolderController();
-  registerPromptIPC(promptDB, folderDB);
-  registerFolderIPC(folderDB, promptDB);
-  registerIoIPC(promptDB, folderDB);
   registerSkillIPC(skillDB);
-  registerWorkflowIPC(workflowDB);
-  registerWorkflowBackupIPC(workflowDB, promptDB, folderDB, skillDB);
-  registerWorkflowBusinessIPC(workflowBusinessDB);
-  registerWorkflowFolderIPC(workflowFolderDB);
-  registerWorkflowAgentIPC();
   registerSettingsIPC(db);
-  registerAgentRuntimeIPC(db);
+  registerAgentRuntimeIPC(db, customToolWorkspaceService);
   registerImageIPC();
   registerAIIPC();
   registerAichatIPC();
@@ -176,5 +122,6 @@ export function registerAllIPC(db: Database): void {
   registerSystemIPC();
   registerRulesIPC();
   registerNoteIPC();
+  registerApiRequestIPC();
   registerCustomToolIPC();
 }

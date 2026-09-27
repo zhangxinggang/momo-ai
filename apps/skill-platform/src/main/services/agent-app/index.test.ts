@@ -26,7 +26,12 @@ vi.mock('../skill/installer/utils', () => ({
   getPlatformSkillsDir: () => '',
 }));
 
-import { detectAgentApps, listAgentAppSlash, prepareAgentAppSubmit } from './index';
+import {
+  detectAgentApps,
+  listAgentAppSlash,
+  prepareAgentAppSubmit,
+  resolveAgentAppContext,
+} from './index';
 
 const temporaryRoots: string[] = [];
 
@@ -99,7 +104,15 @@ describe('detectAgentApps', () => {
       label: '前端开发',
       scope: 'application',
       category: 'dev',
+      directoryPath: ['开发工具'],
     });
+    for (const query of ['开发工具', 'react', '测试']) {
+      const searched = await listAgentAppSlash(undefined, [], query);
+      expect(searched.items.map((resource) => resource.resourceId)).toEqual([
+        'application-skill:frontend-skill',
+      ]);
+      expect(searched.items[0].directoryPath).toEqual(['开发工具']);
+    }
 
     const item = listed.items[0];
     const prepared = await prepareAgentAppSubmit({
@@ -180,6 +193,33 @@ describe('detectAgentApps', () => {
     );
   });
 
+  it('provides the repository path for an imported application skill with scripts and templates', async () => {
+    const root = await createRoot();
+    applicationSkillState.skills = [
+      {
+        id: 'tender-skill',
+        name: 'tender-document-parser',
+        instructions: '读取 references/data-contract.md 并使用 assets/report.html。',
+        local_repo_path: root,
+        protocol_type: 'skill',
+        is_favorite: false,
+        created_at: 1,
+        updated_at: 1,
+      },
+    ];
+    const [item] = (await listAgentAppSlash(undefined, [])).items;
+    const result = await prepareAgentAppSubmit({
+      folderPaths: [],
+      content: '/tender-document-parser 解析文件',
+      displayContent: '/tender-document-parser 解析文件',
+      invocation: item,
+    });
+    expect(result.action).toBe('allow');
+    expect(result.content).toContain(JSON.stringify(path.join(root, 'SKILL.md')));
+    expect(result.content).toContain(JSON.stringify(root));
+    expect(result.content).toContain('references/data-contract.md');
+  });
+
   it('combines a momo-ai skill with an Agent command in the same request', async () => {
     applicationSkillState.skills = [
       {
@@ -222,5 +262,99 @@ describe('detectAgentApps', () => {
     expect(prepared.content).toContain('验证实现并运行测试：');
     expect(prepared.content).toContain('/设计实现');
     expect(prepared.content).toContain('/verify');
+  });
+
+  it('lists Cursor and Claude skills separately and expands both same-name selections by identity', async () => {
+    const root = await createRoot();
+    for (const provider of ['cursor', 'claude']) {
+      const dir = path.join(root, `.${provider}`, 'skills', 'review');
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(
+        path.join(dir, 'SKILL.md'),
+        `---\nname: review\ndescription: ${provider} review\n---\n${provider} checklist`,
+      );
+    }
+    const listed = await listAgentAppSlash(['cursor', 'claude'], [root]);
+    expect(listed.warning).toBeUndefined();
+    expect(listed.items.map((item) => [item.agentAppId, item.command])).toEqual([
+      ['cursor', '/review'],
+      ['claude', '/review'],
+    ]);
+    expect(new Set(listed.items.map((item) => item.resourceId)).size).toBe(2);
+    const [cursor, claude] = listed.items;
+    const content = '先 @cursor，再 @claude';
+    const prepared = await prepareAgentAppSubmit({
+      agentAppIds: ['cursor', 'claude'],
+      folderPaths: [root],
+      content,
+      displayContent: content,
+      invocations: [
+        { ...cursor, token: '@cursor' },
+        { ...claude, token: '@claude' },
+      ],
+    });
+    expect(prepared.action).toBe('allow');
+    expect(prepared.content).toContain('cursor checklist');
+    expect(prepared.content).toContain('claude checklist');
+    expect(prepared.invocations?.map((item) => item.agentAppId)).toEqual(['cursor', 'claude']);
+    const ambiguous = await prepareAgentAppSubmit({
+      agentAppIds: ['cursor', 'claude'],
+      folderPaths: [root],
+      content: '/review',
+      displayContent: '/review',
+    });
+    expect(ambiguous.action).toBe('deny');
+    expect(ambiguous.reason).toContain('同名');
+  });
+
+  it('honors an explicit empty selection and rejects a skill from a deselected Agent', async () => {
+    const root = await createRoot();
+    const dir = path.join(root, '.cursor', 'skills', 'review');
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(path.join(dir, 'SKILL.md'), '---\nname: review\n---\nCursor checklist');
+    const listed = await listAgentAppSlash(['cursor'], [root]);
+    expect(listed.items).toHaveLength(1);
+    expect((await listAgentAppSlash([], [root])).items).toEqual([]);
+    const prepared = await prepareAgentAppSubmit({
+      agentAppIds: [],
+      agentAppId: 'cursor',
+      folderPaths: [root],
+      content: '@cursor',
+      displayContent: '@cursor',
+      invocations: [{ ...listed.items[0], token: '@cursor' }],
+    });
+    expect(prepared.action).toBe('deny');
+  });
+
+  it('applies selected Agents hooks in order and limits each rules context to its matching directory', async () => {
+    const cursorRoot = await createRoot();
+    const claudeRoot = await createRoot();
+    await fs.mkdir(path.join(cursorRoot, '.cursor', 'rules'), { recursive: true });
+    await fs.mkdir(path.join(claudeRoot, '.claude'), { recursive: true });
+    await fs.writeFile(path.join(cursorRoot, '.cursor', 'rules', 'guide.mdc'), 'Cursor rules');
+    await fs.writeFile(path.join(claudeRoot, 'CLAUDE.md'), 'Claude rules');
+    await fs.writeFile(path.join(cursorRoot, 'CLAUDE.md'), 'Cursor root Claude marker rules');
+    await fs.writeFile(
+      path.join(cursorRoot, '.cursor', 'hooks.json'),
+      JSON.stringify({ beforeSubmitPrompt: [{ type: 'append', text: 'cursor hook' }] }),
+    );
+    await fs.writeFile(
+      path.join(claudeRoot, '.claude', 'settings.json'),
+      JSON.stringify({ beforeSubmitPrompt: [{ type: 'append', text: 'claude hook' }] }),
+    );
+    const input = {
+      agentAppIds: ['cursor', 'claude'],
+      folderPaths: [cursorRoot, claudeRoot],
+      content: 'hello',
+      displayContent: 'hello',
+    };
+    const prepared = await prepareAgentAppSubmit(input);
+    expect(prepared.content).toContain('cursor hook');
+    expect(prepared.content).toContain('claude hook');
+    expect(prepared.content!.indexOf('cursor hook')).toBeLessThan(
+      prepared.content!.indexOf('claude hook'),
+    );
+    const context = await resolveAgentAppContext('cursor', input.folderPaths);
+    expect(context!.sources.every((source) => source.path.startsWith(cursorRoot))).toBe(true);
   });
 });

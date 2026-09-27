@@ -27,7 +27,7 @@
 
   .@{prefix}-fullscreen {
     position: fixed !important;
-    inset-block-start: 0;
+    inset-block-start: var(--app-titlebar-height, 0px);
     inset-inline-end: 0;
     inset-block-end: 0;
     inset-inline-start: 0;
@@ -65,7 +65,42 @@
     padding-block: 10px;
     padding-inline: 20px;
 
+    // Images share the same default and explicit alignment in preview and rich text.
+    figure {
+      display: block;
+      text-align: center;
+
+      > img {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+
+    [data-align] figure {
+      text-align: inherit;
+    }
+
+    [data-align='left'] figure > img,
+    figure[data-align='left'] > img {
+      margin-left: 0;
+      margin-right: auto;
+    }
+
+    [data-align='center'] figure > img,
+    figure[data-align='center'] > img {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    [data-align='right'] figure > img,
+    figure[data-align='right'] > img {
+      margin-left: auto;
+      margin-right: 0;
+    }
+
     p.@{prefix}-mermaid,
+    figure.@{prefix}-drawio-image,
     .@{prefix}-plantuml-rendered,
     div.@{prefix}-echarts {
       position: relative;
@@ -95,6 +130,7 @@
       inset-block-start: 8px;
       inset-inline-end: 8px;
       display: flex;
+      align-items: center;
       gap: 4px;
       padding-block: 2px;
       padding-inline: 4px;
@@ -104,18 +140,35 @@
       z-index: 10;
       pointer-events: auto;
 
-      span {
+      .@{prefix}-mermaid-copy,
+      .@{prefix}-mermaid-zoom,
+      .@{prefix}-mermaid-fullscreen,
+      .@{prefix}-mermaid-download,
+      .@{prefix}-diagram-action-btn,
+      .@{prefix}-drawio-preview-edit {
+        box-sizing: border-box;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        border-radius: 3px;
-        min-width: 24px;
-        min-height: 24px;
+        flex: 0 0 24px;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border: 0;
+        border-radius: 4px;
+        background: var(--md-bk-color-outstand);
+        color: inherit;
 
         svg,
         .@{prefix}-icon {
           pointer-events: none;
+          box-sizing: border-box;
+          display: block;
+          width: 24px;
+          height: 24px;
+          max-width: none;
+          padding: 6px;
         }
 
         &:hover {
@@ -129,6 +182,52 @@
       max-width: 100%;
     }
   }
+}
+
+.@{prefix}-drawio-preview-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: 0;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 90%);
+  color: #42526e;
+  cursor: pointer;
+  svg {
+    pointer-events: none;
+  }
+}
+
+.@{prefix}-drawio-image-viewer-actions {
+  display: flex;
+  align-items: center;
+  gap: inherit;
+}
+
+.@{prefix}-drawio-image {
+  position: relative;
+  overflow: hidden;
+
+  > img {
+    transform-origin: 0 0;
+  }
+
+  &[data-grab] {
+    touch-action: none;
+  }
+}
+
+.@{prefix}-drawio-image > .@{prefix}-drawio-image-action {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  opacity: 0;
+}
+
+.@{prefix}-drawio-image:hover > .@{prefix}-drawio-image-action,
+.@{prefix}-drawio-image:focus-within > .@{prefix}-drawio-image-action {
+  opacity: 1;
 }
 
 .@{prefix}-modal-container {
@@ -199,8 +298,10 @@
 }
 
 .@{prefix}-chart-fullscreen-overlay {
+  -webkit-app-region: no-drag;
+  pointer-events: auto;
   position: fixed;
-  inset: 0;
+  inset: var(--app-titlebar-height, 0px) 0 0;
   z-index: 100002;
   display: flex;
   flex-direction: column;
@@ -226,7 +327,7 @@
   background-color: rgb(255 255 255 / 88%);
   box-shadow: 0 1px 4px rgb(0 0 0 / 12%);
 
-  span {
+  button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -234,10 +335,21 @@
     border-radius: 3px;
     min-width: 24px;
     min-height: 24px;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: #42526e;
+    pointer-events: auto;
+    -webkit-app-region: no-drag;
 
     svg,
     .@{prefix}-icon {
       pointer-events: none;
+      width: 16px;
+      height: 16px;
+      padding: 0;
     }
 
     &:hover {

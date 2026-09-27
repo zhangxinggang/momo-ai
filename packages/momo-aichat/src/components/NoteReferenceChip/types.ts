@@ -6,4 +6,5 @@ export interface IProps {
   /** 是否显示 tooltip，镜像层传 false */
   showTooltip?: boolean;
   className?: string;
+  onOpen?: () => void;
 }

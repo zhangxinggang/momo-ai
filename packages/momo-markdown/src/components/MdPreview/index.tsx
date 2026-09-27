@@ -115,6 +115,7 @@ const MdPreview = forwardRef((props: IMdPreviewProps, ref: ForwardedRef<unknown>
         style={props.style}
         ref={rootRef}>
         <ContentPreview
+          readOnly
           modelValue={value}
           onChange={onChange}
           mdHeadingId={mdHeadingId}

@@ -27,8 +27,8 @@ afterEach(async () => {
   container.remove();
   vi.unstubAllGlobals();
 });
-async function render() {
-  await act(async () => root.render(React.createElement(ChatContextUsage)));
+async function render(props: React.ComponentProps<typeof ChatContextUsage> = {}) {
+  await act(async () => root.render(React.createElement(ChatContextUsage, props)));
 }
 describe('context usage panel', () => {
   it('shows the 1M reference window before the first turn', async () => {
@@ -78,5 +78,26 @@ describe('context usage panel', () => {
     expect(container.textContent).toContain('工具定义');
     expect(container.textContent).toContain('对话消息');
     expect(container.textContent).not.toContain('单次输出上限');
+  });
+  it('uses the independent editor session instead of the global chat session', async () => {
+    mocks.messages = [{ role: 'user', content: '全局会话不应计入', timestamp: 1, id: 'global' }];
+    await render({
+      session: {
+        id: 'tool-session',
+        title: '工具生成',
+        createdAt: 1,
+        updatedAt: 1,
+        messages: [
+          {
+            role: 'user',
+            content: '这是自定义工具的独立上下文'.repeat(40),
+            timestamp: 1,
+            id: 'tool-user',
+          },
+        ],
+      },
+    });
+    expect(container.textContent).toContain('上下文已用 <1%');
+    expect(container.textContent).not.toContain('~0 / 1M');
   });
 });

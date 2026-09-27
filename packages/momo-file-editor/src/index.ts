@@ -26,6 +26,8 @@ export type { IFileEditorHandle, IProps } from './components/FileEditor';
 export { CodeFileEditor } from './components/CodeFileEditor';
 export type { IProps as ICodeFileEditorProps } from './components/CodeFileEditor';
 
+export { BinaryFilePreview } from './components/BinaryFilePreview';
+
 export type {
   EFileEditorNotifyType,
   IFileEditorAdapter,
@@ -73,3 +75,4 @@ export {
   useMdPreviewTheme,
 } from '@momo/markdown';
 export type { TMdPreviewThemeId } from '@momo/markdown';
+export { downloadFileBuffer } from './utils/download';

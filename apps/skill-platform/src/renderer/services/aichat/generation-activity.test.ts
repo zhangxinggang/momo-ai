@@ -9,20 +9,20 @@ import {
 describe('AI chat generation activity registry', () => {
   it('queries activity by module and clears owners independently', () => {
     const chatOwner = Symbol('chat');
-    const workflowOwner = Symbol('workflow');
+    const noteOwner = Symbol('note');
 
     setAiChatGenerationActivity(chatOwner, 'chat', true);
-    setAiChatGenerationActivity(workflowOwner, 'workflow', true);
+    setAiChatGenerationActivity(noteOwner, 'note', true);
 
     expect(hasActiveAiChatGeneration()).toBe(true);
     expect(hasActiveAiChatGeneration('chat')).toBe(true);
-    expect(hasActiveAiChatGeneration('prompt')).toBe(false);
+    expect(hasActiveAiChatGeneration('skill')).toBe(false);
 
     setAiChatGenerationActivity(chatOwner, 'chat', false);
     expect(hasActiveAiChatGeneration('chat')).toBe(false);
-    expect(hasActiveAiChatGeneration('workflow')).toBe(true);
+    expect(hasActiveAiChatGeneration('note')).toBe(true);
 
-    clearAiChatGenerationActivity(workflowOwner);
+    clearAiChatGenerationActivity(noteOwner);
     expect(hasActiveAiChatGeneration()).toBe(false);
   });
 });

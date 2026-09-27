@@ -195,103 +195,6 @@ export async function initDatabase(dbPath: string, hooks?: IInitDatabaseHooks): 
       markMigration('rules_v2_drop_rule_versions');
     }
 
-    // Migrations: prompts table (query column list once)
-    const promptCols = (db!.pragma('table_info(prompts)') as IPragmaColumnInfo[]).map(
-      (c) => c.name,
-    );
-
-    if (!promptCols.includes('images')) {
-      console.log('Migrating: Adding images column to prompts table');
-      db!.prepare('ALTER TABLE prompts ADD COLUMN images TEXT').run();
-    }
-
-    if (!promptCols.includes('is_pinned')) {
-      console.log('Migrating: Adding is_pinned column to prompts table');
-      db!.prepare('ALTER TABLE prompts ADD COLUMN is_pinned INTEGER DEFAULT 0').run();
-    }
-
-    if (!promptCols.includes('source')) {
-      console.log('Migrating: Adding source column to prompts table');
-      db!.prepare('ALTER TABLE prompts ADD COLUMN source TEXT').run();
-    }
-
-    if (!promptCols.includes('notes')) {
-      console.log('Migrating: Adding notes column to prompts table');
-      db!.prepare('ALTER TABLE prompts ADD COLUMN notes TEXT').run();
-    }
-
-    if (!promptCols.includes('prompt_type')) {
-      console.log('Migrating: Adding prompt_type column to prompts table');
-      db!.prepare("ALTER TABLE prompts ADD COLUMN prompt_type TEXT DEFAULT 'text'").run();
-    }
-
-    if (!promptCols.includes('system_prompt_en')) {
-      console.log('Migrating: Adding system_prompt_en column to prompts table');
-      db!.prepare('ALTER TABLE prompts ADD COLUMN system_prompt_en TEXT').run();
-    }
-
-    if (!promptCols.includes('user_prompt_en')) {
-      console.log('Migrating: Adding user_prompt_en column to prompts table');
-      db!.prepare('ALTER TABLE prompts ADD COLUMN user_prompt_en TEXT').run();
-    }
-
-    if (!promptCols.includes('videos')) {
-      console.log('Migrating: Adding videos column to prompts table');
-      db!.prepare('ALTER TABLE prompts ADD COLUMN videos TEXT').run();
-    }
-
-    if (!promptCols.includes('last_ai_response')) {
-      console.log('Migrating: Adding last_ai_response column to prompts table');
-      db!.prepare('ALTER TABLE prompts ADD COLUMN last_ai_response TEXT').run();
-    }
-
-    if (!promptCols.includes('owner_user_id')) {
-      console.log('Migrating: Adding owner_user_id column to prompts table');
-      db!
-        .prepare(
-          'ALTER TABLE prompts ADD COLUMN owner_user_id TEXT REFERENCES users(id) ON DELETE SET NULL',
-        )
-        .run();
-    }
-
-    if (!promptCols.includes('visibility')) {
-      console.log('Migrating: Adding visibility column to prompts table');
-      db!
-        .prepare("ALTER TABLE prompts ADD COLUMN visibility TEXT NOT NULL DEFAULT 'private'")
-        .run();
-    }
-
-    // Migrations: folders table (query column list once)
-    const folderCols = (db!.pragma('table_info(folders)') as IPragmaColumnInfo[]).map(
-      (c) => c.name,
-    );
-
-    if (!folderCols.includes('is_private')) {
-      console.log('Migrating: Adding is_private column to folders table');
-      db!.prepare('ALTER TABLE folders ADD COLUMN is_private INTEGER DEFAULT 0').run();
-    }
-
-    if (!folderCols.includes('updated_at')) {
-      console.log('Migrating: Adding updated_at column to folders table');
-      db!.prepare('ALTER TABLE folders ADD COLUMN updated_at INTEGER').run();
-    }
-
-    if (!folderCols.includes('owner_user_id')) {
-      console.log('Migrating: Adding owner_user_id column to folders table');
-      db!
-        .prepare(
-          'ALTER TABLE folders ADD COLUMN owner_user_id TEXT REFERENCES users(id) ON DELETE SET NULL',
-        )
-        .run();
-    }
-
-    if (!folderCols.includes('visibility')) {
-      console.log('Migrating: Adding visibility column to folders table');
-      db!
-        .prepare("ALTER TABLE folders ADD COLUMN visibility TEXT NOT NULL DEFAULT 'private'")
-        .run();
-    }
-
     // Migrations: skills table (query column list once)
     const skillCols = (db!.pragma('table_info(skills)') as IPragmaColumnInfo[]).map((c) => c.name);
 
@@ -513,136 +416,6 @@ export async function initDatabase(dbPath: string, hooks?: IInitDatabaseHooks): 
       }
       markMigration('dedupe_skill_names_v1');
     }
-
-    const promptVersionCols = (
-      db!.pragma('table_info(prompt_versions)') as IPragmaColumnInfo[]
-    ).map((c) => c.name);
-
-    if (!promptVersionCols.includes('system_prompt_en')) {
-      console.log('Migrating: Adding system_prompt_en column to prompt_versions table');
-      db!.prepare('ALTER TABLE prompt_versions ADD COLUMN system_prompt_en TEXT').run();
-    }
-
-    if (!promptVersionCols.includes('user_prompt_en')) {
-      console.log('Migrating: Adding user_prompt_en column to prompt_versions table');
-      db!.prepare('ALTER TABLE prompt_versions ADD COLUMN user_prompt_en TEXT').run();
-    }
-
-    if (!promptVersionCols.includes('ai_response')) {
-      console.log('Migrating: Adding ai_response column to prompt_versions table');
-      db!.prepare('ALTER TABLE prompt_versions ADD COLUMN ai_response TEXT').run();
-    }
-
-    if (!hasMigration('prompts_slim_metadata_v1')) {
-      const legacyCols = ['description', 'prompt_type', 'images', 'videos', 'notes'];
-      const hasLegacy = legacyCols.some((col) => promptCols.includes(col));
-      if (hasLegacy) {
-        console.log('Migrating: Removing legacy prompt metadata columns');
-        db!.exec(`
-          DROP TRIGGER IF EXISTS prompts_ai;
-          DROP TRIGGER IF EXISTS prompts_ad;
-          DROP TRIGGER IF EXISTS prompts_au;
-          DROP TABLE IF EXISTS prompts_fts;
-
-          CREATE TABLE prompts__slim (
-            id TEXT PRIMARY KEY,
-            owner_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
-            visibility TEXT NOT NULL DEFAULT 'private' CHECK(visibility IN ('private', 'shared')),
-            title TEXT NOT NULL,
-            system_prompt TEXT,
-            system_prompt_en TEXT,
-            user_prompt TEXT NOT NULL,
-            user_prompt_en TEXT,
-            variables TEXT,
-            tags TEXT,
-            folder_id TEXT,
-            is_favorite INTEGER DEFAULT 0,
-            is_pinned INTEGER DEFAULT 0,
-            current_version INTEGER DEFAULT 0,
-            usage_count INTEGER DEFAULT 0,
-            source TEXT,
-            last_ai_response TEXT,
-            created_at INTEGER NOT NULL,
-            updated_at INTEGER NOT NULL,
-            FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL
-          );
-
-          INSERT INTO prompts__slim (
-            id, owner_user_id, visibility, title,
-            system_prompt, system_prompt_en, user_prompt, user_prompt_en,
-            variables, tags, folder_id,
-            is_favorite, is_pinned, current_version, usage_count,
-            source, last_ai_response, created_at, updated_at
-          )
-          SELECT
-            id, owner_user_id, visibility, title,
-            system_prompt, system_prompt_en, user_prompt, user_prompt_en,
-            variables, tags, folder_id,
-            is_favorite, is_pinned, current_version, usage_count,
-            source, last_ai_response, created_at, updated_at
-          FROM prompts;
-
-          DROP TABLE prompts;
-          ALTER TABLE prompts__slim RENAME TO prompts;
-        `);
-      }
-      markMigration('prompts_slim_metadata_v1');
-    }
-
-    if (!hasMigration('fix_prompt_current_version_v1')) {
-      console.log('Migrating: Aligning prompt current_version with latest stored version');
-      db!
-        .prepare(
-          `UPDATE prompts
-         SET current_version = COALESCE(
-           (SELECT MAX(version) FROM prompt_versions WHERE prompt_id = prompts.id),
-           0
-         )`,
-        )
-        .run();
-      markMigration('fix_prompt_current_version_v1');
-    }
-
-    if (!hasMigration('workflow_businesses_v1')) {
-      db!.exec(`
-        CREATE TABLE IF NOT EXISTS workflow_businesses (
-          id TEXT PRIMARY KEY,
-          workflow_id TEXT NOT NULL,
-          name TEXT NOT NULL,
-          remark TEXT NOT NULL DEFAULT '',
-          created_at INTEGER NOT NULL,
-          updated_at INTEGER NOT NULL,
-          FOREIGN KEY (workflow_id) REFERENCES workflows(id) ON DELETE CASCADE
-        );
-        CREATE INDEX IF NOT EXISTS idx_workflow_businesses_workflow ON workflow_businesses(workflow_id);
-        CREATE INDEX IF NOT EXISTS idx_workflow_businesses_updated ON workflow_businesses(updated_at DESC);
-      `);
-      markMigration('workflow_businesses_v1');
-    }
-
-    if (!hasMigration('workflow_folders_v1')) {
-      console.log('Migrating: Creating workflow_folders table and workflows.folder_id');
-      db!.exec(`
-        CREATE TABLE IF NOT EXISTS workflow_folders (
-          id TEXT PRIMARY KEY,
-          name TEXT NOT NULL,
-          parent_id TEXT,
-          sort_order INTEGER NOT NULL DEFAULT 0,
-          created_at INTEGER NOT NULL,
-          updated_at INTEGER NOT NULL,
-          FOREIGN KEY (parent_id) REFERENCES workflow_folders(id) ON DELETE CASCADE
-        );
-        CREATE INDEX IF NOT EXISTS idx_workflow_folders_parent ON workflow_folders(parent_id);
-        CREATE INDEX IF NOT EXISTS idx_workflow_folders_sort ON workflow_folders(sort_order);
-      `);
-      const workflowCols = (db!.pragma('table_info(workflows)') as IPragmaColumnInfo[]).map(
-        (col) => col.name,
-      );
-      if (!workflowCols.includes('folder_id')) {
-        db!.prepare('ALTER TABLE workflows ADD COLUMN folder_id TEXT').run();
-      }
-      markMigration('workflow_folders_v1');
-    }
   });
 
   try {
@@ -686,13 +459,6 @@ export async function closeDatabase(): Promise<void> {
  */
 export function isDatabaseEmpty(database: Database): boolean {
   try {
-    const promptRow = database.prepare('SELECT COUNT(*) as count FROM prompts').get() as
-      | { count: number }
-      | undefined;
-    const folderRow = database.prepare('SELECT COUNT(*) as count FROM folders').get() as
-      | { count: number }
-      | undefined;
-
     let skillCount = 0;
     try {
       const skillRow = database.prepare('SELECT COUNT(*) as count FROM skills').get() as
@@ -703,7 +469,7 @@ export function isDatabaseEmpty(database: Database): boolean {
       // skills table may not exist in older schemas
     }
 
-    return (promptRow?.count ?? 0) === 0 && (folderRow?.count ?? 0) === 0 && skillCount === 0;
+    return skillCount === 0;
   } catch {
     // Table might not exist in a freshly created DB
     return true;

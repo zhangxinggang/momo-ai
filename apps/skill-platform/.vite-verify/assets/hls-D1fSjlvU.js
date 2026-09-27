@@ -11321,21 +11321,19 @@ class wr {
     return { remuxResult: this.remuxer.remux(r, n, o, c, t, s, !1, this.id), chunkMeta: i };
   }
   transmuxSampleAes(e, t, s, i, r) {
-    return this.demuxer
-      .demuxSampleAes(e, t, s)
-      .then((n) => ({
-        remuxResult: this.remuxer.remux(
-          n.audioTrack,
-          n.videoTrack,
-          n.id3Track,
-          n.textTrack,
-          s,
-          i,
-          !1,
-          this.id,
-        ),
-        chunkMeta: r,
-      }));
+    return this.demuxer.demuxSampleAes(e, t, s).then((n) => ({
+      remuxResult: this.remuxer.remux(
+        n.audioTrack,
+        n.videoTrack,
+        n.id3Track,
+        n.textTrack,
+        s,
+        i,
+        !1,
+        this.id,
+      ),
+      chunkMeta: r,
+    }));
   }
   configureTransmuxer(e) {
     const { config: t, observer: s, typeSupported: i } = this;

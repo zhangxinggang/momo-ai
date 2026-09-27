@@ -3,33 +3,6 @@
  */
 
 export const IPC_CHANNELS = {
-  // Prompt
-  PROMPT_CREATE: 'prompt:create',
-  PROMPT_GET: 'prompt:get',
-  PROMPT_GET_ALL: 'prompt:getAll',
-  PROMPT_UPDATE: 'prompt:update',
-  PROMPT_DELETE: 'prompt:delete',
-  PROMPT_SEARCH: 'prompt:search',
-  PROMPT_COPY: 'prompt:copy',
-  PROMPT_INSERT_DIRECT: 'prompt:insertDirect',
-  PROMPT_SYNC_WORKSPACE: 'prompt:syncWorkspace',
-
-  // Version
-  VERSION_GET_ALL: 'version:getAll',
-  VERSION_CREATE: 'version:create',
-  VERSION_ROLLBACK: 'version:rollback',
-  VERSION_DIFF: 'version:diff',
-  VERSION_DELETE: 'version:delete',
-  VERSION_INSERT_DIRECT: 'version:insertDirect',
-
-  // Folder
-  FOLDER_CREATE: 'folder:create',
-  FOLDER_GET_ALL: 'folder:getAll',
-  FOLDER_UPDATE: 'folder:update',
-  FOLDER_DELETE: 'folder:delete',
-  FOLDER_REORDER: 'folder:reorder',
-  FOLDER_INSERT_DIRECT: 'folder:insertDirect',
-
   // Settings
   SETTINGS_GET: 'settings:get',
   SETTINGS_SET: 'settings:set',
@@ -70,10 +43,6 @@ export const IPC_CHANNELS = {
   AI_HTTP_STREAM_CHUNK: 'ai:httpStreamChunk',
   AI_HTTP_STREAM_ERROR: 'ai:httpStreamError',
 
-  // Import/Export
-  EXPORT_PROMPTS: 'export:prompts',
-  IMPORT_PROMPTS: 'import:prompts',
-
   // Notes（我的笔记）
   NOTE_LIST_TREE: 'note:listTree',
   NOTE_CREATE_FOLDER: 'note:createFolder',
@@ -95,12 +64,15 @@ export const IPC_CHANNELS = {
   TOOL_RENAME: 'tool:rename',
   TOOL_DELETE: 'tool:delete',
   TOOL_MOVE: 'tool:move',
+  TOOL_OPEN_DIRECTORY: 'tool:openDirectory',
   TOOL_READ_SNAPEDIT_HTML: 'tool:readSnapEditHtml',
-  TOOL_WRITE_GENERATED_FILES: 'tool:writeGeneratedFiles',
-  TOOL_ACTIVATE: 'tool:activate',
-  TOOL_DEACTIVATE: 'tool:deactivate',
-  TOOL_RUNTIME_STATUS: 'tool:runtimeStatus',
-  TOOL_READ_CONTEXT_FILES: 'tool:readContextFiles',
+  TOOL_READ_WEB_PAGE: 'tool:readWebPage',
+  TOOL_CHECK_IDENTIFIER: 'tool:checkIdentifier',
+  TOOL_VALIDATE_PLUGIN: 'tool:validatePlugin',
+  TOOL_INVOKE_PLUGIN: 'tool:invokePlugin',
+
+  // 可复用接口请求工作台
+  API_REQUEST_EXECUTE: 'apiRequest:execute',
 
   // Knowledge base（知识库）
   KNOWLEDGE_LIST_COLLECTIONS: 'knowledge:listCollections',
@@ -125,52 +97,6 @@ export const IPC_CHANNELS = {
   KNOWLEDGE_RETRY_JOB: 'knowledge:retryJob',
   KNOWLEDGE_CANCEL_JOB: 'knowledge:cancelJob',
 
-  // Workflows（工作流画布）
-  WORKFLOW_CREATE: 'workflow:create',
-  WORKFLOW_GET: 'workflow:get',
-  WORKFLOW_GET_ALL: 'workflow:getAll',
-  WORKFLOW_UPDATE: 'workflow:update',
-  WORKFLOW_DELETE: 'workflow:delete',
-
-  // 工作流模板导入导出
-  WORKFLOW_EXPORT_TEMPLATE: 'workflow:exportTemplate',
-  WORKFLOW_PREVIEW_IMPORT: 'workflow:previewImport',
-  WORKFLOW_COMMIT_IMPORT: 'workflow:commitImport',
-  WORKFLOW_CANCEL_IMPORT: 'workflow:cancelImport',
-
-  // 工作流侧栏目录
-  WORKFLOW_FOLDER_CREATE: 'workflowFolder:create',
-  WORKFLOW_FOLDER_GET_ALL: 'workflowFolder:getAll',
-  WORKFLOW_FOLDER_UPDATE: 'workflowFolder:update',
-  WORKFLOW_FOLDER_DELETE: 'workflowFolder:delete',
-  WORKFLOW_FOLDER_UPDATE_ORDERS: 'workflowFolder:updateOrders',
-
-  // 工作流业务实例
-  WORKFLOW_BUSINESS_CREATE: 'workflowBusiness:create',
-  WORKFLOW_BUSINESS_GET_ALL: 'workflowBusiness:getAll',
-  WORKFLOW_BUSINESS_UPDATE: 'workflowBusiness:update',
-  WORKFLOW_BUSINESS_DELETE: 'workflowBusiness:delete',
-  WORKFLOW_BUSINESS_DELETE_BY_WORKFLOW: 'workflowBusiness:deleteByWorkflow',
-  WORKFLOW_BUSINESS_HAS_ANY: 'workflowBusiness:hasAny',
-
-  // 工作流 Agent 目录（节点产出与文件）
-  WORKFLOW_AGENT_ENSURE_DIR: 'workflowAgent:ensureDir',
-  WORKFLOW_AGENT_DELETE_DIR: 'workflowAgent:deleteDir',
-  WORKFLOW_AGENT_RENAME_DIR: 'workflowAgent:renameDir',
-  WORKFLOW_AGENT_LIST_DIR: 'workflowAgent:listDir',
-  WORKFLOW_AGENT_READ_FILE: 'workflowAgent:readFile',
-  WORKFLOW_AGENT_WRITE_FILE: 'workflowAgent:writeFile',
-  WORKFLOW_AGENT_DELETE_NODE_DIR: 'workflowAgent:deleteNodeDir',
-  WORKFLOW_AGENT_RENAME_NODE_DIR: 'workflowAgent:renameNodeDir',
-  WORKFLOW_AGENT_LIST_FILE_TREE: 'workflowAgent:listFileTree',
-  WORKFLOW_AGENT_DELETE_FILE: 'workflowAgent:deleteFile',
-  WORKFLOW_AGENT_CREATE_DIR: 'workflowAgent:createDir',
-  WORKFLOW_AGENT_MOVE_PATH: 'workflowAgent:movePath',
-  WORKFLOW_AGENT_ENSURE_BUSINESS_DIR: 'workflowAgent:ensureBusinessDir',
-  WORKFLOW_AGENT_DELETE_BUSINESS_DIR: 'workflowAgent:deleteBusinessDir',
-  WORKFLOW_AGENT_DELETE_NODE_FOR_ALL_BUSINESSES: 'workflowAgent:deleteNodeForAllBusinesses',
-  WORKFLOW_AGENT_RENAME_NODE_FOR_ALL_BUSINESSES: 'workflowAgent:renameNodeForAllBusinesses',
-
   // Skills
   SKILL_CREATE: 'skill:create',
   SKILL_GET: 'skill:get',
@@ -184,6 +110,7 @@ export const IPC_CHANNELS = {
   SKILL_SCAN_LOCAL: 'skill:scanLocal',
   SKILL_SCAN_LOCAL_PREVIEW: 'skill:scanLocalPreview',
   SKILL_LIST_DEFAULT_SKILLS: 'skill:listDefaultSkills',
+  SKILL_GET_BUILTIN_SKILLS: 'skill:getBuiltinSkills',
   SKILL_IMPORT_DEFAULT_SKILLS: 'skill:importDefaultSkills',
   SKILL_PREVIEW_LOCAL_ZIPS: 'skill:previewLocalZips',
   SKILL_IMPORT_LOCAL_ZIPS: 'skill:importLocalZips',
@@ -244,6 +171,8 @@ export const IPC_CHANNELS = {
   IMAGE_SAVE_BASE64: 'image:saveBase64',
   IMAGE_EXISTS: 'image:exists',
   IMAGE_CLEAR: 'image:clear',
+  DRAWIO_DIAGRAM_SAVE: 'drawioDiagram:save',
+  DRAWIO_DIAGRAM_LOAD: 'drawioDiagram:load',
 
   // Video
   DIALOG_SELECT_VIDEO: 'dialog:selectVideo',

@@ -34,9 +34,9 @@ export interface IUseChatSessionsOptions {
   bootstrapSessionTitle?: string | null;
 }
 
-/** 笔记引用注入 API 时的系统提示：禁止在回答中复述全文 */
+/** 显式引用注入 API 时的系统提示：禁止在回答中复述全文 */
 const NOTE_REFERENCE_SYSTEM_HINT =
-  '用户消息中以「--- 笔记: … START ---」与「--- 笔记: … END ---」包裹的内容仅为供你阅读的笔记上下文。请基于其内容作答，不要在回答中复述、粘贴或展开笔记全文。';
+  '用户消息中以「--- 笔记/工作区文件: … START ---」与对应 END 标记包裹的内容仅为供你阅读的引用上下文。请基于其内容作答，不要在回答中复述、粘贴或展开引用全文。';
 
 function toApiUserContent(
   displayContent: string,
@@ -989,6 +989,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
 
       let selectedProjectId = sessions.find((s) => s.id === currentSessionId)?.projectId;
       let activeSessionId = currentSessionId;
+      let createdSessionNow = false;
       if (!activeSessionId) {
         const draftProjectId = pendingProjectIdRef.current?.trim() || undefined;
         selectedProjectId = draftProjectId;
@@ -1011,6 +1012,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         });
         setCurrentSessionId(draftSession.id);
         activeSessionId = draftSession.id;
+        createdSessionNow = true;
       }
 
       // 确保 bootstrap 会话已在内存中（延后落库场景）
@@ -1062,7 +1064,9 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       // 如果是会话的第一条用户消息，更新会话标题
       const session = sessions.find((s) => s.id === activeSessionId);
       const isFirstUserMessage =
-        !isRetry && session && session.messages.filter((m) => m.role === 'user').length === 0;
+        !isRetry &&
+        (createdSessionNow ||
+          Boolean(session && session.messages.filter((m) => m.role === 'user').length === 0));
 
       // 构造云端保存内容：对用户消息用包装格式保留附件元信息（不保存大段文本）
       const buildCloudContent = (
@@ -1199,7 +1203,10 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
         const hasNoteContext =
           Object.keys(activeSnapshots).length > 0 ||
           chatMessages.some(
-            (message) => message.role === 'user' && message.content.includes('--- 笔记:'),
+            (message) =>
+              message.role === 'user' &&
+              (message.content.includes('--- 笔记:') ||
+                message.content.includes('--- 工作区文件:')),
           );
         if (hasNoteContext) {
           chatMessages = [{ role: 'system', content: NOTE_REFERENCE_SYSTEM_HINT }, ...chatMessages];

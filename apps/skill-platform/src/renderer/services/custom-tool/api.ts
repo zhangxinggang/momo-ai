@@ -1,148 +1,66 @@
 import type {
-  ICustomToolGeneratedFile,
-  ICustomToolRuntimeInfo,
+  ICustomToolDocument,
+  ICustomToolSaveInput,
   ICustomToolTreeNode,
-  IReadCustomToolFileResult,
 } from '@/types/modules';
+import type { IApiRequestConfig, IApiRequestResponse } from '@momo/api-request/core';
 
+import { getAppApi } from '../app-api';
 import { getCustomToolIpc } from '../ipc';
 
-function getCustomToolApi() {
-  return getCustomToolIpc();
-}
-
-export function isCustomToolApiAvailable(): boolean {
-  return !!getCustomToolIpc();
-}
-
 export async function listCustomToolTree(): Promise<ICustomToolTreeNode[]> {
-  const api = getCustomToolApi();
-  if (!api?.listTree) {
-    return [];
-  }
-  return api.listTree();
+  return (await getCustomToolIpc()?.listTree?.()) ?? [];
 }
 
-export async function readCustomToolFile(filePath: string): Promise<IReadCustomToolFileResult> {
-  const api = getCustomToolApi();
-  if (!api?.readFile) {
-    throw new Error('当前环境不支持工具读写');
-  }
-  return api.readFile(filePath);
+export async function readCustomTool(toolPath: string): Promise<ICustomToolDocument> {
+  const api = getCustomToolIpc();
+  if (!api?.readFile) throw new Error('当前环境不支持读取自定义工具');
+  return api.readFile(toolPath);
 }
 
-export async function writeCustomToolFile(filePath: string, content: string): Promise<void> {
-  const api = getCustomToolApi();
-  if (!api?.writeFile) {
-    throw new Error('当前环境不支持工具读写');
-  }
-  await api.writeFile(filePath, content);
+export async function saveCustomTool(
+  toolPath: string,
+  input: ICustomToolSaveInput,
+): Promise<ICustomToolDocument> {
+  const api = getCustomToolIpc();
+  if (!api?.writeFile) throw new Error('当前环境不支持保存自定义工具');
+  return api.writeFile(toolPath, input);
 }
 
-export async function createCustomToolFolder(
-  parentPath: string | null,
-  name: string,
-): Promise<void> {
-  const api = getCustomToolApi();
-  if (!api?.createFolder) {
-    throw new Error('当前环境不支持工具目录');
-  }
-  await api.createFolder(parentPath, name);
+export async function createCustomToolFolder(parentPath: string | null, name: string) {
+  const api = getCustomToolIpc();
+  if (!api?.createFolder) throw new Error('当前环境不支持工具目录');
+  return api.createFolder(parentPath, name);
 }
 
-/** 创建工具包（文件夹 + tool.json + index.html） */
-export async function createCustomToolFile(
-  parentPath: string | null,
-  name: string,
-): Promise<{ id: string; kind: string }> {
-  const api = getCustomToolApi();
-  if (!api?.createFile) {
-    throw new Error('当前环境不支持创建工具');
-  }
+export async function createCustomTool(parentPath: string | null, name: string) {
+  const api = getCustomToolIpc();
+  if (!api?.createFile) throw new Error('当前环境不支持创建工具');
   return api.createFile(parentPath, name);
 }
 
-export async function renameCustomTool(
-  nodePath: string,
-  newName: string,
-): Promise<{ id: string; kind: string }> {
-  const api = getCustomToolApi();
-  if (!api?.rename) {
-    throw new Error('当前环境不支持工具重命名');
-  }
+export async function renameCustomTool(nodePath: string, newName: string) {
+  const api = getCustomToolIpc();
+  if (!api?.rename) throw new Error('当前环境不支持工具重命名');
   return api.rename(nodePath, newName);
 }
 
 export async function deleteCustomTool(nodePath: string): Promise<void> {
-  const api = getCustomToolApi();
-  if (!api?.delete) {
-    throw new Error('当前环境不支持工具删除');
-  }
+  const api = getCustomToolIpc();
+  if (!api?.delete) throw new Error('当前环境不支持删除工具');
   await api.delete(nodePath);
 }
 
-export async function moveCustomTool(
-  sourcePath: string,
-  targetParentPath: string | null,
-): Promise<{ id: string }> {
-  const api = getCustomToolApi();
-  if (!api?.move) {
-    throw new Error('当前环境不支持工具移动');
-  }
+export async function moveCustomTool(sourcePath: string, targetParentPath: string | null) {
+  const api = getCustomToolIpc();
+  if (!api?.move) throw new Error('当前环境不支持移动工具');
   return api.move(sourcePath, targetParentPath);
 }
 
-export async function readSnapEditHtml(): Promise<string> {
-  const api = getCustomToolApi();
-  if (!api?.readSnapEditHtml) {
-    throw new Error('无法加载 snapEdit');
-  }
-  return api.readSnapEditHtml();
-}
-
-export async function writeCustomToolGeneratedFiles(
-  toolPath: string,
-  files: ICustomToolGeneratedFile[],
-  options?: { activate?: boolean; requireCallable?: boolean },
-): Promise<ICustomToolRuntimeInfo | null> {
-  const api = getCustomToolApi();
-  if (!api?.writeGeneratedFiles) {
-    throw new Error('当前环境不支持写入多文件工具');
-  }
-  return api.writeGeneratedFiles(toolPath, files, options);
-}
-
-export async function activateCustomTool(toolPath: string): Promise<ICustomToolRuntimeInfo> {
-  const api = getCustomToolApi();
-  if (!api?.activate) {
-    throw new Error('当前环境不支持运行自定义工具');
-  }
-  return api.activate(toolPath);
-}
-
-export async function deactivateCustomTool(toolPath?: string): Promise<void> {
-  const api = getCustomToolApi();
-  if (api?.deactivate) {
-    await api.deactivate(toolPath);
-  }
-}
-
-export async function getCustomToolRuntimeStatus(
-  toolPath: string,
-): Promise<ICustomToolRuntimeInfo | null> {
-  const api = getCustomToolApi();
-  if (!api?.runtimeStatus) {
-    return null;
-  }
-  return api.runtimeStatus(toolPath);
-}
-
-export async function readCustomToolContextFiles(
-  toolPath: string,
-): Promise<ICustomToolGeneratedFile[]> {
-  const api = getCustomToolApi();
-  if (!api?.readContextFiles) {
-    return [];
-  }
-  return api.readContextFiles(toolPath);
+export async function executeConfiguredApiRequest(
+  config: IApiRequestConfig,
+): Promise<IApiRequestResponse> {
+  const api = getAppApi()?.apiRequest;
+  if (!api?.execute) throw new Error('当前环境不支持接口请求');
+  return api.execute(config);
 }

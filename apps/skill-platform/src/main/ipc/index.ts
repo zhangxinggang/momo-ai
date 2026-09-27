@@ -8,6 +8,7 @@ import { WorkflowFolderController } from '../database/controller/workflow-folder
 import { registerAgentAppIPC } from './agent-app';
 import { registerAIIPC } from './ai';
 import { registerAichatIPC } from './aichat-handlers';
+import { registerApiRequestIPC } from './api-request';
 import { registerCustomToolIPC } from './custom-tool';
 import { registerDataIPC } from './data';
 import { registerDialogIPC } from './dialog';
@@ -176,5 +177,6 @@ export function registerAllIPC(db: Database): void {
   registerSystemIPC();
   registerRulesIPC();
   registerNoteIPC();
+  registerApiRequestIPC();
   registerCustomToolIPC();
 }

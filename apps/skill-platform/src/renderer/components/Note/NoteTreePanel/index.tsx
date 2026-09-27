@@ -1,6 +1,8 @@
 import { MomoTree, countNonFolderDescendants, type IMomoTreeAdapter } from '@momo/tree';
 import { useConfirmLeaveAiChat } from '@renderer/hooks/useConfirmLeaveAiChat';
 import { useNoteStore } from '@renderer/store';
+import { Button } from 'antd';
+import { RefreshCwIcon } from 'lucide-react';
 import { useMemo } from 'react';
 
 export function NoteTreePanel() {
@@ -9,6 +11,9 @@ export function NoteTreePanel() {
   const treeSearchQuery = useNoteStore((state) => state.treeSearchQuery);
   const selectedId = useNoteStore((state) => state.selectedId);
   const expandedKeys = useNoteStore((state) => state.expandedKeys);
+  const isLoadingTree = useNoteStore((state) => state.isLoadingTree);
+  const treeLoadError = useNoteStore((state) => state.treeLoadError);
+  const loadTree = useNoteStore((state) => state.loadTree);
   const setExpandedKeys = useNoteStore((state) => state.setExpandedKeys);
   const selectFolder = useNoteStore((state) => state.selectFolder);
   const selectFile = useNoteStore((state) => state.selectFile);
@@ -75,7 +80,19 @@ export function NoteTreePanel() {
       }}
       rootLabel='根目录'
       searchQuery={treeSearchQuery}
-      emptyDescription='暂无笔记，请新建目录或笔记'
+      emptyDescription={
+        isLoadingTree ? '正在加载笔记...' : treeLoadError || '暂无笔记，请新建目录或笔记'
+      }
+      emptyAction={
+        treeLoadError && !isLoadingTree ? (
+          <Button
+            size='small'
+            icon={<RefreshCwIcon className='h-4 w-4' />}
+            onClick={() => void loadTree()}>
+            {'重新加载'}
+          </Button>
+        ) : undefined
+      }
     />
   );
 }

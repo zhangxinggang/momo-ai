@@ -1,4 +1,5 @@
 ﻿import { IPC_CHANNELS } from '@/types/constants';
+import type { ISkillLocalFileListOptions } from '@/types/modules';
 import { getMainWindow } from '@momo/electron';
 import { dialog, ipcMain } from 'electron';
 import path from 'path';
@@ -157,25 +158,51 @@ export function registerSkillLocalRepoHandlers({ db }: ISkillIPCContext): void {
     },
   );
 
-  ipcMain.handle(IPC_CHANNELS.SKILL_LIST_LOCAL_FILES, async (_, skillId: string) => {
-    if (typeof skillId !== 'string' || skillId.trim() === '') {
-      return [];
-    }
-    const skill = await db.getById(skillId);
-    if (!skill) return [];
-    const repoPath = await ensureLocalRepoPath(db, skillId);
-    if (repoPath) {
-      return SkillInstaller.listLocalRepoFilesByPath(repoPath);
-    }
-    return SkillInstaller.listLocalRepoFiles(skill.name);
-  });
+  ipcMain.handle(
+    IPC_CHANNELS.SKILL_LIST_LOCAL_FILES,
+    async (_, skillId: string, options?: ISkillLocalFileListOptions) => {
+      if (typeof skillId !== 'string' || skillId.trim() === '') {
+        return [];
+      }
+      const skill = await db.getById(skillId);
+      if (!skill) return [];
+      const repoPath = await ensureLocalRepoPath(db, skillId);
+      const query = typeof options?.query === 'string' ? options.query.trim() : '';
+      const directory =
+        typeof options?.directory === 'string' ? options.directory.trim() : undefined;
+      if (query) {
+        return repoPath
+          ? SkillInstaller.searchLocalRepoFilesByPath(repoPath, query)
+          : SkillInstaller.searchLocalRepoFiles(skill.name, query);
+      }
+      if (directory !== undefined) {
+        return repoPath
+          ? SkillInstaller.listLocalRepoDirectoryByPath(repoPath, directory)
+          : SkillInstaller.listLocalRepoDirectory(skill.name, directory);
+      }
+      if (repoPath) {
+        return SkillInstaller.listLocalRepoFilesByPath(repoPath);
+      }
+      return SkillInstaller.listLocalRepoFiles(skill.name);
+    },
+  );
 
-  ipcMain.handle(IPC_CHANNELS.SKILL_LIST_LOCAL_FILES_BY_PATH, async (_, localPath: string) => {
-    if (typeof localPath !== 'string' || localPath.trim() === '') {
-      return [];
-    }
-    return SkillInstaller.listLocalRepoFilesByPath(localPath);
-  });
+  ipcMain.handle(
+    IPC_CHANNELS.SKILL_LIST_LOCAL_FILES_BY_PATH,
+    async (_, localPath: string, options?: ISkillLocalFileListOptions) => {
+      if (typeof localPath !== 'string' || localPath.trim() === '') {
+        return [];
+      }
+      const query = typeof options?.query === 'string' ? options.query.trim() : '';
+      if (query) {
+        return SkillInstaller.searchLocalRepoFilesByPath(localPath, query);
+      }
+      if (typeof options?.directory === 'string') {
+        return SkillInstaller.listLocalRepoDirectoryByPath(localPath, options.directory.trim());
+      }
+      return SkillInstaller.listLocalRepoFilesByPath(localPath);
+    },
+  );
 
   ipcMain.handle(
     IPC_CHANNELS.SKILL_READ_LOCAL_FILE,

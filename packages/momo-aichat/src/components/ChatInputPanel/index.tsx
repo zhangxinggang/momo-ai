@@ -147,12 +147,15 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
     ];
     const selectedPermission =
       permissions.find((item) => item.id === permissionMode) ?? permissions[1];
+    const mentionInputHint = workspace?.paths.length ? '@ 引用笔记或工作区文件' : '@ 引用笔记';
 
     const inputPlaceholder = (() => {
       if (slashCommands?.isActive(currentModel)) {
-        return noteReferences ? '输入消息，/ 命令，@ 引用笔记' : '输入消息，或 / 查看命令...';
+        return noteReferences
+          ? `输入消息，/ 命令，${mentionInputHint}`
+          : '输入消息，或 / 查看命令...';
       }
-      return noteReferences ? '输入消息，@ 引用笔记' : placeholder;
+      return noteReferences ? `输入消息，${mentionInputHint}` : placeholder;
     })();
 
     const flatModelIds = useMemo(() => {
@@ -388,7 +391,11 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
     const downloadLog = async () => {
       if (!sessionForExport) return;
       try {
-        const log = await runtime?.port.exportSession?.(sessionForExport.id);
+        // 独立编辑器传入的会话不属于 Harness 持久化层，直接导出前端快照。
+        const log =
+          exportSession === undefined
+            ? await runtime?.port.exportSession?.(sessionForExport.id)
+            : undefined;
         downloadChatSessionExport(sessionForExport, log);
         closeMenu();
       } catch (error) {
@@ -604,6 +611,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
             open={noteRef.open}
             tree={noteRef.tree}
             loading={noteRef.loading}
+            loadingFolderIds={noteRef.loadingFolderIds}
             selectedFileId={noteRef.selectedFileId}
             expandedKeys={noteRef.expandedKeys}
             onToggleFolder={noteRef.toggleFolder}
@@ -804,7 +812,7 @@ const ChatInputPanel = forwardRef<IChatInputPanelRef, IProps>(
                 popupMatchSelectWidth={false}
               />
             ) : null}
-            <ChatContextUsage modelId={selectedModel} />
+            <ChatContextUsage modelId={selectedModel} session={sessionForExport} />
             {isGenerating ? (
               <Button
                 type='primary'

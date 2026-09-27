@@ -59,9 +59,9 @@ export function ConfirmDialog({
   }
 
   const content = (
-    <div className='fixed inset-0 z-[99999] flex items-center justify-center p-4'>
+    <div className='titlebar-no-drag fixed inset-0 z-[99999] flex items-center justify-center p-4'>
       <div className='bg-background/60 absolute inset-0 backdrop-blur-sm' onClick={onClose} />
-      <div className='app-wallpaper-panel-strong border-border animate-in fade-in zoom-in-95 duration-base relative w-full max-w-sm rounded-xl border p-6 shadow-2xl'>
+      <div className='app-wallpaper-panel-strong border-border animate-in fade-in zoom-in-95 duration-base relative max-h-[calc(100dvh-2rem)] w-full max-w-sm overflow-y-auto overscroll-contain rounded-xl border p-6 shadow-2xl'>
         {variant === 'destructive' ? (
           <div className='mb-4 flex justify-center'>
             <div className='flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30'>

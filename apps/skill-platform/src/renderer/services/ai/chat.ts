@@ -14,6 +14,7 @@ import {
   resolveAIProtocol,
   resolveProtocolBase,
 } from './protocol';
+import { normalizeChatMaxTokens } from './token-limits';
 import type {
   DChatCompletionRequest,
   DChatCompletionResponse,
@@ -77,7 +78,7 @@ export async function chatCompletion(
   // Merge parameters: config.chatParams < options (options takes precedence)
   const mergedParams = {
     temperature: options?.temperature ?? chatParams?.temperature ?? 0.7,
-    maxTokens: options?.maxTokens ?? chatParams?.maxTokens ?? 2048,
+    maxTokens: normalizeChatMaxTokens(options?.maxTokens ?? chatParams?.maxTokens, 2048),
     topP: options?.topP ?? chatParams?.topP,
     topK: options?.topK ?? chatParams?.topK,
     frequencyPenalty: options?.frequencyPenalty ?? chatParams?.frequencyPenalty,
@@ -233,6 +234,16 @@ export async function chatCompletion(
         bodyAny[key] = value;
       }
     }
+  }
+
+  // Token limit is a structured setting. Re-apply the normalized value after custom
+  // parameters so stale max_tokens/max_completion_tokens values cannot override it.
+  if (useMaxCompletionTokens) {
+    delete body.max_tokens;
+    body.max_completion_tokens = mergedParams.maxTokens;
+  } else {
+    delete body.max_completion_tokens;
+    body.max_tokens = mergedParams.maxTokens;
   }
 
   // 处理输出格式 / Handle response format (Issue #38)

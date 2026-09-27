@@ -114,6 +114,7 @@ export {
   getNoteMentionDisplayPath,
   normalizeNotePath,
   parseNoteReferenceContent,
+  parseWorkspaceMentionPath,
   resolveNoteMentionsInContent,
   stripEchoedNoteBlocks,
   truncateNoteContent,

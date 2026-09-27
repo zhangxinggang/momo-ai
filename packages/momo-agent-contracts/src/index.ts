@@ -129,45 +129,16 @@ export interface RunEvent {
   type: RunEventType;
   payload: Record<string, unknown>;
 }
-export interface ToolAction {
-  id: string;
-  title: string;
-  description: string;
-  inputSchema: JsonSchema;
-  outputSchema: JsonSchema;
-  executor: {
-    runtime: 'node' | 'python' | 'http';
-    entry?: string;
-    export?: string;
-    url?: string;
-    method?: 'GET' | 'POST';
-  };
-  capabilities: string[];
-  effects: Array<'read' | 'write' | 'network' | 'execute'>;
-  timeoutMs: number;
-  retry: number;
-  parallelSafe: boolean;
-  idempotent: boolean;
-  examples?: Array<{ input: unknown; output: unknown }>;
-}
-export interface ToolPackageActions {
-  id: string;
-  name?: string;
-  description?: string;
-  aliases?: string[];
-  actions: ToolAction[];
-}
+export type ToolEffect = 'read' | 'write' | 'network' | 'execute';
 export interface ToolDescriptor {
   id: string;
   name: string;
   title: string;
   description: string;
   revision: string;
-  /** User-facing names that let the model associate an explicit prompt/Skill reference with this tool. */
-  aliases?: string[];
   inputSchema: JsonSchema;
   outputSchema?: JsonSchema;
-  effects: ToolAction['effects'];
+  effects: ToolEffect[];
   timeoutMs: number;
   parallelSafe: boolean;
   idempotent: boolean;

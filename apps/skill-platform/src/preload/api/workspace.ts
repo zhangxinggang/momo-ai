@@ -10,4 +10,6 @@ export const workspaceApi = {
   readSnippet: (dirPath: string, relativePath: string, line: number) =>
     ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_READ_SNIPPET, { dirPath, relativePath, line }),
   readFile: (filePath: string) => ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_READ_FILE, filePath),
+  reviewFile: (dirPath: string, filePath: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_REVIEW_FILE, { dirPath, filePath }),
 };

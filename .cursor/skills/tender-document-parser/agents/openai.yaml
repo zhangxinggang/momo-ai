@@ -1,0 +1,4 @@
+interface:
+  display_name: "标书解析助手"
+  short_description: "专业解析招采文件，完整提取投标模块、风险、评分与证据定位"
+  default_prompt: "使用 $tender-document-parser 解析这份招标文件，输出全部模块及证据定位。"

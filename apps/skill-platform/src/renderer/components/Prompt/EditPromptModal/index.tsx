@@ -299,6 +299,7 @@ export function EditPromptModal({
               wrapper: {
                 position: 'absolute',
                 inset: 0,
+                padding: 0,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'stretch',
@@ -308,6 +309,7 @@ export function EditPromptModal({
               container: {
                 flex: '1 1 auto',
                 height: '100%',
+                maxHeight: '100%',
                 minHeight: 0,
                 display: 'flex',
                 flexDirection: 'column',

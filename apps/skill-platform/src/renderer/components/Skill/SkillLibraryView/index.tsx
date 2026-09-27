@@ -7,6 +7,7 @@ import {
   useIncrementalSkillRender,
 } from '@renderer/hooks/useIncrementalSkillRender';
 import { useSkillStoreRemoteSync } from '@renderer/hooks/useSkillStoreRemoteSync';
+import { downloadSkillsBundle } from '@renderer/services/skill/batch-export';
 import { filterVisibleSkills } from '@renderer/services/skill/filter';
 import { importSkillZipFiles } from '@renderer/services/skill/import-zip';
 import { collectAllSkillTags } from '@renderer/services/skill/modal-utils';
@@ -16,6 +17,7 @@ import { Button, Modal } from 'antd';
 import {
   CheckSquareIcon,
   CuboidIcon,
+  DownloadIcon,
   FileArchiveIcon,
   FolderInputIcon,
   LayoutGridIcon,
@@ -59,6 +61,7 @@ export function SkillLibraryView() {
   const selectSkill = useSkillStore((state) => state.selectSkill);
   const filterType = useSkillStore((state) => state.filterType);
   const searchQuery = useSkillStore((state) => state.searchQuery);
+  const setSearchQuery = useSkillStore((state) => state.setSearchQuery);
   const viewMode = useSkillStore((state) => state.viewMode);
   const setViewMode = useSkillStore((state) => state.setViewMode);
   const storeView = useSkillStore((state) => state.storeView);
@@ -132,6 +135,7 @@ export function SkillLibraryView() {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedSkillIds, setSelectedSkillIds] = useState<Set<string>>(new Set());
   const [isZipImporting, setIsZipImporting] = useState(false);
+  const [isBatchDownloading, setIsBatchDownloading] = useState(false);
   const [isZipDragOver, setIsZipDragOver] = useState(false);
   const zipInputRef = useRef<HTMLInputElement>(null);
   const zipDragDepthRef = useRef(0);
@@ -331,6 +335,20 @@ export function SkillLibraryView() {
     setShowBatchDeployDialog(true);
   };
 
+  const handleBatchDownload = async () => {
+    if (selectedSkills.length === 0 || isBatchDownloading) return;
+    setIsBatchDownloading(true);
+    try {
+      await downloadSkillsBundle(selectedSkills.map((skill) => skill.id));
+      showToast(`已打包下载 ${selectedSkills.length} 个技能`, 'success');
+    } catch (error) {
+      console.error('批量打包技能失败:', error);
+      showToast(error instanceof Error ? error.message : '批量打包技能失败', 'error');
+    } finally {
+      setIsBatchDownloading(false);
+    }
+  };
+
   const confirmDelete = async () => {
     for (const id of deleteConfirm.skillIds) {
       await deleteSkill(id);
@@ -350,25 +368,30 @@ export function SkillLibraryView() {
           ? '待分发'
           : '我的 Skills';
 
-  const emptyStateTitle = isDistributionView
-    ? '暂无技能'
-    : effectiveFilterType === 'installed'
-      ? '还没有已导入的技能'
-      : effectiveFilterType === 'deployed'
-        ? '还没有已分发的技能'
-        : effectiveFilterType === 'pending'
-          ? '还没有待分发的技能'
-          : '暂无技能';
+  const hasSearchQuery = searchQuery.trim().length > 0;
+  const emptyStateTitle = hasSearchQuery
+    ? '没有匹配的技能'
+    : isDistributionView
+      ? '暂无技能'
+      : effectiveFilterType === 'installed'
+        ? '还没有已导入的技能'
+        : effectiveFilterType === 'deployed'
+          ? '还没有已分发的技能'
+          : effectiveFilterType === 'pending'
+            ? '还没有待分发的技能'
+            : '暂无技能';
 
-  const emptyStateHint = isDistributionView
-    ? '先导入 skill，再在这里安装、同步或卸载到 Claude、Cursor 等平台。'
-    : effectiveFilterType === 'installed'
-      ? '从 Skill 商店、本地扫描、GitHub 或手动创建导入后，它们会出现在这里。'
-      : effectiveFilterType === 'deployed'
-        ? '将技能分发到 Claude、Cursor 等平台后，这里会显示已分发项目。'
-        : effectiveFilterType === 'pending'
-          ? '尚未分发到任何平台的 skill 会显示在这里。'
-          : '创建、导入或从商店安装你的第一个技能';
+  const emptyStateHint = hasSearchQuery
+    ? '试试更短的关键词，或切换到其他标签。'
+    : isDistributionView
+      ? '先导入 skill，再在这里安装、同步或卸载到 Claude、Cursor 等平台。'
+      : effectiveFilterType === 'installed'
+        ? '从 Skill 商店、本地扫描、GitHub 或手动创建导入后，它们会出现在这里。'
+        : effectiveFilterType === 'deployed'
+          ? '将技能分发到 Claude、Cursor 等平台后，这里会显示已分发项目。'
+          : effectiveFilterType === 'pending'
+            ? '尚未分发到任何平台的 skill 会显示在这里。'
+            : '创建、导入或从商店安装你的第一个技能';
 
   const headerSubtitle = isDistributionView
     ? '集中管理 skill 在各个平台上的安装、同步与卸载。'
@@ -573,6 +596,15 @@ export function SkillLibraryView() {
                   {'批量同步到平台'}
                 </Button>
                 <Button
+                  onClick={() => void handleBatchDownload()}
+                  disabled={selectedSkillIds.size === 0 || isBatchDownloading}
+                  loading={isBatchDownloading}
+                  icon={!isBatchDownloading ? <DownloadIcon className='h-4 w-4' /> : undefined}
+                  className='border-border app-wallpaper-surface text-foreground hover:border-primary/25 hover:bg-accent inline-flex h-auto items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium'
+                  title={'打包下载'}>
+                  {'打包下载'}
+                </Button>
+                <Button
                   danger
                   onClick={handleBatchDelete}
                   disabled={selectedSkillIds.size === 0}
@@ -597,8 +629,12 @@ export function SkillLibraryView() {
           <SkillTagFilter
             activeTag={skillFilterTags[0] ?? null}
             onManageTags={() => setShowTagManageDialog(true)}
+            onSearchChange={setSearchQuery}
             onSelectAll={() => clearSkillFilterTags()}
             onSelectTag={toggleSkillFilterTag}
+            resultCount={filteredSkills.length}
+            searchPlaceholder={isDistributionView ? '搜索已分发技能' : undefined}
+            searchQuery={searchQuery}
             tags={availableTags}
           />
         ) : null}

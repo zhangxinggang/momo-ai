@@ -95,12 +95,9 @@ export const IPC_CHANNELS = {
   TOOL_RENAME: 'tool:rename',
   TOOL_DELETE: 'tool:delete',
   TOOL_MOVE: 'tool:move',
-  TOOL_READ_SNAPEDIT_HTML: 'tool:readSnapEditHtml',
-  TOOL_WRITE_GENERATED_FILES: 'tool:writeGeneratedFiles',
-  TOOL_ACTIVATE: 'tool:activate',
-  TOOL_DEACTIVATE: 'tool:deactivate',
-  TOOL_RUNTIME_STATUS: 'tool:runtimeStatus',
-  TOOL_READ_CONTEXT_FILES: 'tool:readContextFiles',
+
+  // 可复用接口请求工作台
+  API_REQUEST_EXECUTE: 'apiRequest:execute',
 
   // Knowledge base（知识库）
   KNOWLEDGE_LIST_COLLECTIONS: 'knowledge:listCollections',
@@ -263,6 +260,7 @@ export const IPC_CHANNELS = {
   WORKSPACE_LIST_TREE: 'workspace:listTree',
   WORKSPACE_GREP: 'workspace:grep',
   WORKSPACE_READ_SNIPPET: 'workspace:readSnippet',
+  WORKSPACE_REVIEW_FILE: 'workspace:reviewFile',
 
   // 爬虫（模型排行）
   SCRAPE_MODEL_RANKING: 'scrape:modelRanking',

@@ -162,7 +162,7 @@ export interface IAiChatServices {
   superpowerPrompts?: {
     workflow: string;
   };
-  /** 输入框 @ 笔记引用（由宿主注入） */
+  /** 输入框 @ 资源引用（由宿主注入，可包含笔记和工作区文件） */
   noteReferences?: INoteReferencesConfig;
   /** 消息内本地路径点击（由宿主注入） */
   localPath?: ILocalPathConfig;

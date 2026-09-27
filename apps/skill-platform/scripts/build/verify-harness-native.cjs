@@ -8,7 +8,7 @@ module.exports = async function verifyHarnessNative(context) {
   if (manifest.runtimeId !== 'deepseek-harness' || manifest.platform !== context.electronPlatformName || manifest.hostProtocolRange !== '1.x') throw new Error('Harness runtime packaging mismatch');
   const sorted = Object.fromEntries(Object.entries(manifest.files).sort(([a],[b])=>a<b?-1:a>b?1:0));
   if (manifest.bundleId !== 'dsh-'+manifest.coreVersion+'-'+createHash('sha256').update(JSON.stringify(sorted)).digest('hex').slice(0,16)) throw new Error('Harness bundle identity mismatch');
-  for (const required of [manifest.node,manifest.entry,'profile/cordis.patch.yml','plugins/momo-host-bridge/index.mjs','plugins/momo-model-credentials/index.mjs','plugins/momo-host-bridge/tool-schema.mjs','plugins/momo-tools/action-worker.mjs','plugins/momo-tools/action-worker.py']) if (!Object.hasOwn(sorted,required)) throw new Error('Harness packaged file missing: '+required);
+  for (const required of [manifest.node,manifest.entry,'profile/cordis.patch.yml','plugins/momo-host-bridge/index.mjs','plugins/momo-model-credentials/index.mjs','plugins/momo-host-bridge/tool-schema.mjs']) if (!Object.hasOwn(sorted,required)) throw new Error('Harness packaged file missing: '+required);
   const entries = Object.entries(sorted); let next=0;
   await Promise.all(Array.from({length:16},async()=>{while(next<entries.length){
     const [relative,expected]=entries[next++];

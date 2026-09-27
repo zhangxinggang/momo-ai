@@ -18,7 +18,6 @@ import { closeDatabase, initDatabase } from './database';
 import { registerBootstrapIPC } from './ipc';
 import { markAppQuitting } from './ipc/window-chrome';
 import { registerLocalMediaPrivilegedSchemes } from './protocol/local-media';
-import { customToolRuntimeService } from './services/custom-tool';
 import { knowledgeWorkerClient } from './services/knowledge-v2/worker-client';
 import {
   attachMainWindowCloseBehavior,
@@ -117,7 +116,6 @@ app.on('before-quit', (event) => {
     try {
       await disposeAgentRuntime();
     } finally {
-      customToolRuntimeService.disposeNow();
       knowledgeWorkerClient.dispose();
       await closeDatabase();
       shutdownFinished = true;

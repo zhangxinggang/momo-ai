@@ -68,6 +68,7 @@ export function CreateSkillModal({ isOpen, onClose }: IProps) {
       {!hideMainModal && (
         <Modal
           open
+          rootClassName={modal.isManualMode ? 'app-fullscreen-modal-root' : undefined}
           zIndex={100}
           data-testid='create-skill-modal-container'
           onCancel={modal.handleCloseRequest}
@@ -80,17 +81,45 @@ export function CreateSkillModal({ isOpen, onClose }: IProps) {
             (modal.isManualMode
               ? {
                   wrapper: { padding: 0 },
-                  content: {
+                  container: {
                     margin: 0,
                     maxWidth: '100vw',
                     width: '100vw',
-                    height: '100vh',
+                    height: '100dvh',
                     display: 'flex',
                     flexDirection: 'column',
                     padding: 0,
                     borderRadius: 0,
+                    overflow: 'hidden',
                   },
-                  body: { flex: 1, minHeight: 0, overflow: 'auto', paddingTop: 8 },
+                  header: {
+                    flex: '0 0 auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    minHeight: 64,
+                    margin: 0,
+                    padding: '16px 56px 16px 24px',
+                    backgroundColor: 'hsl(var(--background))',
+                    borderBottom: '1px solid hsl(var(--border))',
+                  },
+                  body: {
+                    flex: '1 1 auto',
+                    minHeight: 0,
+                    overflowY: 'auto',
+                    overscrollBehavior: 'contain',
+                    padding: 0,
+                  },
+                  footer: {
+                    flex: '0 0 auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                    minHeight: 64,
+                    margin: 0,
+                    padding: '12px 24px',
+                    backgroundColor: 'hsl(var(--background))',
+                    borderTop: '1px solid hsl(var(--border))',
+                  },
                 }
               : {
                   body: {

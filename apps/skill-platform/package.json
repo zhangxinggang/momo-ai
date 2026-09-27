@@ -1,7 +1,6 @@
 {
   "name": "AIM",
   "version": "1.0.0",
-  "packageManager": "pnpm@10.33.2",
   "private": true,
   "description": "AIM Desktop - Electron application for AI prompt management",
   "main": "dist/main/index.js",
@@ -26,19 +25,23 @@
     "@lancedb/lancedb": "0.22.3",
     "@lancedb/lancedb-win32-x64-msvc": "0.22.3",
     "@log4js-node/smtp": "^1.1.0",
+    "@momo/agent-contracts": "workspace:*",
+    "@momo/api-request": "workspace:*",
+    "@momo/harness-adapter": "workspace:*",
     "@napi-rs/canvas": "^0.1.80",
     "@napi-rs/canvas-win32-x64-msvc": "0.1.80",
+    "@openuidev/react-lang": "^0.3.0",
+    "@openuidev/react-ui": "^0.16.2",
     "@xberg-io/xberg": "1.0.7",
     "@xberg-io/xberg-win32-x64-msvc": "1.0.7",
+    "ajv": "^8.17.1",
     "better-sqlite3": "12.9.0",
     "chokidar": "3.6.0",
     "html-to-docx": "^1.8.0",
     "log4js": "^6.3.0",
     "reflect-metadata": "^0.2.2",
     "typeorm": "^1.0.0",
-    "@momo/agent-contracts": "workspace:*",
-    "@momo/harness-adapter": "workspace:*",
-    "ajv": "^8.17.1"
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@ant-design/icons": "^6.2.2",
@@ -93,6 +96,7 @@
     "xlsx": "^0.18.5",
     "zustand": "^5.0.0"
   },
+  "packageManager": "pnpm@10.33.2",
   "engines": {
     "node": ">=22.0.0"
   }

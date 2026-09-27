@@ -1,13 +1,14 @@
 import { FileTextOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 
-import { getNoteMentionDisplayPath } from '../../utils/note-mention';
+import { getNoteMentionDisplayPath, parseWorkspaceMentionPath } from '../../utils/note-mention';
 import styles from './index.module.less';
 import type { IProps } from './types';
 
 export function NoteReferenceChip(props: IProps) {
   const { path, measureText, showTooltip = true, className } = props;
   const displayPath = getNoteMentionDisplayPath(path);
+  const referenceLabel = parseWorkspaceMentionPath(path) ? '工作区文件引用' : '笔记引用';
 
   const chipNode = measureText ? (
     <span className={`${styles['chip-mirror']} ${className ?? ''}`}>
@@ -28,5 +29,5 @@ export function NoteReferenceChip(props: IProps) {
     return chipNode;
   }
 
-  return <Tooltip title='笔记引用'>{chipNode}</Tooltip>;
+  return <Tooltip title={referenceLabel}>{chipNode}</Tooltip>;
 }

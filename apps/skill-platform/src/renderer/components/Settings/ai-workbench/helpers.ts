@@ -1,5 +1,7 @@
 import type { IAIModelConfig, IChatModelParams, IImageModelParams } from '@renderer/types/settings';
 
+import { normalizeChatMaxTokens } from '@renderer/services/ai/token-limits';
+
 import { DEFAULT_CHAT_PARAMS, DEFAULT_IMAGE_PARAMS, PROVIDER_OPTIONS } from './constants';
 import type { IModelFormState, IModelOption, IProviderOption } from './types';
 
@@ -94,7 +96,7 @@ export function buildChatParams(form: IModelFormState): IChatModelParams | null 
 
   return {
     temperature: form.chatParams.temperature,
-    maxTokens: form.chatParams.maxTokens,
+    maxTokens: normalizeChatMaxTokens(form.chatParams.maxTokens, DEFAULT_CHAT_PARAMS.maxTokens),
     topP: form.chatParams.topP,
     topK: form.chatParams.topK.trim() ? Number(form.chatParams.topK) : undefined,
     frequencyPenalty: form.chatParams.frequencyPenalty,
@@ -226,7 +228,7 @@ export function createFormFromModel(model: IAIModelConfig): IModelFormState {
     model: model.model,
     chatParams: {
       temperature: chatParams?.temperature ?? DEFAULT_CHAT_PARAMS.temperature,
-      maxTokens: chatParams?.maxTokens ?? DEFAULT_CHAT_PARAMS.maxTokens,
+      maxTokens: normalizeChatMaxTokens(chatParams?.maxTokens, DEFAULT_CHAT_PARAMS.maxTokens),
       topP: chatParams?.topP ?? DEFAULT_CHAT_PARAMS.topP,
       topK: chatParams?.topK != null ? String(chatParams.topK) : '',
       frequencyPenalty: chatParams?.frequencyPenalty ?? DEFAULT_CHAT_PARAMS.frequencyPenalty,

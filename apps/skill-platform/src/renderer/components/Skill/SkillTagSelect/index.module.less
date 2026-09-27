@@ -1,5 +1,11 @@
 .tag-select {
   width: 100%;
+
+  :global(.ant-select-selection-search-input:focus),
+  :global(.ant-select-selection-search-input:focus-visible) {
+    outline: none !important;
+    box-shadow: none !important;
+  }
 }
 
 .tag-select-option {

@@ -13,8 +13,9 @@ import {
   useMdPreviewTheme,
   useSkillMdEditorToolbars,
 } from '@renderer/utils/markdown/editor-config';
+import { Button } from 'antd';
 import { clsx } from 'clsx';
-import { FileTextIcon } from 'lucide-react';
+import { FileTextIcon, RefreshCwIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styles from './index.module.less';
 
@@ -39,8 +40,10 @@ export function NoteManager() {
   const savedContent = useNoteStore((state) => state.savedContent);
   const isLoadingFile = useNoteStore((state) => state.isLoadingFile);
   const isSaving = useNoteStore((state) => state.isSaving);
+  const fileLoadError = useNoteStore((state) => state.fileLoadError);
   const setEditorContent = useNoteStore((state) => state.setEditorContent);
   const saveCurrentFile = useNoteStore((state) => state.saveCurrentFile);
+  const selectFile = useNoteStore((state) => state.selectFile);
   const loadTree = useNoteStore((state) => state.loadTree);
   const [isAiRewriting, setIsAiRewriting] = useState(false);
 
@@ -115,6 +118,20 @@ export function NoteManager() {
             <div className={styles['note-editor-body']}>
               {isLoadingFile ? (
                 <div className={styles['note-editor-loading']}>{'加载中…'}</div>
+              ) : fileLoadError ? (
+                <ModuleEmptyState
+                  centered
+                  icon={FileTextIcon}
+                  title='笔记加载失败'
+                  description={fileLoadError}
+                  action={
+                    <Button
+                      icon={<RefreshCwIcon className='h-4 w-4' />}
+                      onClick={() => void selectFile(selectedId)}>
+                      {'重新加载'}
+                    </Button>
+                  }
+                />
               ) : (
                 <div
                   className={clsx(

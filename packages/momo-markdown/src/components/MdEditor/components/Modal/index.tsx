@@ -166,7 +166,9 @@ const Modal = (props: IProps) => {
                 <div className={`${prefix}-modal-mask`} style={state.maskStyle} onClick={onClose} />
               )}
               <div
-                className={modalClass.join(' ')}
+                className={[...modalClass, props.isFullscreen ? `${prefix}-modal-fullscreen` : '']
+                  .filter(Boolean)
+                  .join(' ')}
                 style={{
                   ...state.modalStyle,
                   ...state.initPos,

@@ -1,6 +1,8 @@
 import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
 import { ipcMain } from 'electron';
 import fs from 'fs';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import path from 'path';
 
 import { isCodeEditorPath } from '@momo/file-editor/node';
@@ -15,6 +17,7 @@ import {
 } from '../services/workspace/root-permissions';
 
 const MAX_FILE_SIZE = 1024 * 50;
+const execFileAsync = promisify(execFile);
 
 interface IDirEntry {
   name: string;
@@ -23,14 +26,9 @@ interface IDirEntry {
   size?: number;
 }
 
-function listDirectory(
-  dirPath: string,
-  maxDepth: number = 2,
-  currentDepth: number = 0,
-): IDirEntry[] {
-  if (currentDepth >= maxDepth) return [];
+async function listDirectory(dirPath: string): Promise<IDirEntry[]> {
   try {
-    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
     const result: IDirEntry[] = [];
     for (const entry of entries) {
       if (
@@ -43,12 +41,7 @@ function listDirectory(
       if (entry.isDirectory()) {
         result.push({ name: entry.name, path: fullPath, type: 'directory' });
       } else if (entry.isFile()) {
-        try {
-          const stat = fs.statSync(fullPath);
-          result.push({ name: entry.name, path: fullPath, type: 'file', size: stat.size });
-        } catch {
-          result.push({ name: entry.name, path: fullPath, type: 'file' });
-        }
+        result.push({ name: entry.name, path: fullPath, type: 'file' });
       }
     }
     return result;
@@ -64,7 +57,7 @@ export function registerWorkspaceIPC(): void {
     }
     try {
       const grantedPath = assertGrantedWorkspaceDirectory(dirPath);
-      const entries = listDirectory(grantedPath);
+      const entries = await listDirectory(grantedPath);
       return { success: true, entries, dirPath: grantedPath };
     } catch (error) {
       return {
@@ -189,4 +182,78 @@ export function registerWorkspaceIPC(): void {
       };
     }
   });
+
+  ipcMain.handle(
+    IPC_CHANNELS.WORKSPACE_REVIEW_FILE,
+    async (_event, payload: { dirPath: string; filePath: string }) => {
+      const dirPath = payload?.dirPath;
+      const requestedPath = payload?.filePath;
+      if (!dirPath || !requestedPath) {
+        return { success: false, error: '工作区和文件路径不能为空' };
+      }
+
+      try {
+        const workspaceRoot = assertGrantedWorkspaceDirectory(dirPath);
+        const targetPath = assertFileWithinWorkspaceRoot(
+          workspaceRoot,
+          path.isAbsolute(requestedPath)
+            ? requestedPath
+            : path.resolve(workspaceRoot, requestedPath),
+        );
+        const stat = fs.statSync(targetPath);
+        if (!stat.isFile()) {
+          return { success: false, error: '目标不是文件' };
+        }
+        if (stat.size > 1024 * 1024) {
+          return { success: false, error: '文件超过 1 MB，无法在审阅面板中打开' };
+        }
+
+        const currentContent = fs.readFileSync(targetPath, 'utf-8');
+        let baseContent = '';
+        let hasBase = false;
+
+        try {
+          const { stdout: gitRootOutput } = await execFileAsync(
+            'git',
+            ['-C', workspaceRoot, 'rev-parse', '--show-toplevel'],
+            { encoding: 'utf8', maxBuffer: 1024 * 1024 },
+          );
+          const gitRoot = gitRootOutput.trim();
+          const gitRelativePath = path.relative(gitRoot, targetPath).split(path.sep).join('/');
+          if (
+            gitRelativePath &&
+            !gitRelativePath.startsWith('../') &&
+            !path.isAbsolute(gitRelativePath)
+          ) {
+            const { stdout } = await execFileAsync(
+              'git',
+              ['-C', gitRoot, 'show', `HEAD:${gitRelativePath}`],
+              {
+                encoding: 'utf8',
+                maxBuffer: 2 * 1024 * 1024,
+              },
+            );
+            baseContent = stdout;
+            hasBase = true;
+          }
+        } catch {
+          // Untracked files and non-Git workspaces have no baseline; review still shows AI output.
+        }
+
+        return {
+          success: true,
+          filePath: targetPath,
+          relativePath: path.relative(workspaceRoot, targetPath).split(path.sep).join('/'),
+          currentContent,
+          baseContent,
+          hasBase,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
+    },
+  );
 }

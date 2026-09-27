@@ -1,0 +1,44 @@
+.preview {
+  min-width: 0;
+  min-height: 100%;
+  padding: 18px;
+  overflow: auto;
+}
+
+.surface {
+  min-height: 100%;
+}
+
+.selectable {
+  display: contents;
+}
+
+.selectable[data-editing] > *:not(.dataError) {
+  cursor: pointer;
+  transition:
+    outline-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.selectable[data-editing]:hover > *:not(.dataError) {
+  outline: 1px dashed hsl(var(--primary) / 0.65);
+  outline-offset: 3px;
+}
+
+.selectable[data-selected] > *:not(.dataError) {
+  outline: 2px solid hsl(var(--primary) / 0.9);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 5px hsl(var(--primary) / 0.08);
+}
+
+.selectable[data-selected] > *:not(.dataError):first-of-type {
+  position: relative;
+}
+
+.dataError {
+  margin: 4px 0;
+  border-left: 2px solid hsl(var(--destructive));
+  padding: 3px 7px;
+  color: hsl(var(--destructive));
+  font-size: 11px;
+}

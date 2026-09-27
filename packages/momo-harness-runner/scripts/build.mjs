@@ -29,7 +29,9 @@ if (process.argv.includes('--ensure')) {
   try {
     const manifest = JSON.parse(await fs.readFile(path.join(output,'runtime.json'),'utf8'));
     const current = manifest.coreVersion === lock.version && manifest.nodeVersion === process.version && manifest.platform === process.platform && manifest.arch === process.arch;
-    if (current && (await Promise.all(assetPaths.map(async file => manifest.files[path.relative(root,file).replaceAll('\\','/')] === createHash('sha256').update(await fs.readFile(file)).digest('hex')))).every(Boolean)) {
+    const sourceAssets = await Promise.all(assetPaths.map(async file => [path.relative(root,file).replaceAll('\\','/'),createHash('sha256').update(await fs.readFile(file)).digest('hex')]));
+    const declaredAssets = Object.keys(manifest.files).filter(file => file.startsWith('plugins/') || file.startsWith('profile/'));
+    if (current && declaredAssets.length === sourceAssets.length && sourceAssets.every(([file,hash]) => manifest.files[file] === hash)) {
       console.log('Harness runtime ready:', manifest.bundleId); process.exit(0);
     }
   } catch { /* Build a missing or stale runtime. */ }
@@ -49,6 +51,7 @@ if (!reuse) {
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
 await fs.copyFile(path.join(output,'package-lock.json'),path.join(root,'runtime-package-lock.json'));
+await Promise.all(['plugins','profile'].map(directory => fs.rm(path.join(output,directory),{recursive:true,force:true})));
 await fs.cp(path.join(root,'plugins'),path.join(output,'plugins'),{recursive:true});
 await fs.cp(path.join(root,'profile'),path.join(output,'profile'),{recursive:true});
 const node = process.platform === 'win32' ? 'node.exe' : 'node';

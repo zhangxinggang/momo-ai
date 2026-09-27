@@ -22,20 +22,25 @@ flowchart LR
     FileEditor["@momo/file-editor"]
     Knowledge["@momo/knowledge"]
     Tree["@momo/tree"]
+    ApiRequest["@momo/api-request"]
     Utils["@momo/utils"]
   end
 
   subgraph Runtime["Agent 问答运行时"]
     Contracts["@momo/agent-contracts"]
     RuntimeService["agent-runtime<br/>应用服务与工具代理"]
-    ToolCatalog["工具箱目录<br/>tool.json + actions"]
-    ToolBroker["ToolBroker<br/>点名匹配、权限与执行"]
+    ToolBroker["ToolBroker<br/>内建与 MCP 工具权限、执行"]
     Adapter["@momo/harness-adapter"]
     Harness["@momo/harness-runner<br/>独立 Node 运行包"]
     Agent["DeepSeek Harness<br/>Agent 与模型调用"]
     Contracts --> RuntimeService --> Adapter --> Harness --> Agent
-    ToolCatalog --> ToolBroker --> RuntimeService
-    Agent -->|工具调用| ToolBroker
+    Agent -->|宿主工具调用| ToolBroker --> RuntimeService
+  end
+
+  subgraph CustomViews["自定义工具（仅视图）"]
+    ToolEditor["工具箱编辑器<br/>OpenUI 默认 / HTML 显式"]
+    ToolFiles[("momo-tool.json<br/>view.openui / index.html")]
+    ToolEditor --> ApiRequest
   end
 
   subgraph Storage["本地数据与外部能力"]
@@ -52,9 +57,12 @@ flowchart LR
   Renderer --> FileEditor
   Renderer --> Knowledge
   Renderer --> Tree
+  Renderer --> ToolEditor
+  ApiRequest --> Preload
   UiPackages --> Utils
   Main --> SQLite
   Main --> Files
+  Main --> ToolFiles
   Main --> RuntimeService
   Knowledge --> Lance
   KbService --> SQLite
@@ -93,7 +101,7 @@ sequenceDiagram
 
 问答 UI 不直接依赖 Harness 实现；它通过共享契约和 IPC 调用主进程服务，后者负责运行、持久化、工具及生命周期管理。
 
-提示词、规则或已展开 Skill/Command 点名工具箱名称、别名、稳定 ID 或 action 名称时，主进程只把匹配 action 临时加入本轮工具目录；项目策略可长期开放额外 action。所有调用仍经 ToolBroker 完成输入/输出校验、权限审批、执行快照与审计。
+自定义工具不进入 Agent 工具目录。ToolBroker 只代理系统内建工具与项目启用的 MCP 工具；自定义工具中的静态数据和 API 请求只服务于工具箱视图预览。
 
 ### 统一 AI 问答入口
 
@@ -113,7 +121,12 @@ flowchart LR
   PromptCompare --> StreamAdapter
   WorkflowChat --> ChatState
   NoteComposer --> ScopedSession[单轮独立会话<br/>一次用户任务一个 sessionId]
-  ToolComposer --> ScopedSession
+  ToolComposer --> ProtocolStream[无 tools 的视图生成流<br/>默认 OpenUI]
+  ProtocolStream --> AIHttp[AI HTTP IPC]
+  AIHttp --> Model[配置的对话模型]
+  Notes[笔记树] --> MentionMenu[@ 引用菜单]
+  WorkspaceFiles[当前项目工作区文件树] --> MentionMenu
+  MentionMenu --> ChatState
   ScopedSession --> StreamAdapter[Harness Stream Adapter]
   ChatState --> RuntimePort[ChatRuntimePort]
   StreamAdapter --> RuntimePort
@@ -125,7 +138,7 @@ flowchart LR
   Runner --> Agent[Agent / LLM / 工具]
 ```
 
-所有用户可见的 AI 问答入口统一进入 Harness。完整对话直接使用 `ChatRuntimePort`；笔记改写和工具生成等单轮编辑器为每次用户任务分配独立 `sessionId`，任务内自动修复复用该会话，下一次发送重新建会话，再通过 Harness Stream Adapter 转为同一运行协议。输入栏中的会话命令不会回落到主对话；日志导出使用当前任务的 `sessionId`，因此上下文、运行日志与其他对话隔离。Renderer 不再保留直连模型、LangGraph 二次问答或隐式回退问答链路。
+所有对话型 AI 入口统一进入 Harness。完整对话直接使用 `ChatRuntimePort`；笔记改写等单轮编辑器为每次用户任务分配独立 `sessionId`，再通过 Harness Stream Adapter 转为同一运行协议。自定义工具生成是例外：它只要求模型返回 OpenUI Lang（默认）或用户明确要求的单文件 HTML，因此使用无宿主 tools、无知识库检索的 AI HTTP 文本流；结果由 Renderer 预检，并由 Main 在保存时再次校验路径、大小和视图类型。主对话输入 `@` 时，未选择工作区仍展示原笔记树；已选择工作区时按“笔记 / 工作区文件”分类展示，主进程只允许读取当前项目已注册根目录内且不经过符号链接的显式文件引用。输入栏中的会话命令不会回落到主对话；Renderer 不保留隐式回退问答链路。
 
 ### 生成中离开保护
 
@@ -171,7 +184,9 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-  Source[文件、目录或文本] --> Manager[知识库管理 UI]
+  Source[文件或目录] --> Manager[知识库管理 UI]
+  Paste[粘贴文本] --> LocalChunk[本地固定规则切分<br/>不调用对话模型]
+  LocalChunk --> Manager
   Manager --> IPC[Electron IPC]
   IPC --> KbService[主进程知识库服务]
   KbService --> Worker[Knowledge Worker<br/>解析与结构化切分]
@@ -189,4 +204,4 @@ flowchart LR
   Runtime --> Chat
 ```
 
-知识库以本地元数据和向量索引保存可检索内容。解析、预览和结构化切分统一由 Knowledge Worker 的正式 V2 实现完成，Renderer 中的 `@momo/knowledge` 只保留组件和 UI 类型，不再维护第二套 LangChain 切分链路。用户在对话输入栏选择单个知识库后，主进程在模型调用前检索该集合，并将证据与引用注入问答运行时。`retrieveForChat` 将空库或首次索引未完成归一为 `no_match`，问答继续但必须明确说明没有足够知识证据；知识库管理检索和其他检索故障仍返回结构化错误。
+知识库以本地元数据和向量索引保存可检索内容。解析、预览和结构化切分统一由 Knowledge Worker 的正式 V2 实现完成，Renderer 中的 `@momo/knowledge` 只保留组件和 UI 类型，不再维护第二套 LangChain 切分链路。粘贴入库固定使用本地规则切分，不调用对话或文本切分模型；随后仍调用已配置的嵌入模型生成向量并写入 LanceDB，因此入库完成后可参与向量检索。用户在对话输入栏选择单个知识库后，主进程在模型调用前检索该集合，并将证据与引用注入问答运行时。`retrieveForChat` 将空库或首次索引未完成归一为 `no_match`，问答继续但必须明确说明没有足够知识证据；知识库管理检索和其他检索故障仍返回结构化错误。

@@ -32,8 +32,6 @@ describe('packaged Harness integrity gate', () => {
       'plugins/momo-host-bridge/index.mjs',
       'plugins/momo-host-bridge/tool-schema.mjs',
       'plugins/momo-model-credentials/index.mjs',
-      'plugins/momo-tools/action-worker.mjs',
-      'plugins/momo-tools/action-worker.py',
     ];
     for (const relative of paths) {
       const target = path.join(root, relative);
@@ -100,8 +98,8 @@ describe('packaged Harness integrity gate', () => {
       verify({ appOutDir: home, electronPlatformName: process.platform }),
     ).resolves.toBeUndefined();
   });
-  it('rejects a modified action worker before publishing', async () => {
-    await fs.writeFile(path.join(root, 'plugins/momo-tools/action-worker.py'), 'changed');
+  it('rejects a modified host bridge before publishing', async () => {
+    await fs.writeFile(path.join(root, 'plugins/momo-host-bridge/index.mjs'), 'changed');
     await expect(
       verify({ appOutDir: home, electronPlatformName: process.platform }),
     ).rejects.toThrow('corrupted');

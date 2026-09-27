@@ -7,6 +7,7 @@ import {
   toAIConfig,
 } from '@renderer/services/ai/defaults';
 import { resolveImageModelCapabilities } from '@renderer/services/ai/image/capabilities';
+import { normalizeChatMaxTokens } from '@renderer/services/ai/token-limits';
 import { openExternalUrl } from '@renderer/services/desktop';
 import type { IAIModelConfig } from '@renderer/types/settings';
 import { uploadChatAttachmentFiles, validateChatAttachmentFiles } from '../chat-attachment-upload';
@@ -62,7 +63,7 @@ export function buildSharedAiChatServices(
   const chatModels = getModelsByType(options.aiModels, 'chat').map((model) => ({
     id: model.id,
     label: model.name?.trim() || model.model,
-    maxOutputTokens: model.chatParams?.maxTokens ?? 32768,
+    maxOutputTokens: normalizeChatMaxTokens(model.chatParams?.maxTokens, 32768),
   }));
 
   const defaultModelId = chatModels[0]?.id;

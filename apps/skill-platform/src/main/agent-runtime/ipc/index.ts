@@ -186,6 +186,7 @@ export function registerAgentRuntimeIPC(db: Database) {
     }
   });
 }
+
 export async function disposeAgentRuntime() {
   await service?.dispose();
   service = undefined;

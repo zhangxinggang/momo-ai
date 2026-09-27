@@ -103,6 +103,7 @@ export function FullscreenModal({
   return (
     <Modal
       open={open}
+      rootClassName='app-fullscreen-modal-root'
       title={title}
       footer={resolvedFooter}
       onCancel={onClose}

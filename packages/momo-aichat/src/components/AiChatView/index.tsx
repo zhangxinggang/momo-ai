@@ -40,6 +40,10 @@ export interface IProps {
   codeTheme?: string;
   /** 助手消息「复制」按钮右侧扩展插槽 */
   renderAssistantMessageActions?: (message: IChatMessage) => React.ReactNode;
+  /** Empty state shown before the first message. */
+  emptyState?: React.ReactNode;
+  /** Host actions rendered on the right side of the context header. */
+  headerActions?: React.ReactNode;
 }
 
 export const AiChatView: React.FC<IProps> = ({
@@ -52,6 +56,8 @@ export const AiChatView: React.FC<IProps> = ({
   previewTheme = 'cyanosis',
   codeTheme = 'atom',
   renderAssistantMessageActions,
+  emptyState,
+  headerActions,
 }) => {
   const { message, modal } = App.useApp();
   const {
@@ -623,7 +629,8 @@ export const AiChatView: React.FC<IProps> = ({
 
   // 获取当前会话的消息列表，如果没有消息则显示欢迎语
   const displayMessages = currentSession?.messages || [];
-  const showWelcome = !hideWelcome;
+  const showWelcome = !hideWelcome && displayMessages.length === 0 && !emptyState;
+  const showEmptyState = displayMessages.length === 0 && Boolean(emptyState);
 
   // 判断当前会话是否正在生成
   const isCurrentSessionGenerating = currentSessionId
@@ -632,7 +639,7 @@ export const AiChatView: React.FC<IProps> = ({
 
   return (
     <div className='bg-panel flex h-full flex-col transition-colors'>
-      <ChatContextBanner />
+      <ChatContextBanner actions={headerActions} />
       {/* 消息滚动容器：全宽，允许在左右 10% 空白区域滚动 */}
       <div
         ref={messagesContainerRef}
@@ -641,7 +648,10 @@ export const AiChatView: React.FC<IProps> = ({
         className='relative flex-1 overflow-y-auto p-4'
         style={{ overflowAnchor: 'none' }}>
         {/* 视觉内容区：80% 宽度、居中 */}
-        <div ref={messagesContentRef} className='mx-auto w-[80%] space-y-4'>
+        <div
+          ref={messagesContentRef}
+          className={`mx-auto w-[80%] space-y-4 ${showEmptyState ? 'flex min-h-full items-center justify-center' : ''}`}>
+          {showEmptyState ? emptyState : null}
           {/* 欢迎消息 - 用户发送消息后仍保持显示 */}
           {showWelcome && (
             <div className='w-full'>

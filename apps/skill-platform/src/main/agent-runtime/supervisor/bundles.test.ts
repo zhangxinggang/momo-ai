@@ -18,8 +18,6 @@ describe('builtin adapter updates with the same native core', () => {
       'plugins/momo-host-bridge/index.mjs',
       'plugins/momo-host-bridge/tool-schema.mjs',
       'plugins/momo-model-credentials/index.mjs',
-      'plugins/momo-tools/action-worker.mjs',
-      'plugins/momo-tools/action-worker.py',
       'profile/agent-presets/momo-default/agent.cordis.yml',
       'profile/package.json',
       'profile/cordis.patch.yml',

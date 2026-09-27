@@ -8,6 +8,7 @@ import {
   buildNoteMentionToken,
   ensureNoteSnapshots,
   expandNoteMentionsWithSnapshots,
+  getNoteMentionDisplayPath,
   stripEchoedNoteBlocks,
   truncateNoteContent,
 } from './note-mention';
@@ -58,6 +59,25 @@ describe('expandNoteMentionsWithSnapshots', () => {
       '\n',
     );
     expect(result).toBe(`请查看 ${block} 内容`);
+  });
+
+  it('labels workspace file references separately from notes', () => {
+    const path = `workspace:${encodeURIComponent('C:\\project')}::${encodeURIComponent('src/app.ts')}`;
+    const token = buildNoteMentionToken(path);
+    const result = expandNoteMentionsWithSnapshots(token, {
+      [path]: {
+        path,
+        content: 'export const app = true;',
+        snapshotAt: 1,
+        isTruncated: false,
+        originalLength: 24,
+      },
+    });
+
+    expect(getNoteMentionDisplayPath(path)).toBe('src/app.ts');
+    expect(result).toContain('--- 工作区文件: src/app.ts START ---');
+    expect(result).toContain('--- 工作区文件: src/app.ts END ---');
+    expect(stripEchoedNoteBlocks(`结论\n${result}\n完成`)).toBe('结论\n\n完成');
   });
 
   it('缺少快照时使用占位符', () => {

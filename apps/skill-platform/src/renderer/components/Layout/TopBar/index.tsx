@@ -89,6 +89,8 @@ export function TopBar({ onOpenSettings }: IProps) {
   });
   const isProjectSkillView = appModule === 'skill' && skillStoreView === 'projects';
   const isSkillView = appModule === 'skill';
+  const usesInlineSkillSearch =
+    isSkillView && (skillStoreView === 'my-skills' || skillStoreView === 'distribution');
   const isPromptView = appModule === 'prompt';
   const isNoteView = appModule === 'note';
   const isKbView = appModule === 'kb';
@@ -322,6 +324,9 @@ export function TopBar({ onOpenSettings }: IProps) {
       openCreateEditor();
     };
     const handleSearch = () => {
+      if (usesInlineSkillSearch) {
+        return;
+      }
       searchInputRef.current?.focus();
     };
 
@@ -332,7 +337,7 @@ export function TopBar({ onOpenSettings }: IProps) {
       window.removeEventListener('shortcut:newPrompt', handleNewPrompt);
       window.removeEventListener('shortcut:search', handleSearch);
     };
-  }, []);
+  }, [openCreateEditor, usesInlineSkillSearch]);
 
   // Click outside to close create menu
   useEffect(() => {
@@ -440,7 +445,8 @@ export function TopBar({ onOpenSettings }: IProps) {
             isKbView ||
             isChatView ||
             isToolboxView ||
-            isWorkflowView ? null : (
+            isWorkflowView ||
+            usesInlineSkillSearch ? null : (
               <div className='relative flex w-full max-w-lg flex-1 items-center'>
                 <div className='app-wallpaper-search pointer-events-none absolute inset-0 rounded-lg border' />
                 <Input

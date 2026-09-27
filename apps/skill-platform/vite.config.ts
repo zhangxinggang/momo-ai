@@ -104,6 +104,7 @@ const sharedResolveAlias = {
     __dirname,
     '../../packages/momo-agent-contracts/src/index.ts',
   ),
+  '@momo/api-request/core': path.resolve(__dirname, '../../packages/momo-api-request/src/core.ts'),
   '@momo/harness-adapter': path.resolve(
     __dirname,
     '../../packages/momo-harness-adapter/src/index.ts',
@@ -195,6 +196,7 @@ export default defineConfig({
     alias: {
       ...sharedResolveAlias,
       '@momo/aichat': path.resolve(__dirname, '../../packages/momo-aichat/src/index.ts'),
+      '@momo/api-request': path.resolve(__dirname, '../../packages/momo-api-request/src/index.ts'),
       '@momo/knowledge': path.resolve(__dirname, '../../packages/momo-knowledge/src/index.ts'),
       '@momo/aichat/styles.css': path.resolve(
         __dirname,

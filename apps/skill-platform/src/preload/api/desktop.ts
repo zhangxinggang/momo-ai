@@ -20,6 +20,8 @@ export const desktopApi = {
   setMinimizeToTray: (enabled: boolean) => ipcRenderer.send('app:setMinimizeToTray', enabled),
   setCloseAction: (action: 'ask' | 'minimize' | 'exit') =>
     ipcRenderer.send('app:setCloseAction', action),
+  setPowerSaveMode: (mode: 'prevent-app-suspension' | 'prevent-display-sleep', enabled: boolean) =>
+    ipcRenderer.send('app:setPowerSaveMode', mode, enabled),
   onShowCloseDialog: (callback: () => void) => {
     const listener = () => callback();
     ipcRenderer.on('window:showCloseDialog', listener);

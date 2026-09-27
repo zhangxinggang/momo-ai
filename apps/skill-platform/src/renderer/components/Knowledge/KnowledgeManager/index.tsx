@@ -312,7 +312,22 @@ export function KnowledgeManager() {
         activeCollectionId,
         txt,
         pasteFilename.trim() || undefined,
-        kbEmbeddingOptions,
+        {
+          ...kbEmbeddingOptions,
+          // 粘贴文本使用确定性本地切分，不调用对话/文本切分模型。
+          // 嵌入模型仍用于生成向量，保证内容可以被语义检索。
+          segmentMode: 'fixed',
+          segmentSettings: {
+            separator: '\n\n',
+            maxChunkLength: 500,
+            chunkOverlap: 100,
+            preprocess: {
+              normalizeWhitespace: true,
+              removeUrlsAndEmails: false,
+            },
+            splitMode: 'code',
+          },
+        },
       );
       setPasteOpen(false);
       setPasteText('');
@@ -539,6 +554,11 @@ export function KnowledgeManager() {
           onChange={(e) => setPasteText(e.target.value)}
           autoSize={{ minRows: 8 }}
         />
+        <p className={styles['kb-main-paste-hint']}>
+          {
+            '粘贴内容使用本地规则切分，不调用对话模型；入库时仍使用嵌入模型生成向量，因此可以进行向量检索。'
+          }
+        </p>
       </Modal>
 
       <Modal

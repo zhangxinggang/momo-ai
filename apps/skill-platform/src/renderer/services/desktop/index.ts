@@ -22,4 +22,10 @@ export {
 
 export { subscribeFullscreenChanged, subscribeMainEvent, unsubscribeMainEvent } from './ipc-events';
 
-export { setAutoLaunch, setCloseAction, setDebugMode, setMinimizeToTray } from './lifecycle';
+export {
+  setAutoLaunch,
+  setCloseAction,
+  setDebugMode,
+  setMinimizeToTray,
+  setPowerSaveMode,
+} from './lifecycle';

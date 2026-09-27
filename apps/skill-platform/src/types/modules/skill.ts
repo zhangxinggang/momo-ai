@@ -260,6 +260,14 @@ export interface ISkillLocalFileTreeEntry {
   size?: number;
 }
 
+/** Optional scoped listing used by the lazy file explorer. */
+export interface ISkillLocalFileListOptions {
+  /** Return direct children of this directory instead of walking the full tree. */
+  directory?: string;
+  /** Search all non-generated directories for matching paths. */
+  query?: string;
+}
+
 /**
  * Scanned local skill (not yet imported)
  * 扫描到的本地技能（尚未导入）

@@ -2,6 +2,100 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ant Design Modal 统一限制在当前窗口内。标题/关闭按钮和底部操作保持可见，
+   超出高度的内容只在正文区域滚动。 */
+.ant-modal-root,
+.ant-modal-root .ant-modal-wrap,
+.ant-modal-root .ant-modal,
+.ant-modal-root .ant-modal-container,
+.ant-modal-root .ant-modal-header,
+.ant-modal-root .ant-modal-close,
+.ant-modal-root .ant-modal-body,
+.ant-modal-root .ant-modal-footer {
+  -webkit-app-region: no-drag;
+}
+
+.ant-modal-root .ant-modal-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 24px;
+  overflow: hidden;
+}
+
+/* centered 模式原本用一个 100% 高的伪元素做垂直对齐；全局改用 flex 后必须移除，
+   否则它会和弹框一起参与布局并把高弹框挤出窗口。 */
+.ant-modal-root .ant-modal-wrap::before {
+  display: none !important;
+  content: none !important;
+}
+
+.ant-modal-root .ant-modal-wrap > .ant-modal {
+  top: auto;
+  display: flex;
+  flex-direction: column;
+  max-width: 100% !important;
+  max-height: 100%;
+  margin: 0 auto;
+  padding-bottom: 0;
+}
+
+.ant-modal-root .ant-modal-container {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
+  overflow: hidden;
+}
+
+.ant-modal-root .ant-modal-header,
+.ant-modal-root .ant-modal-footer {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  pointer-events: auto;
+}
+
+.ant-modal-root .ant-modal-close {
+  z-index: 3;
+  pointer-events: auto;
+}
+
+.ant-modal-root .ant-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.ant-modal-root .ant-modal-confirm-body-wrapper {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 480px), (max-height: 480px) {
+  .ant-modal-root .ant-modal-wrap {
+    padding: 8px;
+  }
+
+  .ant-modal-root .ant-modal-container {
+    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+}
+
+/* 全屏弹框不需要安全边距，但仍不能超过动态视口。 */
+.app-fullscreen-modal-root .ant-modal-wrap {
+  padding: 0;
+}
+
+.app-fullscreen-modal-root .ant-modal-container {
+  max-height: 100vh;
+  max-height: 100dvh;
+}
+
 @layer base {
   :root {
     /* Theme variables - Morandi palette */

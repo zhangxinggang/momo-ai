@@ -1,8 +1,8 @@
-import type { ToolAction } from '@momo/agent-contracts';
-/** 自定义工具树节点种类：组织目录或工具包 */
+import type { IApiRequestConfig } from '@momo/api-request/core';
+
+/** 自定义工具树只负责设置页中的目录组织。 */
 export type ECustomToolNodeKind = 'folder' | 'tool';
 
-/** 自定义工具树节点（相对 tools 根目录的路径作为 id） */
 export interface ICustomToolTreeNode {
   id: string;
   name: string;
@@ -10,63 +10,45 @@ export interface ICustomToolTreeNode {
   children?: ICustomToolTreeNode[];
 }
 
-export interface IReadCustomToolFileResult {
-  /** 工具包相对路径（文件夹 id，非 index.html） */
-  path: string;
-  content: string;
+export type ECustomToolViewKind = 'openui' | 'html';
+export type ECustomToolDataMode = 'static' | 'api';
+
+export interface ICustomToolPollingConfig {
+  enabled: boolean;
+  intervalMs: number;
 }
 
-/** 自定义工具后台进程类型。端口统一由宿主动态分配，工具代码通过 MOMO_TOOL_PORT 获取。 */
-export type ECustomToolServiceRuntime = 'none' | 'node' | 'python';
-
-export interface ICustomToolServiceConfig {
-  runtime: ECustomToolServiceRuntime;
-  /** 相对工具包根目录的服务入口，例如 backend/server.mjs。 */
-  entry?: string;
-  args?: string[];
-  /** 服务就绪探针；未设置时只检查端口是否开始监听。 */
-  healthPath?: string;
-  startupTimeoutMs?: number;
-  env?: Record<string, string>;
+/** 组件数据来源。接口响应通过 responsePath 取值后写入 targetProp。 */
+export interface ICustomToolDataSource {
+  mode: ECustomToolDataMode;
+  targetProp: string;
+  staticValue: unknown;
+  request: IApiRequestConfig;
+  responsePath: string;
+  polling: ICustomToolPollingConfig;
 }
 
-export interface ICustomToolPermissions {
-  /** 允许页面调用的 MCP 聚合工具名（server__tool）。 */
-  mcp?: string[];
-  /** 允许页面执行的 Skill id 或名称。 */
-  skills?: string[];
+/** OpenUI statementId 对应的可视化覆盖配置。 */
+export interface ICustomToolComponentConfig {
+  componentType: string;
+  props: Record<string, unknown>;
+  data: ICustomToolDataSource;
 }
 
-/** 工具包元数据（tool.json）。v1 工具会按纯静态工具兼容读取。 */
-export interface DCustomToolMeta {
-  kind: 'tool';
+/**
+ * 新版自定义工具是纯视图文档，不包含 action、后台服务、MCP、Skill 或执行权限。
+ * id 为 tools 根目录下的相对路径。
+ */
+export interface ICustomToolDocument {
   id: string;
-  /** 展示名称和别名同时用于 AI 对话识别用户或 Skill 点名的工具。 */
-  name?: string;
-  description?: string;
-  aliases?: string[];
-  actions: ToolAction[];
-  entry?: string;
-  service?: ICustomToolServiceConfig;
-  permissions?: ICustomToolPermissions;
-}
-
-export interface ICustomToolGeneratedFile {
-  /** 相对工具包根目录的 POSIX 路径。 */
-  path: string;
+  name: string;
+  kind: ECustomToolViewKind;
   content: string;
+  components: Record<string, ICustomToolComponentConfig>;
 }
 
-export type ECustomToolRuntimeStatus = 'idle' | 'starting' | 'running' | 'error';
-
-/** 选择工具后由主进程返回的隔离运行信息。 */
-export interface ICustomToolRuntimeInfo {
-  toolPath: string;
-  status: ECustomToolRuntimeStatus;
-  /** 宿主静态服务地址，天然支持相对 assets 路径。 */
-  previewUrl: string;
-  serviceRuntime: ECustomToolServiceRuntime;
-  permissions: ICustomToolPermissions;
-  errorMessage?: string;
-  logs?: string[];
+export interface ICustomToolSaveInput {
+  kind: ECustomToolViewKind;
+  content: string;
+  components: Record<string, ICustomToolComponentConfig>;
 }

@@ -1,2 +1,6 @@
-export { CustomToolRuntimeService, customToolRuntimeService } from './runtime';
-export { CustomToolWorkspaceService, customToolWorkspaceService } from './workspace';
+import { getToolsDir } from '../../runtime-paths';
+import { CustomToolWorkspaceService } from './workspace';
+
+export { CustomToolWorkspaceService } from './workspace';
+
+export const customToolWorkspaceService = new CustomToolWorkspaceService(getToolsDir());

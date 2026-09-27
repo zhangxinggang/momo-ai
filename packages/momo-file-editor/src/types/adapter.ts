@@ -9,6 +9,10 @@ export interface IFileTreeEntry {
 export interface IFileEditorAdapter {
   /** 列出目录下全部文件与文件夹 */
   listTree: () => Promise<IFileTreeEntry[]>;
+  /** 按需列出指定目录的直接子项；提供后文件树会启用懒加载 */
+  listDirectory?: (relativeDirectory: string) => Promise<IFileTreeEntry[]>;
+  /** 搜索整棵文件树，不受当前已展开目录限制 */
+  searchTree?: (query: string) => Promise<IFileTreeEntry[]>;
   /** 读取文件文本内容 */
   readFile: (relativePath: string) => Promise<string>;
   /** 读取二进制文件内容，用于 [binary file] 占位时的预览（可选） */

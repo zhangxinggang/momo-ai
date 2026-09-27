@@ -119,5 +119,10 @@ describe('host turn boundary', () => {
     expect(() => validateTurn({ ...turn(), sessionId: '', temperature: NaN })).toThrow();
     expect(() => validateTurn({ ...turn(), permissionMode: 'arbitrary' })).toThrow();
     expect(() => validateTurn({ ...turn(), command: 'shell' })).toThrow();
+    expect(() => validateTurn({ ...turn(), apiInput: 5 })).toThrow();
+    expect(() => validateTurn({ ...turn(), webBrowsing: 'yes' })).toThrow();
+    expect(() =>
+      validateTurn({ ...turn(), apiInput: '网页正文', webBrowsing: true }),
+    ).not.toThrow();
   });
 });

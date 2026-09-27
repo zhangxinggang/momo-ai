@@ -7,6 +7,8 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@momo/agent-contracts": ["../../packages/momo-agent-contracts/src/index.ts"],
+      "@momo/api-request": ["../../packages/momo-api-request/src/index.ts"],
+      "@momo/api-request/core": ["../../packages/momo-api-request/src/core.ts"],
       "@momo/harness-adapter": ["../../packages/momo-harness-adapter/src/index.ts"],
       "@/*": ["./src/*"],
       "@renderer/*": ["./src/renderer/*"],

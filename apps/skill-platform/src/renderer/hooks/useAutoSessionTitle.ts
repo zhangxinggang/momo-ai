@@ -30,7 +30,6 @@ export function useAutoSessionTitle() {
       return;
     }
 
-    titledRef.current.add(currentSession.id);
     const modelConfig =
       getModelsByType(aiModels, 'chat').find((m) => m.id === currentModel) ??
       getModelsByType(aiModels, 'chat')[0];
@@ -38,14 +37,16 @@ export function useAutoSessionTitle() {
       return;
     }
 
-    void generateChatTitle(
-      toAIConfig(modelConfig),
-      userMessage.content,
-      assistantMessage.content,
-    ).then((title) => {
-      if (title.trim()) {
-        updateSessionTitle(currentSession.id, title.trim());
-      }
-    });
+    titledRef.current.add(currentSession.id);
+    void generateChatTitle(toAIConfig(modelConfig), userMessage.content, assistantMessage.content)
+      .then((title) => {
+        if (title.trim()) {
+          updateSessionTitle(currentSession.id, title.trim());
+        }
+      })
+      .catch(() => {
+        // 允许模型配置临时不可用或请求失败后，在下一次状态变化时重试。
+        titledRef.current.delete(currentSession.id);
+      });
   }, [aiModels, currentModel, currentSession, updateSessionTitle]);
 }

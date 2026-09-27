@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "kind": "openui",
+  "name": "大屏",
+  "components": {
+    "rightHeader": {
+      "componentType": "CardHeader",
+      "props": {},
+      "data": {
+        "mode": "static",
+        "targetProp": "data",
+        "staticValue": null,
+        "request": {
+          "method": "GET",
+          "url": "",
+          "query": [],
+          "headers": [],
+          "auth": {
+            "type": "none"
+          },
+          "body": {
+            "mode": "none",
+            "content": ""
+          },
+          "timeoutMs": 30000
+        },
+        "responsePath": "",
+        "polling": {
+          "enabled": false,
+          "intervalMs": 30000
+        }
+      }
+    },
+    "centerHeader": {
+      "componentType": "CardHeader",
+      "props": {},
+      "data": {
+        "mode": "static",
+        "targetProp": "data",
+        "staticValue": null,
+        "request": {
+          "method": "GET",
+          "url": "",
+          "query": [],
+          "headers": [],
+          "auth": {
+            "type": "none"
+          },
+          "body": {
+            "mode": "none",
+            "content": ""
+          },
+          "timeoutMs": 30000
+        },
+        "responsePath": "",
+        "polling": {
+          "enabled": false,
+          "intervalMs": 30000
+        }
+      }
+    }
+  }
+}

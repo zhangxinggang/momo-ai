@@ -30,7 +30,7 @@ beforeEach(async () => {
     path: filename,
   };
   store = testStore();
-  broker = new ToolBroker(store, root, root, process.execPath);
+  broker = new ToolBroker(store);
   runCode = vi.fn().mockResolvedValue({ exitCode: 0, stdout: 'read', stderr: '' });
   broker.register('run', uploadedFileTools([file], runCode));
   context = {

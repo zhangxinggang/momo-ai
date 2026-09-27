@@ -9439,15 +9439,13 @@ var wu = d((r, t) => {
     t.width = g;
     let u;
     if (t.look === 'handDrawn') {
-      const x = z
-        .svg(s)
-        .rectangle(h, p, g, c, {
-          fill: 'lightgrey',
-          roughness: 0.5,
-          strokeLineDash: [5],
-          stroke: a,
-          seed: o,
-        });
+      const x = z.svg(s).rectangle(h, p, g, c, {
+        fill: 'lightgrey',
+        roughness: 0.5,
+        strokeLineDash: [5],
+        stroke: a,
+        seed: o,
+      });
       u = s.insert(() => x, ':first-child');
     } else {
       u = l.insert('rect', ':first-child');

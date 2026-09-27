@@ -1,6 +1,6 @@
 ﻿import { IPC_CHANNELS } from '@/types/constants';
 import { resolvePathUnderBase } from '@/utils/path-under-base';
-import { getAppConfig } from '@momo/electron';
+import { getAppConfig, getServerConfig, getUploadDir } from '@momo/electron';
 import { dialog, ipcMain, shell } from 'electron';
 import fs from 'fs/promises';
 import * as http from 'http';
@@ -15,6 +15,10 @@ const IMAGE_DOWNLOAD_MAX_BYTES = 10 * 1024 * 1024;
 const IMAGE_DOWNLOAD_MAX_REDIRECTS = 5;
 const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp']);
 const VIDEO_EXTENSIONS = new Set(['.mp4', '.webm', '.mov', '.avi', '.mkv']);
+const DRAWIO_ASSET_ID_RE =
+  /^drawio-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const DRAWIO_MAX_XML_BYTES = 10 * 1024 * 1024;
+const DRAWIO_MAX_PNG_BYTES = 25 * 1024 * 1024;
 
 let lastSelectedImagePaths = new Set<string>();
 let lastSelectedVideoPaths = new Set<string>();
@@ -206,6 +210,45 @@ function validateFileName(fileName: string, baseDir: string): string {
   }
 
   return fullPath;
+}
+
+function validateDrawioAssetId(assetId: string): string {
+  if (!DRAWIO_ASSET_ID_RE.test(assetId)) {
+    throw new Error('Invalid draw.io asset id');
+  }
+  return assetId;
+}
+
+function decodeDrawioPng(dataUri: string): Buffer {
+  const match = /^data:image\/png;base64,([A-Za-z0-9+/=\r\n]+)$/.exec(dataUri);
+  if (!match) throw new Error('Invalid draw.io PNG payload');
+
+  const buffer = Buffer.from(match[1], 'base64');
+  if (buffer.length === 0 || buffer.length > DRAWIO_MAX_PNG_BYTES) {
+    throw new Error('Draw.io PNG exceeds size limit');
+  }
+  const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  if (buffer.length < pngSignature.length || !buffer.subarray(0, 8).equals(pngSignature)) {
+    throw new Error('Draw.io export is not a PNG image');
+  }
+  return buffer;
+}
+
+function validateDrawioXml(xml: string): string {
+  const normalized = xml.trim();
+  if (
+    !normalized ||
+    Buffer.byteLength(normalized, 'utf8') > DRAWIO_MAX_XML_BYTES ||
+    !/<(?:mxfile|mxGraphModel)\b/.test(normalized)
+  ) {
+    throw new Error('Invalid draw.io XML payload');
+  }
+  return normalized;
+}
+
+function getDrawioImageUrl(fileName: string): string {
+  const { httpPort } = getServerConfig();
+  return `http://localhost:${httpPort}/assets/${encodeURIComponent(fileName)}`;
 }
 
 /**
@@ -434,6 +477,38 @@ export function registerImageIPC(): void {
       console.error('Failed to clear images:', error);
       return false;
     }
+  });
+
+  // Draw.io resources live in getUploadDir(): Markdown stores only the PNG URL,
+  // while the same-basename .drawio file remains an invisible editable sidecar.
+  ipcMain.handle(
+    IPC_CHANNELS.DRAWIO_DIAGRAM_SAVE,
+    async (
+      _event,
+      input: { assetId?: string; xml: string; pngDataUri: string },
+    ): Promise<{ assetId: string; imageUrl: string }> => {
+      const uploadDir = getUploadDir();
+      await ensureDir(uploadDir);
+
+      const assetId = input.assetId ? validateDrawioAssetId(input.assetId) : `drawio-${uuidv4()}`;
+      const xml = validateDrawioXml(input.xml);
+      const png = decodeDrawioPng(input.pngDataUri);
+      const pngName = `${assetId}.png`;
+
+      await Promise.all([
+        fs.writeFile(validateFileName(pngName, uploadDir), png),
+        fs.writeFile(validateFileName(`${assetId}.drawio`, uploadDir), xml, 'utf8'),
+      ]);
+
+      return { assetId, imageUrl: getDrawioImageUrl(pngName) };
+    },
+  );
+
+  ipcMain.handle(IPC_CHANNELS.DRAWIO_DIAGRAM_LOAD, async (_event, rawAssetId: string) => {
+    const assetId = validateDrawioAssetId(rawAssetId);
+    const diagramPath = validateFileName(`${assetId}.drawio`, getUploadDir());
+    if (!(await pathExists(diagramPath))) return null;
+    return fs.readFile(diagramPath, 'utf8');
   });
 
   // ==================== Video Support ====================

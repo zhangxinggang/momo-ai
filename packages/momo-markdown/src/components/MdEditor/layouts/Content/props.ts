@@ -2,6 +2,7 @@ import { CompletionSource } from '@codemirror/autocomplete';
 import { IHeadList, ISettingType, TMdHeadingId, TPreviewRendererComponent } from '~/type';
 
 export interface IContentPreviewProps {
+  readOnly?: boolean;
   modelValue: string;
   onChange: (v: string) => void;
   setting?: ISettingType;

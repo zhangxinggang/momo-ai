@@ -97,7 +97,7 @@ const useAntdImagePreview = (props: IContentPreviewProps, html: string) => {
     );
     const srcList = imageNodeList.map((img) => img.src).filter(Boolean);
 
-    const clickHandlerList = imageNodeList.map((img, index) => (event: Event) => {
+    const clickHandlerList = imageNodeList.map((_img, index) => (event: Event) => {
       event.preventDefault();
       event.stopPropagation();
       setPreviewState({

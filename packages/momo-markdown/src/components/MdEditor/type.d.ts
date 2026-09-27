@@ -30,6 +30,7 @@ export interface IToolbarTips {
   sub?: string;
   sup?: string;
   quote?: string;
+  align?: string;
   unorderedList?: string;
   orderedList?: string;
   task?: string;
@@ -56,6 +57,11 @@ export interface IToolbarTips {
 }
 export interface IStaticTextDefaultValue {
   toolbarTips?: IToolbarTips;
+  alignItem?: {
+    left?: string;
+    center?: string;
+    right?: string;
+  };
   titleItem?: {
     h1?: string;
     h2?: string;

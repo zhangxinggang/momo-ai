@@ -58,7 +58,7 @@ export const createAutocompletion = (completions: Array<CompletionSource> | unde
       from: word.from,
       options: [
         // 标题
-        ...['h2', 'h3', 'h4', 'h5', 'h6'].map((key, index) => {
+        ...['h2', 'h3', 'h4', 'h5', 'h6'].map((_key, index) => {
           const label = new Array(index + 2).fill('#').join('');
           return {
             label,

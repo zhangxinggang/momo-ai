@@ -325,10 +325,6 @@ export function WorkflowWorkPage({ workflowId, businessId, onClose }: IProps) {
     activeResourceData?.resourceKind === 'prompt'
       ? prompts.find((p) => p.id === activeResourceData.resourceId)
       : undefined;
-  const linkedSkill =
-    activeResourceData?.resourceKind === 'skill'
-      ? skills.find((s) => s.id === activeResourceData.resourceId)
-      : undefined;
 
   const systemPrompt = activeResourceData?.systemPrompt?.trim() || linkedPrompt?.systemPrompt || '';
   const userPrompt = activeResourceData?.userPrompt?.trim() || linkedPrompt?.userPrompt || '';

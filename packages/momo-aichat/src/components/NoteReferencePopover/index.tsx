@@ -1,4 +1,9 @@
-import { FileTextOutlined, FolderOutlined, RightOutlined } from '@ant-design/icons';
+import {
+  FileTextOutlined,
+  FolderOutlined,
+  LoadingOutlined,
+  RightOutlined,
+} from '@ant-design/icons';
 import {
   forwardRef,
   useLayoutEffect,
@@ -16,6 +21,7 @@ interface IProps {
   open: boolean;
   tree: INoteReferenceNode[];
   loading: boolean;
+  loadingFolderIds?: string[];
   selectedFileId?: string;
   expandedKeys: string[];
   onToggleFolder: (folderId: string) => void;
@@ -30,6 +36,7 @@ function renderNodes(nodes: INoteReferenceNode[], depth: number, props: IProps):
   for (const node of nodes) {
     const isFolder = node.kind === 'folder';
     const isExpanded = props.expandedKeys.includes(node.id);
+    const isLoadingFolder = isFolder && props.loadingFolderIds?.includes(node.id);
     const isActive = !isFolder && node.id === props.selectedFileId;
 
     rows.push(
@@ -50,7 +57,9 @@ function renderNodes(nodes: INoteReferenceNode[], depth: number, props: IProps):
           }
           props.onSelectFile(node);
         }}>
-        {isFolder ? (
+        {isLoadingFolder ? (
+          <LoadingOutlined className={styles['note-popover-node-icon']} style={{ fontSize: 10 }} />
+        ) : isFolder ? (
           <RightOutlined
             className={styles['note-popover-node-icon']}
             style={{
@@ -126,19 +135,25 @@ export const NoteReferencePopover = forwardRef(function NoteReferencePopover(
     return null;
   }
 
+  const hasWorkspaceCategory = tree.some(
+    (node) => node.id === 'reference-category:workspace' || node.noteType === 'workspace',
+  );
+
   const content = (
     <div
       ref={ref}
       className={`${styles['note-popover']} ${anchorRef ? styles['note-popover-portal'] : ''}`}
       style={anchorRef ? (portalStyle ?? undefined) : undefined}
       role='listbox'
-      aria-label='笔记引用'>
+      aria-label={hasWorkspaceCategory ? '资源引用' : '笔记引用'}>
       <div className={styles['note-popover-header']}>
-        {loading ? '加载笔记...' : '选择笔记引用'}
+        {loading ? '加载笔记...' : hasWorkspaceCategory ? '选择引用' : '选择笔记引用'}
       </div>
       <div className={styles['note-popover-list']}>
         {tree.length === 0 && !loading ? (
-          <div className={styles['note-popover-empty']}>无匹配笔记</div>
+          <div className={styles['note-popover-empty']}>
+            {hasWorkspaceCategory ? '无匹配内容' : '无匹配笔记'}
+          </div>
         ) : (
           renderNodes(tree, 0, props)
         )}

@@ -1,8 +1,6 @@
-import type { IFolder } from '@/types/modules';
 import { compareVersions } from '@/utils/version';
 import { MomoTreeToolbar } from '@momo/tree';
 import { ChatPanel } from '@renderer/components/Chat';
-import { FolderModal } from '@renderer/components/Folder';
 import { KnowledgePanel } from '@renderer/components/Knowledge';
 import { NoteTreePanel } from '@renderer/components/Note/NoteTreePanel';
 import { PromptTreePanel } from '@renderer/components/Prompt/PromptTreePanel';
@@ -20,7 +18,6 @@ import { usePromptBackup } from '@renderer/hooks/usePromptBackup';
 import { useTreeRootCreate } from '@renderer/hooks/useTreeRootCreate';
 import { useWorkflowBackup } from '@renderer/hooks/useWorkflowBackup';
 import { isWindowFullscreen } from '@renderer/services/desktop';
-import { buildPromptStats } from '@renderer/services/prompt/filter';
 import { buildSkillStats } from '@renderer/services/skill/stats';
 import {
   useFolderStore,
@@ -51,7 +48,7 @@ import {
   UploadIcon,
   WrenchIcon,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { NavItem } from './components/NavItem';
 type PageType = 'home' | 'settings';
@@ -66,38 +63,8 @@ interface IProps {
 export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps) {
   const { confirmLeaveAllEditors } = useConfirmLeaveEditors();
   useSyncDefaultOnlineStoreSource();
-  const folders = useFolderStore((state) => state.folders);
-  const selectedFolderId = useFolderStore((state) => state.selectedFolderId);
-  const selectFolder = useFolderStore((state) => state.selectFolder);
-  const reorderFolders = useFolderStore((state) => state.reorderFolders);
-  const expandedIds = useFolderStore((state) => state.expandedIds);
-  const toggleExpand = useFolderStore((state) => state.toggleExpand);
-  const updateFolder = useFolderStore((state) => state.updateFolder);
-  const prompts = usePromptStore((state) => state.prompts);
   const [isMac, setIsMac] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
-  const [editingFolder, setEditingFolder] = useState<IFolder | null>(null);
-  const [showAllTags, setShowAllTags] = useState(false);
-  const filterTags = usePromptStore((state) => state.filterTags);
-  const toggleFilterTag = usePromptStore((state) => state.toggleFilterTag);
-  const clearFilterTags = usePromptStore((state) => state.clearFilterTags);
-  const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
-  const [isTagPopoverVisible, setIsTagPopoverVisible] = useState(false);
-  const [tagPopoverPos, setTagPopoverPos] = useState<{
-    top?: number;
-    bottom?: number;
-    left: number;
-  }>({ top: 0, left: 0 });
-  const tagButtonRef = useRef<HTMLButtonElement | null>(null);
-  const tagPopoverRef = useRef<HTMLDivElement | null>(null);
-  const tagPopoverCloseTimerRef = useRef<number | null>(null);
-
-  // Resize state
-  const tagsSectionHeight = useSettingsStore((state) => state.tagsSectionHeight);
-  const setTagsSectionHeight = useSettingsStore((state) => state.setTagsSectionHeight);
-  const isTagsCollapsed = useSettingsStore((state) => state.isTagsSectionCollapsed);
-  const setIsTagsCollapsed = useSettingsStore((state) => state.setIsTagsSectionCollapsed);
   const viewMode = useUIStore((state) => state.viewMode);
   const workflowScreen = useUIStore((state) => state.workflowScreen);
   const setAppModule = useUIStore((state) => state.setAppModule);
@@ -125,13 +92,10 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
   const customStoreSources = useSkillStore((state) => state.customStoreSources);
   const onlineStoreSources = useOnlineStoreSources();
   const remoteStoreEntries = useSkillStore((state) => state.remoteStoreEntries);
-  const promptStats = useMemo(() => buildPromptStats(prompts), [prompts]);
   const skillStats = useMemo(
     () => buildSkillStats(skills, deployedSkillNames),
     [skills, deployedSkillNames],
   );
-  const favoriteCount = promptStats.favoriteCount;
-  const uniqueTags = promptStats.uniqueTags;
   const showRail = layout !== 'panel';
   const railWidthClass = 'w-20';
   const combinedWidthClass = 'w-[23rem]';
@@ -348,7 +312,6 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
               return;
             }
             setAppModule('prompt');
-            closeTagPopover();
             if (currentPage !== 'home') onNavigate('home');
           })();
         },
@@ -368,7 +331,6 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
             }
             setAppModule('skill');
             selectSkill(null);
-            closeTagPopover();
             if (currentPage !== 'home') onNavigate('home');
           })();
         },
@@ -387,7 +349,6 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
               return;
             }
             setAppModule('kb');
-            closeTagPopover();
             if (currentPage !== 'home') {
               onNavigate('home');
             }
@@ -406,7 +367,6 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
             });
             if (!canLeave) return;
             setAppModule('note');
-            closeTagPopover();
             if (currentPage !== 'home') onNavigate('home');
           })();
         },
@@ -428,7 +388,6 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
             }
             setAppModule('workflow');
             selectWorkflow(null);
-            closeTagPopover();
             if (currentPage !== 'home') {
               onNavigate('home');
             }
@@ -449,7 +408,6 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
               return;
             }
             setAppModule('chat');
-            closeTagPopover();
             if (currentPage !== 'home') {
               onNavigate('home');
             }
@@ -470,7 +428,6 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
               return;
             }
             setAppModule('toolbox');
-            closeTagPopover();
             if (currentPage !== 'home') {
               onNavigate('home');
             }
@@ -491,17 +448,6 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
     selectWorkflow,
   ]);
 
-  // Skill tags section settings (mirrors prompt tags behavior)
-  const skillTagsSectionHeight = useSettingsStore((state) => state.skillTagsSectionHeight);
-  const setSkillTagsSectionHeight = useSettingsStore((state) => state.setSkillTagsSectionHeight);
-  const isSkillTagsCollapsed = useSettingsStore((state) => state.isSkillTagsSectionCollapsed);
-  const setIsSkillTagsCollapsed = useSettingsStore((state) => state.setIsSkillTagsSectionCollapsed);
-
-  const [isResizing, setIsResizing] = useState(false);
-  const sidebarRef = useRef<HTMLElement>(null);
-  const dragStartY = useRef(0);
-  const dragStartHeight = useRef(0);
-
   useEffect(() => {
     const platform = navigator.userAgent.toLowerCase();
     setIsMac(platform.includes('mac'));
@@ -516,138 +462,8 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
     return () => window.removeEventListener('resize', checkFullscreen);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (tagPopoverCloseTimerRef.current !== null) {
-        window.clearTimeout(tagPopoverCloseTimerRef.current);
-        tagPopoverCloseTimerRef.current = null;
-      }
-    };
-  }, []);
-
-  const closeTagPopover = useCallback(() => {
-    setIsTagPopoverVisible(false);
-    if (tagPopoverCloseTimerRef.current !== null) {
-      window.clearTimeout(tagPopoverCloseTimerRef.current);
-      tagPopoverCloseTimerRef.current = null;
-    }
-    tagPopoverCloseTimerRef.current = window.setTimeout(() => {
-      setIsTagPopoverOpen(false);
-      tagPopoverCloseTimerRef.current = null;
-    }, 160);
-  }, []);
-
-  useEffect(() => {
-    if (!isTagPopoverOpen) return;
-
-    const handleMouseDown = (e: MouseEvent) => {
-      const target = e.target as Node | null;
-      if (!target) return;
-      if (tagPopoverRef.current?.contains(target)) return;
-      if (tagButtonRef.current?.contains(target)) return;
-      closeTagPopover();
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeTagPopover();
-    };
-
-    document.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.removeEventListener('mousedown', handleMouseDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [closeTagPopover, isTagPopoverOpen]);
-
-  const openTagPopover = () => {
-    const el = tagButtonRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-
-    const width = 320;
-    const maxHeight = Math.min(420, Math.max(240, window.innerHeight - 24));
-
-    let left = rect.right + 12;
-    if (left + width > window.innerWidth - 12) {
-      left = Math.max(12, rect.left - width - 12);
-    }
-
-    // 彻底修复定位：根据按钮所在屏幕位置，决定是用 top 还是 bottom 定位
-    // Fix positioning: use top or bottom depending on button's screen position
-    const isInBottomHalf = rect.top > window.innerHeight / 2;
-    const newPos: { top?: number; bottom?: number; left: number } = { left };
-
-    if (isInBottomHalf) {
-      // 底部对齐逻辑：设置 bottom 距离，让弹窗向上生长
-      // Bottom alignment: set bottom distance, let popover grow upwards
-      newPos.bottom = window.innerHeight - rect.bottom + 8;
-    } else {
-      // 顶部对齐逻辑：设置 top 距离
-      // Top alignment: set top distance
-      newPos.top = rect.top - 8;
-      if (newPos.top + maxHeight > window.innerHeight - 12) {
-        newPos.top = Math.max(12, window.innerHeight - 12 - maxHeight);
-      }
-    }
-
-    if (tagPopoverCloseTimerRef.current !== null) {
-      window.clearTimeout(tagPopoverCloseTimerRef.current);
-      tagPopoverCloseTimerRef.current = null;
-    }
-
-    setTagPopoverPos(newPos);
-    setIsTagPopoverOpen(true);
-    setIsTagPopoverVisible(false);
-    requestAnimationFrame(() => {
-      setIsTagPopoverVisible(true);
-    });
-  };
-
-  // Resize handler (shared for prompt and skill tags sections)
-  const resizeTarget = useRef<'prompt' | 'skill'>('prompt');
-
-  const handleResizeStart = (e: React.MouseEvent, target: 'prompt' | 'skill' = 'prompt') => {
-    e.preventDefault();
-    setIsResizing(true);
-    resizeTarget.current = target;
-    dragStartY.current = e.clientY;
-    dragStartHeight.current = target === 'prompt' ? tagsSectionHeight : skillTagsSectionHeight;
-    document.body.style.cursor = 'ns-resize';
-  };
-
-  useEffect(() => {
-    if (!isResizing) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaY = dragStartY.current - e.clientY;
-      const newHeight = dragStartHeight.current + deltaY;
-      const minHeight = 140;
-      const maxHeight = window.innerHeight - 300;
-      const clampedHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
-      if (resizeTarget.current === 'prompt') {
-        setTagsSectionHeight(clampedHeight);
-      } else {
-        setSkillTagsSectionHeight(clampedHeight);
-      }
-    };
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      document.body.style.cursor = '';
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isResizing, setTagsSectionHeight, setSkillTagsSectionHeight]);
   return (
     <aside
-      ref={sidebarRef}
       className={`relative z-20 shrink-0 overflow-hidden transition-all duration-300 ease-in-out ${
         layout === 'panel' && isCollapsed ? 'hidden' : 'flex'
       } ${asideClassName}`}>
@@ -657,7 +473,7 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
           {isMac && !isFullscreen && <div className='titlebar-drag h-14 shrink-0' />}
 
           <div className='flex flex-1 flex-col px-2 py-3'>
-            <div className='flex flex-1 flex-col gap-2'>
+            <div className='flex flex-1 flex-col'>
               {railNavItems.map((item) => (
                 <Button
                   key={item.key}
@@ -969,15 +785,6 @@ export function Sidebar({ currentPage, onNavigate, layout = 'combined' }: IProps
               </div>
             </>
           )}
-
-          <FolderModal
-            isOpen={isFolderModalOpen}
-            onClose={() => {
-              setIsFolderModalOpen(false);
-              setEditingFolder(null);
-            }}
-            folder={editingFolder}
-          />
         </div>
       ) : null}
     </aside>

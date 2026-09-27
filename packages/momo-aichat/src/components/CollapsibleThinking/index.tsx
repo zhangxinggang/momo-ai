@@ -23,6 +23,7 @@ export function CollapsibleThinking({
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const contentRef = useRef<HTMLDivElement>(null);
   const prevContentLength = useRef(0);
+  const wasLoading = useRef(isLoading);
 
   useEffect(() => {
     if (isExpanded && contentRef.current && content && content.length > prevContentLength.current) {
@@ -34,7 +35,10 @@ export function CollapsibleThinking({
   useEffect(() => {
     if (isLoading) {
       setIsExpanded(true);
+    } else if (wasLoading.current) {
+      setIsExpanded(false);
     }
+    wasLoading.current = isLoading;
   }, [isLoading]);
 
   if (content === null && !isLoading) {

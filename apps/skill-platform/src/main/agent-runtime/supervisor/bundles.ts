@@ -1,10 +1,20 @@
 import type { RuntimeBundleManifest } from '@momo/agent-contracts';
 import { createHash, randomUUID } from 'node:crypto';
+import { createReadStream, createWriteStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-export async function safeExistingPath(root: string, relative: string): Promise<string> {
-  if (!relative || path.isAbsolute(relative) || relative.split(/[\\/]/).includes('..'))
+import { pipeline } from 'node:stream/promises';
+import { createBrotliDecompress } from 'node:zlib';
+import { extract } from 'tar';
+
+function assertRelativeBundlePath(relative: string): void {
+  if (!relative || path.isAbsolute(relative) || relative.split(/[\\/]/).includes('..')) {
     throw new Error('INVALID_BUNDLE_PATH');
+  }
+}
+
+export async function safeExistingPath(root: string, relative: string): Promise<string> {
+  assertRelativeBundlePath(relative);
   const base = await fs.realpath(root);
   let walked = base;
   for (const part of relative.split(/[\\/]/).filter((p) => p && p !== '.')) {
@@ -40,9 +50,6 @@ export async function verifyBundle(root: string): Promise<RuntimeBundleManifest>
     'plugins/momo-host-bridge/index.mjs',
     'plugins/momo-host-bridge/tool-schema.mjs',
     'plugins/momo-model-credentials/index.mjs',
-    'plugins/momo-tools/action-worker.mjs',
-    'plugins/momo-tools/action-worker.py',
-    'profile/agent-presets/momo-default/agent.cordis.yml',
     'profile/package.json',
     'profile/cordis.patch.yml',
   ]) {
@@ -78,15 +85,129 @@ export async function verifyBundle(root: string): Promise<RuntimeBundleManifest>
   );
   return manifest;
 }
+
+/**
+ * Expand the packaged ASAR into an immutable user-data cache. Electron's fs
+ * layer can read files within an ASAR, while the standalone bundled Node needs
+ * ordinary files in order to resolve its dependency graph.
+ */
+export async function materializeBuiltinBundle(source: string, cacheRoot: string): Promise<string> {
+  const manifest = JSON.parse(
+    await fs.readFile(path.join(source, 'runtime.json'), 'utf8'),
+  ) as RuntimeBundleManifest;
+  if (
+    manifest.runtimeId !== 'deepseek-harness' ||
+    !/^dsh-[a-zA-Z0-9.-]+$/.test(manifest.bundleId) ||
+    !manifest.files ||
+    !Object.keys(manifest.files).length ||
+    Object.keys(manifest.files).length > 100000
+  ) {
+    throw new Error('INVALID_BUILTIN_BUNDLE');
+  }
+
+  const target = path.join(cacheRoot, manifest.bundleId);
+  try {
+    await verifyBundle(target);
+    return target;
+  } catch {
+    await fs.rm(target, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  }
+
+  await fs.mkdir(cacheRoot, { recursive: true });
+  let compressed = false;
+  try {
+    const storage = JSON.parse(await fs.readFile(path.join(source, 'storage.json'), 'utf8'));
+    if (!['raw-v1', 'brotli-tar-v1'].includes(storage.format)) {
+      throw new Error('INVALID_BUILTIN_STORAGE');
+    }
+    compressed = storage.format === 'brotli-tar-v1';
+  } catch (error: any) {
+    // Existing installations and imported development bundles use raw files.
+    if (error.code !== 'ENOENT') throw error;
+  }
+  const staging = path.join(cacheRoot, `staging-${randomUUID()}`);
+  await fs.mkdir(staging);
+  try {
+    if (compressed) {
+      let invalidEntry: string | undefined;
+      const seen = new Set<string>();
+      await pipeline(
+        createReadStream(path.join(source, 'payload.tar.br')),
+        createBrotliDecompress(),
+        extract({
+          cwd: staging,
+          strict: true,
+          noMtime: true,
+          filter(relative, entry) {
+            if (
+              !('type' in entry) ||
+              entry.type !== 'File' ||
+              !Object.hasOwn(manifest.files, relative) ||
+              path.isAbsolute(relative) ||
+              relative.split(/[\\/]/).includes('..') ||
+              seen.has(relative)
+            ) {
+              invalidEntry = relative;
+              return false;
+            }
+            seen.add(relative);
+            return true;
+          },
+        }),
+      );
+      if (invalidEntry !== undefined) throw new Error('INVALID_BUILTIN_ENTRY: ' + invalidEntry);
+      await fs.writeFile(path.join(staging, 'runtime.json'), JSON.stringify(manifest));
+    } else {
+      const relativePaths = [...Object.keys(manifest.files), 'runtime.json'];
+      let next = 0;
+      const workers = await Promise.allSettled(
+        Array.from({ length: 8 }, async () => {
+          while (next < relativePaths.length) {
+            const relative = relativePaths[next++];
+            assertRelativeBundlePath(relative);
+            const destination = path.join(staging, relative);
+            await fs.mkdir(path.dirname(destination), { recursive: true });
+            const input = createReadStream(path.join(source, relative));
+            const output = createWriteStream(destination);
+            await pipeline(input, output);
+          }
+        }),
+      );
+      const failure = workers.find((result) => result.status === 'rejected');
+      if (failure?.status === 'rejected') throw failure.reason;
+    }
+    if (process.platform !== 'win32') {
+      await fs.chmod(path.join(staging, manifest.node), 0o755);
+    }
+    await verifyBundle(staging);
+    try {
+      await fs.rename(staging, target);
+    } catch (error: any) {
+      if (error.code !== 'EEXIST' && error.code !== 'ENOTEMPTY') throw error;
+      await verifyBundle(target);
+    }
+    return target;
+  } finally {
+    await fs.rm(staging, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  }
+}
+
 export class RuntimeBundles {
   private verified = new Map<
     string,
     { root: string; manifest: RuntimeBundleManifest; sessionNamespace?: string }
   >();
+  private builtinPromise?: Promise<string>;
   constructor(
     private root: string,
-    private builtin: string,
+    private builtinSource: string,
+    private builtinCache?: string,
   ) {}
+  private builtinRoot(): Promise<string> {
+    return (this.builtinPromise ??= this.builtinCache
+      ? materializeBuiltinBundle(this.builtinSource, this.builtinCache)
+      : Promise.resolve(this.builtinSource));
+  }
   async get(bundleId?: string) {
     if (!bundleId) {
       try {
@@ -98,7 +219,8 @@ export class RuntimeBundles {
       }
     }
     if (bundleId && this.verified.has(bundleId)) return this.verified.get(bundleId)!;
-    let directory = this.builtin,
+    const builtin = await this.builtinRoot();
+    let directory = builtin,
       pinned = false;
     if (bundleId) {
       if (!/^dsh-[a-zA-Z0-9.-]+$/.test(bundleId)) throw new Error('INVALID_BUNDLE_ID');
@@ -128,8 +250,9 @@ export class RuntimeBundles {
   async list() {
     await fs.mkdir(this.root, { recursive: true });
     const active = await this.get();
+    const builtinRoot = await this.builtinRoot();
     const builtin = JSON.parse(
-      await fs.readFile(path.join(this.builtin, 'runtime.json'), 'utf8'),
+      await fs.readFile(path.join(builtinRoot, 'runtime.json'), 'utf8'),
     ) as RuntimeBundleManifest;
     const bundles = [builtin];
     if (active.manifest.bundleId !== builtin.bundleId) bundles.push(active.manifest);

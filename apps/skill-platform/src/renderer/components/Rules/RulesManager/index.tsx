@@ -318,12 +318,14 @@ export function RulesManager() {
       </div>
 
       {syncConflictFile ? (
-        <div className='fixed inset-0 z-[99999] flex items-center justify-center p-4'>
+        <div
+          className='titlebar-no-drag fixed inset-0 z-[99999] flex items-center justify-center p-4'
+          style={{ top: 'var(--app-titlebar-height, 0px)' }}>
           <div
             className='bg-background/60 absolute inset-0 backdrop-blur-sm'
             onClick={() => setDismissedConflictRuleId(syncConflictFile.id)}
           />
-          <div className='border-border bg-card animate-in fade-in zoom-in-95 duration-base relative w-full max-w-lg rounded-xl border p-6 shadow-2xl'>
+          <div className='border-border bg-card animate-in fade-in zoom-in-95 duration-base relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-xl border p-6 shadow-2xl'>
             <div className='flex items-start gap-3'>
               <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400'>
                 <AlertCircleIcon className='h-5 w-5' />

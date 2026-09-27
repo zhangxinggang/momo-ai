@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>西安实时天气1 · tool-a-demo</title>
+<style>
+  :root{
+    --bg1:#0b2a4a; --bg2:#123f6b; --card:rgba(255,255,255,.08); --line:rgba(255,255,255,.16);
+    --txt:#eaf2fb; --sub:#9fb6cf; --accent:#ffd166;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--txt);background:radial-gradient(1200px 600px at 20% -10%,#1d5c96 0%,transparent 60%),linear-gradient(160deg,var(--bg1),var(--bg2));}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 56px}
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  h1{font-size:24px;margin:0;letter-spacing:.5px}
+  h1 .tag{font-size:14px;color:var(--sub);font-weight:400;margin-left:10px}
+  .meta{font-size:13px;color:var(--sub)}
+  .row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;backdrop-filter:blur(6px)}
+  .main{flex:1 1 420px;display:flex;align-items:center;gap:22px}
+  .big-icon{font-size:64px;line-height:1}
+  .temp{font-size:56px;font-weight:700;line-height:1}
+  .temp sup{font-size:22px;font-weight:500;vertical-align:top}
+  .desc{font-size:17px;margin-top:6px}
+  .side{flex:1 1 260px}
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .kpi{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+  .kpi b{display:block;font-size:16px;margin-top:2px}
+  .kpi i{font-style:normal;font-size:12px;color:var(--sub)}
+  section h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:1px}
+  .hours{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
+  .hour{min-width:78px;text-align:center;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:10px 6px}
+  .hour .t{font-size:12px;color:var(--sub)}
+  .hour .i{font-size:22px;margin:4px 0}
+  .hour .v{font-size:14px;font-weight:600}
+  .hour .p{font-size:11px;color:#7fd1ff;height:14px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:10px 8px;text-align:left;border-bottom:1px solid var(--line)}
+  th{color:var(--sub);font-weight:500;font-size:12px}
+  td.r,th.r{text-align:right}
+  .barwrap{position:relative;height:6px;border-radius:3px;background:rgba(255,255,255,.12)}
+  .bar{position:absolute;height:6px;border-radius:3px;background:linear-gradient(90deg,#5aa9ff,#ffd166,#ff8f6b)}
+  .actions{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+  button,select,input{font:inherit;color:var(--txt);background:rgba(255,255,255,.1);border:1px solid var(--line);border-radius:10px;padding:8px 14px;cursor:pointer}
+  select option{color:#123}
+  input[type=text]{cursor:text;flex:1 1 160px;max-width:220px}
+  button:hover{background:rgba(255,255,255,.18)}
+  .note{font-size:12px;color:var(--sub)}
+  #loading{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));z-index:20}
+  .spinner{width:42px;height:42px;border:4px solid rgba(255,255,255,.2);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #loading p{color:var(--sub);font-size:14px;margin:0}
+  #error{display:none;background:rgba(255,90,90,.14);border:1px solid rgba(255,120,120,.4);border-radius:12px;padding:14px;font-size:14px;margin-bottom:14px}
+  footer{margin-top:26px;font-size:12px;color:var(--sub);text-align:center;line-height:1.7}
+</style>
+</head>
+<body>
+<div id="loading">
+  <div class="spinner"></div>
+  <p id="loadingText">正在获取西安实时天气…</p>
+</div>
+
+<div class="wrap">
+  <header>
+    <h1><span id="titleText">西安实时天气</span><span class="tag">tool-a-demo</span></h1>
+    <div class="meta" id="updated">数据源：Open-Meteo（免费、无需密钥）</div>
+  </header>
+
+  <div id="error"></div>
+
+  <div class="row" id="content" style="display:none">
+    <div class="card main">
+      <div class="big-icon" id="wIcon">☀️</div>
+      <div>
+        <div class="temp"><span id="wTemp">--</span><sup>℃</sup></div>
+        <div class="desc"><span id="wText">加载中</span> · 体感 <span id="wFeel">--</span>℃</div>
+        <div class="meta" id="wRange">今日 -- / --</div>
+      </div>
+    </div>
+    <div class="card side">
+      <div class="grid">
+        <div class="kpi"><i>湿度</i><b id="kHum">--</b></div>
+        <div class="kpi"><i>风</i><b id="kWind">--</b></div>
+        <div class="kpi"><i>降水</i><b id="kRain">--</b></div>
+        <div class="kpi"><i>云量</i><b id="kCloud">--</b></div>
+        <div class="kpi"><i>气压</i><b id="kPress">--</b></div>
+        <div class="kpi"><i>能见度</i><b id="kVis">--</b></div>
+        <div class="kpi"><i>紫外线指数</i><b id="kUv">--</b></div>
+        <div class="kpi"><i>日出 / 日落</i><b id="kSun">--</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="hourCard" style="display:none;margin-bottom:14px">
+    <section><h2>逐小时趋势（未来 24 小时）</h2><div class="hours" id="hours"></div></section>
+  </div>
+
+  <div class="card" id="dayCard" style="display:none">
+    <section><h2>未来几天预报</h2>
+      <table>
+        <thead><tr><th>日期</th><th>天气</th><th class="r">最低</th><th class="r">最高</th><th>温度区间</th><th class="r">降水概率</th></tr></thead>
+        <tbody id="days"></tbody>
+      </table>
+    </section>
+    <div class="actions">
+      <input type="text" id="cityInput" placeholder="城市（默认：西安）" value="西安">
+      <select id="daysSel"><option value="3">3 天</option><option value="5">5 天</option><option value="7">7 天</option></select>
+      <button id="btnRefresh">刷新</button>
+      <span class="note" id="autoNote">每 10 分钟自动刷新</span>
+    </div>
+  </div>
+
+  <footer>页面与 AI 对话 action（get_weather / get_forecast）共用同一套 Open-Meteo 解析逻辑，结果一致。<br>
+    在对话中可直接说「调用 tool-a-demo 查看西安天气」。</footer>
+</div>
+
+<script type="module">
+/* ===== 核心逻辑（与 lib/weather.mjs 等价，内联以保证纯前端零依赖运行） ===== */
+const WEATHER_API = 'https://api.open-meteo.com/v1/forecast';
+const GEOCODE_API = 'https://geocoding-api.open-meteo.com/v1/search';
+const WMO = {
+  0:['晴','☀️'],1:['大致晴朗','🌤️'],2:['局部多云','⛅'],3:['阴天','☁️'],
+  45:['雾','🌫️'],48:['雾凇','🌫️'],
+  51:['毛毛雨（弱）','🌦️'],53:['毛毛雨（中）','🌦️'],55:['毛毛雨（强）','🌧️'],
+  56:['冻毛毛雨（弱）','🌧️'],57:['冻毛毛雨（强）','🌧️'],
+  61:['小雨','🌦️'],63:['中雨','🌧️'],65:['大雨','🌧️'],
+  66:['冻雨（弱）','🌧️'],67:['冻雨（强）','🌧️'],
+  71:['小雪','🌨️'],73:['中雪','🌨️'],75:['大雪','❄️'],77:['雪粒','❄️'],
+  80:['阵雨（弱）','🌦️'],81:['阵雨（中）','🌧️'],82:['强阵雨','⛈️'],
+  85:['阵雪（弱）','🌨️'],86:['阵雪（强）','❄️'],
+  95:['雷阵雨','⛈️'],96:['雷阵雨伴冰雹（弱）','⛈️'],99:['雷阵雨伴冰雹（强）','⛈️']
+};
+const describeCode = (c) => { const v = WMO[c]; return v ? { text: v[0], icon: v[1] } : { text: `未知天气（代码 ${c}）`, icon: '❔' }; };
+const round = (n, d = 1) => (typeof n !== 'number' || Number.isNaN(n)) ? null : Math.round(n * 10 ** d) / 10 ** d;
+const WEEK = ['周日','周一','周二','周三','周四','周五','周六'];
+const DIRS = ['北风','东北风','东风','东南风','南风','西南风','西风','西北风'];
+const dirText = (deg) => (deg == null ? '' : DIRS[Math.round((((deg % 360) + 360) % 360) / 45) % 8]);
+const weekdayOf = (iso) => { const d = new Date(`${iso}T00:00:00`); return Number.isNaN(d.getTime()) ? '' : WEEK[d.getDay()]; };
+
+async function getJson(url, timeoutMs = 12000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    if (!res.ok) throw new Error(`接口返回 ${res.status}`);
+    return await res.json();
+  } finally { clearTimeout(t); }
+}
+
+const KNOWN = {
+  '西安':[34.3416,108.9398,'陕西省'],'xian':[34.3416,108.9398,'陕西省'],'xi_an':[34.3416,108.9398,'陕西省'],
+  '北京':[39.9042,116.4074,'北京市'],'上海':[31.2304,121.4737,'上海市'],'广州':[23.1291,113.2644,'广东省'],
+  '深圳':[22.5431,114.0579,'广东省'],'成都':[30.5728,104.0668,'四川省'],'杭州':[30.2741,120.1551,'浙江省']
+};
+
+async function resolveCity(city) {
+  const raw = String(city || '西安').trim() || '西安';
+  const key = raw.toLowerCase().replace(/[\s·]/g, '_');
+  if (KNOWN[key]) return { name: raw, province: KNOWN[key][2], latitude: KNOWN[key][0], longitude: KNOWN[key][1] };
+  try {
+    const d = await getJson(`${GEOCODE_API}?name=${encodeURIComponent(raw)}&count=1&language=zh&format=json`);
+    const hit = d && Array.isArray(d.results) && d.results[0];
+    if (hit) return { name: hit.name || raw, province: hit.admin1 || '', latitude: hit.latitude, longitude: hit.longitude };
+  } catch (e) { /* 回退西安 */ }
+  return { name: '西安', province: '陕西省', latitude: KNOWN['西安'][0], longitude: KNOWN['西安'][1] };
+}
+
+async function fetchWeather(city = '西安', forecastDays = 3) {
+  const loc = await resolveCity(city);
+  const params = new URLSearchParams({
+    latitude: String(loc.latitude), longitude: String(loc.longitude),
+    current: 'temperature_2m,apparent_temperature,relative_humidity_2m,dew_point_2m,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility,is_day,uv_index',
+    hourly: 'temperature_2m,weather_code,precipitation_probability,is_day',
+    daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,sunrise,sunset,uv_index_max',
+    timezone: 'auto', forecast_days: String(Math.max(1, Math.min(forecastDays || 3, 7)))
+  });
+  const data = await getJson(`${WEATHER_API}?${params}`);
+  const cur = data.current || {};
+  const info = describeCode(cur.weather_code);
+  const nowIso = cur.time || new Date().toISOString();
+  const times = (data.hourly && data.hourly.time) || [];
+  let idx = times.indexOf(String(nowIso).slice(0, 13) + ':00');
+  if (idx < 0) idx = 0;
+  const hourly = times.slice(idx, idx + 24).map((t, i) => {
+    const hi = describeCode(data.hourly.weather_code?.[idx + i]);
+    return { time: t, temperature: round(data.hourly.temperature_2m?.[idx + i]), text: hi.text, icon: hi.icon,
+      precipProbability: data.hourly.precipitation_probability?.[idx + i] ?? null, isDay: (data.hourly.is_day?.[idx + i] ?? 1) === 1 };
+  });
+  const daily = ((data.daily && data.daily.time) || []).map((d, i) => {
+    const di = describeCode(data.daily.weather_code?.[i]);
+    return { date: d, weekday: weekdayOf(d), text: di.text, icon: di.icon,
+      tempMax: round(data.daily.temperature_2m_max?.[i]), tempMin: round(data.daily.temperature_2m_min?.[i]),
+      precipitation: round(data.daily.precipitation_sum?.[i]), precipProbability: data.daily.precipitation_probability_max?.[i] ?? null,
+      sunrise: data.daily.sunrise?.[i] ?? null, sunset: data.daily.sunset?.[i] ?? null, uvIndexMax: round(data.daily.uv_index_max?.[i]) };
+  });
+  return {
+    city: { name: loc.name, region: [loc.province, '中国'].filter(Boolean).join(' · '), latitude: round(loc.latitude, 4), longitude: round(loc.longitude, 4) },
+    observedAt: nowIso, timezone: data.timezone || 'Asia/Shanghai',
+    current: { code: cur.weather_code ?? null, text: info.text, icon: info.icon, isDay: cur.is_day !== 0,
+      temperature: round(cur.temperature_2m), feelsLike: round(cur.apparent_temperature), humidity: cur.relative_humidity_2m ?? null,
+      dewPoint: round(cur.dew_point_2m), precipitation: round(cur.precipitation), cloudCover: cur.cloud_cover ?? null,
+      pressure: round(cur.pressure_msl), windSpeed: round(cur.wind_speed_10m), windDirection: cur.wind_direction_10m ?? null,
+      windDirText: dirText(cur.wind_direction_10m), windGusts: round(cur.wind_gusts_10m),
+      visibilityKm: cur.visibility != null ? round(cur.visibility / 1000) : null, uvIndex: round(cur.uv_index) },
+    today: daily[0] || null, hourly, daily
+  };
+}
+
+/* ===== 渲染 ===== */
+const $ = (id) => document.getElementById(id);
+const fmt = (v, u) => (v === null || v === undefined || Number.isNaN(v)) ? '--' : `${v}${u}`;
+const hhmm = (s) => (s ? String(s).slice(11, 16) : '--');
+let timer = null;
+
+function render(w) {
+  const c = w.current;
+  $('titleText').textContent = `${w.city.name}实时天气`;
+  $('updated').textContent = `更新于 ${String(w.observedAt).replace('T', ' ')} · ${w.timezone} · ${w.city.region}`;
+  $('wIcon').textContent = c.icon;
+  $('wTemp').textContent = c.temperature ?? '--';
+  $('wText').textContent = c.text + (c.isDay ? '' : '（夜间）');
+  $('wFeel').textContent = c.feelsLike ?? '--';
+  $('wRange').textContent = w.today ? `今日 ${w.today.tempMin}℃ ~ ${w.today.tempMax}℃ · ${w.today.text}` : '';
+  $('kHum').textContent = fmt(c.humidity, '%');
+  $('kWind').textContent = `${c.windDirText || ''} ${fmt(c.windSpeed, ' km/h')}`;
+  $('kRain').textContent = fmt(c.precipitation, ' mm');
+  $('kCloud').textContent = fmt(c.cloudCover, '%');
+  $('kPress').textContent = fmt(c.pressure, ' hPa');
+  $('kVis').textContent = fmt(c.visibilityKm, ' km');
+  $('kUv').textContent = c.uvIndex ?? '--';
+  $('kSun').textContent = w.today ? `${hhmm(w.today.sunrise)} / ${hhmm(w.today.sunset)}` : '--';
+
+  $('hours').innerHTML = w.hourly.map(h => `<div class="hour">
+      <div class="t">${hhmm(h.time)}</div><div class="i">${h.icon}</div>
+      <div class="v">${h.temperature ?? '--'}℃</div>
+      <div class="p">${h.precipProbability != null ? h.precipProbability + '%' : ''}</div>
+    </div>`).join('');
+
+  const maxT = Math.max(...w.daily.map(d => d.tempMax ?? -99), 1);
+  const minT = Math.min(...w.daily.map(d => d.tempMin ?? 99), 0);
+  const span = Math.max(maxT - minT, 1);
+  $('days').innerHTML = w.daily.map(d => {
+    const left = (((d.tempMin ?? minT) - minT) / span) * 100;
+    const width = Math.max((((d.tempMax ?? minT) - (d.tempMin ?? minT)) / span) * 100, 8);
+    return `<tr>
+      <td>${String(d.date).slice(5)} <span style="color:var(--sub)">${d.weekday}</span></td>
+      <td>${d.icon} ${d.text}</td><td class="r">${d.tempMin}℃</td><td class="r">${d.tempMax}℃</td>
+      <td style="width:28%"><div class="barwrap"><div class="bar" style="left:${left.toFixed(1)}%;width:${width.toFixed(1)}%"></div></div></td>
+      <td class="r">${d.precipProbability != null ? d.precipProbability + '%' : '--'}</td></tr>`;
+  }).join('');
+}
+
+async function loadWeather() {
+  const city = ($('cityInput').value || '西安').trim();
+  const days = Number($('daysSel').value || 3);
+  $('loading').style.display = 'flex';
+  $('loadingText').textContent = `正在获取${city}实时天气…`;
+  $('error').style.display = 'none';
+  try {
+    const w = await fetchWeather(city, days);
+    render(w);
+    $('content').style.display = 'flex';
+    $('hourCard').style.display = 'block';
+    $('dayCard').style.display = 'block';
+  } catch (err) {
+    $('error').style.display = 'block';
+    $('error').textContent = `获取天气失败：${err && err.message ? err.message : err}。请检查网络后点击「刷新」重试。`;
+  } finally {
+    $('loading').style.display = 'none';
+  }
+}
+
+$('btnRefresh').addEventListener('click', loadWeather);
+$('daysSel').addEventListener('change', loadWeather);
+$('cityInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') loadWeather(); });
+
+loadWeather();
+clearInterval(timer);
+timer = setInterval(loadWeather, 10 * 60 * 1000);
+</script>
+
+</body></html>

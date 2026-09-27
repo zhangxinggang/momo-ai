@@ -1,4 +1,8 @@
 import { deepMerge } from '@vavt/util';
+import Cropper from 'cropperjs';
+import 'cropperjs/dist/cropper.css';
+import hljs from 'highlight.js';
+import { localCodeCss } from './local-highlight';
 import {
   ICodeCss,
   IGlobalConfig,
@@ -38,40 +42,7 @@ export const katexUrl = {
   js: `${cdnBase}/katex@0.16.33/dist/katex.min.js`,
   css: `${cdnBase}/katex@0.16.33/dist/katex.min.css`,
 };
-export const codeCss: ICodeCss = {
-  a11y: {
-    light: `${cdnBase}/@highlightjs/cdn-assets@11.11.1/styles/a11y-light.min.css`,
-    dark: `${cdnBase}/@highlightjs/cdn-assets@11.11.1/styles/a11y-dark.min.css`,
-  },
-  atom: {
-    light: `${cdnBase}/@highlightjs/cdn-assets@11.11.1/styles/atom-one-light.min.css`,
-    dark: `${cdnBase}/@highlightjs/cdn-assets@11.11.1/styles/atom-one-dark.min.css`,
-  },
-  github: {
-    light: `${cdnBase}/@highlightjs/cdn-assets@11.11.1/styles/github.min.css`,
-    dark: `${cdnBase}/@highlightjs/cdn-assets@11.11.1/styles/github-dark.min.css`,
-  },
-  gradient: {
-    light: `${cdnBase}/@highlightjs/cdn-assets@11.11.1/styles/gradient-light.min.css`,
-    dark: `${cdnBase}/@highlightjs/cdn-assets@11.11.1/styles/gradient-dark.min.css`,
-  },
-  kimbie: {
-    light: `${cdnBase}/@highlightjs/cdn-assets@11.11.1/styles/kimbie-light.min.css`,
-    dark: `${cdnBase}/@highlightjs/cdn-assets@11.11.1/styles/kimbie-dark.min.css`,
-  },
-  paraiso: {
-    light: `${cdnBase}/@highlightjs/cdn-assets@11.11.1/styles/paraiso-light.min.css`,
-    dark: `${cdnBase}/@highlightjs/cdn-assets@11.11.1/styles/paraiso-dark.min.css`,
-  },
-  qtcreator: {
-    light: `${cdnBase}/@highlightjs/cdn-assets@11.11.1/styles/qtcreator-light.min.css`,
-    dark: `${cdnBase}/@highlightjs/cdn-assets@11.11.1/styles/qtcreator-dark.min.css`,
-  },
-  stackoverflow: {
-    light: `${cdnBase}/@highlightjs/cdn-assets@11.11.1/styles/stackoverflow-light.min.css`,
-    dark: `${cdnBase}/@highlightjs/cdn-assets@11.11.1/styles/stackoverflow-dark.min.css`,
-  },
-};
+export const codeCss: ICodeCss = localCodeCss;
 
 export const echartsUrl = `${cdnBase}/echarts@6.0.0/dist/echarts.min.js`;
 
@@ -226,6 +197,7 @@ export const allToolbar: Array<TToolbarNames> = [
   'sub',
   'sup',
   'quote',
+  'align',
   'unorderedList',
   'orderedList',
   'task',
@@ -266,6 +238,7 @@ export const staticTextDefault: IStaticTextDefault = {
       sub: '下标',
       sup: '上标',
       quote: '引用',
+      align: '对齐',
       unorderedList: '无序列表',
       orderedList: '有序列表',
       task: '任务列表',
@@ -282,12 +255,17 @@ export const staticTextDefault: IStaticTextDefault = {
       prettier: '美化',
       fullscreen: '全屏',
       previewStyle: '预览样式',
-      preview: '预览',
+      preview: 'Markdown',
       previewOnly: '仅预览',
       htmlPreview: 'html代码预览',
       catalog: '目录',
       github: '源码地址',
       richtext: '富文本',
+    },
+    alignItem: {
+      left: '左对齐',
+      center: '居中对齐',
+      right: '右对齐',
     },
     titleItem: {
       h1: '一级标题',
@@ -355,6 +333,7 @@ export const staticTextDefault: IStaticTextDefault = {
       sub: 'subscript',
       sup: 'superscript',
       quote: 'quote',
+      align: 'alignment',
       unorderedList: 'unordered list',
       orderedList: 'ordered list',
       task: 'task list',
@@ -371,7 +350,7 @@ export const staticTextDefault: IStaticTextDefault = {
       prettier: 'prettier',
       fullscreen: 'fullscreen',
       previewStyle: 'preview style',
-      preview: 'preview',
+      preview: 'Markdown',
       previewOnly: 'preview only',
       htmlPreview: 'html preview',
       catalog: 'catalog',
@@ -385,6 +364,11 @@ export const staticTextDefault: IStaticTextDefault = {
       h4: 'Lv4 Heading',
       h5: 'Lv5 Heading',
       h6: 'Lv6 Heading',
+    },
+    alignItem: {
+      left: 'Align left',
+      center: 'Align center',
+      right: 'Align right',
     },
     imgTitleItem: {
       link: 'Add Image Link',
@@ -492,6 +476,7 @@ export const defaultProps = {
 export const globalConfig: IGlobalConfig = {
   editorExtensions: {
     highlight: {
+      instance: hljs,
       js: highlightUrl,
       css: codeCss,
     },
@@ -501,6 +486,7 @@ export const globalConfig: IGlobalConfig = {
     },
     cropper: {
       ...cropperUrl,
+      instance: Cropper,
     },
     screenfull: {
       js: screenfullUrl,
@@ -519,6 +505,10 @@ export const globalConfig: IGlobalConfig = {
         // eslint-disable-next-line @typescript-eslint/no-implied-eval
         return new Function(`return ${code}`)();
       },
+    },
+    drawio: {
+      editorUrl:
+        'https://embed.diagrams.net/?embed=1&proto=json&spin=1&libraries=1&noSaveBtn=1&saveAndExit=1&suppressNewWindows=1',
     },
   },
   editorExtensionsAttrs: {},

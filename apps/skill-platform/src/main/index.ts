@@ -18,8 +18,9 @@ import { closeDatabase, initDatabase } from './database';
 import { registerBootstrapIPC } from './ipc';
 import { markAppQuitting } from './ipc/window-chrome';
 import { registerLocalMediaPrivilegedSchemes } from './protocol/local-media';
-import { customToolRuntimeService } from './services/custom-tool';
+import { getStaticDir } from './runtime-paths';
 import { knowledgeWorkerClient } from './services/knowledge-v2/worker-client';
+import { setupChatBrowser } from './window/chat-browser';
 import {
   attachMainWindowCloseBehavior,
   loadMainWindowContent,
@@ -57,8 +58,11 @@ async function createWindow() {
         nodeIntegration: false,
         contextIsolation: true,
         sandbox: true,
+        webviewTag: true,
       },
       frame: isWin ? false : true,
+      resizable: true,
+      thickFrame: isWin ? true : undefined,
       titleBarStyle: isMac ? 'hiddenInset' : 'default',
       trafficLightPosition: isMac ? { x: 14, y: 22 } : undefined,
       backgroundColor: '#1a1d23',
@@ -66,7 +70,13 @@ async function createWindow() {
     serverConfig: {
       services: {
         httpServer: {
+          security: {
+            frameAncestors: ["'self'", 'file:', 'http://localhost:*', 'http://127.0.0.1:*'],
+          },
           routes: {
+            staticDirs: [
+              { rootDir: path.join(getStaticDir(), 'drawio'), rootPath: 'drawio', auth: false },
+            ],
             dynamicRouteDirs: [
               {
                 rootDir: path.join(__dirname, '../../server'),
@@ -96,6 +106,7 @@ async function createWindow() {
     },
   });
   setMainWindow(win);
+  setupChatBrowser(win);
 
   setupMainWindowReadyBehavior(win, appDb);
   await loadMainWindowContent(win);
@@ -117,7 +128,6 @@ app.on('before-quit', (event) => {
     try {
       await disposeAgentRuntime();
     } finally {
-      customToolRuntimeService.disposeNow();
       knowledgeWorkerClient.dispose();
       await closeDatabase();
       shutdownFinished = true;

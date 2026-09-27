@@ -2,8 +2,9 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { create } from 'tar';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { RuntimeBundles } from './bundles';
+import { materializeBuiltinBundle, RuntimeBundles } from './bundles';
 
 describe('builtin adapter updates with the same native core', () => {
   let root: string, builtin: string, bundles: RuntimeBundles, bundleId: string;
@@ -18,9 +19,6 @@ describe('builtin adapter updates with the same native core', () => {
       'plugins/momo-host-bridge/index.mjs',
       'plugins/momo-host-bridge/tool-schema.mjs',
       'plugins/momo-model-credentials/index.mjs',
-      'plugins/momo-tools/action-worker.mjs',
-      'plugins/momo-tools/action-worker.py',
-      'profile/agent-presets/momo-default/agent.cordis.yml',
       'profile/package.json',
       'profile/cordis.patch.yml',
     ]) {
@@ -33,14 +31,14 @@ describe('builtin adapter updates with the same native core', () => {
       Object.entries(files).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
     );
     bundleId =
-      'dsh-0.1.6-alpha.2-' +
+      'dsh-0.2.1-alpha.1-' +
       createHash('sha256').update(JSON.stringify(sorted)).digest('hex').slice(0, 16);
     await fs.writeFile(
       path.join(builtin, 'runtime.json'),
       JSON.stringify({
         runtimeId: 'deepseek-harness',
         bundleId,
-        coreVersion: '0.1.6-alpha.2',
+        coreVersion: '0.2.1-alpha.1',
         hostProtocolRange: '1.x',
         platform: process.platform,
         arch: process.arch,
@@ -56,7 +54,7 @@ describe('builtin adapter updates with the same native core', () => {
     await fs.rm(root, { recursive: true, force: true });
   });
   it('keeps the original native journal namespace when only the builtin adapter changed', async () => {
-    const old = 'dsh-0.1.6-alpha.2-0000000000000000';
+    const old = 'dsh-0.2.1-alpha.1-0000000000000000';
     expect(await bundles.get(old)).toMatchObject({
       root: builtin,
       sessionNamespace: old,
@@ -71,5 +69,79 @@ describe('builtin adapter updates with the same native core', () => {
     const pinned = path.join(root, 'imports', bundleId);
     await fs.cp(builtin, pinned, { recursive: true });
     expect(await bundles.get(bundleId)).toMatchObject({ root: pinned, manifest: { bundleId } });
+  });
+  it('materializes the packaged builtin into its immutable user-data cache', async () => {
+    const cache = path.join(root, 'builtin-cache');
+    const packaged = new RuntimeBundles(path.join(root, 'imports'), builtin, cache);
+    const result = await packaged.get();
+    const expected = path.join(cache, bundleId);
+    expect(result).toMatchObject({ root: expected, manifest: { bundleId } });
+    await expect(fs.readFile(path.join(expected, 'runtime.json'), 'utf8')).resolves.toContain(
+      bundleId,
+    );
+  });
+  async function compressFixture(tampered = false, extra = false) {
+    const relative = 'plugins/momo-host-bridge/index.mjs';
+    const file = path.join(builtin, relative);
+    if (tampered) await fs.writeFile(file, 'tampered');
+    const manifest = JSON.parse(await fs.readFile(path.join(builtin, 'runtime.json'), 'utf8'));
+    if (extra) await fs.writeFile(path.join(builtin, 'undeclared.txt'), 'extra');
+    await create(
+      {
+        cwd: builtin,
+        file: path.join(builtin, 'payload.tar.br'),
+        brotli: true,
+        portable: true,
+        noMtime: true,
+      },
+      [...Object.keys(manifest.files), ...(extra ? ['undeclared.txt'] : [])],
+    );
+    await fs.writeFile(
+      path.join(builtin, 'storage.json'),
+      JSON.stringify({
+        format: 'brotli-tar-v1',
+      }),
+    );
+    return { relative, file };
+  }
+  it('stream-decodes the solid payload, preserves identity and repairs a damaged cache', async () => {
+    const { relative } = await compressFixture();
+    const cache = path.join(root, 'builtin-cache');
+    const target = await materializeBuiltinBundle(builtin, cache);
+    expect(target).toBe(path.join(cache, bundleId));
+    expect(await fs.readFile(path.join(target, relative), 'utf8')).toBe('fixture');
+    await fs.writeFile(path.join(target, relative), 'damaged');
+    expect(await materializeBuiltinBundle(builtin, cache)).toBe(target);
+    expect(await fs.readFile(path.join(target, relative), 'utf8')).toBe('fixture');
+    // A valid cache is independent of its original archive's storage encoding.
+    await fs.rm(builtin, { recursive: true });
+    await fs.mkdir(builtin);
+    await fs.copyFile(path.join(target, 'runtime.json'), path.join(builtin, 'runtime.json'));
+    expect(await materializeBuiltinBundle(builtin, cache)).toBe(target);
+  });
+  it('rejects corrupt compressed payloads without leaving a partial cache', async () => {
+    await compressFixture(true);
+    const cache = path.join(root, 'builtin-cache');
+    await expect(materializeBuiltinBundle(builtin, cache)).rejects.toThrow('校验失败');
+    expect(await fs.readdir(cache)).toEqual([]);
+  });
+  it('rejects a truncated Brotli stream and cleans partial extraction', async () => {
+    await compressFixture();
+    const payload = path.join(builtin, 'payload.tar.br');
+    const bytes = await fs.readFile(payload);
+    await fs.writeFile(payload, bytes.subarray(0, bytes.length - 16));
+    const cache = path.join(root, 'builtin-cache');
+    await expect(materializeBuiltinBundle(builtin, cache)).rejects.toThrow();
+    expect(await fs.readdir(cache)).toEqual([]);
+  });
+  it('rejects unknown storage formats and undeclared payload entries', async () => {
+    const cache = path.join(root, 'builtin-cache');
+    await fs.writeFile(path.join(builtin, 'storage.json'), JSON.stringify({ format: 'future-v2' }));
+    await expect(materializeBuiltinBundle(builtin, cache)).rejects.toThrow(
+      'INVALID_BUILTIN_STORAGE',
+    );
+    await compressFixture(false, true);
+    await expect(materializeBuiltinBundle(builtin, cache)).rejects.toThrow('INVALID_BUILTIN_ENTRY');
+    expect(await fs.readdir(cache)).toEqual([]);
   });
 });

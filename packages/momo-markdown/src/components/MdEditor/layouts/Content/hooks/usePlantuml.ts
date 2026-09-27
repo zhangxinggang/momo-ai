@@ -3,11 +3,7 @@ import { globalConfig, prefix } from '~/config';
 import { EditorContext } from '~/context';
 import { ERROR_CATCHER } from '~/static/event-name';
 import eventBus from '~/utils/event-bus';
-import {
-  buildPlantumlSvgUrl,
-  encodePlantuml,
-  normalizePlantumlSource,
-} from '~/utils/plantuml-encoder';
+import { renderPlantumlImage } from '~/utils/plantuml-renderer';
 
 import { IContentPreviewProps } from '../props';
 
@@ -27,7 +23,7 @@ const usePlantuml = (props: IContentPreviewProps) => {
 
     await Promise.allSettled(
       Array.from(sourceEles).map(async (ele) => {
-        if (ele.dataset.closed === 'false') {
+        if (ele.dataset.closed === 'false' || ele.dataset.plantumlRendering === 'true') {
           return;
         }
 
@@ -36,15 +32,14 @@ const usePlantuml = (props: IContentPreviewProps) => {
           return;
         }
 
+        ele.dataset.plantumlRendering = 'true';
         try {
-          const normalized = normalizePlantumlSource(code);
-          const encoded = await encodePlantuml(normalized);
-          const url = buildPlantumlSvgUrl(normalized, encoded);
+          const url = await renderPlantumlImage(code);
+          if (!ele.isConnected) return;
 
           const wrapper = document.createElement('div');
           wrapper.className = `${prefix}-plantuml-rendered`;
           wrapper.dataset.content = code;
-          wrapper.dataset.encoded = encoded;
 
           const img = document.createElement('img');
           img.className = `${prefix}-plantuml-image`;
@@ -59,11 +54,16 @@ const usePlantuml = (props: IContentPreviewProps) => {
 
           ele.replaceWith(wrapper);
         } catch (error) {
+          if (!ele.isConnected) return;
+          // Keep the source readable and avoid retrying on every preview update.
+          delete ele.dataset.plantumlPending;
           eventBus.emit(editorId, ERROR_CATCHER, {
             name: 'plantuml',
             message: error instanceof Error ? error.message : String(error),
             error,
           });
+        } finally {
+          delete ele.dataset.plantumlRendering;
         }
       }),
     );

@@ -1,3 +1,4 @@
+import { getBuiltinSkillPrompt } from '@/shared/builtin-skills';
 import type { IChatStreamMessage } from '@momo/aichat';
 
 /** 单轮改写：当前笔记作为上下文，模型只输出新的全文 */
@@ -6,15 +7,7 @@ export function buildNoteRewriteMessages(
   instruction: string,
 ): IChatStreamMessage[] {
   const body = noteContent.trim() ? noteContent : '（当前笔记为空）';
-  const system = `你正在改写用户的当前笔记。用户指令会要求你润色、缩短、补全，或就笔记内容作答。
-
-约束：
-1. 只输出改写后的完整 Markdown 正文，作为新的笔记全文
-2. 不要解释、不要前言后语、不要用代码围栏包裹全文
-3. 若用户是提问，把完整回答作为新的笔记正文
-
-当前笔记：
-${body}`;
+  const system = getBuiltinSkillPrompt('noteRewrite', { noteContent: body });
 
   return [
     { role: 'system', content: system },

@@ -7,6 +7,46 @@ import { testStore } from '../persistence/test-store';
 import { ArtifactStore } from './artifact-store';
 import { AgentSourceStore } from './source-store';
 describe('host facts and original sources', () => {
+  it('reads legacy snapshots but writes new sources and artifacts only to temp storage', async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'momo-temp-snapshots-'));
+    const store = testStore();
+    const oldRoot = path.join(root, 'legacy');
+    const newRoot = path.join(root, 'temp');
+    try {
+      const input = {
+        name: 'analysis.json',
+        mimeType: 'application/json',
+        encoding: 'utf8' as const,
+        content: '{}',
+      };
+      const oldSource = await new AgentSourceStore(store, path.join(oldRoot, 'blobs')).save(input);
+      const oldArtifact = await new ArtifactStore(store, path.join(oldRoot, 'artifacts')).create(
+        'run',
+        input,
+      );
+      const sources = new AgentSourceStore(
+        store,
+        path.join(newRoot, 'blobs'),
+        path.join(oldRoot, 'blobs'),
+      );
+      const artifacts = new ArtifactStore(
+        store,
+        path.join(newRoot, 'artifacts'),
+        path.join(oldRoot, 'artifacts'),
+      );
+      expect((await sources.load([oldSource]))[0].content).toBe('{}');
+      expect((await artifacts.load(oldArtifact.id)).bytes.toString()).toBe('{}');
+      await sources.save({ ...input, content: '{"new":true}' });
+      await artifacts.create('run', { ...input, content: '{"new":true}' });
+      expect(await fs.readdir(path.join(oldRoot, 'blobs'))).toHaveLength(1);
+      expect(await fs.readdir(path.join(oldRoot, 'artifacts'))).toHaveLength(1);
+      expect(await fs.readdir(path.join(newRoot, 'blobs'))).toHaveLength(1);
+      expect(await fs.readdir(path.join(newRoot, 'artifacts'))).toHaveLength(1);
+    } finally {
+      store.db.close();
+      await fs.rm(root, { recursive: true, force: true });
+    }
+  });
   it('stores original bytes separately from derived text and trusts canonical encoding', async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'momo-sources-')),
       store = testStore();

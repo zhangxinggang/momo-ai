@@ -1,6 +1,9 @@
 import { ChatProvider } from '@momo/aichat';
-import { createHarnessChatOverrides } from '@renderer/services/agent-runtime/client';
-import { Button, message } from 'antd';
+import {
+  createHarnessChatOverrides,
+  uploadHarnessAttachments,
+} from '@renderer/services/agent-runtime/client';
+import { message } from 'antd';
 import { useCallback, useRef } from 'react';
 import { HarnessModelSelect, HarnessSessionBinding } from '../HarnessControls';
 
@@ -16,10 +19,19 @@ import { useLocalPathBinding } from '@renderer/hooks/useLocalPathBinding';
 import { useStableRef } from '@renderer/hooks/useStableRef';
 import { createAgentAppChatAdapters } from '@renderer/services/agent-app/chat-adapters';
 import { buildSharedAiChatServices } from '@renderer/services/aichat';
+import { getRuntimeViewPrompt, projectRuntimeView } from '@renderer/services/aichat/runtime-view';
+import { createChatViewGenerator } from '@renderer/services/aichat/view-generation';
+import {
+  openChatArtifactFile,
+  openChatBrowser,
+  openChatWorkspaceFile,
+} from '@renderer/services/chat/workspace-panel';
 import { useSettingsStore } from '@renderer/store';
 import { useChatProjectStore } from '@renderer/store/chat';
 import { ChatActiveProjectBridge } from '../ChatActiveProjectBridge';
 import { ChatErrorBoundary } from '../ChatErrorBoundary';
+import { ChatGeneratedView } from '../ChatGeneratedView';
+import { RuntimeArtifactCard } from '../RuntimeArtifactCard';
 
 interface IProps {
   children: ReactNode;
@@ -31,24 +43,28 @@ export function ChatModuleProvider({ children }: IProps) {
   const reportGeneration = useAiChatGenerationReporter('chat');
   const agentIdRef = useRef('momo-default');
   const aiModels = useSettingsStore((state) => state.aiModels);
-  const activeAgentAppId = useChatProjectStore((state) => state.activeAgentAppId);
+  const activeAgentAppIds = useChatProjectStore((state) => state.activeAgentAppIds);
   const activeFolderPaths = useChatProjectStore((state) => state.activeFolderPaths);
   const workspace = useChatWorkspaceBinding();
-  const localPath = useLocalPathBinding();
-  const activeAgentAppIdRef = useStableRef(activeAgentAppId);
+  const openWorkspacePath = useCallback(
+    (path: string) => openChatWorkspaceFile(activeFolderPaths, path),
+    [activeFolderPaths],
+  );
+  const localPath = useLocalPathBinding(openWorkspacePath);
+  const activeAgentAppIdsRef = useStableRef(activeAgentAppIds);
   const activeFolderPathsRef = useStableRef(activeFolderPaths);
   const handleAgentChange = useCallback((id: string) => {
     agentIdRef.current = id;
   }, []);
 
-  const activeAgentPlatform = useMemo(
-    () => (activeAgentAppId ? getPlatformById(activeAgentAppId) : undefined),
-    [activeAgentAppId],
+  const activeAgentPlatforms = useMemo(
+    () => activeAgentAppIds.map(getPlatformById).filter((platform) => platform !== undefined),
+    [activeAgentAppIds],
   );
 
   const chatServices = useMemo(() => {
     const agentAdapters = createAgentAppChatAdapters({
-      getAgentAppId: () => activeAgentAppIdRef.current,
+      getAgentAppIds: () => activeAgentAppIdsRef.current,
       getFolderPaths: () => activeFolderPathsRef.current,
       onDenied: (reason) => showToast(reason, 'warning'),
     });
@@ -62,25 +78,44 @@ export function ChatModuleProvider({ children }: IProps) {
       chatModelOptionGroups: undefined,
       workspace,
       localPath,
+      onOpenExternalUrl: openChatBrowser,
       storageKeyPrefix: 'skill-platform-ai-chat',
       callAIChatStream: harnessOverrides.callAIChatStream!,
       overrides: {
         ...harnessOverrides,
-        agentAppBanner: activeAgentPlatform
-          ? { id: activeAgentPlatform.id, name: activeAgentPlatform.name }
+        viewGeneration: {
+          runtimePrompt: getRuntimeViewPrompt(),
+          projectRuntimeView,
+          generate: createChatViewGenerator(aiModels),
+          render: (message, actions) => (
+            <ChatGeneratedView
+              message={message}
+              onSelectFiles={actions?.attachFiles}
+              onSubmit={actions?.submit}
+              busy={actions?.busy}
+            />
+          ),
+          uploadFiles: uploadHarnessAttachments,
+        },
+        agentAppBanner: activeAgentPlatforms.length
+          ? {
+              id: activeAgentAppIds.join(','),
+              name: activeAgentPlatforms.map((platform) => platform.name).join('、'),
+            }
           : null,
         slashCommands: agentAdapters.slashCommands,
         beforeSubmitPrompt: undefined,
-        renderRuntimeArtifact: (artifact) => (
-          <Button
-            size='small'
-            onClick={() => {
+        renderRuntimeArtifact: (artifact, sourceRef) => (
+          <RuntimeArtifactCard
+            artifact={artifact}
+            sourceRef={sourceRef}
+            onOpen={openChatArtifactFile}
+            onSave={() => {
               void window.api.agentRuntime
                 .saveArtifact(artifact.id)
                 .catch((e) => message.error(e.message));
-            }}>
-            保存产物 · {artifact.name}
-          </Button>
+            }}
+          />
         ),
         isImageModel: () => false,
         renderModelSelect: (input) => <HarnessModelSelect models={aiModels} input={input} />,
@@ -88,8 +123,9 @@ export function ChatModuleProvider({ children }: IProps) {
       },
     });
   }, [
-    activeAgentPlatform,
-    activeAgentAppIdRef,
+    activeAgentPlatforms,
+    activeAgentAppIds,
+    activeAgentAppIdsRef,
     activeFolderPathsRef,
     aiModels,
     localPath,

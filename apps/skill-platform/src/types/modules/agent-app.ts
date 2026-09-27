@@ -52,11 +52,16 @@ export interface DAgentAppSlashItem {
   category?: string;
   tags?: string[];
   hasArgs?: boolean;
+  agentAppId?: string;
+  agentAppName?: string;
+  /** 相对于资源根目录的文件夹层级，不包含绝对路径。 */
+  directoryPath?: string[];
 }
 
 export interface DAgentAppListSlashInput {
   /** 未选择 Agent 时仍可列出 momo-ai 应用技能。 */
   agentAppId?: string;
+  agentAppIds?: string[];
   folderPaths: string[];
   query?: string;
 }
@@ -75,12 +80,15 @@ export interface DAgentAppSlashInvocation {
   scope: 'application' | 'project' | 'global';
   category?: string;
   tags?: string[];
+  agentAppId?: string;
+  agentAppName?: string;
   /** 对应消息正文中的行内序列化 token。 */
   token?: string;
 }
 
 export interface DAgentAppPrepareSubmitInput {
   agentAppId?: string;
+  agentAppIds?: string[];
   folderPaths: string[];
   content: string;
   displayContent: string;

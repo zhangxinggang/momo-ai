@@ -103,11 +103,7 @@ const PYTHON_SKIP_ARG_PATCH = new Set([
   'clean.py',
 ]);
 
-async function ensurePythonCommandHasArgs(
-  commandLine: string,
-  repoPath: string,
-  outputDir: string,
-): Promise<string> {
+async function ensurePythonCommandHasArgs(commandLine: string, repoPath: string): Promise<string> {
   const match = commandLine.match(PYTHON_CMD_RE);
   if (!match) {
     return commandLine;
@@ -423,7 +419,7 @@ export async function executeSkillWorkspace(
 
   const supplementedCommands: string[] = [];
   for (const cmd of plannedCommands) {
-    supplementedCommands.push(await ensurePythonCommandHasArgs(cmd, repoPath, outputDir));
+    supplementedCommands.push(await ensurePythonCommandHasArgs(cmd, repoPath));
   }
   plannedCommands = supplementedCommands;
 

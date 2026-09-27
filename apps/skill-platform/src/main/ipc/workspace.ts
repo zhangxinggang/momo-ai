@@ -23,14 +23,9 @@ interface IDirEntry {
   size?: number;
 }
 
-function listDirectory(
-  dirPath: string,
-  maxDepth: number = 2,
-  currentDepth: number = 0,
-): IDirEntry[] {
-  if (currentDepth >= maxDepth) return [];
+async function listDirectory(dirPath: string): Promise<IDirEntry[]> {
   try {
-    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
     const result: IDirEntry[] = [];
     for (const entry of entries) {
       if (
@@ -43,12 +38,7 @@ function listDirectory(
       if (entry.isDirectory()) {
         result.push({ name: entry.name, path: fullPath, type: 'directory' });
       } else if (entry.isFile()) {
-        try {
-          const stat = fs.statSync(fullPath);
-          result.push({ name: entry.name, path: fullPath, type: 'file', size: stat.size });
-        } catch {
-          result.push({ name: entry.name, path: fullPath, type: 'file' });
-        }
+        result.push({ name: entry.name, path: fullPath, type: 'file' });
       }
     }
     return result;
@@ -64,7 +54,7 @@ export function registerWorkspaceIPC(): void {
     }
     try {
       const grantedPath = assertGrantedWorkspaceDirectory(dirPath);
-      const entries = listDirectory(grantedPath);
+      const entries = await listDirectory(grantedPath);
       return { success: true, entries, dirPath: grantedPath };
     } catch (error) {
       return {

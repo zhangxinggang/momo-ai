@@ -15445,14 +15445,12 @@ class Xr {
     const t = 'GetMetadata',
       e = this.#t.get(t);
     if (e) return e;
-    const s = this.messageHandler
-      .sendWithPromise(t, null)
-      .then((i) => ({
-        info: i[0],
-        metadata: i[1] ? new Sr(i[1]) : null,
-        contentDispositionFilename: this._fullReader?.filename ?? null,
-        contentLength: this._fullReader?.contentLength ?? null,
-      }));
+    const s = this.messageHandler.sendWithPromise(t, null).then((i) => ({
+      info: i[0],
+      metadata: i[1] ? new Sr(i[1]) : null,
+      contentDispositionFilename: this._fullReader?.filename ?? null,
+      contentLength: this._fullReader?.contentLength ?? null,
+    }));
     return (this.#t.set(t, s), s);
   }
   getMarkInfo() {

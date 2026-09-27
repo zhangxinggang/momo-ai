@@ -2,7 +2,6 @@ import copy2Clipboard from '@vavt/copy2clipboard';
 import StrIcon from '~/components/Icon/Str';
 import { prefix } from '~/config';
 import { ICustomIcon } from '~/type';
-import { buildPlantumlPngUrl } from '../plantuml-encoder';
 import { canvasElementToPngData, fetchUrlAsBlob, imgElementToPngData } from './dom-to-png';
 import { svgElementToPngBlob } from './svg-to-image';
 
@@ -34,6 +33,7 @@ const setDiagramFullscreenIcon = (
   }
   span.innerHTML = StrIcon(iconName, customIcon);
   span.title = iconName === 'fullscreen-exit' ? '退出全屏' : '全屏';
+  span.setAttribute('aria-label', span.title);
 };
 
 const ensureDiagramActionButton = (
@@ -62,7 +62,19 @@ const handleDiagramCopy = (
   if (previousTimer !== undefined) {
     window.clearTimeout(previousTimer);
   }
-  void copy2Clipboard(container.dataset.content || '')
+  const image = container.classList.contains(`${prefix}-drawio-image`)
+    ? container.querySelector<HTMLImageElement>('img')
+    : null;
+  const copy = image
+    ? imgElementToPngData(image).then(({ data }) =>
+        navigator.clipboard.write([
+          new ClipboardItem({
+            'image/png': new Blob([Uint8Array.from(data)], { type: 'image/png' }),
+          }),
+        ]),
+      )
+    : copy2Clipboard(container.dataset.content || '');
+  void copy
     .then(() => {
       copySpan.innerHTML = StrIcon('check', customIcon);
     })
@@ -149,6 +161,9 @@ const DIAGRAM_CONTAINER_SELECTOR = `p.${prefix}-mermaid, .${prefix}-plantuml-ren
 const getDiagramVisualNode = (
   container: HTMLElement,
 ): HTMLElement | SVGSVGElement | HTMLCanvasElement | null => {
+  if (container.classList.contains(`${prefix}-drawio-image`)) {
+    return container.querySelector<HTMLImageElement>('img');
+  }
   const plantumlImg = container.querySelector<HTMLImageElement>(`img.${prefix}-plantuml-image`);
   if (plantumlImg) {
     return plantumlImg;
@@ -464,16 +479,23 @@ const openDiagramFullscreen = (container: HTMLElement, options: { customIcon: IC
   const actionBar = document.createElement('div');
   actionBar.className = `${prefix}-mermaid-action ${prefix}-chart-fullscreen-action`;
 
-  const copySpan = document.createElement('span');
+  const copySpan = document.createElement('button');
+  copySpan.type = 'button';
   copySpan.className = `${prefix}-mermaid-copy`;
+  copySpan.title = container.classList.contains(`${prefix}-drawio-image`) ? '复制图片' : '复制源码';
+  copySpan.setAttribute('aria-label', copySpan.title);
   copySpan.innerHTML = StrIcon('copy', options.customIcon);
 
-  const exitSpan = document.createElement('span');
+  const exitSpan = document.createElement('button');
+  exitSpan.type = 'button';
   exitSpan.className = `${prefix}-mermaid-fullscreen`;
   setDiagramFullscreenIcon(exitSpan, 'fullscreen-exit', options.customIcon);
 
-  const downloadSpan = document.createElement('span');
+  const downloadSpan = document.createElement('button');
+  downloadSpan.type = 'button';
   downloadSpan.className = `${prefix}-mermaid-download`;
+  downloadSpan.title = '下载';
+  downloadSpan.setAttribute('aria-label', '下载');
   downloadSpan.innerHTML = StrIcon('download', options.customIcon);
 
   actionBar.append(copySpan, exitSpan, downloadSpan);
@@ -516,6 +538,7 @@ const openDiagramFullscreen = (container: HTMLElement, options: { customIcon: IC
     try {
       if (visualNode instanceof HTMLImageElement) {
         const img = await cloneDiagramImage(visualNode);
+        if (!overlay.isConnected) return;
         transformLayer.appendChild(img);
       } else if (visualNode instanceof HTMLCanvasElement) {
         const img = document.createElement('img');
@@ -678,6 +701,7 @@ export const bindDiagramPanZoom = (
 
   const onWheel = (event: WheelEvent) => {
     event.preventDefault();
+    event.stopPropagation();
     markUserInteracted();
     const scaleAmount = 0.08;
     const previousScale = scale;
@@ -794,12 +818,6 @@ const downloadUrlAsFile = async (url: string, filename: string) => {
 };
 
 const downloadDiagramAsPng = async (container: HTMLElement) => {
-  const encoded = container.dataset.encoded;
-  if (encoded) {
-    await downloadUrlAsFile(buildPlantumlPngUrl(encoded), 'plantuml-chart.png');
-    return;
-  }
-
   const visualNode = getDiagramVisualNode(container);
   if (!visualNode) {
     return;
@@ -821,13 +839,98 @@ const downloadDiagramAsPng = async (container: HTMLElement) => {
     downloadBlobAsFile(blob, 'diagram.png');
   } catch {
     if (visualNode instanceof HTMLImageElement && visualNode.src) {
-      const pngUrl = visualNode.src.replace('/svg/', '/png/');
-      await downloadUrlAsFile(pngUrl, 'plantuml-chart.png');
+      const extension = visualNode.src.startsWith('data:image/svg+xml') ? 'svg' : 'png';
+      await downloadUrlAsFile(visualNode.src, `diagram.${extension}`);
     }
   }
 };
 
 export { downloadDiagramAsPng };
+
+/** 富文本与 Markdown 预览中的 draw.io PNG 共用图片操作。 */
+export const bindDrawioImageActions = (
+  container: HTMLElement,
+  actionDiv: HTMLElement,
+  options: { customIcon: ICustomIcon },
+) => {
+  const image = container.querySelector<HTMLImageElement>('img');
+  if (!image) return () => {};
+  let panZoom: IDiagramPanZoomHandle | null = null;
+  const buttons: HTMLButtonElement[] = [];
+  const addButton = (
+    action: string,
+    title: string,
+    icon: keyof ICustomIcon,
+    onClick: () => void,
+  ) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `${prefix}-diagram-action-btn ${prefix}-mermaid-${action}`;
+    button.title = title;
+    button.setAttribute('aria-label', title);
+    button.innerHTML = StrIcon(icon as any, options.customIcon);
+    button.onclick = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onClick();
+    };
+    actionDiv.appendChild(button);
+    buttons.push(button);
+    return button;
+  };
+  const copyButton = addButton('copy', '复制图片', 'copy', () =>
+    handleDiagramCopy(container, copyButton, options.customIcon),
+  );
+  const resetZoom = () => {
+    panZoom?.cleanup();
+    panZoom = null;
+    container.removeAttribute('data-grab');
+    zoomButton.title = '缩放';
+    zoomButton.setAttribute('aria-label', '缩放');
+    zoomButton.setAttribute('aria-pressed', 'false');
+    zoomButton.innerHTML = StrIcon('pin', options.customIcon);
+  };
+  const zoomButton = addButton('zoom', '缩放', 'pin', () => {
+    if (panZoom) {
+      resetZoom();
+      return;
+    }
+    panZoom = bindDiagramPanZoom(container, image);
+    container.setAttribute('data-grab', '');
+    zoomButton.title = '退出缩放';
+    zoomButton.setAttribute('aria-label', '退出缩放');
+    zoomButton.setAttribute('aria-pressed', 'true');
+    zoomButton.innerHTML = StrIcon('pin-off', options.customIcon);
+  });
+  zoomButton.setAttribute('aria-pressed', 'false');
+  addButton('fullscreen', '全屏', 'fullscreen', () => toggleDiagramFullscreen(container, options));
+  addButton('download', '下载', 'download', () => void downloadDiagramAsPng(container));
+
+  const stopDrag = (event: Event) => event.stopPropagation();
+  const stopImagePreview = (event: MouseEvent) => {
+    if (panZoom && event.target === image) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+  const actionBar = actionDiv.closest<HTMLElement>(`.${prefix}-mermaid-action`) || actionDiv;
+  actionBar.addEventListener('mousedown', stopDrag);
+  actionBar.addEventListener('touchstart', stopDrag);
+  container.addEventListener('click', stopImagePreview, true);
+  image.addEventListener('load', resetZoom);
+  return () => {
+    resetZoom();
+    diagramFullscreenCloseMap.get(container)?.();
+    const timer = diagramCopyTimers.get(container);
+    if (timer !== undefined) window.clearTimeout(timer);
+    diagramCopyTimers.delete(container);
+    actionBar.removeEventListener('mousedown', stopDrag);
+    actionBar.removeEventListener('touchstart', stopDrag);
+    container.removeEventListener('click', stopImagePreview, true);
+    image.removeEventListener('load', resetZoom);
+    buttons.forEach((button) => button.remove());
+  };
+};
 
 /** 为图表容器挂载操作栏（复制 / 全屏 / 下载） */
 export const prepareDiagramActionBars = (

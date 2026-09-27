@@ -72,7 +72,11 @@ export function isLocalPathLike(text: string): boolean {
 }
 
 export function isAbsoluteLocalPath(rawPath: string): boolean {
-  return isAbsoluteLocalPathLike(rawPath);
+  const value = rawPath.trim();
+  return (
+    !URL_SCHEME_RE.test(value) &&
+    (isAbsoluteLocalPathLike(value) || /^(?:[a-z]:[\\/]|\/|~\/)[^\n\r<>"']+$/i.test(value))
+  );
 }
 
 export function joinLocalPath(basePath: string, relativePath: string): string {
@@ -84,7 +88,33 @@ export function joinLocalPath(basePath: string, relativePath: string): string {
 
 /** 将识别到的路径规范化为可打开的值 */
 export function normalizeLocalPathValue(rawPath: string): string {
-  return stripTrailingPathPunctuation(stripCodeLanguagePrefix(rawPath));
+  let value = stripTrailingPathPunctuation(stripCodeLanguagePrefix(rawPath));
+  if (/^file:\/\//i.test(value)) {
+    try {
+      const url = new URL(value);
+      value = decodeURIComponent(url.pathname);
+      if (/^\/[a-z]:\//i.test(value)) value = value.slice(1);
+      if (url.hostname) value = `//${url.hostname}${value}`;
+    } catch {
+      return value;
+    }
+  }
+  return value.replace(/(?::\d+(?::\d+)?|#L\d+(?:-L\d+)?)$/, '');
+}
+
+export function isWorkspaceRelativePath(rawPath: string): boolean {
+  const value = normalizeLocalPathValue(rawPath);
+  if (
+    !value ||
+    value.length > 4096 ||
+    isAbsoluteLocalPath(value) ||
+    /[\n\r:=;{}<>"'`?#]/.test(value)
+  )
+    return false;
+  if (/^(?:\.env|\.gitignore|\.npmrc|LICENSE|Dockerfile|Makefile)$/i.test(value)) return true;
+  return /^(?:\.{1,2}[\\/])?(?:[\p{L}\p{N}_. @+-]+[\\/])*[\p{L}\p{N}_. @+-]+\.[a-z][a-z0-9]{0,15}$/iu.test(
+    value,
+  );
 }
 
 function createLocalPathSpan(className: string, pathValue: string): HTMLSpanElement {
@@ -139,8 +169,23 @@ function collectAbsolutePathMatches(content: string): IPathMatch[] {
 /** 将纯文本按绝对路径片段拆分，便于渲染可点击路径 */
 export function splitPlainTextByLocalPaths(
   content: string,
+  allowRelative = false,
 ): Array<{ kind: 'text' | 'path'; value: string }> {
   const matches = collectAbsolutePathMatches(content);
+  if (allowRelative) {
+    const pattern =
+      /(?:^|[\s([{>])((?:\.{1,2}[\\/])?(?:[\p{L}\p{N}_.@+-]+[\\/])*[\p{L}\p{N}_.@+-]+\.[a-z][a-z0-9]{0,15}(?::\d+(?::\d+)?)?)/giu;
+    for (const candidate of content.matchAll(pattern)) {
+      const value = stripTrailingPathPunctuation(candidate[1]);
+      const start = candidate.index! + candidate[0].length - candidate[1].length;
+      if (
+        isWorkspaceRelativePath(value) &&
+        !matches.some((match) => start < match.end && start + value.length > match.start)
+      )
+        matches.push({ start, end: start + value.length, value });
+    }
+    matches.sort((a, b) => a.start - b.start);
+  }
   if (matches.length === 0) {
     return [{ kind: 'text', value: content }];
   }
@@ -164,7 +209,23 @@ export function splitPlainTextByLocalPaths(
 }
 
 /** 为 Markdown 渲染结果中的绝对路径添加可点击标记 */
-export function enhanceLocalPathElements(root: HTMLElement, className: string): void {
+export function enhanceLocalPathElements(
+  root: HTMLElement,
+  className: string,
+  allowRelative = false,
+): void {
+  if (allowRelative)
+    for (const element of root.querySelectorAll('a, code:not(pre code)')) {
+      const value = normalizeLocalPathValue(
+        element.getAttribute('href') ?? element.textContent ?? '',
+      );
+      if (isWorkspaceRelativePath(value) || isAbsoluteLocalPath(value)) {
+        element.setAttribute('data-local-path', value);
+        element.classList.add(className);
+        element.setAttribute('role', 'link');
+        element.setAttribute('tabindex', '0');
+      }
+    }
   const textNodes: Text[] = [];
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
 
@@ -178,8 +239,8 @@ export function enhanceLocalPathElements(root: HTMLElement, className: string): 
       !parent.closest('[data-local-path]')
     ) {
       const text = currentNode.textContent ?? '';
-      if (text.trim() && PATH_HINT_RE.test(text)) {
-        const parts = splitPlainTextByLocalPaths(text);
+      if (text.trim() && (allowRelative || PATH_HINT_RE.test(text))) {
+        const parts = splitPlainTextByLocalPaths(text, allowRelative);
         if (parts.some((part) => part.kind === 'path')) {
           textNodes.push(currentNode as Text);
         }
@@ -190,7 +251,7 @@ export function enhanceLocalPathElements(root: HTMLElement, className: string): 
 
   for (const textNode of textNodes) {
     const content = textNode.textContent ?? '';
-    const parts = splitPlainTextByLocalPaths(content);
+    const parts = splitPlainTextByLocalPaths(content, allowRelative);
     const fragment = document.createDocumentFragment();
 
     for (const part of parts) {

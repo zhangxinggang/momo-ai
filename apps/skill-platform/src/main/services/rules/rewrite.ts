@@ -1,21 +1,16 @@
+import { getBuiltinSkillPrompt } from '@/main/services/builtin-skills';
 import type { DRuleRewriteRequest, IRuleRewriteResult } from '@/types/modules/rules';
 import type { ISafetyScanAiConfig } from '@/types/modules/skill';
 
 import { chatCompletion } from '../ai/client';
 
 export function buildRuleRewritePrompt(payload: DRuleRewriteRequest): string {
-  return [
-    `You are editing a rules file for ${payload.platformName}.`,
-    `Target file: ${payload.fileName}`,
-    'Rewrite the rules file based on the user instruction.',
-    'IMPORTANT: Only return the final file content. Do not include introductory or concluding conversational text.',
-    'Preserve useful existing structure when possible.',
-    'Return valid markdown only.',
-    'User instruction:',
-    payload.instruction.trim(),
-    'Current content:',
-    payload.currentContent.trim() || '(empty)',
-  ].join('\n\n');
+  return getBuiltinSkillPrompt('rulesRewriteInput', {
+    platformName: payload.platformName,
+    fileName: payload.fileName,
+    instruction: payload.instruction.trim(),
+    currentContent: payload.currentContent.trim() || '(empty)',
+  });
 }
 
 /** 使用 AI 改写规则文件内容 */
@@ -27,8 +22,7 @@ export async function rewriteRuleWithAi(payload: DRuleRewriteRequest): Promise<I
   const messages = [
     {
       role: 'system' as const,
-      content:
-        'You are an expert AI Rules engineer. Rewrite local AI rules files according to user instructions. Return ONLY production-ready markdown. Do NOT wrap output in code fences.',
+      content: getBuiltinSkillPrompt('rulesRewrite'),
     },
     {
       role: 'user' as const,

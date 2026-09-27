@@ -6,10 +6,11 @@ import { koaBody } from 'koa-body';
 import compress from 'koa-compress';
 import favicon from 'koa-favicon';
 import helmet from 'koa-helmet';
-import cors from 'koa2-cors';
 import zlib from 'zlib';
 import type { IHttpServerConfig } from '../../types/runtime-config';
+import { createCorsMiddleware } from './cors';
 import diffieHellman from './diffieHellman';
+import { createFrameEmbeddingMiddleware } from './frame-embedding';
 import Routers from './routes';
 
 const app = new Koa();
@@ -43,6 +44,9 @@ class HttpServer {
       }
     }
     app
+      .use(helmet())
+      .use(createFrameEmbeddingMiddleware(this.config.security?.frameAncestors))
+      .use(createCorsMiddleware())
       .use(
         compress({
           filter: (contentType: string) => {
@@ -52,9 +56,7 @@ class HttpServer {
           flush: zlib.constants.Z_SYNC_FLUSH,
         }),
       )
-      .use(koaBody(bodyParserOptions))
-      .use(helmet())
-      .use(cors());
+      .use(koaBody(bodyParserOptions));
     app.use(routes.standardResponse);
     routes.loadProxyRoutes();
     routes.loadMountRoutes();

@@ -18,6 +18,7 @@ import { TFocusOption } from '~/type';
 import MdCatalog, { ITocItem } from '~~/components/MdCatalog';
 import ContentPreview from './ContentPreview';
 import { useAutoScroll, useCodeMirror, useFollowCatalog, useResize } from './hooks';
+import useDrawioCreation from './hooks/useDrawioCreation';
 import { IContentProps } from './props';
 import { IContentExposeParam } from './type';
 
@@ -46,6 +47,16 @@ const MarkdownContent = forwardRef((props: IContentProps, ref: ForwardedRef<unkn
   );
 
   const { inputWrapperRef, codeMirrorUt, resetHistory } = useCodeMirror(props);
+  const drawioCreation = useDrawioCreation(props.readOnly, () => {
+    const view = codeMirrorUt.current?.view;
+    if (!view) return;
+    const { from, to } = view.state.selection.main;
+    const original = view.state.doc;
+    return (imageUrl) => {
+      if (view.state.doc !== original) throw new Error('文档已变化，请关闭后重新新增图形');
+      view.dispatch({ changes: { from, to, insert: `\n\n![](${imageUrl})\n\n` } });
+    };
+  });
   const { inputWrapperStyle, resizeOperateStyle } = useResize(props, contentRef, resizeRef);
   // 自动滚动
   useAutoScroll(props, html, codeMirrorUt);
@@ -97,6 +108,7 @@ const MarkdownContent = forwardRef((props: IContentProps, ref: ForwardedRef<unkn
       <ContentPreview
         modelValue={props.modelValue}
         onChange={props.onChange}
+        readOnly={props.readOnly}
         setting={setting}
         onHtmlChanged={onHtmlChangedCopy}
         onGetCatalog={props.onGetCatalog}
@@ -133,6 +145,7 @@ const MarkdownContent = forwardRef((props: IContentProps, ref: ForwardedRef<unkn
     props.onGetCatalog,
     props.onRemount,
     props.previewComponent,
+    props.readOnly,
     props.sanitize,
     props.sanitizeMermaid,
     setting,
@@ -165,6 +178,7 @@ const MarkdownContent = forwardRef((props: IContentProps, ref: ForwardedRef<unkn
 
   return (
     <div className={`${prefix}-content`}>
+      {drawioCreation}
       <div className={`${prefix}-content-wrapper`} ref={contentRef}>
         <CustomScrollbar
           alwaysShowTrack

@@ -13,13 +13,26 @@ export {
 export {
   closeWindow,
   isWindowFullscreen,
+  isWindowMaximized,
   maximizeWindow,
   minimizeWindow,
   sendCloseDialogCancel,
   sendCloseDialogResult,
+  setWindowFullscreen,
   subscribeShowCloseDialog,
 } from './window';
 
-export { subscribeFullscreenChanged, subscribeMainEvent, unsubscribeMainEvent } from './ipc-events';
+export {
+  subscribeFullscreenChanged,
+  subscribeMainEvent,
+  subscribeMaximizedChanged,
+  unsubscribeMainEvent,
+} from './ipc-events';
 
-export { setAutoLaunch, setCloseAction, setDebugMode, setMinimizeToTray } from './lifecycle';
+export {
+  setAutoLaunch,
+  setCloseAction,
+  setDebugMode,
+  setMinimizeToTray,
+  setPowerSaveMode,
+} from './lifecycle';

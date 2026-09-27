@@ -33,8 +33,35 @@
     }
   }
 
+  &-align-menu {
+    min-width: 120px;
+
+    &-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  }
+
   &-chart-menu {
-    min-width: 140px;
+    min-width: 240px;
+    &-custom {
+      padding: 16px;
+      text-align: center;
+      p {
+        font-size: 12px;
+        margin: 0 0 12px;
+      }
+      button {
+        border: 1px solid var(--md-border-color);
+        border-radius: 4px;
+        padding: 6px 18px;
+        color: var(--md-color);
+        background: var(--md-bk-color-outstand);
+        cursor: pointer;
+        white-space: nowrap;
+      }
+    }
 
     &-tabs {
       display: flex;

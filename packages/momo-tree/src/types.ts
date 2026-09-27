@@ -14,12 +14,17 @@ export interface IMomoTreeNode {
   noteType?: EMomoTreeNoteType;
   /** 仅文件节点：稳定 UUID（AI 写作等场景绑定） */
   noteId?: string;
+  /** 网页工具地址，供宿主渲染站点图标。 */
+  webUrl?: string;
+  /** AI 工具的稳定标识，供宿主显示插件图标。 */
+  toolIdentifier?: string;
 }
 
 /** 树操作文案 */
 export interface IMomoTreeLabels {
   createFolder: string;
   createNote: string;
+  openInFileSystem?: string;
   edit?: string;
   copy?: string;
   export?: string;
@@ -51,6 +56,8 @@ export interface IMomoTreeAdapter {
   onRename: (nodeId: string, newName: string) => Promise<void>;
   onDelete: (nodeId: string) => Promise<void>;
   onMove: (nodeId: string, targetParentId: string | null) => Promise<void>;
+  /** 在系统文件管理器中打开文件节点对应的目录 */
+  onOpenInFileSystem?: (nodeId: string) => Promise<void>;
   /** 编辑文件节点（如打开编辑器） */
   onEdit?: (nodeId: string) => Promise<void>;
   /** 复制文件节点（非目录） */

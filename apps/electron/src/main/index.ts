@@ -12,7 +12,9 @@ import startServer from './server';
 import { buildMenu } from './system/menu';
 
 const appConf = getAppConfig();
-const { openDevTools, browserWindow = {} } = appConf;
+const { openDevTools, browserWindow } = appConf;
+const appBrowserWindowOptions: BrowserWindowConstructorOptions =
+  browserWindow === null ? { fullscreen: true } : (browserWindow ?? {});
 
 interface ICreateShellWindowOptions {
   config?: BrowserWindowConstructorOptions;
@@ -34,7 +36,7 @@ async function createWindow({ config = {} }: ICreateShellWindowOptions): Promise
     ...DEFAULT_WINDOW_ATTR,
     webPreferences: getWebPreferences(),
     ...config,
-    ...browserWindow,
+    ...appBrowserWindowOptions,
   });
   setMainWindow(win);
   winEvent({ win });

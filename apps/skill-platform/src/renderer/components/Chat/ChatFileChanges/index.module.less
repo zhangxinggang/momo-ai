@@ -1,0 +1,83 @@
+.card {
+  min-width: 0;
+  margin-top: 14px;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  background: hsl(var(--background));
+  font-size: 12px;
+}
+.header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px;
+  border-bottom: 1px solid hsl(var(--border));
+}
+.summary {
+  display: flex;
+  flex: 1;
+  min-width: 120px;
+  flex-direction: column;
+  gap: 3px;
+}
+.summary strong {
+  font-weight: 500;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.files {
+  padding: 5px 12px 10px;
+}
+.file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 7px 0;
+  border: 0;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  text-align: left;
+  cursor: pointer;
+}
+.file:hover .path {
+  color: hsl(var(--foreground));
+  text-decoration: underline;
+}
+.path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.counts {
+  flex: none;
+}
+.added {
+  color: hsl(142 65% 37%);
+  font-weight: 400;
+}
+.removed {
+  color: hsl(0 70% 50%);
+  font-weight: 400;
+}
+.more {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 0 0;
+  border: 0;
+  background: transparent;
+  color: hsl(var(--foreground));
+  cursor: pointer;
+}
+.status {
+  color: hsl(var(--muted-foreground));
+}

@@ -1,6 +1,7 @@
 export { agentAppApi } from './agent-app';
 export { aiApi } from './ai';
 export { aichatApi } from './aichat';
+export { apiRequestApi } from './api-request';
 export { customToolApi } from './custom-tool';
 export { desktopApi } from './desktop';
 export { folderApi } from './folder';

@@ -1,5 +1,6 @@
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { SidebarEmptyState } from '@renderer/components/ui/SidebarEmptyState';
+import { useSortableSidebarList } from '@renderer/hooks/useSidebarOrder';
 import {
   kbCreateCollection,
   kbDeleteCollection,
@@ -49,6 +50,7 @@ export function KnowledgePanel({
   const setCreateModalOpen = useKbStore((s) => s.setCreateModalOpen);
 
   const [list, setList] = useState<{ id: string; name: string }[]>([]);
+  const ordering = useSortableSidebarList('knowledge', list, (item) => item.id);
 
   const [createName, setCreateName] = useState('');
   const [createSubmitting, setCreateSubmitting] = useState(false);
@@ -95,10 +97,10 @@ export function KnowledgePanel({
   const normalizedSearchQuery = listSearchQuery.trim().toLowerCase();
   const filteredList = useMemo(() => {
     if (!normalizedSearchQuery) {
-      return list;
+      return ordering.items;
     }
-    return list.filter((c) => c.name.toLowerCase().includes(normalizedSearchQuery));
-  }, [list, normalizedSearchQuery]);
+    return ordering.items.filter((c) => c.name.toLowerCase().includes(normalizedSearchQuery));
+  }, [ordering.items, normalizedSearchQuery]);
 
   const openCreateModal = () => {
     setCreateName('');
@@ -210,6 +212,7 @@ export function KnowledgePanel({
             return (
               <div
                 key={c.id}
+                {...ordering.dragProps(c.id)}
                 className={clsx(styles['knowledge-card'], {
                   [styles['knowledge-card--active']]: isActive,
                 })}>

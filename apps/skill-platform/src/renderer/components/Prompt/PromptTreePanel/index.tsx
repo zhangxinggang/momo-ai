@@ -4,6 +4,7 @@ import {
   findTreeNode,
   type IMomoTreeAdapter,
 } from '@momo/tree';
+import { useSidebarTreeOrder } from '@renderer/hooks/useSidebarOrder';
 import { buildPromptTree } from '@renderer/services/prompt/tree';
 import { useFolderStore, usePromptStore } from '@renderer/store';
 import { getAllDescendantIds, getFolderDepth } from '@renderer/utils/folder/tree';
@@ -30,6 +31,7 @@ export function PromptTreePanel() {
   const fetchPrompts = usePromptStore((state) => state.fetchPrompts);
 
   const moveTreeData = useMemo(() => buildPromptTree(folders, prompts), [folders, prompts]);
+  const ordering = useSidebarTreeOrder('prompts', treeData, moveTreeData);
 
   const findNode = useCallback((nodeId: string) => findTreeNode(treeData, nodeId), [treeData]);
 
@@ -162,8 +164,7 @@ export function PromptTreePanel() {
 
   return (
     <MomoTree
-      treeData={treeData}
-      moveTreeData={moveTreeData}
+      {...ordering}
       selectedId={selectedId}
       expandedKeys={expandedKeys}
       onExpandedChange={setExpandedKeys}

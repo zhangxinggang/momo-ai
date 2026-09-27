@@ -20806,13 +20806,11 @@ var UF = { WITH_2_BLANKS: '  ' },
     static pack(e, r, n) {
       var i = this;
       return qF(function* (s, o, a, l = []) {
-        return i.compiler
-          .compile(s, iw(a), l)
-          .generateAsync({
-            type: o,
-            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            compression: 'DEFLATE',
-          });
+        return i.compiler.compile(s, iw(a), l).generateAsync({
+          type: o,
+          mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          compression: 'DEFLATE',
+        });
       }).apply(this, arguments);
     }
     static toString(e, r, n = []) {

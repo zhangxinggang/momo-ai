@@ -6,7 +6,7 @@ import { zipSync } from 'fflate';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(scriptDir, '..');
-const outputDir = path.join(appRoot, 'default', 'skills');
+const outputDir = path.join(appRoot, 'default', 'skills', 'user');
 
 /** 内置默认技能：源目录相对 monorepo 根路径 -> 输出 zip 文件名 */
 const DEFAULT_SKILL_SOURCES = [

@@ -1,7 +1,7 @@
 import { FileViewer } from '@file-viewer/react';
 import { Button } from 'antd';
 import { ExternalLinkIcon, Loader2Icon } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { cloneArrayBuffer } from '../../utils/file-content';
 import {
@@ -20,6 +20,27 @@ interface IProps {
   onUnSupport?: (relativePath: string) => void;
 }
 
+/**
+ * FileViewer loads a source when its controller mounts and its React adapter
+ * immediately calls update with the same source. Delay supplying the file until
+ * the empty controller has mounted so a DOCX render starts only once. This also
+ * keeps React StrictMode's development remounts from leaving stale page batches.
+ */
+function SingleLoadFileViewer({
+  file,
+  fileName,
+  options,
+}: {
+  file: File;
+  fileName: string;
+  options: ReturnType<typeof buildFileViewerPreviewOptions>;
+}) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
+
+  return <FileViewer file={ready ? file : undefined} name={fileName} options={options} />;
+}
+
 /** 二进制文件预览（基于 @file-viewer/react + preset-all 全格式 renderer） */
 export function BinaryFilePreview(props: IProps) {
   const { relativePath, buffer, isLoading, filePreviewBaseUrl, onUnSupport } = props;
@@ -30,7 +51,7 @@ export function BinaryFilePreview(props: IProps) {
     [filePreviewBaseUrl],
   );
 
-  // 使用 File 而非 buffer：FileViewer 挂载时会触发两次 load，file.arrayBuffer() 每次返回新副本
+  // FileViewer 内部更新可能重复读取；使用 File 保证每次读取都得到独立 ArrayBuffer。
   const previewFile = useMemo(() => {
     if (!buffer) {
       return undefined;
@@ -77,7 +98,12 @@ export function BinaryFilePreview(props: IProps) {
   return (
     <div className='momo-file-editor__binary-preview'>
       <div className='momo-file-editor__binary-preview-viewer'>
-        <FileViewer key={relativePath} file={previewFile} name={fileName} options={viewerOptions} />
+        <SingleLoadFileViewer
+          key={relativePath}
+          file={previewFile}
+          fileName={fileName}
+          options={viewerOptions}
+        />
       </div>
     </div>
   );

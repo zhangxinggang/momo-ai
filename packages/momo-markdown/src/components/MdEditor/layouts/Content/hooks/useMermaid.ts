@@ -12,6 +12,7 @@ import {
 } from '~/utils/chart/cynefin-polyfill';
 import { registerMermaidPlugins } from '~/utils/chart/mermaid-plugins';
 import { normalizeMermaidSource } from '~/utils/chart/mermaid-source';
+import { renderMermaidSvg } from '~/utils/chart/render-mermaid';
 import { appendHandler } from '~/utils/dom';
 import eventBus from '~/utils/event-bus';
 
@@ -57,7 +58,10 @@ const useMermaid = (props: IContentPreviewProps) => {
             };
 
       await registerMermaidPlugins(mermaid);
-      mermaid.initialize(globalConfig.mermaidConfig(mermaidBaseConfig));
+      mermaid.initialize({
+        ...globalConfig.mermaidConfig(mermaidBaseConfig),
+        suppressErrorRendering: true,
+      });
 
       // 严格模式下，如果reRender是boolean型，会执行两次，这是reRender将不会effect
       setReRender((_r) => _r + 1);
@@ -141,22 +145,6 @@ const useMermaid = (props: IContentPreviewProps) => {
       const mermaidSourceEles =
         rootRef!.current?.querySelectorAll<HTMLElement>(`div.${prefix}-mermaid`) || [];
 
-      const svgContainingElement = document.createElement('div');
-      const sceWidth = document.body.offsetWidth > 1366 ? document.body.offsetWidth : 1366;
-      const sceHeight = document.body.offsetHeight > 768 ? document.body.offsetHeight : 768;
-
-      svgContainingElement.style.width = sceWidth + 'px';
-      svgContainingElement.style.height = sceHeight + 'px';
-      svgContainingElement.style.position = 'fixed';
-      svgContainingElement.style.zIndex = '-10000';
-      svgContainingElement.style.top = '-10000';
-
-      const count = mermaidSourceEles.length;
-
-      if (count > 0) {
-        document.body.appendChild(svgContainingElement);
-      }
-
       const buildRenderedNode = (rawCode: string, mermaidHtml: string) => {
         const p = document.createElement('p');
         p.className = `${prefix}-mermaid`;
@@ -174,7 +162,7 @@ const useMermaid = (props: IContentPreviewProps) => {
               return false;
             }
 
-            const rawCode = item.innerText;
+            const rawCode = item.textContent || '';
             const code = normalizeMermaidSource(rawCode);
             let mermaidHtml = mermaidCache.get(code) as string;
 
@@ -193,7 +181,7 @@ const useMermaid = (props: IContentPreviewProps) => {
               if (isCynefinBetaSource(code) && !hasNativeCynefinSupport(mermaidRef.current)) {
                 result = { svg: renderCynefinPolyfill(code, idRand) };
               } else {
-                result = await mermaidRef.current.render(idRand, code, svgContainingElement);
+                result = await renderMermaidSvg(mermaidRef.current, idRand, code);
               }
 
               mermaidHtml = await sanitizeMermaid(result.svg);
@@ -207,6 +195,9 @@ const useMermaid = (props: IContentPreviewProps) => {
 
               item.replaceWith(p);
             } catch (error: any) {
+              const empty = buildRenderedNode(rawCode, '');
+              if (item.dataset.line !== undefined) empty.dataset.line = item.dataset.line;
+              item.replaceWith(empty);
               eventBus.emit(editorId, ERROR_CATCHER, {
                 name: 'mermaid',
                 message: error.message,
@@ -218,10 +209,6 @@ const useMermaid = (props: IContentPreviewProps) => {
           return handler(ele);
         }),
       );
-
-      if (count > 0) {
-        svgContainingElement.remove();
-      }
     }
   }, [editorId, noMermaid, rootRef, sanitizeMermaid]);
 

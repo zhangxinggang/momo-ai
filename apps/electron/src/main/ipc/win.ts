@@ -61,10 +61,13 @@ export function registerWindowChromeIpc(deps: IWindowChromeIpcDeps): void {
 
   ipcMain.on(SYSTEM_EVENT.WINDOW_MAXIMIZE, () => {
     const w = getMainWindow();
-    if (w?.isMaximized()) {
+    if (!w) return;
+    if (w.isFullScreen()) {
+      w.setFullScreen(false);
+    } else if (w.isMaximized()) {
       w.unmaximize();
     } else {
-      w?.maximize();
+      w.maximize();
     }
   });
 
@@ -82,6 +85,10 @@ export function registerWindowChromeIpc(deps: IWindowChromeIpcDeps): void {
 
   ipcMain.handle('window:isFullscreen', () => {
     return getMainWindow()?.isFullScreen() ?? false;
+  });
+
+  ipcMain.handle('window:isMaximized', () => {
+    return getMainWindow()?.isMaximized() ?? false;
   });
 
   ipcMain.handle('window:isVisible', () => {

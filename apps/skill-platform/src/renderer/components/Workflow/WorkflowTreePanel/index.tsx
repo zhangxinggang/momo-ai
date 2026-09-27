@@ -7,6 +7,7 @@ import {
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { useToast } from '@renderer/components/ui/Toast';
+import { useSidebarTreeOrder } from '@renderer/hooks/useSidebarOrder';
 import { useWorkflowBackup } from '@renderer/hooks/useWorkflowBackup';
 import { renameWorkflowAgentDir } from '@renderer/services/workflow/agent-files';
 import { isWorkflowAvailable } from '@renderer/services/workflow/api';
@@ -47,6 +48,7 @@ export function WorkflowTreePanel() {
   }, [fetchFolders, fetchWorkflows]);
 
   const moveTreeData = useMemo(() => buildWorkflowTree(folders, workflows), [folders, workflows]);
+  const ordering = useSidebarTreeOrder('workflows', treeData, moveTreeData);
 
   const findNode = useCallback((nodeId: string) => findTreeNode(treeData, nodeId), [treeData]);
 
@@ -245,14 +247,13 @@ export function WorkflowTreePanel() {
         duplicateNameError: '同级下已存在相同名称',
         emptyNameError: '名称不能为空',
       }}
-      moveTreeData={moveTreeData}
+      {...ordering}
       onExpandedChange={setExpandedKeys}
       onSelectFile={handleSelectFile}
       onSelectFolder={handleSelectFolder}
       rootLabel='根目录'
       searchQuery={treeSearchQuery}
       selectedId={selectedWorkflowId}
-      treeData={treeData}
     />
   );
 }

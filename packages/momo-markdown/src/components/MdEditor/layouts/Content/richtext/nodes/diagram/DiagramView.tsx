@@ -1,8 +1,19 @@
 import { NodeViewContent, NodeViewWrapper, type ReactNodeViewProps } from '@tiptap/react';
 import copy2Clipboard from '@vavt/copy2clipboard';
 import { randomId } from '@vavt/util';
-import { Check, CircleChevronLeft, Code2, Copy, Download, Expand, Pin, PinOff } from 'lucide-react';
+import {
+  Check,
+  CircleChevronLeft,
+  Code2,
+  Copy,
+  Download,
+  Expand,
+  PenTool,
+  Pin,
+  PinOff,
+} from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import DrawioEditor from '~/components/DrawioEditor';
 import { globalConfig, prefix } from '~/config';
 import {
   bindDiagramPanZoom,
@@ -11,11 +22,9 @@ import {
   type IDiagramPanZoomHandle,
 } from '~/utils/chart/diagram-viewer';
 import { normalizeMermaidSource } from '~/utils/chart/mermaid-source';
-import {
-  buildPlantumlSvgUrl,
-  encodePlantuml,
-  normalizePlantumlSource,
-} from '~/utils/plantuml-encoder';
+import { renderMermaidSvg } from '~/utils/chart/render-mermaid';
+import { normalizePlantumlSource } from '~/utils/plantuml-encoder';
+import { renderPlantumlImage } from '~/utils/plantuml-renderer';
 import { isDiagramLang, parseCodeLang } from './CodeBlock';
 
 const EMPTY_CUSTOM_ICON = {} as any;
@@ -53,11 +62,12 @@ const DiagramView = (props: ReactNodeViewProps) => {
   const [draft, setDraft] = useState<string>('');
   const [copied, setCopied] = useState<boolean>(false);
   const [zoomOn, setZoomOn] = useState<boolean>(false);
+  const [drawioOpen, setDrawioOpen] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const echartsBoxRef = useRef<HTMLDivElement>(null);
   const echartsInstanceRef = useRef<any>(null);
   const zoomHandleRef = useRef<IDiagramPanZoomHandle | null>(null);
-  const encodedRef = useRef<string>('');
+  const plantumlRenderId = useRef(0);
 
   // 代码块折叠：是否可折叠、初始是否展开，逻辑与 markdown CodePlugin 完全一致
   const foldable = isDiagram ? false : !!mandatory || codeFoldable;
@@ -102,9 +112,9 @@ const DiagramView = (props: ReactNodeViewProps) => {
         const instance = (mod as any).default;
         globalConfig.editorExtensions.mermaid = globalConfig.editorExtensions.mermaid || {};
         globalConfig.editorExtensions.mermaid.instance = instance;
-        instance.initialize({ startOnLoad: false, theme: 'default' });
+        instance.initialize({ startOnLoad: false, theme: 'default', suppressErrorRendering: true });
         const normalized = normalizeMermaidSource(code.trim()) || 'flowchart TD\n  A --> B';
-        const { svg } = await instance.render(`mmd-${randomId()}`, normalized);
+        const { svg } = await renderMermaidSvg(instance, `mmd-${randomId()}`, normalized);
         setRendered(svg);
         setError('');
       } catch (err: any) {
@@ -115,7 +125,7 @@ const DiagramView = (props: ReactNodeViewProps) => {
     }
     try {
       const normalized = normalizeMermaidSource(code.trim()) || 'flowchart TD\n  A --> B';
-      const { svg } = await mermaid.render(`mmd-${randomId()}`, normalized);
+      const { svg } = await renderMermaidSvg(mermaid, `mmd-${randomId()}`, normalized);
       setRendered(svg);
       setError('');
     } catch (err: any) {
@@ -162,14 +172,14 @@ const DiagramView = (props: ReactNodeViewProps) => {
 
   // 渲染 plantuml
   const renderPlantuml = useCallback(async (code: string) => {
+    const renderId = ++plantumlRenderId.current;
     try {
-      const normalized = normalizePlantumlSource(code);
-      const encoded = await encodePlantuml(normalized);
-      encodedRef.current = encoded;
-      const url = buildPlantumlSvgUrl(normalized, encoded);
+      const url = await renderPlantumlImage(code);
+      if (renderId !== plantumlRenderId.current) return;
       setRendered(`<img src="${url}" alt="PlantUML" class="${prefix}-plantuml-image" />`);
       setError('');
     } catch (err: any) {
+      if (renderId !== plantumlRenderId.current) return;
       setError(err?.message || String(err));
       setRendered('');
     }
@@ -185,16 +195,16 @@ const DiagramView = (props: ReactNodeViewProps) => {
     } else if (lang === 'plantuml' || lang === 'puml') {
       void renderPlantuml(code);
     }
+    return () => {
+      ++plantumlRenderId.current;
+    };
   }, [isDiagram, editing, lang, node.textContent, renderMermaid, renderEcharts, renderPlantuml]);
 
-  // 同步 data-content / data-encoded 到容器，供复制 / 下载使用
+  // 同步源码到容器，供复制和图形编辑使用。
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     container.dataset.content = node.textContent || '';
-    if (lang === 'plantuml' || lang === 'puml') {
-      container.dataset.encoded = encodedRef.current;
-    }
   }, [node.textContent, lang, rendered]);
 
   // 节点卸载时释放 echarts 实例与缩放句柄
@@ -260,6 +270,30 @@ const DiagramView = (props: ReactNodeViewProps) => {
     void downloadDiagramAsPng(container);
   }, []);
 
+  // 操作：保存 draw.io 后，用图片节点替换原代码块。XML 由宿主旁路保存，不进入 Markdown。
+  const handleDrawioSave = useCallback(
+    async (xml: string, pngDataUri: string) => {
+      const saveDiagram = globalConfig.editorExtensions.drawio?.saveDiagram;
+      if (!saveDiagram) throw new Error('图形保存服务不可用');
+
+      const saved = await saveDiagram({ xml, pngDataUri });
+      const pos = getPos();
+      const imageType = editor.state.schema.nodes.image;
+      if (typeof pos !== 'number' || !imageType) {
+        throw new Error('无法将图表替换为图片');
+      }
+
+      const tr = editor.state.tr.replaceWith(
+        pos,
+        pos + node.nodeSize,
+        imageType.create({ src: saved.imageUrl, alt: '', title: null }),
+      );
+      tr.setMeta('addToHistory', true);
+      editor.view.dispatch(tr);
+    },
+    [editor, getPos, node.nodeSize],
+  );
+
   // 操作：切换折叠。收起时若选区落在代码内部，则将选区移至该节点，避免光标被困在隐藏内容中
   const handleToggleFold = useCallback(() => {
     setFolded((prev) => {
@@ -282,6 +316,12 @@ const DiagramView = (props: ReactNodeViewProps) => {
   if (isDiagram) {
     const diagramClass = getDiagramClass(lang);
     const isMermaid = lang === 'mermaid' || lang === 'flowchart';
+    const isPlantuml = lang === 'plantuml' || lang === 'puml';
+    const canGraphEdit =
+      (isMermaid || isPlantuml) && !!globalConfig.editorExtensions.drawio?.saveDiagram;
+    const drawioSource = isMermaid
+      ? { format: 'mermaid' as const, data: normalizeMermaidSource(node.textContent.trim()) }
+      : { format: 'plantuml' as const, data: normalizePlantumlSource(node.textContent) };
 
     // 源码编辑态：仅显示编辑区
     if (editing) {
@@ -330,11 +370,23 @@ const DiagramView = (props: ReactNodeViewProps) => {
         className={`${prefix}-diagram ${selected ? `${prefix}-diagram-selected` : ''}`}
         as='div'
         contentEditable={false}>
-        <div className={`${prefix}-diagram-preview ${diagramClass}`} ref={containerRef}>
+        <div
+          className={`${prefix}-diagram-preview ${diagramClass}`}
+          ref={containerRef}
+          onClick={(event) => {
+            if ((event.target as Element).closest(`.${prefix}-mermaid-action`)) return;
+            const pos = getPos();
+            if (typeof pos !== 'number') return;
+            event.preventDefault();
+            event.stopPropagation();
+            editor.chain().setNodeSelection(pos).focus(undefined, { scrollIntoView: false }).run();
+          }}>
           {lang === 'echarts' ? (
             <div className={`${prefix}-diagram-echarts`} ref={echartsBoxRef} />
           ) : error ? (
-            <div className={`${prefix}-diagram-error`}>{error}</div>
+            lang === 'mermaid' || lang === 'flowchart' ? null : (
+              <div className={`${prefix}-diagram-error`}>{error}</div>
+            )
           ) : (
             <div dangerouslySetInnerHTML={{ __html: rendered }} />
           )}
@@ -396,8 +448,29 @@ const DiagramView = (props: ReactNodeViewProps) => {
               }}>
               <Code2 size={16} />
             </button>
+            {canGraphEdit && (
+              <button
+                type='button'
+                className={`${prefix}-diagram-action-btn`}
+                title='图形编辑'
+                aria-label='图形编辑'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDrawioOpen(true);
+                }}>
+                <PenTool size={16} />
+              </button>
+            )}
           </div>
         </div>
+        {drawioOpen && canGraphEdit && (
+          <DrawioEditor
+            source={drawioSource}
+            title={`${isMermaid ? 'Mermaid' : 'PlantUML'} 图形编辑`}
+            onClose={() => setDrawioOpen(false)}
+            onSave={handleDrawioSave}
+          />
+        )}
       </NodeViewWrapper>
     );
   }

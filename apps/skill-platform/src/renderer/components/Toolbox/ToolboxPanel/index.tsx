@@ -1,22 +1,23 @@
 import { CaretDownOutlined } from '@ant-design/icons';
 import { MomoTreeToolbar } from '@momo/tree';
 import { useConfirmLeaveAiChat } from '@renderer/hooks/useConfirmLeaveAiChat';
+import { useSortableSidebarList } from '@renderer/hooks/useSidebarOrder';
 import { useTreeRootCreate } from '@renderer/hooks/useTreeRootCreate';
 import { useCustomToolStore, useUIStore } from '@renderer/store';
 import { clsx } from 'clsx';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 
 import { CustomToolTreePanel } from '../CustomToolTreePanel';
 import { ToolboxMenuIcon } from '../ToolboxMenuIcon';
-import { useToolboxTools } from '../useToolboxTools';
-import { EToolboxToolMode, mapToolsWithKeys } from '../utils';
+import { useToolboxNodes } from '../useToolboxTools';
+import { EToolboxToolMode, type IToolboxBranchNode } from '../utils';
 import styles from './index.module.less';
 
 /** 工具箱侧栏：上自定义工具 + 下系统工具 */
 export function ToolboxPanel() {
   const confirmLeaveAiChat = useConfirmLeaveAiChat();
-  const tools = useToolboxTools();
-  const toolNodes = useMemo(() => mapToolsWithKeys(tools), [tools]);
+  const toolNodes = useToolboxNodes();
+  const ordering = useSortableSidebarList('toolbox', toolNodes, (tool) => tool.key);
 
   const activeToolboxToolKey = useUIStore((state) => state.activeToolboxToolKey);
   const activeToolboxBranchKey = useUIStore((state) => state.activeToolboxBranchKey);
@@ -162,6 +163,7 @@ export function ToolboxPanel() {
                   <div key={tool.key} className={styles['toolbox-menu-group']}>
                     <button
                       type='button'
+                      {...ordering.dragProps(tool.key)}
                       className={clsx(
                         styles['toolbox-menu-root'],
                         isToolActive && styles['toolbox-menu-root--active'],
@@ -182,29 +184,12 @@ export function ToolboxPanel() {
 
                     {isExpanded ? (
                       <div className={styles['toolbox-menu-children']}>
-                        {tool.branches.map((branch) => {
-                          const isBranchActive =
-                            isToolActive && activeToolboxBranchKey === branch.key;
-
-                          return (
-                            <button
-                              key={branch.key}
-                              type='button'
-                              className={clsx(
-                                styles['toolbox-menu-branch'],
-                                isBranchActive && styles['toolbox-menu-branch--active'],
-                              )}
-                              onClick={() => void handleSelectBranch(tool.key, branch.key)}>
-                              <ToolboxMenuIcon
-                                icon={branch.icon}
-                                className={styles['toolbox-menu-icon']}
-                              />
-                              <span className={styles['toolbox-menu-branch-label']}>
-                                {branch.title}
-                              </span>
-                            </button>
-                          );
-                        })}
+                        <ToolboxBranches
+                          toolKey={tool.key}
+                          branches={tool.branches}
+                          activeKey={isToolActive ? activeToolboxBranchKey : ''}
+                          onSelect={(branchKey) => void handleSelectBranch(tool.key, branchKey)}
+                        />
                       </div>
                     ) : null}
                   </div>
@@ -214,6 +199,7 @@ export function ToolboxPanel() {
               return (
                 <button
                   key={tool.key}
+                  {...ordering.dragProps(tool.key)}
                   type='button'
                   className={clsx(
                     styles['toolbox-menu-root'],
@@ -236,5 +222,37 @@ export function ToolboxPanel() {
         )}
       </div>
     </div>
+  );
+}
+
+function ToolboxBranches({
+  toolKey,
+  branches,
+  activeKey,
+  onSelect,
+}: {
+  toolKey: string;
+  branches: IToolboxBranchNode[];
+  activeKey: string;
+  onSelect: (key: string) => void;
+}) {
+  const ordering = useSortableSidebarList('toolbox', branches, (branch) => branch.key, toolKey);
+  return (
+    <>
+      {ordering.items.map((branch) => (
+        <button
+          key={branch.key}
+          type='button'
+          {...ordering.dragProps(branch.key)}
+          className={clsx(
+            styles['toolbox-menu-branch'],
+            activeKey === branch.key && styles['toolbox-menu-branch--active'],
+          )}
+          onClick={() => onSelect(branch.key)}>
+          <ToolboxMenuIcon icon={branch.icon} className={styles['toolbox-menu-icon']} />
+          <span className={styles['toolbox-menu-branch-label']}>{branch.title}</span>
+        </button>
+      ))}
+    </>
   );
 }

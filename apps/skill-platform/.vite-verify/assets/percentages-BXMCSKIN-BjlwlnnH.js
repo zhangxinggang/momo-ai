@@ -38474,17 +38474,15 @@ var jX = (e) => e.replace(/\b[a-z]\b/, (t) => t.toUpperCase()),
         }
       }, []);
       let [u, h] = Z.useState(LX),
-        p = s
-          .slice(0, u - 1)
-          .map((U) =>
-            jh({
-              actionManager: i,
-              collaborator: U,
-              socketId: U.socketId,
-              shouldWrapWithTooltip: !0,
-              isBeingFollowed: U.socketId === a,
-            }),
-          );
+        p = s.slice(0, u - 1).map((U) =>
+          jh({
+            actionManager: i,
+            collaborator: U,
+            socketId: U.socketId,
+            shouldWrapWithTooltip: !0,
+            isBeingFollowed: U.socketId === a,
+          }),
+        );
       return t
         ? f.jsx('div', {
             className: te('UserList UserList_mobile', e),
@@ -48410,17 +48408,15 @@ var Va = () => C.useContext(Ix),
       let a = this.scene.getElementsMapIncludingDeleted(),
         i = (r, s) => {
           this.scene.replaceAllElements([
-            ...this.scene
-              .getElementsIncludingDeleted()
-              .map((l) =>
-                l.id === t.id && q(l)
-                  ? pe(l, {
-                      originalText: r,
-                      isDeleted: s ?? l.isDeleted,
-                      ...f7(l, zt(l, a), a, r),
-                    })
-                  : l,
-              ),
+            ...this.scene.getElementsIncludingDeleted().map((l) =>
+              l.id === t.id && q(l)
+                ? pe(l, {
+                    originalText: r,
+                    isDeleted: s ?? l.isDeleted,
+                    ...f7(l, zt(l, a), a, r),
+                  })
+                : l,
+            ),
           ]);
         };
       (YV({

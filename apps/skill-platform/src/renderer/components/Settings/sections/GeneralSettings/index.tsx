@@ -31,6 +31,17 @@ export function GeneralSettings() {
           </SettingItem>
         )}
       </SettingSection>
+      <SettingSection title='电源'>
+        <SettingItem label='保持电脑唤醒' description='防止系统因长时间无操作而自动挂起'>
+          <Switch checked={settings.keepComputerAwake} onChange={settings.setKeepComputerAwake} />
+        </SettingItem>
+        <SettingItem label='阻止屏幕休眠' description='运行 AIM 时保持屏幕常亮'>
+          <Switch
+            checked={settings.preventDisplaySleep}
+            onChange={settings.setPreventDisplaySleep}
+          />
+        </SettingItem>
+      </SettingSection>
     </div>
   );
 }

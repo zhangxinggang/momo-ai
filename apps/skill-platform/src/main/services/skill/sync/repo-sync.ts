@@ -114,8 +114,7 @@ export async function syncFrontmatterToRepo(
   // Read the current SKILL.md from disk
   let existingContent: string | undefined;
   try {
-    const files = await SkillInstaller.readLocalRepoFilesByPath(repoPath);
-    const skillMdFile = files.find((f) => !f.isDirectory && f.path.toLowerCase() === 'skill.md');
+    const skillMdFile = await SkillInstaller.readLocalRepoFileByPath(repoPath, 'SKILL.md');
     existingContent = skillMdFile?.content ?? undefined;
   } catch {
     // Repo may not exist yet – nothing to sync

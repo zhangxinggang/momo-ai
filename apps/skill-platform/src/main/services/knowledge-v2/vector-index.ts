@@ -1,8 +1,17 @@
 import { createHash } from 'node:crypto';
 
-import * as lancedb from '@lancedb/lancedb';
-
 import { KnowledgeError, toKnowledgeError } from './error';
+import { loadPackagedNativeModule } from './native-module';
+
+let lancedb: typeof import('@lancedb/lancedb') | undefined;
+function getLanceDB() {
+  return (lancedb ??= loadPackagedNativeModule<typeof import('@lancedb/lancedb')>({
+    packageName: '@lancedb/lancedb',
+    nativePackageName: '@lancedb/lancedb-win32-x64-msvc',
+    nativeFileName: 'lancedb.win32-x64-msvc.node',
+    nativePackageVersion: '0.22.3',
+  }));
+}
 
 export interface IVectorRow {
   chunk_id: string;
@@ -33,14 +42,14 @@ function tableName(fingerprint: string): string {
 }
 
 export class LanceVectorIndex {
-  private connectionPromise?: ReturnType<typeof lancedb.connect>;
+  private connectionPromise?: ReturnType<typeof import('@lancedb/lancedb').connect>;
   private readonly writeQueues = new Map<string, Promise<void>>();
   private readonly indexedTables = new Set<string>();
 
   constructor(private readonly rootPath: string) {}
 
   private connection() {
-    this.connectionPromise ||= lancedb.connect(this.rootPath);
+    this.connectionPromise ||= getLanceDB().connect(this.rootPath);
     return this.connectionPromise;
   }
 
@@ -100,7 +109,7 @@ export class LanceVectorIndex {
         if (count >= 2_048 && !this.indexedTables.has(name)) {
           await table.createIndex('vector', {
             replace: true,
-            config: lancedb.Index.ivfPq({ distanceType }),
+            config: getLanceDB().Index.ivfPq({ distanceType }),
           });
           for (const column of ['collection_id', 'document_id', 'revision_id', 'chunk_id']) {
             await table.createIndex(column, { replace: true });

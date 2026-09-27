@@ -1,5 +1,6 @@
 import { useMemo, type Dispatch, type SetStateAction } from 'react';
 
+import { MAX_CHAT_OUTPUT_TOKENS } from '@renderer/services/ai/token-limits';
 import type { IModelFormState } from '@renderer/types/ai-workbench';
 import { InputNumber } from 'antd';
 
@@ -42,6 +43,7 @@ export function SamplingFields({
         </label>
         <InputNumber
           min={1}
+          max={MAX_CHAT_OUTPUT_TOKENS}
           step={1}
           className='w-full'
           value={modelForm.chatParams.maxTokens}

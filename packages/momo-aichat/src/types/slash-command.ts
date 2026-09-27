@@ -11,6 +11,10 @@ export interface ISlashCommandItem {
   category?: string;
   tags?: string[];
   hasArgs?: boolean;
+  agentAppId?: string;
+  agentAppName?: string;
+  /** 相对于技能或命令根目录的文件夹层级，仅用于检索与展示。 */
+  directoryPath?: string[];
 }
 
 export interface ISlashInvocation {
@@ -22,6 +26,8 @@ export interface ISlashInvocation {
   scope: 'application' | 'project' | 'global';
   category?: string;
   tags?: string[];
+  agentAppId?: string;
+  agentAppName?: string;
   /** 行内序列化 token；同一资源可在一条消息中出现多次。 */
   token?: string;
 }

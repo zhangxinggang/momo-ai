@@ -53,18 +53,22 @@ export async function executeRuntimeTurn(
   };
   signal.addEventListener('abort', abort, { once: true });
   let poll: ReturnType<typeof setInterval> | undefined;
+  const readEvents = async () => {
+    const events = await port.events(runId!, state.afterSeq);
+    if (events === null) throw new Error('本轮执行记录已不可用，请重新发送消息');
+    return events;
+  };
   try {
     const result = await port.startTurn(input);
     runId = result.runId;
     for (const event of early.sort((a, b) => a.seq - b.seq)) accept(event);
-    for (const event of await port.events(runId, state.afterSeq)) accept(event);
+    for (const event of await readEvents()) accept(event);
     if (signal.aborted) abort();
     let polling = false;
     poll = setInterval(() => {
       if (settled || polling) return;
       polling = true;
-      void port
-        .events(runId!, state.afterSeq)
+      void readEvents()
         .then(
           (events) => events.forEach(accept),
           (error) => {

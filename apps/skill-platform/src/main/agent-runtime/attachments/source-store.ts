@@ -7,6 +7,7 @@ export class AgentSourceStore {
   constructor(
     private store: AgentStore,
     private root: string,
+    private legacyRoot?: string,
   ) {}
   async save(input: {
     name: string;
@@ -78,7 +79,10 @@ export class AgentSourceStore {
         .prepare('SELECT * FROM agent_sources WHERE id=? AND revision=?')
         .get(ref.sourceId, ref.revision) as any;
       if (!row) throw new Error('附件快照不可用：' + ref.name);
-      const bytes = await fs.readFile(path.join(this.root, row.blob_id));
+      const bytes = await fs.readFile(path.join(this.root, row.blob_id)).catch((error) => {
+        if (error.code !== 'ENOENT' || !this.legacyRoot) throw error;
+        return fs.readFile(path.join(this.legacyRoot, row.blob_id));
+      });
       if (createHash('sha256').update(bytes).digest('hex') !== row.blob_id)
         throw new Error('附件校验失败');
       const stored = JSON.parse(row.metadata) as SourceRef;

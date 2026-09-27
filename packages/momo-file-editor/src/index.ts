@@ -26,6 +26,8 @@ export type { IFileEditorHandle, IProps } from './components/FileEditor';
 export { CodeFileEditor } from './components/CodeFileEditor';
 export type { IProps as ICodeFileEditorProps } from './components/CodeFileEditor';
 
+export { BinaryFilePreview } from './components/BinaryFilePreview';
+
 export type {
   EFileEditorNotifyType,
   IFileEditorAdapter,

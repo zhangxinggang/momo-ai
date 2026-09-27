@@ -9,7 +9,7 @@ export type { IWindowChromeIpcDeps } from './win';
 export function registerIpcHandlers(): void {
   registerLicenseIpc();
 
-  ipcMain.handle('delete-library', (_event, id: number) => {
+  ipcMain.handle('delete-library', (_event, _id: number) => {
     return 0;
   });
 

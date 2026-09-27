@@ -36,4 +36,9 @@ export {
   getImageApiEndpointPreview,
   resolveAIProtocol,
 } from './protocol';
+export {
+  MAX_CHAT_OUTPUT_TOKENS,
+  MIN_CHAT_OUTPUT_TOKENS,
+  normalizeChatMaxTokens,
+} from './token-limits';
 export { getBaseUrl, normalizeApiUrlInput } from './url';

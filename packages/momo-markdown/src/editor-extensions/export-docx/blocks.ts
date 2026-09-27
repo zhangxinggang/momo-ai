@@ -9,11 +9,8 @@ import {
   type FileChild,
 } from 'docx';
 
-import { buildPlantumlPngUrl } from '../../components/MdEditor/utils/plantuml-encoder';
 import {
-  blobToUint8Array,
   canvasElementToPngData,
-  fetchUrlAsBlob,
   getMermaidSvg,
   imgElementToPngData,
   scaleImageSize,
@@ -74,29 +71,6 @@ async function convertPlantumlBlock(element: HTMLElement): Promise<Paragraph | n
   const img = element.querySelector<HTMLImageElement>(`.${PLANTUML_IMAGE_CLASS}`);
   if (!img) {
     return null;
-  }
-
-  const encoded = element.dataset.encoded;
-  if (encoded) {
-    try {
-      const blob = await fetchUrlAsBlob(buildPlantumlPngUrl(encoded));
-      const data = await blobToUint8Array(blob);
-      const width = img.naturalWidth || img.clientWidth || 800;
-      const height = img.naturalHeight || img.clientHeight || 600;
-      const size = scaleImageSize(width, height);
-      return createParagraph({
-        children: [
-          new ImageRun({
-            data,
-            type: 'png',
-            transformation: { width: size.width, height: size.height },
-          }),
-        ],
-        spacing: { after: 120 },
-      });
-    } catch {
-      // 远程 PNG 拉取失败时回退 img 元素导出
-    }
   }
 
   return convertImageElement(img);

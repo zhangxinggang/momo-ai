@@ -20,7 +20,7 @@ export const fullscreenModalStyles = {
     padding: 0,
     maxWidth: '100vw',
     width: '100vw',
-    height: '100vh',
+    height: 'calc(100dvh - var(--app-titlebar-height, 0px))',
     display: 'flex',
     flexDirection: 'column',
     borderRadius: 0,
@@ -77,7 +77,7 @@ function resolveModalMask(mask: ModalProps['mask']): ModalProps['mask'] {
   return baseMask;
 }
 
-/** 全屏 Modal 壳（头部样式对齐提示词 AI 测试弹框） */
+/** 通用全屏 Modal 壳 */
 export function FullscreenModal({
   open,
   title,
@@ -103,6 +103,7 @@ export function FullscreenModal({
   return (
     <Modal
       open={open}
+      rootClassName='app-fullscreen-modal-root'
       title={title}
       footer={resolvedFooter}
       onCancel={onClose}

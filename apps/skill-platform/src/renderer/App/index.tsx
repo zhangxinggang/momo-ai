@@ -1,4 +1,3 @@
-import { createNativeFullscreenBridge } from '@momo/utils';
 import { ChatModuleProvider } from '@renderer/components/Chat';
 import { MainContent, Sidebar, TitleBar, TopBar } from '@renderer/components/Layout';
 import { BackgroundImageBackdrop } from '@renderer/components/ui/BackgroundImageBackdrop';
@@ -7,12 +6,9 @@ import { WorkflowModalsHost } from '@renderer/components/Workflow';
 import { useAppName } from '@renderer/hooks/useAppName';
 import { useConfirmLeaveEditors } from '@renderer/hooks/useConfirmLeaveEditors';
 import { initDatabase } from '@renderer/services/database';
-import {
-  setDebugMode,
-  subscribeFullscreenChanged,
-  subscribeShowCloseDialog,
-} from '@renderer/services/desktop';
+import { setDebugMode, subscribeShowCloseDialog } from '@renderer/services/desktop';
 import { configureKbService } from '@renderer/services/kb';
+import { initializeBuiltinSkills } from '@renderer/services/skill/builtin-skills';
 import {
   useFolderStore,
   useOnlineConfStore,
@@ -26,18 +22,11 @@ import {
 import { Flex, Spin } from 'antd';
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 
-const nativeFullscreenBridge = createNativeFullscreenBridge();
-
 // Lazy load heavy components for better initial load performance
 // 懒加载大型组件以提升初始加载性能
 const SettingsPage = lazy(() =>
   import('@renderer/components/Settings').then((m) => ({
     default: m.SettingsPage,
-  })),
-);
-const EditPromptModal = lazy(() =>
-  import('@renderer/components/Prompt/EditPromptModal').then((m) => ({
-    default: m.EditPromptModal,
   })),
 );
 
@@ -87,10 +76,6 @@ function App() {
     return () => window.removeEventListener('app:open-settings', handleOpenSettings);
   }, [openSettingsPage]);
 
-  // OS-level fullscreen state (synced from main process events)
-  // OS 级全屏状态（通过主进程事件同步）
-  const [isOsFullscreen, setIsOsFullscreen] = useState(false);
-
   // Close dialog state (Windows)
   // 关闭对话框状态（Windows）
   const [showCloseDialog, setShowCloseDialog] = useState(false);
@@ -106,34 +91,13 @@ function App() {
   const renderedBackgroundBlur = getRenderedBackgroundImageBlur(backgroundImageBlur);
   const renderedBackgroundImageOpacity = getRenderedBackgroundImageOpacity(backgroundImageOpacity);
 
-  // Global Escape key: exit OS fullscreen regardless of which component entered it
-  // 全局 Escape 键：无论哪个组件进入了 OS 全屏，都可以退出
   useEffect(() => {
-    if (!isOsFullscreen) return;
-    const handleEscapeFullscreen = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        nativeFullscreenBridge.exit();
-      }
-    };
-    window.addEventListener('keydown', handleEscapeFullscreen);
-    return () => window.removeEventListener('keydown', handleEscapeFullscreen);
-  }, [isOsFullscreen]);
-
-  useEffect(() => {
-    // Listen for OS fullscreen state changes from main process
-    // 监听主进程发送的 OS 全屏状态变化事件
-    const handleFullscreenChanged = (isFullscreen: boolean) => {
-      setIsOsFullscreen(isFullscreen);
-    };
-    const unsubscribeFullscreen = subscribeFullscreenChanged(handleFullscreenChanged);
-
     // Listen for close dialog trigger (Windows)
     // 监听关闭对话框触发（Windows）
     const handleShowCloseDialog = () => setShowCloseDialog(true);
     const unsubscribeCloseDialog = subscribeShowCloseDialog(handleShowCloseDialog);
 
     return () => {
-      unsubscribeFullscreen();
       unsubscribeCloseDialog();
     };
   }, []);
@@ -221,6 +185,7 @@ function App() {
       }, 5000);
 
       try {
+        await initializeBuiltinSkills();
         await initDatabase();
         await fetchPrompts();
         await fetchFolders();
@@ -297,7 +262,7 @@ function App() {
 
               <div className='relative flex min-w-0 flex-1 flex-col overflow-hidden'>
                 <WorkflowModalsHost />
-                <TopBar onOpenSettings={openSettingsPage} />
+                <TopBar />
 
                 <div className='flex min-h-0 flex-1 overflow-hidden'>
                   {currentPage === 'home' ? (

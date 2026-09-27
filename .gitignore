@@ -26,3 +26,9 @@ dist-ssr
 *.sql
 
 .env
+
+# Pinned draw.io web distribution, prepared before development/build.
+apps/skill-platform/static/drawio/
+
+# Generated mirror of apps/skill-platform/default/plugins.
+packages/momo-harness-runner/plugins/

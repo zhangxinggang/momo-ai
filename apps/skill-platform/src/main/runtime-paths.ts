@@ -116,9 +116,13 @@ export function getNotesDir(): string {
   return path.join(getDataDir(), 'notes');
 }
 
-/** 自定义工具目录：与笔记同级，位于 data/tools */
+export function getDefaultPluginsDir(): string {
+  return path.join(getProjectRoot(), 'default', 'plugins');
+}
+
+/** 用户自定义工具与插件的唯一可编辑目录。 */
 export function getToolsDir(): string {
-  return path.join(getDataDir(), 'tools');
+  return path.join(getDefaultPluginsDir(), 'user');
 }
 
 /** 静态资源目录（snapEdit.html 等） */

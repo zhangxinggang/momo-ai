@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron';
 
+import { normalizeAgentAppIds } from '@/types/constants/agent-app-profile';
 import { IPC_CHANNELS } from '@/types/constants/ipc-channels';
 import type {
   DAgentAppContext,
@@ -64,6 +65,8 @@ function sanitizeSlashInvocation(value: unknown): DAgentAppSlashInvocation | und
           .slice(0, 8)
           .map((tag) => tag.slice(0, 100))
       : undefined,
+    agentAppId: typeof input.agentAppId === 'string' ? input.agentAppId : undefined,
+    agentAppName: typeof input.agentAppName === 'string' ? input.agentAppName : undefined,
     token: typeof input.token === 'string' ? input.token.slice(0, 8_000) : undefined,
   };
 }
@@ -116,10 +119,7 @@ export function registerAgentAppIPC(): void {
       if (!input) {
         return { items: [] };
       }
-      const agentAppId =
-        typeof input.agentAppId === 'string' && input.agentAppId.trim()
-          ? input.agentAppId.trim()
-          : undefined;
+      const agentAppIds = normalizeAgentAppIds(input.agentAppIds ?? input.agentAppId);
       const folderPaths = Array.isArray(input.folderPaths)
         ? input.folderPaths.filter((item): item is string => typeof item === 'string')
         : [];
@@ -133,7 +133,7 @@ export function registerAgentAppIPC(): void {
         return { ...applicationOnly, warning: '工作区目录未授权，Agent 资源暂不可用' };
       }
       return listAgentAppSlash(
-        agentAppId,
+        agentAppIds,
         roots.granted,
         typeof input.query === 'string' ? input.query : '',
       );
@@ -150,15 +150,12 @@ export function registerAgentAppIPC(): void {
           displayContent: '',
         };
       }
-      const agentAppId =
-        typeof input.agentAppId === 'string' && input.agentAppId.trim()
-          ? input.agentAppId.trim()
-          : undefined;
+      const agentAppIds = normalizeAgentAppIds(input.agentAppIds ?? input.agentAppId);
       const folderPaths = Array.isArray(input.folderPaths)
         ? input.folderPaths.filter((item): item is string => typeof item === 'string')
         : [];
       const roots = resolveGrantedRoots(folderPaths);
-      if (agentAppId && roots.denied.length > 0) {
+      if (agentAppIds.length && roots.denied.length > 0) {
         return { action: 'deny', reason: '工作区目录未授权，请重新选择目录' };
       }
       const invocation = sanitizeSlashInvocation(input.invocation);
@@ -174,7 +171,7 @@ export function registerAgentAppIPC(): void {
         return { action: 'deny', reason: '技能或命令数据无效，请重新选择' };
       }
       return prepareAgentAppSubmit({
-        agentAppId,
+        agentAppIds,
         folderPaths: roots.granted,
         content: typeof input.content === 'string' ? input.content : '',
         displayContent:

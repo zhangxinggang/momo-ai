@@ -118,11 +118,6 @@ export function AppearanceSettings() {
     [settings.backgroundImageBlur],
   );
 
-  const backgroundVisibilityPercent = useMemo(
-    () => Math.round(renderedBackgroundOpacity * 100),
-    [renderedBackgroundOpacity],
-  );
-
   const handleSelectBackgroundImage = async () => {
     if (isPickingBackground) {
       return;

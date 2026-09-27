@@ -81,10 +81,6 @@ function expandCompoundSkillCommand(commandLine: string): string[] {
       : [];
 }
 
-function isExecutableSkillCommand(line: string): boolean {
-  return expandCompoundSkillCommand(line).length > 0;
-}
-
 /** 从 AI 回复中解析可执行的 skill-run / bash 命令块（已过滤 install 等） */
 export function parseSkillRunCommands(reply: string): string[] {
   const commands: string[] = [];

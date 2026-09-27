@@ -1,6 +1,7 @@
 import './editor-extensions';
 
 export { default as MdEditor } from './components/MdEditor';
+export { ViewportPortal } from './components/ViewportPortal';
 
 export { default as DropdownToolbar } from './components/DropdownToolbar';
 export { default as StrIcon } from './components/MdEditor/components/Icon/Str';

@@ -1,10 +1,9 @@
-import { AiTestModal } from '@renderer/components/Prompt/AiTestModal';
 import { EditPromptModal } from '@renderer/components/Prompt/EditPromptModal';
 import { CenteredLoading } from '@renderer/components/ui/CenteredLoading';
 import { ModuleEmptyState } from '@renderer/components/ui/ModuleEmptyState';
 import { useFolderStore, usePromptStore } from '@renderer/store';
 import { FileTextIcon } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import styles from './index.module.less';
 
 export function PromptManager() {
@@ -17,8 +16,6 @@ export function PromptManager() {
   const refreshTree = usePromptStore((state) => state.refreshTree);
   const openEditEditor = usePromptStore((state) => state.openEditEditor);
   const folders = useFolderStore((state) => state.folders);
-
-  const [isAiTestOpen, setIsAiTestOpen] = useState(false);
 
   useEffect(() => {
     void fetchPrompts();
@@ -45,10 +42,6 @@ export function PromptManager() {
     [openEditEditor],
   );
 
-  const handleAiTest = useCallback(() => {
-    setIsAiTestOpen(true);
-  }, []);
-
   return (
     <div className={styles.prompt}>
       {isLoading && prompts.length === 0 ? <CenteredLoading label='加载提示词…' /> : null}
@@ -61,7 +54,6 @@ export function PromptManager() {
               prompt={activePrompt}
               onClose={() => {}}
               onSaved={handleSaved}
-              onAiTest={handleAiTest}
             />
           </div>
         ) : (
@@ -73,11 +65,6 @@ export function PromptManager() {
           />
         )}
       </div>
-      <AiTestModal
-        isOpen={isAiTestOpen}
-        onClose={() => setIsAiTestOpen(false)}
-        prompt={activePrompt}
-      />
     </div>
   );
 }

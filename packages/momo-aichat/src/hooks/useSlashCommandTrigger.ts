@@ -5,6 +5,7 @@ import type {
   ISlashCommandsConfig,
   ISlashInvocation,
 } from '../types/slash-command';
+import { buildSlashCommandTree } from '../utils/slash-command-tree';
 import { buildSlashInvocationToken } from '../utils/slash-token';
 
 export interface ISlashTriggerMatch {
@@ -53,6 +54,8 @@ export function insertSlashSelection(
     scope: item.scope,
     category: item.category,
     tags: item.tags,
+    agentAppId: item.agentAppId,
+    agentAppName: item.agentAppName,
   };
   const token = buildSlashInvocationToken(invocation);
   const trailingContent = value.slice(match.end);
@@ -82,6 +85,7 @@ export function useSlashCommandTrigger(options: IUseSlashCommandTriggerOptions) 
   const [warning, setWarning] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [dismissedKey, setDismissedKey] = useState('');
+  const [search, setSearch] = useState<{ key: string; query: string }>();
   const requestIdRef = useRef(0);
 
   const enabled = Boolean(slashCommands?.isActive(currentModel));
@@ -91,6 +95,7 @@ export function useSlashCommandTrigger(options: IUseSlashCommandTriggerOptions) 
   );
   const matchKey = match ? String(match.start) + ':' + match.query : '';
   const visible = Boolean(match && matchKey !== dismissedKey);
+  const query = search?.key === matchKey ? search.query : match?.query || '';
 
   // 选中资源后 match 会消失。此时必须释放上一次的关闭键，否则删除标签后
   // 再次在同一位置输入 “/” 会被误判为仍处于已关闭状态。
@@ -106,19 +111,22 @@ export function useSlashCommandTrigger(options: IUseSlashCommandTriggerOptions) 
       setItems([]);
       setWarning(undefined);
       setLoading(false);
+      setSearch(undefined);
       return;
     }
 
     const requestId = ++requestIdRef.current;
     setLoading(true);
+    setItems([]);
+    setSelectedIndex(0);
     const timer = window.setTimeout(() => {
       void slashCommands
-        .list(match.query, { workspacePaths, workspaceEnabled })
+        .list(query, { workspacePaths, workspaceEnabled })
         .then((result) => {
           if (requestId !== requestIdRef.current) {
             return;
           }
-          setItems(result.items);
+          setItems(buildSlashCommandTree(result.items).items);
           setWarning(result.warning);
           setSelectedIndex(0);
         })
@@ -137,8 +145,9 @@ export function useSlashCommandTrigger(options: IUseSlashCommandTriggerOptions) 
 
     return () => {
       window.clearTimeout(timer);
+      requestIdRef.current += 1;
     };
-  }, [matchKey, slashCommands, visible, workspaceEnabled, workspacePaths]);
+  }, [matchKey, query, slashCommands, visible, workspaceEnabled, workspacePaths]);
 
   const applySelection = useCallback(
     (item: ISlashCommandItem) => {
@@ -162,7 +171,8 @@ export function useSlashCommandTrigger(options: IUseSlashCommandTriggerOptions) 
   }, [matchKey]);
 
   const handleKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    (event: KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+      if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return false;
       if (!visible) {
         return false;
       }
@@ -201,6 +211,8 @@ export function useSlashCommandTrigger(options: IUseSlashCommandTriggerOptions) 
     // 保持空结果面板可见，明确告诉用户“没有匹配项”，避免看起来像触发失效。
     open: visible,
     items,
+    query,
+    setQuery: (next: string) => setSearch({ key: matchKey, query: next }),
     selectedIndex,
     setSelectedIndex,
     warning,

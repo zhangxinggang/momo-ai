@@ -1,3 +1,4 @@
+import { normalizeAgentAppIds } from '@/types/constants/agent-app-profile';
 import type { ChatRuntimePort } from '@momo/agent-contracts';
 import {
   createRuntimeChatStream,
@@ -7,12 +8,14 @@ import {
   type IChatSourceInput,
   type IChatSourceRef,
 } from '@momo/aichat';
+import { flushReviewDrafts, hasReviewDrafts } from '@renderer/services/chat/review-drafts';
 import { useChatProjectStore } from '@renderer/store/chat';
 import { useSettingsStore } from '@renderer/store/settings';
 export const harnessPort: ChatRuntimePort = {
   describe: () => window.api.agentRuntime.describe(),
   listAgents: () => window.api.agentRuntime.listAgents(),
   startTurn: async (input) => {
+    if (hasReviewDrafts()) await flushReviewDrafts();
     const project = useChatProjectStore.getState().projects.find((p) => p.id === input.projectId);
     if (!project) throw new Error('对话项目不存在');
     // Await the current settings, including models restored from older renderer-only storage.
@@ -26,6 +29,7 @@ export const harnessPort: ChatRuntimePort = {
   onEvent: (listener) => window.api.agentRuntime.onEvent(listener),
   controlGoal: (sessionId, action) => window.api.agentRuntime.controlGoal(sessionId, action),
   exportSession: (sessionId) => window.api.agentRuntime.exportSession(sessionId),
+  clearSession: (sessionId) => window.api.agentRuntime.clearSession(sessionId),
   setPermission: (sessionId, mode) => window.api.agentRuntime.setPermission(sessionId, mode),
 };
 export function resourceContext(projectId?: string) {
@@ -37,7 +41,7 @@ export function resourceContext(projectId?: string) {
   return {
     projectId: id,
     folderPaths: project?.folderPaths ?? [],
-    resourceAgentAppId: project?.agentAppId ?? undefined,
+    resourceAgentAppIds: normalizeAgentAppIds(project?.agentAppIds ?? project?.agentAppId),
   };
 }
 
@@ -54,7 +58,7 @@ export function ensureHarnessResourceContext(name: string, folderPaths: string[]
     return {
       projectId: existing.id,
       folderPaths: existing.folderPaths,
-      resourceAgentAppId: existing.agentAppId ?? undefined,
+      resourceAgentAppIds: normalizeAgentAppIds(existing.agentAppIds ?? existing.agentAppId),
     };
   }
   const created = store.createProject(name, normalizedPaths);
@@ -62,7 +66,7 @@ export function ensureHarnessResourceContext(name: string, folderPaths: string[]
     return {
       projectId: created.project.id,
       folderPaths: created.project.folderPaths,
-      resourceAgentAppId: undefined,
+      resourceAgentAppIds: [],
     };
   }
   return resourceContext();
@@ -76,9 +80,15 @@ export const harnessSourceStore = {
 export function createHarnessChatOverrides(options?: {
   getAgentId?: () => string;
   getResourceContext?: () => ReturnType<typeof resourceContext>;
+  webBrowsing?: boolean;
 }): Partial<IAiChatServices> {
   const runtime: NonNullable<IAiChatServices['runtime']> = {
-    port: harnessPort,
+    port: options?.webBrowsing
+      ? {
+          ...harnessPort,
+          startTurn: (input) => harnessPort.startTurn({ ...input, webBrowsing: true }),
+        }
+      : harnessPort,
     getAgentId: options?.getAgentId ?? (() => 'momo-default'),
     getResourceContext: options?.getResourceContext ?? resourceContext,
   };

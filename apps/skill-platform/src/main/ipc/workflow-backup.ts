@@ -34,45 +34,6 @@ import {
 } from '../services/workflow/backup';
 import { ensureLocalRepoPath } from './skill/shared';
 
-async function readSkillFilesForExport(skill: ISkill): Promise<Record<string, Uint8Array> | null> {
-  try {
-    const repoPath =
-      (skill.local_repo_path &&
-        (await SkillInstaller.isManagedRepoPath(skill.local_repo_path)) &&
-        skill.local_repo_path) ||
-      (await ensureLocalRepoPath(
-        // ensureLocalRepoPath 需要 db；导出时若无路径则尝试按 name 读
-        { getById: async () => skill, update: async () => skill } as unknown as SkillDB,
-        skill.id,
-      ));
-
-    const absolute =
-      typeof repoPath === 'string'
-        ? repoPath
-        : skill.local_repo_path &&
-          (await fsp.stat(skill.local_repo_path).then(
-            (s) => (s.isDirectory() ? skill.local_repo_path! : null),
-            () => null,
-          ));
-
-    if (!absolute) {
-      return {};
-    }
-
-    const entries = await SkillInstaller.readLocalRepoFileBuffersByPath(absolute);
-    const files: Record<string, Uint8Array> = {};
-    for (const file of entries) {
-      if (isInternalSkillRepoEntry(file.path) || isSkillExportExcludedEntry(file.path)) {
-        continue;
-      }
-      files[file.path.replace(/\\/g, '/')] = file.data;
-    }
-    return files;
-  } catch {
-    return null;
-  }
-}
-
 async function writeSkillRepoFiles(
   skillName: string,
   files: Record<string, Uint8Array>,

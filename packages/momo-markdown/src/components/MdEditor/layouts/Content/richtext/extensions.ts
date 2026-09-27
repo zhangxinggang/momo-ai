@@ -1,4 +1,4 @@
-import { Extension } from '@tiptap/core';
+import { Extension, Mark } from '@tiptap/core';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -10,9 +10,25 @@ import TaskList from '@tiptap/extension-task-list';
 import Underline from '@tiptap/extension-underline';
 import { DOMParser as ProseMirrorDOMParser } from '@tiptap/pm/model';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
-import StarterKit from '@tiptap/starter-kit';
-import { Markdown } from 'tiptap-markdown';
+import { ReactNodeViewRenderer } from '@tiptap/react';
+import MarkdownItMark from 'markdown-it-mark';
+import { alignmentClosing, alignmentOpening, isTextAlignment } from '~/utils/alignment';
+import { AlignedMarkdown, AlignedStarterKit, TextAlignment } from './alignment';
 import { Admonition, CodeBlock, KatexBlock, KatexInline } from './nodes';
+import { DiagramDeletion } from './nodes/diagram/DiagramDeletion';
+import DrawioImageView from './nodes/diagram/DrawioImageView';
+
+const Highlight = Mark.create({
+  name: 'highlight',
+  parseHTML: () => [{ tag: 'mark' }],
+  renderHTML: () => ['mark', {}, 0],
+  addStorage: () => ({
+    markdown: {
+      serialize: { open: '==', close: '==', expelEnclosingWhitespace: true },
+      parse: { setup: (md: any) => md.use(MarkdownItMark) },
+    },
+  }),
+});
 
 const MARKDOWN_PASTE_SYNTAX =
   /(^|\n)\s*(?:#{1,6}\s+|`{3,}|~{3,}|[-+*]\s+|\d+[.)]\s+|>\s+|\|.*\||(?:---|\*\*\*|___)\s*$)|(?:\*\*|__|!\[|\[[^\]]+\]\([^\n)]+\))/m;
@@ -63,13 +79,46 @@ const MarkdownPaste = Extension.create({
 
 /** 与 markdown-it-image-figures 使用相同 DOM，确保图片与图注主题规则一致。 */
 const PreviewImage = Image.extend({
+  addStorage() {
+    return {
+      markdown: {
+        parse: {
+          updateDOM(element: HTMLElement) {
+            // Captions are represented by the image's alt attribute, not a second text node.
+            element
+              .querySelectorAll('figure:has(> img) > figcaption')
+              .forEach((caption) => caption.remove());
+          },
+        },
+        serialize(state: any, node: any) {
+          const alignment = node.attrs.textAlign;
+          const aligned = isTextAlignment(alignment) && alignment !== 'center';
+          if (aligned) state.write(alignmentOpening(alignment));
+          const alt = state.esc(node.attrs.alt || '');
+          const src = String(node.attrs.src || '').replace(/[()]/g, '\\$&');
+          const title = node.attrs.title
+            ? ` "${String(node.attrs.title).replace(/"/g, '\\"')}"`
+            : '';
+          state.write(`![${alt}](${src}${title})`);
+          if (aligned) state.write(alignmentClosing);
+          // Images are block nodes; flush their boundary before the following heading or paragraph.
+          state.closeBlock(node);
+        },
+      },
+    };
+  },
+  addNodeView() {
+    return ReactNodeViewRenderer(DrawioImageView);
+  },
+
   parseHTML() {
     return [{ tag: 'img[src]' }, { tag: 'figure img[src]' }];
   },
   renderHTML({ HTMLAttributes }) {
+    const { 'data-align': alignment, style, ...attributes } = HTMLAttributes;
     const imageAttributes = {
       ...this.options.HTMLAttributes,
-      ...HTMLAttributes,
+      ...attributes,
       class: [this.options.HTMLAttributes.class, HTMLAttributes.class, 'md-zoom']
         .filter(Boolean)
         .join(' '),
@@ -77,7 +126,7 @@ const PreviewImage = Image.extend({
     const caption = String(HTMLAttributes.alt || '').trim();
     return [
       'figure',
-      {},
+      alignment ? { 'data-align': alignment, style } : {},
       ['img', imageAttributes],
       ...(caption ? [['figcaption', {}, caption]] : []),
     ];
@@ -131,13 +180,17 @@ export const buildRichTextExtensions = (
   autoFoldThreshold: number,
 ) => {
   return [
-    // 关闭 StarterKit 自带 codeBlock，使用自定义 CodeBlock（支持图表渲染）
-    StarterKit.configure({
+    // 关闭 StarterKit 中需要自定义配置的扩展，改用下方的显式注册。
+    AlignedStarterKit.configure({
       codeBlock: false,
+      link: false,
+      underline: false,
     }),
     Underline,
     Subscript,
     Superscript,
+    Highlight,
+    TextAlignment,
     Link.configure({
       openOnClick: false,
     }),
@@ -168,12 +221,13 @@ export const buildRichTextExtensions = (
       codeFoldable,
       autoFoldThreshold,
     }),
+    DiagramDeletion,
     KatexInline,
     KatexBlock,
     Admonition,
     // 预览器使用 markdown-it breaks:true；富文本必须采用同一软换行语义，
     // 否则同一段 Markdown 在两种模式下会出现肉眼可见的断行差异。
-    Markdown.configure({
+    AlignedMarkdown.configure({
       html: true,
       breaks: true,
       // 内置剪贴板转换作为行内 Markdown 粘贴的兜底；块级内容由 MarkdownPaste

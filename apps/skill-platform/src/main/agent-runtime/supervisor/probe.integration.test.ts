@@ -6,7 +6,9 @@ import { describe, expect, it } from 'vitest';
 import { probeRuntime } from './probe';
 describe('official dsh process contract (keyless)', () => {
   it('streams, dispatches, asks, reviews plans, cancels, and resumes the native journal', async () => {
-    const bundle = path.resolve('../../packages/momo-harness-runner/dist');
+    const bundle = path.resolve(
+      process.env.MOMO_TEST_HARNESS_BUNDLE || '../../packages/momo-harness-runner/dist',
+    );
     const home = path.resolve('../../temp/harness-contract-' + randomUUID());
     const profile = path.join(home, 'profiles/momo');
     await fs.mkdir(profile, { recursive: true });
@@ -34,9 +36,8 @@ describe('official dsh process contract (keyless)', () => {
             env: {
               DSH_HOME: home,
               MOMO_SESSION_ROOT: path.join(home, 'sessions'),
-              MOMO_PRESET_ROOT: path.join(bundle, 'profile/agent-presets'),
               MOMO_BUNDLE_ID: 'contract-test',
-              MOMO_CORE_VERSION: '0.1.6-alpha.2',
+              MOMO_CORE_VERSION: '0.2.1-alpha.1',
             },
           },
         ),

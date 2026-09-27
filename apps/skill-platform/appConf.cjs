@@ -9,6 +9,7 @@ module.exports = {
   closeConfirm: false,
   bundledNodeServer: true,
   onlineConfUrl: 'https://biaobida.oss-cn-beijing.aliyuncs.com/1/1780316365784/momo-ai-conf.json',
+  browserWindow: null,
   server: {
     httpPort: 28081,
     filePreviewBaseUrl: 'https://demo.file-viewer.app',

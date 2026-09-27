@@ -73,7 +73,9 @@ const Modal = (props: IProps) => {
     if (props.isFullscreen) {
       return {
         width: '100%',
-        height: '100%',
+        height: 'calc(100dvh - var(--app-titlebar-height, 0px))',
+        insetInlineStart: 0,
+        insetBlockStart: 'var(--app-titlebar-height, 0px)',
       };
     } else {
       return {
@@ -166,7 +168,9 @@ const Modal = (props: IProps) => {
                 <div className={`${prefix}-modal-mask`} style={state.maskStyle} onClick={onClose} />
               )}
               <div
-                className={modalClass.join(' ')}
+                className={[...modalClass, props.isFullscreen ? `${prefix}-modal-fullscreen` : '']
+                  .filter(Boolean)
+                  .join(' ')}
                 style={{
                   ...state.modalStyle,
                   ...state.initPos,

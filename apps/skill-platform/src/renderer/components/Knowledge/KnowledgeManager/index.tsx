@@ -174,29 +174,6 @@ export function KnowledgeManager() {
     progressTimersRef.current[docId] = setInterval(() => void poll(), 1500);
   };
 
-  const uploadFilesToCollection = async (files: File[]) => {
-    if (!activeCollectionId || !files.length) {
-      return;
-    }
-    const valid = files.filter((f) => f.size > 0);
-    if (valid.length < files.length) {
-      message.warning('已忽略空文件');
-    }
-    if (!valid.length) {
-      return;
-    }
-    try {
-      setUploading(true);
-      const items = await kbImportFiles(activeCollectionId, valid, kbEmbeddingOptions);
-      await refreshDocs(activeCollectionId);
-      items.forEach((item) => startProgressPolling(item.docId, activeCollectionId));
-    } catch (e: unknown) {
-      message.error((e as Error)?.message || '上传失败');
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleWizardUpload = async (
     files: File[],
     settings: ISegmentSettings,
@@ -312,7 +289,22 @@ export function KnowledgeManager() {
         activeCollectionId,
         txt,
         pasteFilename.trim() || undefined,
-        kbEmbeddingOptions,
+        {
+          ...kbEmbeddingOptions,
+          // 粘贴文本使用确定性本地切分，不调用对话/文本切分模型。
+          // 嵌入模型仍用于生成向量，保证内容可以被语义检索。
+          segmentMode: 'fixed',
+          segmentSettings: {
+            separator: '\n\n',
+            maxChunkLength: 500,
+            chunkOverlap: 100,
+            preprocess: {
+              normalizeWhitespace: true,
+              removeUrlsAndEmails: false,
+            },
+            splitMode: 'code',
+          },
+        },
       );
       setPasteOpen(false);
       setPasteText('');
@@ -383,27 +375,42 @@ export function KnowledgeManager() {
               {collectionName || '知识库'}
             </h2>
             <p className={styles['kb-main-meta']}>{docCountLabel}</p>
-            <div
-              className={`${styles['kb-main-embedding-status']} ${
-                embeddingReady
-                  ? styles['kb-main-embedding-status--ready']
-                  : styles['kb-main-embedding-status--missing']
-              }`}
-              title={
-                embeddingReady
-                  ? `知识库嵌入模型：${embeddingModel?.model}`
-                  : embeddingModel
-                    ? '当前嵌入模型缺少 API Key、API 地址或模型名称'
-                    : '文本切分模型只负责切段，入库还需要单独配置嵌入模型'
-              }>
-              <span className={styles['kb-main-embedding-dot']} aria-hidden />
-              {embeddingReady
-                ? `嵌入模型：${embeddingModel?.name?.trim() || embeddingModel?.model}`
-                : embeddingModel
-                  ? `嵌入模型配置不完整：${embeddingModel.name?.trim() || embeddingModel.model}`
-                  : '未配置嵌入模型（文本切分模型不能代替）'}
-            </div>
           </div>
+        </div>
+        <div className={styles['kb-main-model-row']}>
+          <div
+            className={`${styles['kb-main-embedding-status']} ${
+              embeddingReady
+                ? styles['kb-main-embedding-status--ready']
+                : styles['kb-main-embedding-status--missing']
+            }`}
+            title={
+              embeddingReady
+                ? `知识库嵌入模型：${embeddingModel?.model}`
+                : embeddingModel
+                  ? '当前嵌入模型缺少 API Key、API 地址或模型名称'
+                  : '文本切分模型只负责切段，入库还需要单独配置嵌入模型'
+            }>
+            <span className={styles['kb-main-embedding-dot']} aria-hidden />
+            {embeddingReady
+              ? `嵌入模型：${embeddingModel?.name?.trim() || embeddingModel?.model}`
+              : embeddingModel
+                ? `嵌入模型配置不完整：${embeddingModel.name?.trim() || embeddingModel.model}`
+                : '未配置嵌入模型'}
+          </div>
+          <span className={styles['kb-main-model-hint']}>本地规则切分 · 嵌入模型用于语义检索</span>
+          {!embeddingReady ? (
+            <Button
+              type='link'
+              size='small'
+              onClick={() =>
+                window.dispatchEvent(
+                  new CustomEvent('app:open-settings', { detail: { section: 'ai' } }),
+                )
+              }>
+              配置嵌入模型
+            </Button>
+          ) : null}
         </div>
         <div className={styles['kb-main-toolbar']}>
           <Button
@@ -413,17 +420,6 @@ export function KnowledgeManager() {
             {uploading ? <Spin size='small' /> : <FilePlusIcon size={16} aria-hidden />}
             {'添加文档'}
           </Button>
-          {!embeddingReady ? (
-            <Button
-              className={styles['kb-main-toolbar-btn']}
-              onClick={() =>
-                window.dispatchEvent(
-                  new CustomEvent('app:open-settings', { detail: { section: 'ai' } }),
-                )
-              }>
-              {'配置嵌入模型'}
-            </Button>
-          ) : null}
           <Button
             className={styles['kb-main-toolbar-btn']}
             disabled={!activeCollectionId || uploading}
@@ -539,6 +535,11 @@ export function KnowledgeManager() {
           onChange={(e) => setPasteText(e.target.value)}
           autoSize={{ minRows: 8 }}
         />
+        <p className={styles['kb-main-paste-hint']}>
+          {
+            '粘贴内容使用本地规则切分，不调用对话模型；入库时仍使用嵌入模型生成向量，因此可以进行向量检索。'
+          }
+        </p>
       </Modal>
 
       <Modal

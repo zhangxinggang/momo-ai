@@ -15,6 +15,7 @@ import ToolBar from '~/layouts/Toolbar';
 import { IContextType, IEditorProps, IStaticProps, TTableShapeType, TThemes } from '~/type';
 import { classnames } from '~/utils';
 import bus from '~/utils/event-bus';
+import { ViewportPortal } from '../ViewportPortal';
 import { EditorContext } from './context';
 import {
   useCatalog,
@@ -216,66 +217,68 @@ const Editor = forwardRef((props: IEditorProps, ref: ForwardedRef<unknown>) => {
 
   return (
     <EditorContext.Provider value={contextValue}>
-      <div
-        id={staticProps.editorId}
-        className={classnames([
-          prefix,
-          !!className && className,
-          theme === 'dark' && `${prefix}-dark`,
-          setting.fullscreen && `${prefix}-fullscreen`,
-        ])}
-        style={props.style}
-        ref={rootRef}>
-        {toolbars.length > 0 && <ToolBar toolbars={toolbars} toolbarsExclude={toolbarsExclude} />}
-        <Content
-          ref={codeRef}
-          modelValue={value}
-          onChange={onChange}
-          setting={setting}
-          mdHeadingId={mdHeadingId}
-          onHtmlChanged={onHtmlChanged}
-          onGetCatalog={onGetCatalog}
-          sanitize={sanitize}
-          noMermaid={staticProps.noMermaid}
-          noPlantuml={noPlantuml}
-          noHighlight={staticProps.noHighlight}
-          placeholder={placeholder}
-          noKatex={staticProps.noKatex}
-          scrollAuto={state.scrollAuto}
-          formatCopiedText={props.formatCopiedText}
-          autoFocus={props.autoFocus}
-          readOnly={props.readOnly}
-          maxLength={props.maxLength}
-          autoDetectCode={props.autoDetectCode}
-          onBlur={props.onBlur}
-          onFocus={props.onFocus}
-          onInput={props.onInput}
-          completions={props.completions}
-          noImgZoomIn={noImgZoomIn}
-          onDrop={props.onDrop}
-          inputBoxWidth={inputBoxWidth}
-          onInputBoxWidthChange={props.onInputBoxWidthChange}
-          sanitizeMermaid={sanitizeMermaid}
-          transformImgUrl={transformImgUrl}
-          codeFoldable={codeFoldable}
-          autoFoldThreshold={autoFoldThreshold}
-          onRemount={props.onRemount}
-          catalogLayout={catalogLayout}
-          catalogMaxDepth={props.catalogMaxDepth}
-          noEcharts={props.noEcharts}
-          previewComponent={previewComponent}
-        />
-        {footers.length > 0 && (
-          <Footer
+      <ViewportPortal active={setting.fullscreen}>
+        <div
+          id={staticProps.editorId}
+          className={classnames([
+            prefix,
+            !!className && className,
+            theme === 'dark' && `${prefix}-dark`,
+            setting.fullscreen && `${prefix}-fullscreen`,
+          ])}
+          style={props.style}
+          ref={rootRef}>
+          {toolbars.length > 0 && <ToolBar toolbars={toolbars} toolbarsExclude={toolbarsExclude} />}
+          <Content
+            ref={codeRef}
             modelValue={value}
-            footers={footers}
-            defFooters={defFooters}
-            noScrollAuto={(!setting.preview && !setting.htmlPreview) || setting.previewOnly}
+            onChange={onChange}
+            setting={setting}
+            mdHeadingId={mdHeadingId}
+            onHtmlChanged={onHtmlChanged}
+            onGetCatalog={onGetCatalog}
+            sanitize={sanitize}
+            noMermaid={staticProps.noMermaid}
+            noPlantuml={noPlantuml}
+            noHighlight={staticProps.noHighlight}
+            placeholder={placeholder}
+            noKatex={staticProps.noKatex}
             scrollAuto={state.scrollAuto}
-            onScrollAutoChange={onScrollAutoChange}
+            formatCopiedText={props.formatCopiedText}
+            autoFocus={props.autoFocus}
+            readOnly={props.readOnly}
+            maxLength={props.maxLength}
+            autoDetectCode={props.autoDetectCode}
+            onBlur={props.onBlur}
+            onFocus={props.onFocus}
+            onInput={props.onInput}
+            completions={props.completions}
+            noImgZoomIn={noImgZoomIn}
+            onDrop={props.onDrop}
+            inputBoxWidth={inputBoxWidth}
+            onInputBoxWidthChange={props.onInputBoxWidthChange}
+            sanitizeMermaid={sanitizeMermaid}
+            transformImgUrl={transformImgUrl}
+            codeFoldable={codeFoldable}
+            autoFoldThreshold={autoFoldThreshold}
+            onRemount={props.onRemount}
+            catalogLayout={catalogLayout}
+            catalogMaxDepth={props.catalogMaxDepth}
+            noEcharts={props.noEcharts}
+            previewComponent={previewComponent}
           />
-        )}
-      </div>
+          {footers.length > 0 && (
+            <Footer
+              modelValue={value}
+              footers={footers}
+              defFooters={defFooters}
+              noScrollAuto={(!setting.preview && !setting.htmlPreview) || setting.previewOnly}
+              scrollAuto={state.scrollAuto}
+              onScrollAutoChange={onScrollAutoChange}
+            />
+          )}
+        </div>
+      </ViewportPortal>
     </EditorContext.Provider>
   );
 });

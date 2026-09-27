@@ -27,7 +27,6 @@ import {
   ArrowUpIcon,
   BookOpenIcon,
   CheckCircleIcon,
-  CodeIcon,
   FolderOpenIcon,
   GlobeIcon,
   InfoIcon,
@@ -40,7 +39,6 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { EditSkillModal } from '../EditSkillModal';
-import { SkillCodePane } from '../SkillCodePane';
 import { SkillFileEditor, type ISkillFileEditorHandle } from '../SkillFileEditor';
 import { SkillIcon } from '../SkillIcon';
 import '../SkillMarkdown/index.module.less';
@@ -77,7 +75,7 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
 
   const [copyStatus, setCopyStatus] = useState<Record<string, boolean>>({});
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'preview' | 'code' | 'files'>('preview');
+  const [activeTab, setActiveTab] = useState<'preview' | 'files'>('preview');
 
   const translationMode = useSettingsStore((state) => state.translationMode);
   const skillInstallMethod = useSettingsStore((state) => state.skillInstallMethod);
@@ -100,7 +98,6 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
     isTranslating,
     showTranslation,
     hasStaleTranslation,
-    hasDisplayableTranslation,
     cachedTranslation: effectiveInstructionsTranslation,
     effectiveContent: effectiveSkillMdContent,
     resolvedDescription,
@@ -400,22 +397,6 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
         </Button>
         <Button
           type='text'
-          onClick={() => {
-            requestLeaveFileEditing(() => {
-              setActiveTab('code');
-            });
-          }}
-          className={`relative h-auto rounded-none py-3 text-sm font-semibold ${activeTab === 'code' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
-          <div className='flex items-center gap-2'>
-            <CodeIcon className='h-4 w-4' />
-            {'源码/内容'}
-          </div>
-          {activeTab === 'code' && (
-            <div className='bg-primary absolute bottom-0 left-0 right-0 h-0.5 rounded-full' />
-          )}
-        </Button>
-        <Button
-          type='text'
           onClick={() => setActiveTab('files')}
           className={`relative h-auto rounded-none py-3 text-sm font-semibold ${activeTab === 'files' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
           <div className='flex items-center gap-2'>
@@ -487,57 +468,46 @@ export function SkillFullDetailPage({ overrideSkill, projectContext, onBack }: I
           </div>
         ) : (
           <div className='mx-auto w-full max-w-6xl p-6'>
-            {activeTab === 'preview' ? (
-              <div className='grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-stretch'>
-                <SkillPreviewPane
-                  cachedInstructionsTranslation={effectiveInstructionsTranslation}
-                  copyStatus={copyStatus}
-                  handleCopy={handleCopy}
-                  handleTranslateSkill={handleTranslateSkill}
-                  hasStaleTranslation={hasStaleTranslation}
-                  isTranslating={isTranslating}
-                  resolvedDescription={resolvedDescription}
-                  selectedSkill={selectedSkill}
-                  showTranslation={showTranslation}
-                  skillContent={effectiveSkillMdContent}
-                  translationMode={translationMode}
-                />
-
-                {!isProjectDetail ? (
-                  <SkillPlatformPanel
-                    availablePlatforms={availablePlatforms}
-                    handleExport={handleExport}
-                    installMode={installMode}
-                    installProgress={installProgress}
-                    isBatchInstalling={isBatchInstalling}
-                    onBatchInstall={batchInstall}
-                    selectedPlatforms={selectedPlatforms}
-                    selectedSkill={selectedSkill}
-                    selectAllPlatforms={selectAllPlatforms}
-                    deselectAllPlatforms={deselectAllPlatforms}
-                    setInstallMode={setInstallMode}
-                    skillMdInstallStatus={skillMdInstallStatus}
-                    togglePlatformSelection={togglePlatformSelection}
-                    uninstallFromPlatform={uninstallFromPlatform}
-                    uninstalledPlatforms={uninstalledPlatforms}
-                  />
-                ) : (
-                  <SkillCodePane
-                    copyStatus={copyStatus}
-                    handleCopy={handleCopy}
-                    selectedSkill={selectedSkill}
-                    skillContent={effectiveSkillMdContent}
-                  />
-                )}
-              </div>
-            ) : (
-              <SkillCodePane
+            <div
+              className={
+                isProjectDetail
+                  ? 'flex min-h-0 flex-col'
+                  : 'grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-stretch'
+              }>
+              <SkillPreviewPane
+                cachedInstructionsTranslation={effectiveInstructionsTranslation}
                 copyStatus={copyStatus}
                 handleCopy={handleCopy}
+                handleTranslateSkill={handleTranslateSkill}
+                hasStaleTranslation={hasStaleTranslation}
+                isTranslating={isTranslating}
+                resolvedDescription={resolvedDescription}
                 selectedSkill={selectedSkill}
+                showTranslation={showTranslation}
                 skillContent={effectiveSkillMdContent}
+                translationMode={translationMode}
               />
-            )}
+
+              {!isProjectDetail ? (
+                <SkillPlatformPanel
+                  availablePlatforms={availablePlatforms}
+                  handleExport={handleExport}
+                  installMode={installMode}
+                  installProgress={installProgress}
+                  isBatchInstalling={isBatchInstalling}
+                  onBatchInstall={batchInstall}
+                  selectedPlatforms={selectedPlatforms}
+                  selectedSkill={selectedSkill}
+                  selectAllPlatforms={selectAllPlatforms}
+                  deselectAllPlatforms={deselectAllPlatforms}
+                  setInstallMode={setInstallMode}
+                  skillMdInstallStatus={skillMdInstallStatus}
+                  togglePlatformSelection={togglePlatformSelection}
+                  uninstallFromPlatform={uninstallFromPlatform}
+                  uninstalledPlatforms={uninstalledPlatforms}
+                />
+              ) : null}
+            </div>
           </div>
         )}
       </div>

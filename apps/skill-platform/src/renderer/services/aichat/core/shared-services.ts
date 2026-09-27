@@ -1,3 +1,4 @@
+import { getBuiltinSkillPrompt } from '@/shared/builtin-skills';
 import type { IAiChatServices, ILocalPathConfig, TCallAiChatStream } from '@momo/aichat';
 
 import {
@@ -7,6 +8,7 @@ import {
   toAIConfig,
 } from '@renderer/services/ai/defaults';
 import { resolveImageModelCapabilities } from '@renderer/services/ai/image/capabilities';
+import { normalizeChatMaxTokens } from '@renderer/services/ai/token-limits';
 import { openExternalUrl } from '@renderer/services/desktop';
 import type { IAIModelConfig } from '@renderer/types/settings';
 import { uploadChatAttachmentFiles, validateChatAttachmentFiles } from '../chat-attachment-upload';
@@ -47,7 +49,7 @@ export interface IBuildSharedAiChatServicesOptions {
   localPath?: ILocalPathConfig;
   /** 消息内 http(s) 链接点击；默认注入系统浏览器打开 */
   onOpenExternalUrl?: IAiChatServices['onOpenExternalUrl'];
-  /** 是否启用 Superpowers 两阶段（默认 true；提示词测试等固定模板场景设为 false） */
+  /** 是否启用 Superpowers 两阶段（默认 true；工作流提示词节点等固定模板场景设为 false） */
   enableSuperpower?: boolean;
   /** 额外覆盖项（如 getIsAuthenticated、chatSync） */
   overrides?: Partial<IAiChatServices>;
@@ -62,7 +64,7 @@ export function buildSharedAiChatServices(
   const chatModels = getModelsByType(options.aiModels, 'chat').map((model) => ({
     id: model.id,
     label: model.name?.trim() || model.model,
-    maxOutputTokens: model.chatParams?.maxTokens ?? 32768,
+    maxOutputTokens: normalizeChatMaxTokens(model.chatParams?.maxTokens, 32768),
   }));
 
   const defaultModelId = chatModels[0]?.id;
@@ -144,6 +146,14 @@ export function buildSharedAiChatServices(
       return '描述你想生成的图片内容';
     },
     noteReferences: createNoteReferencesConfig(),
+    getDefaultAttachmentPrompt: (kind) =>
+      getBuiltinSkillPrompt(
+        kind === 'view'
+          ? 'attachmentViewTask'
+          : kind === 'image'
+            ? 'attachmentImageTask'
+            : 'attachmentSummaryTask',
+      ),
     ...superpowerOverrides,
   };
 }

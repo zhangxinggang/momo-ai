@@ -35,18 +35,21 @@ export function createSkillFileEditorAdapter(
 ): IFileEditorAdapter {
   const { skillId, localPath } = options;
   const isPathMode = Boolean(localPath);
+  const listEntries = async (listOptions?: { directory?: string; query?: string }) => {
+    const list = isPathMode
+      ? await listSkillLocalFilesByPath(localPath!, listOptions)
+      : await listSkillLocalFiles(skillId, listOptions);
+    return list.map((entry) => ({
+      relativePath: normalizeRelativePath(entry.path),
+      isDirectory: entry.isDirectory,
+      size: entry.size,
+    }));
+  };
 
   return {
-    async listTree() {
-      const list = isPathMode
-        ? await listSkillLocalFilesByPath(localPath!)
-        : await listSkillLocalFiles(skillId);
-      return list.map((entry) => ({
-        relativePath: normalizeRelativePath(entry.path),
-        isDirectory: entry.isDirectory,
-        size: entry.size,
-      }));
-    },
+    listTree: () => listEntries(),
+    listDirectory: (relativeDirectory: string) => listEntries({ directory: relativeDirectory }),
+    searchTree: (query: string) => listEntries({ query }),
 
     filterEntry: (entry: IFileTreeEntry) => !isHiddenSkillRepoEntry(entry.relativePath),
 

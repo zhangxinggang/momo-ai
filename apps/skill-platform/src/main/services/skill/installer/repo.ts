@@ -5,7 +5,7 @@
  * listing, deleting, and atomic replacement of repo contents.
  */
 import type { ISkillLocalFileEntry, ISkillLocalFileTreeEntry } from '@/types/modules';
-import { isCodeEditorPath } from '@momo/file-editor/node';
+import { decodeEditableFile } from '@momo/file-editor/node';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import {
@@ -34,8 +34,51 @@ const MAX_WALK_DEPTH = 5;
 const MAX_WALK_FILES = 500;
 /** Maximum file size (1 MB) for reading text content */
 const MAX_FILE_SIZE_BYTES = 1_048_576;
+/** Maximum number of search results returned to the renderer */
+const MAX_FILE_SEARCH_RESULTS = 500;
+/** Safety ceiling for entries inspected by one search */
+const MAX_FILE_SEARCH_ENTRIES = 50_000;
+/** Safety ceiling for deeply nested generated projects */
+const MAX_FILE_SEARCH_DEPTH = 32;
 
 const INTERNAL_REPO_DIRS = new Set(['.git', '.aim']);
+
+/** Dependency, build output and cache directories skipped by project-wide search. */
+export const DEFAULT_FILE_SEARCH_IGNORED_DIRECTORIES = new Set([
+  '.cache',
+  '.dart_tool',
+  '.gradle',
+  '.mypy_cache',
+  '.next',
+  '.nuxt',
+  '.output',
+  '.parcel-cache',
+  '.pnpm-store',
+  '.pub-cache',
+  '.pytest_cache',
+  '.ruff_cache',
+  '.tox',
+  '.turbo',
+  '.venv',
+  '.vite',
+  '.yarn',
+  '__pycache__',
+  'bin',
+  'bower_components',
+  'build',
+  'coverage',
+  'deriveddata',
+  'dist',
+  'env',
+  'node_modules',
+  'obj',
+  'out',
+  'pods',
+  'site-packages',
+  'target',
+  'vendor',
+  'venv',
+]);
 
 export function isInternalSkillRepoEntry(relativePath: string): boolean {
   return relativePath.split(/[\\/]+/).some((segment) => INTERNAL_REPO_DIRS.has(segment));
@@ -69,7 +112,6 @@ async function walkRepoDir<T>(opts: {
     relativePath: string;
     fullPath: string;
     isDirectory: boolean;
-    dirent: import('fs').Dirent;
   }) => Promise<T | null>;
 }): Promise<T[]> {
   const { baseDir, realBasePath, onEntry } = opts;
@@ -79,7 +121,14 @@ async function walkRepoDir<T>(opts: {
     if (depth > MAX_WALK_DEPTH) return;
     if (results.length >= MAX_WALK_FILES) return;
 
-    const entries = await fs.readdir(dir, { withFileTypes: true });
+    const readEntries = () => fs.readdir(dir, { withFileTypes: true });
+    let entries: Awaited<ReturnType<typeof readEntries>>;
+    try {
+      entries = await readEntries();
+    } catch (error) {
+      if (['ENOENT', 'ENOTDIR'].includes(getErrorCode(error) ?? '')) return;
+      throw error;
+    }
     for (const dirent of entries) {
       if (results.length >= MAX_WALK_FILES) return;
 
@@ -98,12 +147,14 @@ async function walkRepoDir<T>(opts: {
         continue;
       }
 
-      const item = await onEntry({
-        relativePath,
-        fullPath,
-        isDirectory,
-        dirent,
-      });
+      let item: T | null;
+      try {
+        item = await onEntry({ relativePath, fullPath, isDirectory });
+      } catch (error) {
+        // An editor or import may replace a file after readdir; skip vanished entries only.
+        if (['ENOENT', 'ENOTDIR'].includes(getErrorCode(error) ?? '')) continue;
+        throw error;
+      }
       if (item !== null) {
         results.push(item);
       }
@@ -122,15 +173,12 @@ async function walkRepoDir<T>(opts: {
  * Read a single file's content, returning a placeholder for binary or
  * oversized files.  Shared by walkRepoDir callers and readLocalRepoFileByPath.
  */
-async function readFileContent(fullPath: string, fileName: string): Promise<string> {
-  if (!isCodeEditorPath(fileName)) {
-    return '[binary file]';
-  }
+async function readFileContent(fullPath: string): Promise<string> {
   const stat = await fs.stat(fullPath);
   if (stat.size > MAX_FILE_SIZE_BYTES) {
     return '[file too large]';
   }
-  return fs.readFile(fullPath, 'utf-8');
+  return decodeEditableFile(await fs.readFile(fullPath)) ?? '[binary file]';
 }
 
 // ==================== Managed path check ====================
@@ -232,11 +280,11 @@ export async function readLocalRepoFiles(
   return walkRepoDir<{ path: string; content: string; isDirectory: boolean }>({
     baseDir,
     realBasePath,
-    onEntry: async ({ relativePath, fullPath, isDirectory, dirent }) => {
+    onEntry: async ({ relativePath, fullPath, isDirectory }) => {
       if (isDirectory) {
         return { path: relativePath, content: '', isDirectory: true };
       }
-      const content = await readFileContent(fullPath, dirent.name);
+      const content = await readFileContent(fullPath);
       return { path: relativePath, content, isDirectory: false };
     },
   });
@@ -263,11 +311,11 @@ export async function readLocalRepoFilesByPath(
   return walkRepoDir<ISkillLocalFileEntry>({
     baseDir,
     realBasePath,
-    onEntry: async ({ relativePath, fullPath, isDirectory, dirent }) => {
+    onEntry: async ({ relativePath, fullPath, isDirectory }) => {
       if (isDirectory) {
         return { path: relativePath, content: '', isDirectory: true };
       }
-      const content = await readFileContent(fullPath, dirent.name);
+      const content = await readFileContent(fullPath);
       return { path: relativePath, content, isDirectory: false };
     },
   });
@@ -308,6 +356,160 @@ export async function listLocalRepoFiles(skillName: string): Promise<ISkillLocal
   await initSkillsDir();
   const absolutePath = path.join(skillsDir, skillName);
   return listLocalRepoFilesByPath(absolutePath);
+}
+
+/** List only the direct children of one directory inside a managed skill repo. */
+export async function listLocalRepoDirectory(
+  skillName: string,
+  relativeDirectory = '',
+): Promise<ISkillLocalFileTreeEntry[]> {
+  const skillsDir = getSkillsDirAccessor();
+  validateSkillName(skillName);
+  await initSkillsDir();
+  return listLocalRepoDirectoryByPath(path.join(skillsDir, skillName), relativeDirectory);
+}
+
+/**
+ * List only the direct children of a directory. This is the data source used by
+ * the renderer's lazy file tree, so opening a large project does not walk it.
+ */
+export async function listLocalRepoDirectoryByPath(
+  absolutePath: string,
+  relativeDirectory = '',
+): Promise<ISkillLocalFileTreeEntry[]> {
+  const normalizedDirectory = relativeDirectory.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  const { resolvedBasePath, realBasePath } = await resolveRepoBasePath(absolutePath, {
+    allowOutsideSkillsDir: true,
+  });
+  const directoryPath = normalizedDirectory
+    ? (
+        await resolveRepoTargetPath(absolutePath, normalizedDirectory, {
+          allowOutsideSkillsDir: true,
+        })
+      ).fullPath
+    : resolvedBasePath;
+
+  const directoryStat = await fs.stat(directoryPath).catch(() => null);
+  if (!directoryStat?.isDirectory()) {
+    return [];
+  }
+
+  const directoryEntries = await fs.readdir(directoryPath, { withFileTypes: true });
+  const results: ISkillLocalFileTreeEntry[] = [];
+
+  for (const dirent of directoryEntries) {
+    if (dirent.isSymbolicLink()) {
+      continue;
+    }
+    const fullPath = path.join(directoryPath, dirent.name);
+    const realFullPath = await fs.realpath(fullPath).catch(() => fullPath);
+    if (!isPathWithin(realBasePath, realFullPath)) {
+      continue;
+    }
+    const relativePath = path.relative(resolvedBasePath, fullPath);
+    if (isInternalSkillRepoEntry(relativePath)) {
+      continue;
+    }
+    results.push({ path: relativePath, isDirectory: dirent.isDirectory() });
+  }
+
+  return results.sort(
+    (left, right) =>
+      Number(right.isDirectory) - Number(left.isDirectory) || left.path.localeCompare(right.path),
+  );
+}
+
+/** Search the complete repo while pruning dependency, build and cache directories. */
+export async function searchLocalRepoFiles(
+  skillName: string,
+  query: string,
+): Promise<ISkillLocalFileTreeEntry[]> {
+  const skillsDir = getSkillsDirAccessor();
+  validateSkillName(skillName);
+  await initSkillsDir();
+  return searchLocalRepoFilesByPath(path.join(skillsDir, skillName), query);
+}
+
+/**
+ * Search paths independently from the expanded UI nodes. Traversal is async,
+ * bounded, rejects symlinks and skips well-known generated directories.
+ */
+export async function searchLocalRepoFilesByPath(
+  absolutePath: string,
+  query: string,
+): Promise<ISkillLocalFileTreeEntry[]> {
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  if (!normalizedQuery) {
+    return [];
+  }
+
+  const { resolvedBasePath, realBasePath } = await resolveRepoBasePath(absolutePath, {
+    allowOutsideSkillsDir: true,
+  });
+  const baseStat = await fs.stat(resolvedBasePath).catch(() => null);
+  if (!baseStat?.isDirectory()) {
+    return [];
+  }
+
+  const results: ISkillLocalFileTreeEntry[] = [];
+  let inspectedEntries = 0;
+
+  const recurse = async (directoryPath: string, depth: number): Promise<void> => {
+    if (
+      depth > MAX_FILE_SEARCH_DEPTH ||
+      inspectedEntries >= MAX_FILE_SEARCH_ENTRIES ||
+      results.length >= MAX_FILE_SEARCH_RESULTS
+    ) {
+      return;
+    }
+
+    const directoryEntries = await fs
+      .readdir(directoryPath, { withFileTypes: true })
+      .catch(() => []);
+    for (const dirent of directoryEntries) {
+      if (
+        inspectedEntries >= MAX_FILE_SEARCH_ENTRIES ||
+        results.length >= MAX_FILE_SEARCH_RESULTS
+      ) {
+        return;
+      }
+      inspectedEntries += 1;
+
+      if (dirent.isSymbolicLink()) {
+        continue;
+      }
+      if (
+        dirent.isDirectory() &&
+        DEFAULT_FILE_SEARCH_IGNORED_DIRECTORIES.has(dirent.name.toLocaleLowerCase())
+      ) {
+        continue;
+      }
+
+      const fullPath = path.join(directoryPath, dirent.name);
+      const realFullPath = await fs.realpath(fullPath).catch(() => fullPath);
+      if (!isPathWithin(realBasePath, realFullPath)) {
+        continue;
+      }
+      const relativePath = path.relative(resolvedBasePath, fullPath);
+      if (isInternalSkillRepoEntry(relativePath)) {
+        continue;
+      }
+
+      const isDirectory = dirent.isDirectory();
+      if (relativePath.toLocaleLowerCase().includes(normalizedQuery)) {
+        results.push({ path: relativePath, isDirectory });
+      }
+      if (isDirectory) {
+        await recurse(fullPath, depth + 1);
+      }
+    }
+  };
+
+  await recurse(resolvedBasePath, 0);
+  return results.sort(
+    (left, right) =>
+      Number(right.isDirectory) - Number(left.isDirectory) || left.path.localeCompare(right.path),
+  );
 }
 
 export async function listLocalRepoFilesByPath(
@@ -398,7 +600,7 @@ export async function readLocalRepoFileByPath(
     return { path: relativePath, content: '', isDirectory: true };
   }
 
-  const content = await readFileContent(fullPath, path.basename(relativePath));
+  const content = await readFileContent(fullPath);
 
   return {
     path: relativePath,

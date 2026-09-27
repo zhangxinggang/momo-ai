@@ -13,16 +13,11 @@ const MAIN_PROCESS_EXTERNALS = [
   'electron',
   'log4js',
   '@log4js-node/smtp',
-  '@napi-rs/canvas',
   '@lancedb/lancedb',
   '@xberg-io/xberg',
-  'html-to-docx',
 ];
 
 function isMainProcessExternal(id: string): boolean {
-  if (id.includes('@napi-rs/canvas')) {
-    return true;
-  }
   return MAIN_PROCESS_EXTERNALS.some((name) => id === name || id.startsWith(`${name}/`));
 }
 
@@ -50,9 +45,6 @@ function copyStaticToDist(): PluginOption {
     if (!fs.existsSync(STATIC_SRC_DIR)) {
       return;
     }
-    if (fs.existsSync(STATIC_OUT_DIR)) {
-      fs.rmSync(STATIC_OUT_DIR, { recursive: true, force: true });
-    }
     fs.mkdirSync(path.dirname(STATIC_OUT_DIR), { recursive: true });
     fs.cpSync(STATIC_SRC_DIR, STATIC_OUT_DIR, { recursive: true });
   }
@@ -63,16 +55,35 @@ function copyStaticToDist(): PluginOption {
       syncStatic();
     },
     configureServer(server) {
+      const pendingPaths = new Set<string>();
+      let pendingSync: ReturnType<typeof setTimeout> | undefined;
+      const syncChangedFiles = () => {
+        for (const relativePath of pendingPaths) {
+          const source = path.join(STATIC_SRC_DIR, relativePath);
+          const destination = path.join(STATIC_OUT_DIR, relativePath);
+          if (fs.existsSync(source) && fs.statSync(source).isFile()) {
+            fs.mkdirSync(path.dirname(destination), { recursive: true });
+            fs.copyFileSync(source, destination);
+          } else if (!fs.existsSync(source)) {
+            fs.rmSync(destination, { force: true });
+          }
+        }
+        pendingPaths.clear();
+      };
       server.watcher.add(STATIC_SRC_DIR);
       const handleStaticChange = (changedPath: string) => {
         const relativePath = path.relative(STATIC_SRC_DIR, changedPath);
         if (relativePath && !relativePath.startsWith('..') && !path.isAbsolute(relativePath)) {
-          syncStatic();
+          // Copy changed files; never remove the served directory during a bulk update.
+          pendingPaths.add(relativePath);
+          clearTimeout(pendingSync);
+          pendingSync = setTimeout(syncChangedFiles, 500);
         }
       };
       server.watcher.on('change', handleStaticChange);
       server.watcher.on('add', handleStaticChange);
       server.watcher.on('unlink', handleStaticChange);
+      server.httpServer?.once('close', () => clearTimeout(pendingSync));
     },
   };
 }
@@ -104,6 +115,7 @@ const sharedResolveAlias = {
     __dirname,
     '../../packages/momo-agent-contracts/src/index.ts',
   ),
+  '@momo/api-request/core': path.resolve(__dirname, '../../packages/momo-api-request/src/core.ts'),
   '@momo/harness-adapter': path.resolve(
     __dirname,
     '../../packages/momo-harness-adapter/src/index.ts',
@@ -114,7 +126,7 @@ const sharedResolveAlias = {
   '@momo/file-editor/node': path.resolve(__dirname, '../../packages/momo-file-editor/src/node.ts'),
 };
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   base: './',
   plugins: [
     copyStaticToDist(),
@@ -140,6 +152,8 @@ export default defineConfig({
           build: {
             outDir: 'dist/main',
             emptyOutDir: true,
+            minify: command === 'build' ? 'esbuild' : false,
+            sourcemap: false,
             reportCompressedSize: false,
             rollupOptions: {
               // log4js 在运行时用动态 require 加载 @log4js-node/smtp 等 appender，
@@ -153,6 +167,8 @@ export default defineConfig({
               },
             },
           },
+          // TypeORM derives unnamed tables from entity class names.
+          esbuild: { keepNames: true },
         },
       },
       {
@@ -167,6 +183,8 @@ export default defineConfig({
           build: {
             outDir: 'dist/preload',
             emptyOutDir: true,
+            minify: command === 'build' ? 'esbuild' : false,
+            sourcemap: false,
             reportCompressedSize: false,
           },
         },
@@ -180,11 +198,14 @@ export default defineConfig({
           build: {
             outDir: 'dist/knowledge-worker',
             emptyOutDir: true,
+            minify: command === 'build' ? 'esbuild' : false,
+            sourcemap: false,
             reportCompressedSize: false,
             rollupOptions: {
               external: isMainProcessExternal,
             },
           },
+          esbuild: { keepNames: true },
         },
       },
     ]) as PluginOption[],
@@ -195,6 +216,7 @@ export default defineConfig({
     alias: {
       ...sharedResolveAlias,
       '@momo/aichat': path.resolve(__dirname, '../../packages/momo-aichat/src/index.ts'),
+      '@momo/api-request': path.resolve(__dirname, '../../packages/momo-api-request/src/index.ts'),
       '@momo/knowledge': path.resolve(__dirname, '../../packages/momo-knowledge/src/index.ts'),
       '@momo/aichat/styles.css': path.resolve(
         __dirname,
@@ -221,8 +243,17 @@ export default defineConfig({
       },
     },
   },
+  server: {
+    watch: {
+      // Packaged copies, generated bundles and application logs are never HMR inputs.
+      ignored: ['**/out/**', '**/dist/**', '**/logs/**', '**/temp/**'],
+    },
+  },
   optimizeDeps: {
-    include: ['fflate', 'html2canvas', 'jspdf', 'docx'],
+    // The default **/*.html crawl also finds installed copies and offline draw.io.
+    // Follow only the renderer entry's imports, regardless of existing build outputs.
+    entries: ['index.html'],
+    include: ['fflate', 'docx'],
     // renderer 不应打包 typeorm；若误引入主进程依赖，跳过预构建避免 expo-sqlite 解析失败
     exclude: ['typeorm', 'expo-sqlite'],
   },
@@ -253,4 +284,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

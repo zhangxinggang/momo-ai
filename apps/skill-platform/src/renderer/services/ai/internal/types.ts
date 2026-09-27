@@ -1,6 +1,6 @@
 import type { EAIProtocol } from '@/types/modules';
 
-import type { IChatToolCall } from '../../types';
+import type { IChatToolCall } from '../types';
 import type { ITokenUsage } from './usage';
 
 export interface IResponseLike {

@@ -13,8 +13,6 @@ export const FONT_SIZES = [
   { id: 'medium', value: 16, name: 'Medium' },
   { id: 'large', value: 18, name: 'Large' },
 ];
-
-const DEFAULT_BACKGROUND_IMAGE_OPACITY = 1;
 const DEFAULT_BACKGROUND_IMAGE_BLUR = 0;
 
 const clamp = (n: number, min: number, max: number): number => Math.max(min, Math.min(max, n));

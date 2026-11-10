@@ -664,7 +664,22 @@ export function RunTimeline({
     }
   }, [settled]);
   const visibleTools = expanded ? tools : settled ? [] : tools.slice(-1);
-  const requests = events.filter((e) => e.type === 'interaction.requested');
+  const automaticApprovals = new Set(
+    events
+      .filter(
+        (e) =>
+          e.type === 'interaction.resolved' && e.payload.permissionMode === 'danger-full-access',
+      )
+      .map((e) => e.payload.requestId),
+  );
+  const requests = events.filter(
+    (e) =>
+      e.type === 'interaction.requested' &&
+      !(
+        e.payload.kind === 'approval' &&
+        (e.payload.automaticApproval === true || automaticApprovals.has(e.payload.requestId))
+      ),
+  );
   const failure = runFailureDetails(events);
   const progress = [...events].reverse().find((e) => e.type === 'agent.status');
   const [showAllArtifacts, setShowAllArtifacts] = useState(false);

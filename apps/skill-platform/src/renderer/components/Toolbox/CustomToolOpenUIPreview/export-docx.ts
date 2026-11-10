@@ -6,6 +6,7 @@ import {
   Paragraph,
   Table,
   TableCell,
+  TableLayoutType,
   TableRow,
   TextRun,
   VerticalAlign,
@@ -18,38 +19,45 @@ function nodeText(node: Element): string {
   return value.replace(/\r\n?/g, '\n').trim();
 }
 
-function paragraph(text: string, heading?: (typeof HeadingLevel)[keyof typeof HeadingLevel]) {
+function paragraph(
+  text: string,
+  heading?: (typeof HeadingLevel)[keyof typeof HeadingLevel],
+  bold = false,
+) {
   const lines = text.split('\n');
   return new Paragraph({
     ...(heading ? { heading } : {}),
     spacing: { after: 120 },
+    ...(heading ? { keepNext: true } : {}),
     children: lines.map(
-      (line, index) => new TextRun({ text: line, ...(index > 0 ? { break: 1 } : {}) }),
+      (line, index) =>
+        new TextRun({
+          text: line,
+          bold: bold || Boolean(heading),
+          ...(index > 0 ? { break: 1 } : {}),
+        }),
     ),
   });
 }
 
 function tableBlock(element: HTMLTableElement): Table | null {
+  const columnCount = Math.max(1, ...Array.from(element.rows).map((row) => row.cells.length));
+  const columnWidth = Math.floor(9638 / columnCount);
   const rows = Array.from(element.rows)
     .map((row) => {
       const cells = Array.from(row.cells);
       if (!cells.length) return null;
-      const width = Math.max(1, Math.floor(100 / cells.length));
       return new TableRow({
+        ...(row.parentElement?.tagName === 'THEAD' ? { tableHeader: true } : {}),
         children: cells.map(
           (cell) =>
             new TableCell({
-              width: { size: width, type: WidthType.PERCENTAGE },
-              verticalAlign: VerticalAlign.CENTER,
+              width: { size: columnWidth, type: WidthType.DXA },
+              verticalAlign: VerticalAlign.TOP,
+              margins: { top: 100, bottom: 100, left: 120, right: 120 },
+              shading: row.parentElement?.tagName === 'THEAD' ? { fill: 'F1F5F9' } : undefined,
               children: [
-                new Paragraph({
-                  children: [
-                    new TextRun({
-                      text: nodeText(cell),
-                      bold: row.parentElement?.tagName === 'THEAD',
-                    }),
-                  ],
-                }),
+                paragraph(nodeText(cell), undefined, row.parentElement?.tagName === 'THEAD'),
               ],
             }),
         ),
@@ -61,7 +69,16 @@ function tableBlock(element: HTMLTableElement): Table | null {
   return new Table({
     rows,
     width: { size: 100, type: WidthType.PERCENTAGE },
-    borders: { top: border, bottom: border, left: border, right: border, insideHorizontal: border, insideVertical: border },
+    layout: TableLayoutType.FIXED,
+    columnWidths: Array(columnCount).fill(columnWidth),
+    borders: {
+      top: border,
+      bottom: border,
+      left: border,
+      right: border,
+      insideHorizontal: border,
+      insideVertical: border,
+    },
   });
 }
 
@@ -115,30 +132,50 @@ function appendContent(element: Element, children: FileChild[]): void {
 }
 
 function safeDocxName(value: string): string {
-  const base = value.trim().replace(/[\\/:*?"<>|]/g, '-').replace(/\.docx$/i, '');
+  const base = value
+    .trim()
+    .replace(/[\\/:*?"<>|]/g, '-')
+    .replace(/\.docx$/i, '');
   return `${base || '界面内容'}.docx`;
 }
 
-/** Export the currently visible OpenUI surface. Hidden tabs and embedded file readers are excluded. */
-export async function exportVisibleInterfaceToDocx(
-  surface: HTMLElement,
-  fileName: string,
-): Promise<void> {
-  const selectedTabs = Array.from(
-    surface.querySelectorAll<HTMLElement>('[role="tab"][aria-selected="true"]'),
-  )
-    .map((tab) => nodeText(tab))
-    .filter(Boolean);
+/** Build a consistently formatted Word document from a semantic export surface. */
+export function createInterfaceDocx(surface: HTMLElement, fileName: string): Document {
   const children: FileChild[] = [];
   const heading = safeDocxName(fileName).replace(/\.docx$/i, '');
   children.push(paragraph(heading, HeadingLevel.TITLE));
-  selectedTabs.forEach((label) => children.push(paragraph(label, HeadingLevel.HEADING_1)));
   for (const child of Array.from(surface.children)) appendContent(child, children);
   if (children.length === 1) children.push(paragraph('当前界面没有可导出的文字或表格内容。'));
 
-  const blob = await Packer.toBlob(
-    new Document({ title: heading, sections: [{ children }] }),
-  );
+  return new Document({
+    title: heading,
+    styles: {
+      default: {
+        document: {
+          run: {
+            font: { ascii: 'Calibri', hAnsi: 'Calibri', eastAsia: 'Microsoft YaHei' },
+            size: 21,
+          },
+          paragraph: { spacing: { after: 120, line: 300 } },
+        },
+      },
+    },
+    sections: [
+      {
+        properties: {
+          page: {
+            size: { width: 11906, height: 16838 },
+            margin: { top: 1134, bottom: 1134, left: 1134, right: 1134 },
+          },
+        },
+        children,
+      },
+    ],
+  });
+}
+
+export async function exportInterfaceToDocx(surface: HTMLElement, fileName: string): Promise<void> {
+  const blob = await Packer.toBlob(createInterfaceDocx(surface, fileName));
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

@@ -154,6 +154,51 @@ describe('chat interface mode history', () => {
     expect(state.currentProjectId).toBeNull();
   });
 
+  it('defaults existing sessions and new project drafts to full access', async () => {
+    expect(state.permissionMode).toBe('danger-full-access');
+    await act(async () => state.handleNewChatInProject('another-project'));
+    expect(state.permissionMode).toBe('danger-full-access');
+    await act(async () => state.setAgentMode('ask'));
+    vi.mocked(executeRuntimeTurn).mockResolvedValue({ ...emptyProjection(), status: 'completed' });
+    await send('执行任务');
+    expect(vi.mocked(executeRuntimeTurn).mock.calls.at(-1)![1].permissionMode).toBe(
+      'danger-full-access',
+    );
+  });
+
+  it('keeps streaming to the original session while another session is visible', async () => {
+    await act(async () => state.setAgentMode('ask'));
+    let progress!: Parameters<typeof executeRuntimeTurn>[3];
+    let complete!: (value: ReturnType<typeof emptyProjection>) => void;
+    let signal!: AbortSignal;
+    vi.mocked(executeRuntimeTurn).mockImplementation((_port, _input, abortSignal, onProgress) => {
+      signal = abortSignal;
+      progress = onProgress;
+      return new Promise((resolve) => {
+        complete = resolve;
+      });
+    });
+    let pending!: Promise<boolean>;
+    await act(async () => {
+      pending = state.sendMessage('后台运行');
+    });
+    await act(async () => state.handleNewChatInProject('other-project'));
+    await act(async () => {
+      progress({ ...emptyProjection(), content: '最新进度', runId: 'background-run' });
+    });
+    expect(state.currentSession).toBeNull();
+    expect(signal.aborted).toBe(false);
+    await act(async () => state.switchToSession(original.id));
+    expect(state.currentSession!.messages.at(-1)?.content).toBe('最新进度');
+    expect(state.isAILoading).toBe(true);
+    await act(async () => {
+      complete({ ...emptyProjection(), content: '已完成', status: 'completed' });
+      await pending;
+    });
+    expect(state.currentSession!.messages.at(-1)?.content).toBe('已完成');
+    expect(state.isAILoading).toBe(false);
+  });
+
   it('passes all selected Agent resource providers into the Harness request', async () => {
     services.runtime!.getResourceContext = (projectId) => ({
       projectId: projectId ?? 'project',

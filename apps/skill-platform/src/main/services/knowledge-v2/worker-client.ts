@@ -1,6 +1,6 @@
-﻿import { randomUUID } from 'node:crypto';
+﻿import { utilityProcess, type UtilityProcess } from 'electron';
+import { randomUUID } from 'node:crypto';
 import path from 'node:path';
-import { utilityProcess, type UtilityProcess } from 'electron';
 import { getUserDataPath } from '../../runtime-paths';
 import { fromKnowledgeErrorShape, KnowledgeError } from './error';
 import type { IKnowledgeWorkerRequest, IKnowledgeWorkerResponse } from './protocol';

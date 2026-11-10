@@ -2,5 +2,4 @@
 
 校验错误：{{validationError}}
 
-待修复源码：
-{{content}}
+待修复源码： {{content}}

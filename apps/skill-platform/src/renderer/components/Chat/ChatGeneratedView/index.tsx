@@ -1,8 +1,8 @@
 import { MarkdownRenderer, type IChatMessage } from '@momo/aichat';
 import { ViewportPortal } from '@momo/markdown';
 import { runtimeViewNotes } from '@renderer/services/aichat/runtime-view';
-import { setWindowFullscreen } from '@renderer/services/desktop/window';
 import { subscribeFullscreenChanged } from '@renderer/services/desktop/ipc-events';
+import { setWindowFullscreen } from '@renderer/services/desktop/window';
 import { Alert, App, Button, Tooltip } from 'antd';
 import { Maximize2Icon, Minimize2Icon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -23,6 +23,7 @@ export function ChatGeneratedView({
 }) {
   const { message: notification } = App.useApp();
   const [fullscreen, setFullscreen] = useState(false);
+  const [exportToolbar, setExportToolbar] = useState<HTMLDivElement | null>(null);
   const ownsFullscreen = useRef(false);
   const toggleFullscreen = async () => {
     const next = !ownsFullscreen.current;
@@ -81,6 +82,7 @@ export function ChatGeneratedView({
         className={`${styles.card} ${fullscreen ? styles.fullscreen : ''}`}
         aria-label='生成的界面'>
         <div className={styles.toolbar}>
+          <div className={styles.exportActions} ref={setExportToolbar} aria-label='报告操作' />
           <Tooltip title={fullscreen ? '退出全屏（Esc）' : '全屏展示'}>
             <Button
               type='text'
@@ -99,11 +101,13 @@ export function ChatGeneratedView({
         {view.errorMessage ? <Alert type='error' message={view.errorMessage} showIcon /> : null}
         {view.kind === 'openui' ? (
           <CustomToolOpenUIPreview
+            runtimeKey={`chat:${message.id}`}
             content={view.content}
             title='聊天界面预览'
             components={{}}
             streaming={streaming}
             presentation='chat'
+            exportToolbar={exportToolbar}
             sourceRefs={view.sourceRefs}
             onSelectFiles={onSelectFiles}
             onSubmit={onSubmit}

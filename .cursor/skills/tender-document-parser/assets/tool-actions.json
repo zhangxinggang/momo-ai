@@ -1,0 +1,51 @@
+{
+  "analyze": {
+    "capability": "model.generate",
+    "title": "解析招标文件",
+    "instruction": "完整读取本次招标文件及附件，按所选标书解析技能分析十个模块。保留逐项原文证据和实际截取的 Word 模板。页面已经由宿主创建，不输出页面源码。完成 analysis.json 后优先运行技能 scripts/render_host_report.py 生成 report.json，通过 artifact_create 注册并只返回 resultSourceId。全文覆盖后再归纳，不省略后半部分、表格行或页签。",
+    "skill": "tender-document-parser",
+    "result": "report",
+    "requiredSections": [
+      {
+        "id": "basic",
+        "title": "基础信息"
+      },
+      {
+        "id": "technical",
+        "title": "技术参数要求"
+      },
+      {
+        "id": "risks",
+        "title": "潜在风险"
+      },
+      {
+        "id": "disqualification",
+        "title": "废标项"
+      },
+      {
+        "id": "eligibility",
+        "title": "投标人资格要求"
+      },
+      {
+        "id": "evaluation",
+        "title": "评标标准"
+      },
+      {
+        "id": "submission",
+        "title": "投标文件要求"
+      },
+      {
+        "id": "documents",
+        "title": "应标所需文件"
+      },
+      {
+        "id": "templates",
+        "title": "投标文件模板"
+      },
+      {
+        "id": "qa",
+        "title": "智能问答"
+      }
+    ]
+  }
+}

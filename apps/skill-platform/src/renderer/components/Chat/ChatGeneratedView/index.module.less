@@ -9,24 +9,17 @@
 
 .toolbar {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin-bottom: 4px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease;
 }
 
-.card:hover > .toolbar,
-.card:has(.toolbar :focus-visible) > .toolbar {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-@media (hover: none) {
-  .toolbar {
-    opacity: 1;
-    pointer-events: auto;
-  }
+.exportActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .fullscreen {

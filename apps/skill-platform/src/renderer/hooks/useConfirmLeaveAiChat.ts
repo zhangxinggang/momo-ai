@@ -1,10 +1,6 @@
-import { App } from 'antd';
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 
-import {
-  hasActiveAiChatGeneration,
-  type EAiChatGenerationScope,
-} from '@renderer/services/aichat/generation-activity';
+import type { EAiChatGenerationScope } from '@renderer/services/aichat/generation-activity';
 
 export interface IConfirmLeaveAiChatOptions {
   /** 仅检查指定业务入口；省略时检查应用内全部 AI 入口。 */
@@ -13,38 +9,9 @@ export interface IConfirmLeaveAiChatOptions {
   isGenerating?: boolean;
 }
 
-/** AI 正在回复时，统一确认是否离开当前对话。 */
+/** 菜单和会话切换不打断后台生成；保留调用接口供各业务入口共用。 */
 export function useConfirmLeaveAiChat() {
-  const { modal } = App.useApp();
-  const pendingRef = useRef<Promise<boolean> | null>(null);
-
-  return useCallback(
-    (options: IConfirmLeaveAiChatOptions = {}): Promise<boolean> => {
-      const isGenerating = options.isGenerating ?? hasActiveAiChatGeneration(options.scope);
-      if (!isGenerating) {
-        return Promise.resolve(true);
-      }
-      if (pendingRef.current) {
-        return pendingRef.current;
-      }
-
-      const pending = new Promise<boolean>((resolve) => {
-        modal.confirm({
-          title: 'AI 正在回答',
-          content: '当前对话仍在生成回复，是否确认离开？',
-          okText: '离开',
-          cancelText: '继续对话',
-          okButtonProps: { danger: true },
-          onOk: () => resolve(true),
-          onCancel: () => resolve(false),
-        });
-      }).finally(() => {
-        pendingRef.current = null;
-      });
-
-      pendingRef.current = pending;
-      return pending;
-    },
-    [modal],
-  );
+  return useCallback((_options: IConfirmLeaveAiChatOptions = {}): Promise<boolean> => {
+    return Promise.resolve(true);
+  }, []);
 }

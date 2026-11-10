@@ -59,7 +59,7 @@
 ## 动态 sections 与 blocks
 
 - 每个 `section` 对应一个动态二级 Tab：`id` 在该模块内唯一，`title` 是本次文档的分组名称，`blocks` 是一个或多个内容块。
-- `table` 块：`columns` 为动态表头数组，至少 1 列；`rows` 为数组，每行 `cells` 数量与表头一致；单元格为字符串或字符串数组（显示多行）。
+- `table` 块：`columns` 为动态业务表头数组，至少 1 列；`rows` 为数组，每行 `cells` 数量与表头一致；单元格为字符串或字符串数组（显示多行）。`evidence/basis/note` 单独提供，渲染器统一追加“出处”列，不把证据拼进业务 cells，也不在 columns 中重复创建出处列。
 - `text` 块：`text` 为字符串或字符串数组，可以添加可选的 `title`。
 - `template` 块：只在 `templates` 模块出现，`basis` 必须为 `explicit`。用 `document: {"name":"报价表.docx", "source_id":"artifact_create 返回的 sourceRef.sourceId", "extraction":"native-docx"}` 指向实际截取的 Word；PDF 原页模式使用 `page-facsimile`。不使用 `text` 重建模板。证据仍引用原招采文件。具体截取与注册见 [template-extraction.md](template-extraction.md)。
 - 事实行和 `text` 块：`basis` 为 `explicit/inferred/missing`，`evidence` 为证据数组。`inferred` 和 `missing` 需要非空 `note`。`explicit/inferred` 必须有证据；`template` 只接受带证据的 `explicit`。

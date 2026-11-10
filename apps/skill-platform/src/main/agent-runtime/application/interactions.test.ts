@@ -70,6 +70,21 @@ function question() {
     questions: [{ id: 'original', header: '[file] 原文件', question: '请上传文件' }],
   });
 }
+
+it('defaults to full access and lets explicit turn permission replace a legacy cached permission', async () => {
+  expect(active.input.permissionMode).toBe('danger-full-access');
+  expect(store.get('permission:chat')).toBe('danger-full-access');
+  store.set('permission:legacy', 'workspace-write');
+  const { runId: legacyRun } = await service.start({
+    ...active.input,
+    sessionId: 'legacy',
+    turnId: 'legacy-turn',
+    idempotencyKey: 'legacy-turn',
+    permissionMode: 'danger-full-access',
+  });
+  expect((service as any).active.get(legacyRun).input.permissionMode).toBe('danger-full-access');
+  expect(store.get('permission:legacy')).toBe('danger-full-access');
+});
 it('waits for a cancelled startup to release the session before starting the replacement turn', async () => {
   let rejectFirst!: (error: Error) => void;
   const prepared = vi

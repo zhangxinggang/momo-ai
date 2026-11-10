@@ -88,7 +88,7 @@ export function createRuntimeChatStream(options: IRuntimeChatStreamOptions): TCa
           kbCollectionId: streamOptions?.kb_collection_id,
           temperature: streamOptions?.temperature,
           topP: streamOptions?.top_p,
-          permissionMode: options.getPermissionMode?.() ?? 'workspace-write',
+          permissionMode: options.getPermissionMode?.() ?? 'danger-full-access',
           history,
         },
         controller.signal,

@@ -9,6 +9,4 @@
 - `data/`：工具运行数据；`assets/`：前端静态资源。
 - `tool.json`：入口、后台服务和 MCP/Skill 权限声明。
 
-页面请求后台时使用 `window.momoTool.request('/api/path', options)`，不要写死端口。
-页面调用宿主能力时使用 `window.momoTool.callMcp(name, args)` 或
-`window.momoTool.runSkill(idOrName, input, options)`，并在 `tool.json` 的 permissions 中显式声明。
+页面请求后台时使用 `window.momoTool.request('/api/path', options)`，不要写死端口。页面调用宿主能力时使用 `window.momoTool.callMcp(name, args)` 或 `window.momoTool.runSkill(idOrName, input, options)`，并在 `tool.json` 的 permissions 中显式声明。

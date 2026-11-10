@@ -1,6 +1,8 @@
 # 自定义工具视图编辑器
 
-工具箱支持“界面显示 / AI 工具 / 网页”三种入口。界面显示保留 OpenUI 与 HTML 视图文档；AI 工具生成经过校验的 DeepSeek Harness / Cordis 插件，供验证表单与后续 AI 对话调用；网页保存快捷入口。界面编辑器中的普通提示用于生成视图；明确选择 Skill/Command 时转入主 AI 对话的 Harness 执行链，并携带原始附件引用。旧版 tool.json 的 action 不恢复执行。
+新建页面默认生成 HTML 与独立 actions 配置，通过沙箱页面桥接调用系统能力；页面、执行设置和业务数据分开编辑与运行，详见 [页面与执行配置](./custom-tool-pages.md)。下文 OpenUI 编辑器为已有视图保留的兼容能力。
+
+工具箱支持“界面显示 / AI 工具 / 网页”三种入口。界面显示保留 OpenUI 与 HTML 视图文档；AI 工具生成经过校验的 DeepSeek Harness / Cordis 插件，供验证表单与后续 AI 对话调用；网页保存快捷入口。界面编辑器中的普通提示用于生成视图；明确选择 Skill/Command 时在工具页执行 Harness、展示过程并校验保存 OpenUI 或 HTML 定义，携带原始附件引用。AI 插件编辑器的技能入口仍转入主聊天。旧版 tool.json 的 action 不恢复执行。
 
 ## 模块与数据流
 
@@ -10,12 +12,15 @@ flowchart LR
   Tree --> Editor[自定义工具编辑器]
   Chat[AI 对话无显式资源的界面请求] -->|context=chat| Generator
   ToolComposer[工具箱 AI 输入框] -->|普通界面描述| Generator
-  ToolComposer -->|显式 Skill/Command + sourceRefs| ChatRuntime[ChatProvider.sendMessage]
-  ChatRuntime --> Harness[现有 Agent Harness]
+  ToolComposer -->|视图的显式 Skill/Command + sourceRefs| TaskRuntime[executeToolTask / 定义阶段]
+  TaskRuntime --> Harness[现有 Agent Harness]
+  TaskRuntime -->|校验后保存| Editor
+  ToolComposer -->|AI 插件的显式资源| ChatRuntime[ChatProvider.sendMessage]
+  ChatRuntime --> Harness
   ChatDesign[chat-view-generation 普通展示规则] --> Generator
   DesignSkill["default/skills/builtIn<br/>科技视觉与生成技能"] --> SkillLoader[Main 内置技能加载器]
   SkillLoader -->|启动 IPC 快照| Generator
-  Generator[AI 纯文本生成] -->|默认 OpenUI<br/>技能命令或明确要求时 HTML| Validator[Renderer 视图校验]
+  Generator[AI 纯文本生成] -->|工具默认 HTML / 聊天默认 OpenUI| Validator[Renderer 视图校验]
   Validator -->|通过| Editor
   Validator -->|聊天轮次| ChatHistory[完整聊天记录 / 独立界面快照]
   ChatHistory --> OpenUI
@@ -24,9 +29,12 @@ flowchart LR
   Repair --> Validator
   Editor --> OpenUI[OpenUI Renderer]
   OpenUI --> FileInput[FileInput]
+  OpenUI --> Task[AgentTask / FileTask]
+  Task -->|任务阶段| TaskRuntime
   FileInput -->|上传原文件与 SourceRef| ToolComposer
-  OpenUI --> ExportDocx[导出当前可见文字与表格]
-  ExportDocx --> Download[DOCX Blob 下载]
+  OpenUI --> ExportDocx[内容框外导出工具栏]
+  ExportDocx --> Graph[完整组件图与静态编辑覆盖值]
+  Graph -->|全页签与全表格 / 格式化 Word| Download[DOCX Blob 下载]
   SharedSchema[momoOpenuiLibrary<br/>通用组件 schema] --> Validator
   SharedSchema --> OpenUI
   Editor --> Html[snapEdit HTML 编辑器]
@@ -56,16 +64,16 @@ flowchart LR
   PluginEditor -->|参数表单真实调用| Execute[隔离 Worker / VM]
   Broker --> Execute
   Editor --> Workspace
-  Workspace --> Files[(default/plugins/user)]
+  Workspace --> Files[(temp/custom-tools)]
   Tree -->|在文件系统打开| Preload
   Main --> Shell[系统文件管理器]
 ```
 
-普通 AI 界面生成直接使用已配置的对话模型文本流，不进入 Harness，也不获得宿主工具或知识库能力；显式 Skill/Command 调用则用 `ChatProvider.sendMessage` 进入 Harness。科技视觉规范维护在 `default/skills/builtIn/custom-tool-tech-design/references/generation-guidance.md`，HTML、OpenUI 与修复规则维护在 `custom-tool-generation`。Renderer 启动时经 Main / Preload 读取外部文件，构建默认值也来自同一目录；技术人员编辑后重启桌面应用即可生效。Cursor 技能入口引用同一规则源。`/custom-tool-tech-design` 命令默认路由到 HTML，以获得完整主题和构图能力；显式要求 OpenUI 时仍保持 OpenUI。Renderer 在保存前校验生成内容，OpenUI 首次校验失败时携带具体错误进行一次定向修复并重新校验；Main 再校验路径、大小和视图类型后写入本地目录。加载边界见 [技能资源](./skill-resources.md)。
+普通 AI 界面生成直接使用已配置的对话模型文本流，不进入 Harness，也不获得宿主工具或知识库能力；视图的显式 Skill/Command 则通过 `executeToolTask` 进入 Harness 并保存工具定义，AI 插件的显式资源仍走主聊天。科技视觉规范维护在 `default/skills/builtIn/custom-tool-tech-design/references/generation-guidance.md`，HTML、OpenUI 与修复规则维护在 `custom-tool-generation`。Renderer 启动时经 Main / Preload 读取外部文件，构建默认值也来自同一目录；技术人员编辑后重启桌面应用即可生效。Cursor 技能入口引用同一规则源。`/custom-tool-tech-design` 命令默认路由到 HTML，以获得完整主题和构图能力；显式要求 OpenUI 时仍保持 OpenUI。Renderer 在保存前校验生成内容，OpenUI 首次校验失败时携带具体错误进行一次定向修复并重新校验；Main 再校验路径、大小和视图类型后写入本地目录。加载边界见 [技能资源](./skill-resources.md)。
 
 ## 本地文档契约
 
-生成、校验和预览共用 `momoOpenuiLibrary`。扩展能力为嵌套 Tabs、SplitPane、PlainText、FilePreview、FileInput 和 ExportDocx；组件本身不包含技能业务字段。聊天通过 presentation=chat 使用浅色预览，工具箱保留科技主题。FilePreview 在宿主注入准入附件引用时读取原件，未绑定的工具视图只显示准确空状态。FileInput 在编辑器中把原始附件上传到 AI 输入框，显式技能调用继续通过 SourceRef 读取。
+生成、校验和预览共用 `momoOpenuiLibrary`。扩展能力为嵌套 Tabs、SplitPane、PlainText、FilePreview、FileInput、AgentTask、FileTask 和 ExportDocx；组件本身不包含技能业务字段。聊天通过 presentation=chat 使用浅色预览，普通工具箱视图保留科技主题，任务根组件使用浅色画布。FilePreview 在宿主注入准入附件引用时读取原件，未绑定的工具视图只显示准确空状态。AgentTask 内 FileInput 上传至当前任务，其他位置仍附加到 AI 输入框。通用任务执行和结果缓存见 [通用交互工具任务](./interactive-tool-tasks.md)。
 
 `generateCustomToolView` 统一负责工具箱与主 AI 对话纯界面请求的生成、流式投影、校验和一次 OpenUI 修复。工具箱继续使用科技视觉规则并保存视图文档；聊天通过 `context=chat` 在生成和修复中使用 `chat-view-generation` 的普通展示规则，保存每轮独立界面，并复用 `CustomToolOpenUIPreview`。界面模式中显式调用 Skill/Command 时进入原有 Agent 执行链路，详见 [AI 对话界面模式](./ai-chat-interface-mode.md)。
 
@@ -76,10 +84,11 @@ OpenUI 图表通过 `MeasuredChart` 的 ResizeObserver 等待容器宽高大于�
 工具目录以 momo-tool.json 为权威提交记录；界面保存视图入口，网页保存 URL，AI 插件另外生成可查看的文件：
 
 ```text
-default/plugins/user/<relative-path>/
+temp/custom-tools/<relative-path>/
 ├── momo-tool.json
 ├── view.openui       # kind=openui
 ├── index.html        # kind=html 时使用
+├── actions.json      # HTML 页面的独立执行配置
 ├── index.mjs         # kind=plugin：受信任的 Cordis 注册入口
 ├── execute.js        # kind=plugin：AI 生成的 execute(input)
 ├── plugin.json       # kind=plugin：描述、输入/输出 Schema、测试
@@ -92,11 +101,11 @@ default/plugins/user/<relative-path>/
 - `props`：覆盖模型生成的 OpenUI 组件属性。
 - `data`：选择静态数据或 API 响应，指定写入的目标属性、响应取值路径以及轮询设置。
 
-新建工具默认选择“界面显示”（OpenUI），说明为“AI 生成需求界面”。“AI 工具”说明为“工具将会录入系统，供后续 AI 对话调用”，图标为插件；“网页”说明为“网页快捷入口记录”，输入 HTTP/HTTPS 地址。网页工具统一使用 Ant Design 的 `IeOutlined` 图标，在整个右侧区域加载目标网页；右下角机器人打开高 75%、最小宽度 420px 的 AI 对话框，并可放大至整个网页区域。当前正文经受控 IPC 读取并作为实际模型输入，网页对话可按需调用宿主 `web_fetch` 抓取链接，历史按网页隔离持久化。详见 [网页工具 AI 对话](./webpage-assistant.md)。生成指令明确要求 HTML 或调用 `/custom-tool-tech-design` 时生成 HTML；显式要求 OpenUI 的优先级更高。HTML 使用打包的 `static/snapEdit.html` 在 sandbox iframe 中可视化编辑，源码与画布通过 `postMessage` 同步，不注入宿主 API。
+新建工具默认选择“界面显示”，首次生成默认使用 HTML 与独立执行配置，说明为“AI 生成需求界面”。“AI 工具”说明为“工具将会录入系统，供后续 AI 对话调用”，图标为插件；“网页”说明为“网页快捷入口记录”，输入 HTTP/HTTPS 地址。网页工具统一使用 Ant Design 的 `IeOutlined` 图标，在整个右侧区域加载目标网页；右下角机器人打开高 75%、最小宽度 420px 的 AI 对话框，并可放大至整个网页区域。当前正文经受控 IPC 读取并作为实际模型输入，网页对话可按需调用宿主 `web_fetch` 抓取链接，历史按网页隔离持久化。详见 [网页工具 AI 对话](./webpage-assistant.md)。工具箱默认生成 HTML；显式要求 OpenUI 时保留兼容视图。HTML 使用打包的 `static/snapEdit.html` 在 sandbox iframe 中可视化编辑，源码与画布通过 `postMessage` 同步，不注入宿主 API。
 
 OpenUI 组件设置默认展示面向业务人员的属性表格，并提供 JSON 视图用于新增或批量修改属性。底层渲染调试入口不面向产品用户，查看态与编辑态都只展示业务化工具界面和组件配置能力。
 
-历史 `tool.json` 工具包作为兼容叶子节点显示，目录树不会递归暴露其 `actions`、`assets`、`backend` 等内部结构。编辑器仅按清单中的 `entry`（默认 `index.html`）读取和保存 HTML 视图；旧 action、后台服务、MCP、Skill 及权限声明均不恢复执行。工具节点菜单通过 `tool:openDirectory` IPC 请求 Main 进程解析受限于 `default/plugins/user` 的目录，再交给系统文件管理器打开。
+历史 `tool.json` 工具包作为兼容叶子节点显示，目录树不会递归暴露其 `actions`、`assets`、`backend` 等内部结构。编辑器仅按清单中的 `entry`（默认 `index.html`）读取和保存 HTML 视图；旧 action、后台服务、MCP、Skill 及权限声明均不恢复执行。工具节点菜单通过 `tool:openDirectory` IPC 请求 Main 进程解析受限于 `temp/custom-tools` 的目录，再交给系统文件管理器打开。
 
 ## 组件编辑链路
 

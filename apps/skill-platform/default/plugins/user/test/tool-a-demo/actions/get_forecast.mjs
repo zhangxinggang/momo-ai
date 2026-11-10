@@ -11,7 +11,7 @@ export async function execute(input = {}) {
     tempMin: d.tempMin,
     tempMax: d.tempMax,
     precipitation: d.precipitation,
-    precipProbability: d.precipProbability
+    precipProbability: d.precipProbability,
   }));
   const brief = forecast
     .map((d) => `${String(d.date).slice(5)} ${d.text} ${d.tempMin}~${d.tempMax}℃`)
@@ -20,6 +20,6 @@ export async function execute(input = {}) {
     city: w.city.name,
     days: forecast.length,
     forecast,
-    summary: `${w.city.name}未来 ${forecast.length} 天预报：${brief}。（当前：${w.current.text} ${w.current.temperature}℃）`
+    summary: `${w.city.name}未来 ${forecast.length} 天预报：${brief}。（当前：${w.current.text} ${w.current.temperature}℃）`,
   };
 }

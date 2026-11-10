@@ -29,7 +29,7 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  color: inherit;
+  color: transparent;
   overflow: hidden;
   scrollbar-gutter: auto;
 }
@@ -42,6 +42,8 @@
   overflow-wrap: anywhere;
   word-break: break-word;
   word-wrap: break-word;
+  unicode-bidi: plaintext;
+  font: inherit;
 }
 
 .mention-input-textarea {
@@ -52,23 +54,12 @@
   field-sizing: content;
 }
 
-/* 有笔记引用：透明字 + 镜像层展示 */
+/* 文字与光标始终由同一个原生 textarea 绘制，镜像仅提供引用背景。 */
 .mention-input-textarea-overlay {
   background: transparent;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-  caret-color: var(--text-primary, #111827);
-}
-
-.mention-input-textarea-overlay::selection {
-  background: rgba(59, 130, 246, 0.35);
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-}
-
-.mention-input-textarea-overlay::-moz-selection {
-  background: rgba(59, 130, 246, 0.35);
-  color: transparent;
+  color: inherit;
+  -webkit-text-fill-color: currentColor;
+  caret-color: currentColor;
 }
 
 /* 无笔记引用：直接显示文本，避免镜像换行与光标错位 */
@@ -80,8 +71,18 @@
 }
 
 .mention-plain {
+  font: inherit;
   color: inherit;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+// 不增加 padding、图标或独立文本布局，确保背景与原生文本使用同样的字形和换行。
+.mention-highlight {
+  font: inherit;
+  border-radius: 4px;
+  background: rgba(59, 130, 246, 0.18);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }

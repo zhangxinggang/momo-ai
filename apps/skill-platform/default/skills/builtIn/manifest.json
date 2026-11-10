@@ -18,6 +18,7 @@
   "customToolVisualDesign": "custom-tool-generation/references/visual-design.md",
   "chatViewDesign": "chat-view-generation/SKILL.md",
   "customToolHtml": "custom-tool-generation/SKILL.md",
+  "customToolPage": "custom-tool-generation/references/page-actions.md",
   "customToolOpenui": "custom-tool-generation/references/openui.md",
   "customToolRepair": "custom-tool-generation/references/repair.md",
   "skillCreatorInput": "skill-creator/references/input.md",

@@ -12,6 +12,7 @@ Skills are modular, self-contained packages that extend Claude's capabilities by
 ## SKILL.md Structure
 
 Every SKILL.md requires:
+
 1. **YAML frontmatter** (between --- markers) with:
    - `name`: Human-friendly name (lowercase-with-hyphens, max 64 characters)
    - `description`: What the skill does and when to use it (max 200 characters) - CRITICAL: Claude uses this to determine when to invoke the skill
@@ -37,21 +38,25 @@ description: Clear description of what this skill does and when to use it (max 2
 # ISkill Title
 
 ## Overview
+
 Brief explanation of the skill's purpose.
 
 ## When to Use
+
 - Trigger condition 1
 - Trigger condition 2
 
 ## Instructions
+
 1. Step 1
-2. Step 2
-...
+2. Step 2 ...
 
 ## Examples (if helpful)
+
 ...
 
 ## Guidelines
+
 - Important constraint 1
 - Best practice 2
 ```

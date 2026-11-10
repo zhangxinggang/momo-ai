@@ -38,10 +38,14 @@ it('enables fetch capability only on the webpage port and preserves the actual m
     invocations: [],
   };
   await createHarnessChatOverrides({ webBrowsing: true }).runtime!.port.startTurn(turn);
-  expect(start).toHaveBeenLastCalledWith({ ...turn, webBrowsing: true });
+  expect(start).toHaveBeenLastCalledWith({
+    ...turn,
+    webBrowsing: true,
+    permissionMode: 'danger-full-access',
+  });
   const ordinary = createHarnessChatOverrides();
   expect(ordinary.runtime!.port).toBe(harnessPort);
   await ordinary.runtime!.port.startTurn(turn);
-  expect(start).toHaveBeenLastCalledWith(turn);
+  expect(start).toHaveBeenLastCalledWith({ ...turn, permissionMode: 'danger-full-access' });
   expect(turn.webBrowsing).toBeUndefined();
 });

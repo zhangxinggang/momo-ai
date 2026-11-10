@@ -21,6 +21,18 @@ flowchart LR
 
 工作区目录不会在输入 `@` 时递归扫描。根目录只返回直接子项，后续目录由用户展开时按需加载；在同一次 `@` 面板打开期间继续输入筛选文本不会重新请求资源根。笔记数据仍由笔记服务提供完整树，但默认只渲染第一层可见节点。
 
+```mermaid
+flowchart LR
+  Value[持久化引用和技能 token] --> Mapping[valueToSurface / 索引映射]
+  Mapping --> Native[原生 textarea / 唯一文字与光标绘制]
+  Mapping --> Background[透明文字镜像 / 仅引用背景]
+  Native -->|输入和选区| Reverse[surfaceToValue / value 索引]
+  Reverse --> Value
+  Native -->|字体、宽度、滚动同步| Background
+```
+
+输入区让文字、选区、中文输入法和光标共用原生 textarea 排版；镜像只绘制引用背景，不再覆盖另一份截断标签文字。背景的字体族、字号、字重和行高按 computed longhand 同步到镜像与内部内容，避免 Chromium 无法序列化 `font` shorthand 时退回默认字号、背景覆盖后续文本。引用背景无额外内边距、图标或独立换行，长文本与特殊字符均保持原生插入位置；历史消息仍使用原有引用 Chip。
+
 ## 项目 Agent 多选与斜杠资源
 
 项目编辑框只展示所选目录实际检测到的 Agent，以复选框保存 `agentAppIds`。新项目不自动勾选，全部取消以空数组持久化；项目存储 v3 将旧 `agentAppId` 单选值迁移为数组。显式空数组优先于旧单选字段。

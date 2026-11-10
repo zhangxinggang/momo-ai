@@ -106,6 +106,19 @@
       if (item.basis === "inferred") parent.append(element("span", "badge", "推断"));
       if (item.basis === "missing") parent.append(element("span", "badge", "未明确"));
     }
+    function sourcedText(item, label, value) {
+      const wrap = element("div", "table-wrap");
+      const table = element("table");
+      const header = table.createTHead().insertRow();
+      header.append(element("th", "", label), element("th", "", "出处"));
+      const row = table.createTBody().insertRow();
+      const body = row.insertCell();
+      badge(item, body);
+      body.append(element("div", "cell-text", value));
+      evidence(item, row.insertCell());
+      wrap.append(table);
+      return wrap;
+    }
     function blockView(block) {
       const holder = element("div", "block");
       if (block.title) holder.append(element("h3", "", block.title));
@@ -119,6 +132,9 @@
           th.scope = "col";
           headrow.append(th);
         }
+        const sourceHeading = element("th", "", "出处");
+        sourceHeading.scope = "col";
+        headrow.append(sourceHeading);
         thead.append(headrow);
         table.append(thead);
         const tbody = element("tbody");
@@ -128,9 +144,11 @@
             const td = element("td");
             if (index === 0) badge(row, td);
             td.append(element("div", "cell-text", cell));
-            if (index === row.cells.length - 1) evidence(row, td);
             tr.append(td);
           });
+          const sourceCell = element("td");
+          evidence(row, sourceCell);
+          tr.append(sourceCell);
           tbody.append(tr);
         }
         table.append(tbody);
@@ -142,11 +160,9 @@
         link.download = block.document.name;
         holder.append(link);
         holder.append(element("p", "text-body", "请打开同目录的 Word 模板；宿主界面通过 momo-file-editor 预览。"));
-        evidence(block, holder);
+        holder.append(sourcedText(block, "模板文件", block.document.name));
       } else {
-        badge(block, holder);
-        holder.append(element("div", "text-body", block.text));
-        evidence(block, holder);
+        holder.append(sourcedText(block, "内容", block.text));
       }
       return holder;
     }

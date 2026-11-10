@@ -1,4 +1,5 @@
 import { pluginEntrySource, validateToolIdentifier } from '@/shared/custom-tool-plugin';
+import { parseToolPageActions, splitToolPage, type ToolPageActions } from '@/shared/tool-page';
 import type {
   ECustomToolViewKind,
   ICustomToolCreateInput,
@@ -8,6 +9,7 @@ import type {
   ICustomToolSaveInput,
   ICustomToolTreeNode,
 } from '@/types/modules';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { HostTool } from '../../agent-runtime/tools/broker';
@@ -30,6 +32,7 @@ interface IPersistedDefinition {
   plugin?: ICustomToolPlugin;
   source?: string;
   validation?: ICustomToolPluginValidation;
+  actions?: ToolPageActions;
 }
 
 interface ILegacyDefinition {
@@ -194,7 +197,7 @@ export class CustomToolWorkspaceService {
   constructor(
     rootDirectory: string,
     staticDirectory = path.join(rootDirectory, '.static'),
-    private legacyDirectory?: string,
+    private legacyDirectory?: string | string[],
   ) {
     this.rootDirectory = rootDirectory;
     this.staticDirectory = staticDirectory;
@@ -202,23 +205,34 @@ export class CustomToolWorkspaceService {
 
   private ensureRoot(): string {
     fs.mkdirSync(this.rootDirectory, { recursive: true });
-    const marker = path.join(this.rootDirectory, '.legacy-tools-imported');
-    if (this.legacyDirectory && fs.existsSync(this.legacyDirectory) && !fs.existsSync(marker)) {
-      for (const entry of fs.readdirSync(this.legacyDirectory, { withFileTypes: true })) {
-        if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
-        const source = path.join(this.legacyDirectory, entry.name);
-        let target = path.join(this.rootDirectory, entry.name);
-        let suffix = 1;
-        while (fs.existsSync(target))
-          target = path.join(this.rootDirectory, `${entry.name}（旧版 ${suffix++}）`);
-        fs.cpSync(source, target, {
-          recursive: true,
-          errorOnExist: true,
-          force: false,
-          filter: (file) => !fs.lstatSync(file).isSymbolicLink(),
-        });
+    for (const legacyDirectory of [this.legacyDirectory]
+      .flat()
+      .filter((value): value is string => Boolean(value))) {
+      const marker = path.join(
+        this.rootDirectory,
+        `.legacy-tools-${createHash('sha256').update(path.resolve(legacyDirectory)).digest('hex').slice(0, 12)}`,
+      );
+      if (
+        fs.existsSync(legacyDirectory) &&
+        path.resolve(legacyDirectory) !== path.resolve(this.rootDirectory) &&
+        !fs.existsSync(marker)
+      ) {
+        for (const entry of fs.readdirSync(legacyDirectory, { withFileTypes: true })) {
+          if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+          const source = path.join(legacyDirectory, entry.name);
+          let target = path.join(this.rootDirectory, entry.name);
+          let suffix = 1;
+          while (fs.existsSync(target))
+            target = path.join(this.rootDirectory, `${entry.name}（旧版 ${suffix++}）`);
+          fs.cpSync(source, target, {
+            recursive: true,
+            errorOnExist: true,
+            force: false,
+            filter: (file) => !fs.lstatSync(file).isSymbolicLink(),
+          });
+        }
+        fs.writeFileSync(marker, 'Legacy tools copied; originals retained.\n');
       }
-      fs.writeFileSync(marker, 'Legacy tools copied; originals retained.\n');
     }
     return fs.realpathSync(this.rootDirectory);
   }
@@ -448,6 +462,7 @@ export class CustomToolWorkspaceService {
       kind: definition.kind,
       content,
       components: definition.components,
+      ...(definition.actions ? { actions: parseToolPageActions(definition.actions) } : {}),
     };
   }
 
@@ -475,12 +490,17 @@ export class CustomToolWorkspaceService {
       throw new Error('组件配置无效');
     }
     const current = readDefinition(directory);
+    const page =
+      input.kind === 'html'
+        ? splitToolPage(input.content, input.actions ?? current.actions)
+        : { content: input.content, actions: undefined };
     const definition: IPersistedDefinition = {
       version: 1,
       kind: input.kind,
       name: current.name || path.basename(directory),
       components: input.kind === 'web' ? {} : input.components,
       ...(input.kind === 'web' ? { url: input.content.trim() } : {}),
+      ...(page.actions ? { actions: page.actions } : {}),
     };
     let serializedDefinition: string;
     try {
@@ -493,7 +513,9 @@ export class CustomToolWorkspaceService {
     }
     if (input.kind !== 'web') {
       const entry = input.kind === 'openui' ? OPENUI_FILE : HTML_FILE;
-      writeAtomic(path.join(directory, entry), input.content);
+      writeAtomic(path.join(directory, entry), page.content);
+      if (page.actions)
+        writeAtomic(path.join(directory, 'actions.json'), JSON.stringify(page.actions, null, 2));
     }
     writeAtomic(path.join(directory, DEFINITION_FILE), serializedDefinition);
     return this.readDocument(toolPath);

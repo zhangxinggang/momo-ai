@@ -182,14 +182,17 @@ export class ChatApplicationService {
       const active = this.active.get(frame.runId)!;
       if (frame.type === 'runtime.event' && frame.payload?.nativeType === 'plan/mode')
         active.input.modeId = frame.payload.data.active ? 'plan' : 'ask';
-      this.emit(frame.runId, frame.type, frame.payload ?? {});
       // Native approvals and host approvals share the user's current permission setting.
-      if (
+      const automaticApproval =
         frame.type === 'interaction.requested' &&
         frame.payload?.kind === 'approval' &&
         active.input.permissionMode === 'danger-full-access' &&
-        active.input.modeId !== 'plan'
-      )
+        active.input.modeId !== 'plan';
+      this.emit(frame.runId, frame.type, {
+        ...frame.payload,
+        ...(automaticApproval ? { automaticApproval: true } : {}),
+      });
+      if (automaticApproval)
         void this.respond({
           runId: frame.runId,
           requestId: frame.payload.requestId,
@@ -311,7 +314,7 @@ export class ChatApplicationService {
       modeId: active.input.modeId,
       roots: active.input.folderPaths,
       signal,
-      getPermissionMode: () => active.input.permissionMode ?? 'workspace-write',
+      getPermissionMode: () => active.input.permissionMode ?? 'danger-full-access',
       emit: (type, payload) => this.emit(runId, type, payload),
       askApproval: (request) =>
         new Promise((resolve, reject) => {
@@ -447,9 +450,9 @@ export class ChatApplicationService {
     if ([...this.active.values()].some((r) => r.input.sessionId === input.sessionId))
       throw new Error('当前会话正在执行');
     input.permissionMode =
-      (this.store.get('permission:' + input.sessionId) as RuntimeTurnInput['permissionMode']) ??
       input.permissionMode ??
-      'workspace-write';
+      (this.store.get('permission:' + input.sessionId) as RuntimeTurnInput['permissionMode']) ??
+      'danger-full-access';
     this.store.set('permission:' + input.sessionId, input.permissionMode);
     let session = this.store.session(input.sessionId);
     if (session && session.project_id !== input.projectId)

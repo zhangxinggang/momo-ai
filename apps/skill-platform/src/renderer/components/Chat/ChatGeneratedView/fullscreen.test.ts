@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import React, { act, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
 import { ChatGeneratedView } from './index';
@@ -27,12 +28,22 @@ vi.mock('antd', () => ({
   Button: ({ icon, type, ...props }: any) => React.createElement('button', props, icon),
 }));
 vi.mock('../../Toolbox/CustomToolOpenUIPreview', () => ({
-  CustomToolOpenUIPreview: () => {
+  CustomToolOpenUIPreview: ({ exportToolbar }: any) => {
     const [value, setValue] = useState('初始');
     return React.createElement(
-      'button',
-      { 'data-form': true, onClick: () => setValue('已填写') },
-      value,
+      React.Fragment,
+      {},
+      exportToolbar
+        ? createPortal(
+            React.createElement('button', { 'data-export': true }, '导出 DOCX'),
+            exportToolbar,
+          )
+        : null,
+      React.createElement(
+        'button',
+        { 'data-form': true, onClick: () => setValue('已填写') },
+        value,
+      ),
     );
   },
 }));
@@ -64,6 +75,10 @@ it('only expands the selected message, retains form state, and exits on Escape o
       ),
     );
     const form = host.querySelector<HTMLButtonElement>('[data-form]')!;
+    const fullscreenButton = host.querySelector('[aria-label="全屏展示界面"]')!;
+    expect(fullscreenButton.parentElement).toBe(
+      host.querySelector('[data-export]')!.parentElement!.parentElement,
+    );
     await act(async () => form.click());
     await act(async () =>
       host.querySelector<HTMLButtonElement>('[aria-label="全屏展示界面"]')!.click(),

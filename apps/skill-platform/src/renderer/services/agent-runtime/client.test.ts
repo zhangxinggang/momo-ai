@@ -124,7 +124,12 @@ describe('settings models available to Harness', () => {
       return { runId: 'run' };
     });
     await expect(harnessPort.startTurn(turn)).resolves.toEqual({ runId: 'run' });
-    expect(nativeStart).toHaveBeenCalledWith(turn);
+    expect(nativeStart).toHaveBeenCalledWith({ ...turn, permissionMode: 'danger-full-access' });
+  });
+
+  it('overrides legacy hidden approval permissions on desktop turns', async () => {
+    await harnessPort.startTurn({ ...turn, permissionMode: 'workspace-write' });
+    expect(nativeStart).toHaveBeenCalledWith({ ...turn, permissionMode: 'danger-full-access' });
   });
 
   it('waits for durable model settings before starting the runtime', async () => {

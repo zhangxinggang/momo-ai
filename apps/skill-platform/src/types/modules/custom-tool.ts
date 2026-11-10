@@ -1,3 +1,4 @@
+import type { ToolPageActions } from '@/shared/tool-page';
 import type { IApiRequestConfig } from '@momo/api-request/core';
 
 /** 自定义工具树只负责设置页中的目录组织。 */
@@ -71,6 +72,7 @@ export interface ICustomToolDocument {
   components: Record<string, ICustomToolComponentConfig>;
   plugin?: ICustomToolPlugin;
   validation?: ICustomToolPluginValidation;
+  actions?: ToolPageActions;
 }
 
 export interface ICustomToolSaveInput {
@@ -78,4 +80,5 @@ export interface ICustomToolSaveInput {
   content: string;
   components: Record<string, ICustomToolComponentConfig>;
   plugin?: ICustomToolPlugin;
+  actions?: ToolPageActions;
 }

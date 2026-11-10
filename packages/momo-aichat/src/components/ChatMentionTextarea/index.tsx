@@ -25,12 +25,9 @@ import {
 import {
   findSlashInvocationTokens,
   removeSlashInvocationTokenAt,
-  SURFACE_SLASH_COMMAND,
   SURFACE_SLASH_REGEX,
   SURFACE_SLASH_START,
 } from '../../utils/slash-token';
-import { NoteReferenceChip } from '../NoteReferenceChip';
-import { SlashInvocationChip } from '../SlashInvocationChip';
 import styles from './index.module.less';
 
 export interface IChatMentionTextareaRef {
@@ -61,9 +58,6 @@ function renderMirrorContent(surface: string) {
   const matches: Array<{
     start: number;
     end: number;
-    type: 'mention' | 'slash';
-    label: string;
-    kind?: 'skill' | 'command';
     measureText: string;
   }> = [];
   const mentionSurfaceRegex = new RegExp(SURFACE_MENTION_REGEX.source, 'g');
@@ -72,8 +66,6 @@ function renderMirrorContent(surface: string) {
     matches.push({
       start: match.index,
       end: match.index + match[0].length,
-      type: 'mention',
-      label: match[1],
       measureText: match[0],
     });
   }
@@ -82,9 +74,6 @@ function renderMirrorContent(surface: string) {
     matches.push({
       start: match.index,
       end: match.index + match[0].length,
-      type: 'slash',
-      kind: match[1] === SURFACE_SLASH_COMMAND ? 'command' : 'skill',
-      label: match[2],
       measureText: match[0],
     });
   }
@@ -104,28 +93,9 @@ function renderMirrorContent(surface: string) {
     }
 
     parts.push(
-      inlineMatch.type === 'mention' ? (
-        <NoteReferenceChip
-          key={`chip-${index}`}
-          path={inlineMatch.label}
-          measureText={inlineMatch.measureText}
-          showTooltip={false}
-        />
-      ) : (
-        <SlashInvocationChip
-          key={`chip-${index}`}
-          invocation={{
-            resourceId: '',
-            resourceRevision: '',
-            command: `/${inlineMatch.label}`,
-            label: inlineMatch.label,
-            kind: inlineMatch.kind || 'skill',
-            scope: 'application',
-          }}
-          measureText={inlineMatch.measureText}
-          showTooltip={false}
-        />
-      ),
+      <span key={`chip-${index}`} className={styles['mention-highlight']}>
+        {inlineMatch.measureText}
+      </span>,
     );
     index += 1;
     lastIndex = inlineMatch.end;
@@ -188,11 +158,39 @@ function ChatMentionTextareaInner(props: IProps, ref: Ref<IChatMentionTextareaRe
     // clientWidth already excludes the stable scrollbar gutter. Reserving it a second
     // time makes the overlay wrap sooner and accumulates vertical caret drift.
     mirror.style.width = `${textarea.clientWidth}px`;
-    mirror.style.paddingRight = '0px';
     mirror.style.height = `${textarea.clientHeight}px`;
     const computed = getComputedStyle(textarea);
-    for (const property of ['font', 'letter-spacing', 'word-spacing', 'text-indent', 'tab-size']) {
-      mirror.style.setProperty(property, computed.getPropertyValue(property));
+    for (const property of [
+      // Chromium can return an empty font shorthand when newer font longhands
+      // are in use. Copy the resolved longhands to avoid falling back to 16px.
+      'font-family',
+      'font-size',
+      'font-weight',
+      'font-style',
+      'font-stretch',
+      'font-variant',
+      'font-kerning',
+      'font-feature-settings',
+      'font-variation-settings',
+      'letter-spacing',
+      'word-spacing',
+      'text-indent',
+      'tab-size',
+      'line-height',
+      'text-align',
+      'text-transform',
+      'direction',
+      'white-space',
+      'overflow-wrap',
+      'word-break',
+      'padding-top',
+      'padding-right',
+      'padding-bottom',
+      'padding-left',
+    ]) {
+      const resolved = computed.getPropertyValue(property);
+      mirror.style.setProperty(property, resolved);
+      if (!property.startsWith('padding-')) mirrorContent.style.setProperty(property, resolved);
     }
   }, []);
 
@@ -234,7 +232,11 @@ function ChatMentionTextareaInner(props: IProps, ref: Ref<IChatMentionTextareaRe
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Backspace' || event.key === 'Delete') {
       const textarea = textareaRef.current;
-      if (textarea) {
+      if (
+        textarea &&
+        textarea.selectionStart === textarea.selectionEnd &&
+        !event.nativeEvent.isComposing
+      ) {
         const valueCursor = surfaceIndexToValueIndex(value, textarea.selectionStart);
         const isBackspace = event.key === 'Backspace';
         const slashHit = findSlashInvocationTokens(value).find((item) =>

@@ -89,7 +89,7 @@ export function getDefaultPluginsDir(): string {
 
 /** 用户自定义工具与插件的唯一可编辑目录。 */
 export function getToolsDir(): string {
-  return path.join(getDefaultPluginsDir(), 'user');
+  return path.join(getAppTempDir(), 'custom-tools');
 }
 
 /** 静态资源目录（snapEdit.html 等） */

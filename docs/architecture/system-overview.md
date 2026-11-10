@@ -12,7 +12,7 @@ Windows 产品构建将界面依赖编译进前端，运行时 external 依赖�
 
 AI 对话按当前会话或项目草稿绑定目录与多个 Agent 应用，斜杠面板与 Harness 共用所选资源来源。详见 [AI 对话资源引用](./ai-chat-references.md)。
 
-默认插件源位于 `default/plugins/builtIn` 与 `default/plugins/user`，构建器合并到 Harness 插件镜像。对话生成文件位于 `temp/<sessionId>`，运行会话、附件与产物快照位于 `temp/ai-chat-runtime`。知识库工作进程退出后可重建服务，未完成的写入任务仍由用户重试。详见 [插件目录与加载](./harness-plugin-catalog.md) 和 [问答运行时](./ai-chat-harness-integration-design.md)。
+系统插件源位于 `default/plugins/builtIn`，构建器仅将系统插件纳入 Harness 镜像。业务工具位于 `temp/custom-tools`，页面与执行配置分离；旧 `default/plugins/user` 在首次访问时复制迁移。对话生成文件位于 `temp/<sessionId>`，运行会话、附件与产物快照位于 `temp/ai-chat-runtime`。知识库工作进程退出后可重建服务，未完成的写入任务仍由用户重试。详见 [插件目录与加载](./harness-plugin-catalog.md)、[自定义页面](./custom-tool-pages.md) 和 [问答运行时](./ai-chat-harness-integration-design.md)。
 
 消息中的链接、工作区文件和本轮文件变更统一进入右侧工作面板；文件变更使用实际前后快照，支持保留人工编辑的撤销。详见 [对话工作面板与文件审阅](./chat-workspace-review.md)。
 
@@ -62,14 +62,17 @@ flowchart LR
   end
 
   subgraph CustomViews["自定义工具（界面 / AI 插件 / 网页）"]
-    ToolEditor["工具箱编辑器<br/>OpenUI 默认 / HTML 显式"]
+    ToolEditor["工具箱编辑器<br/>HTML 页面 / 独立执行配置"]
     ToolFiles[("momo-tool.json<br/>view.openui / index.html")]
-    PluginSources["default/plugins<br/>builtIn / user"] --> Harness
+    PluginSources["default/plugins/builtIn<br/>仅系统插件"] --> Harness
     PluginSources --> PluginRegistry
     ToolEditor --> PluginRegistry[已验证 AI 插件目录]
     PluginRegistry -->|实时注册与撤销| Agent
     ToolBroker --> PluginWorker[隔离 Worker 插件执行]
     ToolEditor -->|验证表单调用同一实现| PluginWorker
+    ToolEditor --> TaskHost[AgentTask / FileTask 通用任务]
+    TaskHost -->|同一运行时契约| RuntimeService
+    ToolEditor -->|显式创建技能 / 校验保存| RuntimeService
     ToolEditor --> ApiRequest
     WebAssistant[网页工具 AI 对话]
     ToolEditor --> WebAssistant
@@ -87,11 +90,11 @@ flowchart LR
     DiagramAssets[("getUploadDir<br/>上传图片 / PNG + .drawio")]
     Models[模型与 Embedding 服务]
     WebPages[外部 HTTP/HTTPS 网页]
-    UiStorage[(localStorage<br/>侧栏顺序 / 独立网页问答)]
+    UiStorage[(localStorage<br/>侧栏顺序 / 独立网页问答 / 工具任务)]
   end
 
   User --> Renderer
-  UserSkills -->|预览与导入| Main
+  UserSkills -->|预览 / 目录配置自动补装| Main
   BuiltinSkills -->|功能调用时读取| Main
   Main -->|启动 IPC 加载| BuiltinSnapshot --> Renderer
   BuiltinSkills -->|知识证据规则| KbService
@@ -182,7 +185,7 @@ flowchart LR
   ChatState -->|未调用 Skill 或 Command 的界面模式| ProtocolStream
   ProtocolStream -->|每轮界面快照| ViewHistory[完整聊天列表 / 既有会话持久化]
   NoteComposer --> ScopedSession[单轮独立会话<br/>一次用户任务一个 sessionId]
-  ToolComposer --> ProtocolStream[无 tools 的视图生成流<br/>默认 OpenUI]
+  ToolComposer --> ProtocolStream[无 tools 的页面生成流<br/>工具 HTML / 聊天 OpenUI]
   ProtocolStream --> AIHttp[AI HTTP IPC]
   AIHttp --> Model[配置的对话模型]
   Notes[笔记树] --> MentionMenu["@ 引用菜单"]
@@ -204,7 +207,7 @@ flowchart LR
   SourceStore[会话原文件 Source Store] -->|准入 sourceRefs 读取字节| FilePreview
 ```
 
-普通问答、计划模式及界面模式中的显式 Skill/Command 调用统一进入 Harness。技能正文附带真实资源目录，Agent 按技能读取参考文件、使用脚本和模板；上传原文件在所有模式中保留。完整对话直接使用 `ChatRuntimePort`；笔记改写等单轮编辑器为每次用户任务分配独立 `sessionId`，再通过 Harness Stream Adapter 转为同一运行协议。自定义工具中的界面显示与未调用技能或命令的聊天界面请求共用无宿主 tools、无知识库检索的 AI HTTP 文本流，生成 OpenUI Lang（默认）或明确要求的单文件 HTML，并在 Renderer 校验与修复。聊天生成和修复使用简洁展示规则，工具箱使用自身视觉规则。工具箱保存时由 Main 再次校验路径、大小和视图类型；纯聊天界面生成按轮保存预览与源码，保留所有问答记录，详见 [AI 对话界面模式](./ai-chat-interface-mode.md)。主对话输入 `@` 时，未选择工作区仍展示原笔记树；已选择工作区时按“笔记 / 工作区文件”分类展示，只读取当前项目已注册目录内的显式文件引用。输入栏中的会话命令仍明确进入 Harness；Renderer 不保留隐式回退问答链路。
+普通问答、计划模式及界面模式中的显式 Skill/Command 调用统一进入 Harness。技能正文附带真实资源目录，Agent 按技能读取参考文件、使用脚本和模板；上传原文件在所有模式中保留。完整对话直接使用 `ChatRuntimePort`；笔记改写等单轮编辑器为每次用户任务分配独立 `sessionId`，再通过 Harness Stream Adapter 转为同一运行协议。自定义工具中的界面显示与未调用技能或命令的聊天界面请求共用无宿主 tools、无知识库检索的 AI HTTP 文本流，在工具箱默认生成 HTML 与独立 actions 配置，聊天默认生成 OpenUI Lang；明确指定时可使用其他兼容视图，并在 Renderer 校验与修复。聊天生成和修复使用简洁展示规则，工具箱使用自身视觉规则。工具箱保存时由 Main 再次校验路径、大小和视图类型；纯聊天界面生成按轮保存预览与源码，保留所有问答记录，详见 [AI 对话界面模式](./ai-chat-interface-mode.md)。主对话输入 `@` 时，未选择工作区仍展示原笔记树；已选择工作区时按“笔记 / 工作区文件”分类展示，只读取当前项目已注册目录内的显式文件引用。输入栏中的会话命令仍明确进入 Harness；Renderer 不保留隐式回退问答链路。
 
 ## 技能与文件编辑
 
@@ -220,20 +223,21 @@ flowchart LR
 
 提示词和工作流模块及其 Renderer、Preload、IPC、数据库业务层和 `@momo/workflow` 包已移除，新库不再创建相应表或迁移。旧库中的历史表和磁盘文件不主动删除；当前应用不再访问它们。默认入口为 AI 对话。技能文件继续经受控适配器读写。
 
-### 生成中离开保护
+### 后台生成与菜单切换
 
 ```mermaid
 flowchart LR
   ChatProvider[ChatProvider 多轮会话] -->|onGenerationStateChange| Activity[Renderer 生成活动注册表]
   NoteComposer[笔记 AI 改写] --> Activity
   ToolComposer[自定义工具生成] --> Activity
-  Navigation[模块、会话、节点或弹窗离开动作] --> Guard[统一离开确认]
-  Activity --> Guard
-  Guard -->|继续对话| Stay[保留当前界面]
-  Guard -->|确认离开| Leave[执行原导航或关闭动作]
+  Navigation[菜单或会话切换] -->|直接导航 / 不弹生成确认| Visibility[隐藏已挂载模块]
+  Visibility -->|保留 Provider 和流订阅| ChatProvider
+  ChatProvider --> Runtime[主进程 Harness / SQLite 事件日志]
+  Runtime -->|实时事件和恢复补读| ChatProvider
+  ChatProvider -->|返回对话| Progress[最新进度或完成结果]
 ```
 
-`@momo/aichat` 只通过可选回调报告 Provider 内任一会话的生成状态，不依赖宿主导航。Renderer 按业务模块登记多轮与单轮 AI 活动；导航守卫只查询当前可见模块，避免后台仍在完成的任务反复阻塞后续操作。会话列表切换仍检查当前会话状态。已访问模块隐藏时保持挂载，菜单切换保留问答、输入草稿和当前编辑状态；右侧 Portal 在模块或设置页隐藏时不可见且不可交互。
+`ChatModuleProvider` 位于菜单与设置页外层，`MainContent` 保持对话模块挂载；切换菜单和会话不取消运行、不弹出生成确认。隐藏期间事件继续写入原会话，返回时直接显示最新状态，重载后通过 runId 恢复补读。生成活动注册表仍提供状态统计，技能文件未保存确认仍由编辑器独立处理；右侧 Portal 随模块可见性隐藏。
 
 ### 会话模型切换
 
@@ -311,3 +315,5 @@ flowchart LR
 业务应用通过根目录 `appConf.cjs` 覆盖共享 Electron 壳层配置。`browserWindow` 为对象时继续覆盖窗口参数，为 `null` 时表示应用以操作系统全屏模式启动；未配置时使用共享壳层默认尺寸。主进程向 Renderer 同步全屏和最大化状态，标题栏据此切换最大化/还原图标；还原操作优先退出全屏，再使用 Electron 保存的 normal bounds 或原生 unmaximize 回到此前的位置与宽高。Windows 无边框主窗口保持 `resizable` 和 `thickFrame`，退出全屏后由系统提供四边及四角缩放。
 
 AI 对话的代码执行和生成文件统一使用既有 `temp/<sessionId>`；生成文档经 artifact.create 注册后以真实 sourceRef 进入 momo-file-editor，见 [Harness 集成](./ai-chat-harness-integration-design.md)。界面模式隐藏文件修改统计和记录；标书分析以全宽 Tabs 展示，只有模板 Tab 预览截取的 Word，见 [标书解析技能](./tender-document-parser-skill.md)。自定义工具的全屏控制位于内容区内，悬停显示，全屏时隐藏顶部标题和编辑控件。
+
+通用工具的表单与文件输入经共享 Harness 执行，创建类技能在工具箱完成采集、生成、校验与保存。新建工具使用 HTML 页面与独立动作配置，执行返回结构化报告或普通 JSON，通用宿主负责后台任务与完整 Word 导出；详见 [自定义页面](./custom-tool-pages.md)、[兼容交互工具任务](./interactive-tool-tasks.md) 与 [REA 网页证据](./rea-page-rebuild.md)。

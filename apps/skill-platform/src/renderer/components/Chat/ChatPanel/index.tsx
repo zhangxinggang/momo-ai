@@ -15,10 +15,13 @@ import {
 } from '@momo/aichat';
 import { Button, Dropdown, Input, Modal, type MenuProps } from 'antd';
 import { clsx } from 'clsx';
+import { PinIcon, PinOffIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { SidebarEmptyState } from '@renderer/components/ui/SidebarEmptyState';
+import { useChatHistoryOrder } from '@renderer/hooks/useChatHistoryOrder';
 import { useConfirmLeaveAiChat } from '@renderer/hooks/useConfirmLeaveAiChat';
+import { orderChatHistory } from '@renderer/services/aichat/history-order';
 import { useChatProjectStore, useUIStore } from '@renderer/store';
 import { ChatErrorBoundary } from '../ChatErrorBoundary';
 import { ChatProjectModal } from '../ChatProjectModal';
@@ -36,6 +39,7 @@ interface IProjectTreeNode {
 function ChatPanelContent({ collapsed = false }: IProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -57,6 +61,7 @@ function ChatPanelContent({ collapsed = false }: IProps) {
     stopGeneration,
     refreshSessionsFromStorage,
   } = useChatContext();
+  const { orders, pinnedIds, togglePin, dragProps } = useChatHistoryOrder(sessions);
 
   const projects = useChatProjectStore((s) => s.projects);
   const removeProject = useChatProjectStore((s) => s.removeProject);
@@ -83,21 +88,25 @@ function ChatPanelContent({ collapsed = false }: IProps) {
     const keyword = searchQuery.trim().toLowerCase();
     return projects
       .map((project) => {
-        const projectSessions = sessions
-          .filter((session) => session.projectId === project.id)
-          .filter((session) =>
-            (session.messages ?? []).some(
-              (message) => message.role === 'user' || message.role === 'assistant',
-            ),
-          )
-          .filter((session) => (keyword ? session.title.toLowerCase().includes(keyword) : true))
-          .sort((a, b) => b.updatedAt - a.updatedAt);
+        const projectSessions = orderChatHistory(
+          sessions
+            .filter((session) => session.projectId === project.id)
+            .filter((session) =>
+              (session.messages ?? []).some(
+                (message) => message.role === 'user' || message.role === 'assistant',
+              ),
+            )
+            .filter((session) => (keyword ? session.title.toLowerCase().includes(keyword) : true)),
+          orders[project.id],
+          pinnedIds,
+        );
         return { project, sessions: projectSessions };
       })
       .filter((node) => (keyword ? node.sessions.length > 0 : true));
-  }, [projects, searchQuery, sessions]);
+  }, [projects, searchQuery, sessions, orders, pinnedIds]);
 
   const handleToggleExpand = (projectId: string) => {
+    setOpenMenuId(null);
     setExpandedIds((prev) => {
       const next = new Set(prev);
       if (next.has(projectId)) {
@@ -191,6 +200,11 @@ function ChatPanelContent({ collapsed = false }: IProps) {
   const buildSessionMenu = (session: IChatSession): MenuProps => ({
     items: [
       {
+        key: 'pin',
+        icon: pinnedIds.includes(session.id) ? <PinOffIcon size={14} /> : <PinIcon size={14} />,
+        label: pinnedIds.includes(session.id) ? '取消置顶' : '置顶',
+      },
+      {
         key: 'rename',
         icon: <EditOutlined />,
         label: '编辑',
@@ -204,6 +218,7 @@ function ChatPanelContent({ collapsed = false }: IProps) {
     ],
     onClick: ({ key, domEvent }) => {
       domEvent.stopPropagation();
+      if (key === 'pin') togglePin(session.id);
       if (key === 'rename') {
         setEditingSessionId(session.id);
         setEditingTitle(session.title);
@@ -212,6 +227,17 @@ function ChatPanelContent({ collapsed = false }: IProps) {
         handleDeleteSession(session.id);
       }
     },
+  });
+
+  const menuVisibility = (menuId: string) => ({
+    open: openMenuId === menuId,
+    // Ignore close events from another menu when switching between buttons.
+    onOpenChange: (open: boolean) => {
+      setOpenMenuId((current) => (open ? menuId : current === menuId ? null : current));
+    },
+    // Remove the old popup immediately when switching rows so it cannot overlap the new one.
+    transitionName: '',
+    destroyOnHidden: true,
   });
 
   if (collapsed) {
@@ -239,7 +265,10 @@ function ChatPanelContent({ collapsed = false }: IProps) {
           allowClear
           placeholder='搜索对话'
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setOpenMenuId(null);
+            setSearchQuery(e.target.value);
+          }}
         />
       </div>
 
@@ -252,6 +281,7 @@ function ChatPanelContent({ collapsed = false }: IProps) {
           treeNodes.map(({ project, sessions: projectSessions }) => {
             const isExpanded = expandedIds.has(project.id);
             const displayName = getChatProjectDisplayName(project);
+            const projectMenu = menuVisibility(`project:${project.id}`);
             return (
               <div key={project.id} className={styles['chat-panel-project']}>
                 <div
@@ -272,12 +302,16 @@ function ChatPanelContent({ collapsed = false }: IProps) {
                     className={styles['chat-panel-project-actions']}
                     onClick={(e) => e.stopPropagation()}>
                     <Dropdown
+                      {...projectMenu}
                       menu={buildProjectMenu(project.id)}
-                      trigger={['hover']}
+                      trigger={['click']}
                       placement='bottomRight'>
                       <Button
                         type='text'
                         size='small'
+                        aria-label={`项目操作：${displayName}`}
+                        aria-haspopup='menu'
+                        aria-expanded={projectMenu.open}
                         icon={<EllipsisOutlined />}
                         className={styles['chat-panel-action-btn']}
                       />
@@ -298,9 +332,12 @@ function ChatPanelContent({ collapsed = false }: IProps) {
                       const isActive = session.id === currentSessionId;
                       const isEditing = editingSessionId === session.id;
                       const isGenerating = isSessionGenerating(session.id);
+                      const sessionMenu = menuVisibility(`session:${session.id}`);
                       return (
                         <div
                           key={session.id}
+                          {...(!isEditing ? dragProps(session.id) : {})}
+                          data-session-id={session.id}
                           className={clsx(styles['chat-panel-session-row'], {
                             [styles['chat-panel-session-row--active']]: isActive,
                           })}
@@ -314,6 +351,13 @@ function ChatPanelContent({ collapsed = false }: IProps) {
                             }
                           }}
                           title={session.title}>
+                          {pinnedIds.includes(session.id) ? (
+                            <PinIcon
+                              size={12}
+                              className={styles['chat-panel-session-pin']}
+                              aria-label='已置顶'
+                            />
+                          ) : null}
                           <div className={styles['chat-panel-session-main']}>
                             {isEditing ? (
                               <Input
@@ -356,11 +400,15 @@ function ChatPanelContent({ collapsed = false }: IProps) {
                                 </span>
                               ) : null}
                               <Dropdown
+                                {...sessionMenu}
                                 menu={buildSessionMenu(session)}
-                                trigger={['hover']}
+                                trigger={['click']}
                                 placement='bottomRight'>
                                 <Button
                                   type='text'
+                                  aria-label={`对话操作：${session.title}`}
+                                  aria-haspopup='menu'
+                                  aria-expanded={sessionMenu.open}
                                   size='small'
                                   icon={<EllipsisOutlined />}
                                   className={styles['chat-panel-session-more']}

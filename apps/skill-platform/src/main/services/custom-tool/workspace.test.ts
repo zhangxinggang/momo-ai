@@ -20,6 +20,41 @@ afterEach(() => {
 });
 
 describe('CustomToolWorkspaceService', () => {
+  it('persists page markup and execution configuration separately and keeps actions across visual edits', () => {
+    const service = createService();
+    const created = service.createTool(null, '文件分析');
+    const actions = {
+      analyze: {
+        capability: 'model.generate',
+        title: '分析文件',
+        instruction: '业务独立指令',
+        result: 'report',
+      },
+    };
+    const content = `<html><body><button>开始分析</button><script type="application/json" id="momo-actions">${JSON.stringify(actions)}</script></body></html>`;
+    const saved = service.saveDocument(created.id, { kind: 'html', content, components: {} });
+    expect(saved.actions).toEqual(actions);
+    expect(saved.content).not.toContain('业务独立指令');
+    const directory = service.resolveNodeDirectory(created.id);
+    expect(JSON.parse(fs.readFileSync(path.join(directory, 'actions.json'), 'utf8'))).toEqual(
+      actions,
+    );
+    expect(
+      service.saveDocument(created.id, {
+        kind: 'html',
+        content: '<html><body>新页面</body></html>',
+        components: {},
+      }).actions,
+    ).toEqual(actions);
+    expect(() =>
+      service.saveDocument(created.id, {
+        kind: 'html',
+        content: content.replace('model.generate', 'unknown'),
+        components: {},
+      }),
+    ).toThrow('执行配置');
+    expect(service.readDocument(created.id).content).toContain('新页面');
+  });
   it('imports legacy tools once into the user plugin directory without losing originals or existing tools', () => {
     const legacy = createService();
     legacy.createTool(null, '旧工具');

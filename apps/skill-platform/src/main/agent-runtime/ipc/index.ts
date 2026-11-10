@@ -9,10 +9,10 @@ import { app, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'el
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { getAppTempDir, getProjectRoot, getUserDataPath } from '../../runtime-paths';
+import type { CustomToolWorkspaceService } from '../../services/custom-tool/workspace';
 import { ChatApplicationService } from '../application/service';
 import { AgentStore } from '../persistence/store';
 import { RuntimeBundles } from '../supervisor/bundles';
-import type { CustomToolWorkspaceService } from '../../services/custom-tool/workspace';
 let service: ChatApplicationService | undefined;
 export async function refreshCustomToolCatalog() {
   await service?.refreshCustomTools();

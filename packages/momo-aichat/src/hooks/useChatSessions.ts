@@ -233,9 +233,9 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
   const currentSession = sessions.find((session) => session.id === currentSessionId) || null;
   const currentProjectId =
     currentSession?.projectId ?? (currentSessionId ? null : pendingProjectId);
-  const [draftPermission, setDraftPermission] = useState<PermissionMode>('workspace-write');
+  const [draftPermission, setDraftPermission] = useState<PermissionMode>('danger-full-access');
   const permissionMode = currentSession
-    ? (currentSession.permissionMode ?? 'workspace-write')
+    ? (currentSession.permissionMode ?? 'danger-full-access')
     : draftPermission;
 
   // 获取指定会话的生成状态
@@ -1965,7 +1965,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
 
   // 新建对话：仅进入草稿态，待用户首次发送后再落库
   const handleNewChat = useCallback(() => {
-    setDraftPermission('workspace-write');
+    setDraftPermission('danger-full-access');
     window.dispatchEvent(new CustomEvent('kb:close-manager'));
     setPendingProjectId(null);
     setCurrentSessionId(null);
@@ -1984,7 +1984,7 @@ export const useChatSessions = (options?: IUseChatSessionsOptions) => {
       }
       window.dispatchEvent(new CustomEvent('kb:close-manager'));
       setPendingProjectId(trimmed);
-      setDraftPermission('workspace-write');
+      setDraftPermission('danger-full-access');
       setCurrentSessionId(null);
       if (!isAuthenticated) {
         debouncedSave(sessions, null);

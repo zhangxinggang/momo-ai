@@ -5,6 +5,7 @@ import { createMenu } from '../menu';
 import { registerLocalMediaProtocols } from '../protocol/local-media';
 import { startSilentExternalSkillImportSchedule } from '../services';
 import { noteWorkspaceService } from '../services/note';
+import { ensureBundledSkills } from '../services/skill/bundled-skills';
 
 export interface IAppStartupResult {
   disposeSilentExternalSkillImport?: () => void;
@@ -21,6 +22,12 @@ export async function runAppStartup(db: Database): Promise<IAppStartupResult> {
   }
 
   registerAllIPC(db);
+
+  try {
+    await ensureBundledSkills(new SkillDB());
+  } catch (error) {
+    console.error('[startup] bundled skill installation failed:', error);
+  }
 
   const disposeSilentExternalSkillImport = startSilentExternalSkillImportSchedule(new SkillDB());
   createMenu();

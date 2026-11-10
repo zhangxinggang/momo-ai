@@ -111,6 +111,11 @@
     flex-shrink: 0;
     opacity: 0;
     transition: opacity 0.15s;
+
+    &:focus-within,
+    &:has([aria-expanded='true']) {
+      opacity: 1;
+    }
   }
 
   &-action-btn {
@@ -118,6 +123,7 @@
   }
 
   &-session-row {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -127,6 +133,26 @@
     border-radius: 8px;
     cursor: pointer;
     border: 1px solid transparent;
+
+    &[data-drop-position]::after {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      border-radius: 1px;
+      background: hsl(var(--primary));
+      content: '';
+      pointer-events: none;
+    }
+    &[data-drop-position='before']::after {
+      top: -2px;
+    }
+    &[data-drop-position='after']::after {
+      bottom: -2px;
+    }
+    &:focus-within .chat-panel-session-more {
+      opacity: 1;
+    }
 
     &--active {
       border-color: hsl(var(--primary) / 0.5);
@@ -145,6 +171,11 @@
   &-session-main {
     min-width: 0;
     flex: 1;
+  }
+
+  &-session-pin {
+    flex-shrink: 0;
+    color: hsl(var(--primary));
   }
 
   &-session-title {
@@ -167,6 +198,10 @@
     opacity: 0;
     color: hsl(var(--sidebar-foreground) / 0.45);
     transition: opacity 0.15s;
+
+    &[aria-expanded='true'] {
+      opacity: 1;
+    }
   }
 
   &-session-loading {

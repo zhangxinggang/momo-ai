@@ -1,3 +1,4 @@
+import type { ToolPageActions } from '@/shared/tool-page';
 import type {
   ECustomToolViewKind,
   ICustomToolComponentConfig,
@@ -47,6 +48,7 @@ function serializeDocument(document: ICustomToolDocument | null): string {
         content: document.content,
         components: document.components,
         plugin: document.plugin,
+        actions: document.actions,
       })
     : '';
 }
@@ -91,6 +93,7 @@ interface ICustomToolState {
   exitEditMode: () => void;
   setDocumentContent: (content: string, kind?: ECustomToolViewKind) => void;
   setPluginDraft: (content: string, plugin: ICustomToolPlugin) => void;
+  setPageActions: (actions: ToolPageActions) => void;
   acceptSavedDocument: (toolPath: string, document: ICustomToolDocument) => void;
   setComponentConfig: (id: string, config: ICustomToolComponentConfig) => void;
   selectComponent: (id: string | null) => void;
@@ -234,6 +237,8 @@ export const useCustomToolStore = create<ICustomToolState>((set, get) => ({
       document:
         state.document?.kind === 'plugin' ? { ...state.document, content, plugin } : state.document,
     })),
+  setPageActions: (actions) =>
+    set((state) => ({ document: state.document ? { ...state.document, actions } : null })),
   acceptSavedDocument: (toolPath, document) => {
     if (get().selectedId === toolPath)
       set({ document, savedSnapshot: serializeDocument(document) });

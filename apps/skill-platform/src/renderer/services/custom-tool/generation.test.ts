@@ -85,7 +85,13 @@ file = FileInput("file", "选择文件", ".pdf,.docx")`,
     'injects the shared adaptive visual design guidance into %s generation',
     (kind) => {
       const [systemMessage] = buildCustomToolGenerationMessages('生成生产看板', kind, '');
-      expect(systemMessage.content).toContain(CUSTOM_TOOL_TECH_DESIGN_GUIDANCE);
+      if (kind === 'openui')
+        expect(systemMessage.content).toContain(CUSTOM_TOOL_TECH_DESIGN_GUIDANCE);
+      else {
+        expect(systemMessage.content).toContain('window.momo.invoke');
+        expect(systemMessage.content).toContain('actions.json');
+        expect(systemMessage.content).toContain('浅色工作台');
+      }
     },
   );
 

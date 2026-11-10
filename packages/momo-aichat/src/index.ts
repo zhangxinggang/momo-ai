@@ -1,8 +1,11 @@
 export { AiChatView } from './components/AiChatView';
+export { RunTimeline } from './components/RunTimeline';
 export { AiChatConfigProvider, useAiChatConfig } from './contexts/AiChatConfigContext';
 export { ChatProvider, useChatContext } from './contexts/ChatContext';
 export { createRuntimeChatStream } from './runtime/chat-stream';
 export type { IRuntimeChatStreamOptions } from './runtime/chat-stream';
+export { executeRuntimeTurn } from './runtime/execute';
+export { emptyProjection, type RunProjection } from './runtime/projection';
 
 // 会话类型与工具
 export {
@@ -84,7 +87,6 @@ export type {
   ISlashCommandsListResult,
   ISlashInvocation,
 } from './types/slash-command';
-export { findSlashInvocationTokens, slashTokensToPlainText } from './utils/slash-token';
 export type { IChatWorkspaceConfig, IChatWorkspacePreset } from './types/workspace';
 export {
   buildChatProjectUniqueKey,
@@ -123,4 +125,9 @@ export {
   valueToSurface,
 } from './utils/note-mention';
 export { formatRelativeCompact } from './utils/relative-compact-time';
+export {
+  buildSlashInvocationToken,
+  findSlashInvocationTokens,
+  slashTokensToPlainText,
+} from './utils/slash-token';
 export { formatWorkspaceDisplayPath } from './utils/workspace-display';

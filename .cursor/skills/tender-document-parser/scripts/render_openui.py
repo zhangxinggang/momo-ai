@@ -55,19 +55,22 @@ def render(data):
                         values = []
                         for row in block["rows"]:
                             value = text(row["cells"][ci])
-                            if ci == len(block["columns"]) - 1:
-                                value += "\n\n" + provenance(row)
                             values.append(value)
                         columns.append(emit(prefix + f"Col{ci}", "Col", literal(title), literal(values)))
+                    columns.append(emit(prefix + "Sources", "Col", literal("出处"),
+                                        literal([provenance(row) for row in block["rows"]])))
                     blocks.append(emit(prefix, "Table", refs(columns)))
                 elif block["kind"] == "template":
                     blocks.append(emit(prefix, "FilePreview", literal(block["document"]["source_id"]), "800"))
                     if block["document"]["extraction"] == "page-facsimile":
                         blocks.append(emit(prefix + "Mode", "PlainText", literal("原页版式 Word（图片内容，不可逐字编辑）"), literal("muted")))
-                    blocks.append(emit(prefix + "Evidence", "PlainText", literal(provenance(block)), literal("muted")))
+                    name = emit(prefix + "Name", "Col", literal("模板文件"), literal([block["document"]["name"]]))
+                    sources = emit(prefix + "Sources", "Col", literal("出处"), literal([provenance(block)]))
+                    blocks.append(emit(prefix + "Evidence", "Table", refs([name, sources])))
                 else:
-                    blocks.append(emit(prefix, "PlainText", literal(text(block["text"]))))
-                    blocks.append(emit(prefix + "Evidence", "PlainText", literal(provenance(block)), literal("muted")))
+                    body = emit(prefix + "Text", "Col", literal("内容"), literal([text(block["text"])]))
+                    sources = emit(prefix + "Sources", "Col", literal("出处"), literal([provenance(block)]))
+                    blocks.append(emit(prefix, "Table", refs([body, sources])))
             section_tabs.append(emit(f"section{mi}_{si}", "TabItem", literal(section["id"]), literal(section["title"]), refs(blocks)))
         if section_tabs:
             left = emit(f"sections{mi}", "Tabs", refs(section_tabs), literal("pill"))

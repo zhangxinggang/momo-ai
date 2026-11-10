@@ -67,7 +67,8 @@ export class ToolBroker {
       return { allowed: false, reason: '计划模式只允许读取工具' };
     }
 
-    const permission = context.getPermissionMode?.() ?? context.permissionMode ?? 'workspace-write';
+    const permission =
+      context.getPermissionMode?.() ?? context.permissionMode ?? 'danger-full-access';
     const sideEffect = tool.effects.some((effect) => effect !== 'read');
     if (permission === 'read-only' && sideEffect) {
       return { allowed: false, reason: '仅可查看权限不允许修改、联网或执行代码' };

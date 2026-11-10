@@ -68,6 +68,37 @@ export function normalizeOpenuiSource(source: string): string {
       const keys = Object.keys(properties ?? {});
       const named = args.map((arg) => /^(\w+)\s*[:=]\s*([\s\S]+)$/.exec(arg));
       if (
+        name === 'Stack' &&
+        named.some(
+          (item) =>
+            item && ['align', 'justify'].includes(item[1]) && /^(true|false)$/.test(item[2]),
+        )
+      ) {
+        // Do not turn an explicit invalid assignment into an apparently recoverable
+        // shortened positional call on the next normalization pass.
+        output += `${call[0]}${body})`;
+        i = end + 1;
+        continue;
+      }
+      // A trailing boolean in a shortened Stack call can only mean wrap.
+      // Keep explicit named align/justify errors visible instead of guessing their intent.
+      if (
+        name === 'Stack' &&
+        !named.some(Boolean) &&
+        (args.length === 4 || args.length === 5) &&
+        /^(true|false)$/.test(args.at(-1)!) &&
+        keys[3] === 'align' &&
+        keys[4] === 'justify' &&
+        keys[5] === 'wrap'
+      ) {
+        const wrap = args.pop()!;
+        while (args.length < 5) args.push('null');
+        args.push(wrap);
+        output += `${name}(${args.join(', ')})`;
+        i = end + 1;
+        continue;
+      }
+      if (
         keys.length &&
         named.some(Boolean) &&
         named.every((item) => !item || keys.includes(item[1]))

@@ -19,7 +19,9 @@ const assetPaths = [];
 const pluginRoot = path.resolve(root, '../../apps/skill-platform/default/plugins');
 // The runner directory is a generated mirror, never a second source of truth.
 const pluginAssets = [];
-for (const area of ['builtIn', 'user']) {
+// Project/user tools live under temp/custom-tools and enter via the verified
+// host catalog. They must never be copied into the system runtime image.
+for (const area of ['builtIn']) {
   await walk(path.join(pluginRoot, area), async file => {
     const relative = path.relative(path.join(pluginRoot, area), file).replaceAll('\\', '/');
     const target = 'plugins/' + (area === 'user' ? 'user/' : '') + relative;

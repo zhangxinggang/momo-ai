@@ -11,6 +11,6 @@ export async function execute(input = {}) {
     summary: w.summary,
     current: w.current,
     today: w.today,
-    hourly: input.hourly ? w.hourly : []
+    hourly: input.hourly ? w.hourly : [],
   };
 }

@@ -1,4 +1,5 @@
 import { getBuiltinSkillPrompt } from '@/shared/builtin-skills';
+import { splitToolPage } from '@/shared/tool-page';
 import type { ECustomToolGeneratedViewKind } from '@/types/modules';
 import type { IChatGeneratedView, IChatStreamMessage } from '@momo/aichat';
 import { createParser } from '@openuidev/react-lang';
@@ -40,7 +41,10 @@ export function openuiPrompt(context?: ICustomToolGenerationOptions['context']):
   });
 }
 
-export function resolveCustomToolGenerationKind(instruction: string): ECustomToolGeneratedViewKind {
+export function resolveCustomToolGenerationKind(
+  instruction: string,
+  defaultKind: ECustomToolGeneratedViewKind = 'openui',
+): ECustomToolGeneratedViewKind {
   const text = instruction.normalize('NFKC').toLowerCase();
   if (
     /(?:不要|不再|无需|禁止|避免|别).{0,12}html|(?:do\s+not|don't|without|avoid|no).{0,16}\bhtml\b/.test(
@@ -58,7 +62,7 @@ export function resolveCustomToolGenerationKind(instruction: string): ECustomToo
     text,
   )
     ? 'html'
-    : 'openui';
+    : defaultKind;
 }
 
 export function stripGeneratedView(raw: string, kind: ECustomToolGeneratedViewKind): string {
@@ -79,6 +83,11 @@ export function validateGeneratedView(
   const source = kind === 'openui' ? normalizeOpenuiSource(content.trim()) : content.trim();
   if (!source) return '生成内容为空';
   if (kind === 'html') {
+    try {
+      splitToolPage(source);
+    } catch (error) {
+      return (error as Error).message;
+    }
     return /^\s*(?:<!doctype\s+html\b|<html\b)/i.test(source) ? null : '没有生成完整 HTML 页面';
   }
   if (!/^root\s*=/.test(source)) return '界面源码必须以 root = 声明开始';
@@ -109,7 +118,9 @@ export function buildCustomToolGenerationMessages(
       content:
         kind === 'openui'
           ? openuiPrompt(context)
-          : getBuiltinSkillPrompt('customToolHtml', { visualDesign: visualDesignPrompt(context) }),
+          : context === 'chat'
+            ? getBuiltinSkillPrompt('customToolHtml', { visualDesign: visualDesignPrompt(context) })
+            : getBuiltinSkillPrompt('customToolPage'),
     },
     ...history.filter((message) => message.role !== 'system'),
     { role: 'user', content: `${instruction}${current}` },

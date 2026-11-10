@@ -6,12 +6,7 @@
   "directories": {
     "output": "out"
   },
-  "files": [
-    "dist/main/**/*",
-    "dist/preload/**/*",
-    "dist/knowledge-worker/**/*",
-    "package.json"
-  ],
+  "files": ["dist/main/**/*", "dist/preload/**/*", "dist/knowledge-worker/**/*", "package.json"],
   "electronLanguages": ["en-US", "zh-CN"],
   "extraResources": [],
   "asarUnpack": ["**/*.node", "**/*.dll", "**/*.dylib", "**/*.so", "**/*.wasm"],

@@ -21,7 +21,8 @@ export const harnessPort: ChatRuntimePort = {
     // Await the current settings, including models restored from older renderer-only storage.
     await window.api.settings.set({ aiModels: useSettingsStore.getState().aiModels });
     await window.api.agentRuntime.syncProjects([project]);
-    return window.api.agentRuntime.startTurn(input);
+    // 所有桌面对话入口默认完全权限，也覆盖历史会话中隐藏的旧权限值。
+    return window.api.agentRuntime.startTurn({ ...input, permissionMode: 'danger-full-access' });
   },
   respond: (input) => window.api.agentRuntime.respond(input),
   cancel: (input) => window.api.agentRuntime.cancel(input),

@@ -12,8 +12,16 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "city": { "type": "string", "description": "城市名，默认「西安」；支持常见中文城市，其他城市走在线地理编码。", "default": "西安" },
-          "hourly": { "type": "boolean", "description": "是否附带未来 24 小时逐时趋势，默认 false。", "default": false }
+          "city": {
+            "type": "string",
+            "description": "城市名，默认「西安」；支持常见中文城市，其他城市走在线地理编码。",
+            "default": "西安"
+          },
+          "hourly": {
+            "type": "boolean",
+            "description": "是否附带未来 24 小时逐时趋势，默认 false。",
+            "default": false
+          }
         },
         "required": [],
         "additionalProperties": false
@@ -78,8 +86,28 @@
             "observedAt": "2025-04-10T14:00",
             "timezone": "Asia/Shanghai",
             "summary": "西安实时天气：局部多云，气温 21.3℃（体感 20.8℃），湿度 43%，东北风 11.2 km/h，今日 12~24℃。",
-            "current": { "text": "局部多云", "icon": "⛅", "isDay": true, "temperature": 21.3, "feelsLike": 20.8, "humidity": 43, "precipitation": 0, "windSpeed": 11.2, "windDirText": "东北风", "pressure": 1013.2, "visibilityKm": 24.1, "uvIndex": 4.8 },
-            "today": { "date": "2025-04-10", "text": "局部多云", "tempMax": 24, "tempMin": 12, "sunrise": "2025-04-10T06:18", "sunset": "2025-04-10T19:12" },
+            "current": {
+              "text": "局部多云",
+              "icon": "⛅",
+              "isDay": true,
+              "temperature": 21.3,
+              "feelsLike": 20.8,
+              "humidity": 43,
+              "precipitation": 0,
+              "windSpeed": 11.2,
+              "windDirText": "东北风",
+              "pressure": 1013.2,
+              "visibilityKm": 24.1,
+              "uvIndex": 4.8
+            },
+            "today": {
+              "date": "2025-04-10",
+              "text": "局部多云",
+              "tempMax": 24,
+              "tempMin": 12,
+              "sunrise": "2025-04-10T06:18",
+              "sunset": "2025-04-10T19:12"
+            },
             "hourly": []
           }
         }
@@ -93,7 +121,13 @@
         "type": "object",
         "properties": {
           "city": { "type": "string", "description": "城市名，默认「西安」。", "default": "西安" },
-          "days": { "type": "integer", "description": "预报天数，1~7，默认 3。", "minimum": 1, "maximum": 7, "default": 3 }
+          "days": {
+            "type": "integer",
+            "description": "预报天数，1~7，默认 3。",
+            "minimum": 1,
+            "maximum": 7,
+            "default": 3
+          }
         },
         "required": [],
         "additionalProperties": false
@@ -140,9 +174,33 @@
             "days": 3,
             "summary": "西安未来 3 天预报：04-10 局部多云 12~24℃；04-11 小雨 13~20℃；04-12 晴 10~22℃。（当前：局部多云 21.3℃）",
             "forecast": [
-              { "date": "2025-04-10", "weekday": "周四", "text": "局部多云", "tempMin": 12, "tempMax": 24, "precipitation": 0, "precipProbability": 12 },
-              { "date": "2025-04-11", "weekday": "周五", "text": "小雨", "tempMin": 13, "tempMax": 20, "precipitation": 4.2, "precipProbability": 78 },
-              { "date": "2025-04-12", "weekday": "周六", "text": "晴", "tempMin": 10, "tempMax": 22, "precipitation": 0, "precipProbability": 3 }
+              {
+                "date": "2025-04-10",
+                "weekday": "周四",
+                "text": "局部多云",
+                "tempMin": 12,
+                "tempMax": 24,
+                "precipitation": 0,
+                "precipProbability": 12
+              },
+              {
+                "date": "2025-04-11",
+                "weekday": "周五",
+                "text": "小雨",
+                "tempMin": 13,
+                "tempMax": 20,
+                "precipitation": 4.2,
+                "precipProbability": 78
+              },
+              {
+                "date": "2025-04-12",
+                "weekday": "周六",
+                "text": "晴",
+                "tempMin": 10,
+                "tempMax": 22,
+                "precipitation": 0,
+                "precipProbability": 3
+              }
             ]
           }
         }

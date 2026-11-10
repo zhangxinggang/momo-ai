@@ -3,6 +3,7 @@ import * as PiAi from '@deepseek-ai/dsh-llm-pi-ai';
 import { PERSONA_PREFIX_SECTION } from '@deepseek-ai/dsh-system-prompt';
 import { createHash, randomUUID } from 'node:crypto';
 import readline from 'node:readline';
+import { registerHostTools } from './host-tools.mjs';
 import {
   CHINESE_OUTPUT,
   CONTINUE_AFTER_LIMIT,
@@ -13,7 +14,6 @@ import {
   requestConfig,
 } from './model-policy.mjs';
 import { runManagedCode } from './process.mjs';
-import { registerHostTools } from './host-tools.mjs';
 export const name = 'momo-host-bridge';
 export const inject = [
   'agents',
@@ -255,14 +255,21 @@ export function apply(ctx) {
     };
   }
   function replaceTools(rec, tools) {
-    const update = (rec.toolUpdate ?? Promise.resolve()).catch(() => {}).then(async () => {
-      for (const dispose of rec.registrations) await dispose();
-      rec.registrations = [];
-      rec.registrations = await registerHostTools(rec.scopedContext, tools, (tool, args, exec) =>
-        call('host.tool', { runId: owner(exec.agent)?.runId, name: tool.name, args, callId: exec.callId }, exec.signal));
-      rec.current.tools = tools;
-      for (const run of runs.values()) if (run.agent === rec.handle.agent) run.tools = tools;
-    });
+    const update = (rec.toolUpdate ?? Promise.resolve())
+      .catch(() => {})
+      .then(async () => {
+        for (const dispose of rec.registrations) await dispose();
+        rec.registrations = [];
+        rec.registrations = await registerHostTools(rec.scopedContext, tools, (tool, args, exec) =>
+          call(
+            'host.tool',
+            { runId: owner(exec.agent)?.runId, name: tool.name, args, callId: exec.callId },
+            exec.signal,
+          ),
+        );
+        rec.current.tools = tools;
+        for (const run of runs.values()) if (run.agent === rec.handle.agent) run.tools = tools;
+      });
     rec.toolUpdate = update;
     return update;
   }
@@ -295,21 +302,29 @@ export function apply(ctx) {
           name: PERSONA_PREFIX_SECTION,
           order: systemPrompt.getSectionOrder('DEPLOYMENT_PERSONA_PREFIX'),
           interpolate: false,
-          text: () => rec?.current?.builtinPolicies?.runtimeAssistant ?? input.builtinPolicies?.runtimeAssistant ?? builtinPolicy('runtimeAssistant'),
+          text: () =>
+            rec?.current?.builtinPolicies?.runtimeAssistant ??
+            input.builtinPolicies?.runtimeAssistant ??
+            builtinPolicy('runtimeAssistant'),
         });
       }
+      agentCtx.get('systemPrompt').section({
+        name: 'momo:instructions',
+        order: 10,
+        interpolate: false,
+        text: () => rec?.current?.instructions ?? input.instructions ?? '',
+      });
       agentCtx
         .get('systemPrompt')
         .section({
-          name: 'momo:instructions',
-          order: 10,
+          name: 'momo:language',
+          order: 1000,
           interpolate: false,
-          text: () => rec?.current?.instructions ?? input.instructions ?? '',
+          text: () =>
+            rec?.current?.builtinPolicies?.runtimeLanguage ??
+            input.builtinPolicies?.runtimeLanguage ??
+            CHINESE_OUTPUT,
         });
-      agentCtx
-        .get('systemPrompt')
-        .section({ name: 'momo:language', order: 1000, interpolate: false,
-          text: () => rec?.current?.builtinPolicies?.runtimeLanguage ?? input.builtinPolicies?.runtimeLanguage ?? CHINESE_OUTPUT });
       agentCtx.get('skills').registerProvider((control) => {
         invalidateSkills = control.invalidate;
         return {
@@ -459,7 +474,12 @@ export function apply(ctx) {
           run.nativeReason = undefined;
           run.agent.followup(
             createUserMessage({
-              content: [{ type: 'text', text: input.builtinPolicies?.runtimeContinue ?? CONTINUE_AFTER_LIMIT }],
+              content: [
+                {
+                  type: 'text',
+                  text: input.builtinPolicies?.runtimeContinue ?? CONTINUE_AFTER_LIMIT,
+                },
+              ],
               source: { kind: 'user' },
             }),
           );
@@ -526,9 +546,13 @@ export function apply(ctx) {
     prepareAttachment,
     start,
     async updateCustomTools({ tools }) {
-      if (!Array.isArray(tools) || tools.some(tool => !tool.id?.startsWith('custom.'))) throw Error('INVALID_CUSTOM_CATALOG');
+      if (!Array.isArray(tools) || tools.some((tool) => !tool.id?.startsWith('custom.')))
+        throw Error('INVALID_CUSTOM_CATALOG');
       for (const rec of sessions.values()) {
-        await replaceTools(rec, [...rec.current.tools.filter(tool => !tool.id.startsWith('custom.')), ...tools]);
+        await replaceTools(rec, [
+          ...rec.current.tools.filter((tool) => !tool.id.startsWith('custom.')),
+          ...tools,
+        ]);
       }
       return { updated: sessions.size };
     },

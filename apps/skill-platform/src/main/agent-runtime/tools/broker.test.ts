@@ -66,6 +66,7 @@ describe('host tool broker', () => {
   });
 
   it('asks before a network operation and honours rejection', async () => {
+    context.permissionMode = 'workspace-write';
     const tool = createTool({
       id: 'system.request',
       name: 'system_request',
@@ -77,6 +78,18 @@ describe('host tool broker', () => {
     await expect(broker.execute(tool.name, { value: 'ok' }, 'call', context)).rejects.toThrow();
     expect(tool.execute).not.toHaveBeenCalled();
   });
+
+  it.each(['execute', 'network', 'write'] as const)(
+    'defaults to full access for %s tools',
+    async (effect) => {
+      const tool = createTool({ effects: [effect] });
+      broker.register('run', [tool]);
+      await expect(broker.execute(tool.name, { value: 'ok' }, 'call', context)).resolves.toEqual({
+        value: 'ok',
+      });
+      expect(context.askApproval).not.toHaveBeenCalled();
+    },
+  );
 
   it('revokes a side-effect authorization when permissions become read-only', async () => {
     const tool = createTool({

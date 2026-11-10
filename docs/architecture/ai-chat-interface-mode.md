@@ -59,17 +59,21 @@ flowchart LR
   OpenUI --> FilePreview[FilePreview / momo-file-editor]
   Sources -->|generatedView 准入 sourceRefs| FilePreview
   Toolbox -->|显式 Skill/Command 与附件 sourceRefs| Harness
-  OpenUI --> ExportDocx[ExportDocx / 导出可见文本与表格]
-  ExportDocx --> DocxBlob[DOCX Blob 下载]
+  OpenUI -->|ExportDocx Portal| Toolbar[ChatGeneratedView 共用工具栏 / 左侧导出 / 右侧全屏]
+  Toolbar --> ExportDocx[ExportDocx 完整报告导出]
+  ExportDocx --> ExportGraph[解析完整 OpenUI 图 / 全页签与全表格]
+  ExportGraph --> DocxBlob[格式化 DOCX Blob 下载]
 ```
 
-界面生成完成后 `ChatGeneratedView` 直接显示 OpenUI 或 HTML 预览，不再提供源码标签或完成态提示；生成中、失败和停止状态仍保留必要反馈。工具箱自定义界面中的 `FileInput` 将所选原文件加入界面编辑器输入框；明确调用 Skill/Command 时，输入框把调用、附件元数据和 SourceRef 交给 `ChatProvider.sendMessage`，进入现有 Harness 执行链。界面定义包含 `ExportDocx` 时，该按钮将当前渲染面上的可见文本及表格生成 DOCX 并下载，嵌入式文件预览由其自身下载能力负责。
+界面生成完成后 `ChatGeneratedView` 直接显示 OpenUI 或 HTML 预览，不再提供源码标签或完成态提示；生成中、失败和停止状态仍保留必要反馈。工具箱自定义界面中的 `FileInput` 将所选原文件加入界面编辑器输入框；明确调用 Skill/Command 时，输入框把调用、附件元数据和 SourceRef 交给 `ChatProvider.sendMessage`，进入现有 Harness 执行链。界面声明 `ExportDocx` 时，宿主把按钮放到内容框外；导出从完整组件图及静态编辑覆盖值构建语义文档，包含未选中的嵌套 Tab 与表格全部行，保持标题、换行和独立列。导出不切换 UI、不执行附加任务或读取原文件；嵌入式文件预览保留原版式文件的独立下载能力。
 
 普通界面生成默认 OpenUI，用户明确要求 HTML 时生成单文件 HTML。`context=chat` 让生成和修复都读取 `builtIn/chat-view-generation/SKILL.md` 的简洁展示规则，工具箱继续使用自身视觉规范。附件正文不参与格式选择；提取的全文和参考图片作为材料进入生成请求，无法读取时报错，不能用示例数据代替。此纯界面生成分支不调用 Harness、知识库检索或宿主 tools。
 
 主对话在所有模式中通过 `uploadHarnessAttachments` 保留原文件；仅普通界面分支按需提取文本。显式资源请求由 Main 展开正文及技能目录，在 Harness 执行。技能界面轮次冻结 `agentMode=ask`、`viewRequested=true` 和通用输出提示；Renderer 将唯一 OpenUI 围栏投影为该轮 `generatedView`，不另调用纯界面生成器。校验失败保留源码并支持按冻结请求重试。
 
 生成、最终校验和实际预览共用 `momoOpenuiLibrary`。通用能力包括支持嵌套及稳定选择的 Tabs、独立滚动的 SplitPane、字面 PlainText 和 FilePreview；业务页签、字段及显隐由技能约束。聊天预览采用浅色呈现，工具箱保留自身主题。FilePreview 只从本轮界面准入的附件或生成产物引用中选取 sourceId，经 Source Store 读取实际文件字节，交给 momo-file-editor；Worker/WASM 根地址使用系统配置。
+
+`ChatGeneratedView` 将外部工具栏容器传给 `CustomToolOpenUIPreview`，`ExportDocxView` 通过 Portal 插入与全屏按钮相同的一行；独立工具箱预览保留内部导出工具栏。每个 OpenUI 预览以 `useId` 生成独立主题作用域，ThemeProvider 仅向该实例注入颜色变量，避免同时挂载的深色工具箱覆盖浅色聊天表格。历史界面重新渲染时同样使用隔离主题。
 
 文件上传字段使用 `FileInput`，经 `viewGeneration.render` 注入的 `attachFiles` 回调加入聊天待发送附件；历史上传文本字段兼容转为文件选择器。生成界面的 Button/Form 动作经 `onAction → submit` 进入聊天发送流程，携带表单值、原界面消息 ID 和待发送附件。上传或生成中按钮禁用，失败显示可重试提示。详见 [文件选择与执行续接](./chat-file-interactions.md)。
 

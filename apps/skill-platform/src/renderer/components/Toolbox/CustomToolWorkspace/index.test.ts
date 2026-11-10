@@ -40,6 +40,9 @@ vi.mock('../CustomToolDataPanel', () => ({ CustomToolDataPanel: () => null }));
 vi.mock('../CustomToolOpenUIPreview', () => ({
   CustomToolOpenUIPreview: () => React.createElement('div', { 'data-preview': true }),
 }));
+vi.mock('../CustomToolPagePreview', () => ({
+  CustomToolPagePreview: ({ content }: any) => React.createElement('iframe', { srcDoc: content }),
+}));
 vi.mock('../ToolWebview', () => ({ ToolWebview: () => null }));
 vi.mock('@renderer/components/ui/ModuleEmptyState', () => ({ ModuleEmptyState: () => null }));
 

@@ -7,8 +7,9 @@
 - 浅色背景、白色内容区、清晰表格边框；根 Stack 包含十个固定一级 Tabs，默认基础信息，长导航横向滚动。
 - 每个模块的动态二级 Tabs 和内容占满可用宽度，不生成 SplitPane、原招采文件预览或右侧文件区域。
 - 二级 Tab 和表头来自本次文件的章节、条款或表单，不能固定套用参考截图栏目。
-- 不输出账户区、业务侧栏、业务图标、重新解析或“内容由 AI 大模型生成”提示。根 Stack 顶部必须放置 `ExportDocx("标书解析结果.docx", "导出 DOCX")`，供用户导出当前可见界面的文字和表格。“智能问答”一级 Tab 保留。
+- 不输出账户区、业务侧栏、业务图标、重新解析或“内容由 AI 大模型生成”提示。根 Stack 声明一次 `ExportDocx("标书解析结果.docx", "导出 DOCX")`，宿主将按钮渲染到内容框外的工具栏，不在模块白色框内再放按钮。导出覆盖全部十个一级 Tab、全部二级 Tab 及表格所有行，与当前选中项及分页无关。“智能问答”一级 Tab 保留。
 - Word 阅读器内部控件由 momo-file-editor 管理。模板预览只在“投标文件模板”的对应二级 Tab 内出现。
+- 聊天宿主将导出置于工具栏左侧，全屏置于右侧，两者同一行。只声明 `ExportDocx`，不增加独立工具栏、全屏组件或空白占位。浅色内容区使用深色正文、表头和出处说明，避免浅蓝或白色文字；复用宿主主题，不覆盖通用组件的颜色变量。
 
 ## 内容投影
 
@@ -21,18 +22,22 @@ moduleNavigation = Tabs([basicItem, templateItem], "line")
 basicItem = TabItem("basic", "基础信息", [basicSections])
 basicSections = Tabs([actualSection], "pill")
 actualSection = TabItem("project", "本次原文分组名", [actualContent])
-actualContent = PlainText("本次分析内容与证据")
+actualContent = Table([bodyColumn, sourceColumn])
+bodyColumn = Col("内容", ["本次分析内容"])
+sourceColumn = Col("出处", ["本次文件 · 页码或正文块位置\n原文摘录"])
 templateItem = TabItem("templates", "投标文件模板", [templateSections])
 templateSections = Tabs([actualTemplate], "pill")
 actualTemplate = TabItem("quotation", "本次原表单名", [templateFile, templateEvidence])
 templateFile = FilePreview("artifact_create 返回的 sourceRef.sourceId", 800)
-templateEvidence = PlainText("出处：本次原招采文件及页码/正文块范围", "muted")
+templateEvidence = Table([templateName, templateSource])
+templateName = Col("模板文件", ["本次截取模板.docx"])
+templateSource = Col("出处", ["本次原招采文件 · 页码/正文块范围\n原文摘录"])
 ```
 
 以上仅展示嵌套关系，最终必须保留全部十个一级 Tab，替换示例事实与 ID。每个变量都须声明，TabItem.value 在所属 Tabs 内唯一。
 
-- `table` → Table/Col，列和行动态生成；证据放在相应内容旁。
-- `text` → PlainText，字面保留原文，避免执行文件里的 HTML、脚本或 Markdown。
+- `table` → Table/Col，业务列和行动态生成，追加独立“出处”列，不能把证据拼进建议或要求列。
+- `text` → “内容 / 出处”两列的 Table，字面保留原文与换行，避免执行文件里的 HTML、脚本或 Markdown。标题仍用 PlainText heading。
 - `template` → FilePreview，引用从原件截取且经 artifact_create 注册的 Word。不能用 PlainText、Markdown 表格、HTML 或原招采文件 ID 代替。按 [template-extraction.md](template-extraction.md) 截取、核验并注册。
 - 原页图像 Word 须说明图片内容不可逐字编辑；有字体或分页差异时标注待核验，不宣称完全一致。
 - 未读部分使用 coverage.partial 并列出位置；空模块保留一级 Tab 和准确 empty_message，不创建空二级 Tab。

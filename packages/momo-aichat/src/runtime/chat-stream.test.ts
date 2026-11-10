@@ -45,6 +45,7 @@ describe('createRuntimeChatStream session isolation', () => {
     expect(executeRuntimeTurn).toHaveBeenCalledTimes(1);
     expect(executeRuntimeTurn.mock.calls[0][1]).toMatchObject({
       sessionId: 'tool-generation-current',
+      permissionMode: 'danger-full-access',
       rawIntent: '生成当前工具',
       history: [{ role: 'user', content: '生成当前工具' }],
     });

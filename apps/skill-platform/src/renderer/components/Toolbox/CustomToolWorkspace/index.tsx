@@ -30,6 +30,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { CustomToolAiComposer } from '../CustomToolAiComposer';
 import { CustomToolDataPanel } from '../CustomToolDataPanel';
 import { CustomToolOpenUIPreview } from '../CustomToolOpenUIPreview';
+import { CustomToolPagePreview } from '../CustomToolPagePreview';
+import { ActionsPanel } from '../CustomToolPagePreview/ActionsPanel';
 import { CustomToolPluginWorkspace } from '../CustomToolPluginWorkspace';
 import { ToolWebview } from '../ToolWebview';
 import styles from './index.module.less';
@@ -60,18 +62,6 @@ function createComponentConfig(
   };
 }
 
-function HtmlView({ content, title }: { content: string; title: string }) {
-  return (
-    <iframe
-      className={styles.iframe}
-      title={title}
-      srcDoc={content}
-      sandbox='allow-scripts allow-forms allow-modals allow-popups'
-      referrerPolicy='no-referrer'
-    />
-  );
-}
-
 export function CustomToolWorkspace() {
   const { message } = App.useApp();
   const snapEditRef = useRef<ISnapEditFrameHandle>(null);
@@ -94,6 +84,7 @@ export function CustomToolWorkspace() {
   const enterEditMode = useCustomToolStore((state) => state.enterEditMode);
   const exitEditMode = useCustomToolStore((state) => state.exitEditMode);
   const setDocumentContent = useCustomToolStore((state) => state.setDocumentContent);
+  const setPageActions = useCustomToolStore((state) => state.setPageActions);
   const setComponentConfig = useCustomToolStore((state) => state.setComponentConfig);
   const selectComponent = useCustomToolStore((state) => state.selectComponent);
   const saveCurrent = useCustomToolStore((state) => state.saveCurrent);
@@ -200,6 +191,7 @@ export function CustomToolWorkspace() {
   const preview =
     document.kind === 'openui' ? (
       <CustomToolOpenUIPreview
+        runtimeKey={document.id}
         title={displayName}
         content={document.content}
         components={document.components}
@@ -217,7 +209,13 @@ export function CustomToolWorkspace() {
         }}
       />
     ) : (
-      <HtmlView content={document.content} title={displayName} />
+      <CustomToolPagePreview
+        toolId={document.id}
+        content={document.content}
+        title={displayName}
+        actions={document.actions}
+        disabled={isEditing || isGenerating}
+      />
     );
   const canvas =
     document.kind === 'html' && isEditing ? (
@@ -302,6 +300,20 @@ export function CustomToolWorkspace() {
                   destroyOnHidden={document.kind === 'openui'}
                   items={[
                     { key: 'preview', label: '画布', children: canvas },
+                    ...(document.kind === 'html'
+                      ? [
+                          {
+                            key: 'actions',
+                            label: '执行设置',
+                            children: (
+                              <ActionsPanel
+                                actions={document.actions || {}}
+                                onChange={setPageActions}
+                              />
+                            ),
+                          },
+                        ]
+                      : []),
                     {
                       key: 'source',
                       label: '源码',
@@ -345,12 +357,12 @@ export function CustomToolWorkspace() {
         </div>
 
         {isEditing && !isFullscreen ? (
-        <CustomToolAiComposer
-          key={selectedId}
-          toolKey={selectedId}
-          hasContent={Boolean(document.content.trim())}
-          onRegisterFileAttachmentHandler={registerFileAttachmentHandler}
-        />
+          <CustomToolAiComposer
+            key={selectedId}
+            toolKey={selectedId}
+            hasContent={Boolean(document.content.trim())}
+            onRegisterFileAttachmentHandler={registerFileAttachmentHandler}
+          />
         ) : null}
       </div>
     </ViewportPortal>

@@ -10,7 +10,10 @@ before(async () => {
   const { transformWithEsbuild } = await import('vite');
   const filename = path.join(__dirname, '../../src/main/events/win.ts');
   ({ code } = await transformWithEsbuild(await fs.readFile(filename, 'utf8'), filename, {
-    loader: 'ts', format: 'cjs', platform: 'node', target: 'node20',
+    loader: 'ts',
+    format: 'cjs',
+    platform: 'node',
+    target: 'node20',
   }));
 });
 
@@ -36,7 +39,9 @@ function createWindowFixture(closeConfirm = true) {
     electron: { app, dialog },
     '../../main-window': {
       getMainWindow: () => mainWindow,
-      setMainWindow: (value) => { mainWindow = value; },
+      setMainWindow: (value) => {
+        mainWindow = value;
+      },
     },
     '../../types': { SYSTEM_EVENT: {} },
     '../../utils': { getAppConfig: () => ({ closeConfirm }) },
@@ -44,7 +49,10 @@ function createWindowFixture(closeConfirm = true) {
   };
   const module = { exports: {} };
   vm.runInNewContext(code, {
-    module, exports: module.exports, URL, console: { error: mock.fn() },
+    module,
+    exports: module.exports,
+    URL,
+    console: { error: mock.fn() },
     require: (name) => {
       assert.ok(Object.hasOwn(dependencies, name), `Unexpected import: ${name}`);
       return dependencies[name];
@@ -83,7 +91,12 @@ test('cancelling close keeps the window and allows a later confirmation', async 
 test('repeated close requests share the pending confirmation', async () => {
   const fixture = createWindowFixture();
   let answer;
-  fixture.dialog.showMessageBox.mock.mockImplementationOnce(() => new Promise((resolve) => { answer = resolve; }));
+  fixture.dialog.showMessageBox.mock.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        answer = resolve;
+      }),
+  );
   fixture.close();
   assert.equal(fixture.close().preventDefault.mock.callCount(), 1);
   assert.equal(fixture.dialog.showMessageBox.mock.callCount(), 1);
@@ -111,7 +124,9 @@ test('quitting from the menu confirms once and then closes the window', async ()
 
 test('a failed dialog resets the pending state and allows another close request', async () => {
   const fixture = createWindowFixture();
-  fixture.dialog.showMessageBox.mock.mockImplementationOnce(async () => { throw new Error('Dialog failed'); });
+  fixture.dialog.showMessageBox.mock.mockImplementationOnce(async () => {
+    throw new Error('Dialog failed');
+  });
   fixture.close();
   await settle();
   assert.equal(fixture.getMainWindow(), fixture.win);

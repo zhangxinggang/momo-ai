@@ -1,9 +1,11 @@
+import { createParser, type ElementNode } from '@openuidev/react-lang';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { validateGeneratedView } from '../custom-tool/generation';
+import { momoOpenuiLibrary } from '../custom-tool/openui-library';
 import { projectRuntimeView, runtimeViewNotes } from './runtime-view';
 
 describe('generic runtime UI projection', () => {
@@ -124,6 +126,29 @@ describe('skill-owned tender OpenUI projection', () => {
       expect(output).not.toContain('source:one');
       expect(output).not.toContain('source:two');
       expect(output).toContain('接口响应≤2秒');
+      const root = createParser(momoOpenuiLibrary.toJSONSchema()).parse(output).root!;
+      const columns: ElementNode[] = [];
+      const collect = (value: unknown) => {
+        if (Array.isArray(value)) {
+          value.forEach(collect);
+          return;
+        }
+        if (!value || typeof value !== 'object') return;
+        const node = value as ElementNode;
+        if (node.type === 'element') {
+          if (node.typeName === 'Col') columns.push(node);
+          Object.values(node.props).forEach(collect);
+        }
+      };
+      collect(root);
+      expect(columns.find((column) => column.props.label === '备注')?.props.data).toEqual([
+        'UTF-8\n多行字段',
+      ]);
+      const sourceColumns = columns.filter((column) => column.props.label === '出处');
+      expect(sourceColumns).toHaveLength(2);
+      expect(sourceColumns[0].props.data).toEqual([
+        expect.stringContaining('测试文件.pdf · 第2页'),
+      ]);
       expect(output).toContain('待核验');
       expect(output).not.toContain('内容由 AI 大模型生成');
       delete data.modules[8].sections[0].blocks[0].document.source_id;

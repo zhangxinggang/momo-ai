@@ -106,6 +106,30 @@ it('summarizes execution approval and keeps code in collapsed details', async ()
   expect(container.textContent).not.toContain('"runtime"');
 });
 
+it.each([false, true])(
+  'hides automatically granted approvals, including restored legacy requests (%s)',
+  async (legacy) => {
+    const approval = {
+      ...event,
+      payload: { requestId: 'auto', kind: 'approval', automaticApproval: !legacy },
+    };
+    const events: RunEvent[] = [approval];
+    if (legacy) {
+      events.push({
+        ...event,
+        type: 'interaction.resolved',
+        payload: { requestId: 'auto', permissionMode: 'danger-full-access' },
+      });
+    }
+    events.push(event);
+    await act(async () =>
+      root.render(createElement(RunTimeline, { events, status: 'running', respond: vi.fn() })),
+    );
+    expect(container.textContent).not.toContain('执行审批');
+    expect(container.textContent).toContain('需要你的回答');
+  },
+);
+
 it('renders a file picker, uploads original files, and submits references to the pending run', async () => {
   let finish!: (value: (typeof ref)[]) => void;
   const uploadFiles = vi.fn(

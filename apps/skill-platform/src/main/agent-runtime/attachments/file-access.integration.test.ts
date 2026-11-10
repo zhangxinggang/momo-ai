@@ -50,6 +50,7 @@ describe('real Harness access to uploaded originals', () => {
     { hasWorkspace: false, mode: 'output-limit' },
     { hasWorkspace: false, mode: 'cancel' },
     { hasWorkspace: true, mode: 'full-access' },
+    { hasWorkspace: true, mode: 'default-full-access' },
     { hasWorkspace: true, mode: 'upgrade' },
     { hasWorkspace: true, mode: 'max-tokens' },
     { hasWorkspace: false, mode: 'persistent-limit' },
@@ -283,7 +284,14 @@ describe('real Harness access to uploaded originals', () => {
               invocations: [],
               folderPaths,
               sourceRefs,
-              permissionMode: mode === 'full-access' ? 'danger-full-access' : 'workspace-write',
+              ...(mode === 'default-full-access'
+                ? {}
+                : {
+                    permissionMode:
+                      mode === 'full-access'
+                        ? ('danger-full-access' as const)
+                        : ('workspace-write' as const),
+                  }),
             });
             // Runtime startup has its own bounded RPCs; measure the turn once it is admitted.
             timer = setTimeout(() => rejectTurn(Error('File access turn timeout')), 20000);
@@ -386,7 +394,7 @@ describe('real Harness access to uploaded originals', () => {
             ),
           ).toHaveLength(2);
         }
-        if (mode === 'full-access')
+        if (mode === 'full-access' || mode === 'default-full-access')
           expect(frames.filter((f) => f.type === 'interaction.requested')).toHaveLength(0);
         if (mode === 'upgrade') {
           expect(frames.filter((f) => f.type === 'interaction.requested')).toHaveLength(1);

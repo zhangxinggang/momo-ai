@@ -27,7 +27,9 @@ sequenceDiagram
 ```mermaid
 flowchart LR
   Tool[Harness 或宿主工具] --> Policy[ToolBroker / 当前模式与权限检查]
-  Policy --> Approval[RunTimeline / 操作说明与折叠代码详情]
+  Policy -->|默认完全权限| Execute[直接执行 / 保留工具进度与审计]
+  Execute --> Tool
+  Policy -->|显式受限调用| Approval[RunTimeline / 操作说明与折叠代码详情]
   Approval --> Response[允许本次或拒绝 / respond]
   Response --> Tool
   Host[会话临时目录 runtime.event] --> Directory[RunTimeline 目录按钮]
@@ -38,7 +40,7 @@ flowchart LR
   Adapter --> Download
 ```
 
-聊天输入框移除权限命令与底部权限入口，执行仍受现有宿主策略与逐次审批约束。审批默认展示操作和原因，代码按运行语言展示在可展开详情中；普通追问使用问题、选项及补充回答。宿主在每轮准备完成后发送临时输出目录，点击通过既有本地路径能力打开系统文件夹。原件预览与工作区文件标题均提供下载，优先使用原始字节，避免重新编码文件。
+聊天输入框没有权限入口，桌面对话、单轮编辑与自定义工具默认完全权限。Renderer 发送时覆盖旧会话的隐藏权限值，Main 优先采用本轮显式权限并持久化；恢复旧会话时同步完全权限并放行已有待审批项。宿主工具直接执行，原生审批由 Main 自动答复并在事件中标记 `automaticApproval`，时间线不显示这类审批卡片；执行进度、审计、普通追问及计划模式保留。底层受限权限调用仍可走原有策略。宿主发送临时输出目录，通过既有本地路径能力打开文件夹；原件预览与下载使用原始字节。
 
 ```mermaid
 flowchart LR

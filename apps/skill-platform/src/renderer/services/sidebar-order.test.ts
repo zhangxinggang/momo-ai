@@ -78,6 +78,21 @@ describe('saved sidebar preferences', () => {
     });
   });
 
+  it('restores chat order and pinned sessions after reloading the store', async () => {
+    let store = await import('../store/sidebar-order');
+    store.useSidebarOrderStore.getState().setOrder('chat-sessions', 'project', ['b', 'a']);
+    store.useSidebarOrderStore.getState().setOrder('chat-pinned-sessions', null, ['a']);
+    vi.resetModules();
+    store = await import('../store/sidebar-order');
+    expect(store.useSidebarOrderStore.getState().orders['chat-sessions'].project).toEqual([
+      'b',
+      'a',
+    ]);
+    expect(store.useSidebarOrderStore.getState().orders['chat-pinned-sessions'].__root__).toEqual([
+      'a',
+    ]);
+  });
+
   it('restores order after store reload and keeps the four modules isolated', async () => {
     let store = await import('../store/sidebar-order');
     for (const scope of ['toolbox', 'custom-tools', 'notes', 'knowledge'])

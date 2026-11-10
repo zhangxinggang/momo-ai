@@ -1,6 +1,7 @@
 # 默认技能资源
 
 - `skills/user/`：向用户展示、允许选择导入的默认技能 ZIP。原 `skills/` 中的 `code-honor.zip`、`how-to-do.zip`、`karpathy-guidelines.zip` 均在此目录，导入后的技能仍保存在用户技能仓库与数据库。
+- `skills/catalog.json`：声明技能源目录和 `autoInstall`。运行 `pnpm run build:default-skills` 重建 ZIP；启动时只补装缺失的自动安装项，保留用户同名版本。通用创建技能为 `interactive-tool-builder`，网站采集复刻为 `rea-page-rebuild`，`tender-document-parser` 为文档业务示例。
 - `skills/builtIn/`：系统功能调用的技能源码，不出现在默认技能导入列表。每项能力使用 `SKILL.md`，较大的规则或输入模板拆入 `references/`；`manifest.json` 将稳定资源标识映射到实际文件。
 
 ## 修改内置规则
@@ -31,6 +32,8 @@
 AI 对话的普通界面展示规则维护在 `chat-view-generation/SKILL.md`，生成和自动修复都使用该规则；工具箱继续使用科技视觉规范。聊天中显式调用的 Skill/Command 通过 Agent 执行，不套用通用界面生成规范。
 
 OpenUI 组件 API / schema 仍由 `@openuidev/react-ui` 生成，技术人员在 `custom-tool-generation/references/openui.md` 中维护产品规则。代码继续负责输入校验、权限、工具执行、结果解析与文件保存。
+
+`AgentTask` 接入任意表单与可选文件，`FileTask` 提供简单单文件流程；两者使用现有 Harness 执行，业务指令、技能与阶段标签在 OpenUI 中配置。新增业务不修改宿主分支。工具箱明确选择创建技能时留在当前工具页执行、校验和保存定义，普通描述仍走直接界面生成。
 
 独立 Harness 构建会读取 `skills/builtIn` 中四项部署策略，生成运行包内的 `builtin-policies.json` 与实际 profile，`--ensure` 检查策略变更。桌面端每轮还会传入外部目录的当前策略，因此安装后的规则修改不会受旧运行包快照限制。
 

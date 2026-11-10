@@ -1,6 +1,6 @@
 # 自定义工具视图编辑器
 
-工具箱支持“界面显示 / AI 工具 / 网页”三种入口。界面显示保留 OpenUI 与 HTML 视图文档；AI 工具生成经过校验的 DeepSeek Harness / Cordis 插件，供验证表单与后续 AI 对话调用；网页保存快捷入口。界面编辑器中的普通提示用于生成视图；明确选择 Skill/Command 时转入主 AI 对话的 Harness 执行链，并携带原始附件引用。旧版 tool.json 的 action 不恢复执行。
+工具箱支持“界面显示 / AI 工具 / 网页”三种入口。界面显示保留 OpenUI 与 HTML 视图文档；AI 工具生成经过校验的 DeepSeek Harness / Cordis 插件，供验证表单与后续 AI 对话调用；网页保存快捷入口。界面编辑器中的普通提示用于生成视图；明确选择 Skill/Command 时在工具页执行 Harness、展示过程并校验保存 OpenUI 或 HTML 定义，携带原始附件引用。AI 插件编辑器的技能入口仍转入主聊天。旧版 tool.json 的 action 不恢复执行。
 
 ## 模块与数据流
 
@@ -10,8 +10,11 @@ flowchart LR
   Tree --> Editor[自定义工具编辑器]
   Chat[AI 对话无显式资源的界面请求] -->|context=chat| Generator
   ToolComposer[工具箱 AI 输入框] -->|普通界面描述| Generator
-  ToolComposer -->|显式 Skill/Command + sourceRefs| ChatRuntime[ChatProvider.sendMessage]
-  ChatRuntime --> Harness[现有 Agent Harness]
+  ToolComposer -->|视图的显式 Skill/Command + sourceRefs| TaskRuntime[executeToolTask / 定义阶段]
+  TaskRuntime --> Harness[现有 Agent Harness]
+  TaskRuntime -->|校验后保存| Editor
+  ToolComposer -->|AI 插件的显式资源| ChatRuntime[ChatProvider.sendMessage]
+  ChatRuntime --> Harness
   ChatDesign[chat-view-generation 普通展示规则] --> Generator
   DesignSkill["default/skills/builtIn<br/>科技视觉与生成技能"] --> SkillLoader[Main 内置技能加载器]
   SkillLoader -->|启动 IPC 快照| Generator
@@ -24,6 +27,8 @@ flowchart LR
   Repair --> Validator
   Editor --> OpenUI[OpenUI Renderer]
   OpenUI --> FileInput[FileInput]
+  OpenUI --> Task[AgentTask / FileTask]
+  Task -->|任务阶段| TaskRuntime
   FileInput -->|上传原文件与 SourceRef| ToolComposer
   OpenUI --> ExportDocx[导出当前可见文字与表格]
   ExportDocx --> Download[DOCX Blob 下载]
@@ -61,11 +66,11 @@ flowchart LR
   Main --> Shell[系统文件管理器]
 ```
 
-普通 AI 界面生成直接使用已配置的对话模型文本流，不进入 Harness，也不获得宿主工具或知识库能力；显式 Skill/Command 调用则用 `ChatProvider.sendMessage` 进入 Harness。科技视觉规范维护在 `default/skills/builtIn/custom-tool-tech-design/references/generation-guidance.md`，HTML、OpenUI 与修复规则维护在 `custom-tool-generation`。Renderer 启动时经 Main / Preload 读取外部文件，构建默认值也来自同一目录；技术人员编辑后重启桌面应用即可生效。Cursor 技能入口引用同一规则源。`/custom-tool-tech-design` 命令默认路由到 HTML，以获得完整主题和构图能力；显式要求 OpenUI 时仍保持 OpenUI。Renderer 在保存前校验生成内容，OpenUI 首次校验失败时携带具体错误进行一次定向修复并重新校验；Main 再校验路径、大小和视图类型后写入本地目录。加载边界见 [技能资源](./skill-resources.md)。
+普通 AI 界面生成直接使用已配置的对话模型文本流，不进入 Harness，也不获得宿主工具或知识库能力；视图的显式 Skill/Command 则通过 `executeToolTask` 进入 Harness 并保存工具定义，AI 插件的显式资源仍走主聊天。科技视觉规范维护在 `default/skills/builtIn/custom-tool-tech-design/references/generation-guidance.md`，HTML、OpenUI 与修复规则维护在 `custom-tool-generation`。Renderer 启动时经 Main / Preload 读取外部文件，构建默认值也来自同一目录；技术人员编辑后重启桌面应用即可生效。Cursor 技能入口引用同一规则源。`/custom-tool-tech-design` 命令默认路由到 HTML，以获得完整主题和构图能力；显式要求 OpenUI 时仍保持 OpenUI。Renderer 在保存前校验生成内容，OpenUI 首次校验失败时携带具体错误进行一次定向修复并重新校验；Main 再校验路径、大小和视图类型后写入本地目录。加载边界见 [技能资源](./skill-resources.md)。
 
 ## 本地文档契约
 
-生成、校验和预览共用 `momoOpenuiLibrary`。扩展能力为嵌套 Tabs、SplitPane、PlainText、FilePreview、FileInput 和 ExportDocx；组件本身不包含技能业务字段。聊天通过 presentation=chat 使用浅色预览，工具箱保留科技主题。FilePreview 在宿主注入准入附件引用时读取原件，未绑定的工具视图只显示准确空状态。FileInput 在编辑器中把原始附件上传到 AI 输入框，显式技能调用继续通过 SourceRef 读取。
+生成、校验和预览共用 `momoOpenuiLibrary`。扩展能力为嵌套 Tabs、SplitPane、PlainText、FilePreview、FileInput、AgentTask、FileTask 和 ExportDocx；组件本身不包含技能业务字段。聊天通过 presentation=chat 使用浅色预览，普通工具箱视图保留科技主题，任务根组件使用浅色画布。FilePreview 在宿主注入准入附件引用时读取原件，未绑定的工具视图只显示准确空状态。AgentTask 内 FileInput 上传至当前任务，其他位置仍附加到 AI 输入框。通用任务执行和结果缓存见 [通用交互工具任务](./interactive-tool-tasks.md)。
 
 `generateCustomToolView` 统一负责工具箱与主 AI 对话纯界面请求的生成、流式投影、校验和一次 OpenUI 修复。工具箱继续使用科技视觉规则并保存视图文档；聊天通过 `context=chat` 在生成和修复中使用 `chat-view-generation` 的普通展示规则，保存每轮独立界面，并复用 `CustomToolOpenUIPreview`。界面模式中显式调用 Skill/Command 时进入原有 Agent 执行链路，详见 [AI 对话界面模式](./ai-chat-interface-mode.md)。
 

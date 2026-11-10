@@ -9,16 +9,14 @@ const appRoot = path.resolve(scriptDir, '..');
 const outputDir = path.join(appRoot, 'default', 'skills', 'user');
 
 /** 内置默认技能：源目录相对 monorepo 根路径 -> 输出 zip 文件名 */
-const DEFAULT_SKILL_SOURCES = [
-  {
-    sourceRelativePath: '.cursor/skills/karpathy-guidelines',
-    zipFileName: 'karpathy-guidelines.zip',
-  },
-];
+const DEFAULT_SKILL_SOURCES = JSON.parse(
+  fs.readFileSync(path.join(appRoot, 'default/skills/catalog.json'), 'utf8'),
+).map(({ name, source }) => ({ sourceRelativePath: source, zipFileName: `${name}.zip` }));
 
 function collectFiles(rootDir, currentDir = rootDir, prefix = '') {
   const files = {};
   for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
+    if (entry.name === '__pycache__' || entry.name.endsWith('.pyc')) continue;
     const absolutePath = path.join(currentDir, entry.name);
     const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
     if (entry.isDirectory()) {
@@ -57,7 +55,9 @@ function buildDefaultSkillZip({ sourceRelativePath, zipFileName }) {
   const outputPath = path.join(outputDir, zipFileName);
   fs.mkdirSync(outputDir, { recursive: true });
   fs.writeFileSync(outputPath, Buffer.from(zipped));
-  console.log(`已生成 ${path.relative(appRoot, outputPath)} (${Object.keys(fileMap).length} 个文件)`);
+  console.log(
+    `已生成 ${path.relative(appRoot, outputPath)} (${Object.keys(fileMap).length} 个文件)`,
+  );
 }
 
 for (const skillSource of DEFAULT_SKILL_SOURCES) {

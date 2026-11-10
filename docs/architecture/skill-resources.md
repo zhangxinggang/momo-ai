@@ -5,10 +5,14 @@
 ```mermaid
 flowchart LR
   subgraph Defaults["apps/skill-platform/default/skills"]
-    UserZip["user/*.zip<br/>原有三个默认技能"]
+    UserZip["user/*.zip<br/>用户可导入技能 ZIP"]
     Builtin["builtIn/*/SKILL.md<br/>references/*.md"]
     Manifest["builtIn/manifest.json<br/>固定资源 ID 与路径"]
   end
+  SourceCatalog[default/skills/catalog.json] --> Build[构建 ZIP]
+  Build --> UserZip
+  SourceCatalog --> Startup[启动时补装 autoInstall 项]
+  Startup --> Preview
   UserZip --> Preview["Main 默认技能预览 / 导入"]
   Preview --> UserUI[用户选择导入]
   UserUI --> Preview
@@ -63,3 +67,5 @@ flowchart LR
 同步和元信息回写只读取根目录 `SKILL.md`，无需遍历 `agents`、`references` 等辅助文件。通用目录读取跳过遍历期间消失的条目，权限及其他读取错误继续上报。文件编辑按内容识别 UTF-8 文本，详细边界见 [文件编辑器](./file-editor.md)。
 
 `@momo/aichat` 通过宿主注入的引用规则与附件默认任务生成实际请求，发送给模型的业务指令由宿主提供。工作流提供文件正文与来源标签，统一模板负责说明参考方式。
+
+`default/skills/catalog.json` 统一声明技能源目录及自动安装标记。构建脚本按目录生成 ZIP；Main 启动仅补装缺失的 autoInstall 技能，保留用户已有同名版本。新增默认技能只修改清单与资源，不在运行时增加业务名称分支。默认提供 interactive-tool-builder、rea-page-rebuild 与 tender-document-parser，均经现有技能仓库和命令目录使用。

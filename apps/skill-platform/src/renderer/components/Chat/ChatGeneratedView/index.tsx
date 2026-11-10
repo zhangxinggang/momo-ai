@@ -99,6 +99,7 @@ export function ChatGeneratedView({
         {view.errorMessage ? <Alert type='error' message={view.errorMessage} showIcon /> : null}
         {view.kind === 'openui' ? (
           <CustomToolOpenUIPreview
+            runtimeKey={`chat:${message.id}`}
             content={view.content}
             title='聊天界面预览'
             components={{}}

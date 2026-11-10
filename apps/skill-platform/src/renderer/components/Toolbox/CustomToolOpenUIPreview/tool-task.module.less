@@ -1,0 +1,208 @@
+.task {
+  color: #262b37;
+  background: #f8f9fd;
+  padding: 22px;
+  border-radius: 12px;
+  font:
+    14px/1.6 'Microsoft YaHei',
+    'PingFang SC',
+    sans-serif;
+  min-width: 0;
+}
+.steps {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 28px;
+  max-width: 640px;
+  gap: 24px;
+}
+.step {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  color: #9499a8;
+  white-space: nowrap;
+}
+.step + .step::before {
+  content: '';
+  height: 1px;
+  background: #dfe2ed;
+  flex: 1;
+  margin-right: 8px;
+}
+.step > span {
+  display: grid;
+  place-items: center;
+  border: 1px solid #dfe2ed;
+  border-radius: 50%;
+  width: 27px;
+  height: 27px;
+  flex: none;
+  background: white;
+}
+.active {
+  color: #5035ff;
+}
+.active > span {
+  background: #5035ff;
+  color: white;
+  border-color: #5035ff;
+}
+.uploadCard {
+  background: #fff;
+  border: 1px solid #e7e9f1;
+  border-radius: 14px;
+  padding: 26px;
+}
+.uploadCard h2 {
+  text-align: center;
+  font-size: clamp(21px, 2.6vw, 30px);
+  font-weight: 650;
+  margin: 8px 0 10px;
+}
+.uploadCard > p {
+  text-align: center;
+  color: #8a8e9c;
+  margin: 0 0 25px;
+}
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  padding: 26px 16px;
+  border: 1px dashed #cdc9e7;
+  border-radius: 9px;
+  background: linear-gradient(110deg, #fbfaff, #f2fbff);
+  cursor: pointer;
+  color: #5138ff;
+  gap: 12px;
+}
+.dropzone:focus-visible,
+.dragging {
+  outline: 2px solid #7968ff;
+  outline-offset: 3px;
+}
+.dropzone[aria-disabled='true'] {
+  cursor: default;
+  opacity: 0.65;
+}
+.dropzone > strong {
+  font-size: 16px;
+}
+.dropzone > small {
+  color: #989ca9;
+  text-align: center;
+}
+.formats {
+  display: flex;
+  gap: 34px;
+  margin: 4px 0;
+}
+.formats > span {
+  color: #4a7bec;
+  font-weight: 700;
+  text-align: center;
+}
+.formats > span:nth-child(2) {
+  color: #f47777;
+}
+.formats small {
+  display: block;
+  font-weight: 400;
+  color: #5c6371;
+  font-size: 11px;
+}
+.file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 2px;
+  border-bottom: 1px solid #f0f1f5;
+}
+.file strong {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.file span {
+  color: #8a8e9c;
+  font-size: 12px;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+.task :global(.ant-btn-primary:not(:disabled)) {
+  background: #6757f5;
+  border-color: #6757f5;
+  min-width: 105px;
+}
+.progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #6757f5;
+  padding: 22px;
+}
+.spinning {
+  animation: spin 1s linear infinite;
+}
+.timeline {
+  margin-top: 16px;
+  font-size: 13px;
+}
+.resultHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.resultHeader strong {
+  overflow-wrap: anywhere;
+}
+.resultLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
+  gap: 16px;
+  align-items: start;
+}
+.resultLayout[data-original='false'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+.analysis {
+  min-width: 0;
+  background: white;
+  border: 1px solid #e7e9f1;
+  border-radius: 10px;
+  overflow: auto;
+  max-height: 75vh;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 850px) {
+  .resultLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .task {
+    padding: 12px;
+  }
+  .uploadCard {
+    padding: 18px;
+  }
+  .steps {
+    gap: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinning {
+    animation: none;
+  }
+}

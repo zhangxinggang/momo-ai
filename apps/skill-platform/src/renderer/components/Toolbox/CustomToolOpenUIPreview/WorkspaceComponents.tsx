@@ -12,9 +12,12 @@ export const ViewSourcesContext = createContext<IChatSourceRef[]>([]);
 export const ViewFileSelectionContext = createContext<
   ((files: File[]) => Promise<boolean>) | undefined
 >(undefined);
+export const ViewFileSelectionFeedbackContext =
+  createContext('文件已添加到对话输入框，发送消息即可继续。');
 
 export function FileInputView({ props }: ComponentRenderProps<Record<string, unknown>>) {
   const attachFiles = useContext(ViewFileSelectionContext);
+  const attachedFeedback = useContext(ViewFileSelectionFeedbackContext);
   const streaming = useIsStreaming();
   const field = useStateField(String(props.name ?? 'files'), []);
   const [busy, setBusy] = useState(false);
@@ -38,7 +41,7 @@ export function FileInputView({ props }: ComponentRenderProps<Record<string, unk
             setError('');
             try {
               if (attachFiles && !(await attachFiles(files)))
-                throw new Error('文件未全部添加，请检查对话输入框中的附件后重试。');
+                throw new Error('文件未全部添加，请检查附件后重试。');
               setNames(files.map((file) => file.name));
               field.setValue(
                 files.map((file) => ({ name: file.name, size: file.size, type: file.type })),
@@ -55,7 +58,7 @@ export function FileInputView({ props }: ComponentRenderProps<Record<string, unk
       {names.map((name, index) => (
         <div key={`${index}:${name}`}>{name}</div>
       ))}
-      {names.length > 0 && attachFiles && <p>文件已添加到对话输入框，发送消息即可继续。</p>}
+      {names.length > 0 && attachFiles && <p>{attachedFeedback}</p>}
       {names.length > 0 && !attachFiles && <p>已选择文件，仅保留在当前界面。</p>}
       {error && <p role='alert'>{error}</p>}
     </div>
@@ -141,7 +144,7 @@ export function SplitPaneView({
   );
 }
 
-export function FilePreviewView({ props }: ComponentRenderProps<Record<string, unknown>>) {
+export function FilePreviewView({ props }: { props: Record<string, unknown> }) {
   const refs = useContext(ViewSourcesContext);
   const ref = refs.find((source) => source.sourceId === props.sourceId);
   const [loaded, setLoaded] = useState<{ key: string; buffer: ArrayBuffer; baseUrl: string }>();

@@ -1,6 +1,7 @@
 import { getBuiltinSkillPrompt } from '@/shared/builtin-skills';
 import {
   ChatInputPanel,
+  RunTimeline,
   findSlashInvocationTokens,
   slashTokensToPlainText,
   useAiChatConfig,
@@ -17,6 +18,13 @@ import {
   resolveCustomToolGenerationKind,
 } from '@renderer/services/custom-tool/generation';
 import { generateCustomToolPlugin } from '@renderer/services/custom-tool/plugin-generation';
+import {
+  executeToolTask,
+  newToolTask,
+  projectToolDefinition,
+} from '@renderer/services/custom-tool/tool-task';
+import { harnessPort, uploadHarnessAttachments } from '@renderer/services/agent-runtime/client';
+import { useToolTaskStore } from '@renderer/store/tool-task';
 import { useCustomToolStore, useSettingsStore, useUIStore } from '@renderer/store';
 import { clsx } from 'clsx';
 import { useCallback, useEffect, useState, type KeyboardEvent } from 'react';
@@ -35,11 +43,12 @@ export function CustomToolAiComposer({
 }: IProps) {
   const { showToast } = useToast();
   const { uploadFiles, validateLocalFiles } = useAiChatConfig();
-  const { currentModel, temperature, topP, sendMessage } = useChatContext();
+  const { currentModel, currentProjectId, temperature, topP, sendMessage } = useChatContext();
   const setViewMode = useUIStore((state) => state.setViewMode);
   const aiModels = useSettingsStore((state) => state.aiModels);
   const document = useCustomToolStore((state) => state.document);
   const task = useCustomToolStore((state) => state.generationTasks[toolKey]);
+  const skillRun = useToolTaskStore((state) => state.tasks[`tool-definition:${toolKey}`]);
   const setDocumentContent = useCustomToolStore((state) => state.setDocumentContent);
   const setGenerationTask = useCustomToolStore((state) => state.setGenerationTask);
 
@@ -112,6 +121,7 @@ export function CustomToolAiComposer({
       isGenerating ||
       isUploading ||
       isExecutingSkill ||
+      controllers.has(toolKey) ||
       !document
     )
       return;
@@ -119,7 +129,7 @@ export function CustomToolAiComposer({
     const selectedInvocations = findSlashInvocationTokens(instruction).map(
       ({ invocation }) => invocation,
     );
-    if (selectedInvocations.length) {
+    if (selectedInvocations.length && document.kind === 'plugin') {
       const attachmentMeta: IChatAttachmentMeta[] = attachments.map(
         ({ id, name, size, mime, ext, snippet, sourceRef }) => ({
           id,
@@ -165,6 +175,98 @@ export function CustomToolAiComposer({
       chatModels[0];
     if (!selectedModel) {
       showToast('请先配置可用于生成自定义工具的 AI 对话模型', 'error');
+      return;
+    }
+
+    if (selectedInvocations.length) {
+      const mode = resolveCustomToolGenerationKind(slashTokensToPlainText(instruction));
+      const generationId = ++generationSequence;
+      const controller = new AbortController();
+      controllers.set(toolKey, controller);
+      const runKey = `tool-definition:${toolKey}`;
+      const initial = newToolTask();
+      useToolTaskStore.getState().setTask(runKey, initial);
+      setGenerationTask(toolKey, {
+        id: generationId,
+        status: 'generating',
+        mode,
+        errorMessage: '',
+      });
+      const previous = document;
+      try {
+        const projection = await executeToolTask({
+          sessionId: initial.sessionId,
+          projectId: currentProjectId ?? undefined,
+          modelId: selectedModel.id,
+          instruction: [
+            slashTokensToPlainText(instruction).trim(),
+            document.content ? `当前工具定义（修改时保留相关功能）：\n${document.content}` : '',
+          ]
+            .filter(Boolean)
+            .join('\n\n'),
+          sources: attachments.flatMap((attachment) =>
+            attachment.sourceRef ? [attachment.sourceRef] : [],
+          ),
+          invocations: selectedInvocations,
+          purpose: 'definition',
+          definitionKind: mode,
+          signal: controller.signal,
+          onUpdate: (projection) => {
+            if (useCustomToolStore.getState().generationTasks[toolKey]?.id !== generationId) return;
+            useToolTaskStore.getState().setTask(runKey, { ...initial, projection });
+            const view = projectToolDefinition(projection.content, true, mode);
+            const state = useCustomToolStore.getState();
+            if (
+              view &&
+              state.selectedId === toolKey &&
+              state.generationTasks[toolKey]?.id === generationId
+            )
+              state.setDocumentContent(view.content, mode);
+          },
+        });
+        if (useCustomToolStore.getState().generationTasks[toolKey]?.id !== generationId) return;
+        if (controller.signal.aborted || projection.status !== 'completed')
+          throw new Error('工具生成已停止');
+        const view = projectToolDefinition(projection.content, false, mode)!;
+        const saved = await saveCustomTool(toolKey, {
+          ...document,
+          kind: mode,
+          content: view.content,
+          components: {},
+        });
+        useCustomToolStore.getState().acceptSavedDocument(toolKey, saved);
+        setGenerationTask(toolKey, {
+          id: generationId,
+          status: 'done',
+          mode,
+          errorMessage: '',
+        });
+        setPrompt('');
+        setAttachments([]);
+        setProgressMap({});
+      } catch (error) {
+        const state = useCustomToolStore.getState();
+        if (state.generationTasks[toolKey]?.id !== generationId) return;
+        const latest = useToolTaskStore.getState().tasks[runKey] || initial;
+        useToolTaskStore.getState().setTask(runKey, {
+          ...latest,
+          error: (error as Error).message,
+          projection: {
+            ...latest.projection,
+            status: controller.signal.aborted ? 'cancelled' : 'failed',
+          },
+        });
+        if (state.selectedId === toolKey) state.setDocumentContent(previous.content, previous.kind);
+        setGenerationTask(toolKey, {
+          id: generationId,
+          status: controller.signal.aborted ? 'stopped' : 'error',
+          mode,
+          errorMessage: (error as Error).message,
+        });
+        if (!controller.signal.aborted) showToast((error as Error).message, 'error');
+      } finally {
+        if (controllers.get(toolKey) === controller) controllers.delete(toolKey);
+      }
       return;
     }
 
@@ -277,6 +379,7 @@ export function CustomToolAiComposer({
     aiModels,
     attachments,
     currentModel,
+    currentProjectId,
     document,
     isGenerating,
     isExecutingSkill,
@@ -340,6 +443,18 @@ export function CustomToolAiComposer({
           </div>
         ) : null}
       </div>
+      {skillRun?.projection.events.length ? (
+        <RunTimeline
+          events={skillRun.projection.events}
+          status={skillRun.projection.status}
+          respond={(answer) => harnessPort.respond(answer)}
+          uploadFiles={async (files) =>
+            (await uploadHarnessAttachments(files)).flatMap((file) =>
+              file.sourceRef ? [file.sourceRef] : [],
+            )
+          }
+        />
+      ) : null}
       <div className={styles['input-wrap']}>
         {!hasContent ? (
           <p className={styles.hint}>

@@ -62,7 +62,38 @@ const FileInput = defineComponent({
     multiple: z.boolean().optional(),
   }),
   description:
-    'Native file selection button. Use for every file/attachment upload field instead of Input or TextArea. In chat and the custom-tool editor, selected original files are added to the AI composer for the next message; an explicitly selected Skill or Command can then read the original source. accept is an optional extension/MIME filter; multiple defaults to false. Never ask users to type file paths.',
+    'Native file selection button. Use for file upload fields instead of Input or TextArea. Inside AgentTask files belong to the task submission; otherwise they attach to the AI composer. accept is an optional extension/MIME filter; multiple defaults to false. Never ask users to type file paths.',
+  component: () => null,
+});
+
+const FileTask = defineComponent({
+  name: 'FileTask',
+  props: z.object({
+    title: z.string(),
+    instruction: z.string(),
+    skill: z.string().optional(),
+    description: z.string().optional(),
+    accept: z.string().optional(),
+    previewOriginal: z.boolean().optional(),
+    steps: z.array(z.string()).length(3).optional(),
+  }),
+  description:
+    'A complete single-file task: upload card, upload/analyze/results steps, native Harness execution with approvals/questions, result Tabs and original-file preview. Use as the root for reusable document-processing tools. instruction describes analysis; skill is the exact installed skill command without /. File bytes and results are host-managed, never invent analysis on the upload screen.',
+  component: () => null,
+});
+
+const AgentTask = defineComponent({
+  name: 'AgentTask',
+  props: z.object({
+    title: z.string(),
+    instruction: z.string(),
+    children: z.array(z.any()),
+    skill: z.string().optional(),
+    steps: z.array(z.string()).length(3).optional(),
+    previewOriginal: z.boolean().optional(),
+  }),
+  description:
+    'Generic executable tool, use one AgentTask as the root. children contains a Form with any Input, Select, FileInput and Button components. On form submission the host sends real fields/files to Harness in an isolated session, shows approvals/questions and displays actual results. Works with or without files. instruction defines the business task, optional skill is an installed skill command. steps optionally renames the three stages. Use FileTask for a simple single-file upload card.',
   component: () => null,
 });
 
@@ -88,13 +119,23 @@ export const momoOpenuiLibrary = createLibrary({
     FilePreview,
     PlainText,
     FileInput,
+    FileTask,
+    AgentTask,
     ExportDocx,
   ],
   componentGroups: [
     ...openuiLibrary.componentGroups,
     {
       name: 'Workspace',
-      components: ['SplitPane', 'FilePreview', 'PlainText', 'FileInput', 'ExportDocx'],
+      components: [
+        'SplitPane',
+        'FilePreview',
+        'PlainText',
+        'FileInput',
+        'FileTask',
+        'AgentTask',
+        'ExportDocx',
+      ],
       notes: [
         'Use supplied attachment source IDs only. Business layout and content come from the user and selected skill.',
       ],

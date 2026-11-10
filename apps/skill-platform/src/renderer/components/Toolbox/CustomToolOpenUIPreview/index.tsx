@@ -19,6 +19,7 @@ import { normalizeOpenuiSource } from '@renderer/services/custom-tool/openui-sou
 import { Alert, Empty } from 'antd';
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -31,6 +32,9 @@ import { GeneratedMarkdown } from './GeneratedMarkdown';
 
 import styles from './index.module.less';
 import { MeasuredChart } from './MeasuredChart';
+import { FileTaskScope, FileTaskView } from './FileTaskView';
+import { AgentTaskView } from './AgentTaskView';
+import { TaskBridge, type ITaskActions } from './TaskBridge';
 import {
   FileInputView,
   FilePreviewView,
@@ -48,6 +52,7 @@ interface ISelection {
 }
 
 interface IProps {
+  runtimeKey?: string;
   content: string;
   title: string;
   components: Record<string, ICustomToolComponentConfig>;
@@ -203,15 +208,19 @@ function EditableComponent({
       ? FileInputView
       : definition.name === 'SplitPane'
         ? SplitPaneView
-        : definition.name === 'FilePreview'
-          ? FilePreviewView
-          : definition.name === 'ExportDocx'
-            ? ExportDocxView
-            : definition.name === 'Tabs'
-              ? TabsView
-              : definition.name === 'PlainText'
-                ? PlainTextView
-                : definition.component;
+        : definition.name === 'FileTask'
+          ? FileTaskView
+          : definition.name === 'AgentTask'
+            ? AgentTaskView
+            : definition.name === 'FilePreview'
+              ? FilePreviewView
+              : definition.name === 'ExportDocx'
+                ? ExportDocxView
+                : definition.name === 'Tabs'
+                  ? TabsView
+                  : definition.name === 'PlainText'
+                    ? PlainTextView
+                    : definition.component;
   const original = <Original {...renderProps} props={resolvedProps} />;
   const rendered =
     definition.name === 'MarkDownRenderer' ? (
@@ -266,6 +275,7 @@ const editableOpenuiLibrary = createLibrary({
 });
 
 export function CustomToolOpenUIPreview({
+  runtimeKey,
   content,
   title,
   components,
@@ -284,15 +294,51 @@ export function CustomToolOpenUIPreview({
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const surfaceRef = useRef<HTMLDivElement>(null);
+  const light =
+    presentation === 'chat' || /^\s*root\s*=\s*(?:AgentTask|FileTask)\s*\(/.test(content);
+  const taskKey = useMemo(() => {
+    // A revised tool definition must not display results produced by its previous instructions.
+    let hash = 2166136261;
+    const definition = `${content}\0${JSON.stringify(components)}`;
+    for (let index = 0; index < definition.length; index++)
+      hash = Math.imul(hash ^ definition.charCodeAt(index), 16777619);
+    return `${runtimeKey || title}:${hash >>> 0}`;
+  }, [runtimeKey, title, content, components]);
+  const tasks = useRef(new Map<string, ITaskActions>());
+  const registerTask = useCallback((id: string, actions?: ITaskActions) => {
+    if (actions) tasks.current.set(id, actions);
+    else tasks.current.delete(id);
+  }, []);
+  const taskBridge = useMemo(
+    () => ({
+      key: taskKey,
+      disabled: Boolean(editing || streaming || busy),
+      register: registerTask,
+    }),
+    [taskKey, editing, streaming, busy, registerTask],
+  );
+  const selectFiles = async (files: File[]) => {
+    if (tasks.current.size > 1) {
+      setActionError('一个工具页面只支持一个 AgentTask，请将输入字段放在同一个任务中。');
+      return false;
+    }
+    const task = tasks.current.values().next().value;
+    return task ? task.attachFiles(files) : ((await onSelectFiles?.(files)) ?? false);
+  };
   const submitAction = async (event: ActionEvent) => {
     if (submittingRef.current || busy || streaming || editing) return;
     setActionError('');
-    if (!onSubmit) {
+    if (tasks.current.size > 1) {
+      setActionError('一个工具页面只支持一个 AgentTask，请将输入字段放在同一个任务中。');
+      return;
+    }
+    const submit = tasks.current.values().next().value?.submit || onSubmit;
+    if (!submit) {
       setActionError('当前界面没有连接到 AI 对话，无法提交处理。');
       return;
     }
     if (event.type === BuiltinActionType.OpenUrl) {
-      setActionError('此按钮是链接操作，无法作为解析请求提交。');
+      setActionError('此按钮是链接操作，无法作为任务提交。');
       return;
     }
     const message = event.humanFriendlyMessage?.trim();
@@ -303,8 +349,9 @@ export function CustomToolOpenUIPreview({
     submittingRef.current = true;
     setSubmitting(true);
     try {
-      const sent = await onSubmit({ message, formState: event.formState });
-      if (!sent) setActionError('暂未提交，请等待文件上传完成或当前对话结束后重试。');
+      const sent = await submit({ message, formState: event.formState });
+      if (!sent && !tasks.current.size)
+        setActionError('暂未提交，请等待文件上传完成或当前对话结束后重试。');
     } catch (error) {
       setActionError(error instanceof Error ? error.message : '提交失败，请重试。');
     } finally {
@@ -318,55 +365,58 @@ export function CustomToolOpenUIPreview({
       editing: Boolean(editing),
       selectedId: selectedId ?? null,
       onSelect,
-      presentation,
+      presentation: light ? 'chat' : presentation,
     }),
-    [components, editing, onSelect, selectedId, presentation],
+    [components, editing, onSelect, selectedId, presentation, light],
   );
   return (
-    <EditorRuntimeContext.Provider value={runtime}>
-      <ViewSourcesContext.Provider value={sourceRefs}>
-        <ViewFileSelectionContext.Provider value={onSelectFiles}>
-          <div
-            className={`${styles.preview} ${presentation === 'chat' ? styles.chat : ''}`}
-            aria-label={title}>
-            {actionError && <Alert type='error' message={actionError} showIcon />}
-            {submitting && <div role='status'>正在提交并处理…</div>}
-            {errors.length && !streaming ? (
-              <Alert
-                type='error'
-                showIcon
-                message='界面无法完整渲染'
-                description={errors
-                  .map((error) => error.message.replace(/openui/gi, '界面源码'))
-                  .join('；')}
-              />
-            ) : null}
-            <ThemeProvider
-              mode={presentation === 'chat' ? 'light' : 'dark'}
-              darkTheme={TECH_DARK_THEME}
-              cssSelector={`.${styles.surface}`}>
-              <div className={styles.surface} ref={surfaceRef}>
-                {content.trim() ? (
-                  <ExportDocxSurfaceProvider getSurface={() => surfaceRef.current}>
-                    <Renderer
-                      response={normalizeOpenuiSource(content)}
-                      library={editableOpenuiLibrary}
-                      isStreaming={Boolean(streaming || busy || submitting)}
-                      onAction={(event) => void submitAction(event)}
-                      onError={setErrors}
-                    />
-                  </ExportDocxSurfaceProvider>
-                ) : (
-                  <Empty
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    description={streaming ? '正在生成工具界面…' : '描述需求后生成工具界面'}
+    <TaskBridge.Provider value={taskBridge}>
+      <FileTaskScope.Provider
+        value={{ key: taskKey, disabled: Boolean(editing || streaming || busy) }}>
+        <EditorRuntimeContext.Provider value={runtime}>
+          <ViewSourcesContext.Provider value={sourceRefs}>
+            <ViewFileSelectionContext.Provider value={selectFiles}>
+              <div className={`${styles.preview} ${light ? styles.chat : ''}`} aria-label={title}>
+                {actionError && <Alert type='error' message={actionError} showIcon />}
+                {submitting && <div role='status'>正在提交并处理…</div>}
+                {errors.length && !streaming ? (
+                  <Alert
+                    type='error'
+                    showIcon
+                    message='界面无法完整渲染'
+                    description={errors
+                      .map((error) => error.message.replace(/openui/gi, '界面源码'))
+                      .join('；')}
                   />
-                )}
+                ) : null}
+                <ThemeProvider
+                  mode={light ? 'light' : 'dark'}
+                  darkTheme={TECH_DARK_THEME}
+                  cssSelector={`.${styles.surface}`}>
+                  <div className={styles.surface} ref={surfaceRef}>
+                    {content.trim() ? (
+                      <ExportDocxSurfaceProvider getSurface={() => surfaceRef.current}>
+                        <Renderer
+                          response={normalizeOpenuiSource(content)}
+                          library={editableOpenuiLibrary}
+                          isStreaming={Boolean(streaming || busy || submitting)}
+                          onAction={(event) => void submitAction(event)}
+                          onError={setErrors}
+                        />
+                      </ExportDocxSurfaceProvider>
+                    ) : (
+                      <Empty
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        description={streaming ? '正在生成工具界面…' : '描述需求后生成工具界面'}
+                      />
+                    )}
+                  </div>
+                </ThemeProvider>
               </div>
-            </ThemeProvider>
-          </div>
-        </ViewFileSelectionContext.Provider>
-      </ViewSourcesContext.Provider>
-    </EditorRuntimeContext.Provider>
+            </ViewFileSelectionContext.Provider>
+          </ViewSourcesContext.Provider>
+        </EditorRuntimeContext.Provider>
+      </FileTaskScope.Provider>
+    </TaskBridge.Provider>
   );
 }

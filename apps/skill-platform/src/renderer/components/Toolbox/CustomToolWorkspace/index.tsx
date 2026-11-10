@@ -200,6 +200,7 @@ export function CustomToolWorkspace() {
   const preview =
     document.kind === 'openui' ? (
       <CustomToolOpenUIPreview
+        runtimeKey={document.id}
         title={displayName}
         content={document.content}
         components={document.components}
@@ -345,12 +346,12 @@ export function CustomToolWorkspace() {
         </div>
 
         {isEditing && !isFullscreen ? (
-        <CustomToolAiComposer
-          key={selectedId}
-          toolKey={selectedId}
-          hasContent={Boolean(document.content.trim())}
-          onRegisterFileAttachmentHandler={registerFileAttachmentHandler}
-        />
+          <CustomToolAiComposer
+            key={selectedId}
+            toolKey={selectedId}
+            hasContent={Boolean(document.content.trim())}
+            onRegisterFileAttachmentHandler={registerFileAttachmentHandler}
+          />
         ) : null}
       </div>
     </ViewportPortal>

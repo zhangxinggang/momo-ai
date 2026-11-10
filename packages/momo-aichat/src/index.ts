@@ -2,6 +2,9 @@ export { AiChatView } from './components/AiChatView';
 export { AiChatConfigProvider, useAiChatConfig } from './contexts/AiChatConfigContext';
 export { ChatProvider, useChatContext } from './contexts/ChatContext';
 export { createRuntimeChatStream } from './runtime/chat-stream';
+export { executeRuntimeTurn } from './runtime/execute';
+export { emptyProjection, type RunProjection } from './runtime/projection';
+export { RunTimeline } from './components/RunTimeline';
 export type { IRuntimeChatStreamOptions } from './runtime/chat-stream';
 
 // 会话类型与工具

@@ -70,6 +70,9 @@ flowchart LR
     PluginRegistry -->|实时注册与撤销| Agent
     ToolBroker --> PluginWorker[隔离 Worker 插件执行]
     ToolEditor -->|验证表单调用同一实现| PluginWorker
+    ToolEditor --> TaskHost[AgentTask / FileTask 通用任务]
+    TaskHost -->|同一运行时契约| RuntimeService
+    ToolEditor -->|显式创建技能 / 校验保存| RuntimeService
     ToolEditor --> ApiRequest
     WebAssistant[网页工具 AI 对话]
     ToolEditor --> WebAssistant
@@ -87,11 +90,11 @@ flowchart LR
     DiagramAssets[("getUploadDir<br/>上传图片 / PNG + .drawio")]
     Models[模型与 Embedding 服务]
     WebPages[外部 HTTP/HTTPS 网页]
-    UiStorage[(localStorage<br/>侧栏顺序 / 独立网页问答)]
+    UiStorage[(localStorage<br/>侧栏顺序 / 独立网页问答 / 工具任务)]
   end
 
   User --> Renderer
-  UserSkills -->|预览与导入| Main
+  UserSkills -->|预览 / 目录配置自动补装| Main
   BuiltinSkills -->|功能调用时读取| Main
   Main -->|启动 IPC 加载| BuiltinSnapshot --> Renderer
   BuiltinSkills -->|知识证据规则| KbService
@@ -311,3 +314,5 @@ flowchart LR
 业务应用通过根目录 `appConf.cjs` 覆盖共享 Electron 壳层配置。`browserWindow` 为对象时继续覆盖窗口参数，为 `null` 时表示应用以操作系统全屏模式启动；未配置时使用共享壳层默认尺寸。主进程向 Renderer 同步全屏和最大化状态，标题栏据此切换最大化/还原图标；还原操作优先退出全屏，再使用 Electron 保存的 normal bounds 或原生 unmaximize 回到此前的位置与宽高。Windows 无边框主窗口保持 `resizable` 和 `thickFrame`，退出全屏后由系统提供四边及四角缩放。
 
 AI 对话的代码执行和生成文件统一使用既有 `temp/<sessionId>`；生成文档经 artifact.create 注册后以真实 sourceRef 进入 momo-file-editor，见 [Harness 集成](./ai-chat-harness-integration-design.md)。界面模式隐藏文件修改统计和记录；标书分析以全宽 Tabs 展示，只有模板 Tab 预览截取的 Word，见 [标书解析技能](./tender-document-parser-skill.md)。自定义工具的全屏控制位于内容区内，悬停显示，全屏时隐藏顶部标题和编辑控件。
+
+通用工具的表单与文件输入经共享 Harness 执行，创建类技能在工具箱完成采集、生成、校验与保存；详见 [通用交互工具任务](./interactive-tool-tasks.md) 与 [REA 网页证据](./rea-page-rebuild.md)。

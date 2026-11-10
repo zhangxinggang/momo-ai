@@ -1,10 +1,14 @@
 # 标书解析技能架构
 
-`.cursor/skills/tender-document-parser` 把 PDF/DOCX 分析为带原文证据的动态数据；十个一级 Tab 固定，二级 Tab、表头和内容随文档生成。投标模板从原件截取为 Word，分析页不再显示右侧原招采文件预览。
+`.cursor/skills/tender-document-parser` 把 PDF/DOCX 分析为带原文证据的动态数据；十个一级 Tab 固定，二级 Tab、表头和内容随文档生成。投标模板从原件截取为 Word；技能结果本身不重复原件栏，工具模式可由通用宿主按参数组合原件预览。
 
 ```mermaid
 flowchart LR
   Upload[上传原文件] --> Sources[Agent Source Store]
+  Task[工具定义 FileTask] -->|上传 / 解析 / 结果| HostTask[通用任务执行宿主]
+  HostTask --> Harness
+  HostTask --> Original[可选右侧原文件阅读器]
+  Sources --> Original
   Chat[显式技能 / 界面模式] --> Harness[ChatRuntimePort / Harness]
   Sources --> Harness
   Resource[技能正文 / 真实资源目录] --> Harness
@@ -37,3 +41,5 @@ flowchart LR
 DOCX 路径仅裁剪正文 XML，保留原包内样式、编号、关系、图片和有效节属性。PDF 路径以 PyMuPDF 渲染选定物理页，按原尺寸嵌入 Word，明确标注图像内容不可逐字编辑。截取脚本测试校验原件不变、依赖部件字节、节属性、原页像素和尺寸；字体与分页的最终一致性仍需针对实际文件在 momo-file-editor 中视觉核验，未核验时不得宣称完全一致。
 
 所有过程文件和交付文件保存到现有 `temp/<sessionId>`。宿主通过 artifact_create 读取该目录内的真实文件，生成持久化快照和预览引用；OpenUI 只持有引用，不嵌入原文件或 Word 字节。离线 HTML 不模拟宿主阅读器。
+
+工具箱示例以声明式 FileTask 绑定此技能，首页为单文件卡片，三阶段标签在工具定义中配置。通用宿主执行后将技能分析结果放在左侧，并按 previewOriginal 参数提供右侧原件预览；技能自身仍不重复生成原件栏。创建、审批、重试、状态缓存见 [通用交互工具任务](./interactive-tool-tasks.md)。

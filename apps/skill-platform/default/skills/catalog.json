@@ -1,0 +1,22 @@
+[
+  {
+    "name": "interactive-tool-builder",
+    "source": ".cursor/skills/interactive-tool-builder",
+    "autoInstall": true
+  },
+  {
+    "name": "tender-document-parser",
+    "source": ".cursor/skills/tender-document-parser",
+    "autoInstall": true
+  },
+  {
+    "name": "rea-page-rebuild",
+    "source": ".cursor/skills/rea-page-rebuild",
+    "autoInstall": true
+  },
+  {
+    "name": "karpathy-guidelines",
+    "source": ".cursor/skills/karpathy-guidelines",
+    "autoInstall": false
+  }
+]
